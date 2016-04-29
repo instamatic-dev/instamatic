@@ -1,0 +1,3 @@
+include LICENCE
+include readme.md
+include setup_win.bat
