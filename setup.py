@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'instamatic = instamatic.app:main',
+            'find_crystals = instamatic.find_crystals.find_crystals_entry'
         ]
     }
 
