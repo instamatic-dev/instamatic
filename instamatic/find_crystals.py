@@ -53,7 +53,11 @@ def get_markers_gradient(img, radius=10, threshold=40):
 def plot_features(img, segmented):
     """Take image and plot segments on top of them"""
     labels, numlabels = ndimage.label(segmented)
-    image_label_overlay = color.label2rgb(labels, image=img)
+    image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
+
+    # plt.imsave("a.png", img)
+    # plt.imsave("c.png", segmented)
+    # plt.imsave("d.png", image_label_overlay)
 
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(15, 10), sharex=True, sharey=True)
@@ -99,6 +103,8 @@ def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
             img, markers, beta=10, mode='bf')
     else:
         raise ValueError("Don't know method: {}".format(method))
+
+    # plt.imsave("b.png", markers)
 
     segmented = ndimage.binary_fill_holes(segmented - 1)
 
@@ -204,8 +210,8 @@ def load_image(fn):
 def find_crystals_entry():
     for fn in sys.argv[1:]:
         img = color.rgb2gray(load_image(fn))
-        img = invert_image(img)
-        crystals = find_crystals(img, plot=False)
+        img = np.invert(img)
+        crystals = find_crystals(img, plot=True)
 
         # crystals = reject_bad_crystals(crystals) ## implemented in find_crystals
 

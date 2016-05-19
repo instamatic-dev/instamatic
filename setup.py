@@ -19,7 +19,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    packages=["instamatic"],
+    packages=["instamatic", "camera"],
 
     install_requires=["numpy"],
 
@@ -30,7 +30,8 @@ setup(
     entry_points={
         'console_scripts': [
             'instamatic = instamatic.app:main',
-            'find_crystals = instamatic.find_crystals.find_crystals_entry'
+            'find_crystals = instamatic.find_crystals:find_crystals_entry',
+            'orius.acquire = camera.camera:main_entry',
         ]
     }
 
