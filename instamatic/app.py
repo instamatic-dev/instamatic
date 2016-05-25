@@ -1,32 +1,47 @@
 #!/usr/bin/env python
 
 import sys, os
+import numpy as np
 
 drc = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..'))  # get path of drc
 sys.path.insert(0, drc)  # prepend module path to make sure it's first
 
 from pyscope import jeolcom, simtem
+from camera import gatanOrius
+from find_crystals import find_crystals, plot_props
 
-# from IPython import embed
+from IPython import embed
+
 
 def main():
     try:
-        s = jeolcom.Jeol()
+        tem = jeolcom.Jeol()
+        cam = gatanOrius()
     except WindowsError:
         print " >> Could not connect to JEOL, using SimTEM instead..."
-        s = simtem.SimTEM()
+        tem = simtem.SimTEM()
+        cam = gatanOrius(simulate=True)
     
-    print "High tension:", s.getHighTension()
+    print "High tension:", tem.getHighTension()
     print
 
-    for d in s.getCapabilities():
-        if 'get' in d["implemented"]:
-            print "{:30s} : {}".format(d["name"], getattr(s, "get"+d["name"])())
+    if True:
+        for d in tem.getCapabilities():
+            if 'get' in d["implemented"]:
+                print "{:30s} : {}".format(d["name"], getattr(tem, "get"+d["name"])())
 
-    for x in dir(s):
-        if x.startswith("get"):
-            print  x
+    if True:
+        img = cam.getImage()
+
+
+        embed()
+
+        # img = color.rgb2gray(img)
+        img = np.invert(img)
+        print img.min(), img.max()
+        crystals = find_crystals(img)
+        plot_props(img, crystals)
 
     # embed()
 

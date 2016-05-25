@@ -2,8 +2,17 @@ import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
+import comtypes
+# initial COM in multithread mode if not initialized otherwise
+try:
+    comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+except WindowsError:
+    comtypes.CoInitialize()
+
 import numpy as np
 import os
+
+import atexit
 
 __version__ = "2016-05-19"
 __author__ = "Stef Smeets"
@@ -11,17 +20,36 @@ __email__ = "stef.smeets@mmk.su.se"
 
 __all__ = ["gatanOrius"]
 
+DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
+DLLPATH      = "CCDCOM2.dll"
+
+
+@atexit.register
+def exit_func():
+    """Uninitialize comtypes to prevent the program from hanging"""
+    comtypes.CoUninitialize()
+    print "Uninitialize com connection"
+
 
 class gatanOrius(object):
     """docstring for gatanOrius"""
 
-    def __init__(self):
+    def __init__(self, simulate=False):
         super(gatanOrius, self).__init__()
 
-        libpath = os.path.join(os.path.dirname(
-            __file__), "CCDCOM2_x64_simulation.dll")
+        if simulate:
+            libpath = os.path.join(os.path.dirname(
+                __file__), DLLPATH_SIMU)
+        else:
+            libpath = os.path.join(os.path.dirname(
+                __file__), DLLPATH)
 
-        lib = ctypes.cdll.LoadLibrary(libpath)
+        try:
+            lib = ctypes.cdll.LoadLibrary(libpath)
+        except WindowsError as e:
+            print e
+            print "Missing DLL:", DLLPATH
+            exit()
 
         ## not used
         # self._acquireImage = getattr(lib, '?acquireImage@@YAHPEAFHHHN_N@Z') # not used
@@ -119,7 +147,20 @@ class gatanOrius(object):
             raise RuntimeError("Could not establish camera connection...")
 
     def releaseConnection(self):
+        name = self.getName()
         self._releaseCCDCOM()
+        print "Connection to camera {} released".format(name) 
+
+
+def save_image(outfile, img):
+    if not outfile:
+        return
+    root, ext = os.path.splitext(outfile)
+    if ext.lower() == ".npy":
+        np.save(outfile, img)
+    else:
+        plt.imsave(outfile, arr, cmap="gray")
+    print " >> File saved to {}".format(outfile) 
 
 
 def main_entry():
@@ -156,16 +197,22 @@ def main_entry():
                         action="store_true", dest="show_fig",
                         help="""Show the image (default True)""")
 
-    parser.add_argument("-t", "--test",
-                        action="store_true", dest="test",
+    parser.add_argument("-t", "--tem",
+                        action="store", type=str, dest="tem",
                         help="""Runs a series of tests (default False)""")
+
+    parser.add_argument("-u", "--simulate",
+                        action="store_true", dest="simulate",
+                        help="""Simulate camera connection (default False)""")
 
     parser.set_defaults(
         binsize=1,
         exposure=1,
         outfile=None,
-        show_fig=True,
-        test=False
+        show_fig=False,
+        test=False,
+        simulate=False,
+        tem="simtem"
     )
 
     options = parser.parse_args()
@@ -176,22 +223,29 @@ def main_entry():
     outfile = options.outfile
     show_fig = options.show_fig
 
-    camera = gatanOrius()
-    import matplotlib.pyplot as plt
+    if options.tem.lower() == "jeol":
+        from pyscope import jeolcom
+        tem = jeolcom.Jeol()
+    else:
+        from pyscope import simtem
+        tem = simtem.SimTem()
 
-    if options.test:
-        arr = camera.getImage(binsize=1)
-        arr = camera.getImage(binsize=2)
-        arr = camera.getImage(binsize=4)
+    tem.getHeader()
+
+    camera = gatanOrius(simulate=options.simulate)
+    import matplotlib.pyplot as plt
 
     arr = camera.getImage(binsize=binsize, t=exposure)
 
-    if outfile:
-        plt.imsave(outfile, arr, cmap="gray")
-        print "File saved to {}".format(outfile)
-    elif show_fig:
+    save_image(outfile, arr)
+
+    if show_fig:
         plt.imshow(arr, cmap="gray", interpolation="none")
         plt.show()
+    elif not outfile:
+        save_image("out.npy", arr)
+
+    camera.releaseConnection()
 
 
 if __name__ == '__main__':

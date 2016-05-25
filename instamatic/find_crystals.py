@@ -33,11 +33,25 @@ def enhance_contrast(img):
     return exposure.equalize_hist(img)
 
 
-def get_markers_bounds(img, lower=100, upper=180):
+def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True):
     """Get markers using simple thresholds"""
+    background = 1
+    features = 2
+
+    if dark_on_bright:
+        background, features = features, background
+
     markers = np.zeros_like(img)
-    markers[img < lower] = 1
-    markers[img > upper] = 2
+
+    print "\nbounds:", lower, upper
+    
+    markers[img < lower] = background
+    markers[img > upper] = features
+    
+    print "\nother     ", np.sum(markers == 0)
+    print "background", np.sum(markers == background)
+    print "features  ", np.sum(markers == features)
+
     return markers
 
 
@@ -55,9 +69,9 @@ def plot_features(img, segmented):
     labels, numlabels = ndimage.label(segmented)
     image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
 
-    # plt.imsave("a.png", img)
-    # plt.imsave("c.png", segmented)
-    # plt.imsave("d.png", image_label_overlay)
+    # plt.imsave("a2.png", img)
+    # plt.imsave("c2.png", segmented)
+    # plt.imsave("d2.png", image_label_overlay)
 
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(15, 10), sharex=True, sharey=True)
@@ -80,13 +94,15 @@ def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
 
     clear_border = kwargs.get("clear_border", True)
     min_size = kwargs.get("min_size", 100)
+    fill_holes = kwargs.get("fill_holes", False)
 
     if isinstance(markers, np.ndarray):
         assert img.shape == markers.shape, "Shape of markers ({}) does not match image ({})".format(
             markers.shape, img.shape)
     elif markers == "bounds":
-        lower_bound = kwargs.get("lower_bound", 100)
-        upper_bound = kwargs.get("upper_bound", 180)
+        otsu = filters.threshold_otsu(img)
+        lower_bound = otsu*0.5
+        upper_bound = otsu
         markers = get_markers_bounds(img, lower=lower_bound, upper=upper_bound)
     elif markers == "gradient":
         radius = kwargs.get("radius", 10)
@@ -104,9 +120,16 @@ def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
     else:
         raise ValueError("Don't know method: {}".format(method))
 
+    # plt.imsave("a.png", img)
     # plt.imsave("b.png", markers)
+    # plt.imsave("c.png", segmented)
 
-    segmented = ndimage.binary_fill_holes(segmented - 1)
+    if fill_holes:
+        segmented = ndimage.binary_fill_holes(segmented - 1)
+    else:
+        segmented = segmented.astype(int)
+
+    # plt.imsave("d.png", segmented)
 
     if min_size > 0:
         print " >> Removing objects smaller than {} pixels".format(min_size)
@@ -122,6 +145,9 @@ def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
     labels, numlabels = ndimage.label(segmented)
     print " >> {} crystals found in image".format(numlabels)
     props = measure.regionprops(labels, img)
+
+    image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
+    plt.imsave("e.png", image_label_overlay)
 
     return props
 
@@ -141,7 +167,7 @@ def plot_props(img, props):
         color = "red"
 
         rect = Rectangle((x1 - 1, y1 - 1), x2 - x1 + 1,
-                         y2 - y1 + 1, fc='none', ec=color)
+                         y2 - y1 + 1, fc='none', ec=color, lw=2)
         ax.add_patch(rect)
 
         cy, cx = prop.weighted_centroid
@@ -152,8 +178,8 @@ def plot_props(img, props):
         plt.xlim(0, xmax)
         plt.ylim(ymax, 0)
 
-        s = "{:d}\n{:d}".format(int(cx), int(cy))
-        plt.text(x2, y2, s=s, color="white", size=10)
+        s = " {:d} {:d}\n".format(int(cx), int(cy))
+        plt.text(x2, y2, s=s, color="black", size=15)
 
     plt.show()
 
@@ -210,8 +236,8 @@ def load_image(fn):
 def find_crystals_entry():
     for fn in sys.argv[1:]:
         img = color.rgb2gray(load_image(fn))
-        img = np.invert(img)
-        crystals = find_crystals(img, plot=True)
+
+        crystals = find_crystals(img, plot=False, markers="bounds")
 
         # crystals = reject_bad_crystals(crystals) ## implemented in find_crystals
 
