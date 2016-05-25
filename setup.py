@@ -19,7 +19,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    packages=["instamatic", "camera", "instamatic.pyami", "instamatic.pyscope"],
+    packages=["instamatic", "instamatic.camera", "instamatic.pyami", "instamatic.pyscope"],
 
     install_requires=["numpy"],
 
@@ -31,7 +31,7 @@ setup(
         'console_scripts': [
             'instamatic = instamatic.app:main',
             'find_crystals = instamatic.find_crystals:find_crystals_entry',
-            'orius.acquire = camera.camera:main_entry',
+            'orius.acquire = instamatic.camera.camera:main_entry',
         ]
     }
 
