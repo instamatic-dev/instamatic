@@ -19,7 +19,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    packages=["instamatic", "camera"],
+    packages=["instamatic", "camera", "instamatic.pyami", "instamatic.pyscope"],
 
     install_requires=["numpy"],
 

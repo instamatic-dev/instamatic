@@ -3,15 +3,11 @@
 import sys, os
 import numpy as np
 
-drc = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..'))  # get path of drc
-sys.path.insert(0, drc)  # prepend module path to make sure it's first
-
 from pyscope import jeolcom, simtem
 from camera import gatanOrius
 from find_crystals import find_crystals, plot_props
 
-from IPython import embed
+# from IPython import embed
 
 
 def main():
