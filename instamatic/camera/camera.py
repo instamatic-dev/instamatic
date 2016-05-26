@@ -10,7 +10,7 @@ except WindowsError:
     comtypes.CoInitialize()
 
 import numpy as np
-import os
+import os, sys
 
 import atexit
 
@@ -163,6 +163,20 @@ def save_image(outfile, img):
     print " >> File saved to {}".format(outfile) 
 
 
+def save_header(outfile, header):
+    import json
+    if not outfile:
+        return
+    if isinstance(outfile, str):
+        root, ext = os.path.splitext(outfile)
+        outfile = open(root+".json", "w")
+    json.dump(header, outfile, indent=2)
+    if outfile.name == "<stdout>":
+        print
+    else:
+        print " >> Header written to {}".format(outfile.name) 
+
+
 def main_entry():
     import argparse
     # usage = """acquire"""
@@ -224,26 +238,31 @@ def main_entry():
     show_fig = options.show_fig
 
     if options.tem.lower() == "jeol":
-        from pyscope import jeolcom
+        from instamatic.pyscope import jeolcom
         tem = jeolcom.Jeol()
     else:
-        from pyscope import simtem
-        tem = simtem.SimTem()
+        from instamatic.pyscope import simtem
+        tem = simtem.SimTEM()
 
-    tem.getHeader()
+    h = tem.getHeader()
 
     camera = gatanOrius(simulate=options.simulate)
+    
     import matplotlib.pyplot as plt
 
     arr = camera.getImage(binsize=binsize, t=exposure)
-
-    save_image(outfile, arr)
-
+    
     if show_fig:
         plt.imshow(arr, cmap="gray", interpolation="none")
         plt.show()
-    elif not outfile:
+        save_header(sys.stdout, h)
+
+    if outfile:
+        save_image(outfile, arr)
+        save_header(outfile, h)
+    else:
         save_image("out.npy", arr)
+        save_header("out.json", h)
 
     camera.releaseConnection()
 

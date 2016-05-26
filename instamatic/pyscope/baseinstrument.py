@@ -29,3 +29,14 @@ class BaseInstrument(object):
             if found['implemented']:
                 implemented.append(found)
         return implemented
+
+    def getHeader(self):
+        ret = {}
+        for d in self.getCapabilities():
+            if 'get' in d["implemented"]:
+                try:
+                    val = getattr(self, "get"+d["name"])()
+                except Exception as e:
+                    val = e
+                ret[d["name"]] = val
+        return ret
