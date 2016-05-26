@@ -15,8 +15,12 @@ from skimage import morphology
 from skimage import segmentation
 from skimage import exposure
 from skimage import measure
+import json
 
 plt.rcParams['image.cmap'] = 'gray'
+
+
+from calibration import lowmag_dimensions
 
 
 def denoise(img, sigma=3, method="median"):
@@ -48,9 +52,9 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True):
     markers[img < lower] = background
     markers[img > upper] = features
     
-    print "\nother     ", np.sum(markers == 0)
-    print "background", np.sum(markers == background)
-    print "features  ", np.sum(markers == features)
+    print "\nother      {:6.2%}".format(1.0*np.sum(markers == 0) / markers.size)
+    print   "background {:6.2%}".format(1.0*np.sum(markers == background) / markers.size)
+    print   "features   {:6.2%}".format(1.0*np.sum(markers == features) / markers.size)
 
     return markers
 
@@ -89,7 +93,7 @@ def plot_features(img, segmented):
     plt.show()
 
 
-def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
+def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
     """Find crystals using the watershed or random_walker methods"""
 
     clear_border = kwargs.get("clear_border", True)
@@ -136,20 +140,50 @@ def find_crystals(img, method="watershed", markers=None, plot=False, **kwargs):
         morphology.remove_small_objects(segmented, min_size=min_size, connectivity=1, in_place=True)
 
     if clear_border:
-        print " >> Removing crystals touching the edge of the frame"
+        print " >> Removing objects touching the edge of the frame"
         segmentation.clear_border(segmented, buffer_size=0, bgval=0, in_place=True)
 
     if plot:
         plot_features(img, segmented)
 
     labels, numlabels = ndimage.label(segmented)
-    print " >> {} crystals found in image".format(numlabels)
+    print " >> {} objects found in image".format(numlabels)
     props = measure.regionprops(labels, img)
 
     image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
     plt.imsave("e.png", image_label_overlay)
 
     return props
+
+
+
+def find_holes(img, header, hole_size=20000, plot=True):
+    """Hole size in micrometer"""
+    pxx, pxy = lowmag_dimensions[header["Magnification"]]
+
+    otsu = filters.threshold_otsu(img)
+    n = 0.25
+    l = otsu - (otsu - np.min(img))*n
+    u = otsu + (np.max(img) - otsu)*n
+    print "img range: {} - {}".format(img.min(), img.max())
+    print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
+    
+    markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False)
+    # plt.imshow(markers)
+    props = find_objects(img, markers=markers, plot=False)
+
+    newprops = []
+    for prop in props:
+        if prop.eccentricity > 0.5:
+            continue
+        if prop.convex_area*pxx*pxy < hole_size*0.5:
+            continue
+        newprops.append(prop)
+    
+    if plot:
+        plot_props(img, newprops)
+
+    return newprops
 
 
 def plot_props(img, props):
@@ -237,9 +271,9 @@ def find_crystals_entry():
     for fn in sys.argv[1:]:
         img = color.rgb2gray(load_image(fn))
 
-        crystals = find_crystals(img, plot=False, markers="bounds")
+        crystals = find_objects(img, plot=False, markers="bounds")
 
-        # crystals = reject_bad_crystals(crystals) ## implemented in find_crystals
+        # crystals = reject_bad_crystals(crystals) ## implemented in find_objects
 
         plot_props(img, crystals)
 
@@ -251,6 +285,23 @@ def find_crystals_entry():
         # plt.scatter(xy[:, 1], xy[:, 0], color="red")
         # plt.show()
 
+def find_holes_entry():
+    for fn in sys.argv[1:]:
+        img = np.load(fn)
+        root, ext = os.path.splitext(fn)
+        header = json.load(open(root+".json", "r"))
+
+        holes = find_holes(img, header, plot=False)
+
+        plot_props(img, holes)
+
+        xy = props2xy(holes)
+
+        print xy
+
+
+
 
 if __name__ == '__main__':
-    find_crystals_entry()
+    # find_crystals_entry()
+    find_holes_entry()

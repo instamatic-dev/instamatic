@@ -31,6 +31,7 @@ setup(
         'console_scripts': [
             'instamatic = instamatic.app:main',
             'find_crystals = instamatic.find_crystals:find_crystals_entry',
+            'find_holes = instamatic.find_crystals:find_holes_entry',
             'orius.acquire = instamatic.camera.camera:main_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
