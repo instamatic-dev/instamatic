@@ -2,6 +2,9 @@
 """
 Port of Manuel Guizar's code from:
 http://www.mathworks.com/matlabcentral/fileexchange/18401-efficient-subpixel-image-registration-by-cross-correlation
+
+Adapted from:
+https://github.com/scikit-image/scikit-image/blob/master/skimage/feature/register_translation.py
 """
 
 import numpy as np
@@ -101,7 +104,7 @@ def _compute_error(cross_correlation_max, src_amp, target_amp):
 
 
 def register_translation(src_image, target_image, upsample_factor=1,
-                         space="real"):
+                         space="real", guess=None, window=None):
     """
     Efficient subpixel image translation registration by cross-correlation.
     This code gives the same precision as the FFT upsampled cross-correlation
@@ -124,6 +127,11 @@ def register_translation(src_image, target_image, upsample_factor=1,
         Defines how the algorithm interprets input data.  "real" means data
         will be FFT'd to compute the correlation, while "fourier" data will
         bypass FFT of input data.  Case insensitive.
+    guess : ndarray, optional
+        Guess for the shift vector (in pixels)
+    window : int, optional
+        If guess is specified, window determines the window size around the 
+        given shift vector to find the local maximum.
     Returns
     -------
     shifts : ndarray
@@ -170,6 +178,21 @@ def register_translation(src_image, target_image, upsample_factor=1,
     image_product = src_freq * target_freq.conj()
     cross_correlation = np.fft.ifftn(image_product)
 
+    if guess:
+        cc_shape = cross_correlation.shape
+        if not window:
+            window = min(cc_shape) / 10
+
+        dy = cc_shape[0] - guess[0]
+        dx = cc_shape[1] - guess[1]
+    
+        x0 = max(0, dx-window)
+        x1 = min(cc_shape[0], dx+window)
+        y0 = max(0, dy-window)
+        y1 = min(cc_shape[1], dy+window)
+        
+        cross_correlation = cross_correlation[y0:y1, x0:x1]
+    
     # Locate maximum
     maxima = np.unravel_index(np.argmax(np.abs(cross_correlation)),
                               cross_correlation.shape)
@@ -178,6 +201,10 @@ def register_translation(src_image, target_image, upsample_factor=1,
     shifts = np.array(maxima, dtype=np.float64)
     shifts[shifts > midpoints] -= np.array(shape)[shifts > midpoints]
 
+    if guess:
+        # Convert coordinates from local view to global
+        shifts = -(np.array([cc_shape[0]-y0, cc_shape[1]-x0]) - shifts)
+    
     if upsample_factor == 1:
         src_amp = np.sum(np.abs(src_freq) ** 2) / src_freq.size
         target_amp = np.sum(np.abs(target_freq) ** 2) / target_freq.size
