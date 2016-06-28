@@ -207,18 +207,22 @@ def main_entry():
                         action="store", type=str, metavar="image.png", dest="outfile",
                         help="""Where to store image""")
 
-    parser.add_argument("-s", "--show",
+    parser.add_argument("-d", "--display",
                         action="store_true", dest="show_fig",
                         help="""Show the image (default True)""")
 
-    parser.add_argument("-t", "--tem",
-                        action="store", type=str, dest="tem",
-                        help="""Runs a series of tests (default False)""")
+    # parser.add_argument("-t", "--tem",
+    #                     action="store", type=str, dest="tem",
+    #                     help="""Simulate microscope connection (default False)""")
 
     parser.add_argument("-u", "--simulate",
                         action="store_true", dest="simulate",
-                        help="""Simulate camera connection (default False)""")
-
+                        help="""Simulate camera/microscope connection (default False)""")
+    
+    parser.add_argument("-s", "--series",
+                        action="store_true", dest="take_series",
+                        help="""Enable mode to take a series of images (default False)""")
+    
     parser.set_defaults(
         binsize=1,
         exposure=1,
@@ -226,7 +230,8 @@ def main_entry():
         show_fig=False,
         test=False,
         simulate=False,
-        tem="simtem"
+        tem="simtem",
+        take_series=False
     )
 
     options = parser.parse_args()
@@ -237,32 +242,86 @@ def main_entry():
     outfile = options.outfile
     show_fig = options.show_fig
 
-    if options.tem.lower() == "jeol":
-        from instamatic.pyscope import jeolcom
-        tem = jeolcom.Jeol()
-    else:
+    take_series = options.take_series
+
+    if options.simulate:
         from instamatic.pyscope import simtem
         tem = simtem.SimTEM()
-
-    h = tem.getHeader()
+    else:
+        from instamatic.pyscope import jeolcom
+        tem = jeolcom.Jeol()
 
     camera = gatanOrius(simulate=options.simulate)
     
-    import matplotlib.pyplot as plt
-
-    arr = camera.getImage(binsize=binsize, t=exposure)
+    if take_series:
+        i = 1
+        print "\nUsage:"
+        print "    set b/e/i X -> set binsize/exposure/file number to X"
+        print "    XXX         -> Add comment to header"
+        print "    exit        -> exit the program"
+    while take_series:
+        outfile = "image_{:04d}.npy".format(i)
+        inp = raw_input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
+        if inp == "exit":
+            break
+        elif inp.startswith("set"):
+            try:
+                key, value = inp.split()[1:3]
+            except ValueError:
+                print "Input not understood"
+                continue
+            if key == "e":
+                try:
+                    value = float(value)
+                except ValueError as e:
+                    print e
+                if value > 0:
+                    exposure = value
+            elif key == "b":
+                try:
+                    value = int(value)
+                except ValueError as e:
+                    print e
+                if value in (1,2,4):
+                    binsize = value
+            elif key == "i":
+                try:
+                    value = int(value)
+                except ValueError as e:
+                    print e
+                if value > 0:
+                    i = value
+            print "binsize = {} | exposure = {} | file #{}".format(binsize, exposure, i)
+        else:
+            h = tem.getHeader()
+            arr = camera.getImage(binsize=binsize, t=exposure)
+            h["ImageExposureTime"] = exposure
+            h["ImageBinSize"] = binsize
+            h["ImageResolution"] = arr.shape
+            h["ImageComment"] = inp
     
-    if show_fig:
-        plt.imshow(arr, cmap="gray", interpolation="none")
-        plt.show()
-        save_header(sys.stdout, h)
-
-    if outfile:
-        save_image(outfile, arr)
-        save_header(outfile, h)
+            save_image(outfile, arr)
+            save_header(outfile, h)
+    
+            i += 1
     else:
-        save_image("out.npy", arr)
-        save_header("out.json", h)
+        h = tem.getHeader()
+
+        import matplotlib.pyplot as plt
+
+        arr = camera.getImage(binsize=binsize, t=exposure)
+
+        if show_fig:
+            plt.imshow(arr, cmap="gray", interpolation="none")
+            plt.show()
+            save_header(sys.stdout, h)
+    
+        if outfile:
+            save_image(outfile, arr)
+            save_header(outfile, h)
+        else:
+            save_image("out.npy", arr)
+            save_header("out.json", h)
 
     camera.releaseConnection()
 
