@@ -3,7 +3,7 @@ import copy
 import sys
 import ConfigParser
 import os
-import pyscope
+import instamatic.pyscope
 from instamatic.pyami import fileutil
 
 
@@ -97,7 +97,7 @@ class ModuleConfigParser(object):
     def parse(self):
         print "parsing %s...." % self.config_filename
         # use the path of this module
-        modpath = pyscope.__path__
+        modpath = instamatic.pyscope.__path__
 
         # read instruments.cfg
         confdirs = fileutil.get_config_dirs()
