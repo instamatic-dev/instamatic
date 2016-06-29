@@ -7,7 +7,7 @@ from os import path
 
 setup(
     name="instamatic",
-    version="0.0.1",
+    version="0.0.2",
     description="Program for automatic data collection of diffraction snapshots on electron microscopes",
 
     author="Stef Smeets",
@@ -32,7 +32,8 @@ setup(
             'instamatic = instamatic.app:main',
             'find_crystals = instamatic.find_crystals:find_crystals_entry',
             'find_holes = instamatic.find_crystals:find_holes_entry',
-            'orius.acquire = instamatic.camera.camera:main_entry',
+            'instamatic.camera = instamatic.camera.camera:main_entry',
+            'instamatic.controller = instamatic.TEMController:main_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }

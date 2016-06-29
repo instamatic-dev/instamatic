@@ -6,6 +6,9 @@ from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
 ipshell = InteractiveShellEmbed(banner1='')
 
+__version__ = "2016-06-29"
+__author__ = "Stef Smeets"
+__email__ = "stef.smeets@mmk.su.se"
 
 class TEMValue(object):
     """docstring for TEMValue"""
@@ -142,18 +145,47 @@ class TEMController(object):
         print self
 
 
+def main_entry():
+    import argparse
+    description = """Python program to control Jeol TEM"""
+
+    epilog = 'Updated: {}'.format(__version__)
+
+    parser = argparse.ArgumentParser(  # usage=usage,
+        description=description,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        version=__version__)
+
+    # parser.add_argument("args",
+    #                     type=str, metavar="FILE",
+    #                     help="Path to save cif")
+
+    parser.add_argument("-u", "--simulate",
+                        action="store_true", dest="simulate",
+                        help="""Simulate microscope connection (default False)""")
+    
+    parser.set_defaults(
+        simulate=False,
+        tem="simtem",
+    )
+
+    options = parser.parse_args()
+
+    if options.simulate:
+        from instamatic.pyscope import simtem
+        tem = simtem.SimTEM()
+    else:
+        from instamatic.pyscope import jeolcom
+        tem = jeolcom.Jeol()
+    
+    ctrl = TEMController(tem)
+
+    ipshell()
+
+
 if __name__ == '__main__':
     from instamatic.pyscope import simtem
     tem = simtem.SimTEM()
-    controller = TEMController(tem)
-
-    d = {'beamshift': {'x': 2.0, 'y': 64.0},
-         'beamtilt': {'x': 3.0, 'y': 23.0},
-         'gunshift': {'x': 4.0, 'y': 4.0},
-         'guntilt': {'x': 5.0, 'y': 23.0},
-         'imageshift': {'x': 6.0, 'y': 9.0},
-         'stageposition': {'a': 1.0, 'x': 0.0001, 'y': 0.0007, 'z': 0.0005}}
-
-    controller.set_all(d)
-
-    # ipshell()
+    ctrl = TEMController(tem)
+    ipshell()
