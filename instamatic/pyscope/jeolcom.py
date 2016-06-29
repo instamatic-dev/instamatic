@@ -2,10 +2,10 @@ import time
 import math
 import sys
 import comtypes.client
-from pyscope import tem
-from pyscope import moduleconfig
+import tem
+import moduleconfig
 
-DEBUG = False
+DEBUG = True
 
 # function modes
 FUNCTION_MODES = {'mag1':0,'mag2':1,'lowmag':2,'samag':3,'diff':4}
@@ -1560,3 +1560,12 @@ class Jeol(tem.TEM):
         self.setMainScreenPosition('down')
         time.sleep(exptime)
         self.setMainScreenPosition('up')
+
+    def setFunctionMode(self, mode):
+        if mode not in FUNCTION_MODE.keys():
+            raise ValueError("Unknown function mode", mode)
+        result = self.eos3.SelectFunctionMode(FUNCTION_MODES[mode])
+
+    def getFunctionMode(self):
+        mode, name, result = self.eos3.GetFunctionMode()
+        return FUNCTION_MODE_ORDERED_NAMES[mode]

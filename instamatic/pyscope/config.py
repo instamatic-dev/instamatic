@@ -5,10 +5,10 @@ import ConfigParser
 import imp
 import os
 import inspect
-import pyscope
-import pyscope.tem
-import pyscope.ccdcamera
-import pyami.fileutil
+import instamatic.pyscope
+import instamatic.pyscope.tem
+import instamatic.pyscope.ccdcamera
+from instamatic.pyami import fileutil
 
 configured = {}
 temclasses = None
@@ -22,10 +22,10 @@ def parse():
     configparser = ConfigParser.SafeConfigParser()
 
     # use the path of this module
-    modpath = pyscope.__path__
+    modpath = instamatic.pyscope.__path__
 
     # read instruments.cfg
-    confdirs = pyami.fileutil.get_config_dirs()
+    confdirs = fileutil.get_config_dirs()
     filenames = [os.path.join(confdir, 'instruments.cfg')
                  for confdir in confdirs]
     one_exists = False
@@ -52,7 +52,7 @@ def parse():
         cls_str = configparser.get(name, 'class')
         modname, clsname = cls_str.split('.')
         if modname not in mods:
-            fullmodname = 'pyscope.' + modname
+            fullmodname = 'instamatic.pyscope.' + modname
             args = imp.find_module(modname, modpath)
             try:
                 mod = imp.load_module(fullmodname, *args)
@@ -62,7 +62,7 @@ def parse():
             mods[modname] = mod
         mod = mods[modname]
         cls = getattr(mod, clsname)
-        if issubclass(cls, pyscope.tem.TEM):
+        if issubclass(cls, instamatic.pyscope.tem.TEM):
             try:
                 cs_str = configparser.get(name, 'cs')
                 cs_value = float(cs_str)
@@ -70,7 +70,7 @@ def parse():
                 cs_value = None
             configured[name]['cs'] = cs_value
             temclasses.append(cls)
-        if issubclass(cls, pyscope.ccdcamera.CCDCamera):
+        if issubclass(cls, instamatic.pyscope.ccdcamera.CCDCamera):
             cameraclasses.append(cls)
             try:
                 z_str = configparser.get(name, 'zplane')

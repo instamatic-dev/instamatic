@@ -80,6 +80,8 @@ class SimTEM(tem.TEM):
 
         self.beam_tilt = {'x': 0.0, 'y': 0.0}
         self.beam_shift = {'x': 0.0, 'y': 0.0}
+        self.gun_tilt = {'x': 0.0, 'y': 0.0}
+        self.gun_shift = {'x': 0.0, 'y': 0.0}
         self.image_shift = {'x': 0.0, 'y': 0.0}
         self.raw_image_shift = {'x': 0.0, 'y': 0.0}
 
@@ -209,6 +211,31 @@ class SimTEM(tem.TEM):
         for axis in self.beam_shift.keys():
             try:
                 self.beam_shift[axis] = value[axis]
+            except KeyError:
+                pass
+
+    def getGunTilt(self):
+        return copy.copy(self.gun_tilt)
+
+    def setGunTilt(self, value):
+        for axis in self.gun_tilt.keys():
+            try:
+                self.gun_tilt[axis] = value[axis]
+            except KeyError:
+                pass
+
+    def getGunShift(self):
+        return copy.copy(self.gun_shift)
+
+    def setGunShift(self, value, relative="absolute"):
+        for axis in self.gun_shift.keys():
+            if axis not in value:
+                continue
+            try:
+                if relative == "relative":
+                    self.gun_shift[axis] = self.gun_shift[axis] + value[axis]
+                else:
+                    self.gun_shift[axis] = value[axis]
             except KeyError:
                 pass
 

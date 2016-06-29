@@ -4,7 +4,7 @@ import sys
 import ConfigParser
 import os
 import pyscope
-import pyami.fileutil
+from instamatic.pyami import fileutil
 
 
 class ModuleConfigParser(object):
@@ -100,7 +100,7 @@ class ModuleConfigParser(object):
         modpath = pyscope.__path__
 
         # read instruments.cfg
-        confdirs = pyami.fileutil.get_config_dirs()
+        confdirs = fileutil.get_config_dirs()
         filenames = [os.path.join(confdir, self.config_filename)
                      for confdir in confdirs]
         one_exists = False
