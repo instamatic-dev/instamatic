@@ -21,7 +21,7 @@ setup(
 
     packages=["instamatic", "instamatic.camera", "instamatic.pyami", "instamatic.pyscope"],
 
-    install_requires=["numpy"],
+    install_requires=["numpy", "comtypes", "scikit-image"],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
@@ -34,6 +34,7 @@ setup(
             'find_holes = instamatic.find_crystals:find_holes_entry',
             'instamatic.camera = instamatic.camera.camera:main_entry',
             'instamatic.controller = instamatic.TEMController:main_entry',
+            'instamatic.viewer = instamatic.viewer:main',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }
