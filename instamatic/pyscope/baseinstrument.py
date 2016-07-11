@@ -37,6 +37,6 @@ class BaseInstrument(object):
                 try:
                     val = getattr(self, "get"+d["name"])()
                 except Exception as e:
-                    val = e
+                    val = repr(e)
                 ret[d["name"]] = val
         return ret

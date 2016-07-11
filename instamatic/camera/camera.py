@@ -312,9 +312,9 @@ def main_entry():
         arr = camera.getImage(binsize=binsize, t=exposure)
 
         if show_fig:
+            save_header(sys.stdout, h)
             plt.imshow(arr, cmap="gray", interpolation="none")
             plt.show()
-            save_header(sys.stdout, h)
     
         if outfile:
             save_image(outfile, arr)
