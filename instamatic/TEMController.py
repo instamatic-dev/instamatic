@@ -55,6 +55,9 @@ class TEMController(object):
                 d = tem.getGunShift()
                 return "GunShift(x={x}, y={y})".format(**d)
 
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
+
         class GunTilt(object):
             x = TEMValue("x", tem.getGunTilt, tem.setGunTilt)
             y = TEMValue("y", tem.getGunTilt, tem.setGunTilt)
@@ -62,6 +65,9 @@ class TEMController(object):
             def __repr__(self):
                 d = tem.getGunTilt()
                 return "GunTilt(x={x}, y={y})".format(**d)
+
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
 
         class BeamShift(object):
             x = TEMValue("x", tem.getBeamShift, tem.setBeamShift)
@@ -71,6 +77,9 @@ class TEMController(object):
                 d = tem.getGunTilt()
                 return "BeamShift(x={x}, y={y})".format(**d)
 
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
+
         class BeamTilt(object):
             x = TEMValue("x", tem.getBeamTilt, tem.setBeamTilt)
             y = TEMValue("y", tem.getBeamTilt, tem.setBeamTilt)
@@ -79,6 +88,9 @@ class TEMController(object):
                 d = tem.getGunTilt()
                 return "BeamTilt(x={x}, y={y})".format(**d)
 
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
+
         class ImageShift(object):
             x = TEMValue("x", tem.getImageShift, tem.setImageShift)
             y = TEMValue("y", tem.getImageShift, tem.setImageShift)
@@ -86,6 +98,9 @@ class TEMController(object):
             def __repr__(self):
                 d = tem.getGunTilt()
                 return "ImageShift(x={x}, y={y})".format(**d)
+            
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
 
         class StagePosition(object):
             x = TEMValue("x", tem.getStagePosition, tem.setStagePosition)
@@ -99,6 +114,10 @@ class TEMController(object):
                 if "b" not in d:
                     d["b"] = np.NaN
                 return "StagePosition(x={x}, y={y}, z={z}, a={a}, b={b})".format(**d)
+
+            def goto(self, **kwargs):
+                tem.setStagePosition(kwargs)
+
 
         self.gunshift = GunShift()
         self.guntilt = GunTilt()
