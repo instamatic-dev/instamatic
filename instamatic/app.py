@@ -6,6 +6,7 @@ import numpy as np
 from pyscope import jeolcom, simtem
 from camera import gatanOrius
 from find_crystals import find_objects, plot_props
+from TEMController import TEMController
 
 from IPython import embed
 
@@ -20,10 +21,31 @@ ctrl = TEMController(tem)
 
 
 def calibrate100x_entry():
-    from calibration import calibrate_lowmag
-    r, t = calibrate_lowmag(ctrl, cam)
-    print r
-    print t
+    from calibration import calibrate_lowmag, calibrate_lowmag_from_image_fn
+
+
+    if "help" in sys.argv:
+        print """
+Program to calibrate lowmag (100x) of microscope
+
+Usage: 
+
+    instamatic.calibrate100x
+        To start live calibration routine on the microscope
+    
+    instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
+       To perform calibration using pre-collected images
+"""
+        exit()
+    elif len(sys.argv) == 1:
+        r, t = calibrate_lowmag(ctrl, cam)
+    else:
+        fn_center = sys.argv[1]
+        fn_other = sys.argv[2:]
+        r, t = calibrate_lowmag_from_image_fn(fn_center, fn_other)
+    
+    print "\nRotation/scalint matrix:\n", r
+    print "Translation vector:\n" ,t
 
 
 def main():

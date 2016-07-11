@@ -2,8 +2,34 @@ from scipy.optimize import leastsq
 from cross_correlate import cross_correlate
 import numpy as np
 import matplotlib.pyplot as plt
+import os,sys
+import json
+
+
+def load_img(fn):
+    arr = np.load(fn)
+
+    root, ext = os.path.splitext(fn)
+    fnh = root + ".json"
+
+    if os.path.exists(fnh):
+        d = json.load(open(fnh, "r"))
+    
+    return arr, d
+
 
 def lsq_rotation_scaling_matrix(shifts, stagepos):
+    """
+    Find pixel->stageposition matrix via least squares routine
+
+    shifts: 2D ndarray, shape (-1,2)
+        pixel shifts from cross correlation
+    stagepos: 2D Ndarray, shape (-1,2)
+        observed stage positions
+
+    stagepos = np.dot(shifts, r) + t
+    shifts = np.dot(stagepos - t, r_i)
+    """
     def objective_func(x0, arr1, arr2):
         r = x0[0:4].reshape(2,2)
         t = np.array(x0[4:6])
@@ -19,10 +45,10 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     t = np.array(x[4:6])
 
     shifts_ = np.dot(shifts, r) + t
-    ri = np.linalg.inv(r)
-    stagepos_ = np.dot(stagepos - t, ri)
+    r_i = np.linalg.inv(r)
+    stagepos_ = np.dot(stagepos - t, r_i)
 
-    plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed shifts")
+    plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
     plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
     plt.legend()
 
@@ -34,10 +60,23 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
 
 
 def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
+    """
+    Calibrate pixel->stageposition coordinates live on the microscope
+
+    ctrl: instance of `TEMController`
+    cam: instance of `gatanOrius`
+    gridsize: `int`
+        Number of grid points to take, gridsize=5 results in 25 points
+    stepsize: `float`
+        Size of steps for stage position along x and y
+    exposure: `float`
+        exposure time
+    """
+
     if not raw_input("""\n >> Go too 100x mag, and move the sample stage
     so that the grid center (clover) is in the 
     middle of the image (type 'go'): """) == "go":
-        return False
+        exit()
     
     print
     print ctrl.stageposition
@@ -57,7 +96,7 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
         print ctrl.stageposition
         
         img = cam.getImage(t=exposure)
-        shift = cross_correlate(img_cent, img, upsample_factor=10)
+        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
         xy = ctrl.stageposition.x, ctrl.stageposition.y
         stagepos.append(xy)
@@ -72,6 +111,44 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
 
     return r,t
 
+
+def calibrate_lowmag_from_image_fn(center_fn, other_fn):
+    """
+    Calibrate pixel->stageposition coordinates from a set of images
+
+    center_fn: `str`
+        Reference image at the center of the grid (with the clover in the middle)
+    other_fn: `tuple` of `str`
+        Set of images to cross correlate to the first reference image
+    """
+    img_cent, header_cent = load_img(center_fn)
+    x_cent, y_cent = np.array((header_cent["StagePosition"]["x"], header_cent["StagePosition"]["y"]))
+    print
+    print "Center:", center_fn
+    print "Stageposition: x={} | y={}".format(x_cent, y_cent)
+
+    shifts = []
+    stagepos = []
+    
+    for fn in other_fn:
+        img, header = load_img(fn)
+        
+        xy = header["StagePosition"]["x"], header["StagePosition"]["y"]
+        print
+        print "Image:", fn
+        print "Stageposition: x={} | y={}".format(*xy)
+        
+        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        
+        stagepos.append(xy)
+        shifts.append(shift)
+        
+    shifts = np.array(shifts)
+    stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
+        
+    r,t = lsq_rotation_scaling_matrix(shifts, stagepos)
+    
+    return r,t
 
 # lowmag
 # pixel dimensions from calibration in Digital Micrograph
