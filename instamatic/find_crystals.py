@@ -23,6 +23,26 @@ plt.rcParams['image.cmap'] = 'gray'
 from calibration import lowmag_dimensions
 
 
+def get_best_mag_for_feature(xsize, ysize=None, verbose=False):
+    if not ysize:
+        ysize = xsize
+    bestmag = 0
+    for mag,(pxx, pxy) in lowmag_dimensions.items():
+        if pxx == pxy == 0:
+            pxx = pxy = 600 * 0.0746331 / mag
+        
+        tx = 2048
+        ty = 2048
+        add = ""
+        if (xsize/pxx < tx) and (ysize/pxy < ty):
+            if mag > bestmag:
+                bestmag = mag
+                add = "**"
+        if verbose:
+            print "{:6d} {:8.0f} {:8.0f} {}".format(mag, xsize/pxx, ysize/pxy, add)
+    return bestmag
+
+
 def denoise(img, sigma=3, method="median"):
     """Denoises the image using a gaussian or median filter.
     median filter is better at preserving edges"""
@@ -157,9 +177,14 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
 
 
 
-def find_holes(img, header, hole_size=20000, plot=True):
+def find_holes(img, header=None, hole_size=20000, plot=True):
     """Hole size in micrometer"""
-    pxx, pxy = lowmag_dimensions[header["Magnification"]]
+    if header:
+        # hole size is in um
+        pxx, pxy = lowmag_dimensions[header["Magnification"]]
+    else:
+        # hole size is in pixels
+        pxx, pxy = 1, 1
 
     otsu = filters.threshold_otsu(img)
     n = 0.25
@@ -195,7 +220,7 @@ def plot_props(img, props):
     plt.imshow(img, interpolation="none")
 
     ymax, xmax = img.shape
-    for prop in props:
+    for i,prop in enumerate(props):
         y1, x1, y2, x2 = prop.bbox
 
         color = "red"
@@ -212,8 +237,8 @@ def plot_props(img, props):
         plt.xlim(0, xmax)
         plt.ylim(ymax, 0)
 
-        s = " {:d} {:d}\n".format(int(cx), int(cy))
-        plt.text(x2, y2, s=s, color="black", size=15)
+        s = "{}: {:d} {:d}\n".format(i, int(cx), int(cy))
+        plt.text(x2, y2, s=s, color="green", size=15)
 
     plt.show()
 

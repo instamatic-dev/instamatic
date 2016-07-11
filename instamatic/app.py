@@ -5,7 +5,7 @@ import numpy as np
 
 from pyscope import jeolcom, simtem
 from camera import gatanOrius
-from find_crystals import find_crystals, plot_props
+from find_crystals import find_objects, plot_props
 
 from IPython import embed
 
