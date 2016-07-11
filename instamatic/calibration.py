@@ -1,3 +1,77 @@
+from scipy.optimize import leastsq
+from cross_correlate import cross_correlate
+import numpy as np
+import matplotlib.pyplot as plt
+
+def lsq_rotation_scaling_matrix(shifts, stagepos):
+    def objective_func(x0, arr1, arr2):
+        r = x0[0:4].reshape(2,2)
+        t = np.array(x0[4:6])
+        fit = np.dot(arr1, r) + t
+        return (fit-arr2).reshape(-1,)
+    
+    x0 = np.array([ 1.,  0.,  0.,  1., 0., 0.])
+    args = (shifts, stagepos)
+
+    x, _ = leastsq(objective_func, x0, args=args)
+
+    r = x[0:4].reshape(2,2)
+    t = np.array(x[4:6])
+
+    shifts_ = np.dot(shifts, r) + t
+    ri = np.linalg.inv(r)
+    stagepos_ = np.dot(stagepos - t, ri)
+
+    plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed shifts")
+    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
+    plt.legend()
+
+    plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.show()
+    
+    return r,t
+
+
+def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
+    if not raw_input("""\n >> Go too 100x mag, and move the sample stage
+    so that the grid center (clover) is in the 
+    middle of the image (type 'go'): """) == "go":
+        return False
+    
+    print
+    print ctrl.stageposition
+    img_cent = cam.getImage(t=exposure)
+    x_cent, y_cent = ctrl.stageposition.x, ctrl.stageposition.y
+    
+    stagepos = []
+    shifts = []
+    
+    n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
+    
+    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
+        ctrl.stageposition.goto(x=x_cent+dx, y=y_cent+dy)
+           
+        print
+        print ctrl.stageposition
+        
+        img = cam.getImage(t=exposure)
+        shift = cross_correlate(img_cent, img, upsample_factor=10)
+        
+        xy = ctrl.stageposition.x, ctrl.stageposition.y
+        stagepos.append(xy)
+        shifts.append(shift)
+            
+    print " >> Reset to center"
+    ctrl.stageposition.goto(x=x_cent, y=y_cent)
+    shifts = np.array(shifts)
+    stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
+    
+    r,t = lsq_rotation_scaling_matrix(shifts, stagepos)
+
+    return r,t
+
 
 # lowmag
 # pixel dimensions from calibration in Digital Micrograph

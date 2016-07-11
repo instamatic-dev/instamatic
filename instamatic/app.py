@@ -7,18 +7,26 @@ from pyscope import jeolcom, simtem
 from camera import gatanOrius
 from find_crystals import find_crystals, plot_props
 
-# from IPython import embed
+from IPython import embed
+
+try:
+    tem = jeolcom.Jeol()
+    cam = gatanOrius()
+except WindowsError:
+    print " >> Could not connect to JEOL, using SimTEM instead..."
+    tem = simtem.SimTEM()
+    cam = gatanOrius(simulate=True)
+ctrl = TEMController(tem)
+
+
+def calibrate100x_entry():
+    from calibration import calibrate_lowmag
+    r, t = calibrate_lowmag(ctrl, cam)
+    print r
+    print t
 
 
 def main():
-    try:
-        tem = jeolcom.Jeol()
-        cam = gatanOrius()
-    except WindowsError:
-        print " >> Could not connect to JEOL, using SimTEM instead..."
-        tem = simtem.SimTEM()
-        cam = gatanOrius(simulate=True)
-    
     print "High tension:", tem.getHighTension()
     print
 
@@ -29,9 +37,6 @@ def main():
 
     if True:
         img = cam.getImage()
-
-
-        embed()
 
         # img = color.rgb2gray(img)
         img = np.invert(img)

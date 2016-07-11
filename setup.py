@@ -35,6 +35,7 @@ setup(
             'instamatic.camera = instamatic.camera.camera:main_entry',
             'instamatic.controller = instamatic.TEMController:main_entry',
             'instamatic.viewer = instamatic.viewer:main',
+            'instamatic.calibrate100x = instamatic.app:calibrate100x_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }
