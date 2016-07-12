@@ -42,10 +42,10 @@ Usage:
     else:
         fn_center = sys.argv[1]
         fn_other = sys.argv[2:]
-        r, t = calibrate_lowmag_from_image_fn(fn_center, fn_other)
+        calib = calibrate_lowmag_from_image_fn(fn_center, fn_other)
     
-    print "\nRotation/scalint matrix:\n", r
-    print "Translation vector:\n" ,t
+    print "\nRotation/scalint matrix:\n", calib.transform
+    print "Reference stagepos:", calib.reference_position
 
 
 def main():

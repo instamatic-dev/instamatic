@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
 import json
+from functools import partial
 
 
 def load_img(fn):
@@ -18,6 +19,133 @@ def load_img(fn):
     return arr, d
 
 
+
+class CalibResult(object):
+    """Simple class to hold the methods to perform transformations from one setting to another
+    based on calibration results"""
+    def __init__(self, transform, reference_position):
+        super(CalibResult, self).__init__()
+        self.transform = transform
+        self.reference_position = reference_position
+        
+    def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, reference_pos):
+        """
+        Function to transform stage position to pixel coordinates
+        
+        px_ref: `list`
+            stage position (x,y) to transform to pixel coordinates on 
+            current image
+        r: `2d ndarray`, shape (2,2)
+            transformation matrix from calibration
+        image_pos: `list`
+            stage position that the image was captured at
+        reference_pos: `list`
+            stage position of the reference (center) image
+        """
+        image_pos = np.array(image_pos)
+        reference_pos = np.array(reference_pos)
+        px_ref = np.array(px_ref)
+        
+        # do the inverse transoformation here
+        r_i = np.linalg.inv(r)
+        
+        # get stagepos vector from reference image (center) to current image
+        vect = image_pos - reference_pos
+        
+        # stagepos -> pixel coords, and add offset for pixel position
+        px = stagepos - np.dot(vect, r_i)
+    
+        return px
+     
+    def _pixelcoord_to_reference_setting(self, px, image_pos, r, reference_pos):
+        """
+        Function to transform pixel coordinates to pixel coordinates in reference setting
+        
+        px: `list`
+            image pixel coordinates to transform to stage position
+        r: `2d ndarray`, shape (2,2)
+            transformation matrix from calibration
+        image_pos: `list`
+            stage position that the image was captured at
+        reference_pos: `list`
+            stage position of the reference (center) image
+        """
+        image_pos = np.array(image_pos)
+        reference_pos = np.array(reference_pos)
+        px = np.array(px)
+        
+        # do the inverse transoformation here
+        r_i = np.linalg.inv(r)
+        
+        # get stagepos vector from reference image (center) to current image
+        vect = image_pos - reference_pos
+        
+        # stagepos -> pixel coords, and add offset for pixel position
+        px_ref = np.dot(vect, r_i) + np.array(px)
+    
+        return px_ref
+
+    def _pixelcoord_to_stagepos(self, px, image_pos, r, reference_pos):
+        """
+        Function to transform pixel coordinates to stage position
+        
+        px: `list`
+            image pixel coordinates to transform to stage position
+        r: `2d ndarray`, shape (2,2)
+            transformation matrix from calibration
+        image_pos: `list`
+            stage position that the image was captured at
+        reference_pos: `list`
+            stage position of the reference (center) image
+        """
+        reference_pos = np.array(reference_pos)
+        
+        px_ref = self._pixelcoord_to_reference_setting(px, image_pos, r, reference_pos)
+    
+        stagepos = np.dot(px_ref - 1024, r) + reference_pos
+        
+        return stagepos
+
+    def _stagepos_to_pixelcoord(self, stagepos, imagepos, transform, reference_position):
+        """
+        Function to transform pixel coordinates to stage position
+        
+        px: `list`
+            image pixel coordinates to transform to stage position
+        r: `2d ndarray`, shape (2,2)
+            transformation matrix from calibration
+        image_pos: `list`
+            stage position that the image was captured at
+        reference_pos: `list`
+            stage position of the reference (center) image
+        """
+        raise NotImplementedError
+
+    def reference_setting_to_pixelcoord(self, px_ref, image_pos):
+        """
+        Function to transform pixel coordinates in reference setting to current frame
+        """
+        return self._reference_setting_to_pixelcoord(px_ref, image_pos, self.transform, self.reference_position)
+
+    def pixelcoord_to_reference_setting(self, px, image_pos):
+        """
+        Function to transform pixel coordinates in current frame to reference setting
+        """
+        return self._pixelcoord_to_reference_setting(px, image_pos, self.transform, self.reference_position)
+
+    def pixelcoord_to_stagepos(self, px, image_pos):
+        """
+        Function to transform pixel coordinates to stage position coordinates
+        """
+        return self._pixelcoord_to_stagepos(px, image_pos, self.transform, self.reference_position)
+
+    def stagepos_to_pixelcoord(self, stagepos, imagepos):
+        """
+        Function to stage position coordinates to pixel coordinates on current frame
+        """
+        return self._stagepos_to_pixelcoord(stagepos, imagepos, self.transform, self.reference_position)
+
+
 def lsq_rotation_scaling_matrix(shifts, stagepos):
     """
     Find pixel->stageposition matrix via least squares routine
@@ -27,26 +155,24 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     stagepos: 2D Ndarray, shape (-1,2)
         observed stage positions
 
-    stagepos = np.dot(shifts, r) + t
-    shifts = np.dot(stagepos - t, r_i)
+    stagepos = np.dot(shifts, r)
+    shifts = np.dot(stagepos, r_i)
     """
     def objective_func(x0, arr1, arr2):
-        r = x0[0:4].reshape(2,2)
-        t = np.array(x0[4:6])
-        fit = np.dot(arr1, r) + t
+        r = x0.reshape(2,2)
+        fit = np.dot(arr1, r)
         return (fit-arr2).reshape(-1,)
     
-    x0 = np.array([ 1.,  0.,  0.,  1., 0., 0.])
+    x0 = np.array([ 1.,  0.,  0.,  1.])
     args = (shifts, stagepos)
 
     x, _ = leastsq(objective_func, x0, args=args)
 
-    r = x[0:4].reshape(2,2)
-    t = np.array(x[4:6])
+    r = x.reshape(2,2)
 
-    shifts_ = np.dot(shifts, r) + t
+    shifts_ = np.dot(shifts, r)
     r_i = np.linalg.inv(r)
-    stagepos_ = np.dot(stagepos - t, r_i)
+    stagepos_ = np.dot(stagepos, r_i)
 
     plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
     plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
@@ -56,10 +182,10 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
     plt.show()
     
-    return r,t
+    return r
 
 
-def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
+def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -71,13 +197,17 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
         Size of steps for stage position along x and y
     exposure: `float`
         exposure time
+
+    return:
+        Rotation matrix, array (2,2)
+        Stagepos of reference frame
     """
 
     if not raw_input("""\n >> Go too 100x mag, and move the sample stage
     so that the grid center (clover) is in the 
     middle of the image (type 'go'): """) == "go":
         exit()
-    
+
     print
     print ctrl.stageposition
     img_cent = cam.getImage(t=exposure)
@@ -107,9 +237,11 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1):
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
     
-    r,t = lsq_rotation_scaling_matrix(shifts, stagepos)
+    r = lsq_rotation_scaling_matrix(shifts, stagepos)
 
-    return r,t
+    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+
+    return c
 
 
 def calibrate_lowmag_from_image_fn(center_fn, other_fn):
@@ -120,6 +252,11 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
         Reference image at the center of the grid (with the clover in the middle)
     other_fn: `tuple` of `str`
         Set of images to cross correlate to the first reference image
+
+    returns:
+        2 functions:
+            _pixelcoord_to_stagepos()
+            _stagepos_to_pixelcoord()
     """
     img_cent, header_cent = load_img(center_fn)
     x_cent, y_cent = np.array((header_cent["StagePosition"]["x"], header_cent["StagePosition"]["y"]))
@@ -146,9 +283,11 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
         
-    r,t = lsq_rotation_scaling_matrix(shifts, stagepos)
+    r = lsq_rotation_scaling_matrix(shifts, stagepos)
     
-    return r,t
+    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+
+    return c
 
 # lowmag
 # pixel dimensions from calibration in Digital Micrograph
