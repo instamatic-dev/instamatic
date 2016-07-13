@@ -156,8 +156,10 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
     # plt.imsave("d.png", segmented)
 
     if min_size > 0:
-        print " >> Removing objects smaller than {} pixels".format(min_size)
+        print " >> Removing objects smaller than {} pixels".format(round(min_size))
+        plt.imsave("before.png", segmented)
         morphology.remove_small_objects(segmented, min_size=min_size, connectivity=1, in_place=True)
+        plt.imsave("after.png", segmented)
 
     if clear_border:
         print " >> Removing objects touching the edge of the frame"
@@ -167,24 +169,25 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
         plot_features(img, segmented)
 
     labels, numlabels = ndimage.label(segmented)
-    print " >> {} objects found in image".format(numlabels)
+    print " >> {} objects found in image\n".format(numlabels)
     props = measure.regionprops(labels, img)
 
-    image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
-    plt.imsave("e.png", image_label_overlay)
+    # image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
+    # plt.imsave("e.png", image_label_overlay)
 
     return props
 
 
-
-def find_holes(img, header=None, hole_size=20000, plot=True):
-    """Hole size in micrometer"""
+def find_holes(img, header=None, diameter=150.0, plot=True):
+    """Hole size as diameter in micrometer"""
     if header:
         # hole size is in um
         pxx, pxy = lowmag_dimensions[header["Magnification"]]
     else:
         # hole size is in pixels
         pxx, pxy = 1, 1
+
+    hole_area = np.pi*(diameter/2.0)**2
 
     otsu = filters.threshold_otsu(img)
     n = 0.25
@@ -195,14 +198,20 @@ def find_holes(img, header=None, hole_size=20000, plot=True):
     
     markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False)
     # plt.imshow(markers)
-    props = find_objects(img, markers=markers, plot=False)
+    props = find_objects(img, markers=markers, fill_holes=True, min_size=hole_area*0.75, plot=plot)
 
     newprops = []
     for prop in props:
-        if prop.eccentricity > 0.5:
+        if prop.eccentricity > 0.4:
             continue
-        if prop.convex_area*pxx*pxy < hole_size*0.5:
+        # FIXME .convex_area crashes here, use .area instead
+        if prop.area*pxx*pxy < hole_area*0.75:  
             continue
+
+        # print "fa", prop.filled_area
+        # print "a", prop.area
+        # print "d", prop.equivalent_diameter
+
         newprops.append(prop)
     
     if plot:
@@ -237,8 +246,8 @@ def plot_props(img, props):
         plt.xlim(0, xmax)
         plt.ylim(ymax, 0)
 
-        s = "{}: {:d} {:d}\n".format(i, int(cx), int(cy))
-        plt.text(x2, y2, s=s, color="green", size=15)
+        s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
+        plt.text(x2, y2, s=s, color="red", size=15)
 
     plt.show()
 
@@ -313,12 +322,11 @@ def find_crystals_entry():
 def find_holes_entry():
     for fn in sys.argv[1:]:
         img = np.load(fn)
+        img = img.astype(int)
         root, ext = os.path.splitext(fn)
         header = json.load(open(root+".json", "r"))
 
-        holes = find_holes(img, header, plot=False)
-
-        plot_props(img, holes)
+        holes = find_holes(img, header, plot=True)
 
         xy = props2xy(holes)
 

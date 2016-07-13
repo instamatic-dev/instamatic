@@ -36,6 +36,7 @@ setup(
             'instamatic.controller = instamatic.TEMController:main_entry',
             'instamatic.viewer = instamatic.viewer:main',
             'instamatic.calibrate100x = instamatic.app:calibrate100x_entry',
+            'instamatic.map_holes = instamatic.app:map_holes_on_grid_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }

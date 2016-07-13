@@ -19,7 +19,6 @@ def load_img(fn):
     return arr, d
 
 
-
 class CalibResult(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
@@ -27,7 +26,10 @@ class CalibResult(object):
         super(CalibResult, self).__init__()
         self.transform = transform
         self.reference_position = reference_position
-        
+   
+    def __repr__(self):
+        return "CalibResult(transform=\n{},\n   reference_position=\n{})".format(self.transform, self.reference_position)
+
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, reference_pos):
         """
         Function to transform stage position to pixel coordinates
