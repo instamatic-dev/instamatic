@@ -14,7 +14,6 @@ from calibration import CalibResult, load_img
 import matplotlib.pyplot as plt
 from find_crystals import find_holes
 
-
 import pickle
 
 try:
@@ -25,6 +24,82 @@ except WindowsError:
     tem = simtem.SimTEM()
     cam = gatanOrius(simulate=True)
 ctrl = TEMController(tem)
+
+
+def load_calib():
+    CALIB100X = "calib.pickle"
+    if os.path.exists(CALIB100X):
+        d = pickle.load(open(CALIB100X, "r"))
+        calib = CalibResult(**d)
+    else:
+        print "\n >> Please run instamatic.calibrate100x first."
+        exit()
+    return calib
+
+
+def load_hole_stage_positions():
+    HOLE_COORDS = "hole_coords.npy"
+    if os.path.exists(HOLE_COORDS):
+        coords = np.load(HOLE_COORDS)
+    else:
+        print "\n >> Please run instamatic.map_holes_on_grid first."
+        exit()
+    return coords
+
+
+def plot_hole_stage_positions(calib, coords, picker=False):
+    fig = plt.figure()
+    reflabel = "Reference position"
+    holelabel = "Hole position"
+    plt.scatter(*calib.reference_position, c="red", label="Reference position", picker=8)
+    plt.scatter(coords[:,0], coords[:,1], c="blue", label="Hole position", picker=8)
+    for i, (x,y) in enumerate(coords):
+        plt.text(x, y, str(i), size=20)
+    plt.legend()
+    minval = coords.min()
+    maxval = coords.max()
+    plt.xlim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
+    plt.ylim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
+    
+    def onclick(event):
+        ind = event.ind[0]
+        
+        label = event.artist.get_label()
+        if label == reflabel:
+            xval, yval = calib.reference_position
+        else:
+            xval, yval = coords[ind]
+
+        print "Pick event -> {} -> ind: {}, xdata: {:.3e}, ydata: {:.3e}".format(label, ind, xval, yval)
+        ctrl.stageposition.goto(x=xval, y=yval)
+        print ctrl.stageposition
+        print
+
+    if picker:
+        fig.canvas.mpl_connect('pick_event', onclick)
+
+    plt.show()
+
+
+def goto_hole_entry():
+    calib = load_calib()
+    coords = load_hole_stage_positions()
+
+    try:
+        num = int(sys.argv[1])
+    except IndexError:
+        print "\nUsage: instamatic.goto_hole [N]"
+        print
+        plot_hole_stage_positions(calib, coords, picker=True)
+        # num = int(raw_input( "Which number to go to? \n >> [0-{}] ".format(len(coords))))
+    else:
+        if num > len(coords):
+            print " >> '{}' not in coord list (max={})".format(num, len(coords))
+            exit()
+        stage_x, stage_y = coords[num]
+
+        ctrl.stageposition.goto(x=stage_x, y=stage_y)
+        print ctrl.stageposition
 
 
 def cluster_mean(arr, threshold=0.00005):
@@ -41,6 +116,7 @@ def cluster_mean(arr, threshold=0.00005):
 def map_holes_on_grid(fns, calib, plot=True):
     stage_coords = []
     for fn in fns:
+        print "Now processing:", fn
         img, header = load_img(fn)
         img = img.astype(int)
         image_pos = np.array([header["StagePosition"]["x"], header["StagePosition"]["y"]])
@@ -55,25 +131,16 @@ def map_holes_on_grid(fns, calib, plot=True):
 
     threshold = 0.00005
     xy = cluster_mean(xy, threshold=threshold)
+    xy = xy[xy[:,0].argsort(axis=0)]
+
     if plot:
-        plt.scatter(*calib.reference_position, c="red", label="Reference position")
-        plt.scatter(xy[:,0], xy[:,1], c="blue", label="Hole position")
-        plt.legend()
-        minval = xy.min()
-        maxval = xy.max()
-        plt.xlim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
-        plt.ylim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
-        plt.show()
+        plot_hole_stage_positions(calib, xy)
     print "Found {} unique holes (threshold={})".format(len(xy), threshold)
+    return xy
 
 
 def map_holes_on_grid_entry():
-    if os.path.exists("calib.pickle"):
-        d = pickle.load(open("calib.pickle", "r"))
-        calib = CalibResult(**d)
-    else:
-        print "\n >> Please run instamatic.calibrate100x first."
-        exit()
+    calib = load_calib()
 
     print
     print calib
@@ -95,7 +162,7 @@ Usage:
 
     instamatic.calibrate100x
         To start live calibration routine on the microscope
-    
+
     instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
 """
@@ -106,7 +173,7 @@ Usage:
         fn_center = sys.argv[1]
         fn_other = sys.argv[2:]
         calib = calibrate_lowmag_from_image_fn(fn_center, fn_other)
-    
+
     print "\nRotation/scalint matrix:\n", calib.transform
     print "Reference stagepos:", calib.reference_position
 
@@ -141,5 +208,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    

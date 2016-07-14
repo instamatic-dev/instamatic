@@ -113,7 +113,7 @@ class TEMController(object):
                 d = tem.getStagePosition()
                 if "b" not in d:
                     d["b"] = np.NaN
-                return "StagePosition(x={x}, y={y}, z={z}, a={a}, b={b})".format(**d)
+                return "StagePosition(x={x:.3e}, y={y:.3e}, z={z}, a={a}, b={b})".format(**d)
 
             def goto(self, **kwargs):
                 tem.setStagePosition(kwargs)
