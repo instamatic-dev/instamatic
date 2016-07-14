@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os,sys
 import json
 from functools import partial
-
+from camera import save_header, save_image
 
 def load_img(fn):
     arr = np.load(fn)
@@ -182,12 +182,13 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
 
     plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)
     plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.axis('equal')
     plt.show()
     
     return r
 
 
-def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1):
+def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -199,6 +200,7 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1):
         Size of steps for stage position along x and y
     exposure: `float`
         exposure time
+    binsize: `int`
 
     return:
         Rotation matrix, array (2,2)
@@ -215,12 +217,24 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1):
     img_cent = cam.getImage(t=exposure)
     x_cent, y_cent = ctrl.stageposition.x, ctrl.stageposition.y
     
+    if save_images:
+        h = ctrl.tem.getHeader()
+        h["ImageExposureTime"] = exposure
+        h["ImageBinSize"] = binsize
+        h["ImageResolution"] = img_cent.shape
+        h["ImageComment"] = "Center image"
+        
+        outfile = "calib_center.npy"
+        save_image(outfile, img_cent)
+        save_header(outfile, h)
+
     stagepos = []
     shifts = []
     
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     
+    i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.stageposition.goto(x=x_cent+dx, y=y_cent+dy)
            
@@ -233,6 +247,19 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1):
         xy = ctrl.stageposition.x, ctrl.stageposition.y
         stagepos.append(xy)
         shifts.append(shift)
+
+        if save_images:
+            h = ctrl.tem.getHeader()
+            h["ImageExposureTime"] = exposure
+            h["ImageBinSize"] = binsize
+            h["ImageResolution"] = img.shape
+            h["ImageComment"] = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+            
+            outfile = "calib_{:04d}.npy".format(i)
+            save_image(outfile, img)
+            save_header(outfile, h)
+        
+        i += 1
             
     print " >> Reset to center"
     ctrl.stageposition.goto(x=x_cent, y=y_cent)

@@ -105,7 +105,7 @@ def get_grid(n, r, borderwidth=0.8):
 def find_hole_center_high_mag_from_files(fns):
     centers = []
     vects = []
-    print "Now processing:", [fn.split("/")[1] for fn in fns]
+    print "Now processing:", fns
     for i,fn in enumerate(fns):
         img, header = load_img(fn)
         img = img.astype(int)
@@ -120,8 +120,8 @@ def find_hole_center_high_mag_from_files(fns):
 
 def fake_circle():
     import random
-    da = random.randrange(-100,100)/10.0
-    db = random.randrange(-100,100)/10.0
+    da = random.randrange(-5,5) * 2.2
+    db = random.randrange(-5,5) * 2.2
     vects = []
     for i in range(3):
         a = random.randrange(-100,100)/100.0
@@ -206,11 +206,6 @@ def plot_experiment_entry():
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
 
-    m1 = centers.min()
-    m2 = centers.max()
-    plt.xlim(m1 - abs(m1*0.2), m2 + abs(m2*0.2))
-    plt.ylim(m1 - abs(m1*0.2), m2 + abs(m2*0.2))
-
     plt.scatter(*calib.reference_position)
 
     x_offsets, y_offsets = get_grid(n=7, r=radius)
@@ -220,6 +215,13 @@ def plot_experiment_entry():
         circle = plt.Circle((x_cent, y_cent), radius, edgecolor='r', facecolor="none")
         ax.add_artist(circle)
     
+    plt.axis('equal')
+    
+    minval = centers.min()
+    maxval = centers.max()
+    plt.xlim(minval - abs(minval*0.2), maxval + abs(maxval*0.2))
+    plt.ylim(minval - abs(minval*0.2), maxval + abs(maxval*0.2))
+
     plt.show()
 
 
@@ -240,6 +242,7 @@ def do_experiment_entry():
     print "    type 'next' to go to the next hole"
     print "    type 'exit' to interrupt the script"
     print "    type 'auto' to enable automatic mode (until next hole)"
+    print "    type 'plot' to toggle plotting mode"
 
     i = 0
     for x, y in centers:
@@ -255,14 +258,16 @@ def do_experiment_entry():
 
             if not auto:
                 answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
-            if answer == "exit":
-                print " >> Interrupted..."
-                exit()
-            elif answer == "next":
-                print " >> Going to next hole"
-                break
-            elif answer == "auto":
-                auto = True
+                if answer == "exit":
+                    print " >> Interrupted..."
+                    exit()
+                elif answer == "next":
+                    print " >> Going to next hole"
+                    break
+                elif answer == "auto":
+                    auto = True
+                elif answer == "plot":
+                    plot = not plot
 
             comment = "Hole {} image {}\nx_offset={:.2e} y_offset={:.2e}".format(i, j, x_offset, y_offset)
 
@@ -294,12 +299,7 @@ def plot_hole_stage_positions(calib, coords, picker=False):
     plt.scatter(coords[:,0], coords[:,1], c="blue", label="Hole position", picker=8)
     for i, (x,y) in enumerate(coords):
         plt.text(x, y, str(i), size=20)
-    plt.legend()
-    minval = coords.min()
-    maxval = coords.max()
-    plt.xlim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
-    plt.ylim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
-    
+
     def onclick(event):
         ind = event.ind[0]
         
@@ -317,6 +317,14 @@ def plot_hole_stage_positions(calib, coords, picker=False):
     if picker:
         fig.canvas.mpl_connect('pick_event', onclick)
 
+    plt.legend()
+    plt.axis('equal')
+    
+    minval = coords.min()
+    maxval = coords.max()
+    plt.xlim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
+    plt.ylim(minval - abs(minval)*0.2, maxval + abs(maxval)*0.2)
+    
     plt.show()
 
 
@@ -386,6 +394,10 @@ def map_holes_on_grid_entry():
     print
 
     fns = sys.argv[1:]
+    if not fns:
+        print "Usage: instamatic.map_holes IMG1 [IMG2 ...]"
+        exit()
+    
     coords = map_holes_on_grid(fns, calib)
     np.save("hole_coords.npy", coords)
 
@@ -407,7 +419,7 @@ Usage:
 """
         exit()
     elif len(sys.argv) == 1:
-        r, t = calibrate_lowmag(ctrl, cam)
+        calib = calibrate_lowmag(ctrl, cam, save_images=True)
     else:
         fn_center = sys.argv[1]
         fn_other = sys.argv[2:]

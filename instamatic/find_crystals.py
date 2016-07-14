@@ -157,9 +157,9 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
 
     if min_size > 0:
         print " >> Removing objects smaller than {} pixels".format(round(min_size))
-        plt.imsave("before.png", segmented)
+        # plt.imsave("before.png", segmented)
         morphology.remove_small_objects(segmented, min_size=min_size, connectivity=1, in_place=True)
-        plt.imsave("after.png", segmented)
+        # plt.imsave("after.png", segmented)
 
     if clear_border:
         print " >> Removing objects touching the edge of the frame"
