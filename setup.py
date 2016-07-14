@@ -38,6 +38,9 @@ setup(
             'instamatic.calibrate100x = instamatic.app:calibrate100x_entry',
             'instamatic.map_holes = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole = instamatic.app:goto_hole_entry',
+            'instamatic.prepare_experiment = instamatic.app:prepare_experiment_entry',
+            'instamatic.plot_experiment = instamatic.app:plot_experiment_entry',
+            'instamatic.do_experiment = instamatic.app:do_experiment_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }
