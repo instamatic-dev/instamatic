@@ -165,7 +165,10 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
         fit = np.dot(arr1, r)
         return (fit-arr2).reshape(-1,)
     
-    x0 = np.array([ 1.,  0.,  0.,  1.])
+    # x0 = np.array([ 1.,  0.,  0.,  1.])
+    # better first guess from experiments, seems to be somewhat consistent between experiments
+    x0 = np.array([-6.0e-08, 3.7e-07, -3.7e-07, -6.0e-08]) 
+
     args = (shifts, stagepos)
 
     x, _ = leastsq(objective_func, x0, args=args)

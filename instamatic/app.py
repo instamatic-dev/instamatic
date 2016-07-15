@@ -25,9 +25,11 @@ except WindowsError:
     cam = gatanOrius(simulate=True)
 ctrl = TEMController(tem)
 
+CALIB100X = "calib.pickle"
+HOLE_COORDS = "hole_coords.npy"
+EXPERIMENT = "experiment.pickle"
 
 def load_calib():
-    CALIB100X = "calib.pickle"
     if os.path.exists(CALIB100X):
         d = pickle.load(open(CALIB100X, "r"))
         calib = CalibResult(**d)
@@ -37,7 +39,6 @@ def load_calib():
 
 
 def load_hole_stage_positions():
-    HOLE_COORDS = "hole_coords.npy"
     if os.path.exists(HOLE_COORDS):
         coords = np.load(HOLE_COORDS)
     else:
@@ -46,7 +47,6 @@ def load_hole_stage_positions():
 
 
 def load_experiment():
-    EXPERIMENT = "experiment.pickle"
     if os.path.exists(EXPERIMENT):
         d = pickle.load(open(EXPERIMENT, "r"))
     else:
@@ -162,6 +162,20 @@ def find_hole_center_high_mag_interactive():
             yield center, radius
 
 
+def update_experiment_with_hole_coords_entry():
+    if len(sys.argv) == 1:
+        coords = load_hole_stage_positions()
+    else:
+        fn = sys.argv[1]
+        coords = np.load(fn)
+
+    experiment = load_experiment()
+    experiment["centers"] = coords
+
+    pickle.dump(experiment, open(EXPERIMENT, "w"))
+    print " >> Wrote {} coordinates to file {}".format(len(coords), EXPERIMENT)
+
+
 def prepare_experiment_entry():
     # fns = sys.argv[1:]
     centers = []
@@ -209,13 +223,46 @@ def plot_experiment_entry():
 
     plt.scatter(*calib.reference_position)
 
-    x_offsets, y_offsets = get_grid(n=7, r=radius)
-    for x_cent, y_cent in centers:
+    for i, (x_cent, y_cent) in enumerate(centers):
         plt.scatter(x_cent, y_cent)
-        plt.scatter(x_offsets+x_cent, y_offsets+y_cent, s=1)
-        circle = plt.Circle((x_cent, y_cent), radius, edgecolor='r', facecolor="none")
+        plt.scatter(x_offsets+x_cent, y_offsets+y_cent, s=1, picker=8, label=str(i))
+        circle = plt.Circle((x_cent, y_cent), radius, edgecolor='r', facecolor="none", alpha=0.5)
         ax.add_artist(circle)
+
+    skiplist = []    
+    def onclick(event):
+        click = event.mouseevent.button
+        ind = event.ind[0]
+        label = int(event.artist.get_label())
+
+        if click == 1:
+            x_cent, y_cent = centers[label]
+            x_offset = x_offsets[ind]
+            y_offset = y_offsets[ind]
     
+            x = x_cent+x_offset
+            y = y_cent+y_offset
+    
+            print "Pick event -> {} -> ind: {}, xdata: {:.3e}, ydata: {:.3e}".format(label, ind, x, y)
+            ctrl.stageposition.goto(x=x, y=y)
+            print ctrl.stageposition
+            print
+        elif click == 3:
+            alpha = event.artist.get_alpha()
+            if (not alpha) or alpha == 1.0:
+                skiplist.append(int(label))
+                event.artist.set_alpha(0.2)
+            else:
+                skiplist.remove(int(label))
+                event.artist.set_alpha(None)
+
+            fig.canvas.draw()
+            # print skiplist
+
+    fig.canvas.mpl_connect('pick_event', onclick)
+    # fig.canvas.mpl_connect('button_press_event', onpress)
+
+
     plt.axis('equal')
     
     minval = centers.min()
@@ -400,7 +447,7 @@ def map_holes_on_grid_entry():
         exit()
     
     coords = map_holes_on_grid(fns, calib)
-    np.save("hole_coords.npy", coords)
+    np.save(HOLE_COORDS, coords)
 
 
 def calibrate100x_entry():
@@ -411,7 +458,7 @@ def calibrate100x_entry():
 Program to calibrate lowmag (100x) of microscope
 
 Usage: 
-
+prepare
     instamatic.calibrate100x
         To start live calibration routine on the microscope
 
@@ -434,7 +481,7 @@ Usage:
     pickle.dump({
         "transform": calib.transform,
         "reference_position": calib.reference_position
-        }, open("calib.pickle","w"))
+        }, open(CALIB100X,"w"))
 
 
 def main():
