@@ -5,6 +5,14 @@ import comtypes.client
 import tem
 import moduleconfig
 
+import atexit
+
+@atexit.register
+def exit_func():
+    """Uninitialize comtypes to prevent the program from hanging"""
+    comtypes.CoUninitialize()
+    print "Uninitialize com connection to microscope"
+
 DEBUG = True
 
 # function modes

@@ -28,7 +28,7 @@ DLLPATH      = "CCDCOM2.dll"
 def exit_func():
     """Uninitialize comtypes to prevent the program from hanging"""
     comtypes.CoUninitialize()
-    print "Uninitialize com connection"
+    print "Uninitialize com connection to camera"
 
 
 class gatanOrius(object):

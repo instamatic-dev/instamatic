@@ -154,6 +154,7 @@ def find_hole_center_high_mag_interactive():
         if "n" in answer:
             continue
         elif "d" in answer:
+            yield center, radius
             raise StopIteration
         elif "x" in answer:
             exit()
@@ -233,7 +234,7 @@ def do_experiment_entry():
     y_offsets = d["y_offsets"]
 
     binsize = 1
-    exposure = 0.1
+    exposure = 0.2
     plot = False
 
     print "binsize = {} | exposure = {}".format(binsize, exposure)
@@ -252,7 +253,7 @@ def do_experiment_entry():
         j = 0
         auto = False
         for x_offset, y_offset in zip(x_offsets, y_offsets):
-            ctrl.stageposition.goto(x=x, y=y)
+            ctrl.stageposition.goto(x=x+x_offset, y=y+y_offset)
 
             outfile = "image_{:04d}_{:04d}.npy".format(i,j)
 
