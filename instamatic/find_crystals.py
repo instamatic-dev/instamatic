@@ -21,6 +21,7 @@ plt.rcParams['image.cmap'] = 'gray'
 
 
 from calibration import lowmag_dimensions
+from calibration import load_img
 
 
 def get_best_mag_for_feature(xsize, ysize=None, verbose=False):
@@ -61,16 +62,16 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True):
     """Get markers using simple thresholds"""
     background = 1
     features = 2
+    
+    markers = np.zeros_like(img)
+    print "\nbounds:", lower, upper
 
     if dark_on_bright:
-        background, features = features, background
-
-    markers = np.zeros_like(img)
-
-    print "\nbounds:", lower, upper
-    
-    markers[img < lower] = background
-    markers[img > upper] = features
+        markers[img < lower] = features
+        markers[img > upper] = background  
+    else:
+        markers[img < lower] = background
+        markers[img > upper] = features
     
     print "\nother      {:6.2%}".format(1.0*np.sum(markers == 0) / markers.size)
     print   "background {:6.2%}".format(1.0*np.sum(markers == background) / markers.size)
@@ -118,22 +119,27 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
 
     clear_border = kwargs.get("clear_border", True)
     min_size = kwargs.get("min_size", 100)
-    fill_holes = kwargs.get("fill_holes", False)
+    fill_holes = kwargs.get("fill_holes", True)
 
     if isinstance(markers, np.ndarray):
         assert img.shape == markers.shape, "Shape of markers ({}) does not match image ({})".format(
             markers.shape, img.shape)
     elif markers == "bounds":
         otsu = filters.threshold_otsu(img)
-        lower_bound = otsu*0.5
-        upper_bound = otsu
-        markers = get_markers_bounds(img, lower=lower_bound, upper=upper_bound)
+        n = 0.33
+        l = otsu - (otsu - np.min(img))*n
+        u = otsu + (np.max(img) - otsu)*n
+        markers = get_markers_bounds(img, lower=l, upper=u)
     elif markers == "gradient":
         radius = kwargs.get("radius", 10)
         threshold = kwargs.get("threshold", 40)
         markers = get_markers_gradient(img, radius=radius, threshold=threshold)
     else:
         markers = get_markers_bounds(img, lower=100, upper=180)
+
+    if plot:
+        plt.imshow(markers)
+        plt.show()
 
     if method == "watershed":
         elevation_map = filters.sobel(img)
@@ -178,6 +184,21 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
     return props
 
 
+def find_crystals(img, header=None, plot=False):
+    otsu = filters.threshold_otsu(img)
+    nl = 0.5
+    nu = 0.0
+    l = otsu - (otsu - np.min(img))*nl
+    u = otsu + (np.max(img) - otsu)*nu
+    print "img range: {} - {}".format(img.min(), img.max())
+    print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
+
+    markers = get_markers_bounds(img, lower=l, upper=u)
+
+    crystals = find_objects(img, method="random_walker", markers=markers, plot=plot)
+    return crystals
+
+
 def find_holes(img, header=None, diameter=150.0, plot=True):
     """Hole size as diameter in micrometer"""
     if header:
@@ -220,7 +241,7 @@ def find_holes(img, header=None, diameter=150.0, plot=True):
     return newprops
 
 
-def plot_props(img, props):
+def plot_props(img, props, fname=None):
     """Take image and plot props on top of them"""
     from matplotlib.patches import Rectangle
 
@@ -246,10 +267,14 @@ def plot_props(img, props):
         plt.xlim(0, xmax)
         plt.ylim(ymax, 0)
 
-        s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
+        #s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
+        s = " {}:\n {:f}".format(i, prop.eccentricity)
         plt.text(x2, y2, s=s, color="red", size=15)
 
-    plt.show()
+    if fname:
+        plt.savefig(fname)
+    else:
+        plt.show()
 
 
 def reject_bad_crystals(props, **kwargs):
@@ -283,6 +308,84 @@ def reject_bad_crystals(props, **kwargs):
     return newprops
 
 
+def plot_hists(img):
+    from skimage import data, img_as_float
+    from skimage import exposure
+    def plot_img_and_hist(img, axes, bins=256):
+        """Plot an image along with its histogram and cumulative histogram.
+    
+        """
+        img = img_as_float(img)
+        ax_img, ax_hist = axes
+        ax_cdf = ax_hist.twinx()
+    
+        img_show = img.copy()
+        img_show[img > 0.065] = 1
+        
+        # Display image
+        ax_img.imshow(img_show, cmap=plt.cm.gray)
+        ax_img.set_axis_off()
+        ax_img.set_adjustable('box-forced')
+    
+        # Display histogram
+        ax_hist.hist(img.ravel(), bins=bins, histtype='step', color='black')
+        ax_hist.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
+        ax_hist.set_xlabel('Pixel intensity')
+        ax_hist.set_xlim(0, 1)
+        ax_hist.set_yticks([])
+    
+        # Display cumulative distribution
+        img_cdf, bins = exposure.cumulative_distribution(img, bins)
+        ax_cdf.plot(bins, img_cdf, 'r')
+        ax_cdf.set_yticks([])
+    
+        return ax_img, ax_hist, ax_cdf
+    
+    img = img.astype(np.uint16)
+    
+    # Contrast stretching
+    p2, p98 = np.percentile(img, (2, 98))
+    img_rescale = exposure.rescale_intensity(img, in_range=(p2, p98))
+    
+    # Equalization
+    img_eq = exposure.equalize_hist(img)
+    
+    # Adaptive Equalization
+    img_adapteq = exposure.equalize_adapthist(img, clip_limit=0.03)
+    
+    # Display results
+    fig = plt.figure(figsize=(15, 10))
+    axes = np.zeros((2,4), dtype=np.object)
+    axes[0,0] = fig.add_subplot(2, 4, 1)
+    for i in range(1,4):
+        axes[0,i] = fig.add_subplot(2, 4, 1+i, sharex=axes[0,0], sharey=axes[0,0])
+    for i in range(0,4):
+        axes[1,i] = fig.add_subplot(2, 4, 5+i)
+    
+    ax_img, ax_hist, ax_cdf = plot_img_and_hist(img, axes[:, 0])
+    ax_img.set_title('Low contrast image')
+    
+    y_min, y_max = ax_hist.get_ylim()
+    ax_hist.set_ylabel('Number of pixels')
+    ax_hist.set_yticks(np.linspace(0, y_max, 5))
+    
+    ax_img, ax_hist, ax_cdf = plot_img_and_hist(img_rescale, axes[:, 1])
+    ax_img.set_title('Contrast stretching')
+    
+    ax_img, ax_hist, ax_cdf = plot_img_and_hist(img_eq, axes[:, 2])
+    ax_img.set_title('Histogram equalization')
+    
+    ax_img, ax_hist, ax_cdf = plot_img_and_hist(img_adapteq, axes[:, 3])
+    ax_img.set_title('Adaptive equalization')
+    
+    ax_cdf.set_ylabel('Fraction of total intensity')
+    ax_cdf.set_yticks(np.linspace(0, 1, 5))
+    
+    # prevent overlap of y-axis labels
+    fig.subplots_adjust(wspace=0.4)
+    plt.show()
+
+
 def props2xy(props):
     """Takes regionprops and returns xy coords in numpy array"""
     return np.array([prop.weighted_centroid for prop in props])
@@ -293,7 +396,7 @@ def invert_image(img):
     return (img * -1) + 255
 
 
-def load_image(fn):
+def load_image_file(fn):
     """Load image. Replace this with function from fabio/snapkit for mrc files
 
     TODO: check if leginon has implemented mrc or other electron microscopy formats
@@ -303,13 +406,22 @@ def load_image(fn):
 
 def find_crystals_entry():
     for fn in sys.argv[1:]:
-        img = color.rgb2gray(load_image(fn))
+        print "\n >> Processing {}...".format(fn)
+        try:
+            img = color.rgb2gray(load_image_file(fn))
+        except IOError:
+            img, header = load_img(fn)
+            img = img.astype(int)
 
-        crystals = find_objects(img, plot=False, markers="bounds")
+        # plot_hists(img)
+
+        plot = False
+        crystals = find_crystals(img, plot=plot)
+        if plot:
+            plot_props(img, crystals)
+        plot_props(img, crystals, fname=fn.replace(".npy", ".png"))
 
         # crystals = reject_bad_crystals(crystals) ## implemented in find_objects
-
-        plot_props(img, crystals)
 
         xy = props2xy(crystals)
 

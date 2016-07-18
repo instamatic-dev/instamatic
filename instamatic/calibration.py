@@ -13,8 +13,7 @@ def load_img(fn):
     root, ext = os.path.splitext(fn)
     fnh = root + ".json"
 
-    if os.path.exists(fnh):
-        d = json.load(open(fnh, "r"))
+    d = json.load(open(fnh, "r"))
     
     return arr, d
 
@@ -191,7 +190,7 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     return r
 
 
-def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1, binsize=1, save_images=False):
+def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -206,8 +205,7 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=12e-05, exposure=0.1, binsi
     binsize: `int`
 
     return:
-        Rotation matrix, array (2,2)
-        Stagepos of reference frame
+        instance of Calibration class with conversion methods
     """
 
     if not raw_input("""\n >> Go too 100x mag, and move the sample stage
@@ -285,10 +283,8 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
     other_fn: `tuple` of `str`
         Set of images to cross correlate to the first reference image
 
-    returns:
-        2 functions:
-            _pixelcoord_to_stagepos()
-            _stagepos_to_pixelcoord()
+    return:
+        instance of Calibration class with conversion methods
     """
     img_cent, header_cent = load_img(center_fn)
     x_cent, y_cent = np.array((header_cent["StagePosition"]["x"], header_cent["StagePosition"]["y"]))
@@ -320,6 +316,135 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
     c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
 
     return c
+
+
+def calibrate_highmag(ctrl, cam, gridsize=5, stepsize=0e-05, exposure=0.1, binsize=1, save_images=False):
+    """
+    Calibrate pixel->beamshift coordinates live on the microscope
+
+    ctrl: instance of `TEMController`
+    cam: instance of `gatanOrius`
+    gridsize: `int`
+        Number of grid points to take, gridsize=5 results in 25 points
+    stepsize: `float`
+        Size of steps for stage position along x and y
+    exposure: `float`
+        exposure time
+    binsize: `int`
+
+    return:
+        instance of Calibration class with conversion methods
+    """
+
+    if not raw_input("""\n >> Go too 2500x mag, and move the beam by beamshift
+    so that it is approximately in the middle of the image 
+    (type 'go' to start): """) == "go":
+        exit()
+
+    print
+    print ctrl.beamshift
+    img_cent = cam.getImage(t=exposure)
+    x_cent, y_cent = ctrl.beamshift.x, ctrl.beamshift.y
+    
+    if save_images:
+        h = ctrl.tem.getHeader()
+        h["ImageExposureTime"] = exposure
+        h["ImageBinSize"] = binsize
+        h["ImageResolution"] = img_cent.shape
+        h["ImageComment"] = "Beam in center of image"
+        
+        outfile = "calib_beamcenter.npy"
+        save_image(outfile, img_cent)
+        save_header(outfile, h)
+
+    beampos = []
+    shifts = []
+    
+    n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
+    
+    i = 0
+    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
+        ctrl.beamshift.goto(x=x_cent+dx, y=y_cent+dy)
+           
+        print
+        print ctrl.beamshift
+        
+        img = cam.getImage(t=exposure)
+        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        
+        xy = ctrl.beamshift.x, ctrl.beamshift.y
+        beampos.append(xy)
+        shifts.append(shift)
+
+        if save_images:
+            h = ctrl.tem.getHeader()
+            h["ImageExposureTime"] = exposure
+            h["ImageBinSize"] = binsize
+            h["ImageResolution"] = img.shape
+            h["ImageComment"] = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+            
+            outfile = "calib_beamshift_{:04d}.npy".format(i)
+            save_image(outfile, img)
+            save_header(outfile, h)
+        
+        i += 1
+            
+    print " >> Reset to center"
+    ctrl.beamshift.goto(x=x_cent, y=y_cent)
+    shifts = np.array(shifts)
+    beampos = np.array(beampos) - np.array((x_cent, y_cent))
+    
+    r = lsq_rotation_scaling_matrix(shifts, beampos)
+
+    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+
+    return c
+
+
+def calibrate_highmag_from_image_fn(center_fn, other_fn):
+    """
+    Calibrate pixel->beamshift coordinates from a set of images
+
+    center_fn: `str`
+        Reference image with the beam at the center of the image
+    other_fn: `tuple` of `str`
+        Set of images to cross correlate to the first reference image
+
+    return:
+        instance of Calibration class with conversion methods
+    """
+    img_cent, header_cent = load_img(center_fn)
+    x_cent, y_cent = np.array((header_cent["BeamShift"]["x"], header_cent["BeamShift"]["y"]))
+    print
+    print "Center:", center_fn
+    print "Beamshift: x={} | y={}".format(x_cent, y_cent)
+
+    shifts = []
+    beampos = []
+    
+    for fn in other_fn:
+        img, header = load_img(fn)
+        
+        xy = header["BeamShift"]["x"], header["BeamShift"]["y"]
+        print
+        print "Image:", fn
+        print "Beamshift: x={} | y={}".format(*xy)
+        
+        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        
+        beampos.append(xy)
+        shifts.append(shift)
+        
+    shifts = np.array(shifts)
+    beampos = np.array(beampos) - np.array((x_cent, y_cent))
+        
+    r = lsq_rotation_scaling_matrix(shifts, beampos)
+    
+    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+
+    return c
+
 
 # lowmag
 # pixel dimensions from calibration in Digital Micrograph

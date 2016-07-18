@@ -26,6 +26,7 @@ except WindowsError:
 ctrl = TEMController(tem)
 
 CALIB100X = "calib.pickle"
+CALIB2500X = "calib2500x.pickle"
 HOLE_COORDS = "hole_coords.npy"
 EXPERIMENT = "experiment.pickle"
 
@@ -37,6 +38,13 @@ def load_calib():
         raise IOError("\n >> Please run instamatic.calibrate100x first.")
     return calib
 
+def load_calib_high_mag():
+    if os.path.exists(CALIB2500X):
+        d = pickle.load(open(CALIB2500X, "r"))
+        calib = CalibResult(**d)
+    else:
+        raise IOError("\n >> Please run instamatic.calibrate2500x first.")
+    return calib
 
 def load_hole_stage_positions():
     if os.path.exists(HOLE_COORDS):
@@ -100,6 +108,60 @@ def get_grid(n, r, borderwidth=0.8):
     xvals = xgrid[sel].flatten()
     yvals = ygrid[sel].flatten()
     return xvals*r, yvals*r 
+
+
+def seek_and_destroy(img, calib, plot=False):
+    """Routine that handles seeking crystals, and shooting them with the beam"""
+
+    exposure = 1.0
+    binsize = 1
+
+    crystals = find_crystals(img)
+    if plot:
+        plot_props(crystals)
+
+    center_beamshift = ctrl.beamshift.x, ctrl.beamshift.y
+
+    for crystal in crystals:
+        x, y = crystal.centroid
+
+        x_shift, y_shift = calib.pixelcoords_to_beamshift(x, y)
+
+        ctrl.activate_nanobeam()
+        ctrl.beamshift.goto(x=x_shift, y=y_shift)
+        ctrl.activate_diffraction_mode()
+
+        h = tem.getHeader()
+        arr = cam.getImage(binsize=binsize, t=exposure)
+        h["ImageExposureTime"] = exposure
+        h["ImageBinSize"] = binsize
+        h["ImageResolution"] = arr.shape
+        h["ImageComment"] = "Diffraction data"
+
+
+def seek_and_destroy_entry():
+    exposure = 0.2
+    binsize = 1
+
+    calib = load_calib2500x()
+
+    fns = sys.argv[1:]
+    if fns:
+        for fn in fns:
+            arr, header = load_img(fn)
+            seek_and_destroy(arr, calib, plot=True)
+    else:
+        h = tem.getHeader()
+        arr = cam.getImage(binsize=binsize, t=exposure)
+        h["ImageExposureTime"] = exposure
+        h["ImageBinSize"] = binsize
+        h["ImageResolution"] = arr.shape
+        h["ImageComment"] = "seek and destroy"
+    
+        seek_and_destroy(arr, calib, plot=True)
+    
+        # save_image(outfile, arr)
+        # save_header(outfile, h)
 
 
 def find_hole_center_high_mag_from_files(fns):
@@ -482,6 +544,40 @@ prepare
         "transform": calib.transform,
         "reference_position": calib.reference_position
         }, open(CALIB100X,"w"))
+
+
+def calibrate2500x_entry():
+    from calibration import calibrate_high_mag, calibrate_high_mag_from_image_fn
+
+    if "help" in sys.argv:
+        print """
+Program to calibrate highmag (2500x) of microscope
+
+Usage: 
+prepare
+    instamatic.calibrate2500x
+        To start live calibration routine on the microscope
+
+    instamatic.calibrate2500x CENTER_IMAGE (CALIBRATION_IMAGE ...)
+       To perform calibration using pre-collected images
+"""
+        exit()
+    elif len(sys.argv) == 1:
+        calib = calibrate_highmag(ctrl, cam, save_images=True)
+    else:
+        fn_center = sys.argv[1]
+        fn_other = sys.argv[2:]
+        calib = calibrate_highmag_from_image_fn(fn_center, fn_other)
+
+    print "\nRotation/scalint matrix:\n", calib.transform
+    print "Reference stagepos:", calib.reference_position
+
+    print calib
+
+    pickle.dump({
+        "transform": calib.transform,
+        "reference_position": calib.reference_position
+        }, open(CALIB2500X, "w"))
 
 
 def main():
