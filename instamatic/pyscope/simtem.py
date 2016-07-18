@@ -101,6 +101,8 @@ class SimTEM(tem.TEM):
 
         self.resetRefrigerant()
 
+        self._diffractionmode = "imaging"
+
     def resetRefrigerant(self):
         self.level0 = 100.0
         self.level1 = 100.0
@@ -274,7 +276,7 @@ class SimTEM(tem.TEM):
         try:
             return self.magnifications[index]
         except IndexError:
-            raise ValueError('invalid magnification')
+            raise ValueError('invalid magnification, must be in {}'.format(self.magnifications))
 
     def getMainScreenMagnification(self, index=None):
         return self.main_screen_scale * self.getMagnification(index=index)
@@ -289,7 +291,7 @@ class SimTEM(tem.TEM):
         try:
             self.magnification_index = self.magnifications.index(float(value))
         except ValueError:
-            raise ValueError('invalid magnification')
+            raise ValueError('invalid magnification, must be in {}'.format(self.magnifications))
 
     def getMagnificationIndex(self, magnification=None):
         if magnification is not None:
@@ -427,6 +429,13 @@ class SimTEM(tem.TEM):
 
     def exposeSpecimenNotCamera(self, seconds):
         time.sleep(seconds)
+
+    def setDiffractionMode(self, mode):
+        assert mode in ["imaging", "diffraction"]
+        self._diffractionmode = mode
+
+    def getDiffractionMode(self):
+        return self._diffractionmode
 
 
 class SimTEM300(SimTEM):

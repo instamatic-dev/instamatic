@@ -841,11 +841,13 @@ class Jeol(tem.TEM):
         try:
             return self.magnifications.index(magnification)
         except ValueError:
-            raise ValueError('invalid magnification')
+            raise ValueError('invalid magnification, must be in {}'.format(self.magnifications))
 
     def setMagnificationIndex(self, value):
         if value <= len(self.magnifications):
             return self.setMagnification(self.magnifications[value])
+        else:
+            raise ValueError('invalid magnification, must be in {}'.format(self.magnifications))
 
     def calculateSelectorIndex(self, mode_index, mag):
         return self.submode_mags[mode_index].index(mag)
@@ -1269,7 +1271,7 @@ class Jeol(tem.TEM):
         elif mode == FUNCTION_MODES['diff']:
             return "diffraction"
         else:
-            raise SystemError
+            raise SystemError("getDiffractionMode")
 
     def setDiffractionMode(self, mode):
         if mode == "imaging":
@@ -1277,7 +1279,7 @@ class Jeol(tem.TEM):
         elif mode == "diffraction":
             result = self.eos3.SelectFunctionMode(FUNCTION_MODES['diff'])
         else:
-            raise ValueError
+            raise ValueError("Unknown value for setDiffractionmode:".format(mode))
         return 0
 
     def getScreenCurrent(self):

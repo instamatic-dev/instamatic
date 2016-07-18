@@ -36,6 +36,48 @@ class TEMValue(object):
         self._setter(vector)
 
 
+class Magnification(object):
+    """docstring for Magnification"""
+    def __init__(self, tem):
+        super(Magnification, self).__init__()
+        self._value = None
+        self._index = None
+        self._tem = tem
+
+    def __repr__(self):
+        value = self.value
+        index = self.index
+        return "Magnification(value={}, index={})".format(value, index)
+
+    @property
+    def value(self):
+        return self._tem.getMagnification()
+
+    @value.setter
+    def value(self, val):
+        self._tem.setMagnification(val)
+
+    @property
+    def index(self):
+        return self._tem.getMagnificationIndex()
+
+    @index.setter
+    def index(self, val):
+        self._tem.setMagnificationIndex(val)
+
+    def increase(self):
+        try:
+            self.index += 1
+        except ValueError:
+            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+
+    def decrease(self):
+        try:
+            self.index -= 1
+        except ValueError:
+            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+
+
 class TEMController(object):
     """docstring for TEMController
 
@@ -125,16 +167,37 @@ class TEMController(object):
         self.beamtilt = BeamTilt()
         self.imageshift = ImageShift()
         self.stageposition = StagePosition()
+        self.magnification = Magnification(tem)
+
+        self.setDiffractionmode = self.tem.setDiffractionMode
+        self.getDiffractionmode = self.tem.getDiffractionMode
 
         print self
 
+    def activate_nanobeam(self):
+        raise NotImplementedError
+
+    def deactivate_nanobeam(self):
+        raise NotImplementedError
+
+    def activate_darkfield(self):
+        # use these 2 methods:
+        #   self.tem.getDarkFieldMode
+        #   self.tem.setDarkFieldMode
+        raise NotImplementedError
+
+    def deactivate_darkfield(self, mode):
+        raise NotImplementedError
+
     def __repr__(self):
-        return "\n".join((str(self.gunshift),
+        return "\n".join(("Mode: {}".format(self.getDiffractionmode()),
+                          str(self.gunshift),
                           str(self.guntilt),
                           str(self.beamshift),
                           str(self.beamtilt),
                           str(self.imageshift),
-                          str(self.stageposition)))
+                          str(self.stageposition),
+                          str(self.magnification)))
 
     def get_all(self):
         d = {
