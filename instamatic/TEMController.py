@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import numpy as np
+import matplotlib.pyplot as plt
+from camera.camera import gatanOrius, save_image, save_header
 
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
@@ -85,9 +87,10 @@ class TEMController(object):
     https://docs.python.org/2/howto/descriptor.html
     """
 
-    def __init__(self, tem):
+    def __init__(self, tem, cam=None):
         super(TEMController, self).__init__()
         self.tem = tem
+        self.cam = cam
 
         class GunShift(object):
             x = TEMValue("x", tem.getGunShift, tem.setGunShift)
@@ -174,6 +177,16 @@ class TEMController(object):
 
         print self
 
+    def __repr__(self):
+        return "\n".join(("Mode: {}".format(self.getDiffractionmode()),
+                          str(self.gunshift),
+                          str(self.guntilt),
+                          str(self.beamshift),
+                          str(self.beamtilt),
+                          str(self.imageshift),
+                          str(self.stageposition),
+                          str(self.magnification)))
+
     def activate_nanobeam(self):
         raise NotImplementedError
 
@@ -189,16 +202,6 @@ class TEMController(object):
     def deactivate_darkfield(self, mode):
         raise NotImplementedError
 
-    def __repr__(self):
-        return "\n".join(("Mode: {}".format(self.getDiffractionmode()),
-                          str(self.gunshift),
-                          str(self.guntilt),
-                          str(self.beamshift),
-                          str(self.beamtilt),
-                          str(self.imageshift),
-                          str(self.stageposition),
-                          str(self.magnification)))
-
     def get_all(self):
         d = {
             'beamshift': self.tem.getBeamShift(),
@@ -206,7 +209,9 @@ class TEMController(object):
             'gunshift': self.tem.getGunShift(),
             'guntilt': self.tem.getGunTilt(),
             'imageshift': self.tem.getImageShift(),
-            'stageposition': self.tem.getStagePosition()
+            'stageposition': self.tem.getStagePosition(),
+            'magnification': self.magnification.value,
+            'diffractionmode': self.getDiffractionmode()
         }
         return d
 
@@ -217,7 +222,9 @@ class TEMController(object):
             'gunshift': self.tem.setGunShift,
             'guntilt': self.tem.setGunTilt,
             'imageshift': self.tem.setImageShift,
-            'stageposition': self.tem.setStagePosition
+            'stageposition': self.tem.setStagePosition,
+            'magnification': self.tem.setMagnification,
+            'diffractionmode': self.tem.setDiffractionMode
         }
 
         for k, v in d.items():
@@ -225,6 +232,27 @@ class TEMController(object):
             func(v)
 
         print self
+
+    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False):
+        if not self.cam:
+            raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
+
+        h = self.tem.getHeader()
+        arr = self.cam.getImage(t=exposure, binsize=binsize)
+        h["ImageExposureTime"] = exposure
+        h["ImageBinSize"] = binsize
+        h["ImageResolution"] = arr.shape
+        h["ImageComment"] = comment
+
+        if out:
+            save_image(out, arr)
+            save_header(out, h)
+
+        if plot:
+            plt.imshow(arr)
+            plt.show()
+
+        return arr, h
 
 
 def main_entry():
@@ -257,11 +285,13 @@ def main_entry():
     if options.simulate:
         from instamatic.pyscope import simtem
         tem = simtem.SimTEM()
+        cam = gatanOrius(simulate=True)
     else:
         from instamatic.pyscope import jeolcom
         tem = jeolcom.Jeol()
+        cam = gatanOrius(simulate=False)
     
-    ctrl = TEMController(tem)
+    ctrl = TEMController(tem, cam=cam)
 
     ipshell()
 

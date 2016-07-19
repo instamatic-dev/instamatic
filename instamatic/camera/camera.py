@@ -160,7 +160,7 @@ def save_image(outfile, img):
         np.save(outfile, img)
     else:
         plt.imsave(outfile, arr, cmap="gray")
-    print " >> File saved to {}".format(outfile) 
+    print " >> Image written to {}".format(outfile) 
 
 
 def save_header(outfile, header):
