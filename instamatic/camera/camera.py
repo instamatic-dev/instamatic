@@ -252,6 +252,8 @@ def main_entry():
         tem = jeolcom.Jeol()
 
     camera = gatanOrius(simulate=options.simulate)
+    #from instamatic import TEMController
+    #ctrl = TEMController.TEMController(tem)
     
     if take_series:
         i = 1
@@ -299,7 +301,9 @@ def main_entry():
             h["ImageBinSize"] = binsize
             h["ImageResolution"] = arr.shape
             h["ImageComment"] = inp
-    
+            #h["ctrl.beamshift"] = repr(ctrl.beamshift)
+            #print ctrl
+
             save_image(outfile, arr)
             save_header(outfile, h)
     

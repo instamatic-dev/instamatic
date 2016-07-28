@@ -356,13 +356,28 @@ def do_experiment_entry():
 
     i = 0
     for x, y in centers:
-        ctrl.stageposition.goto(x=x, y=y)
+        try:
+            ctrl.stageposition.goto(x=x, y=y)
+        except ValueError as e:
+            print e
+            print " >> Moving to next hole..."
+            print
+            i += 1
+            continue
+
         print "\n >> Going to next hole center \n    ->", ctrl.stageposition
 
         j = 0
         auto = False
         for x_offset, y_offset in zip(x_offsets, y_offsets):
-            ctrl.stageposition.goto(x=x+x_offset, y=y+y_offset)
+            try:
+                ctrl.stageposition.goto(x=x+x_offset, y=y+y_offset)
+            except ValueError as e:
+                print e
+                print " >> Moving to next position..."
+                print
+                j += 1
+                continue
 
             outfile = "image_{:04d}_{:04d}.npy".format(i,j)
 

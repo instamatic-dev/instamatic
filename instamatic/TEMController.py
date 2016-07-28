@@ -53,7 +53,12 @@ class Magnification(object):
 
     @property
     def value(self):
-        return self._tem.getMagnification()
+        try:
+            mag = self._tem.getMagnification()
+        except ValueError:    
+            mag = 0
+        finally:
+            return mag
 
     @value.setter
     def value(self, val):
@@ -61,7 +66,12 @@ class Magnification(object):
 
     @property
     def index(self):
-        return self._tem.getMagnificationIndex()
+        try:
+            ind = self._tem.getMagnificationIndex()
+        except ValueError:
+            ind = 0
+        finally:
+            return ind
 
     @index.setter
     def index(self, val):
@@ -291,6 +301,7 @@ def main_entry():
         tem = jeolcom.Jeol()
         cam = gatanOrius(simulate=False)
     
+
     ctrl = TEMController(tem, cam=cam)
 
     ipshell()

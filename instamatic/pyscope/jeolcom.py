@@ -77,7 +77,7 @@ class Jeol(tem.TEM):
         self.camera3 = self.tem3.CreateCamera3()
         self.mds3 = self.tem3.CreateMDS3()
         self.stage3 = self.tem3.CreateStage3()
-        self.feg3 = self.tem3.CreateFEG3()
+        self.feg3 = self.tem3.CreateFEG3()  # we don't have feg (Wei)
         self.filter3 = self.tem3.CreateFilter3()
         self.apt3 = self.tem3.CreateApt3()
         self.backlash_start = 10e-6
@@ -1014,7 +1014,7 @@ class Jeol(tem.TEM):
             if abs(pos[axis]) > self.stage_limit[axis]:
                 raise ValueError('%s limit reached. Ignore' % axis)
         # set axes that need backlash correction
-        backlash = True
+        backlash = False
         if backlash:
             current_position = self.getStagePosition()
             shift = math.hypot(current_position['x']-pos['x'],current_position['y']-pos['y'])
@@ -1265,10 +1265,10 @@ class Jeol(tem.TEM):
             raise ValueError
    
     def getDiffractionMode(self):
-        mode, result = self.eos3.GetFunctionMode()
-        if mode in (FUNCTION_MODES['lowmag'], FUNCTION_MODES['mag1']):
+        ind, mode, result = self.eos3.GetFunctionMode()
+        if ind in (FUNCTION_MODES['lowmag'], FUNCTION_MODES['mag1']):
             return "imaging"
-        elif mode == FUNCTION_MODES['diff']:
+        elif ind == FUNCTION_MODES['diff']:
             return "diffraction"
         else:
             raise SystemError("getDiffractionMode")
