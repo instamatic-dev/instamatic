@@ -4,7 +4,7 @@ import sys, os
 import numpy as np
 
 from pyscope import jeolcom, simtem
-from camera import gatanOrius, save_image, save_header
+from camera import gatanOrius, save_image_and_header
 from find_crystals import find_objects, plot_props
 from TEMController import TEMController
 
@@ -23,7 +23,7 @@ except WindowsError:
     print " >> Could not connect to JEOL, using SimTEM instead..."
     tem = simtem.SimTEM()
     cam = gatanOrius(simulate=True)
-ctrl = TEMController(tem)
+ctrl = TEMController(tem, cam)
 
 CALIB100X = "calib.pickle"
 CALIB2500X = "calib2500x.pickle"
@@ -131,12 +131,7 @@ def seek_and_destroy(img, calib, plot=False):
         ctrl.beamshift.goto(x=x_shift, y=y_shift)
         ctrl.activate_diffraction_mode()
 
-        h = tem.getHeader()
-        arr = cam.getImage(binsize=binsize, t=exposure)
-        h["ImageExposureTime"] = exposure
-        h["ImageBinSize"] = binsize
-        h["ImageResolution"] = arr.shape
-        h["ImageComment"] = "Diffraction data"
+        arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Diffraction data")
 
 
 def seek_and_destroy_entry():
@@ -151,12 +146,7 @@ def seek_and_destroy_entry():
             arr, header = load_img(fn)
             seek_and_destroy(arr, calib, plot=True)
     else:
-        h = tem.getHeader()
-        arr = cam.getImage(binsize=binsize, t=exposure)
-        h["ImageExposureTime"] = exposure
-        h["ImageBinSize"] = binsize
-        h["ImageResolution"] = arr.shape
-        h["ImageComment"] = "seek and destroy"
+        arr = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
     
         seek_and_destroy(arr, calib, plot=True)
     
@@ -174,7 +164,7 @@ def find_hole_center_high_mag_from_files(fns):
         x,y = np.array([header["StagePosition"]["x"], header["StagePosition"]["y"]])
         if i != 3:
             vects.append((x,y))
-        
+
     center = circle_center(*vects)
     r = np.mean([np.linalg.norm(v-center) for v in vects]) # approximate radius
     return center, r
@@ -396,15 +386,9 @@ def do_experiment_entry():
 
             comment = "Hole {} image {}\nx_offset={:.2e} y_offset={:.2e}".format(i, j, x_offset, y_offset)
 
-            h = tem.getHeader()
-            arr = cam.getImage(binsize=binsize, t=exposure)
-            h["ImageExposureTime"] = exposure
-            h["ImageBinSize"] = binsize
-            h["ImageResolution"] = arr.shape
-            h["ImageComment"] = comment
+            arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=comment)
     
-            save_image(outfile, arr)
-            save_header(outfile, h)
+            save_image_and_header(outfile, img=arr, header=h)
 
             if plot:
                 plt.imshow(arr, cmap="gray")
@@ -544,7 +528,7 @@ prepare
 """
         exit()
     elif len(sys.argv) == 1:
-        calib = calibrate_lowmag(ctrl, cam, save_images=True)
+        calib = calibrate_lowmag(ctrl, save_images=True)
     else:
         fn_center = sys.argv[1]
         fn_other = sys.argv[2:]
@@ -578,7 +562,7 @@ prepare
 """
         exit()
     elif len(sys.argv) == 1:
-        calib = calibrate_highmag(ctrl, cam, save_images=True)
+        calib = calibrate_highmag(ctrl, save_images=True)
     else:
         fn_center = sys.argv[1]
         fn_other = sys.argv[2:]
@@ -605,7 +589,7 @@ def main():
                 print "{:30s} : {}".format(d["name"], getattr(tem, "get"+d["name"])())
 
     if True:
-        img = cam.getImage()
+        img, h = ctrl.getImage()
 
         # img = color.rgb2gray(img)
         img = np.invert(img)

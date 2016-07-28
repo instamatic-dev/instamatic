@@ -89,6 +89,9 @@ class gatanOrius(object):
         print "Dimensions {}x{}".format(*self.getDimensions())
         print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
+        atexit.register(self.releaseConnection)
+
+
     def getImage(self, t=0.5, binsize=1, xmin=0, xmax=2048, ymin=0, ymax=2048, showindm=False):
         """Image acquisition routine
 
@@ -176,6 +179,13 @@ def save_header(outfile, header):
     else:
         print " >> Header written to {}".format(outfile.name) 
 
+def save_image_and_header(outfile, img=None, header=None):
+    if img is not None:
+        save_image(outfile, img)
+    if header:
+        save_header(outfile, header)
+
+
 
 def main_entry():
     import argparse
@@ -251,9 +261,9 @@ def main_entry():
         from instamatic.pyscope import jeolcom
         tem = jeolcom.Jeol()
 
-    camera = gatanOrius(simulate=options.simulate)
-    #from instamatic import TEMController
-    #ctrl = TEMController.TEMController(tem)
+    cam = gatanOrius(simulate=options.simulate)
+    from instamatic import TEMController
+    ctrl = TEMController.TEMController(tem, cam)
     
     if take_series:
         i = 1
@@ -295,25 +305,15 @@ def main_entry():
                     i = value
             print "binsize = {} | exposure = {} | file #{}".format(binsize, exposure, i)
         else:
-            h = tem.getHeader()
-            arr = camera.getImage(binsize=binsize, t=exposure)
-            h["ImageExposureTime"] = exposure
-            h["ImageBinSize"] = binsize
-            h["ImageResolution"] = arr.shape
-            h["ImageComment"] = inp
-            #h["ctrl.beamshift"] = repr(ctrl.beamshift)
-            #print ctrl
+            arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
 
-            save_image(outfile, arr)
-            save_header(outfile, h)
+            save_image_and_header(outfile, img=arr, header=h)
     
             i += 1
     else:
-        h = tem.getHeader()
-
         import matplotlib.pyplot as plt
 
-        arr = camera.getImage(binsize=binsize, t=exposure)
+        arr, h = ctrl.getImage(binsize=binsize, exposure=exposure)
 
         if show_fig:
             save_header(sys.stdout, h)
@@ -321,13 +321,11 @@ def main_entry():
             plt.show()
     
         if outfile:
-            save_image(outfile, arr)
-            save_header(outfile, h)
+            save_image_and_header(outfile, img=arr, header=h)
         else:
-            save_image("out.npy", arr)
-            save_header("out.json", h)
+            save_image_and_header("out.npy", img=arr, header=h)
 
-    camera.releaseConnection()
+    # cam.releaseConnection()
 
 
 if __name__ == '__main__':

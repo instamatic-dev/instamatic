@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os,sys
 import json
 from functools import partial
-from camera import save_header, save_image
+from camera import save_image_and_header
 
 def load_img(fn):
     arr = np.load(fn)
@@ -190,12 +190,12 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     return r
 
 
-def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1, save_images=False):
+def calibrate_lowmag(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
     ctrl: instance of `TEMController`
-    cam: instance of `gatanOrius`
+        contains tem + cam interface
     gridsize: `int`
         Number of grid points to take, gridsize=5 results in 25 points
     stepsize: `float`
@@ -215,19 +215,12 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1, binsi
 
     print
     print ctrl.stageposition
-    img_cent = cam.getImage(t=exposure)
-    x_cent, y_cent = ctrl.stageposition.x, ctrl.stageposition.y
+    img_cent, h = ctrl.getImage(exposure=exposure, comment="Center image")
+    x_cent, y_cent = h["TEMStagePosition"]["x"], h["TEMStagePosition"]["y"]
     
     if save_images:
-        h = ctrl.tem.getHeader()
-        h["ImageExposureTime"] = exposure
-        h["ImageBinSize"] = binsize
-        h["ImageResolution"] = img_cent.shape
-        h["ImageComment"] = "Center image"
-        
         outfile = "calib_center.npy"
-        save_image(outfile, img_cent)
-        save_header(outfile, h)
+        save_image_and_header(outfile, arr=img_cent, header=h)
 
     stagepos = []
     shifts = []
@@ -242,23 +235,16 @@ def calibrate_lowmag(ctrl, cam, gridsize=5, stepsize=10e-05, exposure=0.1, binsi
         print
         print ctrl.stageposition
         
-        img = cam.getImage(t=exposure)
+        img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        xy = ctrl.stageposition.x, ctrl.stageposition.y
+        xy = h["TEMStagePosition"]["x"], h["TEMStagePosition"]["y"]
         stagepos.append(xy)
         shifts.append(shift)
 
         if save_images:
-            h = ctrl.tem.getHeader()
-            h["ImageExposureTime"] = exposure
-            h["ImageBinSize"] = binsize
-            h["ImageResolution"] = img.shape
-            h["ImageComment"] = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
-            
             outfile = "calib_{:04d}.npy".format(i)
-            save_image(outfile, img)
-            save_header(outfile, h)
+            save_image_and_header(outfile, img=img, header=h)
         
         i += 1
             
@@ -296,9 +282,9 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
     stagepos = []
     
     for fn in other_fn:
-        img, header = load_img(fn)
+        img, h = load_img(fn)
         
-        xy = header["StagePosition"]["x"], header["StagePosition"]["y"]
+        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
         print
         print "Image:", fn
         print "Stageposition: x={} | y={}".format(*xy)
@@ -318,12 +304,12 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
     return c
 
 
-def calibrate_highmag(ctrl, cam, gridsize=5, stepsize=0e-05, exposure=0.1, binsize=1, save_images=False):
+def calibrate_highmag(ctrl, gridsize=5, stepsize=0e-05, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
     ctrl: instance of `TEMController`
-    cam: instance of `gatanOrius`
+        contains tem + cam interface
     gridsize: `int`
         Number of grid points to take, gridsize=5 results in 25 points
     stepsize: `float`
@@ -343,19 +329,12 @@ def calibrate_highmag(ctrl, cam, gridsize=5, stepsize=0e-05, exposure=0.1, binsi
 
     print
     print ctrl.beamshift
-    img_cent = cam.getImage(t=exposure)
+    img_cent, h = ctrl.getImage(exposure=exposure, comment="Beam in center of image")
     x_cent, y_cent = ctrl.beamshift.x, ctrl.beamshift.y
     
     if save_images:
-        h = ctrl.tem.getHeader()
-        h["ImageExposureTime"] = exposure
-        h["ImageBinSize"] = binsize
-        h["ImageResolution"] = img_cent.shape
-        h["ImageComment"] = "Beam in center of image"
-        
         outfile = "calib_beamcenter.npy"
-        save_image(outfile, img_cent)
-        save_header(outfile, h)
+        save_image_and_header(outfile, img=img_cent, header=h)
 
     beampos = []
     shifts = []
@@ -370,23 +349,16 @@ def calibrate_highmag(ctrl, cam, gridsize=5, stepsize=0e-05, exposure=0.1, binsi
         print
         print ctrl.beamshift
         
-        img = cam.getImage(t=exposure)
+        img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        xy = ctrl.beamshift.x, ctrl.beamshift.y
+        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
         beampos.append(xy)
         shifts.append(shift)
 
         if save_images:
-            h = ctrl.tem.getHeader()
-            h["ImageExposureTime"] = exposure
-            h["ImageBinSize"] = binsize
-            h["ImageResolution"] = img.shape
-            h["ImageComment"] = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
-            
             outfile = "calib_beamshift_{:04d}.npy".format(i)
-            save_image(outfile, img)
-            save_header(outfile, h)
+            save_image_and_header(outfile, img=img,  header=h)
         
         i += 1
             
@@ -414,8 +386,8 @@ def calibrate_highmag_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    img_cent, header_cent = load_img(center_fn)
-    x_cent, y_cent = np.array((header_cent["BeamShift"]["x"], header_cent["BeamShift"]["y"]))
+    img_cent, h_cent = load_img(center_fn)
+    x_cent, y_cent = np.array((h_cent["BeamShift"]["x"], h_cent["BeamShift"]["y"]))
     print
     print "Center:", center_fn
     print "Beamshift: x={} | y={}".format(x_cent, y_cent)
@@ -424,9 +396,9 @@ def calibrate_highmag_from_image_fn(center_fn, other_fn):
     beampos = []
     
     for fn in other_fn:
-        img, header = load_img(fn)
+        img, h = load_img(fn)
         
-        xy = header["BeamShift"]["x"], header["BeamShift"]["y"]
+        xy = h["BeamShift"]["x"], h["BeamShift"]["y"]
         print
         print "Image:", fn
         print "Beamshift: x={} | y={}".format(*xy)

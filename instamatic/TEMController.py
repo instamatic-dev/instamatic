@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from camera.camera import gatanOrius, save_image, save_header
+import time
 
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
@@ -89,7 +90,11 @@ class Magnification(object):
         except ValueError:
             print "Error: Cannot go to higher magnification (current={}).".format(self.value)
 
-
+# TODO
+## Spotsize
+## ScreenCurrent
+## Intensity
+## Defocus
 class TEMController(object):
     """docstring for TEMController
 
@@ -203,38 +208,29 @@ class TEMController(object):
     def deactivate_nanobeam(self):
         raise NotImplementedError
 
-    def activate_darkfield(self):
-        # use these 2 methods:
-        #   self.tem.getDarkFieldMode
-        #   self.tem.setDarkFieldMode
-        raise NotImplementedError
-
-    def deactivate_darkfield(self, mode):
-        raise NotImplementedError
-
     def get_all(self):
         d = {
-            'beamshift': self.tem.getBeamShift(),
-            'beamtilt': self.tem.getBeamTilt(),
-            'gunshift': self.tem.getGunShift(),
-            'guntilt': self.tem.getGunTilt(),
-            'imageshift': self.tem.getImageShift(),
-            'stageposition': self.tem.getStagePosition(),
-            'magnification': self.magnification.value,
-            'diffractionmode': self.getDiffractionmode()
+            'BeamShift': self.tem.getBeamShift(),
+            'BeamTilt': self.tem.getBeamTilt(),
+            'GunShift': self.tem.getGunShift(),
+            'GunTilt': self.tem.getGunTilt(),
+            'ImageShift': self.tem.getImageShift(),
+            'StagePosition': self.tem.getStagePosition(),
+            'Magnification': self.magnification.value,
+            'DiffractionMode': self.getDiffractionmode()
         }
         return d
 
     def set_all(self, d):
         funcs = {
-            'beamshift': self.tem.setBeamShift,
-            'beamtilt': self.tem.setBeamTilt,
-            'gunshift': self.tem.setGunShift,
-            'guntilt': self.tem.setGunTilt,
-            'imageshift': self.tem.setImageShift,
-            'stageposition': self.tem.setStagePosition,
-            'magnification': self.tem.setMagnification,
-            'diffractionmode': self.tem.setDiffractionMode
+            'BeamShift': self.tem.setBeamShift,
+            'BeamTilt': self.tem.setBeamTilt,
+            'GunShift': self.tem.setGunShift,
+            'GunTilt': self.tem.setGunTilt,
+            'ImageShift': self.tem.setImageShift,
+            'StagePosition': self.tem.setStagePosition,
+            'Magnification': self.tem.setMagnification,
+            'DiffractionMode': self.tem.setDiffractionMode
         }
 
         for k, v in d.items():
@@ -247,12 +243,14 @@ class TEMController(object):
         if not self.cam:
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
-        h = self.tem.getHeader()
+        h = self.get_all()
+
         arr = self.cam.getImage(t=exposure, binsize=binsize)
         h["ImageExposureTime"] = exposure
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape
         h["ImageComment"] = comment
+        h["Time"] = time.ctime()
 
         if out:
             save_image(out, arr)
