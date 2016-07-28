@@ -43,9 +43,19 @@ class Magnification(object):
     """docstring for Magnification"""
     def __init__(self, tem):
         super(Magnification, self).__init__()
-        self._value = None
-        self._index = None
         self._tem = tem
+
+        if not tem.getMagnificationsInizialized():
+            answer = raw_input(" >> Magnification index not initialized, run initialization routine? \n [YES/no] >> ")
+            if "y" in answer:
+                tem.findMagnifications()
+                print "done..."
+            print "tem.magnifications"
+            print tem.magnifications
+            print "tem.submode_mags"
+            print tem.submode_mags
+            print "tem.projection_submode_map"
+            print tem.projection_submode_map
 
     def __repr__(self):
         value = self.value
