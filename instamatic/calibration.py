@@ -387,6 +387,7 @@ def calibrate_highmag_from_image_fn(center_fn, other_fn):
         instance of Calibration class with conversion methods
     """
     img_cent, h_cent = load_img(center_fn)
+    print h_cent["BeamShift"]
     x_cent, y_cent = np.array((h_cent["BeamShift"]["x"], h_cent["BeamShift"]["y"]))
     print
     print "Center:", center_fn

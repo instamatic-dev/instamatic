@@ -26,7 +26,7 @@ except WindowsError:
 ctrl = TEMController(tem, cam)
 
 CALIB100X = "calib.pickle"
-CALIB2500X = "calib2500x.pickle"
+CALIBBEAMSHIFT = "calibbeamshift.pickle"
 HOLE_COORDS = "hole_coords.npy"
 EXPERIMENT = "experiment.pickle"
 
@@ -38,14 +38,6 @@ def load_calib():
         raise IOError("\n >> Please run instamatic.calibrate100x first.")
     return calib
 
-def load_calib_high_mag():
-    if os.path.exists(CALIB2500X):
-        d = pickle.load(open(CALIB2500X, "r"))
-        calib = CalibResult(**d)
-    else:
-        raise IOError("\n >> Please run instamatic.calibrate2500x first.")
-    return calib
-
 def load_hole_stage_positions():
     if os.path.exists(HOLE_COORDS):
         coords = np.load(HOLE_COORDS)
@@ -53,6 +45,13 @@ def load_hole_stage_positions():
         raise IOError("\n >> Please run instamatic.map_holes_on_grid first.")
     return coords
 
+def load_calib_beamshift():
+    if os.path.exists(CALIBBEAMSHIFT):
+        d = pickle.load(open(CALIBBEAMSHIFT, "r"))
+        calib = CalibResult(**d)
+    else:
+        raise IOError("\n >> Please run instamatic.calibrate_beamshift first.")
+    return calib
 
 def load_experiment():
     if os.path.exists(EXPERIMENT):
@@ -138,7 +137,7 @@ def seek_and_destroy_entry():
     exposure = 0.2
     binsize = 1
 
-    calib = load_calib2500x()
+    calib = load_calib_beamshift()
 
     fns = sys.argv[1:]
     if fns:
@@ -222,7 +221,37 @@ def update_experiment_with_hole_coords_entry():
         coords = np.load(fn)
 
     experiment = load_experiment()
-    experiment["centers"] = coords
+
+    radius = experiment["radius"]
+
+    shifts = []
+    print "\n >> Trying to find shift correction factor lowmag -> mag1 coords..."
+    for xy in experiment["centers"]:
+        dist_sq = np.sum((coords - xy)**2, axis=1)
+        nearest = np.argmin(dist_sq)
+        val = dist_sq[nearest]
+    
+        if val**0.5 < radius:
+            shift = coords[nearest] - xy
+            shifts.append(shift)
+            print "Shift:", shift
+
+    mean_shift = np.mean(np.array(shifts), axis=0)
+    print " >> Correction factor (mean shift): {}".format(mean_shift)
+
+    corrected = coords - mean_shift
+
+    plot = False
+    if plot:
+        plt.scatter(*coords.T, color="grey", label="original lowmag coords")
+        plt.scatter(*corrected.T, color="blue", label="corrected lowmag coords")
+        plt.scatter(*experiment["centers"].T, color="red", label="picked mag1 coords")
+        plt.legend()
+        plt.show()
+
+    experiment["centers_mag1"] = experiment["centers"]
+    experiment["stagepos_shift"] = mean_shift 
+    experiment["centers"] = corrected
 
     pickle.dump(experiment, open(EXPERIMENT, "w"))
     print " >> Wrote {} coordinates to file {}".format(len(coords), EXPERIMENT)
@@ -545,19 +574,19 @@ prepare
         }, open(CALIB100X,"w"))
 
 
-def calibrate2500x_entry():
-    from calibration import calibrate_high_mag, calibrate_high_mag_from_image_fn
+def calibrate_beamshift_entry():
+    from calibration import calibrate_highmag, calibrate_highmag_from_image_fn
 
     if "help" in sys.argv:
         print """
-Program to calibrate highmag (2500x) of microscope
+Program to calibrate beamshift of microscope
 
 Usage: 
 prepare
-    instamatic.calibrate2500x
+    instamatic.calibrate_beamshift
         To start live calibration routine on the microscope
 
-    instamatic.calibrate2500x CENTER_IMAGE (CALIBRATION_IMAGE ...)
+    instamatic.calibrate_beamshift CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
 """
         exit()
@@ -576,7 +605,7 @@ prepare
     pickle.dump({
         "transform": calib.transform,
         "reference_position": calib.reference_position
-        }, open(CALIB2500X, "w"))
+        }, open(CALIBBEAMSHIFT, "w"))
 
 
 def main():

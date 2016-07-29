@@ -36,6 +36,7 @@ setup(
             'instamatic.controller = instamatic.TEMController:main_entry',
             'instamatic.viewer = instamatic.viewer:main',
             'instamatic.calibrate100x = instamatic.app:calibrate100x_entry',
+            'instamatic.calibratebeamshift = instamatic.app:calibrate_beamshift_entry',
             'instamatic.map_holes = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole = instamatic.app:goto_hole_entry',
             'instamatic.prepare_experiment = instamatic.app:prepare_experiment_entry',

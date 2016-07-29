@@ -270,6 +270,9 @@ class SimTEM(tem.TEM):
     def resetDefocus(self):
         self.zero_defocus = self.focus
 
+    def getMagnificationsInizialized(self):
+        return True
+
     def getMagnification(self, index=None):
         if index is None:
             index = self.magnification_index
