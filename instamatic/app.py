@@ -184,31 +184,39 @@ def fake_circle():
 def find_hole_center_high_mag_interactive():
     while True:
         print "\nPick 3 points centering the camera on the edge of a hole"
-        raw_input(" 1 >> ")
+        print " 1 >> ",
+        raw_input()
         v1 = ctrl.stageposition.x, ctrl.stageposition.y
-        raw_input(" 2 >> ")
+        print v1
+        print " 2 >> ",
+        raw_input()
         v2 = ctrl.stageposition.x, ctrl.stageposition.y
-        raw_input(" 3 >> ")
+        print v2
+        print " 3 >> ",
+        raw_input()
         v3 = ctrl.stageposition.x, ctrl.stageposition.y
+        print v3
     
         # in case of simulation mode generate a fake circle
         if v1 == (0, 0) and v2 == (0, 0) and v3 == (0, 0):
             v1, v2, v3 = fake_circle()
-    
-        center = circle_center(v1, v2, v3)
-        radius = np.mean([np.linalg.norm(np.array(v)-center) for v in (v1, v2, v3)])
+        
+        try:
+            center = circle_center(v1, v2, v3)
+            radius = np.mean([np.linalg.norm(np.array(v)-center) for v in (v1, v2, v3)])
+        except:
+            print "Could not determine circle center/radius... Try again"
+            continue
         print "Center:", center
         print "Radius:", radius
         
-        answer = raw_input("\nkeep? \n [YES/no/done/exit] >> ")
+        answer = raw_input("\ncontinue? \n [YES/no/redo] >> ")
         
         if "n" in answer:
-            continue
-        elif "d" in answer:
             yield center, radius
             raise StopIteration
-        elif "x" in answer:
-            exit()
+        elif "r" in answer:
+            continue
         else:
             yield center, radius
 
@@ -288,7 +296,10 @@ def prepare_experiment_entry():
         "y_offsets": y_offsets
         }, open("experiment.pickle","w"))
 
-    plot_experiment_entry()
+    try:
+        plot_experiment_entry()
+    except IOError:
+        pass
 
 
 def plot_experiment_entry():
