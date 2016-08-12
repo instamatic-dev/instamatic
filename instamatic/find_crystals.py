@@ -267,8 +267,9 @@ def plot_props(img, props, fname=None):
         plt.xlim(0, xmax)
         plt.ylim(ymax, 0)
 
-        #s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
-        s = " {}:\n {:f}".format(i, prop.eccentricity)
+        # s = " {}".format(i, int(cx), int(cy))
+        s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
+        # s = " {}:\n {:f}".format(i, prop.eccentricity)
         plt.text(x2, y2, s=s, color="red", size=15)
 
     if fname:

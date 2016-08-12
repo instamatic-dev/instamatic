@@ -208,19 +208,14 @@ def calibrate_lowmag(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1,
         instance of Calibration class with conversion methods
     """
 
-    if not raw_input("""\n >> Go too 100x mag, and move the sample stage
-    so that the grid center (clover) is in the 
-    middle of the image (type 'go'): """) == "go":
-        exit()
-
     print
     print ctrl.stageposition
     img_cent, h = ctrl.getImage(exposure=exposure, comment="Center image")
-    x_cent, y_cent = h["TEMStagePosition"]["x"], h["TEMStagePosition"]["y"]
+    x_cent, y_cent = h["StagePosition"]["x"], h["StagePosition"]["y"]
     
     if save_images:
         outfile = "calib_center.npy"
-        save_image_and_header(outfile, arr=img_cent, header=h)
+        save_image_and_header(outfile, img=img_cent, header=h)
 
     stagepos = []
     shifts = []
@@ -238,7 +233,7 @@ def calibrate_lowmag(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1,
         img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        xy = h["TEMStagePosition"]["x"], h["TEMStagePosition"]["y"]
+        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
         stagepos.append(xy)
         shifts.append(shift)
 

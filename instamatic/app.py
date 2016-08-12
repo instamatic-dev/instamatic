@@ -16,19 +16,21 @@ from find_crystals import find_holes
 
 import pickle
 
-try:
-    tem = jeolcom.Jeol()
-    cam = gatanOrius()
-except WindowsError:
-    print " >> Could not connect to JEOL, using SimTEM instead..."
-    tem = simtem.SimTEM()
-    cam = gatanOrius(simulate=True)
-ctrl = TEMController(tem, cam)
-
 CALIB100X = "calib.pickle"
 CALIBBEAMSHIFT = "calibbeamshift.pickle"
 HOLE_COORDS = "hole_coords.npy"
 EXPERIMENT = "experiment.pickle"
+
+def initialize():
+    try:
+        tem = jeolcom.Jeol()
+        cam = gatanOrius()
+    except WindowsError:
+        print " >> Could not connect to JEOL, using SimTEM instead..."
+        tem = simtem.SimTEM()
+        cam = gatanOrius(simulate=True)
+    ctrl = TEMController(tem, cam)
+    return ctrl
 
 def load_calib():
     if os.path.exists(CALIB100X):
@@ -109,7 +111,7 @@ def get_grid(n, r, borderwidth=0.8):
     return xvals*r, yvals*r 
 
 
-def seek_and_destroy(img, calib, plot=False):
+def seek_and_destroy(img, calib, ctrl=None, plot=False):
     """Routine that handles seeking crystals, and shooting them with the beam"""
 
     exposure = 1.0
@@ -145,6 +147,7 @@ def seek_and_destroy_entry():
             arr, header = load_img(fn)
             seek_and_destroy(arr, calib, plot=True)
     else:
+        ctrl = initialize()
         arr = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
     
         seek_and_destroy(arr, calib, plot=True)
@@ -181,7 +184,9 @@ def fake_circle():
     return vects
 
 
-def find_hole_center_high_mag_interactive():
+def find_hole_center_high_mag_interactive(ctrl=None):
+    if not ctrl:
+        ctrl = initialize()
     while True:
         print "\nPick 3 points centering the camera on the edge of a hole"
         print " 1 >> ",
@@ -301,8 +306,7 @@ def prepare_experiment_entry():
     except IOError:
         pass
 
-
-def plot_experiment_entry():
+def plot_experiment(ctrl=None):
     d = load_experiment()
     calib = load_calib()
     centers = d["centers"]
@@ -364,8 +368,11 @@ def plot_experiment_entry():
 
     plt.show()
 
+def plot_experiment_entry():
+    ctrl = initialize()
+    plot_experiment()
 
-def do_experiment_entry():
+def do_experiment(ctrl=None):
     d = load_experiment()
     centers = d["centers"]
     radius = d["radius"]
@@ -440,7 +447,12 @@ def do_experiment_entry():
         i += 1
 
 
-def plot_hole_stage_positions(calib, coords, picker=False):
+def do_experiment_entry():
+    ctrl = initialize()
+    do_experiment(ctrl)
+
+
+def plot_hole_stage_positions(calib, coords, ctrl=None, picker=False):
     fig = plt.figure()
     reflabel = "Reference position"
     holelabel = "Hole position"
@@ -478,6 +490,8 @@ def plot_hole_stage_positions(calib, coords, picker=False):
 
 
 def goto_hole_entry():
+    ctrl = initialize()
+
     calib = load_calib()
     coords = load_hole_stage_positions()
 
@@ -486,7 +500,7 @@ def goto_hole_entry():
     except IndexError:
         print "\nUsage: instamatic.goto_hole [N]"
         print
-        plot_hole_stage_positions(calib, coords, picker=True)
+        plot_hole_stage_positions(calib, coords, ctrl=ctrl, picker=True)
         # num = int(raw_input( "Which number to go to? \n >> [0-{}] ".format(len(coords))))
     else:
         if num > len(coords):
@@ -550,9 +564,29 @@ def map_holes_on_grid_entry():
     coords = map_holes_on_grid(fns, calib)
     np.save(HOLE_COORDS, coords)
 
+def calibrate100x(center_fn=None, other_fn=None, ctrl=None, confirm=True):
+    from calibration import calibrate_lowmag, calibrate_lowmag_from_image_fn
+    
+
+    if not (center_fn or other_fn):
+        if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
+            return
+        else:
+            calib = calibrate_lowmag(ctrl, save_images=True)
+    else:
+        calib = calibrate_lowmag_from_image_fn(center_fn, other_fn)
+
+    print "\nRotation/scalint matrix:\n", calib.transform
+    print "Reference stagepos:", calib.reference_position
+
+    print calib
+
+    pickle.dump({
+        "transform": calib.transform,
+        "reference_position": calib.reference_position
+        }, open(CALIB100X,"w"))
 
 def calibrate100x_entry():
-    from calibration import calibrate_lowmag, calibrate_lowmag_from_image_fn
 
     if "help" in sys.argv:
         print """
@@ -568,12 +602,15 @@ prepare
 """
         exit()
     elif len(sys.argv) == 1:
-        calib = calibrate_lowmag(ctrl, save_images=True)
+        ctrl = initialize()
+        calibrate100x(ctrl=ctrl, save_images=True)
     else:
-        fn_center = sys.argv[1]
-        fn_other = sys.argv[2:]
-        calib = calibrate_lowmag_from_image_fn(fn_center, fn_other)
+        center_fn = sys.argv[1]
+        other_fn = sys.argv[2:]
+        calibrate100x(center_fn, other_fn)
 
+
+def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, confirm=True):
     print "\nRotation/scalint matrix:\n", calib.transform
     print "Reference stagepos:", calib.reference_position
 
@@ -582,8 +619,7 @@ prepare
     pickle.dump({
         "transform": calib.transform,
         "reference_position": calib.reference_position
-        }, open(CALIB100X,"w"))
-
+        }, open(CALIBBEAMSHIFT, "w"))
 
 def calibrate_beamshift_entry():
     from calibration import calibrate_highmag, calibrate_highmag_from_image_fn
@@ -604,19 +640,10 @@ prepare
     elif len(sys.argv) == 1:
         calib = calibrate_highmag(ctrl, save_images=True)
     else:
-        fn_center = sys.argv[1]
-        fn_other = sys.argv[2:]
-        calib = calibrate_highmag_from_image_fn(fn_center, fn_other)
+        center_fn = sys.argv[1]
+        other_fn = sys.argv[2:]
+        calib = calibrate_highmag_from_image_fn(center_fn, other_fn)
 
-    print "\nRotation/scalint matrix:\n", calib.transform
-    print "Reference stagepos:", calib.reference_position
-
-    print calib
-
-    pickle.dump({
-        "transform": calib.transform,
-        "reference_position": calib.reference_position
-        }, open(CALIBBEAMSHIFT, "w"))
 
 
 def main():
