@@ -199,7 +199,7 @@ def find_crystals(img, header=None, plot=False):
     return crystals
 
 
-def find_holes(img, header=None, diameter=150.0, plot=True):
+def find_holes(img, header=None, diameter=150.0, plot=True, fname=None):
     """Hole size as diameter in micrometer"""
     if header:
         # hole size is in um
@@ -237,6 +237,8 @@ def find_holes(img, header=None, diameter=150.0, plot=True):
     
     if plot:
         plot_props(img, newprops)
+    if fname:
+        plot_props(img, newprops, fname)
 
     return newprops
 

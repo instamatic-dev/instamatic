@@ -9,6 +9,11 @@ try:
 except WindowsError:
     comtypes.CoInitialize()
 
+try:
+    import fabio
+except IOError:
+    pass
+
 import numpy as np
 import os, sys
 
@@ -122,7 +127,7 @@ class gatanOrius(object):
 
         print "Image acquired - shape: {}x{}, size: {} kB".format(xres, yres, arr.nbytes / 1024)
 
-        return arr
+        return arr.astype(int)
 
     def getCameraCount(self):
         return self._cameraCount()
@@ -162,8 +167,8 @@ def save_image(outfile, img):
     if ext.lower() == ".npy":
         np.save(outfile, img)
     else:
-        plt.imsave(outfile, arr, cmap="gray")
-    print " >> Image written to {}".format(outfile) 
+        plt.imsave(outfile, img, cmap="gray")
+    # print " >> Image written to {}".format(outfile) 
 
 
 def save_header(outfile, header):
@@ -176,16 +181,42 @@ def save_header(outfile, header):
     json.dump(header, outfile, indent=2)
     if outfile.name == "<stdout>":
         print
-    else:
-        print " >> Header written to {}".format(outfile.name) 
+    # else:
+        # print " >> Header written to {}".format(outfile.name) 
+
 
 def save_image_and_header(outfile, img=None, header=None):
-    if img is not None:
-        save_image(outfile, img)
-    if header:
-        save_header(outfile, header)
-
-
+    root, ext = os.path.splitext(outfile)
+    ext = ext.lower()
+    if ext == "":
+        ext = ".edf"
+        outfile = root + ext
+    if ext == ".cbf":
+        im = fabio.cbfimage.cbfimage(data=img, header=header)
+        im.write(outfile)
+    elif ext == ".edf":
+        im = fabio.edfimage.edfimage(data=img, header=header)
+        im.write(outfile)
+    # elif ext == ".dm3":
+    #     im = fabio.dm3image.dm3image(data=img, header=header)
+    #     im.write(outfile)
+    elif ext == ".tif" or ext == ".tiff":
+        im = fabio.tifimage.tifimage(data=img, header=header)
+        im.write(outfile)
+    # elif ext == ".xml" or ext == "xsd":
+    #     im = fabio.xsdimage.xsdimage(data=img, header=header)
+    #     im.write(outfile)
+    # elif ext == ".npy":
+    #     im = fabio.numpyimage.numpyimage(data=img, header=header)
+    #     im.write(outfile)
+    elif ext == ".npy":
+        if img is not None:
+            save_image(outfile, img)
+        if header:
+            save_header(outfile, header)
+    else:
+        raise IOError("Extension {} not understood (edf cbf tif npy)".format(ext))
+    print " >> Image written to {}".format(outfile)
 
 def main_entry():
     import argparse
@@ -272,7 +303,7 @@ def main_entry():
         print "    XXX         -> Add comment to header"
         print "    exit        -> exit the program"
     while take_series:
-        outfile = "image_{:04d}.npy".format(i)
+        outfile = "image_{:04d}".format(i)
         inp = raw_input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
         if inp == "exit":
             break
@@ -323,7 +354,7 @@ def main_entry():
         if outfile:
             save_image_and_header(outfile, img=arr, header=h)
         else:
-            save_image_and_header("out.npy", img=arr, header=h)
+            save_image_and_header("out", img=arr, header=h)
 
     # cam.releaseConnection()
 

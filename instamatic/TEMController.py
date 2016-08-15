@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from camera.camera import gatanOrius, save_image, save_header
+from camera.camera import gatanOrius, save_image_and_header
 import time
 
 from IPython.terminal.embed import InteractiveShellEmbed
@@ -263,8 +263,7 @@ class TEMController(object):
         h["Time"] = time.ctime()
 
         if out:
-            save_image(out, arr)
-            save_header(out, h)
+            save_image_and_header(out, img=arr, header=h)
 
         if plot:
             plt.imshow(arr)

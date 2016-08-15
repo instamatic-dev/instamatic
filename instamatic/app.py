@@ -56,6 +56,7 @@ def load_calib_beamshift():
     return calib
 
 def load_experiment():
+    print os.path.abspath(".")
     if os.path.exists(EXPERIMENT):
         d = pickle.load(open(EXPERIMENT, "r"))
     else:
@@ -225,14 +226,7 @@ def find_hole_center_high_mag_interactive(ctrl=None):
         else:
             yield center, radius
 
-
-def update_experiment_with_hole_coords_entry():
-    if len(sys.argv) == 1:
-        coords = load_hole_stage_positions()
-    else:
-        fn = sys.argv[1]
-        coords = np.load(fn)
-
+def update_experiment_with_hole_coords(coords):
     experiment = load_experiment()
 
     radius = experiment["radius"]
@@ -270,6 +264,33 @@ def update_experiment_with_hole_coords_entry():
     print " >> Wrote {} coordinates to file {}".format(len(coords), EXPERIMENT)
 
 
+def update_experiment_with_hole_coords_entry():
+    if len(sys.argv) == 1:
+        coords = load_hole_stage_positions()
+    else:
+        fn = sys.argv[1]
+        coords = np.load(fn)
+
+    update_experiment_with_hole_coords(coords)
+
+
+def prepare_experiment(centers, radii):
+    centers = np.array(centers)
+
+    r_mean = np.mean(radii)
+    r_std = np.std(radii)
+    print "Average radius: {}+-{} ({:.1%})".format(r_mean, r_std, (r_std/r_mean))
+    
+    x_offsets, y_offsets = get_grid(n=7, r=r_mean)
+
+    pickle.dump({
+        "centers": centers,
+        "radius": r_mean,
+        "x_offsets": x_offsets,
+        "y_offsets": y_offsets
+        }, open("experiment.pickle","w"))
+
+
 def prepare_experiment_entry():
     # fns = sys.argv[1:]
     centers = []
@@ -286,20 +307,7 @@ def prepare_experiment_entry():
             centers.append(center)
             radii.append(radius)
 
-    centers = np.array(centers)
-
-    r_mean = np.mean(radii)
-    r_std = np.std(radii)
-    print "Average radius: {}+-{} ({:.1%})".format(r_mean, r_std, (r_std/r_mean))
-    
-    x_offsets, y_offsets = get_grid(n=7, r=r_mean)
-
-    pickle.dump({
-        "centers": centers,
-        "radius": radius,
-        "x_offsets": x_offsets,
-        "y_offsets": y_offsets
-        }, open("experiment.pickle","w"))
+    prepare_experiment(centers, radii)
 
     try:
         plot_experiment_entry()
@@ -370,7 +378,7 @@ def plot_experiment(ctrl=None):
 
 def plot_experiment_entry():
     ctrl = initialize()
-    plot_experiment()
+    plot_experiment(ctrl=ctrl)
 
 def do_experiment(ctrl=None):
     d = load_experiment()
@@ -416,7 +424,7 @@ def do_experiment(ctrl=None):
                 j += 1
                 continue
 
-            outfile = "image_{:04d}_{:04d}.npy".format(i,j)
+            outfile = "image_{:04d}_{:04d}".format(i,j)
 
             if not auto:
                 answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
@@ -452,7 +460,11 @@ def do_experiment_entry():
     do_experiment(ctrl)
 
 
-def plot_hole_stage_positions(calib, coords, ctrl=None, picker=False):
+def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
+    if calib is None:
+        calib = load_calib()
+    if coords is None:
+        coords = load_hole_stage_positions()
     fig = plt.figure()
     reflabel = "Reference position"
     holelabel = "Hole position"
@@ -500,7 +512,7 @@ def goto_hole_entry():
     except IndexError:
         print "\nUsage: instamatic.goto_hole [N]"
         print
-        plot_hole_stage_positions(calib, coords, ctrl=ctrl, picker=True)
+        plot_hole_stage_positions(coords, calib, ctrl=ctrl, picker=True)
         # num = int(raw_input( "Which number to go to? \n >> [0-{}] ".format(len(coords))))
     else:
         if num > len(coords):
@@ -523,15 +535,23 @@ def cluster_mean(arr, threshold=0.00005):
     return np.array(merged)
 
 
-def map_holes_on_grid(fns, calib, plot=True):
+def map_holes_on_grid(fns, plot=True, save_images=False):
+    calib = load_calib()
+    print
+    print calib
+    print
     stage_coords = []
+    outfile = None
     for fn in fns:
         print "Now processing:", fn
         img, header = load_img(fn)
         img = img.astype(int)
         image_pos = np.array([header["StagePosition"]["x"], header["StagePosition"]["y"]])
 
-        holes = find_holes(img, header, plot=False)
+        if save_images:
+            outfile = os.path.splitext(fn)[0] + ".tif"
+
+        holes = find_holes(img, header, plot=plot, fname=outfile)
 
         for hole in holes:
             stagepos = calib.pixelcoord_to_stagepos(hole.centroid, image_pos)
@@ -546,27 +566,18 @@ def map_holes_on_grid(fns, calib, plot=True):
     if plot:
         plot_hole_stage_positions(calib, xy)
     print "Found {} unique holes (threshold={})".format(len(xy), threshold)
-    return xy
-
+    np.save(HOLE_COORDS, xy)
 
 def map_holes_on_grid_entry():
-    calib = load_calib()
-
-    print
-    print calib
-    print
-
     fns = sys.argv[1:]
     if not fns:
         print "Usage: instamatic.map_holes IMG1 [IMG2 ...]"
         exit()
     
-    coords = map_holes_on_grid(fns, calib)
-    np.save(HOLE_COORDS, coords)
+    map_holes_on_grid(fns)
 
 def calibrate100x(center_fn=None, other_fn=None, ctrl=None, confirm=True):
     from calibration import calibrate_lowmag, calibrate_lowmag_from_image_fn
-    
 
     if not (center_fn or other_fn):
         if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":

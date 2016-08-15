@@ -7,15 +7,28 @@ import json
 from functools import partial
 from camera import save_image_and_header
 
+import fabio
+from IPython import embed
+
 def load_img(fn):
-    arr = np.load(fn)
-
     root, ext = os.path.splitext(fn)
-    fnh = root + ".json"
-
-    d = json.load(open(fnh, "r"))
+    ext = ext.lower()
+    if ext != ".npy":
+        arr = fabio.openimage.openimage(fn)
+        # workaround to fix headers
+        if ext == ".edf":
+            for key in ("BeamShift", "BeamTilt", "GunShift", "GunTilt", "ImageShift", "StagePosition"):
+                if arr.header.has_key(key):
+                    arr.header[key] = eval("{" + arr.header[key] + "}")
+        return arr.data, arr.header
+    else:
+        arr = np.load(fn)
     
-    return arr, d
+        root, ext = os.path.splitext(fn)
+        fnh = root + ".json"
+    
+        d = json.load(open(fnh, "r"))
+        return arr, d
 
 
 class CalibResult(object):
@@ -186,7 +199,7 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
     plt.axis('equal')
     plt.show()
-    
+
     return r
 
 
@@ -214,7 +227,7 @@ def calibrate_lowmag(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1,
     x_cent, y_cent = h["StagePosition"]["x"], h["StagePosition"]["y"]
     
     if save_images:
-        outfile = "calib_center.npy"
+        outfile = "calib_center"
         save_image_and_header(outfile, img=img_cent, header=h)
 
     stagepos = []
@@ -238,9 +251,12 @@ def calibrate_lowmag(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1,
         shifts.append(shift)
 
         if save_images:
-            outfile = "calib_{:04d}.npy".format(i)
+            outfile = "calib_{:04d}".format(i)
             save_image_and_header(outfile, img=img, header=h)
         
+        if i == 4:
+            break
+
         i += 1
             
     print " >> Reset to center"
@@ -291,11 +307,11 @@ def calibrate_lowmag_from_image_fn(center_fn, other_fn):
         
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
-        
+    print "rwar"  
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
     
     c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
-
+    print "Rwar2"
     return c
 
 
@@ -328,7 +344,7 @@ def calibrate_highmag(ctrl, gridsize=5, stepsize=0e-05, exposure=0.1, binsize=1,
     x_cent, y_cent = ctrl.beamshift.x, ctrl.beamshift.y
     
     if save_images:
-        outfile = "calib_beamcenter.npy"
+        outfile = "calib_beamcenter"
         save_image_and_header(outfile, img=img_cent, header=h)
 
     beampos = []
@@ -352,7 +368,7 @@ def calibrate_highmag(ctrl, gridsize=5, stepsize=0e-05, exposure=0.1, binsize=1,
         shifts.append(shift)
 
         if save_images:
-            outfile = "calib_beamshift_{:04d}.npy".format(i)
+            outfile = "calib_beamshift_{:04d}".format(i)
             save_image_and_header(outfile, img=img,  header=h)
         
         i += 1
