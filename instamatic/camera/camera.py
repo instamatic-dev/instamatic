@@ -217,6 +217,7 @@ def save_image_and_header(outfile, img=None, header=None):
     else:
         raise IOError("Extension {} not understood (edf cbf tif npy)".format(ext))
     print " >> Image written to {}".format(outfile)
+    return outfile
 
 def main_entry():
     import argparse

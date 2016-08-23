@@ -535,7 +535,7 @@ def cluster_mean(arr, threshold=0.00005):
     return np.array(merged)
 
 
-def map_holes_on_grid(fns, plot=True, save_images=False):
+def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
     calib = load_calib()
     print
     print calib
@@ -547,6 +547,9 @@ def map_holes_on_grid(fns, plot=True, save_images=False):
         img, header = load_img(fn)
         img = img.astype(int)
         image_pos = np.array([header["StagePosition"]["x"], header["StagePosition"]["y"]])
+
+        if callback:
+            callback(img=img, header=header, name=fn)
 
         if save_images:
             outfile = os.path.splitext(fn)[0] + ".tif"
