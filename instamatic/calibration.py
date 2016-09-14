@@ -1,14 +1,11 @@
 from scipy.optimize import leastsq
-from cross_correlate import cross_correlate
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
 import json
-from functools import partial
-from camera import save_image_and_header
 
 import fabio
-from IPython import embed
+
 
 def load_img(fn):
     root, ext = os.path.splitext(fn)
@@ -29,6 +26,22 @@ def load_img(fn):
     
         d = json.load(open(fnh, "r"))
         return arr, d
+
+
+class CalibBrightness(object):
+    """docstring for calib_brightness"""
+    def __init__(self, slope, intercept):
+        self.slope = slope
+        self.intercept = intercept
+
+    def __repr__(self):
+        return "CalibBrightness(slope={}, intercept={})".format(self.slope, self.intercept)
+
+    def brightness_to_pixelsize(self, val):
+        return self.slope*val + self.intercept
+
+    def pixelsize_to_brightness(self, val):
+        return (val - self.intercept) / self.slope
 
 
 class CalibResult(object):

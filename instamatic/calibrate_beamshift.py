@@ -3,22 +3,13 @@
 import sys, os
 import numpy as np
 
-from scipy.optimize import leastsq
 from cross_correlate import cross_correlate
 
-from pyscope import jeolcom, simtem
-from camera import gatanOrius, save_image_and_header
-from find_crystals import find_objects, plot_props
+from camera import save_image_and_header
 from TEMController import initialize
-
-from IPython import embed
 
 import fileio
 from calibration import CalibResult, load_img, lsq_rotation_scaling_matrix
-import matplotlib.pyplot as plt
-from find_crystals import find_holes
-
-import pickle
 
 
 def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, binsize=1, save_images=False):

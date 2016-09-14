@@ -19,7 +19,6 @@ import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
-
 from calibration import lowmag_dimensions
 from calibration import load_img
 
@@ -58,13 +57,14 @@ def enhance_contrast(img):
     return exposure.equalize_hist(img)
 
 
-def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True):
+def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=True):
     """Get markers using simple thresholds"""
     background = 1
     features = 2
     
     markers = np.zeros_like(img)
-    print "\nbounds:", lower, upper
+    if verbose:
+        print "\nbounds:", lower, upper
 
     if dark_on_bright:
         markers[img < lower] = features
@@ -73,9 +73,10 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True):
         markers[img < lower] = background
         markers[img > upper] = features
     
-    print "\nother      {:6.2%}".format(1.0*np.sum(markers == 0) / markers.size)
-    print   "background {:6.2%}".format(1.0*np.sum(markers == background) / markers.size)
-    print   "features   {:6.2%}".format(1.0*np.sum(markers == features) / markers.size)
+    if verbose:
+        print "\nother      {:6.2%}".format(1.0*np.sum(markers == 0) / markers.size)
+        print   "background {:6.2%}".format(1.0*np.sum(markers == background) / markers.size)
+        print   "features   {:6.2%}".format(1.0*np.sum(markers == features) / markers.size)
 
     return markers
 
@@ -114,7 +115,7 @@ def plot_features(img, segmented):
     plt.show()
 
 
-def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
+def find_objects(img, method="watershed", markers=None, plot=False, verbose=True, **kwargs):
     """Find crystals using the watershed or random_walker methods"""
 
     clear_border = kwargs.get("clear_border", True)
@@ -129,13 +130,13 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
         n = 0.33
         l = otsu - (otsu - np.min(img))*n
         u = otsu + (np.max(img) - otsu)*n
-        markers = get_markers_bounds(img, lower=l, upper=u)
+        markers = get_markers_bounds(img, lower=l, upper=u, verbose=verbose)
     elif markers == "gradient":
         radius = kwargs.get("radius", 10)
         threshold = kwargs.get("threshold", 40)
         markers = get_markers_gradient(img, radius=radius, threshold=threshold)
     else:
-        markers = get_markers_bounds(img, lower=100, upper=180)
+        markers = get_markers_bounds(img, lower=100, upper=180, verbose=verbose)
 
     if plot:
         plt.imshow(markers)
@@ -162,20 +163,22 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
     # plt.imsave("d.png", segmented)
 
     if min_size > 0:
-        print " >> Removing objects smaller than {} pixels".format(round(min_size))
+        if verbose:
+            print " >> Removing objects smaller than {} pixels".format(round(min_size))
         # plt.imsave("before.png", segmented)
         morphology.remove_small_objects(segmented, min_size=min_size, connectivity=1, in_place=True)
         # plt.imsave("after.png", segmented)
 
     if clear_border:
-        print " >> Removing objects touching the edge of the frame"
+        if verbose:
+            print " >> Removing objects touching the edge of the frame"
         segmentation.clear_border(segmented, buffer_size=0, bgval=0, in_place=True)
 
     if plot:
         plot_features(img, segmented)
 
     labels, numlabels = ndimage.label(segmented)
-    print " >> {} objects found in image\n".format(numlabels)
+    print " >> {} objects found in image".format(numlabels)
     props = measure.regionprops(labels, img)
 
     # image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
@@ -184,7 +187,7 @@ def find_objects(img, method="watershed", markers=None, plot=False, **kwargs):
     return props
 
 
-def find_crystals(img, header=None, plot=False):
+def find_crystals(img, header=None, plot=False, verbose=True):
     otsu = filters.threshold_otsu(img)
     nl = 0.5
     nu = 0.0
@@ -195,11 +198,11 @@ def find_crystals(img, header=None, plot=False):
 
     markers = get_markers_bounds(img, lower=l, upper=u)
 
-    crystals = find_objects(img, method="random_walker", markers=markers, plot=plot)
+    crystals = find_objects(img, method="random_walker", markers=markers, plot=plot, verbose=verbose)
     return crystals
 
 
-def find_holes(img, header=None, diameter=150.0, plot=True, fname=None):
+def find_holes(img, header=None, diameter=150.0, plot=True, fname=None, verbose=True, max_eccentricity=0.4):
     """Hole size as diameter in micrometer"""
     if header:
         # hole size is in um
@@ -214,16 +217,17 @@ def find_holes(img, header=None, diameter=150.0, plot=True, fname=None):
     n = 0.25
     l = otsu - (otsu - np.min(img))*n
     u = otsu + (np.max(img) - otsu)*n
-    print "img range: {} - {}".format(img.min(), img.max())
-    print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
+    if verbose:
+        print "img range: {} - {}".format(img.min(), img.max())
+        print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
     
-    markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False)
+    markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
     # plt.imshow(markers)
-    props = find_objects(img, markers=markers, fill_holes=True, min_size=hole_area*0.75, plot=plot)
+    props = find_objects(img, markers=markers, fill_holes=True, min_size=hole_area*0.75, plot=plot, verbose=verbose)
 
     newprops = []
     for prop in props:
-        if prop.eccentricity > 0.4:
+        if prop.eccentricity > max_eccentricity:
             continue
         # FIXME .convex_area crashes here, use .area instead
         if prop.area*pxx*pxy < hole_area*0.75:  
@@ -276,6 +280,7 @@ def plot_props(img, props, fname=None):
 
     if fname:
         plt.savefig(fname)
+        plt.close()
     else:
         plt.show()
 
