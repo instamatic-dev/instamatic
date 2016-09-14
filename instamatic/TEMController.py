@@ -45,8 +45,8 @@ class Magnification(object):
         super(Magnification, self).__init__()
         self._tem = tem
 
-        if not tem.getMagnificationsInizialized():
-            answer = raw_input(" >> Magnification index not initialized, run initialization routine? \n [YES/no] >> ")
+        if not tem.getMagnificationsInitialized():
+            answer = raw_input(" >> Magnification index not initialized, run initialization routine? \n [YES/no] >> ") or "y"
             if "y" in answer:
                 tem.findMagnifications()
                 print "done..."
@@ -126,7 +126,7 @@ class TEMController(object):
                 return "GunShift(x={x}, y={y})".format(**d)
 
             def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
+                tem.setGunShift(kwargs)
 
         class GunTilt(object):
             x = TEMValue("x", tem.getGunTilt, tem.setGunTilt)
@@ -137,29 +137,29 @@ class TEMController(object):
                 return "GunTilt(x={x}, y={y})".format(**d)
 
             def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
+                tem.setGunTilt(kwargs)
 
         class BeamShift(object):
             x = TEMValue("x", tem.getBeamShift, tem.setBeamShift)
             y = TEMValue("y", tem.getBeamShift, tem.setBeamShift)
 
             def __repr__(self):
-                d = tem.getGunTilt()
+                d = tem.getBeamShift()
                 return "BeamShift(x={x}, y={y})".format(**d)
 
             def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
+                tem.setBeamShift(kwargs)
 
         class BeamTilt(object):
             x = TEMValue("x", tem.getBeamTilt, tem.setBeamTilt)
             y = TEMValue("y", tem.getBeamTilt, tem.setBeamTilt)
 
             def __repr__(self):
-                d = tem.getGunTilt()
+                d = tem.getBeamTilt()
                 return "BeamTilt(x={x}, y={y})".format(**d)
 
             def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
+                tem.setBeamTilt(kwargs)
 
         class ImageShift(object):
             x = TEMValue("x", tem.getImageShift, tem.setImageShift)
@@ -210,7 +210,8 @@ class TEMController(object):
                           str(self.beamtilt),
                           str(self.imageshift),
                           str(self.stageposition),
-                          str(self.magnification)))
+                          str(self.magnification),
+                        "Intensity: {}".format(self.tem.getIntensity())))
 
     def activate_nanobeam(self):
         raise NotImplementedError
@@ -227,7 +228,8 @@ class TEMController(object):
             'ImageShift': self.tem.getImageShift(),
             'StagePosition': self.tem.getStagePosition(),
             'Magnification': self.magnification.value,
-            'DiffractionMode': self.getDiffractionmode()
+            'DiffractionMode': self.getDiffractionmode(),
+            'Intensity': self.tem.getIntensity()
         }
         return d
 

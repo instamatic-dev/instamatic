@@ -4,6 +4,7 @@ import sys
 import comtypes.client
 import tem
 import moduleconfig
+import magnifications
 
 import atexit
 
@@ -99,9 +100,10 @@ class Jeol(tem.TEM):
         self.has_auto_apt = self.testAutomatedAperture()
         self.relax_beam = False
 
-        self.magnifications = []
+        self.magnifications = magnifications.magnifications
         # submode_mags keys are submode_indices and values are magnification list in the submode
-        self.submode_mags = {}
+        self.submode_mags = magnifications.submode_mags
+        self.projection_submode_map = magnifications.projection_submode_projection_map
         # initialize values from jeol.cfg
         self.zero_defocus_om = self.getJeolConfig('om standard focus')
         self.zero_defocus_ol = self.getJeolConfig('ol standard focus')
@@ -168,7 +170,8 @@ class Jeol(tem.TEM):
                 # depends on mag to choose ['ls1','ls2','ls3','lm1']
                 mode_subname = self.subDivideMode(mode_name,mag)
                 return value[mode_subname]
-            except:
+            except KeyError as e:
+                print e
                 raise RuntimeError('%s function not implemented in mag %d' % (key,mag))
 
     def getNeutral(self,key,mag=None):
@@ -188,8 +191,9 @@ class Jeol(tem.TEM):
             try:
                 lens_series = self.getLensSeriesDivision(mag)
                 value = self.getJeolConfig(optionname,lens_series)
-            except:
-                debug_print('%s,%d') % (optionname,int(mag))
+            except Exception as e:
+                print e
+                debug_print('{}: {}'.format(optionname,int(mag)))
                 raise RuntimeError('%s function not configured at mag %d' % (key,mag))
         return {'x':value[0],'y':value[1]}
 
@@ -833,7 +837,7 @@ class Jeol(tem.TEM):
             for lower_mode_index in range(mode_index):
                 for mag,submode_info in self.projection_submode_map.items():
                     if mag >= mag_cutoff and submode_info[1] == lower_mode_index:
-                        del self.projection_submode[mag]
+                        del self.projection_submode_map[mag]
 
     def getMagnificationIndex(self, magnification=None):
         if magnification is None:
