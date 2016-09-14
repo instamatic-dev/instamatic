@@ -10,59 +10,10 @@ from TEMController import TEMController
 
 from IPython import embed
 
-from calibration import CalibResult, load_img
+from calibration import CalibResult, fileio.load_img
 import matplotlib.pyplot as plt
 from find_crystals import find_holes
-
-import pickle
-
-CALIB100X = "calib.pickle"
-CALIBBEAMSHIFT = "calibbeamshift.pickle"
-HOLE_COORDS = "hole_coords.npy"
-EXPERIMENT = "experiment.pickle"
-
-def initialize():
-    try:
-        tem = jeolcom.Jeol()
-        cam = gatanOrius()
-    except WindowsError:
-        print " >> Could not connect to JEOL, using SimTEM instead..."
-        tem = simtem.SimTEM()
-        cam = gatanOrius(simulate=True)
-    ctrl = TEMController(tem, cam)
-    return ctrl
-
-def load_calib():
-    if os.path.exists(CALIB100X):
-        d = pickle.load(open(CALIB100X, "r"))
-        calib = CalibResult(**d)
-    else:
-        raise IOError("\n >> Please run instamatic.calibrate100x first.")
-    return calib
-
-def load_hole_stage_positions():
-    if os.path.exists(HOLE_COORDS):
-        coords = np.load(HOLE_COORDS)
-    else:
-        raise IOError("\n >> Please run instamatic.map_holes_on_grid first.")
-    return coords
-
-def load_calib_beamshift():
-    if os.path.exists(CALIBBEAMSHIFT):
-        d = pickle.load(open(CALIBBEAMSHIFT, "r"))
-        calib = CalibResult(**d)
-    else:
-        raise IOError("\n >> Please run instamatic.calibrate_beamshift first.")
-    return calib
-
-def load_experiment():
-    print os.path.abspath(".")
-    if os.path.exists(EXPERIMENT):
-        d = pickle.load(open(EXPERIMENT, "r"))
-    else:
-        raise IOError("\n >> Please run instamatic.prepare_experiment first.")
-    return d
-
+import fileio
 
 def circle_center(A, B, C):
     """Finds the center of a circle from 3 positions on the circumference
@@ -140,7 +91,7 @@ def seek_and_destroy_entry():
     exposure = 0.2
     binsize = 1
 
-    calib = load_calib_beamshift()
+    calib = fileio.load_calib_beamshift()
 
     fns = sys.argv[1:]
     if fns:
@@ -185,7 +136,7 @@ def fake_circle():
     return vects
 
 
-def find_hole_center_high_mag_interactive(ctrl=None):
+def find_hole_center_highmag_interactive(ctrl=None):
     if not ctrl:
         ctrl = initialize()
     while True:
@@ -227,7 +178,7 @@ def find_hole_center_high_mag_interactive(ctrl=None):
             yield center, radius
 
 def update_experiment_with_hole_coords(coords):
-    experiment = load_experiment()
+    experiment = fileio.load_experiment()
 
     radius = experiment["radius"]
 
@@ -260,13 +211,14 @@ def update_experiment_with_hole_coords(coords):
     experiment["stagepos_shift"] = mean_shift 
     experiment["centers"] = corrected
 
-    pickle.dump(experiment, open(EXPERIMENT, "w"))
+    fileio.write_experiment(experiment)
     print " >> Wrote {} coordinates to file {}".format(len(coords), EXPERIMENT)
+
 
 
 def update_experiment_with_hole_coords_entry():
     if len(sys.argv) == 1:
-        coords = load_hole_stage_positions()
+        coords = fileio.load_hole_stage_positions()
     else:
         fn = sys.argv[1]
         coords = np.load(fn)
@@ -283,12 +235,14 @@ def prepare_experiment(centers, radii):
     
     x_offsets, y_offsets = get_grid(n=7, r=r_mean)
 
-    pickle.dump({
+    experiment = {
         "centers": centers,
         "radius": r_mean,
         "x_offsets": x_offsets,
         "y_offsets": y_offsets
-        }, open("experiment.pickle","w"))
+        }
+
+    fileio.write_experiment(experiment)
 
 
 def prepare_experiment_entry():
@@ -303,7 +257,7 @@ def prepare_experiment_entry():
             centers.append(center)
             radii.append(radius)
     else:
-        for center, radius in find_hole_center_high_mag_interactive():
+        for center, radius in find_hole_center_highmag_interactive():
             centers.append(center)
             radii.append(radius)
 
@@ -315,8 +269,8 @@ def prepare_experiment_entry():
         pass
 
 def plot_experiment(ctrl=None):
-    d = load_experiment()
-    calib = load_calib()
+    d = fileio.load_experiment()
+    calib = fileio.load_calib()
     centers = d["centers"]
     radius = d["radius"]
     x_offsets = d["x_offsets"]
@@ -381,7 +335,7 @@ def plot_experiment_entry():
     plot_experiment(ctrl=ctrl)
 
 def do_experiment(ctrl=None):
-    d = load_experiment()
+    d = fileio.load_experiment()
     centers = d["centers"]
     radius = d["radius"]
     x_offsets = d["x_offsets"]
@@ -462,9 +416,9 @@ def do_experiment_entry():
 
 def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
     if calib is None:
-        calib = load_calib()
+        calib = fileio.load_calib()
     if coords is None:
-        coords = load_hole_stage_positions()
+        coords = fileio.load_hole_stage_positions()
     fig = plt.figure()
     reflabel = "Reference position"
     holelabel = "Hole position"
@@ -504,8 +458,8 @@ def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
 def goto_hole_entry():
     ctrl = initialize()
 
-    calib = load_calib()
-    coords = load_hole_stage_positions()
+    calib = fileio.load_calib()
+    coords = fileio.load_hole_stage_positions()
 
     try:
         num = int(sys.argv[1])
@@ -536,7 +490,7 @@ def cluster_mean(arr, threshold=0.00005):
 
 
 def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
-    calib = load_calib()
+    calib = fileio.load_calib()
     print
     print calib
     print
@@ -569,7 +523,8 @@ def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
     if plot:
         plot_hole_stage_positions(calib, xy)
     print "Found {} unique holes (threshold={})".format(len(xy), threshold)
-    np.save(HOLE_COORDS, xy)
+    np.save(fileio.HOLE_COORDS, xy)
+
 
 def map_holes_on_grid_entry():
     fns = sys.argv[1:]
@@ -578,86 +533,6 @@ def map_holes_on_grid_entry():
         exit()
     
     map_holes_on_grid(fns)
-
-def calibrate100x(center_fn=None, other_fn=None, ctrl=None, confirm=True):
-    from calibration import calibrate_lowmag, calibrate_lowmag_from_image_fn
-
-    if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
-            return
-        else:
-            calib = calibrate_lowmag(ctrl, save_images=True)
-    else:
-        calib = calibrate_lowmag_from_image_fn(center_fn, other_fn)
-
-    print "\nRotation/scalint matrix:\n", calib.transform
-    print "Reference stagepos:", calib.reference_position
-
-    print calib
-
-    pickle.dump({
-        "transform": calib.transform,
-        "reference_position": calib.reference_position
-        }, open(CALIB100X,"w"))
-
-def calibrate100x_entry():
-
-    if "help" in sys.argv:
-        print """
-Program to calibrate lowmag (100x) of microscope
-
-Usage: 
-prepare
-    instamatic.calibrate100x
-        To start live calibration routine on the microscope
-
-    instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
-       To perform calibration using pre-collected images
-"""
-        exit()
-    elif len(sys.argv) == 1:
-        ctrl = initialize()
-        calibrate100x(ctrl=ctrl, save_images=True)
-    else:
-        center_fn = sys.argv[1]
-        other_fn = sys.argv[2:]
-        calibrate100x(center_fn, other_fn)
-
-
-def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, confirm=True):
-    print "\nRotation/scalint matrix:\n", calib.transform
-    print "Reference stagepos:", calib.reference_position
-
-    print calib
-
-    pickle.dump({
-        "transform": calib.transform,
-        "reference_position": calib.reference_position
-        }, open(CALIBBEAMSHIFT, "w"))
-
-def calibrate_beamshift_entry():
-    from calibration import calibrate_highmag, calibrate_highmag_from_image_fn
-
-    if "help" in sys.argv:
-        print """
-Program to calibrate beamshift of microscope
-
-Usage: 
-prepare
-    instamatic.calibrate_beamshift
-        To start live calibration routine on the microscope
-
-    instamatic.calibrate_beamshift CENTER_IMAGE (CALIBRATION_IMAGE ...)
-       To perform calibration using pre-collected images
-"""
-        exit()
-    elif len(sys.argv) == 1:
-        calib = calibrate_highmag(ctrl, save_images=True)
-    else:
-        center_fn = sys.argv[1]
-        other_fn = sys.argv[2:]
-        calib = calibrate_highmag_from_image_fn(center_fn, other_fn)
-
 
 
 def main():

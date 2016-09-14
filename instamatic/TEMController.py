@@ -13,6 +13,21 @@ __version__ = "2016-06-29"
 __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
+
+def initialize():
+    try:
+        from instamatic.pyscope import jeolcom
+        tem = jeolcom.Jeol()
+        cam = gatanOrius()
+    except WindowsError:
+        from instamatic.pyscope import simtem
+        print " >> Could not connect to JEOL, using SimTEM instead..."
+        tem = simtem.SimTEM()
+        cam = gatanOrius(simulate=True)
+    ctrl = TEMController(tem, cam)
+    return ctrl
+
+
 class TEMValue(object):
     """docstring for TEMValue"""
 
