@@ -3,7 +3,6 @@
 import sys, os
 import numpy as np
 
-from pyscope import jeolcom, simtem
 from camera import gatanOrius, save_image_and_header
 from find_crystals import find_objects, plot_props
 from TEMController import TEMController

@@ -286,16 +286,8 @@ def main_entry():
 
     take_series = options.take_series
 
-    if options.simulate:
-        from instamatic.pyscope import simtem
-        tem = simtem.SimTEM()
-    else:
-        from instamatic.pyscope import jeolcom
-        tem = jeolcom.Jeol()
-
-    cam = gatanOrius(simulate=options.simulate)
     from instamatic import TEMController
-    ctrl = TEMController.TEMController(tem, cam)
+    ctrl = TEMController.initialize()
     
     if take_series:
         i = 1

@@ -9,99 +9,87 @@ from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
 ipshell = InteractiveShellEmbed(banner1='')
 
-__version__ = "2016-06-29"
+__version__ = "2016-09-15"
 __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
 
 def initialize():
     try:
-        from instamatic.pyscope import jeolcom
-        tem = jeolcom.Jeol()
+        from jeol_microscope import JeolMicroscope
+        tem = JeolMicroscope()
         cam = gatanOrius()
     except WindowsError:
-        from instamatic.pyscope import simtem
-        print " >> Could not connect to JEOL, using SimTEM instead..."
-        tem = simtem.SimTEM()
+        from simu_microscope import SimuMicroscope
+        print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
+        tem = SimuMicroscope()
         cam = gatanOrius(simulate=True)
     ctrl = TEMController(tem, cam)
     return ctrl
 
 
-class TEMValue(object):
-    """docstring for TEMValue"""
-
-    def __init__(self, var, getter, setter):
-        super(TEMValue, self).__init__()
-        self._getter = getter
-        self._setter = setter
-        self._var = var
+class Brightness(object):
+    """docstring for Brightness"""
+    def __init__(self, tem):
+        super(Brightness, self).__init__()
+        self._getter = tem.getBrightness
+        self._setter = tem.setBrightness
 
     def __repr__(self):
-        return str(self.__get__())
+        value = self.value
+        return "Brightness(value={})".format(value)
 
-    def __get__(self, obj, objtype):
-        d = self._getter()
-        try:
-            val = d[self._var]
-        except KeyError:
-            print " >> Error: Cannot retrieve value for", repr(self._var)
-            val = np.NaN
-        return val
+    def set(self, value):
+        self._setter(value)
 
-    def __set__(self, obj, val):
-        vector = {self._var: val}
-        self._setter(vector)
+    def get(self):
+        return self._getter()
+
+    @property
+    def value(self):
+        return self.get()
+
+    @value.setter
+    def value(self, value):
+        self.set(value)
 
 
 class Magnification(object):
     """docstring for Magnification"""
     def __init__(self, tem):
         super(Magnification, self).__init__()
-        self._tem = tem
+        self._getter = tem.getMagnification
+        self._setter = tem.setMagnification
+        self._indexgetter = tem.getMagnificationIndex
+        self._indexsetter = tem.setMagnificationIndex
 
-        if not tem.getMagnificationsInitialized():
-            answer = raw_input(" >> Magnification index not initialized, run initialization routine? \n [YES/no] >> ") or "y"
-            if "y" in answer:
-                tem.findMagnifications()
-                print "done..."
-            print "tem.magnifications"
-            print tem.magnifications
-            print "tem.submode_mags"
-            print tem.submode_mags
-            print "tem.projection_submode_map"
-            print tem.projection_submode_map
 
     def __repr__(self):
         value = self.value
         index = self.index
         return "Magnification(value={}, index={})".format(value, index)
 
+    def set(self, value):
+        self._setter(value)
+
+    def get(self):
+        return self._getter()
+
     @property
     def value(self):
-        try:
-            mag = self._tem.getMagnification()
-        except ValueError:    
-            mag = 0
-        finally:
-            return mag
+        return self.get()
 
     @value.setter
-    def value(self, val):
-        self._tem.setMagnification(val)
+    def value(self, value):
+        self.set(value)
 
     @property
     def index(self):
-        try:
-            ind = self._tem.getMagnificationIndex()
-        except ValueError:
-            ind = 0
-        finally:
-            return ind
+        return self._indexgetter()
 
     @index.setter
-    def index(self, val):
-        self._tem.setMagnificationIndex(val)
+    def index(self, index):
+        self.indexsetter(index)
 
     def increase(self):
         try:
@@ -115,11 +103,251 @@ class Magnification(object):
         except ValueError:
             print "Error: Cannot go to higher magnification (current={}).".format(self.value)
 
-# TODO
-## Spotsize
-## ScreenCurrent
-## Intensity
-## Defocus
+
+class GunShift(object):
+    """docstring for GunShift"""
+    def __init__(self, tem):
+        super(GunShift, self).__init__()
+        self._setter = tem.setGunShift
+        self._getter = tem.getGunShift
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "GunShift(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
+class GunTilt(object):
+    """docstring for GunTilt"""
+    def __init__(self, tem):
+        super(GunTilt, self).__init__()
+        self._setter = tem.setGunTilt
+        self._getter = tem.getGunTilt
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "GunTilt(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
+class BeamShift(object):
+    """docstring for BeamShift"""
+    def __init__(self, tem):
+        super(BeamShift, self).__init__()
+        self._setter = tem.setBeamShift
+        self._getter = tem.getBeamShift
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "BeamShift(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
+class BeamTilt(object):
+    """docstring for BeamTilt"""
+    def __init__(self, tem):
+        super(BeamTilt, self).__init__()
+        self._setter = tem.setBeamTilt
+        self._getter = tem.getBeamTilt
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "BeamTilt(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
+class ImageShift(object):
+    """docstring for ImageShift"""
+    def __init__(self, tem):
+        super(ImageShift, self).__init__()
+        self._setter = tem.setImageShift
+        self._getter = tem.getImageShift
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "ImageShift(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
+class StagePosition(object):
+    """docstring for StagePosition"""
+    def __init__(self, tem):
+        super(StagePosition, self).__init__()
+        self._setter = tem.setStagePosition
+        self._getter = tem.getStagePosition
+        
+    def __repr__(self):
+        x, y, z, a, b = self.get()
+        return "StagePosition(x={}, y={}, z={}, a={}, b={})".format(x,y,z,a,b)
+
+    def set(self, x=None, y=None, z=None, a=None, b=None):
+        self._setter(x, y, z, a, b)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y, z, a, b = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(x=value)
+
+    @property
+    def y(self):
+        x, y, z, a, b = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(y=value)
+
+    @property
+    def z(self):
+        x, y, z, a, b = self.get()
+        return z
+
+    @z.setter
+    def z(self, value):
+        self.set(z=value)
+
+    @property
+    def a(self):
+        x, y, z, a, b = self.get()
+        return a
+
+    @x.setter
+    def ax(self, value):
+        self.set(a=value)
+
+    @property
+    def b(self):
+        x, y, z, a, b = self.get()
+        return b
+
+    @b.setter
+    def b(self, value):
+        self.set(b=value)
+
+
+
 class TEMController(object):
     """docstring for TEMController
 
@@ -132,93 +360,23 @@ class TEMController(object):
         self.tem = tem
         self.cam = cam
 
-        class GunShift(object):
-            x = TEMValue("x", tem.getGunShift, tem.setGunShift)
-            y = TEMValue("y", tem.getGunShift, tem.setGunShift)
-
-            def __repr__(self):
-                d = tem.getGunShift()
-                return "GunShift(x={x}, y={y})".format(**d)
-
-            def goto(self, **kwargs):
-                tem.setGunShift(kwargs)
-
-        class GunTilt(object):
-            x = TEMValue("x", tem.getGunTilt, tem.setGunTilt)
-            y = TEMValue("y", tem.getGunTilt, tem.setGunTilt)
-
-            def __repr__(self):
-                d = tem.getGunTilt()
-                return "GunTilt(x={x}, y={y})".format(**d)
-
-            def goto(self, **kwargs):
-                tem.setGunTilt(kwargs)
-
-        class BeamShift(object):
-            x = TEMValue("x", tem.getBeamShift, tem.setBeamShift)
-            y = TEMValue("y", tem.getBeamShift, tem.setBeamShift)
-
-            def __repr__(self):
-                d = tem.getBeamShift()
-                return "BeamShift(x={x}, y={y})".format(**d)
-
-            def goto(self, **kwargs):
-                tem.setBeamShift(kwargs)
-
-        class BeamTilt(object):
-            x = TEMValue("x", tem.getBeamTilt, tem.setBeamTilt)
-            y = TEMValue("y", tem.getBeamTilt, tem.setBeamTilt)
-
-            def __repr__(self):
-                d = tem.getBeamTilt()
-                return "BeamTilt(x={x}, y={y})".format(**d)
-
-            def goto(self, **kwargs):
-                tem.setBeamTilt(kwargs)
-
-        class ImageShift(object):
-            x = TEMValue("x", tem.getImageShift, tem.setImageShift)
-            y = TEMValue("y", tem.getImageShift, tem.setImageShift)
-
-            def __repr__(self):
-                d = tem.getGunTilt()
-                return "ImageShift(x={x}, y={y})".format(**d)
-            
-            def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
-
-        class StagePosition(object):
-            x = TEMValue("x", tem.getStagePosition, tem.setStagePosition)
-            y = TEMValue("y", tem.getStagePosition, tem.setStagePosition)
-            z = TEMValue("z", tem.getStagePosition, tem.setStagePosition)
-            a = TEMValue("a", tem.getStagePosition, tem.setStagePosition)
-            b = TEMValue("b", tem.getStagePosition, tem.setStagePosition)
-
-            def __repr__(self):
-                d = tem.getStagePosition()
-                if "b" not in d:
-                    d["b"] = np.NaN
-                return "StagePosition(x={x:.3e}, y={y:.3e}, z={z}, a={a}, b={b})".format(**d)
-
-            def goto(self, **kwargs):
-                tem.setStagePosition(kwargs)
-
-
-        self.gunshift = GunShift()
-        self.guntilt = GunTilt()
-        self.beamshift = BeamShift()
-        self.beamtilt = BeamTilt()
-        self.imageshift = ImageShift()
-        self.stageposition = StagePosition()
+        self.gunshift = GunShift(tem)
+        self.guntilt = GunTilt(tem)
+        self.beamshift = BeamShift(tem)
+        self.beamtilt = BeamTilt(tem)
+        self.imageshift = ImageShift(tem)
+        self.stageposition = StagePosition(tem)
         self.magnification = Magnification(tem)
+        self.brightness = Brightness(tem)
 
-        self.setDiffractionmode = self.tem.setDiffractionMode
-        self.getDiffractionmode = self.tem.getDiffractionMode
+        self.mode_diffraction = lambda : self.tem.setFunctionMode("diff")
+        self.mode_mag1 = lambda : self.tem.setFunctionMode("mag1")
+        self.mode_lowmag = lambda : self.tem.setFunctionMode("lowmag")
 
         print self
 
     def __repr__(self):
-        return "\n".join(("Mode: {}".format(self.getDiffractionmode()),
+        return "\n".join(("Mode: {}".format(self.tem.getFunctionMode()),
                           str(self.gunshift),
                           str(self.guntilt),
                           str(self.beamshift),
@@ -226,43 +384,41 @@ class TEMController(object):
                           str(self.imageshift),
                           str(self.stageposition),
                           str(self.magnification),
-                        "Intensity: {}".format(self.tem.getIntensity())))
+                          str(self.brightness)))
 
-    def activate_nanobeam(self):
-        raise NotImplementedError
-
-    def deactivate_nanobeam(self):
-        raise NotImplementedError
-
-    def get_all(self):
+    def to_dict(self):
         d = {
-            'BeamShift': self.tem.getBeamShift(),
-            'BeamTilt': self.tem.getBeamTilt(),
-            'GunShift': self.tem.getGunShift(),
-            'GunTilt': self.tem.getGunTilt(),
-            'ImageShift': self.tem.getImageShift(),
-            'StagePosition': self.tem.getStagePosition(),
-            'Magnification': self.magnification.value,
-            'DiffractionMode': self.getDiffractionmode(),
-            'Intensity': self.tem.getIntensity()
+            'FunctionMode': self.tem.getFunctionMode(),
+            'GunShift': self.gunshift.get(),
+            'GunTilt': self.guntilt.get(),
+            'BeamShift': self.beamshift.get(),
+            'BeamTilt': self.beamtilt.get(),
+            'ImageShift': self.imageshift.get(),
+            'StagePosition': self.stageposition.get(),
+            'Magnification': self.magnification.get(),
+            'Brightness': self.brightness.get()
         }
         return d
 
-    def set_all(self, d):
+    def from_dict(self, d):
         funcs = {
-            'BeamShift': self.tem.setBeamShift,
-            'BeamTilt': self.tem.setBeamTilt,
-            'GunShift': self.tem.setGunShift,
-            'GunTilt': self.tem.setGunTilt,
-            'ImageShift': self.tem.setImageShift,
-            'StagePosition': self.tem.setStagePosition,
-            'Magnification': self.tem.setMagnification,
-            'DiffractionMode': self.tem.setDiffractionMode
+            'FunctionMode': self.tem.setFunctionMode,
+            'GunShift': self.gunshift.set,
+            'GunTilt': self.guntilt.set,
+            'BeamShift': self.beamshift.set,
+            'BeamTilt': self.beamtilt.set,
+            'ImageShift': self.imageshift.set,
+            'StagePosition': self.stageposition.set,
+            'Magnification': self.magnification.set,
+            'Brightness': self.brightness.set
         }
 
         for k, v in d.items():
             func = funcs[k]
-            func(v)
+            try:
+                func(*v)
+            except TypeError:
+                func(v)
 
         print self
 
@@ -270,7 +426,7 @@ class TEMController(object):
         if not self.cam:
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
-        h = self.get_all()
+        h = self.to_dict()
 
         arr = self.cam.getImage(t=exposure, binsize=binsize)
         h["ImageExposureTime"] = exposure
@@ -287,7 +443,6 @@ class TEMController(object):
             plt.show()
 
         return arr, h
-
 
 def main_entry():
     import argparse
@@ -315,24 +470,11 @@ def main_entry():
     )
 
     options = parser.parse_args()
-
-    if options.simulate:
-        from instamatic.pyscope import simtem
-        tem = simtem.SimTEM()
-        cam = gatanOrius(simulate=True)
-    else:
-        from instamatic.pyscope import jeolcom
-        tem = jeolcom.Jeol()
-        cam = gatanOrius(simulate=False)
-    
-
-    ctrl = TEMController(tem, cam=cam)
+    ctrl = initialize()
 
     ipshell()
 
 
 if __name__ == '__main__':
-    from instamatic.pyscope import simtem
-    tem = simtem.SimTEM()
-    ctrl = TEMController(tem)
+    ctrl = initialize()
     ipshell()
