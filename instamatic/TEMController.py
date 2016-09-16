@@ -334,7 +334,7 @@ class StagePosition(object):
         return a
 
     @x.setter
-    def ax(self, value):
+    def a(self, value):
         self.set(a=value)
 
     @property

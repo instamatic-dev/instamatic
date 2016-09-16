@@ -1,12 +1,6 @@
 import atexit
 import comtypes.client
 
-@atexit.register
-def exit_func():
-    """Uninitialize comtypes to prevent the program from hanging"""
-    comtypes.CoUninitialize()
-    print "Uninitialize com connection to microscope"
-
 MAGNIFICATIONS = [
  50,
  60,
@@ -99,6 +93,7 @@ class JeolMicroscope(object):
             if t > 60:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
+        atexit.register(self.releaseConnection)
 
     def __del__(self):
         comtypes.CoUninitialize()
@@ -255,3 +250,7 @@ class JeolMicroscope(object):
 
     def setDiffractionShift(self, x, y):
         self.def3.SetPLA(x, y)
+
+    def releaseConnection(self):
+        comtypes.CoUninitialize()
+        print "Connection to microscope released"

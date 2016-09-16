@@ -34,13 +34,6 @@ DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
 DLLPATH      = "CCDCOM2.dll"
 
 
-@atexit.register
-def exit_func():
-    """Uninitialize comtypes to prevent the program from hanging"""
-    comtypes.CoUninitialize()
-    print "Uninitialize com connection to camera"
-
-
 class gatanOrius(object):
     """docstring for gatanOrius"""
 
