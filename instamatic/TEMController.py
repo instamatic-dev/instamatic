@@ -414,7 +414,11 @@ class TEMController(object):
         }
 
         for k, v in d.items():
-            func = funcs[k]
+            if k in funcs:
+                func = funcs[k]
+            else:
+                continue
+            
             try:
                 func(*v)
             except TypeError:

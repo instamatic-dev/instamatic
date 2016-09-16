@@ -9,7 +9,7 @@ from TEMController import TEMController
 
 from IPython import embed
 
-from calibration import CalibResult, fileio.load_img
+from calibration import CalibResult, load_img
 import matplotlib.pyplot as plt
 from find_crystals import find_holes
 import fileio

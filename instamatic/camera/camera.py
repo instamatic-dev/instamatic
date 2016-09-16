@@ -2,6 +2,11 @@ import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
+try:
+    from snapkit.emformats.mrc import write_image as mrc_write_image
+except ImportError:
+    pass
+
 import comtypes
 # initial COM in multithread mode if not initialized otherwise
 try:
@@ -203,6 +208,9 @@ def save_image_and_header(outfile, img=None, header=None):
     elif ext == ".tif" or ext == ".tiff":
         im = fabio.tifimage.tifimage(data=img, header=header)
         im.write(outfile)
+    elif ext == ".mrc":
+        mrc_write_image(outfile, img)
+	save_header(outfile, header)
     # elif ext == ".xml" or ext == "xsd":
     #     im = fabio.xsdimage.xsdimage(data=img, header=header)
     #     im.write(outfile)
