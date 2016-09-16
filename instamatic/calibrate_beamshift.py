@@ -9,7 +9,8 @@ from camera import save_image_and_header
 from TEMController import initialize
 
 import fileio
-from calibration import CalibResult, load_img, lsq_rotation_scaling_matrix
+from calibration import load_img, lsq_rotation_scaling_matrix, CalibBeamShift
+from find_crystals import find_holes
 
 
 def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, binsize=1, save_images=False):
@@ -31,21 +32,27 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, bins
     """
 
     img_cent, h = ctrl.getImage(exposure=exposure, comment="Beam in center of image")
-    x_cent, y_cent = ctrl.beamshift.x, ctrl.beamshift.y
+    x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
     
     if save_images:
         outfile = "calib_beamcenter"
         save_image_and_header(outfile, img=img_cent, header=h)
 
-    beampos = []
+    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
+    pixel_cent = np.array(holes[0].centroid)
+    
+    print "Beamshift: x={} | y={}".format(*beamshift_cent)
+    print "Pixel: x={} | y={}".format(*pixel_cent)
+        
     shifts = []
+    beampos = []
     
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
-        ctrl.beamshift.goto(x=x_cent+dx, y=y_cent+dy)
+        ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
         print i
         print
         print ctrl.beamshift
@@ -53,8 +60,8 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, bins
         img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
-        beampos.append(xy)
+        beamshift = np.array(h["BeamShift"])
+        beampos.append(beamshift)
         shifts.append(shift)
 
         if save_images:
@@ -64,13 +71,13 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, bins
         i += 1
             
     print " >> Reset to center"
-    ctrl.beamshift.goto(x=x_cent, y=y_cent)
+    ctrl.beamshift.set(*beamshift_cent)
     shifts = np.array(shifts)
-    beampos = np.array(beampos) - np.array((x_cent, y_cent))
+    beampos = np.array(beampos) - np.array((beamshift_cent))
     
     r = lsq_rotation_scaling_matrix(shifts, beampos)
 
-    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+    c = CalibBeamShift(transform=r, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
 
     return c
 
@@ -87,34 +94,40 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    img_cent, h_cent = load_img(center_fn)
-    x_cent, y_cent = np.array((h_cent["BeamShift"]["x"], h_cent["BeamShift"]["y"]))
     print
     print "Center:", center_fn
-    print "Beamshift: x={} | y={}".format(x_cent, y_cent)
-
+    
+    img_cent, h_cent = load_img(center_fn)
+    beamshift_cent = np.array((h_cent["BeamShift"]["x"], h_cent["BeamShift"]["y"]))
+    
+    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
+    pixel_cent = np.array(holes[0].centroid)
+    
+    print "Beamshift: x={} | y={}".format(*beamshift_cent)
+    print "Pixel: x={} | y={}".format(*pixel_cent)
+    
     shifts = []
     beampos = []
     
     for fn in other_fn:
         img, h = load_img(fn)
         
-        xy = h["BeamShift"]["x"], h["BeamShift"]["y"]
+        beamshift = np.array((h["BeamShift"]["x"], h["BeamShift"]["y"]))
         print
         print "Image:", fn
-        print "Beamshift: x={} | y={}".format(*xy)
+        print "Beamshift: x={} | y={}".format(*beamshift)
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        beampos.append(xy)
+        beampos.append(beamshift)
         shifts.append(shift)
         
     shifts = np.array(shifts)
-    beampos = np.array(beampos) - np.array((x_cent, y_cent))
-        
+    beampos = np.array(beampos) - beamshift_cent
+
     r = lsq_rotation_scaling_matrix(shifts, beampos)
     
-    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+    c = CalibBeamShift(transform=r, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
 
     return c
 
@@ -128,9 +141,7 @@ def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, confirm=True):
     else:
         calib = calibrate_beamshift_from_image_fn(center_fn, other_fn)
 
-    print "\nRotation/scalint matrix:\n", calib.transform
-    print "Reference stagepos:", calib.reference_position
-
+    print
     print calib
 
     fileio.write_calib_beamshift(calib)

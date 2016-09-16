@@ -8,8 +8,8 @@ from cross_correlate import cross_correlate
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import CalibResult, load_img, lsq_rotation_scaling_matrix
-
+from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix
+import fileio
 
 def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1, save_images=False):
     """
@@ -72,7 +72,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1,
     
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
 
-    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+    c = CalibStage(transform=r, reference_position=np.array([x_cent, y_cent]))
 
     return c
 
@@ -116,7 +116,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     print "rwar"  
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
     
-    c = CalibResult(transform=r, reference_position=np.array([x_cent, y_cent]))
+    c = CalibStage(transform=r, reference_position=np.array([x_cent, y_cent]))
     print "Rwar2"
     return c
 
@@ -130,9 +130,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
     else:
         calib = calibrate_stage_lowmag_from_image_fn(center_fn, other_fn)
 
-    print "\nRotation/scalint matrix:\n", calib.transform
-    print "Reference stagepos:", calib.reference_position
-
+    print
     print calib
 
     fileio.write_calibration_stage_lowmag(calib)

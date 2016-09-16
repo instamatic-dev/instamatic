@@ -1,6 +1,11 @@
+#!/usr/bin/env python
 import pickle
-from calibration import CalibResult
+import os
+from calibration import CalibStage
 from calibration import CalibBrightness
+from calibration import CalibBeamShift
+import numpy as np
+
 
 CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
 CALIB_BEAMSHIFT = "calib_beamshift.pickle"
@@ -12,7 +17,7 @@ EXPERIMENT = "experiment.pickle"
 def load_calib_stage_lowmag():
     if os.path.exists(CALIB_STAGE_LOWMAG):
         d = pickle.load(open(CALIB_STAGE_LOWMAG, "r"))
-        calib = CalibResult(**d)
+        calib = CalibStage(**d)
     else:
         raise IOError("\n >> Please run instamatic.calibrate_stage_lowmag first.")
     return calib
@@ -27,7 +32,7 @@ def load_hole_stage_positions():
 def load_calib_beamshift():
     if os.path.exists(CALIB_BEAMSHIFT):
         d = pickle.load(open(CALIB_BEAMSHIFT, "r"))
-        calib = CalibResult(**d)
+        calib = CalibBeamShift(**d)
     else:
         raise IOError("\n >> Please run instamatic.calibrate_beamshift first.")
     return calib
@@ -42,8 +47,8 @@ def load_experiment():
 
 def load_calib_brightness():
     print os.path.abspath(".")
-    if os.path.exists(EXPERIMENT):
-        d = pickle.load(open(EXPERIMENT, "r"))
+    if os.path.exists(CALIB_BRIGHTNESS):
+        d = pickle.load(open(CALIB_BRIGHTNESS, "r"))
         calib = CalibBrightness(**d)
     else:
         raise IOError("\n >> Please run instamatic.calib_brightness first.")
@@ -61,7 +66,8 @@ def write_calib_stage_lowmag():
 def write_calib_beamshift(calib):
     pickle.dump({
         "transform": calib.transform,
-        "reference_position": calib.reference_position
+        "reference_shift": calib.reference_shift,
+        "reference_pixel": calib.reference_pixel
         }, open(CALIB_BEAMSHIFT, "w"))
 
 def write_experiment(experiment):

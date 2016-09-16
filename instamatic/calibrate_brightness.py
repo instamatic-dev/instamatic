@@ -57,6 +57,7 @@ def calibrate_brightness_live(ctrl, start=0.6, end=0.8, exposure=0.1, binsize=1,
     values = np.array(values)
     slope, intercept, r_value, p_value, std_err = linregress(values[:,0], values[:,1])
 
+    print
     print "r_value:", r_value
     print "p_value:", p_value
 
@@ -68,6 +69,7 @@ def calibrate_brightness_live(ctrl, start=0.6, end=0.8, exposure=0.1, binsize=1,
     plt.close()
     plt.scatter(*values.T)
     plt.plot(x, y, "r-", label="linear regression")
+    plt.title("Fit brightness")
     plt.legend()
     plt.show()
 
@@ -103,6 +105,7 @@ def calibrate_brightness_from_image_fn(fns):
     values = np.array(values)
     slope, intercept, r_value, p_value, std_err = linregress(values[:,0], values[:,1])
 
+    print
     print "r_value:", r_value
     print "p_value:", p_value
 
@@ -129,6 +132,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     else:
         calib = calibrate_brightness_from_image_fn(fns)
 
+    print
     print calib
 
     fileio.write_calib_brightness(calib)

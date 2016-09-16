@@ -28,6 +28,32 @@ def load_img(fn):
         return arr, d
 
 
+class CalibBeamShift(object):
+    """Simple class to hold the methods to perform transformations from one setting to another
+    based on calibration results"""
+    def __init__(self, transform, reference_shift, reference_pixel):
+        super(CalibBeamShift, self).__init__()
+        self.transform = transform
+        self.reference_shift = reference_shift
+        self.reference_pixel = reference_pixel
+   
+    def __repr__(self):
+        return "CalibBeamShift(transform=\n{},\n   reference_shift=\n{},\n   reference_pixel=\n{})".format(
+            self.transform, self.reference_shift, self.reference_pixel)
+
+    def beamshift_to_pixelcoord(self, beamshift):
+        """Converts from beamshift x,y to pixel coordinates"""
+        r_i = np.linalg.inv(self.transform)
+        pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
+        return pixelcoord
+        
+    def pixelcoord_to_beamshift(self, pixelcoord):
+        """Converts from pixel coordinates to beamshift x,y"""
+        r = self.transform
+        beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
+        return beamshift
+
+
 class CalibBrightness(object):
     """docstring for calib_brightness"""
     def __init__(self, slope, intercept):
@@ -44,16 +70,16 @@ class CalibBrightness(object):
         return (val - self.intercept) / self.slope
 
 
-class CalibResult(object):
+class CalibStage(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
     def __init__(self, transform, reference_position):
-        super(CalibResult, self).__init__()
+        super(CalibStage, self).__init__()
         self.transform = transform
         self.reference_position = reference_position
    
     def __repr__(self):
-        return "CalibResult(transform=\n{},\n   reference_position=\n{})".format(self.transform, self.reference_position)
+        return "CalibStage(transform=\n{},\n   reference_position=\n{})".format(self.transform, self.reference_position)
 
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, reference_pos):
         """
