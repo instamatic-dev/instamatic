@@ -194,7 +194,7 @@ def save_image_and_header(outfile, img=None, header=None):
     root, ext = os.path.splitext(outfile)
     ext = ext.lower()
     if ext == "":
-        ext = ".edf"
+        ext = ".tiff"
         outfile = root + ext
     if ext == ".cbf":
         im = fabio.cbfimage.cbfimage(data=img, header=header)
