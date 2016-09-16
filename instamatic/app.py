@@ -3,15 +3,12 @@
 import sys, os
 import numpy as np
 
-from camera import gatanOrius, save_image_and_header
-from find_crystals import find_objects, plot_props
-from TEMController import TEMController
+from camera import save_image_and_header
+from find_crystals import find_crystals, plot_props, find_holes
+import TEMController
 
-from IPython import embed
-
-from calibration import CalibResult, load_img
+from calibration import load_img
 import matplotlib.pyplot as plt
-from find_crystals import find_holes
 import fileio
 
 def circle_center(A, B, C):
@@ -62,46 +59,60 @@ def get_grid(n, r, borderwidth=0.8):
     return xvals*r, yvals*r 
 
 
-def seek_and_destroy(img, calib, ctrl=None, plot=False):
+def seek_and_destroy_from_image_fn(img, calib, ctrl=None, plot=False):
     """Routine that handles seeking crystals, and shooting them with the beam"""
+
+    calib_brightness, calib_beamshift = calib
 
     exposure = 1.0
     binsize = 1
 
+    img = img.astype(int)
     crystals = find_crystals(img)
     if plot:
-        plot_props(crystals)
+        plot_props(img, crystals)
 
-    center_beamshift = ctrl.beamshift.x, ctrl.beamshift.y
-
-    for crystal in crystals:
+    for i, crystal in enumerate(crystals):
         x, y = crystal.centroid
+        d = crystal.equivalent_diameter
+        print
+        print "Crystal #{}".format(i)
+        print "Pixel - x: {}, y: {}, d: {}".format(x,y,d)
 
-        x_shift, y_shift = calib.pixelcoords_to_beamshift(x, y)
+        bd = calib_brightness.pixelsize_to_brightness(d)
+        bx, by = calib_beamshift.pixelcoord_to_beamshift((x,y))
 
-        ctrl.activate_nanobeam()
-        ctrl.beamshift.goto(x=x_shift, y=y_shift)
-        ctrl.activate_diffraction_mode()
+        print "Beam  - x: {}, y: {}, d: {}".format(bx,by,bd)
+
+        ctrl.beamshift.set(bx, by)
+        ctrl.brightness.set(bd)
+
+        ctrl.mode_diffraction()
 
         arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Diffraction data")
+
+        ctrl.mode_mag1()
+
+        raw_input(" >> Press enter to go to next crystal...")
 
 
 def seek_and_destroy_entry():
     exposure = 0.2
     binsize = 1
 
-    calib = fileio.load_calib_beamshift()
+    calib = (fileio.load_calib_brightness(), fileio.load_calib_beamshift())
+    ctrl = TEMController.initialize()
 
     fns = sys.argv[1:]
     if fns:
         for fn in fns:
             arr, header = load_img(fn)
-            seek_and_destroy(arr, calib, plot=True)
+            seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=False)
     else:
-        ctrl = initialize()
+        ctrl = TEMController.initialize()
         arr = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
     
-        seek_and_destroy(arr, calib, plot=True)
+        seek_and_destroy(arr, calib, ctrl=ctrl, plot=True)
     
         # save_image(outfile, arr)
         # save_header(outfile, h)
@@ -137,7 +148,7 @@ def fake_circle():
 
 def find_hole_center_highmag_interactive(ctrl=None):
     if not ctrl:
-        ctrl = initialize()
+        ctrl = TEMController.initialize()
     while True:
         print "\nPick 3 points centering the camera on the edge of a hole"
         print " 1 >> ",
@@ -330,7 +341,7 @@ def plot_experiment(ctrl=None):
     plt.show()
 
 def plot_experiment_entry():
-    ctrl = initialize()
+    ctrl = TEMController.initialize()
     plot_experiment(ctrl=ctrl)
 
 def do_experiment(ctrl=None):
@@ -409,7 +420,7 @@ def do_experiment(ctrl=None):
 
 
 def do_experiment_entry():
-    ctrl = initialize()
+    ctrl = TEMController.initialize()
     do_experiment(ctrl)
 
 
@@ -455,7 +466,7 @@ def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
 
 
 def goto_hole_entry():
-    ctrl = initialize()
+    ctrl = TEMController.initialize()
 
     calib = fileio.load_calib()
     coords = fileio.load_hole_stage_positions()
