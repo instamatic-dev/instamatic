@@ -13,7 +13,7 @@ from calibration import load_img, lsq_rotation_scaling_matrix, CalibBeamShift
 from find_crystals import find_holes
 
 
-def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=5e-5, exposure=0.1, binsize=1, save_images=False):
+def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2000, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 

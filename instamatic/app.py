@@ -82,18 +82,23 @@ def seek_and_destroy_from_image_fn(img, calib, ctrl=None, plot=False):
         bd = calib_brightness.pixelsize_to_brightness(d)
         bx, by = calib_beamshift.pixelcoord_to_beamshift((x,y))
 
+        bd = int(bd)
+        bx = int(bx)
+        by = int(by)
+
         print "Beam  - x: {}, y: {}, d: {}".format(bx,by,bd)
 
         ctrl.beamshift.set(bx, by)
         ctrl.brightness.set(bd)
 
-        ctrl.mode_diffraction()
+        raw_input(" >> Press enter to take diffraction pattern and go to next crystal...")
+        
+        # ctrl.mode_diffraction()
 
-        arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Diffraction data")
+        # arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, out="seekdestroy_{:04d}".format(i), comment="Diffraction data")
 
-        ctrl.mode_mag1()
+        # ctrl.mode_mag1()
 
-        raw_input(" >> Press enter to go to next crystal...")
 
 
 def seek_and_destroy_entry():
@@ -107,12 +112,11 @@ def seek_and_destroy_entry():
     if fns:
         for fn in fns:
             arr, header = load_img(fn)
-            seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=False)
+            seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=True)
     else:
-        ctrl = TEMController.initialize()
-        arr = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
+        arr, header = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
     
-        seek_and_destroy(arr, calib, ctrl=ctrl, plot=True)
+        seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=True)
     
         # save_image(outfile, arr)
         # save_header(outfile, h)

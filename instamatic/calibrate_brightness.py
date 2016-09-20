@@ -15,7 +15,7 @@ from calibration import load_img, CalibBrightness
 from find_crystals import find_holes
 
 
-def calibrate_brightness_live(ctrl, start=0.6, end=0.8, exposure=0.1, binsize=1, save_images=False):
+def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->brightness coordinates live on the microscope
 
@@ -34,17 +34,21 @@ def calibrate_brightness_live(ctrl, start=0.6, end=0.8, exposure=0.1, binsize=1,
     """
 
     values = []
+    start = ctrl.brightness.value
 
-    steps = np.linspace(start, end, 9)
-
-    for i, target in enumerate(steps):
-        ctrl.tem.setIntensity(target)
+    for i in range(10):
+        target = start + i*step
+        ctrl.brightness.value = int(target)
 
         img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: brightness={}".format(i, target))
-        brightness = float(h["Intensity"])
+        brightness = float(h["Brightness"])
         
         holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
         
+        if len(holes) == 0:
+            print " >> No holes found, continuing..."
+            continue
+
         size = max([hole.equivalent_diameter for hole in holes])
 
         print "Brightness: {:.3f}, equivalent diameter: {:.1f}".format(brightness, size)
@@ -63,7 +67,7 @@ def calibrate_brightness_live(ctrl, start=0.6, end=0.8, exposure=0.1, binsize=1,
 
     c = CalibBrightness(slope, intercept)
 
-    x = np.linspace(start-0.1, end+0.1)
+    x = np.linspace(start-step, target+step)
     y = c.brightness_to_pixelsize(x)
 
     plt.close()
@@ -93,7 +97,7 @@ def calibrate_brightness_from_image_fn(fns):
         print
         print fn
         img, h = load_img(fn)
-        brightness = float(h["Intensity"])
+        brightness = float(h["Brightness"])
 
         holes = find_holes(img, plot=False, fname=None, verbose=False, max_eccentricity=0.8) # fname=fn.replace("edf", "png")
         

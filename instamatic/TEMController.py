@@ -28,6 +28,32 @@ def initialize():
     return ctrl
 
 
+class DiffFocus(object):
+    """docstring for DiffFocus"""
+    def __init__(self, tem):
+        super(DiffFocus, self).__init__()
+        self._getter = tem.getDiffFocus
+        self._setter = tem.setDiffFocus
+
+    def __repr__(self):
+        value = self.value
+        return "DiffFocus(value={})".format(value)
+
+    def set(self, value):
+        self._setter(value)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def value(self):
+        return self.get()
+
+    @value.setter
+    def value(self, value):
+        self.set(value)
+
+
 class Brightness(object):
     """docstring for Brightness"""
     def __init__(self, tem):
@@ -89,7 +115,7 @@ class Magnification(object):
 
     @index.setter
     def index(self, index):
-        self.indexsetter(index)
+        self._indexsetter(index)
 
     def increase(self):
         try:
@@ -248,6 +274,42 @@ class BeamTilt(object):
         self.set(self.x, value)
 
 
+class DiffShift(object):
+    """docstring for DiffShift"""
+    def __init__(self, tem):
+        super(DiffShift, self).__init__()
+        self._setter = tem.setDiffShift
+        self._getter = tem.getDiffShift
+        
+    def __repr__(self):
+        x, y = self.get()
+        return "DiffShift(x={}, y={})".format(x, y)
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+
 class ImageShift(object):
     """docstring for ImageShift"""
     def __init__(self, tem):
@@ -347,7 +409,6 @@ class StagePosition(object):
         self.set(b=value)
 
 
-
 class TEMController(object):
     """docstring for TEMController
 
@@ -365,15 +426,24 @@ class TEMController(object):
         self.beamshift = BeamShift(tem)
         self.beamtilt = BeamTilt(tem)
         self.imageshift = ImageShift(tem)
+        self.diffshift = DiffShift(tem)
         self.stageposition = StagePosition(tem)
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
-
-        self.mode_diffraction = lambda : self.tem.setFunctionMode("diff")
-        self.mode_mag1 = lambda : self.tem.setFunctionMode("mag1")
-        self.mode_lowmag = lambda : self.tem.setFunctionMode("lowmag")
+        self.difffocus = DiffFocus(tem)
 
         print self
+
+    def mode_lowmag(self):
+        self.tem.setFunctionMode("lowmag")
+        self.tem.eos3.SetSelector(3) 
+
+    def mode_mag1(self):
+        self.tem.setFunctionMode("mag1")
+        self.tem.eos3.SetSelector(0) 
+
+    def mode_diffraction(self):
+        self.tem.setFunctionMode("diff")
 
     def __repr__(self):
         return "\n".join(("Mode: {}".format(self.tem.getFunctionMode()),
@@ -382,8 +452,10 @@ class TEMController(object):
                           str(self.beamshift),
                           str(self.beamtilt),
                           str(self.imageshift),
+                          str(self.diffshift),
                           str(self.stageposition),
                           str(self.magnification),
+                          str(self.difffocus),
                           str(self.brightness)))
 
     def to_dict(self):
@@ -394,8 +466,10 @@ class TEMController(object):
             'BeamShift': self.beamshift.get(),
             'BeamTilt': self.beamtilt.get(),
             'ImageShift': self.imageshift.get(),
+            'DiffShift': self.diffshift.get(),
             'StagePosition': self.stageposition.get(),
             'Magnification': self.magnification.get(),
+            'DiffFocus': self.magnification.get(),
             'Brightness': self.brightness.get()
         }
         return d
@@ -408,8 +482,10 @@ class TEMController(object):
             'BeamShift': self.beamshift.set,
             'BeamTilt': self.beamtilt.set,
             'ImageShift': self.imageshift.set,
+            'DiffShift': self.diffshift.set,
             'StagePosition': self.stageposition.set,
             'Magnification': self.magnification.set,
+            'DiffFocus': self.difffocus.set,
             'Brightness': self.brightness.set
         }
 

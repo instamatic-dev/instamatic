@@ -11,7 +11,7 @@ from TEMController import initialize
 from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix
 import fileio
 
-def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1, binsize=1, save_images=False):
+def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.1, binsize=1, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -30,7 +30,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1,
     """
 
     img_cent, h = ctrl.getImage(exposure=exposure, comment="Center image")
-    x_cent, y_cent = h["StagePosition"]["x"], h["StagePosition"]["y"]
+    x_cent, y_cent, _, _, _ = h["StagePosition"]
     
     if save_images:
         outfile = "calib_center"
@@ -41,10 +41,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1,
     
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    
+
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
-        ctrl.stageposition.goto(x=x_cent+dx, y=y_cent+dy)
+        ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
            
         print
         print ctrl.stageposition
@@ -52,21 +52,18 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=10e-05, exposure=0.1,
         img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
-        stagepos.append(xy)
+        xobs, yobs, _, _, _ = h["StagePosition"]
+        stagepos.append((xobs, yobs))
         shifts.append(shift)
 
         if save_images:
             outfile = "calib_{:04d}".format(i)
             save_image_and_header(outfile, img=img, header=h)
         
-        if i == 4:
-            break
-
         i += 1
             
     print " >> Reset to center"
-    ctrl.stageposition.goto(x=x_cent, y=y_cent)
+    ctrl.stageposition.set(x=x_cent, y=y_cent)
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
     
@@ -121,12 +118,12 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     return c
 
 
-def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True):
+def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
         if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
             return
         else:
-            calib = calibrate_stage_lowmag(ctrl, save_images=True)
+            calib = calibrate_stage_lowmag_live(ctrl, save_images=True)
     else:
         calib = calibrate_stage_lowmag_from_image_fn(center_fn, other_fn)
 

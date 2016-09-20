@@ -1,5 +1,6 @@
 import atexit
 import comtypes.client
+import time
 
 MAGNIFICATIONS = [
  50,
@@ -73,24 +74,28 @@ class JeolMicroscope(object):
         self.tem3 = comtypes.client.CreateObject(temext.TEM3, comtypes.CLSCTX_ALL)
         
         # initialize each interface from the TEM3 object
-        self.ht3 = self.tem3.CreateHT3()
-        self.eos3 = self.tem3.CreateEOS3()
-        self.lens3 = self.tem3.CreateLens3()
+        # self.apt3 = self.tem3.CreateApt3()
+        # self.camera3 = self.tem3.CreateCamera3()
         self.def3 = self.tem3.CreateDef3()
         # self.detector3 = self.tem3.CreateDetector3()
-        # self.camera3 = self.tem3.CreateCamera3()
-        # self.mds3 = self.tem3.CreateMDS3()
-        self.stage3 = self.tem3.CreateStage3()
+        self.eos3 = self.tem3.CreateEOS3()
         # self.feg3 = self.tem3.CreateFEG3()
         # self.filter3 = self.tem3.CreateFilter3()
-        # self.apt3 = self.tem3.CreateApt3()
+        self.ht3 = self.tem3.CreateHT3()
+        self.lens3 = self.tem3.CreateLens3()
+        # self.mds3 = self.tem3.CreateMDS3()
+        self.stage3 = self.tem3.CreateStage3()
 
         # wait for interface to activate
         t = 0
-        while self.ht3.GetHTValue() != 0:
+        while True:
+            ht, result = self.ht3.GetHTValue()
+            if result == 0:
+                break
             time.sleep(1)
             t += 1
-            if t > 60:
+            print "Waiting for microscope, t = {}s".format(t)
+            if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
         atexit.register(self.releaseConnection)
@@ -123,6 +128,9 @@ class JeolMicroscope(object):
             self.setFunctionMode(new_mode)
         
         self.eos3.SetMagValue(value)
+        ## ctrl.tem.eos3.SetSelector(i) 
+        # i = 0-24 for lowmag
+        # i = 0-29 for mag1
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
@@ -236,19 +244,20 @@ class JeolMicroscope(object):
                 value = FUNCTION_MODES.index(value)
             except ValueError:
                 raise ValueError("Unrecognized function mode: {}".format(value))
-        self.eos3.SetFunctionMode(value)
+        self.eos3.SelectFunctionMode(value)
 
-    def getDiffractionFocus(self): #IC1
-        raise NotImplementedError
+    def getDiffFocus(self):
+        value, result = self.lens3.GetIL1()
+        return value
 
-    def setDiffractionFocus(self, value): #IC1
-        raise NotImplementedError
+    def setDiffFocus(self, value):
+        self.lens3.setDiffFocus(value)
 
-    def getDiffractionShift(self):
+    def getDiffShift(self):
         x, y, result = self.def3.GetPLA()
         return x, y
 
-    def setDiffractionShift(self, x, y):
+    def setDiffShift(self, x, y):
         self.def3.SetPLA(x, y)
 
     def releaseConnection(self):
