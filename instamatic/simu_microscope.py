@@ -53,13 +53,20 @@ class SimuMicroscope(object):
             value = min(MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
         
         # get best mode for magnification
-        for k in sorted(MAGNIFICATION_MODES.keys()):
-            if k <= value:
-                new_mode = MAGNIFICATION_MODES[k]
+        for k in sorted(MAGNIFICATION_MODES.keys(), key=MAGNIFICATION_MODES.get): # sort by values
+            v = MAGNIFICATION_MODES[k]
+            if v <= value:
+                new_mode = k
 
         current_mode = self.getFunctionMode()
         if current_mode != new_mode:
             self.setFunctionMode(new_mode)
+
+        # calculate index
+        ## i = 0-24 for lowmag
+        ## i = 0-29 for mag1
+        selector = MAGNIFICATIONS.index(value) - MAGNIFICATIONS.index(MAGNIFICATION_MODES[new_mode])
+        print selector
         
         self.Magnification_value = value
 
@@ -113,24 +120,41 @@ class SimuMicroscope(object):
         return False
 
     def waitForStage(self, delay=0.1):
-        pass
+        while self.isStageMoving():
+            time.sleep(delay)
 
+    def setStageX(self, value):
+        self.StagePosition_x = value
+
+    def setStageY(self, value):
+        self.StagePosition_y = value
+
+    def setStageZ(self, value):
+        self.StagePosition_z = value
+
+    def setStageA(self, value):
+        self.StagePosition_a = value
+
+    def setStageB(self, value):
+        self.StagePosition_b = value
+        
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
-        if x:
-            self.StagePosition_x = x
-        if y:
-            self.StagePosition_y = y
         if z:
-            self.StagePosition_z = z
+            self.setStageZ(z)
         if a:
-            self.StagePosition_a = a
+            self.setStageA(a)
         if b:
-            self.StagePosition_b = b
+            self.setStageB(b)
+        if x:
+            self.setStageX(x)
+        if y:
+            self.setStageY(y)
 
     def getFunctionMode(self):
         return FUNCTION_MODES[self.FunctionMode_value]
 
     def setFunctionMode(self, value):
+        """mag1, mag2, lowmag, samag, diff"""
         if isinstance(value, str):
             try:
                 value = FUNCTION_MODES.index(value)
@@ -138,15 +162,15 @@ class SimuMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.FunctionMode_value = value
 
-    def getDiffractionFocus(self): #IC1
+    def getDiffFocus(self): #IC1
         return self.DiffractionFocus_value
 
-    def setDiffractionFocus(self, value): #IC1
+    def setDiffFocus(self, value): #IC1
         self.DiffractionFocus_value = value
 
-    def getDiffractionShift(self):
+    def getDiffShift(self):
         return self.DiffractionShift_x, self.DiffractionShift_y
 
-    def setDiffractionShift(self, x, y):
+    def setDiffShift(self, x, y):
         self.DiffractionShift_x = x
         self.DiffractionShift_y = y

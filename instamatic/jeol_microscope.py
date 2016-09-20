@@ -49,7 +49,7 @@ MAGNIFICATIONS = [
  1500000,
  2000000]
 
-MAGNIFICATION_MODES = {2500: "mag1", 50: "lowmag"}
+MAGNIFICATION_MODES = {"mag1": 2500, "lowmag":50}
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
 
@@ -119,18 +119,22 @@ class JeolMicroscope(object):
             value = min(MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
         
         # get best mode for magnification
-        for k in sorted(MAGNIFICATION_MODES.keys()):
-            if k <= value:
-                new_mode = MAGNIFICATION_MODES[k]
+        for k in sorted(MAGNIFICATION_MODES.keys(), key=MAGNIFICATION_MODES.get): # sort by values
+            v = MAGNIFICATION_MODES[k]
+            if v <= value:
+                new_mode = k
 
         current_mode = self.getFunctionMode()
         if current_mode != new_mode:
             self.setFunctionMode(new_mode)
-        
-        self.eos3.SetMagValue(value)
-        ## ctrl.tem.eos3.SetSelector(i) 
-        # i = 0-24 for lowmag
-        # i = 0-29 for mag1
+
+        # calculate index
+        ## i = 0-24 for lowmag
+        ## i = 0-29 for mag1
+        selector = MAGNIFICATIONS.index(value) - MAGNIFICATIONS.index(MAGNIFICATION_MODES[new_mode])
+                
+        # self.eos3.SetMagValue(value)
+        self.eos3.SetSelector(selector) 
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
