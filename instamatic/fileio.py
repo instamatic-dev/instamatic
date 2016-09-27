@@ -54,7 +54,7 @@ def load_calib_brightness():
         raise IOError("\n >> Please run instamatic.calib_brightness first.")
     return calib
 
-def write_calib_stage_lowmag():
+def write_calib_stage_lowmag(calib):
     pickle.dump({
         "transform": calib.transform,
         "reference_position": calib.reference_position

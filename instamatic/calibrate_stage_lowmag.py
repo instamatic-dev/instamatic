@@ -29,12 +29,12 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.1, 
         instance of Calibration class with conversion methods
     """
 
-    img_cent, h = ctrl.getImage(exposure=exposure, comment="Center image")
-    x_cent, y_cent, _, _, _ = h["StagePosition"]
+    img_cent, header_cent = ctrl.getImage(exposure=exposure, comment="Center image")
+    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     
     if save_images:
         outfile = "calib_center"
-        save_image_and_header(outfile, img=img_cent, header=h)
+        save_image_and_header(outfile, img=img_cent, header=header_cent)
 
     stagepos = []
     shifts = []
@@ -87,7 +87,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         instance of Calibration class with conversion methods
     """
     img_cent, header_cent = load_img(center_fn)
-    x_cent, y_cent = np.array((header_cent["StagePosition"]["x"], header_cent["StagePosition"]["y"]))
+    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     print
     print "Center:", center_fn
     print "Stageposition: x={} | y={}".format(x_cent, y_cent)
@@ -98,23 +98,23 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     for fn in other_fn:
         img, h = load_img(fn)
         
-        xy = h["StagePosition"]["x"], h["StagePosition"]["y"]
+        xobs, yobs, _, _, _ = h["StagePosition"]
         print
         print "Image:", fn
-        print "Stageposition: x={} | y={}".format(*xy)
+        print "Stageposition: x={} | y={}".format(xobs, yobs)
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
-        stagepos.append(xy)
+        stagepos.append((xobs, yobs))
         shifts.append(shift)
         
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
-    print "rwar"  
+
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
     
     c = CalibStage(transform=r, reference_position=np.array([x_cent, y_cent]))
-    print "Rwar2"
+
     return c
 
 
@@ -130,7 +130,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
     print
     print calib
 
-    fileio.write_calibration_stage_lowmag(calib)
+    fileio.write_calib_stage_lowmag(calib)
 
 
 def calibrate_stage_lowmag_entry():

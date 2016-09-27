@@ -180,7 +180,10 @@ class JeolMicroscope(object):
         self.def3.GetIS1(x, y)
 
     def getStagePosition(self):
-        """a and b in degrees"""
+        """
+        x, y, z in nanometer
+        a and b in degrees
+        """
         x, y, z, a, b, result = self.stage3.GetPos()
         return x, y, z, a, b
 
@@ -205,11 +208,11 @@ class JeolMicroscope(object):
         self.waitForStage()
 
     def setStageA(self, value):
-        self.stage3.SetA(value)
+        self.stage3.SetTiltXAngle(value)
         self.waitForStage()
 
     def setStageB(self, value):
-        self.stage3.SetB(value)
+        self.stage3.SetTiltYAngle(value)
         self.waitForStage()
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
@@ -226,15 +229,15 @@ class JeolMicroscope(object):
 
         nx, ny, nz, na, nb = self.getStagePosition()
         if x and nx != x:
-            print " >> Warning: stage position x -> requested: {}, got: {}".format(x, nx)
+            print " >> Warning: stage.x -> requested: {}, got: {}".format(x, nx) # +- 150 nm
         if y and ny != y:
-            print " >> Warning: stage position y -> requested: {}, got: {}".format(y, ny)
+            print " >> Warning: stage.y -> requested: {}, got: {}".format(y, ny) # +- 150 nm
         if z and nz != z:
-            print " >> Warning: stage position z -> requested: {}, got: {}".format(z, nz)
+            print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
         if a and na != a:
-            print " >> Warning: stage position a -> requested: {}, got: {}".format(a, na)
+            print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
         if b and nb != b:
-            print " >> Warning: stage position b -> requested: {}, got: {}".format(b, nb)
+            print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
 
     def getFunctionMode(self): # lowmag, mag1, samag
         """mag1, mag2, lowmag, samag, diff"""
