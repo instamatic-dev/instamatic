@@ -2,6 +2,15 @@ import atexit
 import comtypes.client
 import time
 
+import os
+import logging
+
+if os.path.exists("Y:\Stef\instamatic.log"):
+    logging.basicConfig(
+        filename='instamatic.log', 
+        level=logging.DEBUG, 
+        format='%(asctime)s | %(levelname)8s | %(message)s')
+
 MAGNIFICATIONS = [
  50,
  60,
@@ -98,6 +107,7 @@ class JeolMicroscope(object):
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
+        logging.info("Microscope connection established")
         atexit.register(self.releaseConnection)
 
     def __del__(self):
@@ -215,7 +225,39 @@ class JeolMicroscope(object):
         self.stage3.SetTiltYAngle(value)
         self.waitForStage()
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
+    def _setStagePosition_backlash(self, x=None, y=None, z=None, a=None, b=None):
+        """Backlash errors can be minimized by always approaching the target from the same direction"""
+        cx, cy, cz, ca, cb = self.getStagePosition()
+
+        shift = 10000
+
+        if x:
+            dx = cx - x
+            if dx > 0:
+                x -= shift
+        
+        if y:
+            dy = cy - y
+            if dy > 0:
+                y -= shift
+
+        if z:
+            dz = cz - z
+            print " >> Backlash correction not implemented for z"
+        if a:
+            da = ca - a
+            print " >> Backlash correction not implemented for a"
+        if b:
+            db = cb - b
+            print " >> Backlash correction not implemented for b"
+
+        self.setStagePosition(x, y, z, a, b, backlash=False)
+
+
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=True):
+        if backlash:
+            self._setStagePosition_backlash(x, y, z, a, b)
+
         if z:
             self.setStageZ(z)
         if a:
@@ -230,14 +272,19 @@ class JeolMicroscope(object):
         nx, ny, nz, na, nb = self.getStagePosition()
         if x and nx != x:
             print " >> Warning: stage.x -> requested: {}, got: {}".format(x, nx) # +- 150 nm
+            logging.debug("stage.x -> requested: {}, got: {}, backlash: {}".format(x, nx, backlash))
         if y and ny != y:
             print " >> Warning: stage.y -> requested: {}, got: {}".format(y, ny) # +- 150 nm
+            logging.debug("stage.y -> requested: {}, got: {}, backlash: {}".format(y, ny, backlash))
         if z and nz != z:
             print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
+            logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
         if a and na != a:
             print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
+            logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
         if b and nb != b:
             print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
+            logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
 
     def getFunctionMode(self): # lowmag, mag1, samag
         """mag1, mag2, lowmag, samag, diff"""
