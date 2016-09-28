@@ -73,15 +73,16 @@ class CalibBrightness(object):
 class CalibStage(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
-    def __init__(self, transform, reference_position):
+    def __init__(self, rotation, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
         super(CalibStage, self).__init__()
-        self.transform = transform
+        self.rotation = rotation
+        self.translation = translation
         self.reference_position = reference_position
    
     def __repr__(self):
-        return "CalibStage(transform=\n{},\n   reference_position=\n{})".format(self.transform, self.reference_position)
+        return "CalibStage(rotation=\n{},\n translation=\n{},\n reference_position=\n{})".format(self.rotation, self.translation, self.reference_position)
 
-    def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, reference_pos):
+    def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, t, reference_pos):
         """
         Function to transform stage position to pixel coordinates
         
@@ -105,12 +106,12 @@ class CalibStage(object):
         # get stagepos vector from reference image (center) to current image
         vect = image_pos - reference_pos
         
-        # stagepos -> pixel coords, and add offset for pixel position
-        px = stagepos - np.dot(vect, r_i)
+        # px_ref -> pixel coords, and add offset for pixel position
+        px = px_ref - np.dot(vect - t, r_i)
     
         return px
      
-    def _pixelcoord_to_reference_setting(self, px, image_pos, r, reference_pos):
+    def _pixelcoord_to_reference_setting(self, px, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to pixel coordinates in reference setting
         
@@ -134,11 +135,11 @@ class CalibStage(object):
         vect = image_pos - reference_pos
         
         # stagepos -> pixel coords, and add offset for pixel position
-        px_ref = np.dot(vect, r_i) + np.array(px)
+        px_ref = np.dot(vect - t, r_i) + np.array(px)
     
         return px_ref
 
-    def _pixelcoord_to_stagepos(self, px, image_pos, r, reference_pos):
+    def _pixelcoord_to_stagepos(self, px, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to stage position
         
@@ -153,13 +154,13 @@ class CalibStage(object):
         """
         reference_pos = np.array(reference_pos)
         
-        px_ref = self._pixelcoord_to_reference_setting(px, image_pos, r, reference_pos)
+        px_ref = self._pixelcoord_to_reference_setting(px, image_pos, r, t, reference_pos)
     
-        stagepos = np.dot(px_ref - 1024, r) + reference_pos
+        stagepos = np.dot(px_ref - 1024, r) + t + reference_pos
         
         return stagepos
 
-    def _stagepos_to_pixelcoord(self, stagepos, imagepos, transform, reference_position):
+    def _stagepos_to_pixelcoord(self, stagepos, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to stage position
         
@@ -172,31 +173,111 @@ class CalibStage(object):
         reference_pos: `list`
             stage position of the reference (center) image
         """
-        raise NotImplementedError
+        stagepos = np.array(stagepos)
+        image_pos = np.array(image_pos)
+        reference_pos = np.array(reference_pos)
+        
+        # do the inverse transoformation here
+        r_i = np.linalg.inv(r)
+
+        px_ref = np.dot(stagepos - t - reference_pos, r_i) + 1024
+
+        px = self._reference_setting_to_pixelcoord(px_ref, image_pos, r, t, reference_pos)
+
+        return px
 
     def reference_setting_to_pixelcoord(self, px_ref, image_pos):
         """
         Function to transform pixel coordinates in reference setting to current frame
         """
-        return self._reference_setting_to_pixelcoord(px_ref, image_pos, self.transform, self.reference_position)
+        return self._reference_setting_to_pixelcoord(px_ref, image_pos, self.rotation, self.translation, self.reference_position)
 
     def pixelcoord_to_reference_setting(self, px, image_pos):
         """
         Function to transform pixel coordinates in current frame to reference setting
         """
-        return self._pixelcoord_to_reference_setting(px, image_pos, self.transform, self.reference_position)
+        return self._pixelcoord_to_reference_setting(px, image_pos, self.rotation, self.translation, self.reference_position)
 
     def pixelcoord_to_stagepos(self, px, image_pos):
         """
         Function to transform pixel coordinates to stage position coordinates
         """
-        return self._pixelcoord_to_stagepos(px, image_pos, self.transform, self.reference_position)
+        return self._pixelcoord_to_stagepos(px, image_pos, self.rotation, self.translation, self.reference_position)
 
-    def stagepos_to_pixelcoord(self, stagepos, imagepos):
+    def stagepos_to_pixelcoord(self, stagepos, image_pos):
         """
         Function to stage position coordinates to pixel coordinates on current frame
         """
-        return self._stagepos_to_pixelcoord(stagepos, imagepos, self.transform, self.reference_position)
+        return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
+
+
+def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
+    """
+    Find pixel->stageposition matrix via least squares routine
+
+    shifts: 2D ndarray, shape (-1,2)
+        pixel shifts from cross correlation
+    stagepos: 2D Ndarray, shape (-1,2)
+        observed stage positions
+
+    stagepos = np.dot(shifts, r)
+    shifts = np.dot(stagepos, r_i)
+    """
+
+    def objective_func(x0, arr1, arr2):
+        angle = x0[0]
+        sx = x0[1]
+        sy = x0[2] 
+        tx = x0[3]
+        ty = x0[4]
+    
+        angle = angle % np.pi
+        sin = np.sin(angle)
+        cos = np.cos(angle)
+
+        r = np.array([
+            [ sx*cos, -sy*sin],
+            [ sx*sin,  sy*cos]])
+        t = np.array([tx, ty])
+
+        fit = np.dot(arr1, r) + t
+        return (fit-arr2).reshape(-1,)
+    
+    # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
+    x0 = angle, sx, sy, tx, ty = 0, 1, 1, 0, 0
+    x0 = np.array(x0)
+
+    args = (shifts, stagepos)
+
+    x, _ = leastsq(objective_func, x0, args=args)
+
+    angle, sx, sy, tx, ty = x
+    
+    angle = angle % np.pi
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+
+    print angle, sx, sy, tx, ty
+    
+    r = np.array([
+        [ sx*cos, -sy*sin],
+        [ sx*sin,  sy*cos]])
+    t = np.array([tx, ty])
+   
+    shifts_ = np.dot(shifts, r) + t
+    r_i = np.linalg.inv(r)
+    stagepos_ = np.dot(stagepos - t, r_i)
+
+    plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
+    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
+    plt.legend()
+
+    plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.axis('equal')
+    plt.show()
+    
+    return r, t
 
 
 def lsq_rotation_scaling_matrix(shifts, stagepos):
@@ -211,20 +292,36 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     stagepos = np.dot(shifts, r)
     shifts = np.dot(stagepos, r_i)
     """
+    
     def objective_func(x0, arr1, arr2):
-        r = x0.reshape(2,2)
+        angle = x0[0] % np.pi
+        sx = x0[1]
+        sy = x0[2] 
+ 
+        sin = np.sin(angle)
+        cos = np.cos(angle)
+
+        r = np.array([
+            [ sx*cos, -sy*sin],
+            [ sx*sin,  sy*cos] ])
+
         fit = np.dot(arr1, r)
         return (fit-arr2).reshape(-1,)
     
-    # x0 = np.array([ 1.,  0.,  0.,  1.])
-    # better first guess from experiments, seems to be somewhat consistent between experiments
-    x0 = np.array([-6.0e-08, 3.7e-07, -3.7e-07, -6.0e-08]) 
+    x0 = np.array([ 0, 1, 1]) # angle, sx, sy
 
     args = (shifts, stagepos)
 
     x, _ = leastsq(objective_func, x0, args=args)
 
-    r = x.reshape(2,2)
+    angle, sx, sy = x
+ 
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+
+    r = np.array([
+        [ sx*cos, -sy*sin],
+        [ sx*sin,  sy*cos] ])
 
     shifts_ = np.dot(shifts, r)
     r_i = np.linalg.inv(r)

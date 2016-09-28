@@ -8,7 +8,7 @@ from cross_correlate import cross_correlate
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix
+from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix, lsq_rotation_scaling_trans_matrix
 import fileio
 
 def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.1, binsize=1, save_images=False):
@@ -68,8 +68,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.1, 
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
     
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
+    c = CalibStage(rotation=r, reference_position=np.array([x_cent, y_cent]))
 
-    c = CalibStage(transform=r, reference_position=np.array([x_cent, y_cent]))
+    # r, t = lsq_rotation_scaling_trans_matrix(shifts, stagepos)
+    # c = CalibStage(rotation=r, translation=t, reference_position=np.array([x_cent, y_cent]))
 
     return c
 
@@ -90,18 +92,24 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     print
     print "Center:", center_fn
-    print "Stageposition: x={} | y={}".format(x_cent, y_cent)
+    print "Stageposition: x={:.2f} | y={:.2f}".format(x_cent, y_cent)
 
     shifts = []
     stagepos = []
     
+    # gridsize = 5
+    # stepsize = 50000
+    # n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    # x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
+    # stagepos_p = np.array(zip(x_grid.flatten(), y_grid.flatten()))
+
     for fn in other_fn:
         img, h = load_img(fn)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
         print
         print "Image:", fn
-        print "Stageposition: x={} | y={}".format(xobs, yobs)
+        print "Stageposition: x={:.2f} | y={:.2f}".format(xobs, yobs)
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -112,8 +120,10 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
-    
-    c = CalibStage(transform=r, reference_position=np.array([x_cent, y_cent]))
+    c = CalibStage(rotation=r, reference_position=np.array([x_cent, y_cent]))
+
+    # r, t = lsq_rotation_scaling_trans_matrix(shifts, stagepos)
+    # c = CalibStage(rotation=r, translation=t, reference_position=np.array([x_cent, y_cent]))
 
     return c
 

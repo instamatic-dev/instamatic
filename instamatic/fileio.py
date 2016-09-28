@@ -17,6 +17,8 @@ EXPERIMENT = "experiment.pickle"
 def load_calib_stage_lowmag():
     if os.path.exists(CALIB_STAGE_LOWMAG):
         d = pickle.load(open(CALIB_STAGE_LOWMAG, "r"))
+        if d.has_key("transform"):
+            d["rotation"] = d["transform"]
         calib = CalibStage(**d)
     else:
         raise IOError("\n >> Please run instamatic.calibrate_stage_lowmag first.")
@@ -56,7 +58,8 @@ def load_calib_brightness():
 
 def write_calib_stage_lowmag(calib):
     pickle.dump({
-        "transform": calib.transform,
+        "rotation": calib.rotation,
+        "translation": calib.translation,
         "reference_position": calib.reference_position
         }, open(CALIB_STAGE_LOWMAG,"w"))
 
