@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+import logging
+logging.basicConfig(
+    filename="instamatic.log", 
+    level=logging.DEBUG, 
+    format='%(asctime)s | %(levelname)8s | %(message)s')
+
 import sys, os
 import numpy as np
 
@@ -11,7 +17,7 @@ from TEMController import initialize
 from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix, lsq_rotation_scaling_trans_matrix
 import fileio
 
-def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.1, binsize=1, save_images=False):
+def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=-50000, exposure=1.0, binsize=2, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 

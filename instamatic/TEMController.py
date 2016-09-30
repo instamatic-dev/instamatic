@@ -355,7 +355,7 @@ class StagePosition(object):
         
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return "StagePosition(x={}, y={}, z={}, a={}, b={})".format(x,y,z,a,b)
+        return "StagePosition(x={:.1f}, y={:.1f}, z={:.1f}, a={:.1f}, b={:.1f})".format(x,y,z,a,b)
 
     def set(self, x=None, y=None, z=None, a=None, b=None):
         self._setter(x, y, z, a, b)
@@ -395,7 +395,7 @@ class StagePosition(object):
         x, y, z, a, b = self.get()
         return a
 
-    @x.setter
+    @a.setter
     def a(self, value):
         self.set(a=value)
 

@@ -1,15 +1,9 @@
+import logging
+
 import atexit
 import comtypes.client
 import time
-
 import os
-import logging
-
-if os.path.exists("Y:\Stef\instamatic.log"):
-    logging.basicConfig(
-        filename='instamatic.log', 
-        level=logging.DEBUG, 
-        format='%(asctime)s | %(levelname)8s | %(message)s')
 
 MAGNIFICATIONS = [
  50,
@@ -109,6 +103,9 @@ class JeolMicroscope(object):
 
         logging.info("Microscope connection established")
         atexit.register(self.releaseConnection)
+
+        self._x_direction = 0
+        self._y_direction = 0
 
     def __del__(self):
         comtypes.CoUninitialize()
@@ -227,62 +224,92 @@ class JeolMicroscope(object):
 
     def _setStagePosition_backlash(self, x=None, y=None, z=None, a=None, b=None):
         """Backlash errors can be minimized by always approaching the target from the same direction"""
-        cx, cy, cz, ca, cb = self.getStagePosition()
+        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
 
-        shift = 10000
+        full_limit = 10000
+        half_limit =   500
+        do_backlash = False
 
         if x:
-            dx = cx - x
-            if dx > 0:
-                x -= shift
+            shift_x = current_x - x
+            if shift_x > full_limit:
+                do_backlash = True
+                sign = shift_x / abs(shift_x)
+                x = sign * full_limit + x
+            elif shift_x > half_limit:
+                do_backlash = True
+                x = -0.5*shift_x + x
         
         if y:
-            dy = cy - y
-            if dy > 0:
-                y -= shift
+            shift_y = current_y - y
+            if shift_y > full_limit:
+                do_backlash = True
+                sign = shift_y / abs(shift_y)
+                y = sign * full_limit + y
+            elif shift_y > half_limit:
+                do_backlash = True
+                y = -0.5*shift_y + y
 
         if z:
-            dz = cz - z
+            shift_z = current_z - z
             print " >> Backlash correction not implemented for z"
         if a:
-            da = ca - a
+            shift_a = current_a - a
             print " >> Backlash correction not implemented for a"
         if b:
-            db = cb - b
+            shift_b = current_b - b
             print " >> Backlash correction not implemented for b"
 
-        self.setStagePosition(x, y, z, a, b, backlash=False)
+        if do_backlash:
+            self.setStagePosition(x, y, z, a, b, backlash=False)
 
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=True):
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
         if backlash:
             self._setStagePosition_backlash(x, y, z, a, b)
 
-        if z:
+        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
+
+
+        if z is not None:
             self.setStageZ(z)
-        if a:
+        if a is not None:
             self.setStageA(a)
-        if b:
+        if b is not None:
             self.setStageB(b)
-        if x:
+        if x is not None:
+            # shift = current_x - x
+            # direction = int(shift / abs(shift))
+
+            # if shift > 100 and direction != self._x_direction:
+            #     print "x -> direction reversal"
+            #     # direction reversal
+            #     x += direction * 93.1
             self.setStageX(x)
-        if y:
+        if y is not None:
+            # shift = current_y - y
+            # direction = int(shift / abs(shift))
+
+            # if shift > 100 and direction != self._y_direction:
+            #     print "y -> direction reversal"
+            #     # direction reversal
+            #     y += direction * 95.8
             self.setStageY(y)
 
         nx, ny, nz, na, nb = self.getStagePosition()
-        if x and nx != x:
-            print " >> Warning: stage.x -> requested: {}, got: {}".format(x, nx) # +- 150 nm
-            logging.debug("stage.x -> requested: {}, got: {}, backlash: {}".format(x, nx, backlash))
-        if y and ny != y:
-            print " >> Warning: stage.y -> requested: {}, got: {}".format(y, ny) # +- 150 nm
-            logging.debug("stage.y -> requested: {}, got: {}, backlash: {}".format(y, ny, backlash))
-        if z and nz != z:
+        if x is not None and abs(nx - x) > 10:
+            print " >> Warning: stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx) # +- 150 nm
+            logging.debug("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
+        if y is not None and abs(ny - y) > 10:
+            print " >> Warning: stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny) # +- 150 nm
+            logging.debug("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
+        if z is not None and nz != z:
             print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
             logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
-        if a and na != a:
+        if a is not None and na != a:
             print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
             logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
-        if b and nb != b:
+        if b is not None and nb != b:
             print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
             logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
 
