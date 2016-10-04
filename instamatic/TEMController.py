@@ -89,7 +89,6 @@ class Magnification(object):
         self._indexgetter = tem.getMagnificationIndex
         self._indexsetter = tem.setMagnificationIndex
 
-
     def __repr__(self):
         value = self.value
         index = self.index
@@ -352,6 +351,7 @@ class StagePosition(object):
         super(StagePosition, self).__init__()
         self._setter = tem.setStagePosition
         self._getter = tem.getStagePosition
+        self._reset = tem.forceStageBacklashCorrection
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -407,6 +407,9 @@ class StagePosition(object):
     @b.setter
     def b(self, value):
         self.set(b=value)
+
+    def reset_xy(self):
+        self._reset(x=True, y=True)
 
 
 class TEMController(object):

@@ -35,6 +35,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=-50000, exposure=1.0,
         instance of Calibration class with conversion methods
     """
 
+    # ensure that backlash is eliminated
+    ctrl.stageposition.reset_xy()
+
     img_cent, header_cent = ctrl.getImage(exposure=exposure, comment="Center image")
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     

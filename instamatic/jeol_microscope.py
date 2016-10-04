@@ -226,50 +226,93 @@ class JeolMicroscope(object):
         """Backlash errors can be minimized by always approaching the target from the same direction"""
         current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
 
-        full_limit = 10000
-        half_limit =   500
+        xy_limit = 10000
+        angle_limit = 1.0
+        height_limit = 1000
+
         do_backlash = False
 
-        if x:
-            shift_x = current_x - x
-            if shift_x > full_limit:
+        if x is not None:
+            shift_x = x - current_x
+            if shift_x < 0 and abs(shift_x) > xy_limit:
                 do_backlash = True
-                sign = shift_x / abs(shift_x)
-                x = sign * full_limit + x
-            elif shift_x > half_limit:
-                do_backlash = True
-                x = -0.5*shift_x + x
+                x = xy_limit + x
+                print " >> Correct backlash in x, approach: {} -> {}".format(x, x-xy_limit)
         
-        if y:
-            shift_y = current_y - y
-            if shift_y > full_limit:
+        if y is not None:
+            shift_y = y - current_y
+            if shift_y < 0 and abs(shift_y) > xy_limit:
                 do_backlash = True
-                sign = shift_y / abs(shift_y)
-                y = sign * full_limit + y
-            elif shift_y > half_limit:
-                do_backlash = True
-                y = -0.5*shift_y + y
+                y = xy_limit + y
+                print " >> Correct backlash in x, approach: {} -> {}".format(y, y-xy_limit)
 
-        if z:
-            shift_z = current_z - z
-            print " >> Backlash correction not implemented for z"
-        if a:
-            shift_a = current_a - a
-            print " >> Backlash correction not implemented for a"
-        if b:
-            shift_b = current_b - b
-            print " >> Backlash correction not implemented for b"
+        if z is not None:
+            shift_z = z - current_z
+            if shift_z < 0 and abs(shift_z) > height_limit:
+                do_backlash = True
+                z = height_limit + z
+                print " >> Correct backlash in z, approach: {} -> {}".format(z, z-height_limit)
+        
+        if a is not None:
+            shift_a = a - current_a
+            if shift_a < 0 and abs(shift_a) > angle_limit:
+                do_backlash = True
+                a = angle_limit + a
+                print " >> Correct backlash in a, approach: {} -> {}".format(a, a-angle_limit)
+        
+        if b is not None:
+            shift_b = b - current_b
+            if shift_b < 0 and abs(shift_b) > angle_limit:
+                do_backlash = True
+                b = angle_limit + b
+                print " >> Correct backlash in b, approach: {} -> {}".format(b, b-angle_limit)
 
         if do_backlash:
             self.setStagePosition(x, y, z, a, b, backlash=False)
 
-
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
-        if backlash:
-            self._setStagePosition_backlash(x, y, z, a, b)
-
+    def forceStageBacklashCorrection(self, x=False, y=False, z=False, a=False, b=False):
         current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
 
+        xy_limit = 10000
+        angle_limit = 1.0
+        height_limit = 1000
+
+        if x:
+            x = xy_limit + current_x
+            print " >> Correct backlash in x, approach: {} -> {} (force)".format(x, current_x)
+        else:
+            current_x, x = None, None
+
+        if y:
+            y = xy_limit + current_y
+            print " >> Correct backlash in x, approach: {} -> {} (force)".format(y, current_y)
+        else:
+            current_y, y = None, None
+
+        if z:
+            z = height_limit + current_z
+            print " >> Correct backlash in z, approach: {} -> {} (force)".format(z, current_z)
+        else:
+            current_z, z = None, None
+
+        if a:
+            a = angle_limit + current_a
+            print " >> Correct backlash in a, approach: {} -> {} (force)".format(a, current_a)
+        else:
+            current_a, a = None, None
+
+        if b:
+            b = angle_limit + current_b
+            print " >> Correct backlash in b, approach: {} -> {} (force)".format(b, current_b)
+        else:
+            current_b, b = None, None
+
+        self.setStagePosition(x, y, z, a, b, backlash=False)
+        self.setStagePosition(current_x, current_y, current_z, current_a, current_b, backlash=False)
+
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=True):
+        if backlash:
+            self._setStagePosition_backlash(x, y, z, a, b)
 
         if z is not None:
             self.setStageZ(z)
@@ -278,42 +321,28 @@ class JeolMicroscope(object):
         if b is not None:
             self.setStageB(b)
         if x is not None:
-            # shift = current_x - x
-            # direction = int(shift / abs(shift))
-
-            # if shift > 100 and direction != self._x_direction:
-            #     print "x -> direction reversal"
-            #     # direction reversal
-            #     x += direction * 93.1
             self.setStageX(x)
         if y is not None:
-            # shift = current_y - y
-            # direction = int(shift / abs(shift))
-
-            # if shift > 100 and direction != self._y_direction:
-            #     print "y -> direction reversal"
-            #     # direction reversal
-            #     y += direction * 95.8
             self.setStageY(y)
 
         nx, ny, nz, na, nb = self.getStagePosition()
-        if x is not None and abs(nx - x) > 10:
+        if x is not None and abs(nx - x) > 150:
             print " >> Warning: stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx) # +- 150 nm
             logging.debug("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
-        if y is not None and abs(ny - y) > 10:
+        if y is not None and abs(ny - y) > 150:
             print " >> Warning: stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny) # +- 150 nm
             logging.debug("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
-        if z is not None and nz != z:
+        if z is not None and abs(nz - z) > 500:
             print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
             logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
-        if a is not None and na != a:
+        if a is not None and abs(na - a) > 0.057:
             print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
             logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
-        if b is not None and nb != b:
+        if b is not None and abs(nb - b) > 0.057:
             print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
             logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
 
-    def getFunctionMode(self): # lowmag, mag1, samag
+    def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
         mode, name, result = self.eos3.GetFunctionMode()
         return FUNCTION_MODES[mode]
@@ -332,6 +361,7 @@ class JeolMicroscope(object):
         return value
 
     def setDiffFocus(self, value):
+	"""IC1"""
         self.lens3.setDiffFocus(value)
 
     def getDiffShift(self):
