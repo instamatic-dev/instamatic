@@ -38,6 +38,7 @@ setup(
             'instamatic.calibrate_stage_lowmag = instamatic.calibrate_stage_lowmag:calibrate_stage_lowmag_entry',
             'instamatic.calibrate_beamshift = instamatic.calibrate_beamshift:calibrate_beamshift_entry',
             'instamatic.calibrate_brightness = instamatic.calibrate_brightness:calibrate_brightness_entry',
+            'instamatic.calibrate_pla = instamatic.calibrate_pla:calibrate_pla_entry',
             'instamatic.map_holes = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole = instamatic.app:goto_hole_entry',
             'instamatic.prepare_experiment = instamatic.app:prepare_experiment_entry',

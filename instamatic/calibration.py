@@ -211,6 +211,77 @@ class CalibStage(object):
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
 
 
+def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
+    """
+    Find pixel->stageposition matrix via least squares routine
+
+    shifts: 2D ndarray, shape (-1,2)
+        pixel shifts from cross correlation
+    stagepos: 2D Ndarray, shape (-1,2)
+        observed stage positions
+
+    stagepos = np.dot(shifts, r)
+    shifts = np.dot(stagepos, r_i)
+    """
+
+    def objective_func(x0, arr1, arr2):
+        angle = x0[0]
+        sx = x0[1]
+        sy = x0[2] 
+        tx = x0[3]
+        ty = x0[4]
+        k1 = x0[5]
+        k2 = x0[6]
+    
+        angle = angle % np.pi
+        sin = np.sin(angle)
+        cos = np.cos(angle)
+
+        r = np.array([
+            [ sx*cos, -sy*sin*k1],
+            [ k2*sx*sin,  sy*cos]])
+        t = np.array([tx, ty])
+
+        fit = np.dot(arr1, r) + t
+        return (fit-arr2).reshape(-1,)
+    
+    if not x0:
+        x0 = angle, sx, sy, tx, ty, k1, k2 = 180, 1, 1, 0, 0, 1, 1
+    x0 = np.array(x0)
+
+    args = (shifts, stagepos)
+
+    x, _ = leastsq(objective_func, x0, args=args)
+    print x, _
+
+    angle, sx, sy, tx, ty, k1, k2 = x
+    
+    angle = angle % np.pi
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+
+    print angle, sx, sy, tx, ty, k1, k2
+    
+    r = np.array([
+        [ sx*cos, -sy*sin*k1],
+        [ k2*sx*sin,  sy*cos]])
+    t = np.array([tx, ty])
+   
+    shifts_ = np.dot(shifts, r) + t
+    r_i = np.linalg.inv(r)
+    stagepos_ = np.dot(stagepos - t, r_i)
+
+    plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
+    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Positions in pixel coords")
+    plt.legend()
+
+    plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.ylim(stagepos_.min()*1.2, stagepos_.max()*1.2)
+    plt.axis('equal')
+    plt.show()
+    
+    return r, t
+
 def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
     """
     Find pixel->stageposition matrix via least squares routine
