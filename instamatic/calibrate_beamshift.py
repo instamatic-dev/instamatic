@@ -132,12 +132,12 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     return c
 
 
-def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, confirm=True):
+def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, confirm=True):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go too 2500x mag, and move the beam by beamshift\nso that is in the middle of the image (use reasonable size)\n(type 'go' to start): """) == "go":
+        if confirm and not raw_input("\n >> Go to 2500x mag, and move the beam by beamshift\nso that is in the middle of the image (use reasonable size)\n(type 'go' to start): """) == "go":
             return
         else:
-            calib = calibrate_beamshift_live(ctrl, save_images=True)
+            calib = calibrate_beamshift_live(ctrl, save_images=save_images)
     else:
         calib = calibrate_beamshift_from_image_fn(center_fn, other_fn)
 
@@ -153,7 +153,6 @@ def calibrate_beamshift_entry():
 Program to calibrate beamshift of microscope
 
 Usage: 
-prepare
     instamatic.calibrate_beamshift
         To start live calibration routine on the microscope
 
@@ -163,11 +162,11 @@ prepare
         exit()
     elif len(sys.argv) == 1:
         ctrl = initialize()
-        calibrate_beamshift(ctrl, save_images=True)
+        calibrate_beamshift(ctrl=ctrl, save_images=True)
     else:
         center_fn = sys.argv[1]
         other_fn = sys.argv[2:]
-        calibrate_beamshift(center_fn, other_fn)
+        calibrate_beamshift(center_fn=center_fn, other_fn=other_fn)
 
 
 if __name__ == '__main__':

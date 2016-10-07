@@ -269,7 +269,7 @@ def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
     stagepos_ = np.dot(stagepos - t, r_i)
 
     plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
-    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
+    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Positions in pixel coords")
     plt.legend()
 
     plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)
@@ -328,7 +328,7 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
     stagepos_ = np.dot(stagepos, r_i)
 
     plt.scatter(shifts[:,0], shifts[:,1], color="red", label="Observed pixel shifts")
-    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Stageposition in pixel coords")
+    plt.scatter(stagepos_[:,0], stagepos_[:,1], color="blue", label="Positions in pixel coords")
     plt.legend()
 
     plt.xlim(stagepos_.min()*1.2, stagepos_.max()*1.2)

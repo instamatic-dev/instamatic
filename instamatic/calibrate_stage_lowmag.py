@@ -17,7 +17,7 @@ from TEMController import initialize
 from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix, lsq_rotation_scaling_trans_matrix
 import fileio
 
-def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=-50000, exposure=1.0, binsize=2, save_images=False):
+def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=2, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 

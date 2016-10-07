@@ -472,7 +472,7 @@ class TEMController(object):
             'DiffShift': self.diffshift.get(),
             'StagePosition': self.stageposition.get(),
             'Magnification': self.magnification.get(),
-            'DiffFocus': self.magnification.get(),
+            'DiffFocus': self.difffocus.get(),
             'Brightness': self.brightness.get()
         }
         return d

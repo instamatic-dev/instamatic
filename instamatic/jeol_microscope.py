@@ -184,7 +184,7 @@ class JeolMicroscope(object):
         return x,y 
 
     def setImageShift(self, x, y):
-        self.def3.GetIS1(x, y)
+        self.def3.SetIS1(x, y)
 
     def getStagePosition(self):
         """
@@ -236,36 +236,36 @@ class JeolMicroscope(object):
             shift_x = x - current_x
             if shift_x < 0 and abs(shift_x) > xy_limit:
                 do_backlash = True
-                x = xy_limit + x
-                print " >> Correct backlash in x, approach: {} -> {}".format(x, x-xy_limit)
+                print " >> Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x)
+                x = x - xy_limit
         
         if y is not None:
             shift_y = y - current_y
             if shift_y < 0 and abs(shift_y) > xy_limit:
                 do_backlash = True
-                y = xy_limit + y
-                print " >> Correct backlash in x, approach: {} -> {}".format(y, y-xy_limit)
+                print " >> Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y)
+                y = y - xy_limit
 
         if z is not None:
             shift_z = z - current_z
             if shift_z < 0 and abs(shift_z) > height_limit:
                 do_backlash = True
-                z = height_limit + z
-                print " >> Correct backlash in z, approach: {} -> {}".format(z, z-height_limit)
+                print " >> Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z)
+                z = z - height_limit
         
         if a is not None:
             shift_a = a - current_a
             if shift_a < 0 and abs(shift_a) > angle_limit:
                 do_backlash = True
-                a = angle_limit + a
-                print " >> Correct backlash in a, approach: {} -> {}".format(a, a-angle_limit)
+                print " >> Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a)
+                a = a - angle_limit
         
         if b is not None:
             shift_b = b - current_b
             if shift_b < 0 and abs(shift_b) > angle_limit:
                 do_backlash = True
-                b = angle_limit + b
-                print " >> Correct backlash in b, approach: {} -> {}".format(b, b-angle_limit)
+                print " >> Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b)
+                b = b - angle_limit
 
         if do_backlash:
             self.setStagePosition(x, y, z, a, b, backlash=False)
@@ -278,32 +278,32 @@ class JeolMicroscope(object):
         height_limit = 1000
 
         if x:
-            x = xy_limit + current_x
-            print " >> Correct backlash in x, approach: {} -> {} (force)".format(x, current_x)
+            x = current_x - xy_limit
+            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x)
         else:
             current_x, x = None, None
 
         if y:
-            y = xy_limit + current_y
-            print " >> Correct backlash in x, approach: {} -> {} (force)".format(y, current_y)
+            y = current_y - xy_limit
+            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
         else:
             current_y, y = None, None
 
         if z:
-            z = height_limit + current_z
-            print " >> Correct backlash in z, approach: {} -> {} (force)".format(z, current_z)
+            z = current_z - height_limit
+            print " >> Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z)
         else:
             current_z, z = None, None
 
         if a:
-            a = angle_limit + current_a
-            print " >> Correct backlash in a, approach: {} -> {} (force)".format(a, current_a)
+            a = current_a - angle_limit
+            print " >> Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a)
         else:
             current_a, a = None, None
 
         if b:
-            b = angle_limit + current_b
-            print " >> Correct backlash in b, approach: {} -> {} (force)".format(b, current_b)
+            b = current_b - angle_limit
+            print " >> Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b)
         else:
             current_b, b = None, None
 
@@ -374,3 +374,52 @@ class JeolMicroscope(object):
     def releaseConnection(self):
         comtypes.CoUninitialize()
         print "Connection to microscope released"
+
+    def isBeamBlanked(self, value):
+        value, result = self.def3.GetBeamBlank()
+        return bool(value)
+
+    def setBeamBlank(self, mode):
+        """True/False or 1/0"""
+        self.def3.SetBeamBlank(mode)
+
+    def getAll(self):
+        print "## lens3"
+        print "CL1", self.lens3.GetCL1()
+        print "CL2", self.lens3.GetCL2()
+        print "CL3", self.lens3.GetCL3()
+        print "CM", self.lens3.GetCM()
+        print "FLc", self.lens3.GetFLc()
+        print "FLcomp1", self.lens3.GetFLcomp1()
+        print "FLcomp2", self.lens3.GetFLcomp2()
+        print "FLf", self.lens3.GetFLf()
+        print "IL1", self.lens3.GetIL1()
+        print "IL2", self.lens3.GetIL2()
+        print "IL3", self.lens3.GetIL3()
+        print "IL4", self.lens3.GetIL4()
+        print "OLc", self.lens3.GetOLc()
+        print "OLf", self.lens3.GetOLf()
+        print "OM", self.lens3.GetOM()
+        print "OM2", self.lens3.GetOM2()
+        print "OM2Flag", self.lens3.GetOM2Flag()
+        print "PL1", self.lens3.GetPL1()
+        print "PL2", self.lens3.GetPL2()
+        print "PL3", self.lens3.GetPL3()
+        print
+        print "## def3"
+        print "CLA1", self.def3.GetCLA1()
+        print "CLA2", self.def3.GetCLA2()
+        print "CLs", self.def3.GetCLs()
+        print "FLA1", self.def3.GetFLA1()
+        print "FLA2", self.def3.GetFLA2()
+        print "FLs1", self.def3.GetFLs1()
+        print "FLs2", self.def3.GetFLs2()
+        print "GUNA1", self.def3.GetGUNA1()
+        print "GUNA2", self.def3.GetGUNA2()
+        print "ILs", self.def3.GetILs()
+        print "IS1", self.def3.GetIS1()
+        print "IS2", self.def3.GetIS2()
+        print "OLs", self.def3.GetOLs()
+        print "PLA", self.def3.GetPLA()
+
+
