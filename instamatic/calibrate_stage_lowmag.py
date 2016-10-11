@@ -17,7 +17,7 @@ from TEMController import initialize
 from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix, lsq_rotation_scaling_trans_matrix
 import fileio
 
-def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=2, save_images=False):
+def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=1, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -38,7 +38,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     # ensure that backlash is eliminated
     ctrl.stageposition.reset_xy()
 
-    img_cent, header_cent = ctrl.getImage(exposure=exposure, comment="Center image")
+    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image")
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     
     if save_images:
@@ -50,15 +50,17 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
+    tot = gridsize*gridsize
 
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
            
         print
+        print "Position {}/{}".format(i+1, tot)
         print ctrl.stageposition
         
-        img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
         xobs, yobs, _, _, _ = h["StagePosition"]

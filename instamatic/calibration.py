@@ -28,6 +28,54 @@ def load_img(fn):
         return arr, d
 
 
+class CalibDiffShift(object):
+    """Simple class to hold the methods to perform transformations from one setting to another
+    based on calibration results
+
+    NOTE: The TEM stores different values for diffshift depending on the mode used
+        i.e. mag1 vs sa-diff"""
+    def __init__(self, rotation, translation):
+        super(CalibDiffShift, self).__init__()
+        self.rotation = rotation
+        self.translation = translation
+        self.neutral_beamshift = (32576, 31149)
+        self.neutral_diffshift = (36740, 48572)
+   
+    def __repr__(self):
+        return "CalibDiffShift(rotation=\n{},\n translation=\n{})".format(
+            self.rotation, self.translation)
+
+    def diffshift2beamshift(self, pla):
+        pla = np.array(pla)
+        r = self.rotation
+        t = self.translation
+
+        return (np.dot(pla, r) + t).astype(int)
+
+    def beamshift2diffshift(self, beamshift):
+        beamshift = np.array(beamshift)
+        r_i = np.linalg.inv(self.rotation)
+        t = self.translation
+
+        return np.dot(beamshift - t, r_i).astype(int)
+
+    def compensate_beamshift(self, ctrl):
+        ### This only works in diffraction mode
+        beamshift = ctrl.beamshift.get()
+        diffshift = self.beamshift2diffshift(beamshift)
+        ctrl.diffshift.set(*diffshift)
+
+    def compensate_diffshift(self, ctrl):
+        ### This only works in diffraction mode
+        diffshift = ctrl.diffshift.get()
+        beamshift = self.diffshift2beamshift(diffshift)
+        ctrl.beamshift.set(*beamshift)
+
+    def reset(self, ctrl):
+        ctrl.beamshift.set(*self.neutral_beamshift)
+        ctrl.diffshift.set(*self.neutral_diffshift)
+
+
 class CalibBeamShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
@@ -246,7 +294,7 @@ def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
         return (fit-arr2).reshape(-1,)
     
     if not x0:
-        x0 = angle, sx, sy, tx, ty, k1, k2 = 180, 1, 1, 0, 0, 1, 1
+        x0 = angle, sx, sy, tx, ty, k1, k2 = np.pi, 1, 1, 0, 0, 1, 1
     x0 = np.array(x0)
 
     args = (shifts, stagepos)
@@ -282,7 +330,7 @@ def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
     
     return r, t
 
-def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
+def lsq_rotation_scaling_trans_matrix(shifts, stagepos, x0=None):
     """
     Find pixel->stageposition matrix via least squares routine
 
@@ -315,7 +363,8 @@ def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
         return (fit-arr2).reshape(-1,)
     
     # https://en.wikipedia.org/wiki/Transformation_matrix#Affine_transformations
-    x0 = angle, sx, sy, tx, ty = 0, 1, 1, 0, 0
+    if not x0:
+        x0 = angle, sx, sy, tx, ty = 0, 1, 1, 0, 0
     x0 = np.array(x0)
 
     args = (shifts, stagepos)
@@ -351,7 +400,7 @@ def lsq_rotation_scaling_trans_matrix(shifts, stagepos):
     return r, t
 
 
-def lsq_rotation_scaling_matrix(shifts, stagepos):
+def lsq_rotation_scaling_matrix(shifts, stagepos, x0=None):
     """
     Find pixel->stageposition matrix via least squares routine
 
@@ -379,7 +428,10 @@ def lsq_rotation_scaling_matrix(shifts, stagepos):
         fit = np.dot(arr1, r)
         return (fit-arr2).reshape(-1,)
     
-    x0 = np.array([ 0, 1, 1]) # angle, sx, sy
+
+    if not x0:
+        x0 = 0.0, 1.0, 1.0
+    x0 = np.array(x0) # angle, sx, sy
 
     args = (shifts, stagepos)
 

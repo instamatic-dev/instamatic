@@ -285,7 +285,7 @@ class JeolMicroscope(object):
 
         if y:
             y = current_y - xy_limit
-            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
+            print " >> Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
         else:
             current_y, y = None, None
 

@@ -10,6 +10,7 @@ import numpy as np
 CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
 CALIB_BEAMSHIFT = "calib_beamshift.pickle"
 CALIB_BRIGHTNESS = "calib_brightness.pickle"
+CALIB_DIFFSHIFT = "calib_diffshift.pickle"
 HOLE_COORDS = "hole_coords.npy"
 EXPERIMENT = "experiment.pickle"
 
@@ -56,6 +57,15 @@ def load_calib_brightness():
         raise IOError("\n >> Please run instamatic.calib_brightness first.")
     return calib
 
+def load_calib_diffshift():
+    print os.path.abspath(".")
+    if os.path.exists(CALIB_DIFFSHIFT):
+        d = pickle.load(open(CALIB_DIFFSHIFT, "r"))
+        calib = CalibDiffShift(**d)
+    else:
+        raise IOError("\n >> Please run instamatic.calib_diffshift first.")
+    return calib
+
 def write_calib_stage_lowmag(calib):
     pickle.dump({
         "rotation": calib.rotation,
@@ -81,3 +91,9 @@ def write_calib_brightness(calib):
         "slope": calib.slope,
         "intercept": calib.intercept
         }, open(CALIB_BRIGHTNESS, "w"))
+
+def write_calib_diffshift(calib):
+    pickle.dump({
+        "rotation": calib.rotation,
+        "translation": calib.translation,
+        }, open(CALIB_DIFFSHIFT,"w"))
