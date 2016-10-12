@@ -14,7 +14,7 @@ try:
 except WindowsError:
     comtypes.CoInitialize()
 
-from formats import write_tiff
+from instamatic.formats import write_tiff
 
 import numpy as np
 import os, sys
