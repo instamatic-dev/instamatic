@@ -77,7 +77,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     
     print " >> Reset to center"
     ctrl.stageposition.set(x=x_cent, y=y_cent)
-    shifts = np.array(shifts)
+
+    # correct for binsize, store as binsize=1
+    shifts = np.array(shifts) * binsize
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
     if stagepos[12].max() > 50:
@@ -112,6 +114,8 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     print "Center:", center_fn
     print "Stageposition: x={:.2f} | y={:.2f}".format(x_cent, y_cent)
 
+    binsize = header_cent["ImageBinSize"]
+
     shifts = []
     stagepos = []
     
@@ -134,7 +138,8 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         stagepos.append((xobs, yobs))
         shifts.append(shift)
         
-    shifts = np.array(shifts)
+    # correct for binsize, store as binsize=1
+    shifts = np.array(shifts) * binsize
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
