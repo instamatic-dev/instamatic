@@ -34,13 +34,14 @@ class CalibDiffShift(object):
 
     NOTE: The TEM stores different values for diffshift depending on the mode used
         i.e. mag1 vs sa-diff"""
-    def __init__(self, rotation, translation):
+    def __init__(self, rotation, translation, neutral_beamshift=None):
         super(CalibDiffShift, self).__init__()
         self.rotation = rotation
         self.translation = translation
-        self.neutral_beamshift = (32576, 31149)
-        self.neutral_diffshift = (36740, 48572)
-   
+        if not neutral_beamshift:
+            neutral_beamshift = (32576, 31149)
+        self.neutral_beamshift = neutral_beamshift
+
     def __repr__(self):
         return "CalibDiffShift(rotation=\n{},\n translation=\n{})".format(
             self.rotation, self.translation)
@@ -60,20 +61,24 @@ class CalibDiffShift(object):
         return np.dot(beamshift - t, r_i).astype(int)
 
     def compensate_beamshift(self, ctrl):
-        ### This only works in diffraction mode
+        if not ctrl.mode == "diff":
+            print " >> Switching to diffraction mode"
+            ctrl.mode_diffraction()
         beamshift = ctrl.beamshift.get()
         diffshift = self.beamshift2diffshift(beamshift)
         ctrl.diffshift.set(*diffshift)
 
     def compensate_diffshift(self, ctrl):
-        ### This only works in diffraction mode
+        if not ctrl.mode == "diff":
+            print " >> Switching to diffraction mode"
+            ctrl.mode_diffraction()
         diffshift = ctrl.diffshift.get()
         beamshift = self.diffshift2beamshift(diffshift)
         ctrl.beamshift.set(*beamshift)
 
     def reset(self, ctrl):
         ctrl.beamshift.set(*self.neutral_beamshift)
-        ctrl.diffshift.set(*self.neutral_diffshift)
+        self.compensate_diffshift()
 
 
 class CalibBeamShift(object):

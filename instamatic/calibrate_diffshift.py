@@ -12,6 +12,10 @@ from calibration import load_img, lsq_rotation_scaling_trans_shear_matrix, Calib
 
 def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
 
+    if not ctrl.mode == "diff":
+        print " >> Switching to diffraction mode"
+        ctrl.mode_diffraction()
+
     beam_center_x, beam_center_y = ctrl.beamshift.get()
 
     plas = []
@@ -58,7 +62,7 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
 
     r, t = lsq_rotation_scaling_trans_shear_matrix(plas, beams, x0=[180, 1, 1, 0, 0, 1, 1])
 
-    c = CalibDiffShift(rotation=r, translation=t)
+    c = CalibDiffShift(rotation=r, translation=t, neutral_beamshift=(beam_center_x, beam_center_y))
 
     return c
 

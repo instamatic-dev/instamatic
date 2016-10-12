@@ -448,6 +448,10 @@ class TEMController(object):
     def mode_diffraction(self):
         self.tem.setFunctionMode("diff")
 
+    @property
+    def mode(self):
+        return self.tem.getFunctionMode()
+
     def __repr__(self):
         return "\n".join(("Mode: {}".format(self.tem.getFunctionMode()),
                           str(self.gunshift),
