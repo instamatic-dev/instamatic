@@ -14,10 +14,7 @@ try:
 except WindowsError:
     comtypes.CoInitialize()
 
-try:
-    import fabio
-except IOError:
-    pass
+from formats import write_tiff
 
 import numpy as np
 import os, sys
@@ -159,6 +156,7 @@ class gatanOrius(object):
 
 
 def save_image(outfile, img):
+    import matplotlib.pyplot as plt
     if not outfile:
         return
     root, ext = os.path.splitext(outfile)
@@ -189,36 +187,20 @@ def save_image_and_header(outfile, img=None, header=None):
     if ext == "":
         ext = ".tiff"
         outfile = root + ext
-    if ext == ".cbf":
-        im = fabio.cbfimage.cbfimage(data=img, header=header)
-        im.write(outfile)
-    elif ext == ".edf":
-        im = fabio.edfimage.edfimage(data=img, header=header)
-        im.write(outfile)
-    # elif ext == ".dm3":
-    #     im = fabio.dm3image.dm3image(data=img, header=header)
-    #     im.write(outfile)
-    elif ext == ".tif" or ext == ".tiff":
-        im = fabio.tifimage.tifimage(data=img, header=header)
-        im.write(outfile)
+    if ext == ".tif" or ext == ".tiff":
+        write_tiff(outfile, img, header)
     elif ext == ".mrc":
         mrc_write_image(outfile, img)
-	save_header(outfile, header)
-    # elif ext == ".xml" or ext == "xsd":
-    #     im = fabio.xsdimage.xsdimage(data=img, header=header)
-    #     im.write(outfile)
-    # elif ext == ".npy":
-    #     im = fabio.numpyimage.numpyimage(data=img, header=header)
-    #     im.write(outfile)
     elif ext == ".npy":
         if img is not None:
             save_image(outfile, img)
         if header:
             save_header(outfile, header)
     else:
-        raise IOError("Extension {} not understood (edf cbf tif npy)".format(ext))
+        raise IOError("Extension {} not supported (tif tiff npy mrc)".format(ext))
     print " >> Image written to {}".format(outfile)
     return outfile
+
 
 def main_entry():
     import argparse
