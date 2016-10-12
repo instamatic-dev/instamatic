@@ -2,6 +2,7 @@
 
 import sys, os
 import numpy as np
+import json
 
 from TEMController import initialize
 from camera import save_image_and_header
@@ -48,16 +49,14 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     print "Return to center", beam_center_x, beam_center_y
     ctrl.beamshift.set(beam_center_x, beam_center_y)
 
-    out = open("calibpla.txt", "w")
-    print >> out, "plas"
-    print >> out, plas
-    print >> out, "beams"
-    print >> out, beams
-    print >> out, "xy_coords"
-    print >> out, xy_coords
-    print >> out, "center"
-    print >> out, beam_center_x, beam_center_y
-
+    out = open("calibpla.json", "w")
+    d = {
+        "beams": beams.tolist(),
+        "plas": plas.tolist(),
+        "xy_coords": xy_coords.tolist(),
+        "center": (beam_center_x, beam_center_y)
+    }
+    json.dump(d, out)
     out.close()
 
     r, t = lsq_rotation_scaling_trans_shear_matrix(plas, beams, x0=[180, 1, 1, 0, 0, 1, 1])
@@ -66,8 +65,26 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
 
     return c
 
-def calibrate_diffshift(ctrl=None, confirm=True):
-    if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image (fluorescent screen works well for this)\n(type 'go' to start): """) == "go":
+
+def calibrate_diffshift_from_file(fn):
+    d = json.load(open(fn))
+
+    beams = np.array(d["beams"])
+    plas = np.array(d["plas"])
+    xy_coords = np.array(d["xy_coords"])
+    center = d["center"]
+
+    r, t = lsq_rotation_scaling_trans_shear_matrix(plas, beams, x0=[180, 1, 1, 0, 0, 1, 1])
+
+    c = CalibDiffShift(rotation=r, translation=t, neutral_beamshift=center)
+
+    return c
+
+
+def calibrate_diffshift(ctrl=None, fn=None, confirm=True):
+    if fn:
+        calib = calibrate_diffshift_from_file(fn)
+    elif confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image (fluorescent screen works well for this)\n(type 'go' to start): """) == "go":
         return
     else:
         calib = calibrate_diffshift_live(ctrl)
@@ -77,6 +94,7 @@ def calibrate_diffshift(ctrl=None, confirm=True):
 
     fileio.write_calib_diffshift(calib)
 
+
 def calibrate_diffshift_entry():
     if "help" in sys.argv:
         print """
@@ -85,8 +103,14 @@ Program to calibrate PLA to compensate for beamshift movements
 Usage: 
     instamatic.calibrate_diffshift
         To start live calibration routine on the microscope
+    
+    instamatic.calibrate_diffshift calibpla.json
+        To perform calibration from saved file
 """
         exit()
+    if len(sys.argv[1:]) > 0:
+        fn = sys.argv[1]
+        calibrate_diffshift_from_file(fn)
     else:
         ctrl = initialize()
         calibrate_diffshift(ctrl=ctrl)
