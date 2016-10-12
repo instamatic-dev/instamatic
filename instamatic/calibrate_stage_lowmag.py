@@ -35,9 +35,11 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         instance of Calibration class with conversion methods
     """
 
-    # ensure that backlash is eliminated
+    # Ensure that backlash is eliminated
     ctrl.stageposition.reset_xy()
 
+    # Accurate reading fo the center positions is needed so that we can come back to it,
+    #  because this will be our anchor point
     img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image")
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     
@@ -72,11 +74,16 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
             save_image_and_header(outfile, img=img, header=h)
         
         i += 1
-            
+    
     print " >> Reset to center"
     ctrl.stageposition.set(x=x_cent, y=y_cent)
     shifts = np.array(shifts)
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
+
+    if stagepos[12].max() > 50:
+        print " >> Warning: Large difference between image 12, and center image. These should be close for a good calibration."
+        print "    Difference:", stagepos[12]
+        print
     
     r = lsq_rotation_scaling_matrix(shifts, stagepos)
     c = CalibStage(rotation=r, reference_position=np.array([x_cent, y_cent]))
