@@ -25,13 +25,36 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     pattern = 12, 7, 2, 1, 0, 5, 10, 15, 20, 21, 22, 23, 24, 19, 14, 9, 4, 3, 8, 13, 18, 17, 16, 11, 6
 
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    xy_coords = np.stack([x_grid, y_grid]).reshape(2,-1).T
+
+    try:
+        beamshift_calib = fileio.load_calib_beamshift()
+    except IOError as e:
+        print e
+        x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
+
+        x_grid += beam_center_x
+        y_grid += beam_center_y
+
+        xy_coords = np.stack([x_grid, y_grid]).reshape(2,-1).T
+    else:
+        xres, yres = ctrl.cam.getDimensions()
+        xres, yres = (2048, 2048)
+    
+        xstep = int(xres / gridsize)
+        ystep = int(yres / gridsize)
+    
+        x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * xstep, np.arange(-n, n+1) * ystep)
+
+        x_grid += xres / 2
+        y_grid += yres / 2
+    
+        xy_coords = beamshift_calib.pixelcoord_to_beamshift(np.stack([x_grid, y_grid]).reshape(2,-1).T)
+
     tot = len(pattern)
 
     for i,j in enumerate(pattern):
-        dx, dy = xy_coords[j]
-        ctrl.beamshift.set(x=beam_center_x+dx, y=beam_center_y+dy)
+        x, y = xy_coords[j]
+        ctrl.beamshift.set(x=x, y=y)
 
         raw_input("{}/{}: Center with PLA and press enter...".format(i+1, tot))
 
