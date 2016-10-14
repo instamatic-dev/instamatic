@@ -30,6 +30,7 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
         beamshift_calib = fileio.load_calib_beamshift()
     except IOError as e:
         print e
+        print " >> Cannot use CalibBeamshfit for selecting spots"
         x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
 
         x_grid += beam_center_x
@@ -37,8 +38,9 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
 
         xy_coords = np.stack([x_grid, y_grid]).reshape(2,-1).T
     else:
+        print " >> Using CalibBeamshift to select spots"
         xres, yres = ctrl.cam.getDimensions()
-        xres, yres = (2048, 2048)
+        # xres, yres = (2048, 2048)
     
         xstep = int(xres / gridsize)
         ystep = int(yres / gridsize)

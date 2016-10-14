@@ -305,7 +305,7 @@ def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
     args = (shifts, stagepos)
 
     x, _ = leastsq(objective_func, x0, args=args)
-    print x, _
+    # print x, _
 
     angle, sx, sy, tx, ty, k1, k2 = x
     
@@ -313,7 +313,7 @@ def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
     sin = np.sin(angle)
     cos = np.cos(angle)
 
-    print angle, sx, sy, tx, ty, k1, k2
+    # print angle, sx, sy, tx, ty, k1, k2
     
     r = np.array([
         [ sx*cos, -sy*sin*k1],

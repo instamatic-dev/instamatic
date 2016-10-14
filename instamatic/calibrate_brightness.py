@@ -71,8 +71,8 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
     y = c.brightness_to_pixelsize(x)
 
     plt.close()
-    plt.scatter(*values.T)
     plt.plot(x, y, "r-", label="linear regression")
+    plt.scatter(*values.T)
     plt.title("Fit brightness")
     plt.legend()
     plt.show()
@@ -115,11 +115,11 @@ def calibrate_brightness_from_image_fn(fns):
 
     c = CalibBrightness(slope, intercept)
 
-    x = np.linspace(0.5, 1.0)
+    x = np.linspace(0, 65535)
     y = c.brightness_to_pixelsize(x)
 
-    plt.scatter(*values.T)
     plt.plot(x, y, "r-", label="linear regression")
+    plt.scatter(*values.T)
     plt.title("Fit brightness")
     plt.legend()
     plt.show()
