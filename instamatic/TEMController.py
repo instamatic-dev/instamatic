@@ -435,6 +435,8 @@ class TEMController(object):
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
 
+        self.autoblank = False
+
         print self
 
     def mode_lowmag(self):
@@ -451,6 +453,14 @@ class TEMController(object):
     @property
     def mode(self):
         return self.tem.getFunctionMode()
+
+    @property
+    def beamblank(self):
+        return self.tem.isBeamBlanked()
+
+    @beamblank.setter
+    def beamblank(self, on):
+        self.tem.setBeamBlank(on)
 
     def __repr__(self):
         return "\n".join(("Mode: {}".format(self.tem.getFunctionMode()),
@@ -515,12 +525,18 @@ class TEMController(object):
 
         h = self.to_dict()
 
+        if self.autoblank and self.beamblank:
+            self.beamblank = False
+
         arr = self.cam.getImage(t=exposure, binsize=binsize)
         h["ImageExposureTime"] = exposure
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape
         h["ImageComment"] = comment
         h["Time"] = time.ctime()
+
+        if self.autoblank:
+            self.beamblank = True
 
         if out:
             save_image_and_header(out, img=arr, header=h)
