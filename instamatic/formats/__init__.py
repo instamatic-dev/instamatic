@@ -1,7 +1,7 @@
 from TiffIO import TiffIO
 import time
 
-def write_tiff(self, fname, data, header=None):
+def write_tiff(fname, data, header=None):
     """
     Overrides the FabioImage.write method and provides a simple TIFF image writer.
     @param fname: name of the file to save the image to
