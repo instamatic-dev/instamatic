@@ -78,9 +78,8 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
     shifts = np.array(shifts) * binsize
     beampos = np.array(beampos) - np.array((beamshift_cent))
     
-    r = lsq_rotation_scaling_matrix(shifts, beampos, x0=(1.0,1,1))
-
-    c = CalibBeamShift(transform=r, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c.plot()
 
     return c
 
@@ -130,10 +129,9 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize
     beampos = np.array(beampos) - beamshift_cent
-
-    r = lsq_rotation_scaling_matrix(shifts, beampos, x0=(1.0,1,1))
     
-    c = CalibBeamShift(transform=r, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c.plot()
 
     return c
 

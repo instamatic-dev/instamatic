@@ -120,12 +120,30 @@ class CalibBeamShift(object):
         return beamshift
 
     @classmethod
-    def from_data(cls):
-        pass
+    def from_data(cls, shifts, beampos, reference_shift, reference_pixel):
+        r, t = fit_affine_transformation(shifts, beampos)
+
+        c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
+        c.data_shifts = shifts
+        c.data_beampos = beampos
+        c.has_data = True
+        return c
 
     def plot(self):
         if not self.has_data:
-            pass
+            return
+
+        beampos = self.data_beampos
+        shifts = self.data_shifts
+
+        r_i = np.linalg.inv(self.transform)
+
+        beampos_ = np.dot(beampos, r_i)
+
+        plt.scatter(*shifts.T, label="Observed pixel shifts")
+        plt.scatter(*beampos_.T, label="Positions in pixel coords")
+        plt.legend()
+        plt.show()
 
 
 class CalibBrightness(object):
