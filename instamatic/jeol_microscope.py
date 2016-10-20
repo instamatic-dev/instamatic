@@ -314,18 +314,18 @@ class JeolMicroscope(object):
             if x:
                 x = ((n-j)*x + j*current_x) / n
             if y:
-                y = ((n-j)*x + j*current_x) / n
+                y = ((n-j)*y + j*current_y) / n
             if z:
-                z = ((n-j)*x + j*current_x) / n
+                z = ((n-j)*z + j*current_z) / n
             if a:
-                a = ((n-j)*x + j*current_x) / n
+                a = ((n-j)*a + j*current_a) / n
             if b:
-                b = ((n-j)*x + j*current_x) / n
+                b = ((n-j)*b + j*current_b) / n
 
             print " >> Force backlash, stage {}".format(j)
             self.setStagePosition(x, y, z, a, b, backlash=False)
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=True):
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
         if backlash:
             self._setStagePosition_backlash(x, y, z, a, b)
 
