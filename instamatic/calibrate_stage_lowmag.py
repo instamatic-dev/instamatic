@@ -40,11 +40,12 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image")
+    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image (start)")
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    xy_cent = np.array([x_cent, y_cent])
     
     if save_images:
-        outfile = "calib_center"
+        outfile = "calib_start"
         save_image_and_header(outfile, img=img_cent, header=header_cent)
 
     stagepos = []
@@ -77,6 +78,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     
     print " >> Reset to center"
     ctrl.stageposition.set(x=x_cent, y=y_cent)
+    ctrl.stageposition.reset_xy()
 
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize
@@ -87,11 +89,13 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         print "    Difference:", stagepos[12]
         print
     
-    r = lsq_rotation_scaling_matrix(shifts, stagepos)
-    c = CalibStage(rotation=r, reference_position=np.array([x_cent, y_cent]))
+    if save_images:
+        img, header = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image (end)")
+        outfile = "calib_end"
+        save_image_and_header(outfile, img=img, header=header)
 
-    # r, t = lsq_rotation_scaling_trans_matrix(shifts, stagepos)
-    # c = CalibStage(rotation=r, translation=t, reference_position=np.array([x_cent, y_cent]))
+    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
+    c.plot()
 
     return c
 
@@ -110,9 +114,10 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     """
     img_cent, header_cent = load_img(center_fn)
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    xy_cent = np.array([x_cent, y_cent])
     print
     print "Center:", center_fn
-    print "Stageposition: x={:.2f} | y={:.2f}".format(x_cent, y_cent)
+    print "Stageposition: x={:.2f} | y={:.2f}".format(*xy_cent)
 
     binsize = header_cent["ImageBinSize"]
 
@@ -137,16 +142,13 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         
         stagepos.append((xobs, yobs))
         shifts.append(shift)
-        
+
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize
-    stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
+    stagepos = np.array(stagepos) - xy_cent
 
-    r = lsq_rotation_scaling_matrix(shifts, stagepos)
-    c = CalibStage(rotation=r, reference_position=np.array([x_cent, y_cent]))
-
-    # r, t = lsq_rotation_scaling_trans_matrix(shifts, stagepos)
-    # c = CalibStage(rotation=r, translation=t, reference_position=np.array([x_cent, y_cent]))
+    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
+    c.plot()
 
     return c
 

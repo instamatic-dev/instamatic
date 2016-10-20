@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
 import json
+import lmfit
 
 import fabio
 
@@ -128,6 +129,7 @@ class CalibStage(object):
     based on calibration results"""
     def __init__(self, rotation, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
         super(CalibStage, self).__init__()
+        self.has_data = False
         self.rotation = rotation
         self.translation = translation
         self.reference_position = reference_position
@@ -262,6 +264,87 @@ class CalibStage(object):
         Function to stage position coordinates to pixel coordinates on current frame
         """
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
+
+    @classmethod
+    def from_data(cls, shifts, stagepos, reference_position):
+        r, t = fit_affine_transformation(shifts, stagepos)
+
+        c = cls(rotation=r, translation=t, reference_position=reference_position)
+        c.data_shifts = shifts
+        c.data_stagepos = stagepos
+        c.has_data = True
+        return c
+
+    def plot(self):
+        if not self.has_data:
+            return
+
+        stagepos = self.data_stagepos
+        shifts = self.data_shifts
+
+        r_i = np.linalg.inv(self.rotation)
+
+        stagepos_ = np.dot(stagepos - self.translation, r_i)
+
+        plt.scatter(*shifts.T, label="Observed pixel shifts")
+        plt.scatter(*stagepos_.T, label="Positions in pixel coords")
+        plt.legend()
+        plt.show()
+
+
+def fit_affine_transformation(a, b, x0=None, rotation=True, scaling=True, translation=False, shear=False):
+    params = lmfit.Parameters()
+    params.add("angle", value=0, vary=rotation, min=-np.pi, max=np.pi)
+    params.add("sx"   , value=1, vary=scaling)
+    params.add("sy"   , value=1, vary=scaling)
+    params.add("tx"   , value=0, vary=translation)
+    params.add("ty"   , value=0, vary=translation)
+    params.add("k1"   , value=1, vary=shear)
+    params.add("k2"   , value=1, vary=shear)
+    
+    def objective_func(params, arr1, arr2):
+        angle = params["angle"].value
+        sx    = params["sx"].value
+        sy    = params["sy"].value 
+        tx    = params["tx"].value
+        ty    = params["ty"].value
+        k1    = params["k1"].value
+        k2    = params["k2"].value
+        
+        sin = np.sin(angle)
+        cos = np.cos(angle)
+
+        r = np.array([
+            [ sx*cos, -sy*k1*sin],
+            [ sx*k2*sin,  sy*cos]])
+        t = np.array([tx, ty])
+
+        fit = np.dot(arr1, r) + t
+        return fit-arr2
+    
+    method = "leastsq"
+    args = (a, b)
+    res = lmfit.minimize(objective_func, params, args=args, method=method)
+    
+    lmfit.report_fit(res)
+    
+    angle = res.params["angle"].value
+    sx    = res.params["sx"].value
+    sy    = res.params["sy"].value 
+    tx    = res.params["tx"].value
+    ty    = res.params["ty"].value
+    k1    = res.params["k1"].value
+    k2    = res.params["k2"].value
+    
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+    
+    r = np.array([
+        [ sx*cos, -sy*k1*sin],
+        [ sx*k2*sin,  sy*cos]])
+    t = np.array([tx, ty])
+    
+    return r, t
 
 
 def lsq_rotation_scaling_trans_shear_matrix(shifts, stagepos, x0=None):
