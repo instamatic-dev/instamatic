@@ -3,8 +3,6 @@
 import sys, os
 import numpy as np
 
-from scipy.stats import linregress
-
 import matplotlib.pyplot as plt
 
 from camera import save_image_and_header
@@ -57,25 +55,10 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
         if save_images:
             outfile = "calib_brightness_{:04d}".format(i)
             save_image_and_header(outfile, img=img,  header=h)
-            
+    
     values = np.array(values)
-    slope, intercept, r_value, p_value, std_err = linregress(values[:,0], values[:,1])
-
-    print
-    print "r_value:", r_value
-    print "p_value:", p_value
-
-    c = CalibBrightness(slope, intercept)
-
-    x = np.linspace(start-step, target+step)
-    y = c.brightness_to_pixelsize(x)
-
-    plt.close()
-    plt.plot(x, y, "r-", label="linear regression")
-    plt.scatter(*values.T)
-    plt.title("Fit brightness")
-    plt.legend()
-    plt.show()
+    c = CalibBrightness.from_data(*values.T)
+    c.plot()
 
     return c
 
@@ -107,22 +90,8 @@ def calibrate_brightness_from_image_fn(fns):
         values.append((brightness, size))
 
     values = np.array(values)
-    slope, intercept, r_value, p_value, std_err = linregress(values[:,0], values[:,1])
-
-    print
-    print "r_value:", r_value
-    print "p_value:", p_value
-
-    c = CalibBrightness(slope, intercept)
-
-    x = np.linspace(0, 65535)
-    y = c.brightness_to_pixelsize(x)
-
-    plt.plot(x, y, "r-", label="linear regression")
-    plt.scatter(*values.T)
-    plt.title("Fit brightness")
-    plt.legend()
-    plt.show()
+    c = CalibBrightness.from_data(*values.T)
+    c.plot()
 
     return c
 

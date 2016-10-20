@@ -5,6 +5,8 @@ import os,sys
 import json
 import lmfit
 
+from scipy.stats import linregress
+
 import fabio
 
 
@@ -42,6 +44,7 @@ class CalibDiffShift(object):
         if not neutral_beamshift:
             neutral_beamshift = (32576, 31149)
         self.neutral_beamshift = neutral_beamshift
+        self.has_data = False
 
     def __repr__(self):
         return "CalibDiffShift(rotation=\n{},\n translation=\n{})".format(
@@ -81,6 +84,14 @@ class CalibDiffShift(object):
         ctrl.beamshift.set(*self.neutral_beamshift)
         self.compensate_diffshift()
 
+    @classmethod
+    def from_data(cls):
+        pass
+
+    def plot(self):
+        if not self.has_data:
+            pass
+
 
 class CalibBeamShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another
@@ -90,6 +101,7 @@ class CalibBeamShift(object):
         self.transform = transform
         self.reference_shift = reference_shift
         self.reference_pixel = reference_pixel
+        self.has_data = False
    
     def __repr__(self):
         return "CalibBeamShift(transform=\n{},\n   reference_shift=\n{},\n   reference_pixel=\n{})".format(
@@ -107,12 +119,21 @@ class CalibBeamShift(object):
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
         return beamshift
 
+    @classmethod
+    def from_data(cls):
+        pass
+
+    def plot(self):
+        if not self.has_data:
+            pass
+
 
 class CalibBrightness(object):
     """docstring for calib_brightness"""
     def __init__(self, slope, intercept):
         self.slope = slope
         self.intercept = intercept
+        self.has_data = False
 
     def __repr__(self):
         return "CalibBrightness(slope={}, intercept={})".format(self.slope, self.intercept)
@@ -122,6 +143,35 @@ class CalibBrightness(object):
 
     def pixelsize_to_brightness(self, val):
         return (val - self.intercept) / self.slope
+
+    @classmethod
+    def from_data(cls, brightness, pixeldiameter):
+        slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
+        print
+        print "r_value: {:.4f}".format(r_value)
+        print "p_value: {:.4f}".format(p_value)
+
+        c = cls(slope=slope, intercept=intercept)
+        c.data_brightness = brightness
+        c.data_pixeldiameter = pixeldiameter
+        c.has_data = True
+        return c
+
+    def plot(self):
+        if not self.has_data:
+            pass
+
+        mn = self.data_brightness.min()
+        mx = self.data_brightness.max()
+        extend = abs(mx - mn)*0.1
+        x = np.linspace(mn - extend, mx + extend)
+        y = self.brightness_to_pixelsize(x)
+    
+        plt.plot(x, y, "r-", label="linear regression")
+        plt.scatter(self.data_brightness, self.data_pixeldiameter)
+        plt.title("Fit brightness")
+        plt.legend()
+        plt.show()
 
 
 class CalibStage(object):
