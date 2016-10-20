@@ -50,12 +50,12 @@ class CalibDiffShift(object):
         return "CalibDiffShift(rotation=\n{},\n translation=\n{})".format(
             self.rotation, self.translation)
 
-    def diffshift2beamshift(self, pla):
-        pla = np.array(pla)
+    def diffshift2beamshift(self, diffshift):
+        diffshift = np.array(diffshift)
         r = self.rotation
         t = self.translation
 
-        return (np.dot(pla, r) + t).astype(int)
+        return (np.dot(diffshift, r) + t).astype(int)
 
     def beamshift2diffshift(self, beamshift):
         beamshift = np.array(beamshift)
@@ -85,12 +85,28 @@ class CalibDiffShift(object):
         self.compensate_diffshift()
 
     @classmethod
-    def from_data(cls):
-        pass
+    def from_data(cls, diffshift, beamshift, neutral_beamshift):
+        r, t = fit_affine_transformation(diffshift, beamshift, translation=True, shear=True)
+
+        c = cls(rotation=r, translation=t, neutral_beamshift=neutral_beamshift)
+        c.data_diffshift = diffshift
+        c.data_beamshift = beamshift
+        c.has_data = True
+        return c
 
     def plot(self):
         if not self.has_data:
-            pass
+            return
+    
+        diffshift = self.data_diffshift
+
+        r_i = np.linalg.inv(self.rotation)
+        beamshift_ = np.dot(self.data_beamshift - self.translation, r_i)
+    
+        plt.scatter(*diffshift.T, label="Observed Diffraction shift")
+        plt.scatter(*beamshift_.T, label="Calculated DiffShift from BeamShift")
+        plt.legend()
+        plt.show()
 
 
 class CalibBeamShift(object):
@@ -136,9 +152,7 @@ class CalibBeamShift(object):
         beampos = self.data_beampos
         shifts = self.data_shifts
 
-        r_i = np.linalg.inv(self.transform)
-
-        beampos_ = np.dot(beampos, r_i)
+        beampos_ = self.beamshift_to_pixelcoord(beampos)
 
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*beampos_.T, label="Positions in pixel coords")

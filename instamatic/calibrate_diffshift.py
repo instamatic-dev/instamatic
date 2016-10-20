@@ -84,9 +84,8 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     json.dump(d, out)
     out.close()
 
-    r, t = lsq_rotation_scaling_trans_shear_matrix(plas, beams, x0=[180, 1, 1, 0, 0, 1, 1])
-
-    c = CalibDiffShift(rotation=r, translation=t, neutral_beamshift=(beam_center_x, beam_center_y))
+    c = CalibDiffShift.from_data(plas, beams, neutral_beamshift=center)
+    c.plot()
 
     return c
 
@@ -99,9 +98,8 @@ def calibrate_diffshift_from_file(fn):
     xy_coords = np.array(d["xy_coords"])
     center = d["center"]
 
-    r, t = lsq_rotation_scaling_trans_shear_matrix(plas, beams, x0=[180, 1, 1, 0, 0, 1, 1])
-
-    c = CalibDiffShift(rotation=r, translation=t, neutral_beamshift=center)
+    c = CalibDiffShift.from_data(plas, beams, neutral_beamshift=center)
+    c.plot()
 
     return c
 
