@@ -7,7 +7,7 @@ from camera import save_image_and_header
 from find_crystals import find_crystals, plot_props, find_holes
 import TEMController
 
-from calibration import load_img
+from calibration import load_img, CalibStage, CalibBrightness, CalibBeamShift, CalibDiffShift
 import matplotlib.pyplot as plt
 import fileio
 
@@ -105,7 +105,7 @@ def seek_and_destroy_entry():
     exposure = 0.2
     binsize = 1
 
-    calib = (fileio.load_calib_brightness(), fileio.load_calib_beamshift())
+    calib = (CalibBrightness.from_file(), CalibBeamShift.from_file())
     ctrl = TEMController.initialize()
 
     fns = sys.argv[1:]
@@ -284,7 +284,7 @@ def prepare_experiment_entry():
 
 def plot_experiment(ctrl=None):
     d = fileio.load_experiment()
-    calib = fileio.load_calib()
+    calib = CalibStage.from_file()
     centers = d["centers"]
     radius = d["radius"]
     x_offsets = d["x_offsets"]
@@ -430,7 +430,7 @@ def do_experiment_entry():
 
 def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
     if calib is None:
-        calib = fileio.load_calib()
+        calib = CalibStage.from_file()
     if coords is None:
         coords = fileio.load_hole_stage_positions()
     fig = plt.figure()
@@ -472,7 +472,7 @@ def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
 def goto_hole_entry():
     ctrl = TEMController.initialize()
 
-    calib = fileio.load_calib()
+    calib = CalibStage.from_file()
     coords = fileio.load_hole_stage_positions()
 
     try:
@@ -504,7 +504,7 @@ def cluster_mean(arr, threshold=0.00005):
 
 
 def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
-    calib = fileio.load_calib()
+    calib = CalibStage.from_file()
     print
     print calib
     print

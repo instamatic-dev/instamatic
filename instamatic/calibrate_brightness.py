@@ -3,12 +3,9 @@
 import sys, os
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 from camera import save_image_and_header
 from TEMController import initialize
 
-import fileio
 from calibration import load_img, CalibBrightness
 from find_crystals import find_holes
 
@@ -108,7 +105,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     print
     print calib
 
-    fileio.write_calib_brightness(calib)
+    calib.to_file()
 
 
 def calibrate_brightness_entry():

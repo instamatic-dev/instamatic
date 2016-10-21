@@ -8,8 +8,7 @@ from cross_correlate import cross_correlate
 from camera import save_image_and_header
 from TEMController import initialize
 
-import fileio
-from calibration import load_img, lsq_rotation_scaling_matrix, CalibBeamShift
+from calibration import load_img, CalibBeamShift
 from find_crystals import find_holes
 
 
@@ -148,7 +147,7 @@ def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=Tr
     print
     print calib
 
-    fileio.write_calib_beamshift(calib)
+    calib.to_file()
 
 
 def calibrate_beamshift_entry():

@@ -9,6 +9,13 @@ from scipy.stats import linregress
 
 import fabio
 
+import pickle
+
+CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
+CALIB_BEAMSHIFT = "calib_beamshift.pickle"
+CALIB_BRIGHTNESS = "calib_brightness.pickle"
+CALIB_DIFFSHIFT = "calib_diffshift.pickle"
+
 
 def load_img(fn):
     root, ext = os.path.splitext(fn)
@@ -94,6 +101,17 @@ class CalibDiffShift(object):
         c.has_data = True
         return c
 
+    @classmethod
+    def from_file(cls, fn=CALIB_DIFFSHIFT):
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_diffshift"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_DIFFSHIFT):
+        pickle.dump(self, open(fn, "w"))
+
     def plot(self):
         if not self.has_data:
             return
@@ -145,6 +163,17 @@ class CalibBeamShift(object):
         c.has_data = True
         return c
 
+    @classmethod
+    def from_file(cls, fn=CALIB_BEAMSHIFT):
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_beamshift"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_BEAMSHIFT):
+        pickle.dump(self, open(fn, "w"))
+
     def plot(self):
         if not self.has_data:
             return
@@ -188,6 +217,17 @@ class CalibBrightness(object):
         c.data_pixeldiameter = pixeldiameter
         c.has_data = True
         return c
+
+    @classmethod
+    def from_file(cls, fn=CALIB_BRIGHTNESS):
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_brightness"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_BRIGHTNESS):
+        pickle.dump(self, open(fn, "w"))
 
     def plot(self):
         if not self.has_data:
@@ -356,6 +396,17 @@ class CalibStage(object):
         c.data_stagepos = stagepos
         c.has_data = True
         return c
+
+    @classmethod
+    def from_file(cls, fn=CALIB_STAGE_LOWMAG):
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_stage_lowmag"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_STAGE_LOWMAG):
+        pickle.dump(self, open(fn, "w"))
 
     def plot(self):
         if not self.has_data:

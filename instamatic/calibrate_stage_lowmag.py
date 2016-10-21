@@ -14,8 +14,7 @@ from cross_correlate import cross_correlate
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import CalibStage, load_img, lsq_rotation_scaling_matrix, lsq_rotation_scaling_trans_matrix
-import fileio
+from calibration import CalibStage, load_img
 
 def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=1, save_images=False):
     """
@@ -165,7 +164,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
     print
     print calib
 
-    fileio.write_calib_stage_lowmag(calib)
+    calib.to_file()
 
 
 def calibrate_stage_lowmag_entry():

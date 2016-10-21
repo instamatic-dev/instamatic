@@ -4,6 +4,7 @@ import os
 from calibration import CalibStage
 from calibration import CalibBrightness
 from calibration import CalibBeamShift
+from calibration import CalibDiffShift
 import numpy as np
 
 

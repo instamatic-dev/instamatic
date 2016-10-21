@@ -7,8 +7,7 @@ import json
 from TEMController import initialize
 from camera import save_image_and_header
 
-import fileio
-from calibration import load_img, lsq_rotation_scaling_trans_shear_matrix, CalibDiffShift
+from calibration import load_img, CalibDiffShift, CalibBeamShift
 
 
 def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
@@ -27,7 +26,7 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     n = (gridsize - 1) / 2 # number of points = n*(n+1)
 
     try:
-        beamshift_calib = fileio.load_calib_beamshift()
+        beamshift_calib = CalibBeamShift.from_file()
     except IOError as e:
         print e
         print " >> Cannot use CalibBeamshfit for selecting spots"
@@ -84,7 +83,7 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     json.dump(d, out)
     out.close()
 
-    c = CalibDiffShift.from_data(plas, beams, neutral_beamshift=center)
+    c = CalibDiffShift.from_data(plas, beams, neutral_beamshift=(beam_center_x, beam_center_y))
     c.plot()
 
     return c
@@ -115,7 +114,7 @@ def calibrate_diffshift(ctrl=None, fn=None, confirm=True):
     print
     print calib
 
-    fileio.write_calib_diffshift(calib)
+    calib.to_file()
 
 
 def calibrate_diffshift_entry():
