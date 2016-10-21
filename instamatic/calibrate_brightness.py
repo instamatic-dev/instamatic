@@ -6,8 +6,9 @@ import numpy as np
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import load_img, CalibBrightness
+from calibration import CalibBrightness
 from find_crystals import find_holes
+from tools import *
 
 
 def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_images=False):
@@ -36,17 +37,19 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
         ctrl.brightness.value = int(target)
 
         img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: brightness={}".format(i, target))
+        img, scale = autoscale(img)
+
         brightness = float(h["Brightness"])
         
-        holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
+        holes = find_holes(img, plot=False, verbose=False, diameter=30, max_eccentricity=0.8)
         
         if len(holes) == 0:
             print " >> No holes found, continuing..."
             continue
 
-        size = max([hole.equivalent_diameter for hole in holes])
+        size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print "Brightness: {:.3f}, equivalent diameter: {:.1f}".format(brightness, size)
+        print "Brightness: {:.f}, equivalent diameter: {:.1f}".format(brightness, size)
         values.append((brightness, size))
 
         if save_images:
@@ -75,15 +78,18 @@ def calibrate_brightness_from_image_fn(fns):
 
     for fn in fns:
         print
-        print fn
+        print "Image:", fn
         img, h = load_img(fn)
         brightness = float(h["Brightness"])
+        binsize = float(h["ImageBinSize"])
 
-        holes = find_holes(img, plot=False, fname=None, verbose=False, max_eccentricity=0.8) # fname=fn.replace("edf", "png")
+        img, scale = autoscale(img)
+
+        holes = find_holes(img, plot=False, fname=None, verbose=False, diameter=30, max_eccentricity=0.8)
         
-        size = max([hole.equivalent_diameter for hole in holes])
+        size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print "Brightness: {:.3f}, equivalent diameter: {:.1f}".format(brightness, size)
+        print "Brightness: {:.0f}, equivalent diameter: {:.1f}px".format(brightness, size)
         values.append((brightness, size))
 
     values = np.array(values)

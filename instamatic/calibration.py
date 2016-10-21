@@ -1,13 +1,10 @@
 from scipy.optimize import leastsq
 import numpy as np
 import matplotlib.pyplot as plt
-import os,sys
-import json
 import lmfit
+from tools import *
 
 from scipy.stats import linregress
-
-import fabio
 
 import pickle
 
@@ -15,27 +12,6 @@ CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
 CALIB_BEAMSHIFT = "calib_beamshift.pickle"
 CALIB_BRIGHTNESS = "calib_brightness.pickle"
 CALIB_DIFFSHIFT = "calib_diffshift.pickle"
-
-
-def load_img(fn):
-    root, ext = os.path.splitext(fn)
-    ext = ext.lower()
-    if ext != ".npy":
-        arr = fabio.openimage.openimage(fn)
-        # workaround to fix headers
-        if ext == ".edf":
-            for key in ("BeamShift", "BeamTilt", "GunShift", "GunTilt", "ImageShift", "StagePosition"):
-                if arr.header.has_key(key):
-                    arr.header[key] = eval("{" + arr.header[key] + "}")
-        return arr.data, arr.header
-    else:
-        arr = np.load(fn)
-    
-        root, ext = os.path.splitext(fn)
-        fnh = root + ".json"
-    
-        d = json.load(open(fnh, "r"))
-        return arr, d
 
 
 class CalibDiffShift(object):
@@ -181,7 +157,8 @@ class CalibBeamShift(object):
         beampos = self.data_beampos
         shifts = self.data_shifts
 
-        beampos_ = self.beamshift_to_pixelcoord(beampos)
+        r_i = np.linalg.inv(self.transform)
+        beampos_ = np.dot(beampos, r_i)
 
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*beampos_.T, label="Positions in pixel coords")

@@ -20,8 +20,7 @@ import json
 plt.rcParams['image.cmap'] = 'gray'
 
 from calibration import lowmag_dimensions
-from calibration import load_img
-
+from tools import *
 
 def get_best_mag_for_feature(xsize, ysize=None, verbose=False):
     if not ysize:
@@ -247,7 +246,7 @@ def find_holes(img, header=None, diameter=150.0, plot=True, fname=None, verbose=
     return newprops
 
 
-def plot_props(img, props, fname=None):
+def plot_props(img, props, fname=None, scale=1):
     """Take image and plot props on top of them"""
     from matplotlib.patches import Rectangle
 
@@ -257,7 +256,7 @@ def plot_props(img, props, fname=None):
 
     ymax, xmax = img.shape
     for i,prop in enumerate(props):
-        y1, x1, y2, x2 = prop.bbox
+        y1, x1, y2, x2 = [x*scale for x in prop.bbox]
 
         color = "red"
 
@@ -265,7 +264,7 @@ def plot_props(img, props, fname=None):
                          y2 - y1 + 1, fc='none', ec=color, lw=2)
         ax.add_patch(rect)
 
-        cy, cx = prop.weighted_centroid
+        cy, cx = prop.weighted_centroid*scale
         plt.scatter([cx], [cy], c=color, s=10, edgecolor='none')
 
         plt.axis('off')
@@ -423,6 +422,9 @@ def find_crystals_entry():
 
         # plot_hists(img)
 
+        scale = 1024.0 / max(img.shape) # ensure zoom so that max dimension == 1024
+        img = ndimage.zoom(img, scale, order=3)
+
         plot = False
         crystals = find_crystals(img, plot=plot)
         if plot:
@@ -443,6 +445,10 @@ def find_holes_entry():
     for fn in sys.argv[1:]:
         img = np.load(fn)
         img = img.astype(int)
+
+        scale = 1024.0 / max(img.shape) # ensure zoom so that max dimension == 1024
+        img = ndimage.zoom(img, scale, order=3)
+        
         root, ext = os.path.splitext(fn)
         header = json.load(open(root+".json", "r"))
 

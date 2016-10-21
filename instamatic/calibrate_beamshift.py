@@ -8,8 +8,9 @@ from cross_correlate import cross_correlate
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import load_img, CalibBeamShift
+from calibration import CalibBeamShift
 from find_crystals import find_holes
+from tools import *
 
 
 def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False):
@@ -32,6 +33,8 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
 
     img_cent, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
+
+    img_cent, scale = autoscale(img_cent)
     
     if save_images:
         outfile = "calib_beamcenter"
@@ -58,6 +61,8 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
         print ctrl.beamshift
         
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        img = imgscale(img, scale)
+
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
         beamshift = np.array(h["BeamShift"])
@@ -74,7 +79,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
     ctrl.beamshift.set(*beamshift_cent)
 
     # correct for binsize, store in binsize=1
-    shifts = np.array(shifts) * binsize
+    shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - np.array((beamshift_cent))
     
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
@@ -101,10 +106,13 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     img_cent, h_cent = load_img(center_fn)
     beamshift_cent = np.array(h_cent["BeamShift"])
     
+    img_cent, scale = autoscale(img_cent, maxdim=2048)
+    print scale
+
     binsize = h_cent["ImageBinSize"]
 
-    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    pixel_cent = np.array(holes[0].centroid) * binsize
+    holes = find_holes(img_cent, plot=False, verbose=False, diameter=100, max_eccentricity=0.8)
+    pixel_cent = np.array(holes[0].centroid) * binsize / scale
     
     print "Beamshift: x={} | y={}".format(*beamshift_cent)
     print "Pixel: x={:.2f} | y={:.2f}".format(*pixel_cent)
@@ -114,6 +122,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     
     for fn in other_fn:
         img, h = load_img(fn)
+        img = imgscale(img, scale)
         
         beamshift = np.array((h["BeamShift"]))
         print
@@ -126,7 +135,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         shifts.append(shift)
         
     # correct for binsize, store as binsize=1
-    shifts = np.array(shifts) * binsize
+    shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - beamshift_cent
     
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)

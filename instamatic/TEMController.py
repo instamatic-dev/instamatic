@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import numpy as np
 import matplotlib.pyplot as plt
 from camera.camera import gatanOrius, save_image_and_header
 import time

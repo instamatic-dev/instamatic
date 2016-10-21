@@ -8,13 +8,17 @@ logging.basicConfig(
 
 import sys, os
 import numpy as np
+from scipy import ndimage
+
+from tools import *
 
 from cross_correlate import cross_correlate
 
 from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import CalibStage, load_img
+from calibration import CalibStage
+
 
 def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=1, save_images=False):
     """
@@ -43,6 +47,8 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     
+    img_cent, scale = autoscale(img_cent)
+
     if save_images:
         outfile = "calib_start"
         save_image_and_header(outfile, img=img_cent, header=header_cent)
@@ -57,12 +63,15 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
-           
+
         print
         print "Position {}/{}".format(i+1, tot)
         print ctrl.stageposition
         
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+
+        img = imgscale(img, scale)
+
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
@@ -80,7 +89,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     ctrl.stageposition.reset_xy()
 
     # correct for binsize, store as binsize=1
-    shifts = np.array(shifts) * binsize
+    shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
     if stagepos[12].max() > 50:
@@ -112,11 +121,14 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         instance of Calibration class with conversion methods
     """
     img_cent, header_cent = load_img(center_fn)
+    
+    img_cent, scale = autoscale(img_cent)
+
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
-    print
     print "Center:", center_fn
-    print "Stageposition: x={:.2f} | y={:.2f}".format(*xy_cent)
+    print "Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent)
+    print
 
     binsize = header_cent["ImageBinSize"]
 
@@ -131,11 +143,13 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
     for fn in other_fn:
         img, h = load_img(fn)
+
+        img = imgscale(img, scale)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
-        print
         print "Image:", fn
-        print "Stageposition: x={:.2f} | y={:.2f}".format(xobs, yobs)
+        print "Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs)
+        print
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -143,7 +157,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         shifts.append(shift)
 
     # correct for binsize, store as binsize=1
-    shifts = np.array(shifts) * binsize
+    shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
