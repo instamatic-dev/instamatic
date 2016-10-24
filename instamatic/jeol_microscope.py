@@ -398,6 +398,35 @@ class JeolMicroscope(object):
         """True/False or 1/0"""
         self.def3.SetBeamBlank(mode)
 
+    def getCondensorLensStigmator(self):
+        x, y, result = self.def3.getCLs()
+        return x, y
+
+    def setCondensorLensStigmator(self, x, y):
+        self.def3.SetCLs(x, y)
+        
+    def getIntermediateLensStigmator(self):
+        x, y, result = self.def3.GetILs()
+        return x, y
+
+    def setIntermediateLensStigmator(self, x, y):
+        self.def3.SetILs(x, y)
+
+    def getObjectiveLensStigmator(self):
+        x, y, result = self.def3.GetOLs()
+        return x, y
+
+    def setObjectiveLensStigmator(self, x, y):
+        self.def3.SetOLs(x, y)
+
+    def getSpotSize(self):
+        """0-based indexing for GetSpotSize, add 1 for consistency"""
+        value, result = self.eos3.GetSpotSize()
+        return value + 1
+
+    def setSpotSize(self, value):
+        self.eos3.SetSpotSize(value - 1)
+
     def getAll(self):
         print "## lens3"
         print "CL1", self.lens3.GetCL1()
