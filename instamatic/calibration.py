@@ -127,7 +127,7 @@ class CalibBeamShift(object):
         """Converts from pixel coordinates to beamshift x,y"""
         r = self.transform
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
-        return beamshift
+        return beamshift.astype(int)
 
     @classmethod
     def from_data(cls, shifts, beampos, reference_shift, reference_pixel):
@@ -180,7 +180,7 @@ class CalibBrightness(object):
         return self.slope*val + self.intercept
 
     def pixelsize_to_brightness(self, val):
-        return (val - self.intercept) / self.slope
+        return int((val - self.intercept) / self.slope)
 
     @classmethod
     def from_data(cls, brightness, pixeldiameter):
@@ -461,29 +461,29 @@ def fit_affine_transformation(a, b, x0=None, rotation=True, scaling=True, transl
 # pixel dimensions from calibration in Digital Micrograph
 # x,y dimensions of 1 pixel in micrometer
 lowmag_dimensions = {
-50:      (0,         0),
+50:      (0.895597,  0.895597),
 80:      (0.559748,  0.559748),
 100:     (0.447799,  0.447799),
-150:     (0,         0),
+150:     (0.298532,  0.298532),
 200:     (0.223899,  0.223899),
-250:     (0,         0),
-300:     (0,         0),
-400:     (0,         0),
-500:     (0,         0),
-600:     (0.0746331, 0.0746331),
-800:     (0,         0),
-1000:    (0,         0),
-1200:    (0,         0),
-1500:    (0,         0),
-2000:    (0.0207997, 0.0207997),
-2500:    (0,         0),
-3000:    (0,         0),
-5000:    (0,         0),
-6000:    (0,         0),
-8000:    (0,         0),
-10000:   (0,         0),
-12000:   (0,         0),
-15000:   (0,         0)
+250:     (0.179119,  0.179119),
+300:     (0.149266,  0.149266),
+400:     (0.111949,  0.111949),
+500:     (0.089559,  0.089559),
+600:     (0.074633,  0.074633),
+800:     (0.055974,  0.055974),
+1000:    (0.044779,  0.044779),
+1200:    (0.037316,  0.037316),
+1500:    (0.029853,  0.029853),
+2000:    (0.020800,  0.020800),
+2500:    (0.016640,  0.016640),
+3000:    (0.013866,  0.013866),
+5000:    (0.008320,  0.008320),
+6000:    (0.006933,  0.006933),
+8000:    (0.005200,  0.005200),
+10000:   (0.004160,  0.004160),
+12000:   (0.003466,  0.003466),
+15000:   (0.002773,  0.002773)
 }
 
 lowmag_om_standard_focus = {
@@ -511,7 +511,6 @@ lowmag_om_standard_focus = {
 12000:   48931,
 15000:   48931
 }
-
 
 lowmag_neutral_beamtilt = {
 50:      (33201,     24555),

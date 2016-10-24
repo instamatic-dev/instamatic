@@ -317,7 +317,7 @@ def plot_experiment(ctrl=None):
             y = y_cent+y_offset
     
             print "Pick event -> {} -> ind: {}, xdata: {:.3e}, ydata: {:.3e}".format(label, ind, x, y)
-            ctrl.stageposition.goto(x=x, y=y)
+            ctrl.stageposition.set(x=x, y=y)
             print ctrl.stageposition
             print
         elif click == 3:
@@ -371,7 +371,7 @@ def do_experiment(ctrl=None):
     i = 0
     for x, y in centers:
         try:
-            ctrl.stageposition.goto(x=x, y=y)
+            ctrl.stageposition.set(x=x, y=y)
         except ValueError as e:
             print e
             print " >> Moving to next hole..."
@@ -385,7 +385,7 @@ def do_experiment(ctrl=None):
         auto = False
         for x_offset, y_offset in zip(x_offsets, y_offsets):
             try:
-                ctrl.stageposition.goto(x=x+x_offset, y=y+y_offset)
+                ctrl.stageposition.set(x=x+x_offset, y=y+y_offset)
             except ValueError as e:
                 print e
                 print " >> Moving to next position..."
@@ -452,7 +452,7 @@ def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
             xval, yval = coords[ind]
 
         print "Pick event -> {} -> ind: {}, xdata: {:.3e}, ydata: {:.3e}".format(label, ind, xval, yval)
-        ctrl.stageposition.goto(x=xval, y=yval)
+        ctrl.stageposition.set(x=xval, y=yval)
         print ctrl.stageposition
         print
 
@@ -489,7 +489,7 @@ def goto_hole_entry():
             exit()
         stage_x, stage_y = coords[num]
 
-        ctrl.stageposition.goto(x=stage_x, y=stage_y)
+        ctrl.stageposition.set(x=stage_x, y=stage_y)
         print ctrl.stageposition
 
 
@@ -504,7 +504,7 @@ def cluster_mean(arr, threshold=0.00005):
     return np.array(merged)
 
 
-def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
+def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
     calib = CalibStage.from_file()
     print
     print calib
@@ -512,10 +512,14 @@ def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
     stage_coords = []
     outfile = None
     for fn in fns:
+        print
         print "Now processing:", fn
         img, header = load_img(fn)
         img = img.astype(int)
-        image_pos = np.array([header["StagePosition"]["x"], header["StagePosition"]["y"]])
+
+        img, scale = autoscale(img)
+
+        image_pos = np.array(header["StagePosition"][:2])
 
         if callback:
             callback(img=img, header=header, name=fn)
@@ -523,15 +527,16 @@ def map_holes_on_grid(fns, plot=True, save_images=False, callback=None):
         if save_images:
             outfile = os.path.splitext(fn)[0] + ".tif"
 
-        holes = find_holes(img, header, plot=plot, fname=outfile)
+        holes = find_holes(img, header, plot=plot, fname=outfile, verbose=False)
 
         for hole in holes:
-            stagepos = calib.pixelcoord_to_stagepos(hole.centroid, image_pos)
+            centroid = np.array(hole.centroid) / scale
+            stagepos = calib.pixelcoord_to_stagepos(centroid, image_pos)
             stage_coords.append(stagepos)
 
     xy = np.array(stage_coords)
 
-    threshold = 0.00005
+    threshold = 10000
     xy = cluster_mean(xy, threshold=threshold)
     xy = xy[xy[:,0].argsort(axis=0)]
 

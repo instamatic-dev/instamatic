@@ -5,54 +5,16 @@ import comtypes.client
 import time
 import os
 
-MAGNIFICATIONS = [
- 50,
- 60,
- 80,
- 100,
- 150,
- 200,
- 300,
- 400,
- 500,
- 600,
- 800,
- 1000,
- 1200,
- 1500,
- 2000,
- 2500,
- 3000,
- 4000,
- 5000,
- 6000,
- 8000,
- 10000,
- 12000,
- 15000,
- 20000,
- 25000,
- 30000,
- 40000,
- 50000,
- 60000,
- 80000,
- 100000,
- 120000,
- 150000,
- 200000,
- 250000,
- 300000,
- 400000,
- 500000,
- 600000,
- 800000,
- 1000000,
- 1200000,
- 1500000,
- 2000000]
-
-MAGNIFICATION_MODES = {"mag1": 2500, "lowmag":50}
+specifications{
+    "feg": {
+        "MAGNIFICATIONS": (250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000),
+        "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250}
+    },
+    "lab6":{
+        "MAGNIFICATIONS": (50, 60, 80, 100, 150, 200, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000),
+        "MAGNIFICATION_MODES": {"mag1": 2500, "lowmag":50}
+    }
+}
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
 
@@ -107,6 +69,10 @@ class JeolMicroscope(object):
         self._x_direction = 0
         self._y_direction = 0
 
+        kind = "lab6" # /feg
+        self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
+
     def __del__(self):
         comtypes.CoUninitialize()
 
@@ -122,12 +88,12 @@ class JeolMicroscope(object):
         return value
 
     def setMagnification(self, value):
-        if value not in MAGNIFICATIONS:
-            value = min(MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
+        if value not in self.MAGNIFICATIONS:
+            value = min(self.MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
         
         # get best mode for magnification
-        for k in sorted(MAGNIFICATION_MODES.keys(), key=MAGNIFICATION_MODES.get): # sort by values
-            v = MAGNIFICATION_MODES[k]
+        for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
+            v = self.MAGNIFICATION_MODES[k]
             if v <= value:
                 new_mode = k
 
@@ -138,17 +104,20 @@ class JeolMicroscope(object):
         # calculate index
         ## i = 0-24 for lowmag
         ## i = 0-29 for mag1
-        selector = MAGNIFICATIONS.index(value) - MAGNIFICATIONS.index(MAGNIFICATION_MODES[new_mode])
+        selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
                 
         # self.eos3.SetMagValue(value)
         self.eos3.SetSelector(selector) 
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
-        return MAGNIFICATIONS.index(value)
+        try:
+            return self.MAGNIFICATIONS.index(value)
+        except:
+            return 0
 
     def setMagnificationIndex(self, index):
-        value = MAGNIFICATIONS[index]
+        value = self.MAGNIFICATIONS[index]
         self.setMagnification(value)
 
     def getGunShift(self):
@@ -170,7 +139,7 @@ class JeolMicroscope(object):
         return x, y
 
     def setBeamShift(self, x, y):
-        self.def3.SetCLA1(x, y)
+        self.def3.SetCLA1(int(x), int(y))
 
     def getBeamTilt(self):
         x, y, result = self.def3.GetCLA2()
