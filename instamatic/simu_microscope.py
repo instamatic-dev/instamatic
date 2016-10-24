@@ -1,4 +1,4 @@
-from jeol_microscope import ZERO, MIN, MAX, MAGNIFICATIONS, MAGNIFICATION_MODES, FUNCTION_MODES
+from jeol_microscope import ZERO, MIN, MAX, specifications, FUNCTION_MODES
 
 
 class SimuMicroscope(object):
@@ -8,8 +8,6 @@ class SimuMicroscope(object):
         import random
         
         self.Brightness_value = random.randint(MIN, MAX)
-
-        self.Magnification_value = random.choice(MAGNIFICATIONS)
 
         self.GunShift_x = random.randint(MIN, MAX)
         self.GunShift_y = random.randint(MIN, MAX)
@@ -39,6 +37,26 @@ class SimuMicroscope(object):
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
+        kind = "feg" # /feg
+        self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
+
+        self.Magnification_value = random.choice(self.MAGNIFICATIONS)
+
+        self.beamblank = False
+
+        self.condensorlensstigmator_x = random.randint(MIN, MAX)
+        self.condensorlensstigmator_y = random.randint(MIN, MAX)
+
+        self.intermediatelensstigmator_x = random.randint(MIN, MAX)
+        self.intermediatelensstigmator_y = random.randint(MIN, MAX)
+
+        self.objectivelensstigmator_x = random.randint(MIN, MAX)
+        self.objectivelensstigmator_y = random.randint(MIN, MAX)
+
+        self.spotsize = 1
+
+
     def getBrightness(self):
         return self.Brightness_value
 
@@ -49,12 +67,12 @@ class SimuMicroscope(object):
         return self.Magnification_value
 
     def setMagnification(self, value):
-        if value not in MAGNIFICATIONS:
-            value = min(MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
+        if value not in self.MAGNIFICATIONS:
+            value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
         
         # get best mode for magnification
-        for k in sorted(MAGNIFICATION_MODES.keys(), key=MAGNIFICATION_MODES.get): # sort by values
-            v = MAGNIFICATION_MODES[k]
+        for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
+            v = self.MAGNIFICATION_MODES[k]
             if v <= value:
                 new_mode = k
 
@@ -65,16 +83,16 @@ class SimuMicroscope(object):
         # calculate index
         ## i = 0-24 for lowmag
         ## i = 0-29 for mag1
-        selector = MAGNIFICATIONS.index(value) - MAGNIFICATIONS.index(MAGNIFICATION_MODES[new_mode])
+        selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
                 
         self.Magnification_value = value
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
-        return MAGNIFICATIONS.index(value)
+        return self.MAGNIFICATIONS.index(value)
 
     def setMagnificationIndex(self, index):
-        value = MAGNIFICATIONS[index]
+        value = self.MAGNIFICATIONS[index]
         self.setMagnification(value)
 
     def getGunShift(self):
@@ -151,36 +169,36 @@ class SimuMicroscope(object):
             shift_x = x - current_x
             if shift_x < 0 and abs(shift_x) > xy_limit:
                 do_backlash = True
-                x = xy_limit + x
-                print " >> Correct backlash in x, approach: {} -> {}".format(x, x-xy_limit)
+                print " >> Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x)
+                x = x - xy_limit
         
         if y is not None:
             shift_y = y - current_y
             if shift_y < 0 and abs(shift_y) > xy_limit:
                 do_backlash = True
-                y = xy_limit + y
-                print " >> Correct backlash in x, approach: {} -> {}".format(y, y-xy_limit)
+                print " >> Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y)
+                y = y - xy_limit
 
         if z is not None:
             shift_z = z - current_z
             if shift_z < 0 and abs(shift_z) > height_limit:
                 do_backlash = True
-                z = height_limit + z
-                print " >> Correct backlash in z, approach: {} -> {}".format(z, z-height_limit)
+                print " >> Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z)
+                z = z - height_limit
         
         if a is not None:
             shift_a = a - current_a
             if shift_a < 0 and abs(shift_a) > angle_limit:
                 do_backlash = True
-                a = angle_limit + a
-                print " >> Correct backlash in a, approach: {} -> {}".format(a, a-angle_limit)
+                print " >> Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a)
+                a = a - angle_limit
         
         if b is not None:
             shift_b = b - current_b
             if shift_b < 0 and abs(shift_b) > angle_limit:
                 do_backlash = True
-                b = angle_limit + b
-                print " >> Correct backlash in b, approach: {} -> {}".format(b, b-angle_limit)
+                print " >> Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b)
+                b = b - angle_limit
 
         if do_backlash:
             self.setStagePosition(x, y, z, a, b, backlash=False)
@@ -193,39 +211,54 @@ class SimuMicroscope(object):
         height_limit = 1000
 
         if x:
-            x = xy_limit + current_x
-            print " >> Correct backlash in x, approach: {} -> {} (force)".format(x, current_x)
+            x = current_x - xy_limit
+            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x)
         else:
             current_x, x = None, None
 
         if y:
-            y = xy_limit + current_y
-            print " >> Correct backlash in x, approach: {} -> {} (force)".format(y, current_y)
+            y = current_y - xy_limit
+            print " >> Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
         else:
             current_y, y = None, None
 
         if z:
-            z = height_limit + current_z
-            print " >> Correct backlash in z, approach: {} -> {} (force)".format(z, current_z)
+            z = current_z - height_limit
+            print " >> Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z)
         else:
             current_z, z = None, None
 
         if a:
-            a = angle_limit + current_a
-            print " >> Correct backlash in a, approach: {} -> {} (force)".format(a, current_a)
+            a = current_a - angle_limit
+            print " >> Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a)
         else:
             current_a, a = None, None
 
         if b:
-            b = angle_limit + current_b
-            print " >> Correct backlash in b, approach: {} -> {} (force)".format(b, current_b)
+            b = current_b - angle_limit
+            print " >> Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b)
         else:
             current_b, b = None, None
 
         self.setStagePosition(x, y, z, a, b, backlash=False)
-        self.setStagePosition(current_x, current_y, current_z, current_a, current_b, backlash=False)
+        n = 2 # number of stages
+        for i in range(n):
+            j = i + 1
+            if x:
+                x = ((n-j)*x + j*current_x) / n
+            if y:
+                y = ((n-j)*y + j*current_y) / n
+            if z:
+                z = ((n-j)*z + j*current_z) / n
+            if a:
+                a = ((n-j)*a + j*current_a) / n
+            if b:
+                b = ((n-j)*b + j*current_b) / n
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=True):
+            print " >> Force backlash, stage {}".format(j)
+            self.setStagePosition(x, y, z, a, b, backlash=False)
+
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
         if backlash:
             self._setStagePosition_backlash(x, y, z, a, b)
 
@@ -242,7 +275,7 @@ class SimuMicroscope(object):
 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
-	mode = self.FunctionMode_value
+        mode = self.FunctionMode_value
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
@@ -254,11 +287,11 @@ class SimuMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.FunctionMode_value = value
 
-    def getDiffFocus(self): #IC1
+    def getDiffFocus(self):
         return self.DiffractionFocus_value
 
     def setDiffFocus(self, value):
-	"""IC1"""
+        """IC1"""
         self.DiffractionFocus_value = value
 
     def getDiffShift(self):
@@ -270,3 +303,41 @@ class SimuMicroscope(object):
 
     def releaseConnection(self):
         print "Connection to microscope released"
+
+    def isBeamBlanked(self, value):
+        return self.beamblank
+
+    def setBeamBlank(self, mode):
+        """True/False or 1/0"""
+        self.beamblank = mode
+
+    def getCondensorLensStigmator(self):
+        return self.condensorlensstigmator_x, self.condensorlensstigmator_y
+
+    def setCondensorLensStigmator(self, x, y):
+        self.condensorlensstigmator_x = x
+        self.condensorlensstigmator_y = y
+        
+    def getIntermediateLensStigmator(self):
+        return self.intermediatelensstigmator_x, self.intermediatelensstigmator_y
+
+    def setIntermediateLensStigmator(self, x, y):
+        self.intermediatelensstigmator_x = x
+        self.intermediatelensstigmator_y = y
+
+    def getObjectiveLensStigmator(self):
+        return self.objectivelensstigmator_x, self.objectivelensstigmatir_y
+
+    def setObjectiveLensStigmator(self, x, y):
+        self.objectivelensstigmator_x = x
+        self.objectivelensstigmator_y = y
+
+    def getSpotSize(self):
+        """0-based indexing for GetSpotSize, add 1 for consistency"""
+        value, result = self.eos3.GetSpotSize()
+        return value + 1
+
+    def setSpotSize(self, value):
+        self.spotsize = value
+
+

@@ -5,7 +5,7 @@ import comtypes.client
 import time
 import os
 
-specifications{
+specifications = {
     "feg": {
         "MAGNIFICATIONS": (250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000),
         "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250}
@@ -89,7 +89,7 @@ class JeolMicroscope(object):
 
     def setMagnification(self, value):
         if value not in self.MAGNIFICATIONS:
-            value = min(self.MAGNIFICATIONS.keys(), key=lambda x: abs(x-value))
+            value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
         
         # get best mode for magnification
         for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
@@ -111,10 +111,7 @@ class JeolMicroscope(object):
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
-        try:
-            return self.MAGNIFICATIONS.index(value)
-        except:
-            return 0
+        return self.MAGNIFICATIONS.index(value)
 
     def setMagnificationIndex(self, index):
         value = self.MAGNIFICATIONS[index]
