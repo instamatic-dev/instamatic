@@ -108,7 +108,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
 
     binsize = h_cent["ImageBinSize"]
 
-    holes = find_holes(img_cent, plot=False, verbose=False, diameter=100, max_eccentricity=0.8)
+    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
     pixel_cent = np.array(holes[0].centroid) * binsize / scale
     
     print "Beamshift: x={} | y={}".format(*beamshift_cent)

@@ -4,7 +4,7 @@ import sys, os
 import numpy as np
 
 from camera import save_image_and_header
-from find_crystals import find_crystals, plot_props, find_holes
+from find_crystals import find_crystals, plot_props, find_holes, calculate_hole_area
 import TEMController
 
 from tools import *
@@ -508,24 +508,24 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
     calib = CalibStage.from_file()
     print
     print calib
-    print
     stage_coords = []
     for fn in fns:
         print
         print "Now processing:", fn
-        img, header = load_img(fn)
+        img, h = load_img(fn)
         img = img.astype(int)
 
         img, scale = autoscale(img)
 
-        image_pos = np.array(header["StagePosition"][:2])
+        image_pos = np.array(h["StagePosition"][:2])
 
         if callback:
-            callback(img=img, header=header, name=fn)
+            callback(img=img, header=h, name=fn)
 
         outfile = os.path.splitext(fn)[0] + ".tiff" if save_images else None
 
-        holes = find_holes(img, header, plot=plot, fname=outfile, verbose=False)
+        area = calculate_hole_area(150.0, h["Magnification"], img_scale=scale)
+        holes = find_holes(img, area=area, plot=plot, fname=outfile, verbose=False)
 
         for hole in holes:
             centroid = np.array(hole.centroid) / scale
@@ -535,11 +535,14 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
     xy = np.array(stage_coords)
 
     threshold = 10000
+
     xy = cluster_mean(xy, threshold=threshold)
     xy = xy[xy[:,0].argsort(axis=0)]
 
     if plot:
         plot_hole_stage_positions(calib, xy)
+
+    print
     print "Found {} unique holes (threshold={})".format(len(xy), threshold)
     np.save(fileio.HOLE_COORDS, xy)
 

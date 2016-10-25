@@ -201,17 +201,47 @@ def find_crystals(img, header=None, plot=False, verbose=True):
     return crystals
 
 
-def find_holes(img, header=None, diameter=150.0, plot=True, fname=None, verbose=True, max_eccentricity=0.4):
-    """Hole size as diameter in micrometer"""
-    if header:
-        # hole size is in um
-        pxx, pxy = lowmag_dimensions[header["Magnification"]]
-    else:
-        # hole size is in pixels
-        pxx, pxy = 1, 1
+def calculate_hole_area(diameter, magnification, img_scale=1):
+    """Approximate the size of the feature to locate
 
-    hole_area = np.pi*(diameter/2.0)**2
+    header: dict,
+        image header, to get the magnification used
+    diameter: float,
+        target diameter of feature to locate (in micrometer)
+    img_scale: float,
+        If the image has been scaled down, the scale can be given here to accurately calculate the hole area in pixels.
+    
+    Returns:
+        area: float,
+            apprximate feature size in pixels
+    """
 
+    pxx, pxy = lowmag_dimensions[magnification]
+    pxx /= img_scale
+    pxy /= img_scale
+    hole_area = pxx*pxy*np.pi*(diameter/2.0)**2
+    return hole_area
+
+
+def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricity=0.4):
+    """Hole size as diameter in micrometer
+
+    img: np.ndarray,
+        image as 2d numpy array
+    area: int or float,
+        approximate size in pixels of the feature to locate
+    plot: bool,
+        plot intermediate stages of hole finding routine
+    verbose: bool,
+        increase verbosity of output if True
+    max_eccentricity: float,
+        the maximum allowed eccentricity for hole detection (0.0: perfect circle to 1.0: prefect eccentric)
+
+    Returns:
+        props: list,
+            list of props of the objects found
+
+    """
     otsu = filters.threshold_otsu(img)
     n = 0.25
     l = otsu - (otsu - np.min(img))*n
@@ -222,14 +252,15 @@ def find_holes(img, header=None, diameter=150.0, plot=True, fname=None, verbose=
     
     markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
     # plt.imshow(markers)
-    props = find_objects(img, markers=markers, fill_holes=True, min_size=hole_area*0.75, plot=plot, verbose=verbose)
+    props = find_objects(img, markers=markers, fill_holes=True, plot=plot, verbose=verbose)
 
     newprops = []
     for prop in props:
+        # print prop.eccentricity, prop.area, prop.area*pxx*pxy, hole_area
         if prop.eccentricity > max_eccentricity:
             continue
-        # FIXME .convex_area crashes here, use .area instead
-        if prop.area*pxx*pxy < hole_area*0.75:  
+        # FIXME .convex_area crashes here with skimage-0.12.3, use .area instead
+        if prop.area < area*0.75:  
             continue
 
         # print "fa", prop.filled_area

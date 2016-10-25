@@ -44,7 +44,7 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
 
         brightness = float(h["Brightness"])
         
-        holes = find_holes(img, plot=False, verbose=False, diameter=30, max_eccentricity=0.8)
+        holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
         
         if len(holes) == 0:
             print " >> No holes found, continuing..."
@@ -84,7 +84,7 @@ def calibrate_brightness_from_image_fn(fns):
 
         img, scale = autoscale(img)
 
-        holes = find_holes(img, plot=False, fname=None, verbose=False, diameter=30, max_eccentricity=0.8)
+        holes = find_holes(img, plot=False, fname=None, verbose=False, max_eccentricity=0.8)
         
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
