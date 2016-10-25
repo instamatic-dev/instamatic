@@ -510,7 +510,6 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
     print calib
     print
     stage_coords = []
-    outfile = None
     for fn in fns:
         print
         print "Now processing:", fn
@@ -524,8 +523,7 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
         if callback:
             callback(img=img, header=header, name=fn)
 
-        if save_images:
-            outfile = os.path.splitext(fn)[0] + ".tif"
+        outfile = os.path.splitext(fn)[0] + ".tiff" if save_images else None
 
         holes = find_holes(img, header, plot=plot, fname=outfile, verbose=False)
 

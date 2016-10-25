@@ -21,7 +21,7 @@ setup(
 
     packages=["instamatic", "instamatic.camera", "instamatic.pyami", "instamatic.pyscope"],
 
-    install_requires=["numpy", "comtypes", "scikit-image"],
+    install_requires=["numpy", "comtypes", "scikit-image", "yaml", "lmfit"],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],

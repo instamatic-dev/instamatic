@@ -30,7 +30,7 @@ def load_hole_stage_positions():
     if os.path.exists(HOLE_COORDS):
         coords = np.load(HOLE_COORDS)
     else:
-        raise IOError("\n >> Please run instamatic.map_holes_on_grid first.")
+        raise IOError("\n >> Please run instamatic.map_holes first.")
     return coords
 
 def load_calib_beamshift():

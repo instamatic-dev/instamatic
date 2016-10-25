@@ -519,6 +519,29 @@ class TEMController(object):
         print self
 
     def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False):
+        """Retrieve image as numpy array from camera
+
+        Parameters:
+            exposure: float, 
+                exposure time in seconds
+            binsize: int, 
+                which binning to use for the image, must be 1, 2, or 4
+            comment: str, 
+                arbitrary comment to add to the header file under 'ImageComment'
+            out: str, 
+                path or filename to which the image/header is saved (defaults to tiff)
+            plot: bool, 
+                toggle whether to show the image using matplotlib after acquisition
+
+        Returns:
+            image: np.ndarray, headerfile: dict
+                a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
+
+        Usage:
+            img, h = self.getImage()
+        """
+
+
         if not self.cam:
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
@@ -545,6 +568,7 @@ class TEMController(object):
             plt.show()
 
         return arr, h
+
 
 def main_entry():
     import argparse

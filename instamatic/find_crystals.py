@@ -423,7 +423,7 @@ def find_crystals_entry():
         # plot_hists(img)
 
         scale = 1024.0 / max(img.shape) # ensure zoom so that max dimension == 1024
-        img = ndimage.zoom(img, scale, order=3)
+        img = ndimage.zoom(img, scale, order=1)
 
         plot = False
         crystals = find_crystals(img, plot=plot)
@@ -447,7 +447,7 @@ def find_holes_entry():
         img = img.astype(int)
 
         scale = 1024.0 / max(img.shape) # ensure zoom so that max dimension == 1024
-        img = ndimage.zoom(img, scale, order=3)
+        img = ndimage.zoom(img, scale, order=1)
         
         root, ext = os.path.splitext(fn)
         header = json.load(open(root+".json", "r"))

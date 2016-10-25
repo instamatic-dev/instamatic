@@ -398,6 +398,10 @@ class CalibStage(object):
 
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*stagepos_.T, label="Positions in pixel coords")
+        
+        for i, (x,y) in enumerate(shifts):
+            plt.text(x+5, y+5, str(i), size=14)
+
         plt.legend()
         plt.show()
 

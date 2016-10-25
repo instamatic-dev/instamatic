@@ -41,17 +41,16 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     # Ensure that backlash is eliminated
     ctrl.stageposition.reset_xy()
 
+    outfile = "calib_start" if save_images else None
+
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image (start)")
+    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
+
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     
     img_cent, scale = autoscale(img_cent)
-
-    if save_images:
-        outfile = "calib_start"
-        save_image_and_header(outfile, img=img_cent, header=header_cent)
 
     stagepos = []
     shifts = []
@@ -68,8 +67,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         print "Position {}/{}".format(i+1, tot)
         print ctrl.stageposition
         
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        outfile = "calib_{:04d}".format(i) if save_images else None
 
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        
         img = imgscale(img, scale)
 
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
@@ -77,10 +78,6 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         xobs, yobs, _, _, _ = h["StagePosition"]
         stagepos.append((xobs, yobs))
         shifts.append(shift)
-
-        if save_images:
-            outfile = "calib_{:04d}".format(i)
-            save_image_and_header(outfile, img=img, header=h)
         
         i += 1
     
@@ -98,9 +95,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         print
     
     if save_images:
-        img, header = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Center image (end)")
-        outfile = "calib_end"
-        save_image_and_header(outfile, img=img, header=header)
+        ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
     c.plot()

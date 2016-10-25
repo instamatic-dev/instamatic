@@ -36,7 +36,10 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
         target = start + i*step
         ctrl.brightness.value = int(target)
 
-        img, h = ctrl.getImage(exposure=exposure, comment="Calib image {}: brightness={}".format(i, target))
+        outfile = "calib_brightness_{:04d}".format(i) if save_images else None
+
+        img, h = ctrl.getImage(exposure=exposure, out=outfile, comment="Calib image {}: brightness={}".format(i, target))
+        
         img, scale = autoscale(img)
 
         brightness = float(h["Brightness"])
@@ -52,10 +55,6 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
         print "Brightness: {:.f}, equivalent diameter: {:.1f}".format(brightness, size)
         values.append((brightness, size))
 
-        if save_images:
-            outfile = "calib_brightness_{:04d}".format(i)
-            save_image_and_header(outfile, img=img,  header=h)
-    
     values = np.array(values)
     c = CalibBrightness.from_data(*values.T)
     c.plot()
@@ -137,3 +136,4 @@ prepare
 
 if __name__ == '__main__':
     calibrate_brightness_entry()
+
