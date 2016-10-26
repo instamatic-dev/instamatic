@@ -7,7 +7,7 @@ from os import path
 
 setup(
     name="instamatic",
-    version="0.1.0",
+    version="0.1.1",
     description="Program for automatic data collection of diffraction snapshots on electron microscopes",
 
     author="Stef Smeets",
@@ -19,9 +19,9 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    packages=["instamatic", "instamatic.camera", "instamatic.pyami", "instamatic.pyscope"],
+    packages=["instamatic", "instamatic.camera"],
 
-    install_requires=["numpy", "comtypes", "scikit-image", "yaml", "lmfit"],
+    install_requires=["numpy", "comtypes", "scikit-image", "pyyaml", "lmfit"],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
