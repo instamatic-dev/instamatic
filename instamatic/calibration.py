@@ -165,6 +165,9 @@ class CalibBeamShift(object):
         plt.legend()
         plt.show()
 
+    def center(self):
+        return self.pixelcoord_to_beamshift((1024, 1024))
+
 
 class CalibBrightness(object):
     """docstring for calib_brightness"""

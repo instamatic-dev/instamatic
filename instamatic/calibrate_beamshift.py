@@ -13,7 +13,7 @@ from find_crystals import find_holes
 from tools import *
 
 
-def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False):
+def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.1, binsize=2, save_images=False):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
@@ -39,7 +39,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
     outfile = "calib_beamcenter" if save_images else None
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    pixel_cent = np.array(holes[0].centroid)
+    pixel_cent = np.array(holes[0].centroid) * binsize / scale
     
     print "Beamshift: x={} | y={}".format(*beamshift_cent)
     print "Pixel: x={} | y={}".format(*pixel_cent)

@@ -39,8 +39,7 @@ def calibrate_diffshift_live(ctrl, gridsize=5, stepsize=2500):
     else:
         print " >> Using CalibBeamshift to select spots"
         xres, yres = ctrl.cam.getDimensions()
-        # xres, yres = (2048, 2048)
-    
+            
         xstep = int(xres / gridsize)
         ystep = int(yres / gridsize)
     

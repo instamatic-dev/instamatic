@@ -136,7 +136,10 @@ class gatanOrius(object):
         pnWidth = c_int(0)
         pnHeight = c_int(0)
         self._cameraDimensions(byref(pnWidth), byref(pnHeight))
-        return pnWidth.value, pnHeight.value
+        if (pnWidth.value == 0) and (pnHeight.value == 0):
+            return 2048, 2048
+        else:
+            return pnWidth.value, pnHeight.value
 
     def getName(self):
         """Return string"""

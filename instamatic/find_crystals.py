@@ -220,9 +220,9 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
     """
 
     pxx, pxy = lowmag_dimensions[magnification]
-    pxx /= (img_scale / binsize)
-    pxy /= (img_scale / binsize)
-    hole_area = pxx*pxy*np.pi*(diameter/2.0)**2
+    pxx *= (binsize / img_scale)
+    pxy *= (binsize / img_scale)
+    hole_area = (np.pi*(diameter/2.0)**2) / (pxx * pxy)
     return hole_area
 
 

@@ -65,7 +65,7 @@ def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
     return xvals*radius, yvals*radius
 
 
-def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, plot=False):
+def get_offsets(box_x, box_y=0, radius=75, padding=0, k=1.0, plot=False):
     """
     box_x: float or int,
         x-dimensions of the box in micrometers. 
@@ -413,23 +413,23 @@ def plot_experiment_entry():
     plot_experiment(ctrl=ctrl)
 
 def do_experiment(ctrl=None, **kwargs):
-    ctrl.magnification.value=2500
-
     d = fileio.load_experiment()
     centers = d["centers"]
-    radius = d["radius"]
+    radius = d["radius"] / 1000 # nm -> um
 
     calib_stage = CalibStage.from_file()
     calib_beamshift = CalibBeamShift.from_file()
     calib_diffshift = CalibDiffShift.from_file()
-    calib_brightness = CalibBrightness.from_file()
+    # calib_brightness = CalibBrightness.from_file()
 
     diff_binsize = kwargs.get("diff_binsize", 2)
-    diff_exposure = kwargs.get("diff_exposure", 0.2)
+    diff_exposure = kwargs.get("diff_exposure", 0.1)
     image_binsize = kwargs.get("image_binsize", 2)
-    image_exposure = kwargs.get("image_exposure", 0.2)
-    diff_brightness = kwargs.get("diff_brightness", 40000)
+    image_exposure = kwargs.get("image_exposure", 0.1)
+    diff_brightness = kwargs.get("diff_brightness", 38957)
+    magnification = kwargs.get("magnification", 5000)
     
+    ctrl.magnification.value = magnification
     neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
 
     res_x, res_y = ctrl.cam.getDimensions()
@@ -441,10 +441,13 @@ def do_experiment(ctrl=None, **kwargs):
     box_y *= res_y
 
     x_offsets, y_offsets = get_offsets(box_x, box_y, radius, plot=True)
+    x_offsets *= 1000
+    y_offsets *= 1000
 
     plot = False
     print
     print "Imaging     : binsize = {}, exposure = {}".format(image_binsize, image_exposure)
+    print "              magnification = {}".format(magnification)
     print "Diffraction : binsize = {}, exposure = {}".format(diff_binsize, diff_exposure)
     print "              brightness = {}".format(diff_brightness)
     print
@@ -479,6 +482,7 @@ def do_experiment(ctrl=None, **kwargs):
                 j += 1
                 continue
 
+            print ctrl.stageposition
             outfile = "image_{:04d}_{:04d}".format(i,j)
 
             if not auto:
@@ -498,17 +502,23 @@ def do_experiment(ctrl=None, **kwargs):
 
             img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment, out=outfile)
 
-            if plot:
-                plt.imshow(img, cmap="gray")
-                plt.title(comment)
-                plt.show()
+            # j += 1
+            # continue
+
+            # if plot:
+            #     plt.imshow(img, cmap="gray")
+            #     plt.title(comment)
+            #     plt.show()
 
             img, scale = autoscale(img, maxdim=512)
-            crystals = find_crystals(img, plot=True, verbose=False)
+            crystals = find_crystals(img, plot=False, verbose=False)
 
             plot_props(img, crystals, fname=outfile+".png")
 
             ncrystals = len(crystals)
+
+            if ncrystals == 0:
+                continue
 
             crystal_coords = np.array([crystal.centroid for crystal in crystals]) * image_binsize / scale
 
@@ -640,11 +650,12 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
 
         outfile = os.path.splitext(fn)[0] + ".tiff" if save_images else None
 
-        area = calculate_hole_area(150.0, h["Magnification"], img_scale=scale, binsize=h["BinSize"])
+        binsize = h["ImageBinSize"]
+        area = calculate_hole_area(150.0, h["Magnification"], img_scale=scale, binsize=binsize)
         holes = find_holes(img, area=area, plot=plot, fname=outfile, verbose=False)
 
         for hole in holes:
-            centroid = np.array(hole.centroid) / scale
+            centroid = np.array(hole.centroid) * binsize / scale
             stagepos = calib.pixelcoord_to_stagepos(centroid, image_pos)
             stage_coords.append(stagepos)
 
@@ -701,14 +712,14 @@ def main():
     except IOError as e:
         # print e
         calib_brightness = None
-        ready = False
+        # ready = False
 
     print
     print "Calibration:"
-    print "    Stage     : {}".format("yes" if calib_stage else "no, please run instamatic.calib_stage_lowmag")
-    print "    BeamShift : {}".format("yes" if calib_beamshift else "no, please run instamatic.calib_beamshift")
-    print "    DiffShift : {}".format("yes" if calib_diffshift else "no, please run instamatic.calib_diffshift")
-    print "    Brightness: {}".format("yes" if calib_brightness else "no, please run instamatic.calib_brightness")
+    print "    Stage     : {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
+    print "    BeamShift : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
+    print "    DiffShift : {}".format("yes" if calib_diffshift else "no, please run instamatic.calibrate_diffshift")
+    print "    Brightness: {}".format("yes" if calib_brightness else "no, please run instamatic.calibrate_brightness")
 
     try:
         hole_coords = fileio.load_hole_stage_positions()
