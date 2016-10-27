@@ -78,6 +78,9 @@ class Brightness(object):
     def value(self, value):
         self.set(value)
 
+    def max(self):
+        self.set(65535)
+
 
 class Magnification(object):
     """docstring for Magnification"""
@@ -440,11 +443,9 @@ class TEMController(object):
 
     def mode_lowmag(self):
         self.tem.setFunctionMode("lowmag")
-        self.tem.eos3.SetSelector(3) 
 
     def mode_mag1(self):
         self.tem.setFunctionMode("mag1")
-        self.tem.eos3.SetSelector(0) 
 
     def mode_diffraction(self):
         self.tem.setFunctionMode("diff")

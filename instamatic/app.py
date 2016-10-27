@@ -41,23 +41,87 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
-def get_grid(n, r, borderwidth=0.8):
+def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
     """Make a grid (size=n*n), and return the coordinates of those
     fitting inside a circle (radius=r)
-    n: `int`
-        Used to define a mesh n*n
-    r: `float`
+    nx: `int`
+    ny: `int` (optional)
+        Used to define a mesh nx*ny, if ny is missing, nx*nx is used
+    radius: `float`
         radius of hole
     borderwidth: `float`, 0.0 - 1.0
         define a border around the circumference not to place any points
         should probably be related to the effective camera size: 
     """
-    yr = xr = np.linspace(-1, 1, n)
+    xr = np.linspace(-1, 1, nx)
+    if ny:
+        yr = np.linspace(-1, 1, ny)
+    else:
+        yr = xr
     xgrid, ygrid = np.meshgrid(xr, yr)
-    sel = xgrid**2 + ygrid**2 < 1.0*borderwidth
+    sel = xgrid**2 + ygrid**2 < 1.0*(1-borderwidth)
     xvals = xgrid[sel].flatten()
     yvals = ygrid[sel].flatten()
-    return xvals*r, yvals*r 
+    return xvals*radius, yvals*radius
+
+
+def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, plot=False):
+    """
+    box_x: float or int,
+        x-dimensions of the box in micrometers. 
+        if box_y is missing, box_y = box_x
+    box_y: float or int,
+        y-dimension of the box in micrometers (optional)
+    radius: int or float,
+        size of the hole in micrometer
+    padding: int or float
+        distance between boxes in micrometers
+    k: float,
+        scaling factor for the borderwidth
+    """
+    nx = 1 + int(2.0*radius / (box_x+padding))
+    if box_y:
+        ny = 1 + int(2.0*radius / (box_y+padding))
+        diff = 0.5*(2*max(box_x, box_y)**2)**0.5
+    else:
+        diff = 0.5*(2*(box_x)**2)**0.5
+        ny = 0
+    
+    borderwidth = k*(1.0 - (radius - diff) / radius)
+    
+    x_offsets, y_offsets = get_grid(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
+    
+    if plot:
+        from matplotlib import patches
+        num = len(x_offsets)
+        textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
+
+        print
+        print textstr
+        
+        if num < 1000:
+            fig = plt.figure(figsize=(10,5))
+            ax = fig.add_subplot(111)
+            plt.scatter(0, 0)
+            plt.scatter(x_offsets, y_offsets, picker=8, marker="+")
+            circle = plt.Circle((0, 0), radius, fill=False, color="blue")
+            ax.add_artist(circle)
+            circle = plt.Circle((0, 0), radius*(1-borderwidth/2), fill=False, color="red")
+            ax.add_artist(circle)
+            
+            for dx, dy in zip(x_offsets, y_offsets):
+                r = patches.Rectangle((dx - box_x/2.0, dy - box_y/2.0), box_x, box_y, fill=False)
+                ax.add_artist(r)
+        
+            ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+            ax.set_xlim(-100, 100)
+            ax.set_ylim(-100, 100)
+            ax.set_aspect('equal')
+            plt.show()
+    
+    return x_offsets, y_offsets
 
 
 def seek_and_destroy_from_image_fn(img, calib, ctrl=None, plot=False):
@@ -227,8 +291,7 @@ def update_experiment_with_hole_coords(coords):
     experiment["centers"] = corrected
 
     fileio.write_experiment(experiment)
-    print " >> Wrote {} coordinates to file {}".format(len(coords), EXPERIMENT)
-
+    print " >> Wrote {} coordinates to file".format(len(coords))
 
 
 def update_experiment_with_hole_coords_entry():
@@ -248,7 +311,7 @@ def prepare_experiment(centers, radii):
     r_std = np.std(radii)
     print "Average radius: {}+-{} ({:.1%})".format(r_mean, r_std, (r_std/r_mean))
     
-    x_offsets, y_offsets = get_grid(n=7, r=r_mean)
+    x_offsets, y_offsets = get_grid(nx=7, radius=r_mean)
 
     experiment = {
         "centers": centers,
@@ -349,18 +412,41 @@ def plot_experiment_entry():
     ctrl = TEMController.initialize()
     plot_experiment(ctrl=ctrl)
 
-def do_experiment(ctrl=None):
+def do_experiment(ctrl=None, **kwargs):
+    ctrl.magnification.value=2500
+
     d = fileio.load_experiment()
     centers = d["centers"]
     radius = d["radius"]
-    x_offsets = d["x_offsets"]
-    y_offsets = d["y_offsets"]
 
-    binsize = 1
-    exposure = 0.2
+    calib_stage = CalibStage.from_file()
+    calib_beamshift = CalibBeamShift.from_file()
+    calib_diffshift = CalibDiffShift.from_file()
+    calib_brightness = CalibBrightness.from_file()
+
+    diff_binsize = kwargs.get("diff_binsize", 2)
+    diff_exposure = kwargs.get("diff_exposure", 0.2)
+    image_binsize = kwargs.get("image_binsize", 2)
+    image_exposure = kwargs.get("image_exposure", 0.2)
+    diff_brightness = kwargs.get("diff_brightness", 40000)
+    
+    neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
+
+    res_x, res_y = ctrl.cam.getDimensions()
+    magnification = ctrl.magnification.value
+
+    from calibration import mag1_dimensions
+    box_x, box_y = mag1_dimensions[magnification]
+    box_x *= res_x
+    box_y *= res_y
+
+    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, plot=True)
+
     plot = False
-
-    print "binsize = {} | exposure = {}".format(binsize, exposure)
+    print
+    print "Imaging     : binsize = {}, exposure = {}".format(image_binsize, image_exposure)
+    print "Diffraction : binsize = {}, exposure = {}".format(diff_binsize, diff_exposure)
+    print "              brightness = {}".format(diff_brightness)
     print
     print "Usage:"
     print "    type 'next' to go to the next hole"
@@ -410,14 +496,44 @@ def do_experiment(ctrl=None):
 
             comment = "Hole {} image {}\nx_offset={:.2e} y_offset={:.2e}".format(i, j, x_offset, y_offset)
 
-            arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=comment)
-    
-            save_image_and_header(outfile, img=arr, header=h)
+            img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment, out=outfile)
 
             if plot:
-                plt.imshow(arr, cmap="gray")
+                plt.imshow(img, cmap="gray")
                 plt.title(comment)
                 plt.show()
+
+            img, scale = autoscale(img, maxdim=512)
+            crystals = find_crystals(img, plot=True, verbose=False)
+
+            plot_props(img, crystals, fname=outfile+".png")
+
+            ncrystals = len(crystals)
+
+            crystal_coords = np.array([crystal.centroid for crystal in crystals]) * image_binsize / scale
+
+            beamshift_coords = calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
+
+            print
+            print " >> Switching to diffraction mode"
+            for k, beampos in enumerate(beamshift_coords):
+                ctrl.brightness.set(diff_brightness)
+                ctrl.beamshift.set(*beampos)
+                ctrl.mode_diffraction()
+                calib_diffshift.compensate_beamshift(ctrl)
+                
+                outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
+                comment = "Hole {} image {} Crystal {}".format(i, j, k)
+                print "{}/{}:".format(k+1, ncrystals),
+                img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment, out=outfile)
+            print
+            print " >> Switching back to image mode"
+
+            ctrl.beamshift.set(*neutral_beamshift)
+            calib_diffshift.compensate_beamshift(ctrl)
+
+            ctrl.mode_mag1()
+            ctrl.brightness.max()
 
             j += 1
 
@@ -524,7 +640,7 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
 
         outfile = os.path.splitext(fn)[0] + ".tiff" if save_images else None
 
-        area = calculate_hole_area(150.0, h["Magnification"], img_scale=scale)
+        area = calculate_hole_area(150.0, h["Magnification"], img_scale=scale, binsize=h["BinSize"])
         holes = find_holes(img, area=area, plot=plot, fname=outfile, verbose=False)
 
         for hole in holes:
@@ -557,24 +673,81 @@ def map_holes_on_grid_entry():
 
 
 def main():
-    print "High tension:", tem.getHighTension()
+    ready = True
+    
+    try:
+        calib_stage = CalibStage.from_file()
+    except IOError as e:
+        # print e
+        calib_stage = None
+        ready = False
+
+    try:
+        calib_beamshift = CalibBeamShift.from_file()
+    except IOError as e:
+        # print e
+        calib_beamshift = None
+        ready = False
+
+    try:
+        calib_diffshift = CalibDiffShift.from_file()
+    except IOError as e:
+        # print e
+        calib_diffshift = None
+        ready = False
+
+    try:
+        calib_brightness = CalibBrightness.from_file()
+    except IOError as e:
+        # print e
+        calib_brightness = None
+        ready = False
+
     print
+    print "Calibration:"
+    print "    Stage     : {}".format("yes" if calib_stage else "no, please run instamatic.calib_stage_lowmag")
+    print "    BeamShift : {}".format("yes" if calib_beamshift else "no, please run instamatic.calib_beamshift")
+    print "    DiffShift : {}".format("yes" if calib_diffshift else "no, please run instamatic.calib_diffshift")
+    print "    Brightness: {}".format("yes" if calib_brightness else "no, please run instamatic.calib_brightness")
 
-    if True:
-        for d in tem.getCapabilities():
-            if 'get' in d["implemented"]:
-                print "{:30s} : {}".format(d["name"], getattr(tem, "get"+d["name"])())
+    try:
+        hole_coords = fileio.load_hole_stage_positions()
+    except Exception as e:
+        hole_coords = None
+        message1 = "no, please run instamatic.map_holes"
+        ready = False
+    else:
+        message1 = "yes, {} locations stored".format(len(hole_coords))
 
-    if True:
-        img, h = ctrl.getImage()
+    try:
+        experiment = fileio.load_experiment()
+    except Exception as e:
+        experiment = None
+        message2 = "no, please run instamatic.prepare_experiment"
+        ready = False
+    else:
+        message2 = "yes, {}".format(experiment["radius"])
 
-        # img = color.rgb2gray(img)
-        img = np.invert(img)
-        print img.min(), img.max()
-        crystals = find_crystals(img)
-        plot_props(img, crystals)
+    print 
+    print "Experiment"
+    print "    Holes     : {}".format(message1)
+    print "    Radius    : {} um?".format(message2)
+    
+    try:
+        params = json.load(open("params.json","r"))
+    except IOError:
+        params = {}
 
-    # embed()
+    print "    Params    : {}".format("yes" if params else "no")
+    print "    Ready     : {}".format("yes" if ready else "no")
+
+
+    if ready:
+        if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
+            exit()
+        print
+        ctrl = TEMController.initialize()
+        do_experiment(ctrl, **params)
 
 
 if __name__ == '__main__':

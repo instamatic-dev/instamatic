@@ -42,7 +42,7 @@ def load_calib_beamshift():
     return calib
 
 def load_experiment():
-    print os.path.abspath(".")
+    # print os.path.abspath(".")
     if os.path.exists(EXPERIMENT):
         d = pickle.load(open(EXPERIMENT, "r"))
     else:
@@ -50,7 +50,7 @@ def load_experiment():
     return d
 
 def load_calib_brightness():
-    print os.path.abspath(".")
+    # print os.path.abspath(".")
     if os.path.exists(CALIB_BRIGHTNESS):
         d = pickle.load(open(CALIB_BRIGHTNESS, "r"))
         calib = CalibBrightness(**d)
@@ -59,7 +59,7 @@ def load_calib_brightness():
     return calib
 
 def load_calib_diffshift():
-    print os.path.abspath(".")
+    # print os.path.abspath(".")
     if os.path.exists(CALIB_DIFFSHIFT):
         d = pickle.load(open(CALIB_DIFFSHIFT, "r"))
         calib = CalibDiffShift(**d)

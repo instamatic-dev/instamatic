@@ -49,5 +49,5 @@ setup(
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }
-
 )
+

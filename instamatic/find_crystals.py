@@ -137,9 +137,9 @@ def find_objects(img, method="watershed", markers=None, plot=False, verbose=True
     else:
         markers = get_markers_bounds(img, lower=100, upper=180, verbose=verbose)
 
-    if plot:
-        plt.imshow(markers)
-        plt.show()
+    # if plot:
+    #     plt.imshow(markers)
+    #     plt.show()
 
     if method == "watershed":
         elevation_map = filters.sobel(img)
@@ -192,24 +192,27 @@ def find_crystals(img, header=None, plot=False, verbose=True):
     nu = 0.0
     l = otsu - (otsu - np.min(img))*nl
     u = otsu + (np.max(img) - otsu)*nu
-    print "img range: {} - {}".format(img.min(), img.max())
-    print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
+    if verbose:
+        print "img range: {} - {}".format(img.min(), img.max())
+        print "otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u)
 
-    markers = get_markers_bounds(img, lower=l, upper=u)
+    markers = get_markers_bounds(img, lower=l, upper=u, verbose=verbose)
 
     crystals = find_objects(img, method="random_walker", markers=markers, plot=plot, verbose=verbose)
     return crystals
 
 
-def calculate_hole_area(diameter, magnification, img_scale=1):
+def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
     """Approximate the size of the feature to locate
 
-    header: dict,
-        image header, to get the magnification used
     diameter: float,
         target diameter of feature to locate (in micrometer)
+    magnification: int,
+        Magnification used for the determination
     img_scale: float,
-        If the image has been scaled down, the scale can be given here to accurately calculate the hole area in pixels.
+        If the image has been scaled down, the scale can be given here to accurately calculate the hole area in pixels
+    binsize: int,
+        binning used for the data collection (1, 2, or 4)
     
     Returns:
         area: float,
@@ -217,8 +220,8 @@ def calculate_hole_area(diameter, magnification, img_scale=1):
     """
 
     pxx, pxy = lowmag_dimensions[magnification]
-    pxx /= img_scale
-    pxy /= img_scale
+    pxx /= (img_scale / binsize)
+    pxy /= (img_scale / binsize)
     hole_area = pxx*pxy*np.pi*(diameter/2.0)**2
     return hole_area
 
