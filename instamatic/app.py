@@ -65,7 +65,7 @@ def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
     return xvals*radius, yvals*radius
 
 
-def get_offsets(box_x, box_y=0, radius=75, padding=0, k=1.0, plot=False):
+def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
     """
     box_x: float or int,
         x-dimensions of the box in micrometers. 
@@ -88,16 +88,28 @@ def get_offsets(box_x, box_y=0, radius=75, padding=0, k=1.0, plot=False):
         ny = 0
     
     borderwidth = k*(1.0 - (radius - diff) / radius)
-    
+       
     x_offsets, y_offsets = get_grid(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
     
+    if angle:
+        sin = np.sin(angle)
+        cos = np.cos(angle)
+        r = np.array([
+                    [ cos, -sin],
+                    [ sin,  cos]])
+        x_offsets, y_offsets = np.dot(np.vstack([x_offsets, y_offsets]).T, r).T
+
     if plot:
         from matplotlib import patches
         num = len(x_offsets)
-        textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
-
+        textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {:.2f}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
+        
         print
         print textstr
+        
+	cx, cy = (box_x/2.0, box_y/2.0)
+        if angle:
+            cx, cy = np.dot((cx, cy), r)
         
         if num < 1000:
             fig = plt.figure(figsize=(10,5))
@@ -110,10 +122,10 @@ def get_offsets(box_x, box_y=0, radius=75, padding=0, k=1.0, plot=False):
             ax.add_artist(circle)
             
             for dx, dy in zip(x_offsets, y_offsets):
-                r = patches.Rectangle((dx - box_x/2.0, dy - box_y/2.0), box_x, box_y, fill=False)
-                ax.add_artist(r)
-        
-            ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+                rect = patches.Rectangle((dx - cx, dy - cy), box_x, box_y, fill=False, angle=np.degrees(-angle))
+                ax.add_artist(rect)
+            
+	    ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
             ax.set_xlim(-100, 100)
@@ -428,19 +440,17 @@ def do_experiment(ctrl=None, **kwargs):
     image_exposure = kwargs.get("image_exposure", 0.1)
     diff_brightness = kwargs.get("diff_brightness", 38957)
     magnification = kwargs.get("magnification", 5000)
+    angle = kwargs.get("angle", -0.95)
     
     ctrl.magnification.value = magnification
     neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
 
-    res_x, res_y = ctrl.cam.getDimensions()
     magnification = ctrl.magnification.value
 
     from calibration import mag1_dimensions
     box_x, box_y = mag1_dimensions[magnification]
-    box_x *= res_x
-    box_y *= res_y
 
-    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, plot=True)
+    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=angle, plot=True)
     x_offsets *= 1000
     y_offsets *= 1000
 
