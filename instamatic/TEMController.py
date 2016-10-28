@@ -438,8 +438,11 @@ class TEMController(object):
         self.difffocus = DiffFocus(tem)
 
         self.autoblank = False
-
+        self._saved_settings = {}
+        self.store()
+        print
         print self
+
 
     def mode_lowmag(self):
         self.tem.setFunctionMode("lowmag")
@@ -473,7 +476,8 @@ class TEMController(object):
                           str(self.stageposition),
                           str(self.magnification),
                           str(self.difffocus),
-                          str(self.brightness)))
+                          str(self.brightness),
+                          "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
 
     def to_dict(self):
         d = {
@@ -542,7 +546,6 @@ class TEMController(object):
             img, h = self.getImage()
         """
 
-
         if not self.cam:
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
@@ -569,6 +572,19 @@ class TEMController(object):
             plt.show()
 
         return arr, h
+
+    def store(self, name="stash"):
+        """Stores current settings to dictionary.
+        Multiple settings can be stored under different names."""
+        d = self.to_dict()
+        del d["StagePosition"]
+        self._saved_settings[name] = d
+
+    def restore(self, name="stash"):
+        """Restsores settings from dictionary by the given name."""
+        d = self._saved_settings[name]
+        self.from_dict(d)
+	print "Restored from '{}'".format(name)
 
 
 def main_entry():
