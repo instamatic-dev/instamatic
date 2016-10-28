@@ -25,7 +25,7 @@ def read_tiff(fname):
         image: np.ndarray, headerfile: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
-    tiff = TiffIO.TiffIO(fname)
+    tiff = TiffIO(fname)
     img = tiff.getImage(0)
     h = tiff.getInfo(0)
     return img, h

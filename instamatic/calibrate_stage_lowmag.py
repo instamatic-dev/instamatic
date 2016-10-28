@@ -117,7 +117,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     """
     img_cent, header_cent = load_img(center_fn)
     
-    img_cent, scale = autoscale(img_cent)
+    img_cent, scale = autoscale(img_cent, maxdim=512)
 
     x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])

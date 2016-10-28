@@ -23,6 +23,7 @@ from calibration import lowmag_dimensions
 from tools import *
 
 def get_best_mag_for_feature(xsize, ysize=None, verbose=False):
+    """Not used, outdated"""
     if not ysize:
         ysize = xsize
     bestmag = 0
@@ -219,7 +220,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
             apprximate feature size in pixels
     """
 
-    pxx, pxy = lowmag_dimensions[magnification]
+    pxx, pxy = lowmag_pixeldimensions[magnification]
     pxx *= (binsize / img_scale)
     pxy *= (binsize / img_scale)
     hole_area = (np.pi*(diameter/2.0)**2) / (pxx * pxy)
