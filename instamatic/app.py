@@ -4,7 +4,8 @@ import sys, os
 import numpy as np
 
 from camera import save_image_and_header
-from find_crystals import find_crystals, plot_props, find_holes, calculate_hole_area
+from find_crystals import find_crystals
+from find_holes import plot_props, find_holes, calculate_hole_area
 import TEMController
 
 from tools import *
@@ -521,7 +522,7 @@ def do_experiment(ctrl=None, **kwargs):
             #     plt.show()
 
             img, scale = autoscale(img, maxdim=512)
-            crystals = find_crystals(img, plot=False, verbose=False)
+            crystals = find_crystals(img, h["magnification"], spread=2.5, plot=False)
 
             plot_props(img, crystals, fname=outfile+".png")
 

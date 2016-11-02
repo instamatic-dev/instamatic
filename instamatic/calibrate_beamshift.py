@@ -9,7 +9,7 @@ from camera import save_image_and_header
 from TEMController import initialize
 
 from calibration import CalibBeamShift
-from find_crystals import find_holes
+from find_holes import find_holes
 from tools import *
 
 

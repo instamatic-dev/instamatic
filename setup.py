@@ -31,7 +31,7 @@ setup(
         'console_scripts': [
             'instamatic = instamatic.app:main',
             'find_crystals = instamatic.find_crystals:find_crystals_entry',
-            'find_holes = instamatic.find_crystals:find_holes_entry',
+            'find_holes = instamatic.find_holes:find_holes_entry',
             'instamatic.camera = instamatic.camera.camera:main_entry',
             'instamatic.controller = instamatic.TEMController:main_entry',
             'instamatic.viewer = instamatic.viewer:main',
