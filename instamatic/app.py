@@ -137,69 +137,6 @@ def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False
     return x_offsets, y_offsets
 
 
-def seek_and_destroy_from_image_fn(img, calib, ctrl=None, plot=False):
-    """Routine that handles seeking crystals, and shooting them with the beam"""
-
-    calib_brightness, calib_beamshift = calib
-
-    exposure = 1.0
-    binsize = 1
-
-    img = img.astype(int)
-    crystals = find_crystals(img)
-    if plot:
-        plot_props(img, crystals)
-
-    for i, crystal in enumerate(crystals):
-        x, y = crystal.centroid
-        d = crystal.equivalent_diameter
-        print
-        print "Crystal #{}".format(i)
-        print "Pixel - x: {}, y: {}, d: {}".format(x,y,d)
-
-        bd = calib_brightness.pixelsize_to_brightness(d)
-        bx, by = calib_beamshift.pixelcoord_to_beamshift((x,y))
-
-        bd = int(bd)
-        bx = int(bx)
-        by = int(by)
-
-        print "Beam  - x: {}, y: {}, d: {}".format(bx,by,bd)
-
-        ctrl.beamshift.set(bx, by)
-        ctrl.brightness.set(bd)
-
-        raw_input(" >> Press enter to take diffraction pattern and go to next crystal...")
-        
-        # ctrl.mode_diffraction()
-
-        # arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, out="seekdestroy_{:04d}".format(i), comment="Diffraction data")
-
-        # ctrl.mode_mag1()
-
-
-
-def seek_and_destroy_entry():
-    exposure = 0.2
-    binsize = 1
-
-    calib = (CalibBrightness.from_file(), CalibBeamShift.from_file())
-    ctrl = TEMController.initialize()
-
-    fns = sys.argv[1:]
-    if fns:
-        for fn in fns:
-            arr, header = load_img(fn)
-            seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=True)
-    else:
-        arr, header = ctrl.getImage(binsize=binsize, exposure=exposure, comment="Seek and destroy")
-    
-        seek_and_destroy_from_image_fn(arr, calib, ctrl=ctrl, plot=True)
-    
-        # save_image(outfile, arr)
-        # save_header(outfile, h)
-
-
 def find_hole_center_high_mag_from_files(fns):
     centers = []
     vects = []
@@ -522,16 +459,16 @@ def do_experiment(ctrl=None, **kwargs):
             #     plt.show()
 
             img, scale = autoscale(img, maxdim=512)
-            crystals = find_crystals(img, h["magnification"], spread=2.5, plot=False)
+            crystal_coords = find_crystals(img, h["magnification"], spread=2.5, plot=False)
 
-            plot_props(img, crystals, fname=outfile+".png")
+            # plot_props(img, crystals, fname=outfile+".png")
 
-            ncrystals = len(crystals)
+            ncrystals = len(crystal_coords)
 
             if ncrystals == 0:
                 continue
 
-            crystal_coords = np.array([crystal.centroid for crystal in crystals]) * image_binsize / scale
+            crystal_coords = crystal_coords * image_binsize / scale
 
             beamshift_coords = calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
 

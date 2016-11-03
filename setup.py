@@ -45,7 +45,6 @@ setup(
             'instamatic.plot_experiment = instamatic.app:plot_experiment_entry',
             'instamatic.do_experiment = instamatic.app:do_experiment_entry',
             'instamatic.update_experiment_with_coords = instamatic.app:update_experiment_with_hole_coords_entry',
-            'instamatic.seek_and_destroy = instamatic.app:seek_and_destroy_entry',
             'mrc2npy = instamatic.mrc2npy:main_entry',
         ]
     }
