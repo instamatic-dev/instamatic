@@ -61,10 +61,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
 
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
-        ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
-
         print
-        print "Position {}/{}".format(i+1, tot)
+        print "Position {}/{}: x: {:.0f}, y: {:.0f}".format(i+1, tot, x_cent+dx, y_cent+dy)
+        
+        ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
         print ctrl.stageposition
         
         outfile = "calib_{:04d}".format(i) if save_images else None

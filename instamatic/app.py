@@ -405,29 +405,25 @@ def do_experiment(ctrl=None, **kwargs):
     print "    type 'auto' to enable automatic mode (until next hole)"
     print "    type 'plot' to toggle plotting mode"
 
-    i = 0
-    for x, y in centers:
+    for i, (x, y) in enumerate(centers):
         try:
             ctrl.stageposition.set(x=x, y=y)
         except ValueError as e:
             print e
             print " >> Moving to next hole..."
             print
-            i += 1
             continue
 
         print "\n >> Going to next hole center \n    ->", ctrl.stageposition
 
-        j = 0
         auto = False
-        for x_offset, y_offset in zip(x_offsets, y_offsets):
+        for j, (x_offset, y_offset) in enumerate(zip(x_offsets, y_offsets)):
             try:
                 ctrl.stageposition.set(x=x+x_offset, y=y+y_offset)
             except ValueError as e:
                 print e
                 print " >> Moving to next position..."
                 print
-                j += 1
                 continue
 
             print ctrl.stageposition
@@ -450,16 +446,13 @@ def do_experiment(ctrl=None, **kwargs):
 
             img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment, out=outfile)
 
-            # j += 1
-            # continue
-
             # if plot:
             #     plt.imshow(img, cmap="gray")
             #     plt.title(comment)
             #     plt.show()
 
             img, scale = autoscale(img, maxdim=512)
-            crystal_coords = find_crystals(img, h["magnification"], spread=2.5, plot=False)
+            crystal_coords = find_crystals(img, h["Magnification"], spread=2.5, plot=False)
 
             # plot_props(img, crystals, fname=outfile+".png")
 
@@ -479,7 +472,7 @@ def do_experiment(ctrl=None, **kwargs):
                 ctrl.beamshift.set(*beampos)
                 ctrl.mode_diffraction()
                 calib_diffshift.compensate_beamshift(ctrl)
-                
+
                 outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                 comment = "Hole {} image {} Crystal {}".format(i, j, k)
                 print "{}/{}:".format(k+1, ncrystals),
@@ -493,9 +486,6 @@ def do_experiment(ctrl=None, **kwargs):
             ctrl.mode_mag1()
             ctrl.brightness.max()
 
-            j += 1
-
-        i += 1
 
 
 def do_experiment_entry():
@@ -685,12 +675,12 @@ def main():
         message2 = "no, please run instamatic.prepare_experiment"
         ready = False
     else:
-        message2 = "yes, {}".format(experiment["radius"])
+        message2 = "yes, {:.2f}".format(experiment["radius"] / 1000.0)
 
     print 
     print "Experiment"
     print "    Holes     : {}".format(message1)
-    print "    Radius    : {} um?".format(message2)
+    print "    Radius    : {} um".format(message2)
     
     try:
         params = json.load(open("params.json","r"))
@@ -699,7 +689,6 @@ def main():
 
     print "    Params    : {}".format("yes" if params else "no")
     print "    Ready     : {}".format("yes" if ready else "no")
-
 
     if ready:
         if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":

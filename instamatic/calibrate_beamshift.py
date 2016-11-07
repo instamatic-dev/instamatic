@@ -13,7 +13,7 @@ from find_holes import find_holes
 from tools import *
 
 
-def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.1, binsize=2, save_images=False):
+def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
@@ -23,6 +23,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.1, binsi
         Number of grid points to take, gridsize=5 results in 25 points
     stepsize: `float`
         Size of steps for beamshift along x and y
+        Defined at a magnification of 2500, scales stepsize down for other mags.
     exposure: `float`
         exposure time
     binsize: `int`
@@ -33,6 +34,9 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.1, binsi
 
     img_cent, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
+
+    magnification = h["Magnification"]
+    stepsize = 2500.0/magnification * stepsize
 
     img_cent, scale = autoscale(img_cent)
     
