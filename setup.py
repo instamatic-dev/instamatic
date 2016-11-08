@@ -39,6 +39,7 @@ setup(
             'instamatic.calibrate_beamshift = instamatic.calibrate_beamshift:calibrate_beamshift_entry',
             'instamatic.calibrate_brightness = instamatic.calibrate_brightness:calibrate_brightness_entry',
             'instamatic.calibrate_diffshift = instamatic.calibrate_diffshift:calibrate_diffshift_entry',
+            'instamatic.calibrate_directbeam = instamatic.calibrate_directbeam:calibrate_directbeam_entry',
             'instamatic.map_holes = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole = instamatic.app:goto_hole_entry',
             'instamatic.prepare_experiment = instamatic.app:prepare_experiment_entry',

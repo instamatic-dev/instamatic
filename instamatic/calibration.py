@@ -12,6 +12,112 @@ CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
 CALIB_BEAMSHIFT = "calib_beamshift.pickle"
 CALIB_BRIGHTNESS = "calib_brightness.pickle"
 CALIB_DIFFSHIFT = "calib_diffshift.pickle"
+CALIB_DIRECTBEAM = "calib_diffshift.pickle"
+
+
+class CalibDirectBeam(object):
+    """docstring for CalibDirectBeam"""
+    def __init__(self, dct={}):
+        super(CalibDirectBeam, self).__init__()
+        self._dct = dct
+    
+    def __repr__(self):
+        ret = "CalibDirectBeam("
+        for key in self._dct.keys():
+            r = self._dct[key]["r"]
+            t = self._dct[key]["t"]
+
+            ret += "\n {}(rotation=\n{},\n  translation={})".format(key, r, t)
+        ret += ")"
+        return ret
+
+    @classmethod
+    def combine(cls, lst):
+        return cls({k: v for c in lst for k, v in c._dct.items()})
+
+    def any2pixelshift(self, shift, key):
+        r = self._dct[key]["r"]
+        t = self._dct[key]["t"]
+
+        shift = np.array(shift)
+        r_i = np.linalg.inv(r)
+        pixelshift = np.dot(shift - t, r_i)
+        return pixelshift
+
+    def pixelshift2any(self, pixelshift, key):
+        r = self._dct[key]["r"]
+        t = self._dct[key]["t"]
+
+        pixelshift = np.array(pixelshift)
+        shift = np.dot(shift, r) + t
+        return shift
+
+    def beamshift2pixelshift(self, beamshift):
+        return self.anyshift(shift=beamshift, key="BeamShift")
+
+    def diffshift2pixelshift(self, diffshift):
+        return self.anyshift(shift=beamshift, key="DiffShift")
+
+    def imageshift2pixelshift(self, imageshift):
+        return self.anyshift(shift=beamshift, key="ImageShift")
+
+    def imagetilt2pixelshift(self, imagetilt):
+        return self.anyshift(shift=beamshift, key="ImageTilt")
+
+    def pixelshift2beamshift(self, pixelshift):
+        return self.anyshift(shift=beamshift, key="BeamShift")
+
+    def pixelshift2diffshift(self, pixelshift):
+        return self.anyshift(shift=beamshift, key="DiffShift")
+
+    def pixelshift2imageshift(self, pixelshift):
+        return self.anyshift(shift=beamshift, key="ImageShift")
+
+    def pixelshift2imagetilt(self, pixelshift):
+        return self.anyshift(shift=beamshift, key="ImageTilt")
+
+    @classmethod
+    def from_data(cls, shifts, readout, key, **dct):
+        r, t = fit_affine_transformation(shifts, readout, **dct)
+
+        d = {
+            "data_shifts": shifts,
+            "data_readout": readout,
+            "r": r,
+            "t": t
+        }
+
+        return cls({key:d})
+
+    @classmethod
+    def from_file(cls, fn=CALIB_DIRECTBEAM):
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_directbeam"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_DIRECTBEAM):
+        pickle.dump(self, open(fn, "w"))
+
+    def add(self, key, dct):
+        """Add calibrations to self._dct
+        Must contain keys: 'r', 't'
+        optional: 'data_shifts', 'data_readout'
+        """
+        self._dct[key] = dct
+
+    def plot(self, key):
+        data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
+        data_readout = self._dct[key]["data_readout"] # microscope readout
+
+        shifts_ = self.any2pixelshift(shift=data_readout, key=key)
+
+        plt.scatter(*data_shifts.T, label="Observed pixelshifts shift")
+        plt.scatter(*shifts_.T, label="Calculated shift from readout from BeamShift")
+        plt.title(key + "vs. Direct beam position")
+        plt.legend()
+        plt.show()
 
 
 class CalibDiffShift(object):
@@ -409,15 +515,15 @@ class CalibStage(object):
         plt.show()
 
 
-def fit_affine_transformation(a, b, x0=None, rotation=True, scaling=True, translation=False, shear=False, as_params=False):
+def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, **x0):
     params = lmfit.Parameters()
-    params.add("angle", value=0, vary=rotation, min=-np.pi, max=np.pi)
-    params.add("sx"   , value=1, vary=scaling)
-    params.add("sy"   , value=1, vary=scaling)
-    params.add("tx"   , value=0, vary=translation)
-    params.add("ty"   , value=0, vary=translation)
-    params.add("k1"   , value=1, vary=shear)
-    params.add("k2"   , value=1, vary=shear)
+    params.add("angle", value=x0.get("angle", 0), vary=rotation, min=-np.pi, max=np.pi)
+    params.add("sx"   , value=x0.get("sx"   , 1), vary=scaling)
+    params.add("sy"   , value=x0.get("sy"   , 1), vary=scaling)
+    params.add("tx"   , value=x0.get("tx"   , 0), vary=translation)
+    params.add("ty"   , value=x0.get("ty"   , 0), vary=translation)
+    params.add("k1"   , value=x0.get("k1"   , 1), vary=shear)
+    params.add("k2"   , value=x0.get("k2"   , 1), vary=shear)
     
     def objective_func(params, arr1, arr2):
         angle = params["angle"].value

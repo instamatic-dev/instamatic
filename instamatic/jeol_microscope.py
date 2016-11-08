@@ -152,6 +152,13 @@ class JeolMicroscope(object):
     def setImageShift(self, x, y):
         self.def3.SetIS1(x, y)
 
+    # def getImageTilt(self):
+    #     x, y, result = self.def3.GetIS2()
+    #     return x,y 
+
+    # def setImageTilt(self, x, y):
+    #     self.def3.SetIS2(x, y)
+
     def getStagePosition(self):
         """
         x, y, z in nanometer

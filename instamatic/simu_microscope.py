@@ -37,7 +37,7 @@ class SimuMicroscope(object):
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
-        kind = "feg" # /feg
+        kind = "lab6" # /feg
         self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
         self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
 
