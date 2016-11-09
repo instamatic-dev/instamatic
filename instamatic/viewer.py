@@ -1,15 +1,33 @@
 #!/usr/bin/env python
 
 import numpy as np
-import json
 import matplotlib.pyplot as plt
-import os
 import sys
 
-# from IPython import embed
+from formats import read_tiff
 
 markers = []
 fig = plt.figure()
+
+image_keys = (
+ "ImageBinSize",
+ "ImageComment",
+ "ImageExposureTime",
+ "ImageResolution",
+ "Time" )
+
+microscope_keys = (
+ "FunctionMode",
+ "Magnification",
+ "StagePosition",
+ "BeamShift",
+ "BeamTilt",
+ "Brightness",
+ "DiffFocus",
+ "DiffShift",
+ "GunShift",
+ "GunTilt",
+ "ImageShift" )
 
 
 def onclick(event):
@@ -27,28 +45,38 @@ def main():
     try:
         fn = sys.argv[1]
     except:
-        print "Usage: instamatic.viewer fn.npy"
+        print "Usage: instamatic.viewer IMG.tiff"
+        exit()
 
-    arr = np.load(fn)
+    img, h = read_tiff(fn)
 
-    print "shape", arr.shape
-    print "min:", arr.min(), ":", arr.max()
+    print """Loading data: {}
+        size: {} kB
+       shape: {}
+       range: {}-{}
+""".format(fn, img.nbytes / 1024, img.shape, img.min(), img.max())
 
-    root, ext = os.path.splitext(fn)
-    fnh = root + ".json"
+    l1 = max([len(s) for s in image_keys])
+    l2 = max([len(s) for s in microscope_keys])
 
-    if os.path.exists(fnh):
-        d = json.load(open(fnh, "r"))
-        json.dump(d, sys.stdout, indent=2)
+    fmt1 = "{{:{}s}} = {{}}".format(l1)
+    fmt2 = "{{:{}s}} = {{}}".format(l2)
+
+    for key in image_keys:
+        print fmt1.format(key, h[key])
+    print
+    for key in microscope_keys:
+        print fmt2.format(key, h[key])
 
     fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.imshow(arr, cmap="gray")
+    plt.imshow(img, cmap="gray")
+    plt.title(fn)
     plt.show()
 
     global markers
     if len(markers) > 0:
         markers = np.array(markers)
-        np.save("clickmarkers.npy", markers)
+        np.save("clicked.npy", markers)
 
 
 if __name__ == '__main__':
