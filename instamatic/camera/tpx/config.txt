@@ -1,0 +1,4 @@
+HWID 3
+HWDACS hw.dacs
+PIXELDACS 161107.bpc.dacs
+PIXELBPC 161107.bpc

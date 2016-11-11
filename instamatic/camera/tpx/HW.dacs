@@ -1,0 +1,15 @@
+TestPulseLow:0.0
+TestPulseHigh:0.0
+TestPulseFreq:0
+BiasAdjust:100
+MpixVddAdjust:7
+FirstChipNumber:0
+LogVerbose:0
+ParReadout:1
+StorePixelsCfg:0
+StoreDacs:0
+EraseStoredConfig:0
+ConfTpxClock:2
+ConfRoClockMHz:1
+ConfTpxPreclocks:0
+ConfHvBiasDisable:0

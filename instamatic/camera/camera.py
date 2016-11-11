@@ -2,53 +2,61 @@ import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
-try:
-    from snapkit.emformats.mrc import write_image as mrc_write_image
-except ImportError:
-    pass
-
-import comtypes
-# initial COM in multithread mode if not initialized otherwise
-try:
-    comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-except WindowsError:
-    comtypes.CoInitialize()
-
-from instamatic.formats import write_tiff
+# import comtypes
+# # initial COM in multithread mode if not initialized otherwise
+# try:
+#     comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+# except WindowsError:
+#     comtypes.CoInitialize()
 
 import numpy as np
 import os, sys
 
 import atexit
 
-__version__ = "2016-05-19"
+__version__ = "2016-11-11"
 __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
-__all__ = ["gatanOrius"]
+__all__ = ["Camera"]
 
-DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
-DLLPATH      = "CCDCOM2.dll"
+DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
+DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
+DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 
+class Camera(object):
+    """docstring for Camera"""
 
-class gatanOrius(object):
-    """docstring for gatanOrius"""
+    def __init__(self, kind="timepix"):
+        """Initialize camera module
 
-    def __init__(self, simulate=False):
-        super(gatanOrius, self).__init__()
+        kind:
+            'orius'
+            'timepix'
+            'simulate'
+        """
+        super(Camera, self).__init__()
 
-        if simulate:
-            libpath = os.path.join(os.path.dirname(
-                __file__), DLLPATH_SIMU)
+        # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
+
+        cameradir = os.path.join(os.path.dirname(__file__))
+        curdir = os.path.abspath(os.curdir)
+
+        if kind == "simulate":
+            libpath = os.path.join(cameradir, DLLPATH_SIMU)
+        elif kind == "orius":
+            libpath = os.path.join(cameradir, DLLPATH_ORIUS)
+        elif kind == "timepix":
+            libpath = os.path.join(cameradir, DLLPATH_TIMEPIX)
+            os.chdir(cameradir)
         else:
-            libpath = os.path.join(os.path.dirname(
-                __file__), DLLPATH)
+            raise ValueError("No such camera: {}".format(kind))
 
         try:
             lib = ctypes.cdll.LoadLibrary(libpath)
         except WindowsError as e:
             print e
-            print "Missing DLL:", DLLPATH
+            print "Cannot load DLL:", libpath
             exit()
 
         ## not used
@@ -90,16 +98,28 @@ class gatanOrius(object):
         print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
         atexit.register(self.releaseConnection)
+        
+        if kind == "timepix":
+            os.chdir(curdir)
 
+        self.xmax, self.ymax = self.getDimensions()
 
-    def getImage(self, t=0.5, binsize=1, xmin=0, xmax=2048, ymin=0, ymax=2048, showindm=False):
+    def getImage(self, t=0.5, binsize=1, fastmode=False, **kwargs):
         """Image acquisition routine
 
         t: exposure time in seconds
         binsize: which binning to use
         showindm: show image in digital micrograph
         xmin, xmax, ymin, ymax: retrieve image with smaller size from a subset of pixels
+        fastmode: Shaves off approximately 1ms by avoiding conversion to int/be less verbose
         """
+
+        xmin = kwargs.get("xmin", 0)
+        xmax = kwargs.get("xmax", self.xmax)
+        ymin = kwargs.get("ymin", 0)
+        ymax = kwargs.get("ymax", self.ymax)
+        showindm = kwargs.get("showindm", False)
+
         bins = (1, 2, 4)
         if binsize not in bins:
             raise ValueError(
@@ -120,9 +140,11 @@ class gatanOrius(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
-        print "Image acquired - shape: {}x{}, size: {} kB".format(xres, yres, arr.nbytes / 1024)
-
-        return arr.astype(int)
+        if fastmode:
+            return arr
+        else:
+            print "Image acquired - shape: {}x{}, size: {} kB".format(xres, yres, arr.nbytes / 1024)
+            return arr.astype(int)
 
     def getCameraCount(self):
         return self._cameraCount()
@@ -158,55 +180,9 @@ class gatanOrius(object):
         print "Connection to camera {} released".format(name) 
 
 
-def save_image(outfile, img):
-    import matplotlib.pyplot as plt
-    if not outfile:
-        return
-    root, ext = os.path.splitext(outfile)
-    if ext.lower() == ".npy":
-        np.save(outfile, img)
-    else:
-        plt.imsave(outfile, img, cmap="gray")
-    # print " >> Image written to {}".format(outfile) 
-
-
-def save_header(outfile, header):
-    import json
-    if not outfile:
-        return
-    if isinstance(outfile, str):
-        root, ext = os.path.splitext(outfile)
-        outfile = open(root+".json", "w")
-    json.dump(header, outfile, indent=2)
-    if outfile.name == "<stdout>":
-        print
-    # else:
-        # print " >> Header written to {}".format(outfile.name) 
-
-
-def save_image_and_header(outfile, img=None, header=None):
-    root, ext = os.path.splitext(outfile)
-    ext = ext.lower()
-    if ext == "":
-        ext = ".tiff"
-        outfile = root + ext
-    if ext == ".tif" or ext == ".tiff":
-        write_tiff(outfile, img, header)
-    elif ext == ".mrc":
-        mrc_write_image(outfile, img)
-    elif ext == ".npy":
-        if img is not None:
-            save_image(outfile, img)
-        if header:
-            save_header(outfile, header)
-    else:
-        raise IOError("Extension {} not supported (tif tiff npy mrc)".format(ext))
-    print " >> Image written to {}".format(outfile)
-    return outfile
-
-
 def main_entry():
     import argparse
+    from instamatic.formats import write_tiff
     # usage = """acquire"""
 
     description = """Program to acquire image data from gatan ORIUS ccd camera"""
@@ -258,7 +234,7 @@ def main_entry():
         show_fig=False,
         test=False,
         simulate=False,
-        tem="simtem",
+        camera="simulate",
         take_series=False
     )
 
@@ -317,7 +293,7 @@ def main_entry():
         else:
             arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
 
-            save_image_and_header(outfile, img=arr, header=h)
+            write_tiff(outfile, arr, header=h)
     
             i += 1
     else:
@@ -331,9 +307,9 @@ def main_entry():
             plt.show()
     
         if outfile:
-            save_image_and_header(outfile, img=arr, header=h)
+            write_tiff(outfile, arr, header=h)
         else:
-            save_image_and_header("out", img=arr, header=h)
+            write_tiff("out", arr, header=h)
 
     # cam.releaseConnection()
 

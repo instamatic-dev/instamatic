@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
-from camera.camera import gatanOrius, save_image_and_header
+from camera import Camera
 import time
 
 from IPython.terminal.embed import InteractiveShellEmbed
@@ -13,16 +13,16 @@ __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
 
-def initialize():
+def initialize(camera=None):
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
-        cam = gatanOrius()
+        cam = Camera(kind=camera)
     except WindowsError:
         from simu_microscope import SimuMicroscope
         print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
         tem = SimuMicroscope()
-        cam = gatanOrius(simulate=True)
+        cam = Camera(kind="simulate")
     ctrl = TEMController(tem, cam)
     return ctrl
 
