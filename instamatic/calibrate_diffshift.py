@@ -5,7 +5,6 @@ import numpy as np
 import json
 
 from TEMController import initialize
-from camera import save_image_and_header
 
 from calibration import CalibDiffShift, CalibBeamShift
 from tools import *

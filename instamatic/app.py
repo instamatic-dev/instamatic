@@ -3,7 +3,6 @@
 import sys, os
 import numpy as np
 
-from camera import save_image_and_header
 from find_crystals import find_crystals
 from find_holes import plot_props, find_holes, calculate_hole_area
 import TEMController

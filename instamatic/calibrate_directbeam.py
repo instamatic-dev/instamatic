@@ -7,7 +7,6 @@ import json
 from cross_correlate import cross_correlate
 
 from TEMController import initialize
-from camera import save_image_and_header
 
 from calibration import CalibDirectBeam, fit_affine_transformation
 import matplotlib.pyplot as plt
@@ -20,10 +19,10 @@ refine_params = {
 }
 
 calib_params = {
-    "DiffShift": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44000, "difffocus":32000},
-    "BeamShift": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44000, "difffocus":32000},
-    "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44000, "difffocus":32000},
-    "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44000, "difffocus":32000}
+    "DiffShift": {"gridsize":5, "stepsize":1500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "BeamShift": {"gridsize":5, "stepsize":750, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561}
 }
 
 
@@ -36,9 +35,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     brightness      = kwargs.get("brightness")
     difffocus       = kwargs.get("difffocus")
 
-    ctrl.magnification.value = magnification
-    ctrl.brightness.value = brightness
-    ctrl.difffocus.value = difffocus
+    # ctrl.magnification.value = magnification
+    # ctrl.brightness.value = brightness
+    # ctrl.difffocus.value = difffocus
     
     attr = getattr(ctrl, key.lower())
 
@@ -64,14 +63,14 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
 
     outfile = None
 
-    i = 1
-    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
+    for i, (dx,dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2,-1).T):
+        i += 1
         attr.set(x=x_cent+dx, y=y_cent+dy)
         print
-        print "\bPosition: {}/{}".format(i+1, tot)
+        print "\bPosition: {}/{}".format(i, tot)
         print attr
         
-        outfile = "calib_diffshift_{:04d}".format(i) if save_images else None
+        outfile = "calib_{}_{:04d}".format(key, i) if save_images else None
 
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
         img = imgscale(img, scale)
@@ -81,11 +80,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
         readout = np.array(h[key])
         readouts.append(readout)
         shifts.append(shift)
-
-        i += 1
             
     print " >> Reset to center"
-    attr.set(*keyshift_cent)
+    attr.set(*readout_cent)
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
@@ -93,6 +90,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     
     c = CalibDirectBeam.from_data(shifts, readouts, key, **refine_params[key])
     c.plot(key)
+    # TODO: Store difffocus / brightness to calib file
 
     return c
 
@@ -149,8 +147,11 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
         if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image (fluorescent screen works well for this)\n(type 'go' to start): """) == "go":
             return
         else:
+            cs = []
             for key in keys:
-                r,t = calibrate_directbeam_live(ctrl, save_images=save_images, key=key, **calib_params[key])
+                c = calibrate_directbeam_live(ctrl, save_images=save_images, key=key, **calib_params[key])
+                cs.append(c)
+            calib = CalibDirectBeam.combine(cs)
     else:
         cs = []
         for pattern in patterns:

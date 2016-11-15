@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 from camera import Camera
 import time
+from formats import write_tiff
 
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
@@ -13,7 +14,7 @@ __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
 
-def initialize(camera=None):
+def initialize(camera="orius"):
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
@@ -565,7 +566,7 @@ class TEMController(object):
             self.beamblank = True
 
         if out:
-            save_image_and_header(out, img=arr, header=h)
+            write_tiff(out, arr, header=h)
 
         if plot:
             plt.imshow(arr)

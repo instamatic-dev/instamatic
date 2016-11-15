@@ -3,7 +3,6 @@
 import sys, os
 import numpy as np
 
-from camera import save_image_and_header
 from TEMController import initialize
 
 from calibration import CalibBrightness

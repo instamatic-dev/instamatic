@@ -5,7 +5,6 @@ import numpy as np
 
 from cross_correlate import cross_correlate
 
-from camera import save_image_and_header
 from TEMController import initialize
 
 from calibration import CalibBeamShift

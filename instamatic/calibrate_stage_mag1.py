@@ -8,16 +8,14 @@ logging.basicConfig(
 
 import sys, os
 import numpy as np
-from scipy import ndimage
 
 from tools import *
 
 from cross_correlate import cross_correlate
 
-from camera import save_image_and_header
 from TEMController import initialize
 
-from calibration import CalibStage
+from calibration import CalibStage, fit_affine_transformation
 
 
 def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2, save_images=False):
@@ -89,6 +87,7 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
+    # TODO: Generalize index 12 here
     if stagepos[12].max() > 50:
         print " >> Warning: Large difference between image 12, and center image. These should be close for a good calibration."
         print "    Difference:", stagepos[12]

@@ -27,7 +27,7 @@ DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 class Camera(object):
     """docstring for Camera"""
 
-    def __init__(self, kind="timepix"):
+    def __init__(self, kind="orius"):
         """Initialize camera module
 
         kind:
@@ -88,6 +88,8 @@ class Camera(object):
         self._isCameraInfoAvailable = getattr(
             lib, '?isCameraInfoAvailable@@YA_NXZ')
         self._isCameraInfoAvailable.restype = c_bool
+
+        # TODO: if timepix -> setcorrectionratio to set the parameter (c_double) to divide the pixels on the cross (use 1/2.7) 
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 

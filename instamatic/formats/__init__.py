@@ -1,5 +1,6 @@
 from TiffIO import TiffIO
 import time
+import os
 
 def write_tiff(fname, data, header=None):
     """Simple function to write a tiff file
@@ -12,6 +13,9 @@ def write_tiff(fname, data, header=None):
         dictionary containing the custom tags that should be saved
         key/value pairs are stored as yaml in the TIFF ImageDescription tag
     """
+    root, ext = os.path.splitext(fname)
+    if ext == "":
+        fname = root + ".tiff"
     tiffIO = TiffIO(fname, mode="w")
     tiffIO.writeImage(data, info=header, software="instamatic", date=time.ctime())
 
