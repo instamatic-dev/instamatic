@@ -8,12 +8,31 @@ import os
 specifications = {
     "feg": {
         "MAGNIFICATIONS": (250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000),
-        "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250}
+        "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250},
+        "CAMERALENGTHS": (15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 350, 400, 450) # cm
     },
     "lab6":{
-        "MAGNIFICATIONS": (50, 60, 80, 100, 150, 200, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000),
-        "MAGNIFICATION_MODES": {"mag1": 2500, "lowmag":50}
+        "MAGNIFICATIONS": (50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000),
+        "MAGNIFICATION_MODES": {"mag1": 2500, "lowmag":50},
+        "CAMERALENGTHS": (15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 350, 400, 450) # cm
     }
+}
+
+SetNTRLmapping = {
+   "GUN1" : 0,
+   "GUN2" : 1,
+   "CLA1" : 2,
+   "CLA2" : 3,
+   "SHIFT" : 4,
+   "TILT" : 5,
+   "ANGLE" : 6,
+   "CLS" : 7,
+   "IS1" : 8,
+   "IS2" : 9,
+   "SPOT?" : 10,
+   "PLA" : 11,
+   "OLS" : 12,
+   "ILS" : 13
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
@@ -72,9 +91,17 @@ class JeolMicroscope(object):
         kind = "lab6" # /feg
         self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
         self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS = specifications[kind]["CAMERALENGTHS"]
 
     def __del__(self):
         comtypes.CoUninitialize()
+
+    def setNeutral(self, *args):
+        """Neutralize given deflectors"""
+        for arg in args:
+            if isinstance(arg, str):
+                arg = SetNTRLmapping[arg]
+            self.def3.setNTRL(arg)
 
     def getBrightness(self):
         value, result = self.lens3.GetCL3()
@@ -88,26 +115,31 @@ class JeolMicroscope(object):
         return value
 
     def setMagnification(self, value):
-        if value not in self.MAGNIFICATIONS:
-            value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
-        
-        # get best mode for magnification
-        for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
-            v = self.MAGNIFICATION_MODES[k]
-            if v <= value:
-                new_mode = k
-
         current_mode = self.getFunctionMode()
-        if current_mode != new_mode:
-            self.setFunctionMode(new_mode)
+        
+        if current_mode == "diff":
+            if value not in self.CAMERALENGTHS:
+                value = min(self.CAMERALENGTHS, key=lambda x: abs(x-value))
+            self.CAMERALENGTHS.index(value)
 
-        # calculate index
-        ## i = 0-24 for lowmag
-        ## i = 0-29 for mag1
-        selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
-                
-        # self.eos3.SetMagValue(value)
-        self.eos3.SetSelector(selector) 
+        else:
+            if value not in self.MAGNIFICATIONS:
+                value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
+            
+            # get best mode for magnification
+            for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
+                v = self.MAGNIFICATION_MODES[k]
+                if v <= value:
+                    new_mode = k
+    
+            if current_mode != new_mode:
+                self.setFunctionMode(new_mode)
+    
+            # calculate index
+            selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
+                    
+            # self.eos3.SetMagValue(value)
+            self.eos3.SetSelector(selector) 
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
@@ -152,12 +184,12 @@ class JeolMicroscope(object):
     def setImageShift(self, x, y):
         self.def3.SetIS1(x, y)
 
-    # def getImageTilt(self):
-    #     x, y, result = self.def3.GetIS2()
-    #     return x,y 
+    def getImageShift2(self):
+        x, y, result = self.def3.GetIS2()
+        return x,y 
 
-    # def setImageTilt(self, x, y):
-    #     self.def3.SetIS2(x, y)
+    def setImageShift2(self, x, y):
+        self.def3.SetIS2(x, y)
 
     def getStagePosition(self):
         """
