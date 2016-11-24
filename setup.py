@@ -36,6 +36,7 @@ setup(
             'instamatic.controller                    = instamatic.TEMController:main_entry',
             'instamatic.viewer                        = instamatic.viewer:main',
             'instamatic.calibrate_stage_lowmag        = instamatic.calibrate_stage_lowmag:calibrate_stage_lowmag_entry',
+            'instamatic.calibrate_stage_mag1          = instamatic.calibrate_stage_mag1:calibrate_stage_mag1_entry',
             'instamatic.calibrate_beamshift           = instamatic.calibrate_beamshift:calibrate_beamshift_entry',
             'instamatic.calibrate_brightness          = instamatic.calibrate_brightness:calibrate_brightness_entry',
             'instamatic.calibrate_diffshift           = instamatic.calibrate_diffshift:calibrate_diffshift_entry',

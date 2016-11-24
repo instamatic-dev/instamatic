@@ -18,6 +18,31 @@ from TEMController import initialize
 from calibration import CalibStage, fit_affine_transformation
 
 
+def plot_it(arr1, arr2, params):
+    import matplotlib.pyplot as plt
+    angle = params["angle"].value
+    sx    = params["sx"].value
+    sy    = params["sy"].value
+    tx    = params["tx"].value
+    ty    = params["ty"].value
+    k1    = params["k1"].value
+    k2    = params["k2"].value
+    
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+    
+    r = np.array([
+        [ sx*cos, -sy*k1*sin],
+        [ sx*k2*sin,  sy*cos]])
+    t = np.array([tx, ty])
+
+    fit = np.dot(arr1, r) + t
+
+    plt.scatter(*fit.T)
+    plt.scatter(*arr2.T)
+    plt.show()
+
+
 def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
@@ -100,6 +125,10 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
     angle = params["angle"].value
     print "Angle =", angle
 
+    plot_it(shifts, stagepos, params)
+
+    return angle
+
     # c = CalibStageMag1.from_data(shifts, stagepos, reference_position=xy_cent)
     # c.plot()
 
@@ -158,9 +187,11 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
 
-    params = fit_affine_transformation(shifts, stagepos, as_params=True)
+    params = fit_affine_transformation(shifts, stagepos, translation=True, as_params=True)
     angle = params["angle"].value
     print "\nMag1 correction angle = {:.2f}".format(np.degrees(angle))
+
+    plot_it(shifts, stagepos, params)
 
     return angle
 
@@ -185,11 +216,11 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
     # calib.to_file()
 
 
-def calibrate_mag1_entry():
+def calibrate_stage_mag1_entry():
 
     if "help" in sys.argv:
         print """
-Program to calibrate lowmag (100x) of microscope
+Program to calibrate mag1 (100x) of microscope
 
 Usage: 
 prepare
