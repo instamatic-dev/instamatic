@@ -560,6 +560,7 @@ class TEMController(object):
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape
         h["ImageComment"] = comment
+        h["ImageCamera"] = self.cam.name
         h["Time"] = time.ctime()
 
         if self.autoblank:

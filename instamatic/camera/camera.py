@@ -52,6 +52,8 @@ class Camera(object):
         else:
             raise ValueError("No such camera: {}".format(kind))
 
+        self.name = kind
+
         try:
             lib = ctypes.cdll.LoadLibrary(libpath)
         except WindowsError as e:
@@ -59,14 +61,8 @@ class Camera(object):
             print "Cannot load DLL:", libpath
             exit()
 
-        ## not used
-        # self._acquireImage = getattr(lib, '?acquireImage@@YAHPEAFHHHN_N@Z') # not used
-        # self._acquireImageNew = getattr(lib, '?acquireImageNew@@YAHHHHHPEAFPEAH1HN_N@Z') # not used
-        # self._acquireImageNewInt = getattr(lib, '?acquireImageNewInt@@YAHHHHHPEAH00HN_N@Z') # not used
-        # self._execScript = getattr(lib, '?execScript@@YAHPEB_W@Z') # not used
-
-        self._acquireImageNewFloat = getattr(
-            lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
+        # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
+        self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
         self._acquireImageNewFloat.argtypes = [c_int, c_int, c_int, c_int, c_int, c_double, c_bool, POINTER(
             POINTER(c_float)), POINTER(c_int), POINTER(c_int)]
         self._cameraCount = getattr(lib, '?cameraCount@@YAHXZ')
@@ -85,11 +81,8 @@ class Camera(object):
         self._initCCDCOM = getattr(lib, '?initCCDCOM@@YAHH@Z')
         self._initCCDCOM.restype = c_int
 
-        self._isCameraInfoAvailable = getattr(
-            lib, '?isCameraInfoAvailable@@YA_NXZ')
+        self._isCameraInfoAvailable = getattr(lib, '?isCameraInfoAvailable@@YA_NXZ')
         self._isCameraInfoAvailable.restype = c_bool
-
-        # TODO: if timepix -> setcorrectionratio to set the parameter (c_double) to divide the pixels on the cross (use 1/2.7) 
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
@@ -99,12 +92,16 @@ class Camera(object):
         print "Dimensions {}x{}".format(*self.getDimensions())
         print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
-        atexit.register(self.releaseConnection)
+        self.xmax, self.ymax = self.getDimensions()
         
         if kind == "timepix":
+            self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
+            self._setCorrectionRatio.restype = c_bool
+            self._setCorrectionRatio(1/2.7) # c_double
             os.chdir(curdir)
+        
+        atexit.register(self.releaseConnection)
 
-        self.xmax, self.ymax = self.getDimensions()
 
     def getImage(self, t=0.5, binsize=1, fastmode=False, **kwargs):
         """Image acquisition routine
