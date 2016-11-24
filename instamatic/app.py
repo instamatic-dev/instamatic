@@ -377,7 +377,7 @@ def do_experiment(ctrl=None, **kwargs):
     image_exposure = kwargs.get("image_exposure", 0.1)
     diff_brightness = kwargs.get("diff_brightness", 38957)
     magnification = kwargs.get("magnification", 5000)
-    angle = kwargs.get("angle", -0.95)
+    angle = kwargs.get("angle", -0.71)
     
     ctrl.magnification.value = magnification
     neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
@@ -463,14 +463,23 @@ def do_experiment(ctrl=None, **kwargs):
             crystal_coords = crystal_coords * image_binsize / scale
 
             beamshift_coords = calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
+            diffshift_neutral = np.array(ctrl.diffshift.get())
 
             print
             print " >> Switching to diffraction mode"
-            for k, beampos in enumerate(beamshift_coords):
+            for k, beamshift in enumerate(beamshift_coords):
                 ctrl.brightness.set(diff_brightness)
-                ctrl.beamshift.set(*beampos)
+                ctrl.beamshift.set(*beamshift)
                 ctrl.mode_diffraction()
-                calib_diffshift.compensate_beamshift(ctrl)
+
+                # compensate beamshift
+                beamshift_offset = beamshift - neutral_beamshift
+                pixelshift = CalibDirectBeam.beamshift2pixelshift(beamshift_offset)
+                diffshift = diffshift_neutral - CalibDirectBeam.pixelshift2diffshift(pixelshift)
+                
+                ctrl.diffshift.set(*diffshift)
+
+                # calib_diffshift.compensate_beamshift(ctrl)
 
                 outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                 comment = "Hole {} image {} Crystal {}".format(i, j, k)
