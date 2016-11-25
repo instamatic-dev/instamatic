@@ -9,12 +9,12 @@ specifications = {
     "feg": {
         "MAGNIFICATIONS": (250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000),
         "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250},
-        "CAMERALENGTHS": (15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 350, 400, 450) # cm
+        "CAMERALENGTHS": (150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500) # mm
     },
     "lab6":{
         "MAGNIFICATIONS": (50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000),
         "MAGNIFICATION_MODES": {"mag1": 2500, "lowmag":50},
-        "CAMERALENGTHS": (15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 350, 400, 450) # cm
+        "CAMERALENGTHS": (150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500) # mm
     }
 }
 
@@ -120,8 +120,8 @@ class JeolMicroscope(object):
         if current_mode == "diff":
             if value not in self.CAMERALENGTHS:
                 value = min(self.CAMERALENGTHS, key=lambda x: abs(x-value))
-            self.CAMERALENGTHS.index(value)
-
+            selector = self.CAMERALENGTHS.index(value)
+            self.eos3.SetSelector(selector) 
         else:
             if value not in self.MAGNIFICATIONS:
                 value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
@@ -143,10 +143,20 @@ class JeolMicroscope(object):
 
     def getMagnificationIndex(self):
         value = self.getMagnification()
-        return self.MAGNIFICATIONS.index(value)
+        current_mode = self.getFunctionMode()
+        if current_mode == "diff":
+            return self.CAMERALENGTHS.index(value)
+        else:
+            return self.MAGNIFICATIONS.index(value)
 
     def setMagnificationIndex(self, index):
-        value = self.MAGNIFICATIONS[index]
+        current_mode = self.getFunctionMode()
+        
+        if current_mode == "diff":
+            value = self.CAMERALENGTHS[index]
+        else:
+            value = self.MAGNIFICATIONS[index]
+
         self.setMagnification(value)
 
     def getGunShift(self):
@@ -377,11 +387,15 @@ class JeolMicroscope(object):
         self.eos3.SelectFunctionMode(value)
 
     def getDiffFocus(self):
+        if not self.getFunctionMode() == "diff":
+            raise ValueError("Must be in 'diff' mode to get DiffFocus")
         value, result = self.lens3.GetIL1()
         return value
 
     def setDiffFocus(self, value):
-	"""IC1"""
+        """IL1"""
+        if not self.getFunctionMode() == "diff":
+            raise ValueError("Must be in 'diff' mode to get DiffFocus")
         self.lens3.setDiffFocus(value)
 
     def getDiffShift(self):
@@ -425,12 +439,12 @@ class JeolMicroscope(object):
         self.def3.SetOLs(x, y)
 
     def getSpotSize(self):
-        """0-based indexing for GetSpotSize, add 1 for consistency"""
+        """0-based indexing for GetSpotSize, add 1 to be consistent with JEOL software"""
         value, result = self.eos3.GetSpotSize()
         return value + 1
 
     def setSpotSize(self, value):
-        self.eos3.SetSpotSize(value - 1)
+        self.eos3.selectSpotSize(value - 1)
 
     def getAll(self):
         print "## lens3"

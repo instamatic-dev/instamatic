@@ -49,11 +49,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     outfile = "calib_{}_0000".format(key) if save_images else None
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    pixel_cent = np.array(holes[0].centroid) * binsize / scale
-
+   
     print "{}: x={} | y={}".format(key, *readout_cent)
-    print "Pixel: x={} | y={}".format(*pixel_cent)
-        
+            
     shifts = []
     readouts = []
     
@@ -107,11 +105,9 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     binsize = h_cent["ImageBinSize"]
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    pixel_cent = np.array(holes[0].centroid) * binsize / scale
     
     print "{}: x={} | y={}".format(key, *readout_cent)
-    print "Pixel: x={:.2f} | y={:.2f}".format(*pixel_cent)
-
+    
     shifts = []
     readouts = []
 

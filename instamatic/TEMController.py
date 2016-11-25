@@ -43,11 +43,14 @@ class DiffFocus(object):
         self._setter(value)
 
     def get(self):
-        return self._getter()
+        try:
+            return self._getter()
+        except ValueError:
+            return -1
 
     @property
     def value(self):
-        return self.get()
+            return self.get()
 
     @value.setter
     def value(self, value):
@@ -511,6 +514,9 @@ class TEMController(object):
             'Brightness': self.brightness.set
         }
 
+        mode = d.pop("FunctionMode")
+        self.tem.setFunctionMode(mode)
+
         for k, v in d.items():
             if k in funcs:
                 func = funcs[k]
@@ -586,7 +592,7 @@ class TEMController(object):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)
-	print "Restored from '{}'".format(name)
+        print "Restored from '{}'".format(name)
 
 
 def main_entry():

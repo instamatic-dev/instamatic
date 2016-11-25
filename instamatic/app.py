@@ -8,7 +8,7 @@ from find_holes import plot_props, find_holes, calculate_hole_area
 import TEMController
 
 from tools import *
-from calibration import CalibStage, CalibBrightness, CalibBeamShift, CalibDiffShift
+from calibration import CalibStage, CalibBrightness, CalibBeamShift, CalibDiffShift, CalibDirectBeam
 import matplotlib.pyplot as plt
 import fileio
 
@@ -368,18 +368,24 @@ def do_experiment(ctrl=None, **kwargs):
 
     calib_stage = CalibStage.from_file()
     calib_beamshift = CalibBeamShift.from_file()
-    calib_diffshift = CalibDiffShift.from_file()
+    calib_directbeam = CalibDirectBeam.from_file()
     # calib_brightness = CalibBrightness.from_file()
 
     diff_binsize = kwargs.get("diff_binsize", 2)
     diff_exposure = kwargs.get("diff_exposure", 0.1)
     image_binsize = kwargs.get("image_binsize", 2)
     image_exposure = kwargs.get("image_exposure", 0.1)
-    diff_brightness = kwargs.get("diff_brightness", 38957)
+    diff_brightness = kwargs.get("diff_brightness", 40357)
+    diff_difffocus = kwargs.get("diff_difffocus", 20480)
     magnification = kwargs.get("magnification", 5000)
     angle = kwargs.get("angle", -0.71)
     
+    import atexit
+    atexit.register(ctrl.restore)
+
+    ctrl.mode_mag1()
     ctrl.magnification.value = magnification
+    ctrl.brightness.max()
     neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
 
     magnification = ctrl.magnification.value
@@ -387,7 +393,7 @@ def do_experiment(ctrl=None, **kwargs):
     from calibration import mag1_dimensions
     box_x, box_y = mag1_dimensions[magnification]
 
-    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=angle, plot=True)
+    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=angle, plot=False)
     x_offsets *= 1000
     y_offsets *= 1000
 
@@ -443,7 +449,9 @@ def do_experiment(ctrl=None, **kwargs):
 
             comment = "Hole {} image {}\nx_offset={:.2e} y_offset={:.2e}".format(i, j, x_offset, y_offset)
 
+            ctrl.tem.setSpotSize(1)
             img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment, out=outfile)
+            ctrl.tem.setSpotSize(5)
 
             # if plot:
             #     plt.imshow(img, cmap="gray")
@@ -463,7 +471,7 @@ def do_experiment(ctrl=None, **kwargs):
             crystal_coords = crystal_coords * image_binsize / scale
 
             beamshift_coords = calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
-            diffshift_neutral = np.array(ctrl.diffshift.get())
+            neutral_diffshift = np.array(ctrl.diffshift.get())
 
             print
             print " >> Switching to diffraction mode"
@@ -471,15 +479,21 @@ def do_experiment(ctrl=None, **kwargs):
                 ctrl.brightness.set(diff_brightness)
                 ctrl.beamshift.set(*beamshift)
                 ctrl.mode_diffraction()
+                ctrl.difffocus.value = diff_difffocus
 
                 # compensate beamshift
                 beamshift_offset = beamshift - neutral_beamshift
-                pixelshift = CalibDirectBeam.beamshift2pixelshift(beamshift_offset)
-                diffshift = diffshift_neutral - CalibDirectBeam.pixelshift2diffshift(pixelshift)
-                
-                ctrl.diffshift.set(*diffshift)
+                pixelshift = calib_directbeam.beamshift2pixelshift(beamshift_offset)
 
-                # calib_diffshift.compensate_beamshift(ctrl)
+                diffshift_offset = calib_directbeam.pixelshift2diffshift(pixelshift)
+                diffshift = neutral_diffshift - diffshift_offset
+
+                print "bs", beamshift_offset, "ds", diffshift_offset
+                
+                # diffshift[0] += 1750               
+                # diffshift[1] += 5000                
+                    
+                ctrl.diffshift.set(*diffshift.astype(int))
 
                 outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                 comment = "Hole {} image {} Crystal {}".format(i, j, k)
@@ -489,7 +503,7 @@ def do_experiment(ctrl=None, **kwargs):
             print " >> Switching back to image mode"
 
             ctrl.beamshift.set(*neutral_beamshift)
-            calib_diffshift.compensate_beamshift(ctrl)
+            ctrl.diffshift.set(*neutral_diffshift)
 
             ctrl.mode_mag1()
             ctrl.brightness.max()
@@ -647,10 +661,10 @@ def main():
         ready = False
 
     try:
-        calib_diffshift = CalibDiffShift.from_file()
+        calib_directbeam = CalibDirectBeam.from_file()
     except IOError as e:
         # print e
-        calib_diffshift = None
+        calib_directbeam = None
         ready = False
 
     try:
@@ -662,10 +676,10 @@ def main():
 
     print
     print "Calibration:"
-    print "    Stage     : {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
-    print "    BeamShift : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
-    print "    DiffShift : {}".format("yes" if calib_diffshift else "no, please run instamatic.calibrate_diffshift")
-    print "    Brightness: {}".format("yes" if calib_brightness else "no, please run instamatic.calibrate_brightness")
+    print "    Stage      : {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
+    print "    BeamShift  : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
+    print "    DirectBeam : {}".format("yes" if calib_directbeam else "no, please run instamatic.calibrate_diffshift")
+    # print "    Brightness : {}".format("yes" if calib_brightness else "no, please run instamatic.calibrate_brightness")
 
     try:
         hole_coords = fileio.load_hole_stage_positions()

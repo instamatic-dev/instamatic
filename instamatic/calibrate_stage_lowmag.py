@@ -198,6 +198,18 @@ prepare
         other_fn = sys.argv[2:]
         calibrate_stage_lowmag(center_fn, other_fn)
 
+    import fileio
+    import app
+    if not os.path.exists(fileio.HOLE_COORDS):
+        #TODO: generalize filenames
+        app.map_holes_on_grid(
+            ("calib_0000.tiff",
+             "calib_0004.tiff",
+             "calib_0020.tiff",
+             "calib_0024.tiff"), plot=True)
+
+        print "To use: instamatic.goto_hole"
+
 
 if __name__ == '__main__':
     calibrate_stage_lowmag_entry()

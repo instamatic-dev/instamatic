@@ -112,10 +112,10 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
-    # TODO: Generalize index 12 here
-    if stagepos[12].max() > 50:
-        print " >> Warning: Large difference between image 12, and center image. These should be close for a good calibration."
-        print "    Difference:", stagepos[12]
+    # TODO: Generalize index here
+    if stagepos[4].max() > 50:
+        print " >> Warning: Large difference between image 4, and center image. These should be close for a good calibration."
+        print "    Difference:", stagepos[4]
         print
     
     if save_images:

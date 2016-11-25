@@ -49,32 +49,32 @@ class CalibDirectBeam(object):
         t = self._dct[key]["t"]
 
         pixelshift = np.array(pixelshift)
-        shift = np.dot(shift, r) + t
+        shift = np.dot(pixelshift, r) + t
         return shift
 
     def beamshift2pixelshift(self, beamshift):
-        return self.anyshift(shift=beamshift, key="BeamShift")
+        return self.any2pixelshift(shift=beamshift, key="BeamShift")
 
     def diffshift2pixelshift(self, diffshift):
-        return self.anyshift(shift=beamshift, key="DiffShift")
+        return self.any2pixelshift(shift=diffshift, key="DiffShift")
 
     def imageshift2pixelshift(self, imageshift):
-        return self.anyshift(shift=beamshift, key="ImageShift")
+        return self.any2pixelshift(shift=imageshift, key="ImageShift")
 
     def imagetilt2pixelshift(self, imagetilt):
-        return self.anyshift(shift=beamshift, key="ImageTilt")
+        return self.any2pixelshift(shift=imagetilt, key="ImageTilt")
 
     def pixelshift2beamshift(self, pixelshift):
-        return self.anyshift(shift=beamshift, key="BeamShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key="BeamShift")
 
     def pixelshift2diffshift(self, pixelshift):
-        return self.anyshift(shift=beamshift, key="DiffShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key="DiffShift")
 
     def pixelshift2imageshift(self, pixelshift):
-        return self.anyshift(shift=beamshift, key="ImageShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key="ImageShift")
 
     def pixelshift2imagetilt(self, pixelshift):
-        return self.anyshift(shift=beamshift, key="ImageTilt")
+        return self.pixelshift2any(pixelshift=pixelshift, key="ImageTilt")
 
     @classmethod
     def from_data(cls, shifts, readout, key, **dct):
@@ -115,7 +115,7 @@ class CalibDirectBeam(object):
 
         plt.scatter(*data_shifts.T, label="Observed pixelshifts shift")
         plt.scatter(*shifts_.T, label="Calculated shift from readout from BeamShift")
-        plt.title(key + "vs. Direct beam position")
+        plt.title(key + " vs. Direct beam position")
         plt.legend()
         plt.show()
 
