@@ -1,6 +1,7 @@
 from TiffIO import TiffIO
 import time
 import os
+import yaml
 
 def write_tiff(fname, data, header=None):
     """Simple function to write a tiff file
@@ -14,6 +15,9 @@ def write_tiff(fname, data, header=None):
         key/value pairs are stored as yaml in the TIFF ImageDescription tag
     """
     root, ext = os.path.splitext(fname)
+    if isinstance(header, dict):
+        header = yaml.dump(header)
+
     if ext == "":
         fname = root + ".tiff"
     tiffIO = TiffIO(fname, mode="w")
@@ -29,7 +33,16 @@ def read_tiff(fname):
         image: np.ndarray, headerfile: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
+
     tiff = TiffIO(fname)
     img = tiff.getImage(0)
-    h = tiff.getInfo(0)
-    return img, h
+    header = tiff.getInfo(0)
+
+    info = header.pop("ImageDescription", None)
+    if info:
+        try:
+            header.update(yaml.load(info))
+        except ValueError as e:
+            print e, info
+
+    return img, header

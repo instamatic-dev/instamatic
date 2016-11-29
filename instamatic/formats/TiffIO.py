@@ -35,7 +35,6 @@ import sys
 import os
 import struct
 import numpy
-import yaml
 
 DEBUG = 0
 ALLOW_MULTIPLE_STRIPS = False
@@ -492,10 +491,7 @@ class TiffIO(object):
         info["sampleFormat"] = sampleFormat
         info["photometricInterpretation"] = interpretation
 
-        try:
-            info.update(yaml.load(imageDescription))
-        except Exception:
-            info["imageDescription"] = imageDescription
+        info["imageDescription"] = imageDescription
         
         infoDict = {}
         if sys.version < '3.0':
@@ -841,10 +837,7 @@ class TiffIO(object):
         fd.seek(0, os.SEEK_END)
 
         # get the description information from the input information
-        if info is None or isinstance(info, str):
-            description = info
-        else:
-            description = yaml.dump(info)
+        description = info
 
         # get the image file directory
         outputIFD = self._getOutputIFD(image, description=description,
