@@ -395,7 +395,7 @@ def do_experiment(ctrl=None, **kwargs):
     neutral_beamshift = calib_beamshift.center()
     ctrl.beamshift.set(*neutral_beamshift) # calib_beamshift.reference_shift?
 
-    from calibration import mag1_dimensions
+    from config import mag1_dimensions
     box_x, box_y = mag1_dimensions[magnification]
 
     x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=angle, plot=False)

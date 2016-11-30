@@ -19,7 +19,7 @@ import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
-from calibration import lowmag_pixeldimensions
+from config import lowmag_pixeldimensions
 from tools import *
 
 

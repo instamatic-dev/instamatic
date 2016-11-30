@@ -1,9 +1,10 @@
-from jeol_microscope import ZERO, MIN, MAX, specifications, FUNCTION_MODES
+from jeol_microscope import ZERO, MIN, MAX, FUNCTION_MODES, NTRLMAPPING
+from config import specifications
 
 
 class SimuMicroscope(object):
     """docstring for microscope"""
-    def __init__(self):
+    def __init__(self, model="lab6"):
         super(SimuMicroscope, self).__init__()
         import random
         
@@ -37,9 +38,17 @@ class SimuMicroscope(object):
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
-        kind = "lab6" # /feg
-        self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
+        self.model = model
+        self.MAGNIFICATIONS      = specifications[model]["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = specifications[model]["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = specifications[model]["CAMERALENGTHS"]
+
+        self.FUNCTION_MODES = FUNCTION_MODES
+        self.NTRLMAPPING = NTRLMAPPING
+
+        self.ZERO = ZERO
+        self.MAX = MAX
+        self.MIN = MIN
 
         self.Magnification_value = random.choice(self.MAGNIFICATIONS)
 

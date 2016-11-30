@@ -5,20 +5,9 @@ import comtypes.client
 import time
 import os
 
-specifications = {
-    "feg": {
-        "MAGNIFICATIONS": (250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000),
-        "MAGNIFICATION_MODES": {"mag1": 2000, "lowmag":250},
-        "CAMERALENGTHS": (150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500) # mm
-    },
-    "lab6":{
-        "MAGNIFICATIONS": (50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000, 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000, 2000000),
-        "MAGNIFICATION_MODES": {"mag1": 2500, "lowmag":50},
-        "CAMERALENGTHS": (150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500) # mm
-    }
-}
+from config import specifications
 
-SetNTRLmapping = {
+NTRLMAPPING = {
    "GUN1" : 0,
    "GUN2" : 1,
    "CLA1" : 2,
@@ -44,7 +33,7 @@ MIN = 0
 
 class JeolMicroscope(object):
     """docstring for microscope"""
-    def __init__(self):
+    def __init__(self, model="lab6"):
         super(JeolMicroscope, self).__init__()
         
         # initial COM in multithread mode if not initialized otherwise
@@ -88,10 +77,17 @@ class JeolMicroscope(object):
         self._x_direction = 0
         self._y_direction = 0
 
-        kind = "lab6" # /feg
-        self.MAGNIFICATIONS      = specifications[kind]["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = specifications[kind]["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS = specifications[kind]["CAMERALENGTHS"]
+        self.model = model
+        self.MAGNIFICATIONS      = specifications[model]["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = specifications[model]["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = specifications[model]["CAMERALENGTHS"]
+
+        self.FUNCTION_MODES = FUNCTION_MODES
+        self.NTRLMAPPING = NTRLMAPPING
+
+        self.ZERO = ZERO
+        self.MAX = MAX
+        self.MIN = MIN
 
     def __del__(self):
         comtypes.CoUninitialize()
@@ -100,7 +96,7 @@ class JeolMicroscope(object):
         """Neutralize given deflectors"""
         for arg in args:
             if isinstance(arg, str):
-                arg = SetNTRLmapping[arg]
+                arg = self.NTRLMAPPING[arg]
             self.def3.setNTRL(arg)
 
     def getBrightness(self):
@@ -375,13 +371,13 @@ class JeolMicroscope(object):
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
         mode, name, result = self.eos3.GetFunctionMode()
-        return FUNCTION_MODES[mode]
+        return self.FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
         """mag1, mag2, lowmag, samag, diff"""
         if isinstance(value, str):
             try:
-                value = FUNCTION_MODES.index(value)
+                value = self.FUNCTION_MODES.index(value)
             except ValueError:
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.eos3.SelectFunctionMode(value)

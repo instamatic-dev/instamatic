@@ -13,7 +13,7 @@ from skimage import measure
 
 from tools import autoscale
 
-from instamatic.calibration import mag1_dimensions
+from config import mag1_dimensions
 
 def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
