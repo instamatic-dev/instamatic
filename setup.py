@@ -7,7 +7,7 @@ from os import path
 
 setup(
     name="instamatic",
-    version="0.1.1",
+    version="0.1.2",
     description="Program for automatic data collection of diffraction snapshots on electron microscopes",
 
     author="Stef Smeets",
@@ -47,7 +47,6 @@ setup(
             'instamatic.plot_experiment               = instamatic.app:plot_experiment_entry',
             'instamatic.do_experiment                 = instamatic.app:do_experiment_entry',
             'instamatic.update_experiment_with_coords = instamatic.app:update_experiment_with_hole_coords_entry',
-            'mrc2npy                                  = instamatic.mrc2npy:main_entry',
         ]
     }
 )
