@@ -77,10 +77,11 @@ class CalibDirectBeam(object):
         return self.pixelshift2any(pixelshift=pixelshift, key="ImageTilt")
 
     @classmethod
-    def from_data(cls, shifts, readout, key, **dct):
+    def from_data(cls, shifts, readout, key, header=None, **dct):
         r, t = fit_affine_transformation(shifts, readout, **dct)
 
         d = {
+            "header": header,
             "data_shifts": shifts,
             "data_readout": readout,
             "r": r,
@@ -174,13 +175,14 @@ class CalibDiffShift(object):
         self.compensate_diffshift()
 
     @classmethod
-    def from_data(cls, diffshift, beamshift, neutral_beamshift):
+    def from_data(cls, diffshift, beamshift, neutral_beamshift, header=None):
         r, t = fit_affine_transformation(diffshift, beamshift, translation=True, shear=True)
 
         c = cls(rotation=r, translation=t, neutral_beamshift=neutral_beamshift)
         c.data_diffshift = diffshift
         c.data_beamshift = beamshift
         c.has_data = True
+        c.header = header
         return c
 
     @classmethod
@@ -236,17 +238,19 @@ class CalibBeamShift(object):
         return beamshift.astype(int)
 
     @classmethod
-    def from_data(cls, shifts, beampos, reference_shift, reference_pixel):
+    def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None):
         r, t = fit_affine_transformation(shifts, beampos)
 
         c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
         c.data_shifts = shifts
         c.data_beampos = beampos
         c.has_data = True
+        c.header = header
         return c
 
     @classmethod
     def from_file(cls, fn=CALIB_BEAMSHIFT):
+        """Read calibration from file"""
         try:
             return pickle.load(open(fn, "r"))
         except IOError as e:
@@ -254,6 +258,7 @@ class CalibBeamShift(object):
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     def to_file(self, fn=CALIB_BEAMSHIFT):
+        """Save calibration to file"""
         pickle.dump(self, open(fn, "w"))
 
     def plot(self):
@@ -271,8 +276,13 @@ class CalibBeamShift(object):
         plt.legend()
         plt.show()
 
-    def center(self):
-        return self.pixelcoord_to_beamshift((1024, 1024))
+    def center(self, ctrl=None):
+        """Return beamshift values to center the beam in the frame"""
+        beamshift = self.pixelcoord_to_beamshift((1024, 1024))
+        if ctrl:
+            ctrl.beamshift.set(*beamshift)
+        else:
+            return ctrl
 
 
 class CalibBrightness(object):
@@ -292,7 +302,7 @@ class CalibBrightness(object):
         return int((val - self.intercept) / self.slope)
 
     @classmethod
-    def from_data(cls, brightness, pixeldiameter):
+    def from_data(cls, brightness, pixeldiameter, header=None):
         slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
         print
         print "r_value: {:.4f}".format(r_value)
@@ -302,6 +312,7 @@ class CalibBrightness(object):
         c.data_brightness = brightness
         c.data_pixeldiameter = pixeldiameter
         c.has_data = True
+        c.header = header
         return c
 
     @classmethod
@@ -474,13 +485,14 @@ class CalibStage(object):
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
 
     @classmethod
-    def from_data(cls, shifts, stagepos, reference_position):
+    def from_data(cls, shifts, stagepos, reference_position, header=None):
         r, t = fit_affine_transformation(shifts, stagepos)
 
         c = cls(rotation=r, translation=t, reference_position=reference_position)
         c.data_shifts = shifts
         c.data_stagepos = stagepos
         c.has_data = True
+        c.header = header
         return c
 
     @classmethod

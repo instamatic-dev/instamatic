@@ -31,10 +31,10 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
         instance of Calibration class with conversion methods
     """
 
-    img_cent, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
 
-    magnification = h["Magnification"]
+    magnification = h_cent["Magnification"]
     stepsize = 2500.0/magnification * stepsize
 
     img_cent, scale = autoscale(img_cent)
@@ -83,7 +83,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - np.array((beamshift_cent))
     
-    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
     c.plot()
 
     return c
@@ -138,7 +138,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - beamshift_cent
     
-    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent)
+    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
     c.plot()
 
     return c

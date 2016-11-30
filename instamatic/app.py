@@ -369,26 +369,31 @@ def do_experiment(ctrl=None, **kwargs):
     calib_stage = CalibStage.from_file()
     calib_beamshift = CalibBeamShift.from_file()
     calib_directbeam = CalibDirectBeam.from_file()
-    # calib_brightness = CalibBrightness.from_file()
 
-    diff_binsize = kwargs.get("diff_binsize", 2)
-    diff_exposure = kwargs.get("diff_exposure", 0.1)
-    image_binsize = kwargs.get("image_binsize", 2)
-    image_exposure = kwargs.get("image_exposure", 0.1)
-    diff_brightness = kwargs.get("diff_brightness", 40357)
-    diff_difffocus = kwargs.get("diff_difffocus", 20480)
-    magnification = kwargs.get("magnification", 5000)
-    angle = kwargs.get("angle", -0.71)
+    magnification   = kwargs["magnification"]
+    image_binsize   = kwargs.get("image_binsize",       2   )
+    image_exposure  = kwargs.get("image_exposure",      0.1 )
+    image_spotsize  = kwargs.get("image_spotsize",      1   )
+    diff_binsize    = kwargs.get("diff_binsize",        2   )
+    diff_exposure   = kwargs.get("diff_exposure",       0.1 )
+    diff_brightness = kwargs["diff_brightness"]
+    diff_difffocus  = kwargs["diff_difffocus"]
+    diff_spotsize   = kwargs.get("diff_spotsize",       5   )
+    angle = kwargs["angle"]
     
     import atexit
     atexit.register(ctrl.restore)
 
+    ctrl.mode_diffraction()
+    print raw_input(" >> Getting neutral diffraction shift, press enter to continue")
+    neutral_diffshift = np.array(ctrl.diffshift.get())
+    print "DiffShift(x={}, y={})".format(*neutral_diffshift)
+
     ctrl.mode_mag1()
     ctrl.magnification.value = magnification
     ctrl.brightness.max()
-    neutral_beamshift = calib_beamshift.pixelcoord_to_beamshift((1024, 1024))
-
-    magnification = ctrl.magnification.value
+    neutral_beamshift = calib_beamshift.center()
+    ctrl.beamshift.set(*neutral_beamshift) # calib_beamshift.reference_shift?
 
     from calibration import mag1_dimensions
     box_x, box_y = mag1_dimensions[magnification]
@@ -399,16 +404,21 @@ def do_experiment(ctrl=None, **kwargs):
 
     plot = False
     print
-    print "Imaging     : binsize = {}, exposure = {}".format(image_binsize, image_exposure)
+    print "Imaging     : binsize = {}".format(image_binsize)
+    print "              exposure = {}".format(image_exposure)
     print "              magnification = {}".format(magnification)
-    print "Diffraction : binsize = {}, exposure = {}".format(diff_binsize, diff_exposure)
+    print "              spotsize = {}".format(image_spotsize)
+    print "Diffraction : binsize = {}".format(diff_binsize)
+    print "              exposure = {}".format(diff_exposure)
     print "              brightness = {}".format(diff_brightness)
+    print "              spotsize = {}".format(diff_spotsize)
     print
     print "Usage:"
     print "    type 'next' to go to the next hole"
-    print "    type 'exit' to interrupt the script"
-    print "    type 'auto' to enable automatic mode (until next hole)"
+    print "    type 'auto' to enable automatic data collection (until next hole)"
     print "    type 'plot' to toggle plotting mode"
+    print "    type 'exit' to quit"
+    print "    hit 'Ctrl+C' to interrupt the script"
 
     for i, (x, y) in enumerate(centers):
         try:
@@ -449,17 +459,19 @@ def do_experiment(ctrl=None, **kwargs):
 
             comment = "Hole {} image {}\nx_offset={:.2e} y_offset={:.2e}".format(i, j, x_offset, y_offset)
 
-            ctrl.tem.setSpotSize(1)
-            img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment, out=outfile)
-            ctrl.tem.setSpotSize(5)
+            ctrl.tem.setSpotSize(image_spotsize)
+            img, h = ctrl.getImage(binsize=image_binsize, exposure=image_exposure, comment=comment)
+            ctrl.tem.setSpotSize(diff_spotsize)
 
-            # if plot:
-            #     plt.imshow(img, cmap="gray")
-            #     plt.title(comment)
-            #     plt.show()
+            crystal_coords = find_crystals(img, h["Magnification"], spread=2.5, plot=False) * image_binsize
 
-            img, scale = autoscale(img, maxdim=512)
-            crystal_coords = find_crystals(img, h["Magnification"], spread=2.5, plot=False)
+            h["exp_crystal_coords"] = crystal_coords.tolist()
+            h["exp_neutral_diffshift"] = neutral_beamshift
+            h["exp_neutral_beamshift"] = neutral_diffshift
+            h["exp_hole_number"] = i
+            h["exp_image_number"] = j
+            h["exp_offset"] = (x_offset, y_offset)
+            write_tiff(outfile, img, header=h)
 
             # plot_props(img, crystals, fname=outfile+".png")
 
@@ -468,10 +480,7 @@ def do_experiment(ctrl=None, **kwargs):
             if ncrystals == 0:
                 continue
 
-            crystal_coords = crystal_coords * image_binsize / scale
-
             beamshift_coords = calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
-            neutral_diffshift = np.array(ctrl.diffshift.get())
 
             print
             print " >> Switching to diffraction mode"
@@ -498,7 +507,17 @@ def do_experiment(ctrl=None, **kwargs):
                 outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                 comment = "Hole {} image {} Crystal {}".format(i, j, k)
                 print "{}/{}:".format(k+1, ncrystals),
-                img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment, out=outfile)
+                img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment)
+                
+                h["exp_neutral_diffshift"] = neutral_beamshift
+                h["exp_neutral_beamshift"] = neutral_diffshift
+                h["exp_diffshift_offset"] = diffshift_offset
+                h["exp_beamshift_offset"] = beamshift_offset
+                h["exp_hole_number"] = i
+                h["exp_image_number"] = j
+                h["exp_pattern_number"] = k
+                write_tiff(outfile, img, header=h)
+
             print
             print " >> Switching back to image mode"
 
@@ -668,18 +687,23 @@ def main():
         ready = False
 
     try:
-        calib_brightness = CalibBrightness.from_file()
-    except IOError as e:
-        # print e
-        calib_brightness = None
-        # ready = False
+        params = json.load(open("params.json","r"))
+    except IOError:
+        params = {}
+        ready = False
+
+    if "angle" in params:
+        angle_ans = "yes, angle={:.2f} deg.".format(np.degrees(params["angle"]))
+    else:
+        angle_ans = "no, please run instamatic.calibrate_stage_mag1"
 
     print
     print "Calibration:"
-    print "    Stage      : {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
-    print "    BeamShift  : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
-    print "    DirectBeam : {}".format("yes" if calib_directbeam else "no, please run instamatic.calibrate_diffshift")
-    # print "    Brightness : {}".format("yes" if calib_brightness else "no, please run instamatic.calibrate_brightness")
+    print "    Stage (lowmag): {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
+    print "    Stage (mag1)  : {}".format(angle_ans)
+    print "    BeamShift     : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
+    print "    DirectBeam    : {}".format("yes" if calib_directbeam else "no, please run instamatic.calibrate_diffshift")
+
 
     try:
         hole_coords = fileio.load_hole_stage_positions()
@@ -694,22 +718,21 @@ def main():
         experiment = fileio.load_experiment()
     except Exception as e:
         experiment = None
-        message2 = "no, please run instamatic.prepare_experiment"
+        message2 = "no, please run snapkit.gui > map holes @ high mag"
         ready = False
     else:
         message2 = "yes, {:.2f}".format(experiment["radius"] / 1000.0)
+
+    keys = "magnification", "diff_difffocus", "diff_brightness"
+    missing_keys = [key for key in keys if key not in params]
+    if missing_keys:
+        ready = False
 
     print 
     print "Experiment"
     print "    Holes     : {}".format(message1)
     print "    Radius    : {} um".format(message2)
-    
-    try:
-        params = json.load(open("params.json","r"))
-    except IOError:
-        params = {}
-
-    print "    Params    : {}".format("yes" if params else "no")
+    print "    Params    : {}".format("yes" if not missing_keys else "no, missing {}".format(", ".join(missing_keys)))
     print "    Ready     : {}".format("yes" if ready else "no")
 
     if ready:
@@ -718,7 +741,8 @@ def main():
         print
         ctrl = TEMController.initialize()
         do_experiment(ctrl, **params)
-
+    else:
+        print "Experiment not ready yet!!"
 
 if __name__ == '__main__':
     main()

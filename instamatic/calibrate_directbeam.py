@@ -41,12 +41,12 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     
     attr = getattr(ctrl, key.lower())
 
-    img_cent, h = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
+    outfile = "calib_{}_0000".format(key) if save_images else None
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
     x_cent, y_cent = readout_cent = np.array(attr.get())
 
     img_cent, scale = autoscale(img_cent)
     
-    outfile = "calib_{}_0000".format(key) if save_images else None
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
    
@@ -63,6 +63,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
 
     for i, (dx,dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2,-1).T):
         i += 1
+
         attr.set(x=x_cent+dx, y=y_cent+dy)
         print
         print "\bPosition: {}/{}".format(i, tot)
@@ -86,9 +87,8 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     shifts = np.array(shifts) * binsize / scale
     readouts = np.array(readouts) - np.array((readout_cent))
     
-    c = CalibDirectBeam.from_data(shifts, readouts, key, **refine_params[key])
+    c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
     c.plot(key)
-    # TODO: Store difffocus / brightness to calib file
 
     return c
 
@@ -111,7 +111,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     shifts = []
     readouts = []
 
-    for fn in other_fn:
+    for i,fn in enumerate(other_fn):
         print fn
         img, h = load_img(fn)
         img = imgscale(img, scale)
@@ -130,7 +130,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     shifts = np.array(shifts) * binsize / scale
     readouts = np.array(readouts) - np.array((readout_cent))
 
-    c = CalibDirectBeam.from_data(shifts, readouts, key, **refine_params[key])
+    c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
     c.plot(key)
 
     return c

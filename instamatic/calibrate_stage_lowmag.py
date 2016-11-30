@@ -44,9 +44,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
 
-    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     
     img_cent, scale = autoscale(img_cent)
@@ -96,7 +96,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
-    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
+    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
     c.plot()
 
     return c
@@ -114,17 +114,17 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    img_cent, header_cent = load_img(center_fn)
+    img_cent, h_cent = load_img(center_fn)
     
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     print "Center:", center_fn
     print "Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent)
     print
 
-    binsize = header_cent["ImageBinSize"]
+    binsize = h_cent["ImageBinSize"]
 
     shifts = []
     stagepos = []
@@ -154,7 +154,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
 
-    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent)
+    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
     c.plot()
 
     return c
