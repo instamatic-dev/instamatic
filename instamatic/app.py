@@ -276,9 +276,14 @@ def prepare_experiment_entry():
     # fns = sys.argv[1:]
     centers = []
     radii = []
-    fns = sys.argv[1:]
 
-    if fns:
+    args = sys.argv[1:]
+    if "gui" in args:
+        from gui import prepare_experiment
+        ctrl = TEMController.initialize()
+        centers, radii = prepare_experiment.start(ctrl)
+    elif args:
+        fns = sys.argv[1:]
         for fns in chunks(sys.argv[1:], 3):
             center, radius = find_hole_center_high_mag_from_files(fns)
             centers.append(center)
@@ -528,12 +533,6 @@ def do_experiment(ctrl=None, **kwargs):
             ctrl.brightness.max()
 
 
-
-def do_experiment_entry():
-    ctrl = TEMController.initialize()
-    do_experiment(ctrl)
-
-
 def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
     if calib is None:
         calib = CalibStage.from_file()
@@ -662,78 +661,89 @@ def map_holes_on_grid_entry():
     map_holes_on_grid(fns)
 
 
-def main():
-    ready = True
-    
-    try:
-        calib_stage = CalibStage.from_file()
-    except IOError as e:
-        # print e
-        calib_stage = None
-        ready = False
+def get_status():
+    status = {"stage_lowmag": {"name":"Stage (lowmag)", "ok":False, "msg":"no, please run instamatic.calibrate_stage_lowmag"},
+                "stage_mag1": {"name":"Stage (mag1)", "ok":False, "msg":"no, please run instamatic.calibrate_mag1"},
+                "beamshift": {"name":"BeamShift", "ok":False, "msg":"no, please run instamatic.calibrate_beamshift"},
+                "directbeam": {"name":"DirectBeam", "ok":False, "msg":"no, please run instamatic.calibrate_directbeam"},
+                "holes": {"name":"Holes", "ok":False, "msg": "no, please run instamatic.map_holes"},
+                "radius": {"name":"Radius", "ok":False, "msg": "no, please run instamatic.prepare_experiment"},
+                "params": {"name":"Params", "ok":False, "msg": "no"},
+                "ready": {"name":"Ready", "ok":True, "msg": "Experiment is ready!!"}
+            }
 
     try:
-        calib_beamshift = CalibBeamShift.from_file()
-    except IOError as e:
-        # print e
-        calib_beamshift = None
-        ready = False
+        calib = CalibStage.from_file()
+    except IOError:
+        pass
+    else:
+        status["stage_lowmag"].update({"ok":True, "msg": "OK"})
 
     try:
-        calib_directbeam = CalibDirectBeam.from_file()
-    except IOError as e:
-        # print e
-        calib_directbeam = None
-        ready = False
+        calib = CalibBeamShift.from_file()
+    except IOError:
+        pass
+    else:
+        status["beamshift"].update({"ok":True, "msg": "OK"})
+
+    try:
+        calib = CalibDirectBeam.from_file()
+    except IOError:
+        pass
+    else:
+        status["directbeam"].update({"ok":True, "msg": "OK"})
 
     try:
         params = json.load(open("params.json","r"))
     except IOError:
-        params = {}
-        ready = False
-
-    if "angle" in params:
-        angle_ans = "yes, angle={:.2f} deg.".format(np.degrees(params["angle"]))
+        pass
     else:
-        angle_ans = "no, please run instamatic.calibrate_stage_mag1"
-
-    print
-    print "Calibration:"
-    print "    Stage (lowmag): {}".format("yes" if calib_stage else "no, please run instamatic.calibrate_stage_lowmag")
-    print "    Stage (mag1)  : {}".format(angle_ans)
-    print "    BeamShift     : {}".format("yes" if calib_beamshift else "no, please run instamatic.calibrate_beamshift")
-    print "    DirectBeam    : {}".format("yes" if calib_directbeam else "no, please run instamatic.calibrate_diffshift")
-
-
-    try:
-        hole_coords = fileio.load_hole_stage_positions()
-    except Exception as e:
-        hole_coords = None
-        message1 = "no, please run instamatic.map_holes"
-        ready = False
-    else:
-        message1 = "yes, {} locations stored".format(len(hole_coords))
+        if "angle" in params:
+            status["stage_mag1"].update({"ok":True, "msg":"OK, angle={:.2f} deg.".format(np.degrees(params["angle"]))})
+        keys = "magnification", "diff_difffocus", "diff_brightness"
+        missing_keys = [key for key in keys if key not in params]
+        if missing_keys:
+            status["params"].update({"ok":False, "msg":"no, missing {}".format(", ".join(missing_keys))})
+        else:
+            status["params"].update({"ok":True, "msg":"OK"})
 
     try:
         experiment = fileio.load_experiment()
     except Exception as e:
-        experiment = None
-        message2 = "no, please run snapkit.gui > map holes @ high mag"
-        ready = False
+        pass
     else:
-        message2 = "yes, {:.2f}".format(experiment["radius"] / 1000.0)
+        status["radius"].update({"ok":True, "msg":"OK, {:.2f} um".format(experiment["radius"] / 1000.0)})
 
-    keys = "magnification", "diff_difffocus", "diff_brightness"
-    missing_keys = [key for key in keys if key not in params]
-    if missing_keys:
-        ready = False
+    try:
+        hole_coords = fileio.load_hole_stage_positions()
+    except Exception:
+        pass
+    else:
+        status["holes"].update({"ok":True, "msg":"OK, {} locations stored".format(len(hole_coords))})
 
-    print 
-    print "Experiment"
-    print "    Holes     : {}".format(message1)
-    print "    Radius    : {} um".format(message2)
-    print "    Params    : {}".format("yes" if not missing_keys else "no, missing {}".format(", ".join(missing_keys)))
-    print "    Ready     : {}".format("yes" if ready else "no")
+    if not all([status[key]["ok"] for key in status]):
+        status["ready"].update({"ok":False, "msg":"Experiment is NOT ready!!"})
+
+    return status
+
+
+def main_gui():
+    from gui import main
+    main.start()
+
+
+def main():
+    status = get_status()
+
+    print "\nCalibration:"
+    for key in "stage_lowmag", "stage_mag1", "beamshift", "directbeam":
+        print "    {name:20s}: {msg:s}".format(**status[key])
+
+    print "\nExperiment"
+    for key in "holes", "radius", "params", "ready":
+        print "    {name:20s}: {msg:s}".format(**status[key])
+
+    ready = status["ready"]["ok"]
 
     if ready:
         if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
@@ -742,7 +752,7 @@ def main():
         ctrl = TEMController.initialize()
         do_experiment(ctrl, **params)
     else:
-        print "Experiment not ready yet!!"
+        print "\nExperiment not ready yet!!"
 
 if __name__ == '__main__':
     main()
