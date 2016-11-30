@@ -88,9 +88,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
-    if stagepos[12].max() > 50:
-        print " >> Warning: Large difference between image 12, and center image. These should be close for a good calibration."
-        print "    Difference:", stagepos[12]
+    m = gridsize**2 // 2 
+    if gridsize % 2 and stagepos[m].max() > 50:
+        print " >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m)
+        print "    Difference:", stagepos[m]
         print
     
     if save_images:

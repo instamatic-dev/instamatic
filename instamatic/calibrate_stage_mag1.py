@@ -68,9 +68,9 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, header_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
 
-    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     
     img_cent, scale = autoscale(img_cent)
@@ -112,10 +112,10 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
-    # TODO: Generalize index here
-    if stagepos[4].max() > 50:
-        print " >> Warning: Large difference between image 4, and center image. These should be close for a good calibration."
-        print "    Difference:", stagepos[4]
+    m = gridsize**2 // 2 
+    if gridsize % 2 and stagepos[m].max() > 50:
+        print " >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m)
+        print "    Difference:", stagepos[m]
         print
     
     if save_images:
@@ -147,17 +147,17 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    img_cent, header_cent = load_img(center_fn)
+    img_cent, h_cent = load_img(center_fn)
     
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    x_cent, y_cent, _, _, _ = header_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
     print "Center:", center_fn
     print "Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent)
     print
 
-    binsize = header_cent["ImageBinSize"]
+    binsize = h_cent["ImageBinSize"]
 
     shifts = []
     stagepos = []
@@ -203,7 +203,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
 def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go too 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): """) == "go":
+        if confirm and not raw_input("\n >> Go to 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): """) == "go":
             return
         else:
             calib = calibrate_mag1_live(ctrl, save_images=True)

@@ -343,8 +343,7 @@ class SimuMicroscope(object):
 
     def getSpotSize(self):
         """0-based indexing for GetSpotSize, add 1 for consistency"""
-        value, result = self.eos3.GetSpotSize()
-        return value + 1
+        return self.spotsize
 
     def setSpotSize(self, value):
         self.spotsize = value

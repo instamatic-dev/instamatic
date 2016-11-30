@@ -140,7 +140,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
     import glob
     keys = ("DiffShift", "BeamShift")
     if not patterns:
-        if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image (fluorescent screen works well for this)\n(type 'go' to start): """) == "go":
+        if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image \n(type 'go' to start): """) == "go":
             return
         else:
             cs = []
