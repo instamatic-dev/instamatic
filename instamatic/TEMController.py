@@ -34,6 +34,7 @@ class DiffFocus(object):
         super(DiffFocus, self).__init__()
         self._getter = tem.getDiffFocus
         self._setter = tem.setDiffFocus
+        self._tem = tem
 
     def __repr__(self):
         value = self.value
@@ -63,6 +64,7 @@ class Brightness(object):
         super(Brightness, self).__init__()
         self._getter = tem.getBrightness
         self._setter = tem.setBrightness
+        self._tem = tem
 
     def __repr__(self):
         value = self.value
@@ -83,7 +85,10 @@ class Brightness(object):
         self.set(value)
 
     def max(self):
-        self.set(65535)
+        self.set(self._tem.MAX)
+
+    def min(self):
+        self.set(self._tem.MIN)
 
 
 class Magnification(object):
@@ -141,7 +146,9 @@ class GunShift(object):
         super(GunShift, self).__init__()
         self._setter = tem.setGunShift
         self._getter = tem.getGunShift
-        
+        self._tem = tem
+        self.name = "GUN1"
+
     def __repr__(self):
         x, y = self.get()
         return "GunShift(x={}, y={})".format(x, y)
@@ -170,6 +177,9 @@ class GunShift(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
 
 class GunTilt(object):
     """docstring for GunTilt"""
@@ -177,7 +187,9 @@ class GunTilt(object):
         super(GunTilt, self).__init__()
         self._setter = tem.setGunTilt
         self._getter = tem.getGunTilt
-        
+        self._tem = tem
+        self.name = "GUN2"
+
     def __repr__(self):
         x, y = self.get()
         return "GunTilt(x={}, y={})".format(x, y)
@@ -206,6 +218,9 @@ class GunTilt(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)    
+
 
 class BeamShift(object):
     """docstring for BeamShift"""
@@ -213,7 +228,9 @@ class BeamShift(object):
         super(BeamShift, self).__init__()
         self._setter = tem.setBeamShift
         self._getter = tem.getBeamShift
-        
+        self._tem = tem
+        self.name = "CLA1"
+
     def __repr__(self):
         x, y = self.get()
         return "BeamShift(x={}, y={})".format(x, y)
@@ -242,6 +259,9 @@ class BeamShift(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
 
 class BeamTilt(object):
     """docstring for BeamTilt"""
@@ -249,6 +269,8 @@ class BeamTilt(object):
         super(BeamTilt, self).__init__()
         self._setter = tem.setBeamTilt
         self._getter = tem.getBeamTilt
+        self._tem = tem
+        self.name = "CLA2"
         
     def __repr__(self):
         x, y = self.get()
@@ -278,6 +300,9 @@ class BeamTilt(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
 
 class DiffShift(object):
     """docstring for DiffShift"""
@@ -285,6 +310,8 @@ class DiffShift(object):
         super(DiffShift, self).__init__()
         self._setter = tem.setDiffShift
         self._getter = tem.getDiffShift
+        self._tem = tem
+        self.name = "PLA"
         
     def __repr__(self):
         x, y = self.get()
@@ -314,6 +341,9 @@ class DiffShift(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
 
 class ImageShift(object):
     """docstring for ImageShift"""
@@ -321,6 +351,8 @@ class ImageShift(object):
         super(ImageShift, self).__init__()
         self._setter = tem.setImageShift
         self._getter = tem.getImageShift
+        self._tem = tem
+        self.name = "IS1"
         
     def __repr__(self):
         x, y = self.get()
@@ -350,6 +382,9 @@ class ImageShift(object):
     def y(self, value):
         self.set(self.x, value)
 
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
 
 class StagePosition(object):
     """docstring for StagePosition"""
@@ -358,6 +393,7 @@ class StagePosition(object):
         self._setter = tem.setStagePosition
         self._getter = tem.getStagePosition
         self._reset = tem.forceStageBacklashCorrection
+        self._tem = tem
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -382,6 +418,16 @@ class StagePosition(object):
     def y(self):
         x, y, z, a, b = self.get()
         return y
+
+    @property
+    def xy(self):
+        x, y, z, a, b = self.get()
+        return x, y
+
+    @xy.setter
+    def xy(self, values):
+        x, y = values
+        self.set(x=x, y=y)
 
     @y.setter
     def y(self, value):
@@ -416,6 +462,9 @@ class StagePosition(object):
 
     def reset_xy(self):
         self._reset(x=True, y=True)
+
+    def neutral(self):
+        raise NotImplementedError
 
 
 class TEMController(object):
