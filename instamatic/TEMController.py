@@ -447,6 +447,13 @@ class TEMController(object):
         print
         print self
 
+    @property
+    def spotsize(self):
+        return self.tem.getSpotSize()
+
+    @spotsize.setter
+    def spotsize(self, value):
+        self.tem.setSpotSize(value)
 
     def mode_lowmag(self):
         self.tem.setFunctionMode("lowmag")
@@ -481,6 +488,7 @@ class TEMController(object):
                           str(self.magnification),
                           str(self.difffocus),
                           str(self.brightness),
+                          "SpotSize({})".format(self.spotsize),
                           "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
 
     def to_dict(self):
@@ -495,7 +503,8 @@ class TEMController(object):
             'StagePosition': self.stageposition.get(),
             'Magnification': self.magnification.get(),
             'DiffFocus': self.difffocus.get(),
-            'Brightness': self.brightness.get()
+            'Brightness': self.brightness.get(),
+            'SpotSize': self.tem.getSpotSize
         }
         return d
 
@@ -511,7 +520,8 @@ class TEMController(object):
             'StagePosition': self.stageposition.set,
             'Magnification': self.magnification.set,
             'DiffFocus': self.difffocus.set,
-            'Brightness': self.brightness.set
+            'Brightness': self.brightness.set,
+            'SpotSize': self.tem.setSpotSize
         }
 
         mode = d.pop("FunctionMode")
