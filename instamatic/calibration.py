@@ -5,6 +5,7 @@ import lmfit
 from tools import *
 
 from scipy.stats import linregress
+import config
 
 import pickle
 
@@ -13,6 +14,14 @@ CALIB_BEAMSHIFT = "calib_beamshift.pickle"
 CALIB_BRIGHTNESS = "calib_brightness.pickle"
 CALIB_DIFFSHIFT = "calib_diffshift.pickle"
 CALIB_DIRECTBEAM = "calib_directbeam.pickle"
+
+
+def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"):
+    a,b,c = config.diffraction_pixelsize_fit_parameters
+    def f(x, a, b, c):
+        return a*(x-c) + b
+    
+    return f(difffocus, a, b, c) * config.diffraction_pixelsize[cameralength]/binsize
 
 
 class CalibDirectBeam(object):

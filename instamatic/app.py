@@ -12,6 +12,8 @@ from calibration import CalibStage, CalibBrightness, CalibBeamShift, CalibDiffSh
 import matplotlib.pyplot as plt
 import fileio
 
+import config
+
 def circle_center(A, B, C):
     """Finds the center of a circle from 3 positions on the circumference
 
@@ -379,13 +381,18 @@ def do_experiment(ctrl=None, **kwargs):
     image_binsize   = kwargs.get("image_binsize",       2   )
     image_exposure  = kwargs.get("image_exposure",      0.1 )
     image_spotsize  = kwargs.get("image_spotsize",      1   )
+    image_dimensions = config.mag1_dimensions[magnification]
+
     diff_binsize    = kwargs.get("diff_binsize",        2   )
     diff_exposure   = kwargs.get("diff_exposure",       0.1 )
     diff_brightness = kwargs["diff_brightness"]
     diff_difffocus  = kwargs["diff_difffocus"]
     diff_spotsize   = kwargs.get("diff_spotsize",       5   )
-    angle = kwargs["angle"]
-    
+    diff_cameralength = kwargs.get("diff_cameralength",       1500)
+
+    diff_pixelsize  = calibration.get_diffraction_pixelsize(diff_difffocus, diff_cameralength, binsize=diff_binsize, camera="orius")
+    camera_rotation_angle = config.camera_rotation_vs_stage_xy
+
     import atexit
     atexit.register(ctrl.restore)
 
@@ -401,10 +408,9 @@ def do_experiment(ctrl=None, **kwargs):
     neutral_beamshift = calib_beamshift.center()
     ctrl.beamshift.set(*neutral_beamshift) # calib_beamshift.reference_shift?
 
-    from config import mag1_dimensions
-    box_x, box_y = mag1_dimensions[magnification]
+    box_x, box_y = image_dimensions
 
-    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=angle, plot=False)
+    x_offsets, y_offsets = get_offsets(box_x, box_y, radius, k=1, padding=2, angle=camera_rotation_angle, plot=False)
     x_offsets *= 1000
     y_offsets *= 1000
 
@@ -478,6 +484,7 @@ def do_experiment(ctrl=None, **kwargs):
             h["exp_hole_number"] = i
             h["exp_image_number"] = j
             h["exp_offset"] = (x_offset, y_offset)
+            h["ImageDimensions"] = image_dimensions
             write_tiff(outfile, img, header=h)
 
             # plot_props(img, crystals, fname=outfile+".png")
@@ -523,6 +530,7 @@ def do_experiment(ctrl=None, **kwargs):
                 h["exp_hole_number"] = i
                 h["exp_image_number"] = j
                 h["exp_pattern_number"] = k
+                h["ImagePixelsize"] = diff_pixelsize
                 write_tiff(outfile, img, header=h)
 
             print

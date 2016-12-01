@@ -74,3 +74,32 @@ mag1_dimensions = {
 1500000: (0.00002724*2048, 0.00002724*2048),
 2000000: (0.00002043*2048, 0.00002043*2048)
 }
+
+# Diffraction mode
+# Pixel dimensions for different camera lengths with parallel beam
+# Calibration by Wei Wan (RED) for Orius LaB6
+# x,y dimensions for 1 pixel, 1/XX Angstrom^-1
+diffraction_pixeldimensions = {
+  600 : 0.00735576,
+  800 : 0.00544891,
+  1000: 0.004202,
+  1200: 0.0036496,
+  1500: 0.00285546,
+  2000: 0.00213076,
+  2500: 0.00169945,
+  3000: 0.00141621,
+  3500: 0.0012139,
+  4000: 0.00106216  
+}
+
+# calibration values for the scaling of the diffraction pattern when convergent beam is used
+# To calibrate: Change brightness, adjust diffraction focus, take diffraction pattern
+# use logpolar cross correlation to find scaling between parameters
+# scaling = a * (difffocus - c) + b
+diffraction_pixelsize_fit_parameters = [ -3.72964471e-05,  -1.00023069e+00,   7.36028832e+04]
+
+
+# output from instamatic.calibrate_stage_mag1
+# this is the rotation angle of the camera with regards to the stage xy directions
+# it is related to the direction of the ROTATION AXIS in RED // chi in Snapkit
+camera_rotation_vs_stage_xy = -0.71 # radians
