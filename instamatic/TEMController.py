@@ -553,7 +553,7 @@ class TEMController(object):
             'Magnification': self.magnification.get(),
             'DiffFocus': self.difffocus.get(),
             'Brightness': self.brightness.get(),
-            'SpotSize': self.tem.getSpotSize
+            'SpotSize': self.tem.getSpotSize()
         }
         return d
 

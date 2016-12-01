@@ -392,6 +392,7 @@ def do_experiment(ctrl=None, **kwargs):
     ctrl.mode_diffraction()
     print raw_input(" >> Getting neutral diffraction shift, press enter to continue")
     neutral_diffshift = np.array(ctrl.diffshift.get())
+    print neutral_diffshift
     print "DiffShift(x={}, y={})".format(*neutral_diffshift)
 
     ctrl.mode_mag1()
@@ -426,6 +427,7 @@ def do_experiment(ctrl=None, **kwargs):
     print "    hit 'Ctrl+C' to interrupt the script"
 
     for i, (x, y) in enumerate(centers):
+
         try:
             ctrl.stageposition.set(x=x, y=y)
         except ValueError as e:
@@ -746,6 +748,7 @@ def main():
     ready = status["ready"]["ok"]
 
     if ready:
+        params = json.load(open("params.json","r"))
         if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
             exit()
         print

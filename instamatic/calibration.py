@@ -282,7 +282,7 @@ class CalibBeamShift(object):
         if ctrl:
             ctrl.beamshift.set(*beamshift)
         else:
-            return ctrl
+            return beamshift
 
 
 class CalibBrightness(object):

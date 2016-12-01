@@ -2,10 +2,12 @@
 
 from Tkinter import *
 from tkFileDialog import *
+import tkMessageBox
 from ttk import *
 import os
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class InstamaticGUI(Toplevel):
 

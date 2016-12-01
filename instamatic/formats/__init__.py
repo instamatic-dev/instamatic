@@ -38,7 +38,7 @@ def read_tiff(fname):
     img = tiff.getImage(0)
     header = tiff.getInfo(0)
 
-    info = header.pop("ImageDescription", None)
+    info = header.pop("imageDescription", None)
     if info:
         try:
             header.update(yaml.load(info))
