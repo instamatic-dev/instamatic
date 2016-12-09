@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
-from camera import Camera
+from instamatic.camera import Camera
 import time
-from formats import write_tiff
+from instamatic.formats import write_tiff
 
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False

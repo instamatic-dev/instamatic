@@ -2,16 +2,16 @@
 
 import sys, os
 import numpy as np
-import json
-
-from cross_correlate import cross_correlate
-
-from TEMController import initialize
-
-from calibration import CalibDirectBeam, fit_affine_transformation
 import matplotlib.pyplot as plt
-from find_holes import find_holes
-from tools import *
+
+from instamatic.tools import *
+from instamatic.cross_correlate import cross_correlate
+from instamatic.TEMController import initialize
+from fit import fit_affine_transformation
+from filenames import *
+
+from instamatic.find_holes import find_holes
+
 
 refine_params = {
     "DiffShift": {"rotation": True, "translation": False, "shear": False},
@@ -24,6 +24,113 @@ calib_params = {
     "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
     "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561}
 }
+
+
+class CalibDirectBeam(object):
+    """docstring for CalibDirectBeam"""
+    def __init__(self, dct={}):
+        super(CalibDirectBeam, self).__init__()
+        self._dct = dct
+    
+    def __repr__(self):
+        ret = "CalibDirectBeam("
+        for key in self._dct.keys():
+            r = self._dct[key]["r"]
+            t = self._dct[key]["t"]
+
+            ret += "\n {}(rotation=\n{},\n  translation={})".format(key, r, t)
+        ret += ")"
+        return ret
+
+    @classmethod
+    def combine(cls, lst):
+        return cls({k: v for c in lst for k, v in c._dct.items()})
+
+    def any2pixelshift(self, shift, key):
+        r = self._dct[key]["r"]
+        t = self._dct[key]["t"]
+
+        shift = np.array(shift)
+        r_i = np.linalg.inv(r)
+        pixelshift = np.dot(shift - t, r_i)
+        return pixelshift
+
+    def pixelshift2any(self, pixelshift, key):
+        r = self._dct[key]["r"]
+        t = self._dct[key]["t"]
+
+        pixelshift = np.array(pixelshift)
+        shift = np.dot(pixelshift, r) + t
+        return shift
+
+    def beamshift2pixelshift(self, beamshift):
+        return self.any2pixelshift(shift=beamshift, key="BeamShift")
+
+    def diffshift2pixelshift(self, diffshift):
+        return self.any2pixelshift(shift=diffshift, key="DiffShift")
+
+    def imageshift2pixelshift(self, imageshift):
+        return self.any2pixelshift(shift=imageshift, key="ImageShift")
+
+    def imagetilt2pixelshift(self, imagetilt):
+        return self.any2pixelshift(shift=imagetilt, key="ImageTilt")
+
+    def pixelshift2beamshift(self, pixelshift):
+        return self.pixelshift2any(pixelshift=pixelshift, key="BeamShift")
+
+    def pixelshift2diffshift(self, pixelshift):
+        return self.pixelshift2any(pixelshift=pixelshift, key="DiffShift")
+
+    def pixelshift2imageshift(self, pixelshift):
+        return self.pixelshift2any(pixelshift=pixelshift, key="ImageShift")
+
+    def pixelshift2imagetilt(self, pixelshift):
+        return self.pixelshift2any(pixelshift=pixelshift, key="ImageTilt")
+
+    @classmethod
+    def from_data(cls, shifts, readout, key, header=None, **dct):
+        r, t = fit_affine_transformation(shifts, readout, **dct)
+
+        d = {
+            "header": header,
+            "data_shifts": shifts,
+            "data_readout": readout,
+            "r": r,
+            "t": t
+        }
+
+        return cls({key:d})
+
+    @classmethod
+    def from_file(cls, fn=CALIB_DIRECTBEAM):
+        import pickle
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_directbeam"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_DIRECTBEAM):
+        pickle.dump(self, open(fn, "w"))
+
+    def add(self, key, dct):
+        """Add calibrations to self._dct
+        Must contain keys: 'r', 't'
+        optional: 'data_shifts', 'data_readout'
+        """
+        self._dct[key] = dct
+
+    def plot(self, key):
+        data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
+        data_readout = self._dct[key]["data_readout"] # microscope readout
+
+        shifts_ = self.any2pixelshift(shift=data_readout, key=key)
+
+        plt.scatter(*data_shifts.T, label="Observed pixelshifts shift")
+        plt.scatter(*shifts_.T, label="Calculated shift from readout from BeamShift")
+        plt.title(key + " vs. Direct beam position")
+        plt.legend()
+        plt.show()
 
 
 def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False, **kwargs):
@@ -167,7 +274,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
     calib.to_file()
 
 
-def calibrate_directbeam_entry():
+def main_entry():
     if "help" in sys.argv:
         print """
 Program to calibrate PLA to compensate for beamshift movements
@@ -176,8 +283,8 @@ Usage:
     instamatic.calibrate_directbeam
         To start live calibration routine on the microscope
     
-    instamatic.calibrate_directbeam calibpla.json
-        To perform calibration from saved file
+    instamatic.calibrate_directbeam (DiffShift:pattern.tiff) (BeamShift:pattern.tiff)
+        To perform calibration from saved images
 """
         exit()
     if len(sys.argv[1:]) > 0:
@@ -187,4 +294,4 @@ Usage:
         calibrate_directbeam(ctrl=ctrl)
 
 if __name__ == '__main__':
-    calibrate_directbeam_entry()
+    main_entry()

@@ -216,7 +216,7 @@ class InstamaticGUI(Toplevel):
             self.startbutton.config(state=NORMAL)
 
     def run_stage_lowmag(self):
-        from instamatic.calibrate_stage_lowmag import calibrate_stage_lowmag
+        from instamatic.calibrate.calibrate_stage_lowmag import calibrate_stage_lowmag
         plt.ion() # necessary to prevent blocking of stdout after plot
 
         okay = tkMessageBox.askokcancel("Calibrate lowmag", "Go to 100x mag, and move the sample stage so that the grid center (clover) is in the middle of the image, press OK to continue", icon='warning')
@@ -225,7 +225,7 @@ class InstamaticGUI(Toplevel):
         print "done"
 
     def run_stage_mag1(self):
-        from instamatic.calibrate_stage_mag1 import calibrate_stage_mag1
+        from instamatic.calibrate.calibrate_stage_mag1 import calibrate_stage_mag1
         plt.ion() # necessary to prevent blocking of stdout after plot
 
         okay = tkMessageBox.askokcancel("Calibrate beamshift", "Go to 5000x mag, and move the sample stage so that a strong feature is clearly in the middle of the image, press OK to continue", icon='warning')
@@ -234,7 +234,7 @@ class InstamaticGUI(Toplevel):
         print "done"
 
     def run_beamshift(self):
-        from instamatic.calibrate_beamshift import calibrate_beamshift
+        from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
         plt.ion() # necessary to prevent blocking of stdout after plot
 
         okay = tkMessageBox.askokcancel("Calibrate beamshift", "Go to 2500x mag, and move the beam by beamshift so that is in the middle of the image (use reasonable size), press OK to continue", icon='warning')
@@ -243,7 +243,7 @@ class InstamaticGUI(Toplevel):
         print "done"
 
     def run_directbeam(self):
-        from instamatic.calibrate_directbeam import calibrate_directbeam
+        from instamatic.calibrate.calibrate_directbeam import calibrate_directbeam
         plt.ion() # necessary to prevent blocking of stdout after plot
 
         okay = tkMessageBox.askokcancel("Calibrate directbeam", "Go to diffraction mode (150x) so that the beam is focused and in the middle of the image, press OK to continue", icon='warning')

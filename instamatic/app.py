@@ -8,11 +8,11 @@ from find_holes import plot_props, find_holes, calculate_hole_area
 import TEMController
 
 from tools import *
-from calibration import CalibStage, CalibBrightness, CalibBeamShift, CalibDiffShift, CalibDirectBeam
+from calibrate import CalibStage, CalibBrightness, CalibBeamShift, CalibDirectBeam
 import matplotlib.pyplot as plt
 import fileio
 
-import config
+from TEMController import config
 
 def circle_center(A, B, C):
     """Finds the center of a circle from 3 positions on the circumference
@@ -511,17 +511,11 @@ def do_experiment(ctrl=None, **kwargs):
                 diffshift_offset = calib_directbeam.pixelshift2diffshift(pixelshift)
                 diffshift = neutral_diffshift - diffshift_offset
 
-                print "bs", beamshift_offset, "ds", diffshift_offset
-                
-                # diffshift[0] += 1750               
-                # diffshift[1] += 5000                
-                    
                 ctrl.diffshift.set(*diffshift.astype(int))
 
                 outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                 comment = "Hole {} image {} Crystal {}".format(i, j, k)
-                print "{}/{}:".format(k+1, ncrystals),
-                img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment)
+                img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment, verbose=False)
                 
                 h["exp_neutral_diffshift"] = neutral_beamshift
                 h["exp_neutral_beamshift"] = neutral_diffshift
@@ -532,6 +526,7 @@ def do_experiment(ctrl=None, **kwargs):
                 h["exp_pattern_number"] = k
                 h["ImagePixelsize"] = diff_pixelsize
                 write_tiff(outfile, img, header=h)
+                print "Crystal {}/{} => {}".format(k+1, ncrystals, outfile)
 
             print
             print " >> Switching back to image mode"

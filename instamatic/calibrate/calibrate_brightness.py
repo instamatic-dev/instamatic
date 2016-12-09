@@ -2,12 +2,72 @@
 
 import sys, os
 import numpy as np
+import matplotlib.pyplot as plt
 
-from TEMController import initialize
+from instamatic.tools import *
+from instamatic.TEMController import initialize
+from filenames import *
 
-from calibration import CalibBrightness
-from find_holes import find_holes
-from tools import *
+from instamatic.find_holes import find_holes
+
+
+class CalibBrightness(object):
+    """docstring for calib_brightness"""
+    def __init__(self, slope, intercept):
+        self.slope = slope
+        self.intercept = intercept
+        self.has_data = False
+
+    def __repr__(self):
+        return "CalibBrightness(slope={}, intercept={})".format(self.slope, self.intercept)
+
+    def brightness_to_pixelsize(self, val):
+        return self.slope*val + self.intercept
+
+    def pixelsize_to_brightness(self, val):
+        return int((val - self.intercept) / self.slope)
+
+    @classmethod
+    def from_data(cls, brightness, pixeldiameter, header=None):
+        slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
+        print
+        print "r_value: {:.4f}".format(r_value)
+        print "p_value: {:.4f}".format(p_value)
+
+        c = cls(slope=slope, intercept=intercept)
+        c.data_brightness = brightness
+        c.data_pixeldiameter = pixeldiameter
+        c.has_data = True
+        c.header = header
+        return c
+
+    @classmethod
+    def from_file(cls, fn=CALIB_BRIGHTNESS):
+        import pickle
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_brightness"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_BRIGHTNESS):
+        pickle.dump(self, open(fn, "w"))
+
+    def plot(self):
+        if not self.has_data:
+            pass
+
+        mn = self.data_brightness.min()
+        mx = self.data_brightness.max()
+        extend = abs(mx - mn)*0.1
+        x = np.linspace(mn - extend, mx + extend)
+        y = self.brightness_to_pixelsize(x)
+    
+        plt.plot(x, y, "r-", label="linear regression")
+        plt.scatter(self.data_brightness, self.data_pixeldiameter)
+        plt.title("Fit brightness")
+        plt.legend()
+        plt.show()
 
 
 def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_images=False):
@@ -112,7 +172,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     calib.to_file()
 
 
-def calibrate_brightness_entry():
+def main_entry():
     if "help" in sys.argv:
         print """
 Program to calibrate brightness of microscope
@@ -134,5 +194,5 @@ prepare
         calibrate_brightness(fns)
 
 if __name__ == '__main__':
-    calibrate_brightness_entry()
+    main_entry()
 

@@ -9,13 +9,11 @@ logging.basicConfig(
 import sys, os
 import numpy as np
 
-from tools import *
-
-from cross_correlate import cross_correlate
-
-from TEMController import initialize
-
-from calibration import CalibStage, fit_affine_transformation
+from instamatic.tools import *
+from instamatic.cross_correlate import cross_correlate
+from instamatic.TEMController import initialize
+from fit import fit_affine_transformation
+from filenames import *
 
 
 def plot_it(arr1, arr2, params):
@@ -216,7 +214,7 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
     # calib.to_file()
 
 
-def calibrate_stage_mag1_entry():
+def main_entry():
 
     if "help" in sys.argv:
         print """
@@ -241,4 +239,4 @@ prepare
 
 
 if __name__ == '__main__':
-    calibrate_mag1_entry()
+    main_entry()

@@ -2,14 +2,90 @@
 
 import sys, os
 import numpy as np
+import matplotlib.pyplot as plt
 
-from cross_correlate import cross_correlate
+from instamatic.tools import *
+from instamatic.cross_correlate import cross_correlate
+from instamatic.TEMController import initialize
+from fit import fit_affine_transformation
+from filenames import *
 
-from TEMController import initialize
+from instamatic.find_holes import find_holes
 
-from calibration import CalibBeamShift
-from find_holes import find_holes
-from tools import *
+
+class CalibBeamShift(object):
+    """Simple class to hold the methods to perform transformations from one setting to another
+    based on calibration results"""
+    def __init__(self, transform, reference_shift, reference_pixel):
+        super(CalibBeamShift, self).__init__()
+        self.transform = transform
+        self.reference_shift = reference_shift
+        self.reference_pixel = reference_pixel
+        self.has_data = False
+   
+    def __repr__(self):
+        return "CalibBeamShift(transform=\n{},\n   reference_shift=\n{},\n   reference_pixel=\n{})".format(
+            self.transform, self.reference_shift, self.reference_pixel)
+
+    def beamshift_to_pixelcoord(self, beamshift):
+        """Converts from beamshift x,y to pixel coordinates"""
+        r_i = np.linalg.inv(self.transform)
+        pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
+        return pixelcoord
+        
+    def pixelcoord_to_beamshift(self, pixelcoord):
+        """Converts from pixel coordinates to beamshift x,y"""
+        r = self.transform
+        beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
+        return beamshift.astype(int)
+
+    @classmethod
+    def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None):
+        r, t = fit_affine_transformation(shifts, beampos)
+
+        c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
+        c.data_shifts = shifts
+        c.data_beampos = beampos
+        c.has_data = True
+        c.header = header
+        return c
+
+    @classmethod
+    def from_file(cls, fn=CALIB_BEAMSHIFT):
+        """Read calibration from file"""
+        import pickle
+        try:
+            return pickle.load(open(fn, "r"))
+        except IOError as e:
+            prog = "instamatic.calibrate_beamshift"
+            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+
+    def to_file(self, fn=CALIB_BEAMSHIFT):
+        """Save calibration to file"""
+        pickle.dump(self, open(fn, "w"))
+
+    def plot(self):
+        if not self.has_data:
+            return
+
+        beampos = self.data_beampos
+        shifts = self.data_shifts
+
+        r_i = np.linalg.inv(self.transform)
+        beampos_ = np.dot(beampos, r_i)
+
+        plt.scatter(*shifts.T, label="Observed pixel shifts")
+        plt.scatter(*beampos_.T, label="Positions in pixel coords")
+        plt.legend()
+        plt.show()
+
+    def center(self, ctrl=None):
+        """Return beamshift values to center the beam in the frame"""
+        beamshift = self.pixelcoord_to_beamshift((1024, 1024))
+        if ctrl:
+            ctrl.beamshift.set(*beamshift)
+        else:
+            return beamshift
 
 
 def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False):
@@ -159,7 +235,7 @@ def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=Tr
     calib.to_file()
 
 
-def calibrate_beamshift_entry():
+def main_entry():
     if "help" in sys.argv:
         print """
 Program to calibrate beamshift of microscope
@@ -182,4 +258,4 @@ Usage:
 
 
 if __name__ == '__main__':
-    calibrate_beamshift_entry()
+    main_entry()

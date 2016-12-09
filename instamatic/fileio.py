@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 import pickle
 import os
-from calibration import CalibStage
-from calibration import CalibBrightness
-from calibration import CalibBeamShift
-from calibration import CalibDiffShift
+from calibrate.filenames import *
 import numpy as np
 
+from calibrate import CalibBeamShift
+from calibrate import CalibBrightness
+from calibrate import CalibDirectBeam
+from calibrate import CalibStage
 
-CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
-CALIB_BEAMSHIFT = "calib_beamshift.pickle"
-CALIB_BRIGHTNESS = "calib_brightness.pickle"
-CALIB_DIFFSHIFT = "calib_diffshift.pickle"
 HOLE_COORDS = "hole_coords.npy"
 EXPERIMENT = "experiment.pickle"
 

@@ -19,7 +19,7 @@ import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
-from config import lowmag_pixeldimensions
+from TEMController.config import lowmag_pixeldimensions
 from tools import *
 
 
