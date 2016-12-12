@@ -109,7 +109,7 @@ def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False
         print
         print textstr
         
-	cx, cy = (box_x/2.0, box_y/2.0)
+        cx, cy = (box_x/2.0, box_y/2.0)
         if angle:
             cx, cy = np.dot((cx, cy), r)
         
@@ -127,7 +127,7 @@ def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False
                 rect = patches.Rectangle((dx - cx, dy - cy), box_x, box_y, fill=False, angle=np.degrees(-angle))
                 ax.add_artist(rect)
             
-	    ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+            ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
             ax.set_xlim(-100, 100)
@@ -390,6 +390,8 @@ def do_experiment(ctrl=None, **kwargs):
     diff_spotsize   = kwargs.get("diff_spotsize",       5   )
     diff_cameralength = kwargs.get("diff_cameralength",       1500)
 
+    sample_rotation_angles = [-10, -5, 5, 10]
+
     diff_pixelsize  = calibration.get_diffraction_pixelsize(diff_difffocus, diff_cameralength, binsize=diff_binsize, camera="orius")
     camera_rotation_angle = config.camera_rotation_vs_stage_xy
 
@@ -527,6 +529,25 @@ def do_experiment(ctrl=None, **kwargs):
                 h["ImagePixelsize"] = diff_pixelsize
                 write_tiff(outfile, img, header=h)
                 print "Crystal {}/{} => {}".format(k+1, ncrystals, outfile)
+             
+                for rotation_angle in sample_rotation_angles:
+                    ctrl.stageposition.a = rotation_angle
+
+                    outfile = "image_{:04d}_{:04d}_{:04d}_{}".format(i, j, k, rotation_angle)
+                    img, h = ctrl.getImage(binsize=diff_binsize, exposure=diff_exposure, comment=comment, verbose=False)
+                    
+                    h["exp_neutral_diffshift"] = neutral_beamshift
+                    h["exp_neutral_beamshift"] = neutral_diffshift
+                    h["exp_diffshift_offset"] = diffshift_offset
+                    h["exp_beamshift_offset"] = beamshift_offset
+                    h["exp_hole_number"] = i
+                    h["exp_image_number"] = j
+                    h["exp_pattern_number"] = k
+                    h["ImagePixelsize"] = diff_pixelsize
+                    write_tiff(outfile, img, header=h)
+                    print "Crystal {}/{} => {}".format(k+1, ncrystals, outfile)
+
+                ctrl.stageposition.a = 0
 
             print
             print " >> Switching back to image mode"
@@ -756,6 +777,10 @@ def main():
             exit()
         print
         ctrl = TEMController.initialize()
+
+        # from experiment import Experiment
+        # exp = Experiment(ctrl, **params)
+        # exp.run()
         do_experiment(ctrl, **params)
     else:
         print "\nExperiment not ready yet!!"
