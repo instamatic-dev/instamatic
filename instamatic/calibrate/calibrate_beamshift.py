@@ -12,6 +12,7 @@ from filenames import *
 
 from instamatic.find_holes import find_holes
 
+import pickle
 
 class CalibBeamShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another

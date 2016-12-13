@@ -15,6 +15,7 @@ from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
 
+import pickle
 
 def plot_it(arr1, arr2, params):
     import matplotlib.pyplot as plt

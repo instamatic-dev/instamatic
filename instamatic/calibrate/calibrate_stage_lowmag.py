@@ -16,6 +16,8 @@ from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
 
+import pickle
+
 
 class CalibStage(object):
     """Simple class to hold the methods to perform transformations from one setting to another
@@ -171,7 +173,6 @@ class CalibStage(object):
 
     @classmethod
     def from_file(cls, fn=CALIB_STAGE_LOWMAG):
-        import pickle
         try:
             return pickle.load(open(fn, "r"))
         except IOError as e:

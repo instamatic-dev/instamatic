@@ -10,6 +10,7 @@ from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
 
+import pickle
 
 class CalibDiffShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another
