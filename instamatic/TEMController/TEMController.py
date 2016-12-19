@@ -466,7 +466,7 @@ class StagePosition(object):
     def neutral(self):
         self.set(x=0, y=0, z=0, a=0, b=0)
 
-    def rotate_to(self, target, start=None, speed=5, delay=0.01, wait_for_stage=False):
+    def rotate_to(self, target, start=None, speed=1.0, delay=0.05, wait_for_stage=False):
         """
         Control rotation of the microscope
 
@@ -479,7 +479,8 @@ class StagePosition(object):
         delay: float
             delay in seconds between updates sent to the microscope (accurate to 10 - 13 milliseconds)
         """
-        if not start:
+
+        if start is None:
             start = self.a
         else:
             self.a = start
@@ -494,11 +495,13 @@ class StagePosition(object):
         while cmp(angle, target) == m:
             t1 = time.time()
             angle = start - m * (t1 - t0) * speed
-            ctrl.tem.stage3.SetTiltAngle(angle)
+            self._tem.stage3.SetTiltXAngle(angle)
             time.sleep(delay)
             while wait_for_stage and self._tem.stage3.GetStatus()[3]:  # is stage moving?
                 pass
-            # print t1-t0, angle
+            print round(t1-t0,2), round(angle,2)
+
+        print "speed:", round((target-start) / (t1-t0),2)
 
 
 class TEMController(object):
@@ -623,7 +626,7 @@ class TEMController(object):
 
         print self
 
-    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False):
+    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False):
         """Retrieve image as numpy array from camera
 
         Parameters:

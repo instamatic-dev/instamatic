@@ -15,7 +15,7 @@ def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"
     def f(x, a, b, c):
         return a*(x-c) + b
     
-    return f(difffocus, a, b, c) * config.diffraction_pixelsize[cameralength]/binsize
+    return f(difffocus, a, b, c) * config.diffraction_pixeldimensions[cameralength]/binsize
 
 
 def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, **x0):

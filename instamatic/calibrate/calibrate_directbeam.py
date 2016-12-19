@@ -12,6 +12,7 @@ from filenames import *
 
 from instamatic.find_holes import find_holes
 
+import pickle
 
 refine_params = {
     "DiffShift": {"rotation": True, "translation": False, "shear": False},
@@ -20,10 +21,12 @@ refine_params = {
 
 calib_params = {
     "DiffShift": {"gridsize":5, "stepsize":1500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
-    "BeamShift": {"gridsize":5, "stepsize":750, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "BeamShift": {"gridsize":5, "stepsize":350, "magnification": 5000, "brightness": 44335, "difffocus":20561},
     "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
     "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561}
 }
+#Beamshift @  5000x: 700
+#Beamshift @ 10000x: 350
 
 
 class CalibDirectBeam(object):
@@ -245,7 +248,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
 
 def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=True):
     import glob
-    keys = ("DiffShift", "BeamShift")
+    keys = ("BeamShift", "DiffShift")
     if not patterns:
         if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image \n(type 'go' to start): """) == "go":
             return

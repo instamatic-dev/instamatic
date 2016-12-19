@@ -10,6 +10,7 @@ from filenames import *
 
 from instamatic.find_holes import find_holes
 
+import pickle
 
 class CalibBrightness(object):
     """docstring for calib_brightness"""

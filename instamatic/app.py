@@ -8,7 +8,7 @@ from find_holes import plot_props, find_holes, calculate_hole_area
 import TEMController
 
 from tools import *
-from calibrate import CalibStage, CalibBrightness, CalibBeamShift, CalibDirectBeam
+from calibrate import CalibStage, CalibBrightness, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
 import matplotlib.pyplot as plt
 import fileio
 
@@ -391,8 +391,9 @@ def do_experiment(ctrl=None, **kwargs):
     diff_cameralength = kwargs.get("diff_cameralength",       1500)
 
     sample_rotation_angles = [-10, -5, 5, 10]
+    # sample_rotation_angles = []
 
-    diff_pixelsize  = calibration.get_diffraction_pixelsize(diff_difffocus, diff_cameralength, binsize=diff_binsize, camera="orius")
+    diff_pixelsize = get_diffraction_pixelsize(diff_difffocus, diff_cameralength, binsize=diff_binsize, camera="orius")
     camera_rotation_angle = config.camera_rotation_vs_stage_xy
 
     import atexit
@@ -435,6 +436,9 @@ def do_experiment(ctrl=None, **kwargs):
     print "    hit 'Ctrl+C' to interrupt the script"
 
     for i, (x, y) in enumerate(centers):
+
+        if i != 2:
+            continue
 
         try:
             ctrl.stageposition.set(x=x, y=y)
@@ -567,6 +571,7 @@ def plot_hole_stage_positions(coords=None, calib=None, ctrl=None, picker=False):
     fig = plt.figure()
     reflabel = "Reference position"
     holelabel = "Hole position"
+
     plt.scatter(*calib.reference_position, c="red", label="Reference position", picker=8)
     plt.scatter(coords[:,0], coords[:,1], c="blue", label="Hole position", picker=8)
     for i, (x,y) in enumerate(coords):
@@ -611,7 +616,7 @@ def goto_hole_entry():
     except IndexError:
         print "\nUsage: instamatic.goto_hole [N]"
         print
-        plot_hole_stage_positions(coords, calib, ctrl=ctrl, picker=True)
+        plot_hole_stage_positions(coords=coords, calib=calib, ctrl=ctrl, picker=True)
         # num = int(raw_input( "Which number to go to? \n >> [0-{}] ".format(len(coords))))
     else:
         if num > len(coords):
@@ -671,7 +676,7 @@ def map_holes_on_grid(fns, plot=False, save_images=False, callback=None):
     xy = xy[xy[:,0].argsort(axis=0)]
 
     if plot:
-        plot_hole_stage_positions(calib, xy)
+        plot_hole_stage_positions(calib=calib, coords=xy)
 
     print
     print "Found {} unique holes (threshold={})".format(len(xy), threshold)

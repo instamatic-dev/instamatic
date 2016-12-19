@@ -34,7 +34,7 @@ setup(
             'instamatic.find_crystals                 = instamatic.find_crystals:find_crystals_entry',
             'instamatic.find_holes                    = instamatic.find_holes:find_holes_entry',
             'instamatic.camera                        = instamatic.camera.camera:main_entry',
-            'instamatic.controller                    = instamatic.TEMController:main_entry',
+            'instamatic.controller                    = instamatic.TEMController.TEMController:main_entry',
             'instamatic.viewer                        = instamatic.viewer:main',
             'instamatic.calibrate_stage_lowmag        = instamatic.calibrate.calibrate_stage_lowmag:main_entry',
             'instamatic.calibrate_stage_mag1          = instamatic.calibrate.calibrate_stage_mag1:main_entry',
