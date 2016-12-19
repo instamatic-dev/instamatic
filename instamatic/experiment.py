@@ -74,7 +74,23 @@ def get_status():
     return status
 
 
-def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
+def make_grid_on_stage(startpoint, endpoint, padding=2.0):
+    """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
+    stepsize = np.array((0.016*512, 0.016*512))
+    
+    x1, y1 = pos1 = np.array((0, 0))
+    x2, y2 = pos2 = np.array((1000, 1000))
+    
+    pos_delta = pos2 - pos1
+    
+    nx, ny = np.abs(pos_delta / (stepsize + padding)).astype(int)
+    
+    xgrid, ygrid = np.meshgrid(np.linspace(x1, x2, nx), np.linspace(y1, y2, ny))
+    
+    return np.stack((xgrid.flatten(), ygrid.flatten())).T
+
+
+def get_gridpoints_in_hole(nx, ny=0, radius=1, borderwidth=0.8):
     """Make a grid (size=n*n), and return the coordinates of those
     fitting inside a circle (radius=r)
     nx: `int`
@@ -98,7 +114,7 @@ def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
     return xvals*radius, yvals*radius
 
 
-def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
+def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
     """
     box_x: float or int,
         x-dimensions of the box in micrometers. 
@@ -122,7 +138,7 @@ def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False
     
     borderwidth = k*(1.0 - (radius - diff) / radius)
        
-    x_offsets, y_offsets = get_grid(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
+    x_offsets, y_offsets = get_gridpoints_in_hole(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
     
     if angle:
         sin = np.sin(angle)
@@ -134,6 +150,7 @@ def get_offsets(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False
 
     if plot:
         from matplotlib import patches
+
         num = len(x_offsets)
         textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {:.2f}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
         
@@ -180,12 +197,20 @@ class Experiment(object):
 
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
-       
-        d = fileio.load_experiment()
-        self.hole_centers = d["centers"]
-        self.hole_radius = d["radius"] / 1000 # nm -> um
-    
-        self.calib_stage = CalibStage.from_file()
+        
+        try:
+            d = fileio.load_experiment()
+            self.calib_stage = CalibStage.from_file()
+        except IOError as e:
+            print e
+            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue...")
+            x, y, _, _, _ = self.ctrl.stageposition.get()
+            self.hole_centers = np.array([[x,y]])            
+            self.hole_radius = raw_input("How big of an area do you want to sample (radius in um) ? \n >> [500] ") or 500
+        else:
+            self.hole_centers = d["centers"]
+            self.hole_radius = d["radius"] / 1000 # nm -> um
+
         self.calib_beamshift = CalibBeamShift.from_file()
         self.calib_directbeam = CalibDirectBeam.from_file()
     
@@ -212,7 +237,7 @@ class Experiment(object):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets(box_x, box_y, self.hole_radius, k=1, padding=2, angle=self.camera_rotation_angle, plot=False)
+        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=1, padding=2, angle=self.camera_rotation_angle, plot=True)
         self.offsets = offsets * 1000
 
     def initialize_microscope(self):
@@ -282,8 +307,19 @@ class Experiment(object):
         Return
             di: dict, contains information on holes
         """
-
+        auto = False
         for i, (x, y) in enumerate(self.hole_centers):
+            if not auto:
+                answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
+                if answer == "exit":
+                    print " >> Interrupted..."
+                    exit()
+                elif answer == "next":
+                    print " >> Going to next hole"
+                    break
+                elif answer == "auto":
+                    auto = True
+
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
@@ -293,29 +329,32 @@ class Experiment(object):
                 continue
             else:
                 print "\n >> Going to next hole center \n    ->", self.ctrl.stageposition
-                di = {"exp_hole_number": i, "exp_hole_center": (x,y)}
-                yield i, di
+                yield i, (x,y)
             
-    def loop_positions(self, exp_hole_center, **kwargs):
+    def loop_positions(self):
         """Loop over positions in a hole in the copper grid
         Move the stage to each of the positions in self.offsets
 
         Return
-            dj: dict, contains information on positions
+            dct: dict, contains information on positions
         """
-        x, y = exp_hole_center
-        for j, (x_offset, y_offset) in enumerate(self.offsets):
-            try:
-                self.ctrl.stageposition.set(x=x+x_offset, y=y+y_offset)
-            except ValueError as e:
-                print e
-                print " >> Moving to next position..."
-                print
-                continue
-            else:
-                print "\n     >> Going to next position \n        ->", self.ctrl.stageposition
-                dj = {"exp_image_number": j, "exp_hole_offset": (x_offset, y_offset)}
-                yield j, dj
+
+        for i, hole_center in self.loop_centers():
+            hole_x, hole_y = hole_center
+            for j, (x_offset, y_offset) in enumerate(self.offsets):
+                try:
+                    self.ctrl.stageposition.set(x=hole_x+x_offset, y=hole_y+y_offset)
+                except ValueError as e:
+                    print e
+                    print " >> Moving to next position..."
+                    print
+                    continue
+                else:
+                    print "\n     >> Going to next position \n        ->", self.ctrl.stageposition
+                    dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
+                    dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
+                    yield dct
+
 
     def loop_crystals(self, crystal_coords):
         """Loop over crystal coordinates (pixels)
@@ -346,6 +385,7 @@ class Experiment(object):
             self.ctrl.diffshift.set(*diffshift.astype(int))
 
             dk = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset}
+
             yield k, dk
 
     def run(self, ctrl=None, **kwargs):
@@ -364,66 +404,49 @@ class Experiment(object):
                 "ImagePixelsize": self.diff_pixelsize
         }
 
-        for i, di in self.loop_centers():
-            print di
-            auto = False
-            plot = False
-            for j, dj in self.loop_positions(**di):
-                if not auto:
-                    answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
-                    if answer == "exit":
-                        print " >> Interrupted..."
-                        exit()
-                    elif answer == "next":
-                        print " >> Going to next hole"
-                        break
-                    elif answer == "auto":
-                        auto = True
-                    elif answer == "plot":
-                        plot = not plot
+        for i, d_pos in enumerate(self.loop_positions()):
+   
+            outfile = "image_{:04d}".format(i)
     
-                outfile = "image_{:04d}_{:04d}".format(i, j)
-                comment = "Hole {} image {}\n".format(i, j)
+            self.ctrl.tem.setSpotSize(self.image_spotsize)
+            img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure)
+            self.ctrl.tem.setSpotSize(self.diff_spotsize)
     
-                self.ctrl.tem.setSpotSize(self.image_spotsize)
-                img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, comment=comment)
-                self.ctrl.tem.setSpotSize(self.diff_spotsize)
+            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, plot=False) * self.image_binsize
     
-                crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, plot=False) * self.image_binsize
+            for d in (d_image, d_pos):
+                h.update(d)
+            h["exp_crystal_coords"] = crystal_coords.tolist()
+
+            write_tiff(outfile, img, header=h)
     
-                for d in (d_image, di, dj):
+            # plot_props(img, crystals, fname=outfile+".png")
+    
+            for k, dk in self.loop_crystals(crystal_coords):
+                outfile = "image_{:04d}_{:04d}".format(i, k)
+                comment = "Image {} Crystal {}".format(i, k)
+                img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
+                
+                for d in (d_diff, d_pos, dk):
                     h.update(d)
-                h["exp_crystal_coords"] = crystal_coords.tolist()
 
                 write_tiff(outfile, img, header=h)
+             
+                for rotation_angle in self.sample_rotation_angles:
+                    print " >> Rotation angle = ".format(rotation_angle)
+                    self.ctrl.stageposition.a = rotation_angle
     
-                # plot_props(img, crystals, fname=outfile+".png")
-    
-                for k, dk in self.loop_crystals(crystal_coords):
-                    outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
-                    comment = "Hole {} image {} Crystal {}".format(i, j, k)
+                    outfile = "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle)
                     img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
-                    
-                    for d in (d_diff, di, dj, dk):
+                                                
+                    for d in (d_diff, d_pos, dk):
                         h.update(d)
 
                     write_tiff(outfile, img, header=h)
-                 
-                    for rotation_angle in self.sample_rotation_angles:
-                        print " >> Rotation angle = ".format(rotation_angle)
-                        self.ctrl.stageposition.a = rotation_angle
     
-                        outfile = "image_{:04d}_{:04d}_{:04d}_{}".format(i, j, k, rotation_angle)
-                        img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
-                                                    
-                        for d in (d_diff, di, dj, dk):
-                            h.update(d)
-
-                        write_tiff(outfile, img, header=h)
+                self.ctrl.stageposition.a = 0
     
-                    self.ctrl.stageposition.a = 0
-    
-                self.image_mode()
+            self.image_mode()
 
 
 def main_gui():
