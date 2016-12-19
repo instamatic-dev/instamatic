@@ -2,6 +2,77 @@ from formats import write_tiff
 import numpy as np
 import matplotlib.pyplot as plt
 from find_crystals import find_crystals
+import json
+from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
+from TEMController import config
+import fileio
+
+
+def get_status():
+    status = {"stage_lowmag": {"name":"Stage (lowmag)", "ok":False, "msg":"no, please run instamatic.calibrate_stage_lowmag"},
+                "stage_mag1": {"name":"Stage (mag1)", "ok":False, "msg":"no, please run instamatic.calibrate_mag1"},
+                "beamshift": {"name":"BeamShift", "ok":False, "msg":"no, please run instamatic.calibrate_beamshift"},
+                "directbeam": {"name":"DirectBeam", "ok":False, "msg":"no, please run instamatic.calibrate_directbeam"},
+                "holes": {"name":"Holes", "ok":False, "msg": "no, please run instamatic.map_holes"},
+                "radius": {"name":"Radius", "ok":False, "msg": "no, please run instamatic.prepare_experiment"},
+                "params": {"name":"Params", "ok":False, "msg": "no"},
+                "ready": {"name":"Ready", "ok":True, "msg": "Experiment is ready!!"}
+            }
+
+    try:
+        calib = CalibStage.from_file()
+    except IOError:
+        pass
+    else:
+        status["stage_lowmag"].update({"ok":True, "msg": "OK"})
+
+    try:
+        calib = CalibBeamShift.from_file()
+    except IOError:
+        pass
+    else:
+        status["beamshift"].update({"ok":True, "msg": "OK"})
+
+    try:
+        calib = CalibDirectBeam.from_file()
+    except IOError:
+        pass
+    else:
+        status["directbeam"].update({"ok":True, "msg": "OK"})
+
+    try:
+        params = json.load(open("params.json","r"))
+    except IOError:
+        pass
+    else:
+        if "angle" in params:
+            status["stage_mag1"].update({"ok":True, "msg":"OK, angle={:.2f} deg.".format(np.degrees(params["angle"]))})
+        keys = "magnification", "diff_difffocus", "diff_brightness"
+        missing_keys = [key for key in keys if key not in params]
+        if missing_keys:
+            status["params"].update({"ok":False, "msg":"no, missing {}".format(", ".join(missing_keys))})
+        else:
+            status["params"].update({"ok":True, "msg":"OK"})
+
+    try:
+        experiment = fileio.load_experiment()
+    except Exception as e:
+        pass
+    else:
+        status["radius"].update({"ok":True, "msg":"OK, {:.2f} um".format(experiment["radius"] / 1000.0)})
+
+    try:
+        hole_coords = fileio.load_hole_stage_positions()
+    except Exception:
+        pass
+    else:
+        status["holes"].update({"ok":True, "msg":"OK, {} locations stored".format(len(hole_coords))})
+
+    if not all([status[key]["ok"] for key in status]):
+        status["ready"].update({"ok":False, "msg":"Experiment is NOT ready!!"})
+
+    return status
+
 
 def get_grid(nx, ny=0, radius=1, borderwidth=0.8):
     """Make a grid (size=n*n), and return the coordinates of those
@@ -109,11 +180,7 @@ class Experiment(object):
 
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
-
-        import fileio
-        from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
-        from TEMController import config
-        
+       
         d = fileio.load_experiment()
         self.hole_centers = d["centers"]
         self.hole_radius = d["radius"] / 1000 # nm -> um
@@ -206,6 +273,7 @@ class Experiment(object):
         print "    type 'plot' to toggle plotting mode"
         print "    type 'exit' to quit"
         print "    hit 'Ctrl+C' to interrupt the script"
+        print ""
 
     def loop_centers(self):
         """Loop over holes in the copper grid
@@ -215,7 +283,7 @@ class Experiment(object):
             di: dict, contains information on holes
         """
 
-        for i, (x, y) in enumerate(self.centers):
+        for i, (x, y) in enumerate(self.hole_centers):
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
@@ -226,7 +294,7 @@ class Experiment(object):
             else:
                 print "\n >> Going to next hole center \n    ->", self.ctrl.stageposition
                 di = {"exp_hole_number": i, "exp_hole_center": (x,y)}
-                yield di
+                yield i, di
             
     def loop_positions(self, exp_hole_center, **kwargs):
         """Loop over positions in a hole in the copper grid
@@ -235,9 +303,8 @@ class Experiment(object):
         Return
             dj: dict, contains information on positions
         """
-
         x, y = exp_hole_center
-        for j, x_offset, y_offset in enumerate(self.offsets):
+        for j, (x_offset, y_offset) in enumerate(self.offsets):
             try:
                 self.ctrl.stageposition.set(x=x+x_offset, y=y+y_offset)
             except ValueError as e:
@@ -248,7 +315,7 @@ class Experiment(object):
             else:
                 print "\n     >> Going to next position \n        ->", self.ctrl.stageposition
                 dj = {"exp_image_number": j, "exp_hole_offset": (x_offset, y_offset)}
-                yield dj
+                yield j, dj
 
     def loop_crystals(self, crystal_coords):
         """Loop over crystal coordinates (pixels)
@@ -298,9 +365,10 @@ class Experiment(object):
         }
 
         for i, di in self.loop_centers():
+            print di
             auto = False
             plot = False
-            for j, dj in self.loop_positions(di):
+            for j, dj in self.loop_positions(**di):
                 if not auto:
                     answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
                     if answer == "exit":
@@ -318,8 +386,8 @@ class Experiment(object):
                 comment = "Hole {} image {}\n".format(i, j)
     
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
-                img, h = ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, comment=comment)
-                ctrl.tem.setSpotSize(self.diff_spotsize)
+                img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, comment=comment)
+                self.ctrl.tem.setSpotSize(self.diff_spotsize)
     
                 crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, plot=False) * self.image_binsize
     
@@ -334,7 +402,7 @@ class Experiment(object):
                 for k, dk in self.loop_crystals(crystal_coords):
                     outfile = "image_{:04d}_{:04d}_{:04d}".format(i, j, k)
                     comment = "Hole {} image {} Crystal {}".format(i, j, k)
-                    img, h = ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
+                    img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
                     
                     for d in (d_diff, di, dj, dk):
                         h.update(d)
@@ -343,35 +411,53 @@ class Experiment(object):
                  
                     for rotation_angle in self.sample_rotation_angles:
                         print " >> Rotation angle = ".format(rotation_angle)
-                        ctrl.stageposition.a = rotation_angle
+                        self.ctrl.stageposition.a = rotation_angle
     
                         outfile = "image_{:04d}_{:04d}_{:04d}_{}".format(i, j, k, rotation_angle)
-                        img, h = ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
+                        img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
                                                     
                         for d in (d_diff, di, dj, dk):
                             h.update(d)
 
                         write_tiff(outfile, img, header=h)
     
-                    ctrl.stageposition.a = 0
+                    self.ctrl.stageposition.a = 0
     
                 self.image_mode()
 
 
-def main():
-    import json
-    import TEMController
-    
-    params = {}
-    # params = json.load(open("params.json","r"))
-    if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
-        exit()
-    print
+def main_gui():
+    from gui import main
+    main.start()
 
-    ctrl = TEMController.initialize()
-    exp = Experiment(ctrl, params)
-    exp.report_status()
-    exp.run()
+
+def main():
+    import TEMController
+
+    status = get_status()
+
+    print "\nCalibration:"
+    for key in "stage_lowmag", "stage_mag1", "beamshift", "directbeam":
+        print "    {name:20s}: {msg:s}".format(**status[key])
+
+    print "\nExperiment"
+    for key in "holes", "radius", "params", "ready":
+        print "    {name:20s}: {msg:s}".format(**status[key])
+
+    ready = status["ready"]["ok"]
+
+    if ready:
+        params = json.load(open("params.json","r"))
+        if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
+            exit()
+        print
+        ctrl = TEMController.initialize()
+
+        exp = Experiment(ctrl, params)
+        exp.report_status()
+        exp.run()
+    else:
+        print "\nExperiment not ready yet!!"
 
 
 if __name__ == '__main__':
