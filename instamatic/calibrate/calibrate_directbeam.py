@@ -20,8 +20,8 @@ refine_params = {
 }
 
 calib_params = {
-    "DiffShift": {"gridsize":5, "stepsize":1500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
-    "BeamShift": {"gridsize":5, "stepsize":350, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "DiffShift": {"gridsize":5, "stepsize":300, "magnification": 5000, "brightness": 44335, "difffocus":20561},
+    "BeamShift": {"gridsize":5, "stepsize":75, "magnification": 5000, "brightness": 44335, "difffocus":20561},
     "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
     "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561}
 }
@@ -156,7 +156,6 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     x_cent, y_cent = readout_cent = np.array(attr.get())
 
     img_cent, scale = autoscale(img_cent)
-    
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
    
@@ -198,7 +197,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     readouts = np.array(readouts) - np.array((readout_cent))
     
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
-    c.plot(key)
+    # c.plot(key)
 
     return c
 

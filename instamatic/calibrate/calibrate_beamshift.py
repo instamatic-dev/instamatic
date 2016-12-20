@@ -82,14 +82,14 @@ class CalibBeamShift(object):
 
     def center(self, ctrl=None):
         """Return beamshift values to center the beam in the frame"""
-        beamshift = self.pixelcoord_to_beamshift((1024, 1024))
+        beamshift = self.pixelcoord_to_beamshift((512, 512))
         if ctrl:
             ctrl.beamshift.set(*beamshift)
         else:
             return beamshift
 
 
-def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False):
+def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.01, binsize=2, save_images=False):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
@@ -161,7 +161,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=2500, exposure=0.1, bins
     beampos = np.array(beampos) - np.array((beamshift_cent))
     
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
-    c.plot()
+    # c.plot()
 
     return c
 

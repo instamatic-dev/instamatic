@@ -128,6 +128,7 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
     k: float,
         scaling factor for the borderwidth
     """
+
     nx = 1 + int(2.0*radius / (box_x+padding))
     if box_y:
         ny = 1 + int(2.0*radius / (box_y+padding))
@@ -206,7 +207,7 @@ class Experiment(object):
             raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue...")
             x, y, _, _, _ = self.ctrl.stageposition.get()
             self.hole_centers = np.array([[x,y]])            
-            self.hole_radius = raw_input("How big of an area do you want to sample (radius in um) ? \n >> [500] ") or 500
+            self.hole_radius = float(raw_input("How big of an area do you want to sample (radius in um) ? \n >> [500] ") or 500)
         else:
             self.hole_centers = d["centers"]
             self.hole_radius = d["radius"] / 1000 # nm -> um
@@ -219,13 +220,14 @@ class Experiment(object):
         self.image_exposure  = kwargs.get("image_exposure",      0.1 )
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
+        self.image_dimensions = (6.1, 6.1) #um
     
-        self.diff_binsize    = kwargs.get("diff_binsize",        2   )
+        self.diff_binsize    = kwargs.get("diff_binsize",        2   )  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       0.1 )
         self.diff_brightness = kwargs["diff_brightness"]
         self.diff_difffocus  = kwargs["diff_difffocus"]
         self.diff_spotsize   = kwargs.get("diff_spotsize",       5   )
-        self.diff_cameralength = kwargs.get("diff_cameralength",       1500)
+        self.diff_cameralength = kwargs.get("diff_cameralength",       800)
         self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
     
         self.crystal_spread = kwargs.get("crystal_spread", 2.5)
@@ -237,7 +239,7 @@ class Experiment(object):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=1, padding=2, angle=self.camera_rotation_angle, plot=True)
+        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=1, padding=2, angle=self.camera_rotation_angle, plot=False)
         self.offsets = offsets * 1000
 
     def initialize_microscope(self):
@@ -247,6 +249,9 @@ class Experiment(object):
         atexit.register(self.ctrl.restore)
 
         self.ctrl.mode_diffraction()
+        self.ctrl.brightness.set(self.diff_brightness)
+        self.ctrl.difffocus.set(self.diff_difffocus)
+        self.ctrl.tem.setSpotSize(self.diff_spotsize)
         print raw_input(" >> Getting neutral diffraction shift, press enter to continue")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         print self.neutral_diffshift
@@ -468,7 +473,7 @@ def main():
         print "    {name:20s}: {msg:s}".format(**status[key])
 
     ready = status["ready"]["ok"]
-
+    ready = True
     if ready:
         params = json.load(open("params.json","r"))
         if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":

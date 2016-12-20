@@ -97,7 +97,7 @@ class Camera(object):
         if kind == "timepix":
             self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
             self._setCorrectionRatio.restype = c_bool
-            self._setCorrectionRatio(1/2.7) # c_double
+            self._setCorrectionRatio(c_double(1/2.7)) # c_double
             os.chdir(curdir)
         
         atexit.register(self.releaseConnection)

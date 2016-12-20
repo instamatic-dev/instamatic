@@ -14,11 +14,15 @@ __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
 
-def initialize(camera="orius"):
+def initialize(camera="timepix"):
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
-        cam = Camera(kind=camera)
+        if camera == "timepix":
+            from instamatic.camera.videostream import VideoStream
+            cam = VideoStream(cam="timepix")
+        else:
+            cam = Camera(kind=camera)
     except WindowsError:
         from simu_microscope import SimuMicroscope
         print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
@@ -578,15 +582,16 @@ class TEMController(object):
                           "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
 
     def to_dict(self):
-        d = {
-            'FunctionMode': self.tem.getFunctionMode(),
-            'GunShift': self.gunshift.get(),
-            'GunTilt': self.guntilt.get(),
+        ## Each of these costs about 62 ms per call, stageposition is 265 ms per call
+        d = { 
+            # 'FunctionMode': self.tem.getFunctionMode(),
+            # 'GunShift': self.gunshift.get(),
+            # 'GunTilt': self.guntilt.get(),
             'BeamShift': self.beamshift.get(),
             'BeamTilt': self.beamtilt.get(),
             'ImageShift': self.imageshift.get(),
             'DiffShift': self.diffshift.get(),
-            'StagePosition': self.stageposition.get(),
+            # 'StagePosition': self.stageposition.get(),
             'Magnification': self.magnification.get(),
             'DiffFocus': self.difffocus.get(),
             'Brightness': self.brightness.get(),
@@ -653,6 +658,7 @@ class TEMController(object):
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
         h = self.to_dict()
+        # h = {}
 
         if self.autoblank and self.beamblank:
             self.beamblank = False
@@ -681,7 +687,7 @@ class TEMController(object):
         """Stores current settings to dictionary.
         Multiple settings can be stored under different names."""
         d = self.to_dict()
-        del d["StagePosition"]
+        d.pop("StagePosition", None)
         self._saved_settings[name] = d
 
     def restore(self, name="stash"):

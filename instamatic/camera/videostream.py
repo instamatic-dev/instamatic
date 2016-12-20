@@ -29,7 +29,7 @@ class VideoStream(threading.Thread):
         self.stash = None
         self.acquire = False
 
-        self.frametime = 0.1
+        self.frametime = 0.01
         self.exposure = self.frametime
         self.binsize = 1
  
@@ -87,9 +87,9 @@ class VideoStream(threading.Thread):
         self.var_frametime = DoubleVar()
         self.var_overhead = DoubleVar()
 
-    def getImage(self, exposure=None):
-        if exposure:
-            self.exposure = exposure
+    def getImage(self, t=None, **kwargs):
+        if t:
+            self.exposure = t
         self.stash = None
         self.acquire = True
         
@@ -97,7 +97,7 @@ class VideoStream(threading.Thread):
             pass
 
         self.acquire = False
-        return self.stash
+        return self.stash.astype(int)
 
     def videoLoop(self):
         t0 = time.time()
@@ -105,20 +105,22 @@ class VideoStream(threading.Thread):
         while not self.stopEvent.is_set():
             try:
                 if self.acquire:
-                    self.stash = self.frame = self.cam.getImage(exposure=self.exposure, fastmode=True)
+                    self.stash = self.frame = self.cam.getImage(t=self.exposure, fastmode=True)
                     # self.stash = self.frame = np.random.random((512, 512)) * 256
                     # time.sleep(self.exposure)
                 else:
-                    self.frame = self.cam.getImage(exposure=self.frametime, fastmode=True)
+                    self.frame = self.cam.getImage(t=self.frametime, fastmode=True)
                     # self.frame = np.random.random((512, 512)) * 256
                     # time.sleep(self.frametime)
-            except:
+            except Exception as e:
+                print time.time(), e
                 time.sleep(1)
                 continue
 
-            image = Image.fromarray(self.frame)
+            # rotate image by 90 degrees to match DM/SoPhy
+            image = Image.fromarray(np.rot90(self.frame, k=3))
             image = ImageTk.PhotoImage(image)
-        
+            
             self.panel.configure(image=image)
             # keep a reference to avoid premature garbage collection
             self.panel.image = image
@@ -149,7 +151,7 @@ class VideoStream(threading.Thread):
         self.root.quit()
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="simulate")
+    stream = VideoStream(cam="timepix")
     # stream.root.mainloop()
     from IPython import embed
     embed()
