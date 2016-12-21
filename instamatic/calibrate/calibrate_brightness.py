@@ -98,7 +98,8 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
 
         outfile = "calib_brightness_{:04d}".format(i) if save_images else None
 
-        img, h = ctrl.getImage(exposure=exposure, out=outfile, comment="Calib image {}: brightness={}".format(i, target))
+        comment = "Calib image {}: brightness={}".format(i, target)
+        img, h = ctrl.getImage(exposure=exposure, out=outfile, comment=comment, header_keys="Brightness")
         
         img, scale = autoscale(img)
 

@@ -581,25 +581,45 @@ class TEMController(object):
                           "SpotSize({})".format(self.spotsize),
                           "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
 
-    def to_dict(self):
-        ## Each of these costs about 62 ms per call, stageposition is 265 ms per call
-        d = { 
-            # 'FunctionMode': self.tem.getFunctionMode(),
-            # 'GunShift': self.gunshift.get(),
-            # 'GunTilt': self.guntilt.get(),
-            'BeamShift': self.beamshift.get(),
-            'BeamTilt': self.beamtilt.get(),
-            'ImageShift': self.imageshift.get(),
-            'DiffShift': self.diffshift.get(),
-            # 'StagePosition': self.stageposition.get(),
-            'Magnification': self.magnification.get(),
-            'DiffFocus': self.difffocus.get(),
-            'Brightness': self.brightness.get(),
-            'SpotSize': self.tem.getSpotSize()
-        }
-        return d
+    def to_dict(self, *keys):
+        """
+        Store microscope parameters to dict
 
-    def from_dict(self, d):
+        keys: tuple of str (optional)
+            If any keys are specified, dict is returned with only the given properties
+        
+        self.to_dict('all') or self.to_dict() will return all properties
+        """
+        
+        ## Each of these costs about 62 ms per call, stageposition is 265 ms per call
+        funcs = { 
+            'FunctionMode': self.tem.getFunctionMode,
+            'GunShift': self.gunshift.get,
+            'GunTilt': self.guntilt.get,
+            'BeamShift': self.beamshift.get,
+            'BeamTilt': self.beamtilt.get,
+            'ImageShift': self.imageshift.get,
+            'DiffShift': self.diffshift.get,
+            'StagePosition': self.stageposition.get,
+            'Magnification': self.magnification.get,
+            'DiffFocus': self.difffocus.get,
+            'Brightness': self.brightness.get,
+            'SpotSize': self.tem.getSpotSize
+        }
+
+        dct = {}
+
+        if "all" in keys or not keys:
+            keys = funcs.keys()
+
+        for key in keys:
+            dct[key] = funcs[key]()
+
+        return dct
+
+    def from_dict(self, dct):
+        """Restore microscope parameters from dict"""
+
         funcs = {
             'FunctionMode': self.tem.setFunctionMode,
             'GunShift': self.gunshift.set,
@@ -615,10 +635,10 @@ class TEMController(object):
             'SpotSize': self.tem.setSpotSize
         }
 
-        mode = d.pop("FunctionMode")
+        mode = dct.pop("FunctionMode")
         self.tem.setFunctionMode(mode)
 
-        for k, v in d.items():
+        for k, v in dct.items():
             if k in funcs:
                 func = funcs[k]
             else:
@@ -631,7 +651,7 @@ class TEMController(object):
 
         print self
 
-    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False):
+    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False, header_keys="all"):
         """Retrieve image as numpy array from camera
 
         Parameters:
@@ -645,6 +665,8 @@ class TEMController(object):
                 path or filename to which the image/header is saved (defaults to tiff)
             plot: bool, 
                 toggle whether to show the image using matplotlib after acquisition
+            full_header: bool,
+                return the full header
 
         Returns:
             image: np.ndarray, headerfile: dict
@@ -657,22 +679,28 @@ class TEMController(object):
         if not self.cam:
             raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
 
-        h = self.to_dict()
-        # h = {}
+        if not header_keys:
+            h = {}
+        else:
+            h = self.to_dict(header_keys)
 
         if self.autoblank and self.beamblank:
             self.beamblank = False
 
         arr = self.cam.getImage(t=exposure, binsize=binsize)
+        
+        if self.autoblank:
+            self.beamblank = True
+
+        h["ImageGetTime"] = time.ctime()
         h["ImageExposureTime"] = exposure
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape
         h["ImageComment"] = comment
         h["ImageCamera"] = self.cam.name
-        h["Time"] = time.ctime()
 
-        if self.autoblank:
-            self.beamblank = True
+        if verbose:
+            print "Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024)
 
         if out:
             write_tiff(out, arr, header=h)

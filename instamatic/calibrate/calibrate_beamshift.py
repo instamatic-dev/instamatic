@@ -109,7 +109,7 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.01, bins
     """
 
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
-    x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
+    x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
 
     magnification = h_cent["Magnification"]
     stepsize = 2500.0/magnification * stepsize
@@ -142,7 +142,8 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, exposure=0.01, bins
         
         outfile = "calib_beamshift_{:04d}".format(i) if save_images else None
 
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="BeamShift")
         img = imgscale(img, scale)
 
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)

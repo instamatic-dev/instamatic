@@ -91,7 +91,8 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
         
         outfile = "calib_{:04d}".format(i) if save_images else None
 
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="StagePosition")
         
         img = imgscale(img, scale)
 

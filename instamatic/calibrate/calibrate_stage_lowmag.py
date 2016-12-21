@@ -252,7 +252,8 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         
         outfile = "calib_{:04d}".format(i) if save_images else None
 
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        comment = comment
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="StagePosition")
         
         img = imgscale(img, scale)
 

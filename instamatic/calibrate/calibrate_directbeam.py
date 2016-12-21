@@ -153,7 +153,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
 
     outfile = "calib_{}_0000".format(key) if save_images else None
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
-    x_cent, y_cent = readout_cent = np.array(attr.get())
+    x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent)
 
@@ -180,7 +180,8 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
         
         outfile = "calib_{}_{:04d}".format(key, i) if save_images else None
 
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Calib image {}: dx={} - dy={}".format(i, dx, dy))
+        comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)

@@ -389,7 +389,7 @@ class Experiment(object):
         
             self.ctrl.diffshift.set(*diffshift.astype(int))
 
-            dk = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset}
+            dk = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
 
             yield k, dk
 
@@ -397,6 +397,8 @@ class Experiment(object):
         """Run serial electron diffraction experiment"""
 
         self.initialize_microscope()
+
+        header_keys = kwargs.get("header_keys", None)
 
         d_image = {
                 "exp_neutral_diffshift": self.neutral_beamshift,
@@ -414,10 +416,10 @@ class Experiment(object):
             outfile = "image_{:04d}".format(i)
     
             self.ctrl.tem.setSpotSize(self.image_spotsize)
-            img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure)
+            img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, header_keys=header_keys)
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
     
-            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, plot=False) * self.image_binsize
+            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread) * self.image_binsize
     
             for d in (d_image, d_pos):
                 h.update(d)
@@ -430,7 +432,7 @@ class Experiment(object):
             for k, dk in self.loop_crystals(crystal_coords):
                 outfile = "image_{:04d}_{:04d}".format(i, k)
                 comment = "Image {} Crystal {}".format(i, k)
-                img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
+                img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 
                 for d in (d_diff, d_pos, dk):
                     h.update(d)
@@ -442,7 +444,7 @@ class Experiment(object):
                     self.ctrl.stageposition.a = rotation_angle
     
                     outfile = "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle)
-                    img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, verbose=False)
+                    img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                                                 
                     for d in (d_diff, d_pos, dk):
                         h.update(d)

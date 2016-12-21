@@ -142,7 +142,6 @@ class Camera(object):
         if fastmode:
             return arr
         else:
-            print "Image acquired - shape: {}x{}, size: {} kB".format(xres, yres, arr.nbytes / 1024)
             return arr.astype(int)
 
     def getCameraCount(self):
