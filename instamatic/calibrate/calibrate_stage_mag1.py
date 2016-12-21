@@ -196,7 +196,10 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     return angle
 
     # c = CalibStageMag1.from_data(shifts, stagepos, reference_position=xy_cent)
-    # c.plot()
+    
+    # Calling c.plot with videostream crashes program
+    if not hasattr(ctrl.cam, "VideoLoop"):
+        c.plot(key)
 
     # return c
 

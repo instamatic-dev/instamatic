@@ -118,8 +118,11 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
 
     values = np.array(values)
     c = CalibBrightness.from_data(*values.T)
-    c.plot()
-
+    
+    # Calling c.plot with videostream crashes program
+    if not hasattr(ctrl.cam, "VideoLoop"):
+        c.plot()
+    
     return c
 
 

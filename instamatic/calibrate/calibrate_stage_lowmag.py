@@ -290,7 +290,10 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
-    c.plot()
+    
+    # Calling c.plot with videostream crashes program
+    if not hasattr(ctrl.cam, "VideoLoop"):
+        c.plot(key)
 
     return c
 

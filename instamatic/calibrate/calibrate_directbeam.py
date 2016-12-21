@@ -198,7 +198,10 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, 
     readouts = np.array(readouts) - np.array((readout_cent))
     
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
-    # c.plot(key)
+    
+    # Calling c.plot with videostream crashes program
+    if not hasattr(ctrl.cam, "VideoLoop"):
+        c.plot(key)
 
     return c
 

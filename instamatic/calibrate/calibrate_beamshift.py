@@ -170,7 +170,10 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, save_images=False, 
     beampos = np.array(beampos) - np.array((beamshift_cent))
     
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
-    # c.plot()
+    
+    # Calling c.plot with videostream crashes program
+    if not hasattr(ctrl.cam, "VideoLoop"):
+        c.plot()
 
     return c
 
