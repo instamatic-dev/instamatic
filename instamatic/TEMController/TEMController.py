@@ -697,7 +697,8 @@ class TEMController(object):
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape
         h["ImageComment"] = comment
-        h["ImageCamera"] = self.cam.name
+        h["ImageCameraName"] = self.cam.name
+        h["ImageCameraDimensions"] = self.cam.dimensions
 
         if verbose:
             print "Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024)

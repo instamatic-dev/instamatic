@@ -63,10 +63,16 @@ def main():
     fmt2 = "{{:{}s}} = {{}}".format(l2)
 
     for key in image_keys:
-        print fmt1.format(key, h[key])
+        try:
+            print fmt1.format(key, h[key])
+        except KeyError:
+            pass
     print
     for key in microscope_keys:
-        print fmt2.format(key, h[key])
+        try:
+            print fmt2.format(key, h[key])
+        except KeyError:
+            pass
 
     fig.canvas.mpl_connect('button_press_event', onclick)
     plt.imshow(img, cmap="gray")

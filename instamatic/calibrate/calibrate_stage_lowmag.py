@@ -22,12 +22,13 @@ import pickle
 class CalibStage(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
-    def __init__(self, rotation, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
+    def __init__(self, rotation, camera_dimensions, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
         super(CalibStage, self).__init__()
         self.has_data = False
         self.rotation = rotation
         self.translation = translation
         self.reference_position = reference_position
+        self.center_pixel = np.array(camera_dimensions) / 2.0
    
     def __repr__(self):
         return "CalibStage(rotation=\n{},\n translation=\n{},\n reference_position=\n{})".format(self.rotation, self.translation, self.reference_position)
@@ -106,7 +107,7 @@ class CalibStage(object):
         
         px_ref = self._pixelcoord_to_reference_setting(px, image_pos, r, t, reference_pos)
     
-        stagepos = np.dot(px_ref - 1024, r) + t + reference_pos
+        stagepos = np.dot(px_ref - self.center_pixel, r) + t + reference_pos
         
         return stagepos
 
@@ -130,7 +131,7 @@ class CalibStage(object):
         # do the inverse transoformation here
         r_i = np.linalg.inv(r)
 
-        px_ref = np.dot(stagepos - t - reference_pos, r_i) + 1024
+        px_ref = np.dot(stagepos - t - reference_pos, r_i) + self.center_pixel
 
         px = self._reference_setting_to_pixelcoord(px_ref, image_pos, r, t, reference_pos)
 
@@ -161,14 +162,20 @@ class CalibStage(object):
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
 
     @classmethod
-    def from_data(cls, shifts, stagepos, reference_position, header=None):
+    def from_data(cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None):
         r, t = fit_affine_transformation(shifts, stagepos)
 
-        c = cls(rotation=r, translation=t, reference_position=reference_position)
+        if not camera_dimensions:
+            camera_dimensions = header["ImageCameraDimensions"]
+        else:
+            raise NameError("name 'camera_dimensions' is not defined.")
+
+        c = cls(rotation=r, camera_dimensions=, translation=t, reference_position=reference_position)
         c.data_shifts = shifts
         c.data_stagepos = stagepos
         c.has_data = True
         c.header = header
+
         return c
 
     @classmethod

@@ -87,31 +87,56 @@ class Camera(object):
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
         self.establishConnection()
+        
+        if kind == "timepix":
+            self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
+            self._setCorrectionRatio.restype = c_bool
+            os.chdir(curdir)
+
+        self.load_defaults()
 
         print "Camera {} initialized".format(self.getName())
         print "Dimensions {}x{}".format(*self.getDimensions())
         print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
-        self.xmax, self.ymax = self.getDimensions()
-        
-        if kind == "timepix":
-            self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
-            self._setCorrectionRatio.restype = c_bool
-            self._setCorrectionRatio(c_double(1/2.7)) # c_double
-            os.chdir(curdir)
-        
         atexit.register(self.releaseConnection)
 
+    def load_defaults(self, fname=None):
+        import json
 
-    def getImage(self, t=0.5, binsize=1, fastmode=False, **kwargs):
+        if not fname:
+            fname = os.path.join(self.name+".json")
+
+        with open(fname) as f:
+            dct = json.load(f)
+
+        self.default_exposure = dct["default_exposure"]
+        self.default_binsize = dct["default_binsize"]
+        self.possible_binsizes = dct["possible_binsizes"]
+        self.dimensions = dct["dimensions"]
+        self.xmax, self.ymax = self.dimensions
+
+        try:
+            correction_ratio = dct["correction_ratio"]
+        except KeyError:
+            pass
+        else:
+            self._setCorrectionRatio(c_double(1/correction_ratio))
+
+    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
         """Image acquisition routine
 
         t: exposure time in seconds
         binsize: which binning to use
         showindm: show image in digital micrograph
         xmin, xmax, ymin, ymax: retrieve image with smaller size from a subset of pixels
-        fastmode: Shaves off approximately 1ms by avoiding conversion to int/be less verbose
+        fastmode: Shaves off approximately 1ms by avoiding conversion to int
         """
+
+        if not t:
+            t = self.default_exposure
+        if not binsize:
+            binsize = self.default_binsize
 
         xmin = kwargs.get("xmin", 0)
         xmax = kwargs.get("xmax", self.xmax)
@@ -119,10 +144,9 @@ class Camera(object):
         ymax = kwargs.get("ymax", self.ymax)
         showindm = kwargs.get("showindm", False)
 
-        bins = (1, 2, 4)
-        if binsize not in bins:
+        if binsize not in self.possible_binsizes:
             raise ValueError(
-                "Cannot use binsize={}..., should be one of {}".format(binsize, bins))
+                "Cannot use binsize={}..., should be one of {}".format(binsize, self.possible_binsizes))
 
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
@@ -156,10 +180,7 @@ class Camera(object):
         pnWidth = c_int(0)
         pnHeight = c_int(0)
         self._cameraDimensions(byref(pnWidth), byref(pnHeight))
-        if (pnWidth.value == 0) and (pnHeight.value == 0):
-            return 2048, 2048
-        else:
-            return pnWidth.value, pnHeight.value
+        return pnWidth.value, pnHeight.value
 
     def getName(self):
         """Return string"""
@@ -170,7 +191,7 @@ class Camera(object):
     def establishConnection(self):
         res = self._initCCDCOM(20120101)
         if res != 1:
-            raise RuntimeError("Could not establish camera connection...")
+            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
 
     def releaseConnection(self):
         name = self.getName()
