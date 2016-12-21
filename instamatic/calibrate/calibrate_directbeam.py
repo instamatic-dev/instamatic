@@ -19,15 +19,6 @@ refine_params = {
     "BeamShift": {"rotation": True, "translation": False, "shear": False}
 }
 
-calib_params = {
-    "DiffShift": {"gridsize":5, "stepsize":300, "magnification": 5000, "brightness": 44335, "difffocus":20561},
-    "BeamShift": {"gridsize":5, "stepsize":75, "magnification": 5000, "brightness": 44335, "difffocus":20561},
-    "ImageShift1": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561},
-    "ImageShift2": {"gridsize":5, "stepsize":2500, "magnification": 5000, "brightness": 44335, "difffocus":20561}
-}
-#Beamshift @  5000x: 700
-#Beamshift @ 10000x: 350
-
 
 class CalibDirectBeam(object):
     """docstring for CalibDirectBeam"""
@@ -136,19 +127,40 @@ class CalibDirectBeam(object):
         plt.show()
 
 
-def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=5, stepsize=2500, exposure=0.1, binsize=2, save_images=False, **kwargs):
+def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, **kwargs):
+    """
+    Calibrate pixel->beamshift coordinates live on the microscope
+
+    ctrl: instance of `TEMController`
+        contains tem + cam interface
+    key: `str`
+        Name of property to calibrate
+    gridsize: `int` or None
+        Number of grid points to take, gridsize=5 results in 25 points
+    stepsize: `float` or None
+        Size of steps for property along x and y
+    exposure: `float` or None
+        exposure time
+    binsize: `int` or None
+
+    In case paramers are not defined, camera specific default parameters are 
+
+    return:
+        instance of Calibration class with conversion methods
+    """
+
     if not ctrl.mode == "diff":
         print " >> Switching to diffraction mode"
         ctrl.mode_diffraction()
 
-    magnification   = kwargs.get("magnification")
-    brightness      = kwargs.get("brightness")
-    difffocus       = kwargs.get("difffocus")
+    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
+    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
-    # ctrl.magnification.value = magnification
-    # ctrl.brightness.value = brightness
-    # ctrl.difffocus.value = difffocus
-    
+    if not gridsize:
+        gridsize = ctrl.cam.defaults.get("calib_directbeam", {}).get(key, {}).get("gridsize", 5)    # dat syntax...
+    if not stepsize:
+        stepsize = ctrl.cam.defaults.get("calib_directbeam", {}).get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
+
     attr = getattr(ctrl, key.lower())
 
     outfile = "calib_{}_0000".format(key) if save_images else None
@@ -258,7 +270,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
         else:
             cs = []
             for key in keys:
-                c = calibrate_directbeam_live(ctrl, save_images=save_images, key=key, **calib_params[key])
+                c = calibrate_directbeam_live(ctrl, save_images=save_images, key=key)
                 cs.append(c)
             calib = CalibDirectBeam.combine(cs)
     else:

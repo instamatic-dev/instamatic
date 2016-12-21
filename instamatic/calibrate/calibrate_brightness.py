@@ -71,7 +71,7 @@ class CalibBrightness(object):
         plt.show()
 
 
-def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_images=False):
+def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
     """
     Calibrate pixel->brightness coordinates live on the microscope
 
@@ -88,6 +88,11 @@ def calibrate_brightness_live(ctrl, step=1000, exposure=0.1, binsize=1, save_ima
     return:
         instance of CalibBrightness class with conversion methods
     """
+
+    raise NotImplementedError("calibrate_brightness_live function needs fixing...")
+
+    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
+    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     values = []
     start = ctrl.brightness.value

@@ -170,7 +170,7 @@ class CalibStage(object):
         else:
             raise NameError("name 'camera_dimensions' is not defined.")
 
-        c = cls(rotation=r, camera_dimensions=, translation=t, reference_position=reference_position)
+        c = cls(rotation=r, camera_dimensions=camera_dimensions, translation=t, reference_position=reference_position)
         c.data_shifts = shifts
         c.data_stagepos = stagepos
         c.has_data = True
@@ -210,7 +210,7 @@ class CalibStage(object):
         plt.show()
 
 
-def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, binsize=1, save_images=False):
+def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=False, **kwargs):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -227,6 +227,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, exposure=0.2, 
     return:
         instance of Calibration class with conversion methods
     """
+
+    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
+    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     # Ensure that backlash is eliminated
     ctrl.stageposition.reset_xy()

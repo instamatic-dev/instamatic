@@ -39,8 +39,8 @@ class Camera(object):
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
-        cameradir = os.path.join(os.path.dirname(__file__))
-        curdir = os.path.abspath(os.curdir)
+        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
+        self._curdir = curdir = os.path.abspath(os.curdir)
 
         if kind == "simulate":
             libpath = os.path.join(cameradir, DLLPATH_SIMU)
@@ -105,10 +105,12 @@ class Camera(object):
         import json
 
         if not fname:
-            fname = os.path.join(self.name+".json")
+            fname = os.path.join(self._cameradir, self.name+".json")
 
         with open(fname) as f:
             dct = json.load(f)
+
+        self.defaults = dct
 
         self.default_exposure = dct["default_exposure"]
         self.default_binsize = dct["default_binsize"]

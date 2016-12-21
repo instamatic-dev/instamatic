@@ -42,7 +42,7 @@ def plot_it(arr1, arr2, params):
     plt.show()
 
 
-def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2, save_images=False):
+def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, save_images=False):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -59,6 +59,9 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, exposure=0.2, binsize=2
     return:
         instance of Calibration class with conversion methods
     """
+
+    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
+    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     # Ensure that backlash is eliminated
     # ctrl.stageposition.reset_xy()

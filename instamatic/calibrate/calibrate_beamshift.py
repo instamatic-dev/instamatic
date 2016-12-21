@@ -94,20 +94,22 @@ class CalibBeamShift(object):
             return beamshift
 
 
-def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, save_images=False, **kwargs):
+def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=False, **kwargs):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
-    gridsize: `int`
+    gridsize: `int` or None
         Number of grid points to take, gridsize=5 results in 25 points
-    stepsize: `float`
+    stepsize: `float` or None
         Size of steps for beamshift along x and y
         Defined at a magnification of 2500, scales stepsize down for other mags.
-    exposure: `float`
+    exposure: `float` or None
         exposure time
-    binsize: `int`
+    binsize: `int` or None
+
+    In case paramers are not defined, camera specific default parameters are retrieved
 
     return:
         instance of Calibration class with conversion methods
@@ -115,6 +117,11 @@ def calibrate_beamshift_live(ctrl, gridsize=5, stepsize=500, save_images=False, 
 
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
+
+    if not gridsize:
+        gridsize = ctrl.cam.defaults.get("calib_beamshift", {}).get("gridsize", 5)
+    if not stepsize:
+        stepsize = ctrl.cam.defaults.get("calib_beamshift", {}).get("stepsize", 2500)
 
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
