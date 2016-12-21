@@ -140,14 +140,13 @@ class JeolMicroscope(object):
     def getMagnificationIndex(self):
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
-        print value
         try:
             if current_mode == "diff":
                 return self.CAMERALENGTHS.index(value)
             else:
                 return self.MAGNIFICATIONS.index(value)
-        except:
-            return -1
+        except Exception:
+            raise ValueError("getMagnificationIndex - invalid magnification: {}".format(value)) 
 
     def setMagnificationIndex(self, index):
         current_mode = self.getFunctionMode()
