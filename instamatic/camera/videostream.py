@@ -31,7 +31,7 @@ class VideoStream(threading.Thread):
 
         self.frametime = 0.01
         self.exposure = self.frametime
-        self.binsize = 1
+        self.binsize = self.cam.default_binsize
  
         self.root = Tk()
         self.panel = None

@@ -216,14 +216,17 @@ class Experiment(object):
         self.calib_directbeam = CalibDirectBeam.from_file()
     
         self.magnification   = kwargs["magnification"]
-        self.image_binsize   = kwargs.get("image_binsize",       2   )
-        self.image_exposure  = kwargs.get("image_exposure",      0.1 )
+        self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
+        self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
-        self.image_dimensions = (6.1, 6.1) #um
-    
-        self.diff_binsize    = kwargs.get("diff_binsize",        2   )  # this also messes with calibrate_beamshift class
-        self.diff_exposure   = kwargs.get("diff_exposure",       0.1 )
+        if self.ctrl.camera.name == "timepix":
+            timepix_conversion_factor = config.timepix_conversion_factor
+            self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
+            print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
+
+        self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
+        self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
         self.diff_brightness = kwargs["diff_brightness"]
         self.diff_difffocus  = kwargs["diff_difffocus"]
         self.diff_spotsize   = kwargs.get("diff_spotsize",       5   )

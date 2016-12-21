@@ -74,6 +74,10 @@ mag1_dimensions = {
 1500000: (0.00002724*2048, 0.00002724*2048),
 2000000: (0.00002043*2048, 0.00002043*2048)
 }
+# rough factor to convert values above to rough timepix equivalent numbers
+# 4.0 for the reduction in pixelsize, and 1.4 for the additional scaling of the pixels
+# timepix_dimensions = orius_dimensions / timepix_conversion_factor
+timepix_conversion_factor = 4.0*1.4
 
 # Diffraction mode
 # Pixel dimensions for different camera lengths with parallel beam
