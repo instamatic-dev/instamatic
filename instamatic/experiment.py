@@ -220,6 +220,7 @@ class Experiment(object):
         self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
+        self.image_threshold = kwargs.get("image_threshold", 100)
         if self.ctrl.camera.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
@@ -421,8 +422,12 @@ class Experiment(object):
             self.ctrl.tem.setSpotSize(self.image_spotsize)
             img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, header_keys=header_keys)
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
+
+            if img.mean() < self.image_threshold:
+                print " >> Dark image detected, I(mean) < {}".format(self.image_threshold)
+                continue
     
-            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread) * self.image_binsize
+            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, timepix=True) * self.image_binsize
     
             for d in (d_image, d_pos):
                 h.update(d)

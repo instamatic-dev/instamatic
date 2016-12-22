@@ -13,7 +13,7 @@ from skimage import measure
 
 from tools import autoscale
 
-from TEMController.config import mag1_dimensions
+from TEMController.config import mag1_dimensions, timepix_conversion_factor
 
 def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
@@ -77,7 +77,7 @@ def segment_crystals(img, r=101, offset=5):
     return arr, segmented
 
 
-def find_crystals(img, magnification, spread=2.0, plot=False):
+def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False):
     """Function for finding crystals in a low contrast images.
     Used adaptive thresholds to find local features.
     Edges are detected, and rejected, on the basis of a histogram.
@@ -101,8 +101,14 @@ def find_crystals(img, magnification, spread=2.0, plot=False):
     
     # calculate the pixel dimensions in micrometer
     px, py = mag1_dimensions[magnification]
-    px = px / img.shape[0]
-    py = py / img.shape[1]
+    
+    if timepix:
+        k = timepix_conversion_factor
+    else:
+        k = 1
+    
+    px = px / (img.shape[0] * k)
+    py = py / (img.shape[1] * k)
     
     iters = 20
     
