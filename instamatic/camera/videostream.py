@@ -71,7 +71,16 @@ class VideoStream(threading.Thread):
         self.e_overhead.grid(row=1, column=5)
         
         frame.pack()
-    
+
+        frame = Frame(master)
+        
+        self.e_exposure = Spinbox(frame, width=ewidth, textvariable=self.var_exposure, from_=0.0, to=1.0, increment=0.01)
+        
+        Label(frame, anchor=E, width=lwidth, text="exposure (s)").grid(row=1, column=0)
+        self.e_exposure.grid(row=1, column=1)
+        
+        frame.pack()
+
     def makepanel(self, master, resolution=(512,512)):
         if self.panel is None:
             image = Image.fromarray(np.zeros(resolution))
@@ -90,6 +99,14 @@ class VideoStream(threading.Thread):
         self.var_fps = DoubleVar()
         self.var_frametime = DoubleVar()
         self.var_overhead = DoubleVar()
+
+        self.var_exposure = DoubleVar()
+        self.var_exposure.set(self.frametime)
+        self.var_exposure.trace("w", self.update_exposure_time)
+
+    def update_exposure_time(self, name, index, mode):
+        # print name, index, mode
+        self.frametime = self.var_exposure.get()
 
     def getImage(self, t=None, **kwargs):
         if t:
@@ -157,7 +174,7 @@ class VideoStream(threading.Thread):
         self.root.quit()
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="timepix")
+    stream = VideoStream(cam="simulate")
     # stream.root.mainloop()
     from IPython import embed
     embed()

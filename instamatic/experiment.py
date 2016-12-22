@@ -399,11 +399,11 @@ class Experiment(object):
         if ncrystals == 0:
             raise StopIteration("No crystals found.")
 
+        self.diffraction_mode()
         beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
         for k, beamshift in enumerate(beamshift_coords):
             print " >> Focusing on crystal {}/{}".format(k+1, ncrystals)
             self.ctrl.beamshift.set(*beamshift)
-            self.diffraction_mode()
         
             # compensate beamshift
             beamshift_offset = beamshift - self.neutral_beamshift

@@ -45,25 +45,36 @@ def whiten(obs, check_finite=False):
     return obs / std_dev, std_dev
 
 
-def segment_crystals(img, r=101, offset=5):
+def segment_crystals(img, r=101, offset=5, footprint=5):
+    """
+    r: `int`
+       blocksize to calculate local threshold value
+    footprint: `int`
+       radius for disksize for erosion/dilation operations
+    offset: `int`
+	Constant subtracted from weighted mean of neighborhood to calculate
+        the local threshold value
+    """"
     # normalize
     img = img * (255.0/img.max())
     
     # adaptive thresholding, because contrast is not equal over image
     arr = filters.threshold_adaptive(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
-
+    # arr = morphology.binary_opening(arr, morphology.disk(3))
+    arr = morphology.remove_small_objects(arr, min_size=4*4, connectivity=0) # remove noise
+    
     # magic
-    arr = morphology.binary_closing(arr, morphology.disk(2))
-    arr = morphology.binary_erosion(arr, morphology.disk(2))
-
+    arr = morphology.binary_closing(arr, morphology.disk(footprint)) # dilation + erosion
+    arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion
+    
     # remove carbon lines
     arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
-    arr = morphology.binary_dilation(arr, morphology.disk(2))
     arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
+    arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
     
     # get background pixels
-    bkg = np.invert(morphology.dilation(arr, morphology.disk(5)) | arr)
+    bkg = np.invert(morphology.dilation(arr, morphology.disk(footprint*2)) | arr)
 
     # 2: features
     # 1: background
@@ -77,7 +88,7 @@ def segment_crystals(img, r=101, offset=5):
     return arr, segmented
 
 
-def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False):
+def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False, **kwargs):
     """Function for finding crystals in a low contrast images.
     Used adaptive thresholds to find local features.
     Edges are detected, and rejected, on the basis of a histogram.
@@ -91,11 +102,13 @@ def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False):
         Value in micrometer to roughly indicate the desired spread of centroids over individual regions
     plot: bool
         Whether to plot the results or not
+    **kwargs:
+	keywords to pass to segment_crystals
     """
     img, scale = autoscale(img, maxdim=256)  # scale down for faster
     
     # segment the image, and find objects
-    arr, seg = segment_crystals(img)
+    arr, seg = segment_crystals(img, **kwargs)
     labels, numlabels = ndimage.label(seg)
     props = measure.regionprops(labels, img)
     
