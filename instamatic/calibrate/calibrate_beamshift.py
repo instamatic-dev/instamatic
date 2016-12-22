@@ -62,6 +62,13 @@ class CalibBeamShift(object):
             prog = "instamatic.calibrate_beamshift"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
+    @classmethod
+    def live(cls, ctrl):
+        while True:
+            c = calibrate_beamshift(ctrl=ctrl, save_images=True)
+            if raw_input(" >> Accept? [y/n] ") == "y":
+                return c
+
     def to_file(self, fn=CALIB_BEAMSHIFT):
         """Save calibration to file"""
         pickle.dump(self, open(fn, "w"))
@@ -179,8 +186,8 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
     
     # Calling c.plot with videostream crashes program
-    if not hasattr(ctrl.cam, "VideoLoop"):
-        c.plot()
+    # if not hasattr(ctrl.cam, "VideoLoop"):
+    #     c.plot()
 
     return c
 
@@ -253,6 +260,8 @@ def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=Tr
     print calib
 
     calib.to_file()
+
+    return calib
 
 
 def main_entry():

@@ -21,6 +21,10 @@ class VideoStream(threading.Thread):
 
     def run(self):
         self.cam = Camera(kind=self.cam)
+        self.default_exposure = self.cam.default_exposure
+        self.default_binsize = self.cam.default_binsize
+        self.dimensions = self.cam.dimensions
+        self.defaults = self.cam.defaults
 
         self.frame = None
         self.thread = None

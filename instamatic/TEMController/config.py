@@ -84,6 +84,9 @@ timepix_conversion_factor = 4.0*1.4
 # Calibration by Wei Wan (RED) for Orius LaB6
 # x,y dimensions for 1 pixel, 1/XX Angstrom^-1
 diffraction_pixeldimensions = {
+  300 : 0.0145304267,   # extrapolated from 600
+  400 : 0.01089782,     # extrapolated from 600
+  500 : 0.008718256,    # extrapolated from 600
   600 : 0.00735576,
   800 : 0.00544891,
   1000: 0.004202,

@@ -104,6 +104,13 @@ class CalibDirectBeam(object):
             prog = "instamatic.calibrate_directbeam"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
+    @classmethod
+    def live(cls, ctrl):
+        while True:
+            c = calibrate_directbeam(ctrl=ctrl, save_images=True)
+            if raw_input(" >> Accept? [y/n] ") == "y":
+                return c
+
     def to_file(self, fn=CALIB_DIRECTBEAM):
         pickle.dump(self, open(fn, "w"))
 
@@ -212,8 +219,8 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
     
     # Calling c.plot with videostream crashes program
-    if not hasattr(ctrl.cam, "VideoLoop"):
-        c.plot(key)
+    # if not hasattr(ctrl.cam, "VideoLoop"):
+    #     c.plot(key)
 
     return c
 
@@ -290,6 +297,8 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
     print calib
 
     calib.to_file()
+
+    return calib
 
 
 def main_entry():

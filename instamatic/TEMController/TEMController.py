@@ -41,17 +41,17 @@ class DiffFocus(object):
         self._tem = tem
 
     def __repr__(self):
-        value = self.value
+        try:
+            value = self.value
+        except ValueError:
+            value="n/a"
         return "DiffFocus(value={})".format(value)
 
     def set(self, value):
         self._setter(value)
 
     def get(self):
-        try:
-            return self._getter()
-        except ValueError:
-            return -1
+        return self._getter()
 
     @property
     def value(self):
@@ -600,7 +600,7 @@ class TEMController(object):
             'BeamTilt': self.beamtilt.get,
             'ImageShift': self.imageshift.get,
             'DiffShift': self.diffshift.get,
-            'StagePosition': self.stageposition.get,
+            # 'StagePosition': self.stageposition.get,
             'Magnification': self.magnification.get,
             'DiffFocus': self.difffocus.get,
             'Brightness': self.brightness.get,
@@ -613,7 +613,10 @@ class TEMController(object):
             keys = funcs.keys()
 
         for key in keys:
-            dct[key] = funcs[key]()
+            try:
+                dct[key] = funcs[key]()
+            except ValueError:
+                pass
 
         return dct
 
@@ -621,7 +624,7 @@ class TEMController(object):
         """Restore microscope parameters from dict"""
 
         funcs = {
-            'FunctionMode': self.tem.setFunctionMode,
+            # 'FunctionMode': self.tem.setFunctionMode,
             'GunShift': self.gunshift.set,
             'GunTilt': self.guntilt.set,
             'BeamShift': self.beamshift.set,
@@ -635,7 +638,7 @@ class TEMController(object):
             'SpotSize': self.tem.setSpotSize
         }
 
-        mode = dct.pop("FunctionMode")
+        mode = dct["FunctionMode"]
         self.tem.setFunctionMode(mode)
 
         for k, v in dct.items():

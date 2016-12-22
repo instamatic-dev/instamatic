@@ -203,7 +203,9 @@ class Experiment(object):
             d = fileio.load_experiment()
             self.calib_stage = CalibStage.from_file()
         except IOError as e:
-            print e
+            self.ctrl.mode_mag1()
+            self.ctrl.brightness.max()
+
             raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue...")
             x, y, _, _, _ = self.ctrl.stageposition.get()
             self.hole_centers = np.array([[x,y]])            
@@ -212,26 +214,45 @@ class Experiment(object):
             self.hole_centers = d["centers"]
             self.hole_radius = d["radius"] / 1000 # nm -> um
 
-        self.calib_beamshift = CalibBeamShift.from_file()
-        self.calib_directbeam = CalibDirectBeam.from_file()
-    
-        self.magnification   = kwargs["magnification"]
+        try:
+            self.calib_beamshift = CalibBeamShift.from_file()
+        except IOError:
+            self.ctrl.mode_mag1()
+            self.ctrl.store("image")
+            self.ctrl.brightness.set(38000)
+            self.calib_beamshift = CalibBeamShift.live(self.ctrl)
+            
+            self.image_brightness = self.ctrl.brightness.value
+            self.magnification = self.ctrl.magnification.value
+
+        try:
+            self.calib_directbeam = CalibDirectBeam.from_file()
+        except IOError:
+            self.ctrl.mode_diffraction()
+            self.ctrl.store("diffraction")
+            self.calib_directbeam = CalibDirectBeam.live(self.ctrl)
+
+            self.diff_brightness = self.ctrl.brightness.value
+            self.diff_difffocus = self.ctrl.difffocus.value
+            self.diff_cameralength = self.ctrl.magnification.value
+
+        # self.magnification   = kwargs["magnification"]
         self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
         self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
         self.image_threshold = kwargs.get("image_threshold", 100)
-        if self.ctrl.camera.name == "timepix":
+        if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
             print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
-        self.diff_brightness = kwargs["diff_brightness"]
-        self.diff_difffocus  = kwargs["diff_difffocus"]
+        # self.diff_brightness = kwargs["diff_brightness"]
+        # self.diff_difffocus  = kwargs["diff_difffocus"]
         self.diff_spotsize   = kwargs.get("diff_spotsize",       5   )
-        self.diff_cameralength = kwargs.get("diff_cameralength",       800)
+        # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
         self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
     
         self.crystal_spread = kwargs.get("crystal_spread", 2.5)
@@ -264,8 +285,8 @@ class Experiment(object):
         self.ctrl.mode_mag1()
         self.ctrl.magnification.value = self.magnification
         self.ctrl.brightness.max()
-        self.neutral_beamshift = self.calib_beamshift.center()
-        self.ctrl.beamshift.set(*self.neutral_beamshift) # calib_beamshift.reference_shift?
+        self.calib_beamshift.center(self.ctrl)
+        self.neutral_beamshift = self.ctrl.beamshift.get()
 
     def image_mode(self):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
@@ -427,7 +448,7 @@ class Experiment(object):
                 print " >> Dark image detected, I(mean) < {}".format(self.image_threshold)
                 continue
     
-            crystal_coords = find_crystals(img, h["Magnification"], spread=self.crystal_spread, timepix=True) * self.image_binsize
+            crystal_coords = find_crystals(img, self.magnification, spread=self.crystal_spread, timepix=True) * self.image_binsize
     
             for d in (d_image, d_pos):
                 h.update(d)
