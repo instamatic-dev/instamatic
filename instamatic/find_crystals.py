@@ -54,7 +54,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5):
     offset: `int`
 	Constant subtracted from weighted mean of neighborhood to calculate
         the local threshold value
-    """"
+    """
     # normalize
     img = img * (255.0/img.max())
     

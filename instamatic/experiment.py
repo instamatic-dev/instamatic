@@ -338,6 +338,9 @@ class Experiment(object):
             di: dict, contains information on holes
         """
         auto = False
+
+
+
         for i, (x, y) in enumerate(self.hole_centers):
             if not auto:
                 answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
@@ -483,6 +486,8 @@ class Experiment(object):
                 self.ctrl.stageposition.a = 0
     
             self.image_mode()
+
+        print "\n >> DONE << "
 
 
 def main_gui():
