@@ -25,6 +25,7 @@ class VideoStream(threading.Thread):
         self.default_binsize = self.cam.default_binsize
         self.dimensions = self.cam.dimensions
         self.defaults = self.cam.defaults
+        self.name = self.cam.name
 
         self.frame = None
         self.thread = None

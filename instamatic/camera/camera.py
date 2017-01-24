@@ -86,8 +86,10 @@ class Camera(object):
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
+        print "---"
         self.establishConnection()
-        
+        print "---"
+
         if kind == "timepix":
             self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
             self._setCorrectionRatio.restype = c_bool
@@ -97,7 +99,8 @@ class Camera(object):
 
         print "Camera {} initialized".format(self.getName())
         print "Dimensions {}x{}".format(*self.getDimensions())
-        print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
+        print 
+        # print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
         atexit.register(self.releaseConnection)
 

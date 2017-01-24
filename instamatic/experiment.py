@@ -210,9 +210,11 @@ class Experiment(object):
             x, y, _, _, _ = self.ctrl.stageposition.get()
             self.hole_centers = np.array([[x,y]])            
             self.hole_radius = float(raw_input("How big of an area do you want to sample (radius in um) ? \n >> [500] ") or 500)
+            border_k = 0
         else:
             self.hole_centers = d["centers"]
             self.hole_radius = d["radius"] / 1000 # nm -> um
+            border_k = 1
 
         try:
             self.calib_beamshift = CalibBeamShift.from_file()
@@ -264,7 +266,7 @@ class Experiment(object):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=1, padding=2, angle=self.camera_rotation_angle, plot=False)
+        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
         self.offsets = offsets * 1000
 
     def initialize_microscope(self):

@@ -5,6 +5,12 @@ import sys, os
 import numpy as np
 
 
+def printer(data):
+    """Print things to stdout on one line dynamically"""
+    sys.stdout.write("\r\x1b[K"+data.__str__())
+    sys.stdout.flush()
+
+
 def load_img(fn):
     root, ext = os.path.splitext(fn)
     ext = ext.lower()

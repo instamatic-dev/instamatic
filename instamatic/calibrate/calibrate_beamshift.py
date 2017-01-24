@@ -12,6 +12,8 @@ from filenames import *
 
 from instamatic.find_holes import find_holes
 
+from instamatic.tools import printer
+
 import pickle
 
 class CalibBeamShift(object):
@@ -158,10 +160,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
-        print
-        print "\bPosition: {}/{}".format(i+1, tot)
-        print ctrl.beamshift
-        
+
+        printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))
+
         outfile = "calib_beamshift_{:04d}".format(i) if save_images else None
 
         comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
@@ -176,7 +177,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
         i += 1
             
-    print " >> Reset to center"
+    print "\n >> Reset to center"
     ctrl.beamshift.set(*beamshift_cent)
 
     # correct for binsize, store in binsize=1

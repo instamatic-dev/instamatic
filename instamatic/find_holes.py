@@ -163,7 +163,11 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     
     markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
-    segmented = ndimage.binary_fill_holes(segmented - 1)
+
+    disk = morphology.disk(4)
+    segmented = morphology.binary_closing(segmented - 1, disk)
+
+    # segmented = ndimage.binary_fill_holes(segmented - 1)
 
     segmentation.clear_border(segmented, buffer_size=0, bgval=0, in_place=True)
 

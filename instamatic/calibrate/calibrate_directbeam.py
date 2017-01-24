@@ -12,6 +12,7 @@ from filenames import *
 
 from instamatic.find_holes import find_holes
 
+from instamatic.tools import printer
 import pickle
 
 refine_params = {
@@ -170,7 +171,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
     attr = getattr(ctrl, key.lower())
 
-    outfile = "calib_{}_0000".format(key) if save_images else None
+    outfile = "calib_db_{}_0000".format(key) if save_images else None
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
@@ -193,11 +194,10 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         i += 1
 
         attr.set(x=x_cent+dx, y=y_cent+dy)
-        print
-        print "\bPosition: {}/{}".format(i, tot)
-        print attr
+
+        printer("Position: {}/{}: {}".format(i, tot, attr))
         
-        outfile = "calib_{}_{:04d}".format(key, i) if save_images else None
+        outfile = "calib_db_{}_{:04d}".format(key, i) if save_images else None
 
         comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
@@ -209,7 +209,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         readouts.append(readout)
         shifts.append(shift)
             
-    print " >> Reset to center"
+    print "\n >> Reset to center"
     attr.set(*readout_cent)
 
     # correct for binsize, store in binsize=1
