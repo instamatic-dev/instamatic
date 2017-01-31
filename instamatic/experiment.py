@@ -1,7 +1,7 @@
 from formats import write_tiff
 import numpy as np
 import matplotlib.pyplot as plt
-from find_crystals import find_crystals
+from find_crystals import find_crystals, find_crystals_timepix
 import json
 from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
 from TEMController import config
@@ -244,10 +244,12 @@ class Experiment(object):
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
         self.image_threshold = kwargs.get("image_threshold", 100)
+        
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
             print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
+            self.find_crystals = self.find_crystals_timepix
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
@@ -257,7 +259,7 @@ class Experiment(object):
         # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
         self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
     
-        self.crystal_spread = kwargs.get("crystal_spread", 2.5)
+        self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         # self.sample_rotation_angles = ( -10, -5, 5, 10 )
         self.sample_rotation_angles = ()
@@ -453,7 +455,7 @@ class Experiment(object):
                 print " >> Dark image detected, I(mean) < {}".format(self.image_threshold)
                 continue
     
-            crystal_coords = find_crystals(img, self.magnification, spread=self.crystal_spread, timepix=True) * self.image_binsize
+            crystal_coords = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
     
             for d in (d_image, d_pos):
                 h.update(d)

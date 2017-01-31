@@ -45,14 +45,14 @@ def whiten(obs, check_finite=False):
     return obs / std_dev, std_dev
 
 
-def segment_crystals(img, r=101, offset=5, footprint=5):
+def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=True):
     """
     r: `int`
        blocksize to calculate local threshold value
     footprint: `int`
        radius for disksize for erosion/dilation operations
     offset: `int`
-	Constant subtracted from weighted mean of neighborhood to calculate
+    Constant subtracted from weighted mean of neighborhood to calculate
         the local threshold value
     """
     # normalize
@@ -69,8 +69,9 @@ def segment_crystals(img, r=101, offset=5, footprint=5):
     arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion
     
     # remove carbon lines
-    arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
-    arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
+    if remove_carbon_lacing:
+        arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
+        arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
     arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
     
     # get background pixels
@@ -88,7 +89,24 @@ def segment_crystals(img, r=101, offset=5, footprint=5):
     return arr, segmented
 
 
-def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False, **kwargs):
+def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
+    """Specialized function with better defaults for timepix camera"""
+    r = kwargs.get("r", 75)
+    offset = kwargs.get("offset", 10)
+    footprint = kwargs.get("footprint", 5)
+    k = timepix_conversion_factor
+    
+    return find_crystals(img=img, 
+                         magnification=magnification, 
+                         spread=spread, 
+                         plot=plot, 
+                         footprint=footprint, 
+                         offset=offset, 
+                         k=k,
+                         r=r,
+                        remove_carbon_lacing=False)
+    
+def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     """Function for finding crystals in a low contrast images.
     Used adaptive thresholds to find local features.
     Edges are detected, and rejected, on the basis of a histogram.
@@ -103,23 +121,21 @@ def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False, **k
     plot: bool
         Whether to plot the results or not
     **kwargs:
-	keywords to pass to segment_crystals
+    keywords to pass to segment_crystals
     """
+    k = kwargs.pop("k", 1) # timepix conversion factor
+    
     img, scale = autoscale(img, maxdim=256)  # scale down for faster
     
     # segment the image, and find objects
     arr, seg = segment_crystals(img, **kwargs)
+    
+    
     labels, numlabels = ndimage.label(seg)
     props = measure.regionprops(labels, img)
     
     # calculate the pixel dimensions in micrometer
     px, py = mag1_dimensions[magnification]
-    
-    if timepix:
-        k = timepix_conversion_factor
-    else:
-        k = 1
-    
     px = px / (img.shape[0] * k)
     py = py / (img.shape[1] * k)
     
@@ -159,8 +175,9 @@ def find_crystals(img, magnification, spread=2.0, plot=False, timepix=False, **k
     if plot:
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
-        x,y = centroids.T
-        plt.scatter(y,x, color="red")
+        if len(centroids) > 0:
+            x,y = centroids.T
+            plt.scatter(y,x, color="red")
         ax = plt.axes()
         ax.set_axis_off()
         plt.show()
