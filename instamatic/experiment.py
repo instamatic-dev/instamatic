@@ -6,7 +6,8 @@ import json
 from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
 from TEMController import config
 import fileio
-
+import os, sys
+from flatfield import 
 
 def get_status():
     status = {"stage_lowmag": {"name":"Stage (lowmag)", "ok":False, "msg":"no, please run instamatic.calibrate_stage_lowmag"},
@@ -244,6 +245,11 @@ class Experiment(object):
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
         self.image_threshold = kwargs.get("image_threshold", 100)
+
+        self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
+        if self.flatfield:
+            self.flatfield, hff = read_tiff(self.flatfield)
+            self.deadpixels = hff["deadpixels"]
         
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
@@ -343,8 +349,6 @@ class Experiment(object):
         """
         auto = False
 
-
-
         for i, (x, y) in enumerate(self.hole_centers):
             if not auto:
                 answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
@@ -425,6 +429,14 @@ class Experiment(object):
 
             yield k, dk
 
+    def apply_corrections(img, h):
+        if self.flatfield:
+            img = apply_corrections(img, deadpixels=self.deadpixels):
+            h["DeadPixelCorrection"] = True
+            img = apply_flatfield_correction(img, flatfield=self.flatfield)
+            h["FlatfieldCorrection"] = True
+        return img, h
+
     def run(self, ctrl=None, **kwargs):
         """Run serial electron diffraction experiment"""
 
@@ -454,7 +466,9 @@ class Experiment(object):
             if img.mean() < self.image_threshold:
                 print " >> Dark image detected, I(mean) < {}".format(self.image_threshold)
                 continue
-    
+
+            img, h = self.apply_corrections(img, h)
+
             crystal_coords = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
     
             for d in (d_image, d_pos):
@@ -469,7 +483,8 @@ class Experiment(object):
                 outfile = "image_{:04d}_{:04d}".format(i, k)
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
-                
+                img, h = self.apply_corrections(img, h)
+
                 for d in (d_diff, d_pos, dk):
                     h.update(d)
 
@@ -481,6 +496,7 @@ class Experiment(object):
     
                     outfile = "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle)
                     img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
+                    img, h = self.apply_corrections(img, h)
                                                 
                     for d in (d_diff, d_pos, dk):
                         h.update(d)

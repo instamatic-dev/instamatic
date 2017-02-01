@@ -7,7 +7,7 @@ from os import path
 
 setup(
     name="instamatic",
-    version="0.2.1",
+    version="0.2.2",
     description="Program for automatic data collection of diffraction snapshots on electron microscopes",
 
     author="Stef Smeets",
@@ -40,6 +40,7 @@ setup(
             'instamatic.calibrate_stage_mag1          = instamatic.calibrate.calibrate_stage_mag1:main_entry',
             'instamatic.calibrate_beamshift           = instamatic.calibrate.calibrate_beamshift:main_entry',
             'instamatic.calibrate_directbeam          = instamatic.calibrate.calibrate_directbeam:main_entry',
+            'instamatic.flatfield                     = instamatic.flatfield:main_entry',
             'instamatic.map_holes                     = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole                     = instamatic.app:goto_hole_entry',
             'instamatic.prepare_experiment            = instamatic.app:prepare_experiment_entry',

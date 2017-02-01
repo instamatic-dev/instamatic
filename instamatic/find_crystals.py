@@ -104,7 +104,7 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
                          offset=offset, 
                          k=k,
                          r=r,
-                        remove_carbon_lacing=False)
+                         remove_carbon_lacing=False)
     
 def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     """Function for finding crystals in a low contrast images.
@@ -129,7 +129,6 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     
     # segment the image, and find objects
     arr, seg = segment_crystals(img, **kwargs)
-    
     
     labels, numlabels = ndimage.label(seg)
     props = measure.regionprops(labels, img)
