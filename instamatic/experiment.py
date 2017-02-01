@@ -246,16 +246,20 @@ class Experiment(object):
         self.image_dimensions = config.mag1_dimensions[self.magnification]
         self.image_threshold = kwargs.get("image_threshold", 100)
 
-        self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
-        if self.flatfield:
-            self.flatfield, hff = read_tiff(self.flatfield)
-            self.deadpixels = hff["deadpixels"]
         
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
             print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
-            self.find_crystals = self.find_crystals_timepix
+            self.find_crystals = find_crystals_timepix
+            self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
+        else:
+            self.find_crystals = find_crystals
+            self.flatfield = None
+
+        if self.flatfield:
+            self.flatfield, h_flatfield = read_tiff(self.flatfield)
+            self.deadpixels = h_flatfield["deadpixels"]
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
@@ -287,7 +291,7 @@ class Experiment(object):
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
-        print raw_input(" >> Getting neutral diffraction shift, press enter to continue")
+        print raw_input(" >> Getting neutral diffraction shift, press <ENTER> to continue")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         print self.neutral_diffshift
         print "DiffShift(x={}, y={})".format(*self.neutral_diffshift)
@@ -349,6 +353,8 @@ class Experiment(object):
         """
         auto = False
 
+        ncenters = len(self.hole_centers)
+
         for i, (x, y) in enumerate(self.hole_centers):
             if not auto:
                 answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
@@ -356,7 +362,7 @@ class Experiment(object):
                     print " >> Interrupted..."
                     exit()
                 elif answer == "next":
-                    print " >> Going to next hole"
+                    print " >> Going to next center"
                     break
                 elif answer == "auto":
                     auto = True
@@ -365,11 +371,11 @@ class Experiment(object):
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
                 print e
-                print " >> Moving to next hole..."
+                print " >> Moving to next center..."
                 print
                 continue
             else:
-                print "\n >> Going to next hole center \n    ->", self.ctrl.stageposition
+                print "Stage position: center {}/{} ->".format(i, ncenters), self.ctrl.stageposition
                 yield i, (x,y)
             
     def loop_positions(self):
@@ -379,6 +385,7 @@ class Experiment(object):
         Return
             dct: dict, contains information on positions
         """
+        noffsets = len(self.offsets)
 
         for i, hole_center in self.loop_centers():
             hole_x, hole_y = hole_center
@@ -391,7 +398,7 @@ class Experiment(object):
                     print
                     continue
                 else:
-                    print "\n     >> Going to next position \n        ->", self.ctrl.stageposition
+                    print "Stage position: offset {}/{} ->".format(j, noffsets), self.ctrl.stageposition
                     dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
                     dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
                     yield dct
@@ -413,7 +420,7 @@ class Experiment(object):
         self.diffraction_mode()
         beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
         for k, beamshift in enumerate(beamshift_coords):
-            print " >> Focusing on crystal {}/{}".format(k+1, ncrystals)
+            print "Beamshift: crystal {}/{}".format(k+1, ncrystals)
             self.ctrl.beamshift.set(*beamshift)
         
             # compensate beamshift
@@ -464,7 +471,7 @@ class Experiment(object):
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
             if img.mean() < self.image_threshold:
-                print " >> Dark image detected, I(mean) < {}".format(self.image_threshold)
+                print " >> Dark image detected, skipping..."
                 continue
 
             img, h = self.apply_corrections(img, h)
