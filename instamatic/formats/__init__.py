@@ -17,6 +17,8 @@ def write_tiff(fname, data, header=None):
     root, ext = os.path.splitext(fname)
     if isinstance(header, dict):
         header = yaml.dump(header)
+    if not header:
+        header = ""
 
     if ext == "":
         fname = root + ".tiff"
@@ -38,11 +40,14 @@ def read_tiff(fname):
     img = tiff.getImage(0)
     header = tiff.getInfo(0)
 
-    info = header.pop("imageDescription", None)
-    if info:
+    if "imageDescription" in header:
         try:
-            header.update(yaml.load(info))
+            d = yaml.load(header.get("imageDescription"))
         except ValueError as e:
-            print e, info
+            print "Warning: could not read info from tiff header: {} (input={})".format(e)
+        else:
+            if isinstance(d, dict):
+                header.update(d)
+                del header["imageDescription"]
 
     return img, header
