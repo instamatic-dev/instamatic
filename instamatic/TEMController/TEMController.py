@@ -556,6 +556,7 @@ class TEMController(object):
 
     @property
     def mode(self):
+        """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
         return self.tem.getFunctionMode()
 
     @property

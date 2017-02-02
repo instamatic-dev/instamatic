@@ -29,7 +29,7 @@ def get_deadpixels(img):
     return np.argwhere(img == 0)
 
 
-def apply_center_pixel_correction(img, k=1.21148512995):
+def apply_center_pixel_correction(img, k=1.19870594245):
     img[255:261,255:261] = img[255:261,255:261] * k
     return img
 
@@ -38,8 +38,8 @@ def get_center_pixel_correction(img):
     center = np.sum(img[255:261,255:261])
     edge = np.sum(img[254:262,254:262]) - center
 
-    avg1 = center/36
-    avg2 = edge/28
+    avg1 = center/36.0
+    avg2 = edge/28.0
     k = avg2/avg1
     
     print "timepix central pixel correction factor:", k
@@ -77,7 +77,8 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     
     f = f/frames
     deadpixels = get_deadpixels(f)
-    f = apply_corrections(f, deadpixels=deadpixels)
+    get_center_pixel_correction(f)
+    f = remove_deadpixels(f, deadpixels=deadpixels)
 
     print "\nDark frame"
     raw_input("Blank the beam and press <ENTER> to continue to collect {} dark field images".format(frames))
@@ -92,7 +93,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
             d += img
     
     d = d/frames
-    d = apply_corrections(f, deadpixels=deadpixels)
+    d = remove_deadpixels(d, deadpixels=deadpixels)
 
     date = time.strftime("%Y-%m-%d")
     ff = "flatfield_tpx_{}.tiff".format(date)

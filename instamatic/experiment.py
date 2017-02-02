@@ -7,7 +7,8 @@ from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffracti
 from TEMController import config
 import fileio
 import os, sys
-from flatfield import 
+from flatfield import remove_dead_pixels, apply_flatfield_correction
+from formats import read_tiff
 
 def get_status():
     status = {"stage_lowmag": {"name":"Stage (lowmag)", "ok":False, "msg":"no, please run instamatic.calibrate_stage_lowmag"},
@@ -246,18 +247,17 @@ class Experiment(object):
         self.image_dimensions = config.mag1_dimensions[self.magnification]
         self.image_threshold = kwargs.get("image_threshold", 100)
 
-        
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
             print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
             self.find_crystals = find_crystals_timepix
-            self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
+            self.flatfield = kwargs.get("flatfield", "flatfield_tpx_2017-02-01.tiff")
         else:
             self.find_crystals = find_crystals
             self.flatfield = None
 
-        if self.flatfield:
+        if self.flatfield is not None:
             self.flatfield, h_flatfield = read_tiff(self.flatfield)
             self.deadpixels = h_flatfield["deadpixels"]
 
@@ -309,7 +309,9 @@ class Experiment(object):
         print " >> Switching back to image mode" 
 
         self.ctrl.beamshift.set(*self.neutral_beamshift)
-        self.ctrl.diffshift.set(*self.neutral_diffshift)
+        # avoid setting diffshift in image mode, because it messes with the beam position
+        if self.ctrl.mode == "diff":
+            self.ctrl.diffshift.set(*self.neutral_diffshift)
 
         self.ctrl.mode_mag1()
         self.ctrl.brightness.max()
@@ -375,7 +377,7 @@ class Experiment(object):
                 print
                 continue
             else:
-                print "Stage position: center {}/{} ->".format(i, ncenters), self.ctrl.stageposition
+                print "Stage position: center {}/{} -> (x={:.1f}, y={:.1f})".format(i, ncenters, x, y)
                 yield i, (x,y)
             
     def loop_positions(self):
@@ -390,15 +392,17 @@ class Experiment(object):
         for i, hole_center in self.loop_centers():
             hole_x, hole_y = hole_center
             for j, (x_offset, y_offset) in enumerate(self.offsets):
+                x = hole_x+x_offset
+                y = hole_y+y_offset
                 try:
-                    self.ctrl.stageposition.set(x=hole_x+x_offset, y=hole_y+y_offset)
+                    self.ctrl.stageposition.set(x=x, y=y)
                 except ValueError as e:
                     print e
                     print " >> Moving to next position..."
                     print
                     continue
                 else:
-                    print "Stage position: offset {}/{} ->".format(j, noffsets), self.ctrl.stageposition
+                    print "Stage position: offset {}/{} -> (x={:.1f}, y={:.1f})".format(j, noffsets, x, y)
                     dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
                     dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
                     yield dct
@@ -436,9 +440,9 @@ class Experiment(object):
 
             yield k, dk
 
-    def apply_corrections(img, h):
-        if self.flatfield:
-            img = apply_corrections(img, deadpixels=self.deadpixels):
+    def apply_corrections(self, img, h):
+        if self.flatfield is not None:
+            img = remove_dead_pixels(img, deadpixels=self.deadpixels)
             h["DeadPixelCorrection"] = True
             img = apply_flatfield_correction(img, flatfield=self.flatfield)
             h["FlatfieldCorrection"] = True
@@ -483,6 +487,9 @@ class Experiment(object):
             h["exp_crystal_coords"] = crystal_coords.tolist()
 
             write_tiff(outfile, img, header=h)
+
+            if len(crystal_coords) == 0:
+                continue
     
             # plot_props(img, crystals, fname=outfile+".png")
     
