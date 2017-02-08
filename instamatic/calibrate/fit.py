@@ -18,7 +18,7 @@ def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"
     return f(difffocus, a, b, c) * config.diffraction_pixeldimensions[cameralength]/binsize
 
 
-def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, **x0):
+def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, verbose=False, **x0):
     params = lmfit.Parameters()
     params.add("angle", value=x0.get("angle", 0), vary=rotation, min=-np.pi, max=np.pi)
     params.add("sx"   , value=x0.get("sx"   , 1), vary=scaling)
@@ -52,8 +52,11 @@ def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=Fal
     args = (a, b)
     res = lmfit.minimize(objective_func, params, args=args, method=method)
     
-    lmfit.report_fit(res)
-    
+    if res.success and not verbose:
+        print "Minimization converged after {} cycles with chisqr of {}".format(res.nfev, res.chisqr)
+    else:
+        lmfit.report_fit(res)
+
     angle = res.params["angle"].value
     sx    = res.params["sx"].value
     sy    = res.params["sy"].value 

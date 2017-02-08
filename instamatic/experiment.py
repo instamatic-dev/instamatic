@@ -1,79 +1,18 @@
-from formats import write_tiff
+import os, sys
 import numpy as np
-import matplotlib.pyplot as plt
-from find_crystals import find_crystals, find_crystals_timepix
 import json
+
+import matplotlib.pyplot as plt
+
+import fileio
+
+from formats import *
+from find_crystals import find_crystals, find_crystals_timepix
 from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
 from TEMController import config
-import fileio
-import os, sys
-from flatfield import remove_dead_pixels, apply_flatfield_correction
-from formats import read_tiff
+from flatfield import remove_deadpixels, apply_flatfield_correction
+from tools import printer
 
-def get_status():
-    status = {"stage_lowmag": {"name":"Stage (lowmag)", "ok":False, "msg":"no, please run instamatic.calibrate_stage_lowmag"},
-                "stage_mag1": {"name":"Stage (mag1)", "ok":False, "msg":"no, please run instamatic.calibrate_mag1"},
-                "beamshift": {"name":"BeamShift", "ok":False, "msg":"no, please run instamatic.calibrate_beamshift"},
-                "directbeam": {"name":"DirectBeam", "ok":False, "msg":"no, please run instamatic.calibrate_directbeam"},
-                "holes": {"name":"Holes", "ok":False, "msg": "no, please run instamatic.map_holes"},
-                "radius": {"name":"Radius", "ok":False, "msg": "no, please run instamatic.prepare_experiment"},
-                "params": {"name":"Params", "ok":False, "msg": "no"},
-                "ready": {"name":"Ready", "ok":True, "msg": "Experiment is ready!!"}
-            }
-
-    try:
-        calib = CalibStage.from_file()
-    except IOError:
-        pass
-    else:
-        status["stage_lowmag"].update({"ok":True, "msg": "OK"})
-
-    try:
-        calib = CalibBeamShift.from_file()
-    except IOError:
-        pass
-    else:
-        status["beamshift"].update({"ok":True, "msg": "OK"})
-
-    try:
-        calib = CalibDirectBeam.from_file()
-    except IOError:
-        pass
-    else:
-        status["directbeam"].update({"ok":True, "msg": "OK"})
-
-    try:
-        params = json.load(open("params.json","r"))
-    except IOError:
-        pass
-    else:
-        if "angle" in params:
-            status["stage_mag1"].update({"ok":True, "msg":"OK, angle={:.2f} deg.".format(np.degrees(params["angle"]))})
-        keys = "magnification", "diff_difffocus", "diff_brightness"
-        missing_keys = [key for key in keys if key not in params]
-        if missing_keys:
-            status["params"].update({"ok":False, "msg":"no, missing {}".format(", ".join(missing_keys))})
-        else:
-            status["params"].update({"ok":True, "msg":"OK"})
-
-    try:
-        experiment = fileio.load_experiment()
-    except Exception as e:
-        pass
-    else:
-        status["radius"].update({"ok":True, "msg":"OK, {:.2f} um".format(experiment["radius"] / 1000.0)})
-
-    try:
-        hole_coords = fileio.load_hole_stage_positions()
-    except Exception:
-        pass
-    else:
-        status["holes"].update({"ok":True, "msg":"OK, {} locations stored".format(len(hole_coords))})
-
-    if not all([status[key]["ok"] for key in status]):
-        status["ready"].update({"ok":False, "msg":"Experiment is NOT ready!!"})
-
-    return status
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
@@ -204,7 +143,7 @@ class Experiment(object):
         try:
             d = fileio.load_experiment()
             self.calib_stage = CalibStage.from_file()
-        except IOError as e:
+        except IOError:
             self.ctrl.mode_mag1()
             self.ctrl.brightness.max()
 
@@ -223,10 +162,10 @@ class Experiment(object):
         except IOError:
             self.ctrl.mode_mag1()
             self.ctrl.store("image")
-            self.ctrl.brightness.set(38000)
+            self.ctrl.brightness.set(kwargs.get("diff_brightness", 38000))
             self.calib_beamshift = CalibBeamShift.live(self.ctrl)
             
-            self.image_brightness = self.ctrl.brightness.value
+            # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
 
         try:
@@ -245,14 +184,14 @@ class Experiment(object):
         self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
         self.image_spotsize  = kwargs.get("image_spotsize",      1   )
         self.image_dimensions = config.mag1_dimensions[self.magnification]
-        self.image_threshold = kwargs.get("image_threshold", 100)
+        self.image_threshold = kwargs.get("image_threshold",     100)
 
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
             print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
             self.find_crystals = find_crystals_timepix
-            self.flatfield = kwargs.get("flatfield", "flatfield_tpx_2017-02-01.tiff")
+            self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
         else:
             self.find_crystals = find_crystals
             self.flatfield = None
@@ -263,8 +202,6 @@ class Experiment(object):
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
-        # self.diff_brightness = kwargs["diff_brightness"]
-        # self.diff_difffocus  = kwargs["diff_difffocus"]
         self.diff_spotsize   = kwargs.get("diff_spotsize",       5   )
         # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
         self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
@@ -272,7 +209,7 @@ class Experiment(object):
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         # self.sample_rotation_angles = ( -10, -5, 5, 10 )
-        self.sample_rotation_angles = ()
+        self.sample_rotation_angles = (-5, 5)
     
         self.camera_rotation_angle = config.camera_rotation_vs_stage_xy
 
@@ -291,10 +228,9 @@ class Experiment(object):
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
-        print raw_input(" >> Getting neutral diffraction shift, press <ENTER> to continue")
+        print raw_input(" >> Press <ENTER> to get neutral diffraction shift")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
-        print self.neutral_diffshift
-        print "DiffShift(x={}, y={})".format(*self.neutral_diffshift)
+        print " => DiffShift(x={}, y={})".format(*self.neutral_diffshift)
     
         self.ctrl.mode_mag1()
         self.ctrl.magnification.value = self.magnification
@@ -359,7 +295,7 @@ class Experiment(object):
 
         for i, (x, y) in enumerate(self.hole_centers):
             if not auto:
-                answer = raw_input("\n (Press <enter> to save an image and continue) \n >> ")
+                answer = raw_input("\n >> Press <ENTER> to start #{}/{}".format(i, len(self.hole_centers)))
                 if answer == "exit":
                     print " >> Interrupted..."
                     exit()
@@ -413,7 +349,7 @@ class Experiment(object):
         Switch to diffraction mode, and shift the beam to be on the crystal
 
         Return
-            dk: dict, contains information on beam/diffshift
+            dct: dict, contains information on beam/diffshift
 
         """
 
@@ -424,7 +360,7 @@ class Experiment(object):
         self.diffraction_mode()
         beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
         for k, beamshift in enumerate(beamshift_coords):
-            print "Beamshift: crystal {}/{}".format(k+1, ncrystals)
+            printer("Beamshift: crystal {}/{}".format(k+1, ncrystals))
             self.ctrl.beamshift.set(*beamshift)
         
             # compensate beamshift
@@ -436,13 +372,13 @@ class Experiment(object):
         
             self.ctrl.diffshift.set(*diffshift.astype(int))
 
-            dk = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
+            dct = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
 
-            yield k, dk
+            yield dct
 
     def apply_corrections(self, img, h):
         if self.flatfield is not None:
-            img = remove_dead_pixels(img, deadpixels=self.deadpixels)
+            img = remove_deadpixels(img, deadpixels=self.deadpixels)
             h["DeadPixelCorrection"] = True
             img = apply_flatfield_correction(img, flatfield=self.flatfield)
             h["FlatfieldCorrection"] = True
@@ -475,7 +411,7 @@ class Experiment(object):
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
             if img.mean() < self.image_threshold:
-                print " >> Dark image detected, skipping..."
+                print " >> Dark image detected"
                 continue
 
             img, h = self.apply_corrections(img, h)
@@ -491,28 +427,26 @@ class Experiment(object):
             if len(crystal_coords) == 0:
                 continue
     
-            # plot_props(img, crystals, fname=outfile+".png")
-    
-            for k, dk in self.loop_crystals(crystal_coords):
+            for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = "image_{:04d}_{:04d}".format(i, k)
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
 
-                for d in (d_diff, d_pos, dk):
+                for d in (d_diff, d_pos, d_cryst):
                     h.update(d)
 
                 write_tiff(outfile, img, header=h)
              
                 for rotation_angle in self.sample_rotation_angles:
-                    print " >> Rotation angle = ".format(rotation_angle)
+                    print " >> Rotation angle = {}".format(rotation_angle)
                     self.ctrl.stageposition.a = rotation_angle
     
                     outfile = "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle)
                     img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                     img, h = self.apply_corrections(img, h)
                                                 
-                    for d in (d_diff, d_pos, dk):
+                    for d in (d_diff, d_pos, d_cryst):
                         h.update(d)
 
                     write_tiff(outfile, img, header=h)
@@ -531,31 +465,15 @@ def main_gui():
 
 def main():
     import TEMController
-
-    status = get_status()
-
-    print "\nCalibration:"
-    for key in "stage_lowmag", "stage_mag1", "beamshift", "directbeam":
-        print "    {name:20s}: {msg:s}".format(**status[key])
-
-    print "\nExperiment"
-    for key in "holes", "radius", "params", "ready":
-        print "    {name:20s}: {msg:s}".format(**status[key])
-
-    ready = status["ready"]["ok"]
-    ready = True
-    if ready:
+    try:
         params = json.load(open("params.json","r"))
-        if raw_input("\nExperiment ready. Enter 'go' to start. >> ") != "go":
-            exit()
-        print
-        ctrl = TEMController.initialize()
+    except IOError:
+        params = {}
 
-        exp = Experiment(ctrl, params)
-        exp.report_status()
-        exp.run()
-    else:
-        print "\nExperiment not ready yet!!"
+    ctrl = TEMController.initialize()
+    exp = Experiment(ctrl, params)
+    exp.report_status()
+    exp.run()
 
 
 if __name__ == '__main__':
