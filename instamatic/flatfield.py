@@ -105,6 +105,8 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     fp = "deadpixels_tpx_{}.npy".format(date)
     np.save(fp, deadpixels)
 
+    print "\n >> DONE << "
+
 
 def main_entry():
     import argparse

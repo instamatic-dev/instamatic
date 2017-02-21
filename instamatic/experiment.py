@@ -150,7 +150,7 @@ class Experiment(object):
             raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue...")
             x, y, _, _, _ = self.ctrl.stageposition.get()
             self.hole_centers = np.array([[x,y]])            
-            self.hole_radius = float(raw_input("How big of an area do you want to sample (radius in um) ? \n >> [500] ") or 500)
+            self.hole_radius = float(raw_input("How big of an area do you want to sample (radius in um) ? \n >> [100] ") or 100)
             border_k = 0
         else:
             self.hole_centers = d["centers"]
@@ -167,6 +167,7 @@ class Experiment(object):
             
             # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
+            print self.ctrl.brightness
 
         try:
             self.calib_directbeam = CalibDirectBeam.from_file()
@@ -209,7 +210,8 @@ class Experiment(object):
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         # self.sample_rotation_angles = ( -10, -5, 5, 10 )
-        self.sample_rotation_angles = (-5, 5)
+        # self.sample_rotation_angles = (-5, 5)
+        self.sample_rotation_angles = ()
     
         self.camera_rotation_angle = config.camera_rotation_vs_stage_xy
 
