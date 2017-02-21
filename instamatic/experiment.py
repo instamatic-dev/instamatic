@@ -394,11 +394,15 @@ class Experiment(object):
         d_image = {
                 "exp_neutral_diffshift": self.neutral_beamshift,
                 "exp_neutral_beamshift": self.neutral_diffshift,
+                "exp_image_spotsize": self.image_spotsize,
+                "exp_magnification": self.magnification,
                 "ImageDimensions": self.image_dimensions
         }
         d_diff = {
                 "exp_neutral_diffshift": self.neutral_beamshift,
                 "exp_neutral_beamshift": self.neutral_diffshift,
+                "exp_diff_brightness": self.diff_brightness,
+                "exp_diff_spotsize": self.diff_spotsize,
                 "ImagePixelsize": self.diff_pixelsize
         }
 
