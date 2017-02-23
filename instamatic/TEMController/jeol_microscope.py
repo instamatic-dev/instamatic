@@ -89,6 +89,8 @@ class JeolMicroscope(object):
         self.MAX = MAX
         self.MIN = MIN
 
+        self.VERIFY_STAGE_POSITION = True
+
     def __del__(self):
         comtypes.CoUninitialize()
 
@@ -214,7 +216,8 @@ class JeolMicroscope(object):
 
     def waitForStage(self, delay=0.1):
         while self.isStageMoving():
-            time.sleep(delay)
+            if delay > 0:
+                time.sleep(delay)
 
     def setStageX(self, value):
         self.stage3.SetX(value)
@@ -234,6 +237,13 @@ class JeolMicroscope(object):
 
     def setStageB(self, value):
         self.stage3.SetTiltYAngle(value)
+        self.waitForStage()
+
+    def setStageXY(self, x=None, y=None):
+        if x is not None:
+            self.stage3.SetX(y)
+        if y is not None:
+            self.stage3.SetY(y)
         self.waitForStage()
 
     def _setStagePosition_backlash(self, x=None, y=None, z=None, a=None, b=None):
@@ -349,27 +359,26 @@ class JeolMicroscope(object):
             self.setStageA(a)
         if b is not None:
             self.setStageB(b)
-        if x is not None:
-            self.setStageX(x)
-        if y is not None:
-            self.setStageY(y)
+        if (x is not None) or (y is not None):
+            self.setStageXY(x=x, y=y)
 
-        nx, ny, nz, na, nb = self.getStagePosition()
-        if x is not None and abs(nx - x) > 150:
-            print " >> Warning: stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx) # +- 150 nm
-            logging.debug("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
-        if y is not None and abs(ny - y) > 150:
-            print " >> Warning: stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny) # +- 150 nm
-            logging.debug("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
-        if z is not None and abs(nz - z) > 500:
-            print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
-            logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
-        if a is not None and abs(na - a) > 0.057:
-            print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
-            logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
-        if b is not None and abs(nb - b) > 0.057:
-            print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
-            logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
+        if self.VERIFY_STAGE_POSITION:
+            nx, ny, nz, na, nb = self.getStagePosition()
+            if x is not None and abs(nx - x) > 150:
+                print " >> Warning: stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx) # +- 150 nm
+                logging.debug("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
+            if y is not None and abs(ny - y) > 150:
+                print " >> Warning: stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny) # +- 150 nm
+                logging.debug("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
+            if z is not None and abs(nz - z) > 500:
+                print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
+                logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
+            if a is not None and abs(na - a) > 0.057:
+                print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
+                logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
+            if b is not None and abs(nb - b) > 0.057:
+                print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
+                logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""

@@ -137,6 +137,9 @@ class Experiment(object):
 
         self.load_calibration(**config)
 
+        # set flags
+        self.ctrl.tem.VERIFY_STAGE_POSITION = False
+
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
         
