@@ -241,7 +241,7 @@ class JeolMicroscope(object):
 
     def setStageXY(self, x=None, y=None):
         if x is not None:
-            self.stage3.SetX(y)
+            self.stage3.SetX(x)
         if y is not None:
             self.stage3.SetY(y)
         self.waitForStage()

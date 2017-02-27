@@ -135,10 +135,31 @@ class Experiment(object):
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
 
+        self.setup_folders()
+
         self.load_calibration(**config)
 
         # set flags
         self.ctrl.tem.VERIFY_STAGE_POSITION = False
+
+    def setup_folders(self):
+        n = 1
+        while True:
+            drc = "experiment{}".format(n)
+            if os.path.exists(drc):
+                n += 1
+            else:
+                break
+        self.curdir = os.path.abspath(os.path.curdir)
+        self.expdir = os.path.join(drc)
+        self.calibdir = os.path.join(self.expdir, "calib")
+        self.imagedir = os.path.join(self.expdir, "images")
+        self.datadir = os.path.join(self.expdir, "data")
+        if not os.path.exists(self.expdir):
+            os.mkdir(self.expdir)
+            os.mkdir(self.calibdir)
+            os.mkdir(self.imagedir)
+            os.mkdir(self.datadir)
 
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
@@ -166,7 +187,7 @@ class Experiment(object):
             self.ctrl.mode_mag1()
             self.ctrl.store("image")
             self.ctrl.brightness.set(kwargs.get("diff_brightness", 38000))
-            self.calib_beamshift = CalibBeamShift.live(self.ctrl)
+            self.calib_beamshift = CalibBeamShift.live(self.ctrl, outdir=self.calibdir)
             
             # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
@@ -177,7 +198,7 @@ class Experiment(object):
         except IOError:
             self.ctrl.mode_diffraction()
             self.ctrl.store("diffraction")
-            self.calib_directbeam = CalibDirectBeam.live(self.ctrl)
+            self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir=self.calibdir)
 
             self.diff_brightness = self.ctrl.brightness.value
             self.diff_difffocus = self.ctrl.difffocus.value
@@ -246,9 +267,9 @@ class Experiment(object):
     def image_mode(self):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
         
-        print
-        print " >> Switching back to image mode" 
-
+        print "" # blank line to trigger stdout flush
+        # print " >> Switching back to image mode" 
+        
         self.ctrl.beamshift.set(*self.neutral_beamshift)
         # avoid setting diffshift in image mode, because it messes with the beam position
         if self.ctrl.mode == "diff":
@@ -260,8 +281,9 @@ class Experiment(object):
     def diffraction_mode(self):
         """Switch to diffraction mode, focus the beam, and set the correct focus
         """
-        print
-        print " >> Switching to diffraction mode"
+        print "" # blank line to trigger stdout flush
+        # print " >> Switching to diffraction mode"
+        
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.mode_diffraction()
         self.ctrl.difffocus.value = self.diff_difffocus # difffocus must be set AFTER switching to diffraction mode
@@ -269,6 +291,8 @@ class Experiment(object):
     def report_status(self):
         """Report experiment status"""
 
+        print
+        print "Output directory:\n{}".format(self.expdir)
         print
         print "Imaging     : binsize = {}".format(self.image_binsize)
         print "              exposure = {}".format(self.image_exposure)
@@ -343,7 +367,7 @@ class Experiment(object):
                     print
                     continue
                 else:
-                    print "Stage position: offset {}/{} -> (x={:.1f}, y={:.1f})".format(j, noffsets, x, y)
+                    printer("Imaging: stage position {}/{} -> (x={:.1f}, y={:.1f})".format(j, noffsets, x, y))
                     dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
                     dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
                     yield dct
@@ -365,7 +389,7 @@ class Experiment(object):
         self.diffraction_mode()
         beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
         for k, beamshift in enumerate(beamshift_coords):
-            printer("Beamshift: crystal {}/{}".format(k+1, ncrystals))
+            printer("Diffraction: crystal {}/{}".format(k+1, ncrystals))
             self.ctrl.beamshift.set(*beamshift)
         
             # compensate beamshift
@@ -413,14 +437,14 @@ class Experiment(object):
 
         for i, d_pos in enumerate(self.loop_positions()):
    
-            outfile = "image_{:04d}".format(i)
+            outfile = os.path.join(self.imagedir, "image_{:04d}".format(i))
     
             self.ctrl.tem.setSpotSize(self.image_spotsize)
             img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, header_keys=header_keys)
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
             if img.mean() < self.image_threshold:
-                print " >> Dark image detected"
+                # print " >> Dark image detected"
                 continue
 
             img, h = self.apply_corrections(img, h)
@@ -437,7 +461,7 @@ class Experiment(object):
                 continue
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
-                outfile = "image_{:04d}_{:04d}".format(i, k)
+                outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}".format(i, k))
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
@@ -451,7 +475,7 @@ class Experiment(object):
                     print " >> Rotation angle = {}".format(rotation_angle)
                     self.ctrl.stageposition.a = rotation_angle
     
-                    outfile = "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle)
+                    outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
                     img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                     img, h = self.apply_corrections(img, h)
                                                 

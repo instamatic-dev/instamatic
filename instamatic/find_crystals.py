@@ -26,7 +26,7 @@ def isedge(prop):
 
         hist, edges = np.histogram(prop.intensity_image[prop.image])
         if np.sum(hist) // hist[0] < 2:
-            print " >> Edge detected"
+            # print " >> Edge detected"
             return True
     return False
 

@@ -65,15 +65,16 @@ class CalibBeamShift(object):
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     @classmethod
-    def live(cls, ctrl):
+    def live(cls, ctrl, outdir="."):
         while True:
-            c = calibrate_beamshift(ctrl=ctrl, save_images=True)
+            c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
             if raw_input(" >> Accept? [y/n] ") == "y":
                 return c
 
-    def to_file(self, fn=CALIB_BEAMSHIFT):
+    def to_file(self, fn=CALIB_BEAMSHIFT, outdir="."):
         """Save calibration to file"""
-        pickle.dump(self, open(fn, "w"))
+        fout = os.path.join(outdir, fn)
+        pickle.dump(self, open(fout, "w"))
 
     def plot(self):
         if not self.has_data:
@@ -103,7 +104,7 @@ class CalibBeamShift(object):
             return beamshift
 
 
-def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=False, **kwargs):
+def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
@@ -140,11 +141,10 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
     img_cent, scale = autoscale(img_cent)
     
-    outfile = "calib_beamcenter" if save_images else None
-
-    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    pixel_cent = np.array(holes[0].centroid) * binsize / scale
+    outfile = os.path.join(outdir, "calib_beamcenter") if save_images else None
     
+    pixel_cent = find_beam_center(img_cent) * binsize / scale
+
     print "Beamshift: x={} | y={}".format(*beamshift_cent)
     print "Pixel: x={} | y={}".format(*pixel_cent)
         
@@ -155,15 +155,13 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 
-    outfile = None
-
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
 
         printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))
 
-        outfile = "calib_beamshift_{:04d}".format(i) if save_images else None
+        outfile = os.path.join(outdir, "calib_beamshift_{:04d}".format(i)) if save_images else None
 
         comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="BeamShift")
@@ -248,19 +246,24 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     return c
 
 
-def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, confirm=True):
+def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, outdir=".", confirm=True):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go to 2500x mag, and move the beam by beamshift\nso that is in the middle of the image (use reasonable size)\n(type 'go' to start): """) == "go":
+        if confirm and raw_input("""
+ 1. Go to desired magnification (e.g. 2500x)
+ 2. Select desired beam size (BRIGHTNESS)
+ 3. Center the beam with beamshift
+    
+ Press <ENTER> to start"""):
             return
         else:
-            calib = calibrate_beamshift_live(ctrl, save_images=save_images)
+            calib = calibrate_beamshift_live(ctrl, save_images=save_images, outdir=outdir)
     else:
         calib = calibrate_beamshift_from_image_fn(center_fn, other_fn)
 
     print
     print calib
 
-    calib.to_file()
+    calib.to_file(outdir=outdir)
 
     return calib
 

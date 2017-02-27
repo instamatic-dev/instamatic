@@ -10,8 +10,6 @@ from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
 
-from instamatic.find_holes import find_holes
-
 from instamatic.tools import printer
 import pickle
 
@@ -106,14 +104,16 @@ class CalibDirectBeam(object):
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     @classmethod
-    def live(cls, ctrl):
+    def live(cls, ctrl, outdir="."):
         while True:
-            c = calibrate_directbeam(ctrl=ctrl, save_images=True)
+            c = calibrate_directbeam(ctrl=ctrl, save_images=True, outdir=outdir)
             if raw_input(" >> Accept? [y/n] ") == "y":
                 return c
 
-    def to_file(self, fn=CALIB_DIRECTBEAM):
-        pickle.dump(self, open(fn, "w"))
+    def to_file(self, fn=CALIB_DIRECTBEAM, outdir="."):
+        """Save calibration to file"""
+        fout = os.path.join(outdir, fn)
+        pickle.dump(self, open(fout, "w"))
 
     def add(self, key, dct):
         """Add calibrations to self._dct
@@ -135,7 +135,7 @@ class CalibDirectBeam(object):
         plt.show()
 
 
-def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, **kwargs):
+def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):
     """
     Calibrate pixel->beamshift coordinates live on the microscope
 
@@ -171,14 +171,12 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
     attr = getattr(ctrl, key.lower())
 
-    outfile = "calib_db_{}_0000".format(key) if save_images else None
+    outfile = os.path.join(outdir, "calib_db_{}_0000".format(key)) if save_images else None
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent)
 
-    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-   
     print "{}: x={} | y={}".format(key, *readout_cent)
             
     shifts = []
@@ -188,8 +186,6 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 
-    outfile = None
-
     for i, (dx,dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2,-1).T):
         i += 1
 
@@ -197,7 +193,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
         printer("Position: {}/{}: {}".format(i, tot, attr))
         
-        outfile = "calib_db_{}_{:04d}".format(key, i) if save_images else None
+        outfile = os.path.join(outdir, "calib_db_{}_{:04d}".format(key, i)) if save_images else None
 
         comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
@@ -236,14 +232,12 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
 
     binsize = h_cent["ImageBinSize"]
 
-    holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
-    
     print "{}: x={} | y={}".format(key, *readout_cent)
     
     shifts = []
     readouts = []
 
-    for i,fn in enumerate(other_fn):
+    for i, fn in enumerate(other_fn):
         print fn
         img, h = load_img(fn)
         img = imgscale(img, scale)
@@ -268,16 +262,21 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     return c
 
 
-def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=True):
+def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True):
     import glob
     keys = ("BeamShift", "DiffShift")
     if not patterns:
-        if confirm and not raw_input("\n >> Go to diffraction mode (150x) so that the beam is\n focused and in the middle of the image \n(type 'go' to start): """) == "go":
+        if confirm and raw_input("""
+ 1. Go to diffraction mode and select desired camera length (CAM L)
+ 2. Center the beam with diffraction shift (PLA)
+ 3. Focus the diffraction pattern (DIFF FOCUS)
+    
+ Press <ENTER> to start"""):
             return
         else:
             cs = []
             for key in keys:
-                c = calibrate_directbeam_live(ctrl, save_images=save_images, key=key)
+                c = calibrate_directbeam_live(ctrl, save_images=save_images, outdir=outdir, key=key)
                 cs.append(c)
             calib = CalibDirectBeam.combine(cs)
     else:
@@ -296,7 +295,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, confirm=Tru
     print
     print calib
 
-    calib.to_file()
+    calib.to_file(outdir=outdir)
 
     return calib
 

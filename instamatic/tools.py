@@ -60,3 +60,10 @@ def denoise(img, sigma=3, method="median"):
 def enhance_contrast(img):
     """Enhance contrast by histogram equalization"""
     return exposure.equalize_hist(img)
+
+
+def find_beam_center(img, sigma=30):
+    "Find position of the central beam using gaussian filter"
+    blurred = ndimage.gaussian_filter(img, sigma)
+    center = np.unravel_index(blurred.argmax(), blurred.shape)
+    return np.array(center)
