@@ -41,6 +41,7 @@ setup(
             'instamatic.calibrate_beamshift           = instamatic.calibrate.calibrate_beamshift:main_entry',
             'instamatic.calibrate_directbeam          = instamatic.calibrate.calibrate_directbeam:main_entry',
             'instamatic.flatfield                     = instamatic.flatfield:main_entry',
+            'instamatic.stretch_correction            = instamatic.stretch_correction:main',
             'instamatic.map_holes                     = instamatic.app:map_holes_on_grid_entry',
             'instamatic.goto_hole                     = instamatic.app:goto_hole_entry',
             'instamatic.prepare_experiment            = instamatic.app:prepare_experiment_entry',
