@@ -75,7 +75,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
     
     # get background pixels
-    bkg = np.invert(morphology.dilation(arr, morphology.disk(footprint*2)) | arr)
+    bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint*2)) | arr)
 
     # 2: features
     # 1: background

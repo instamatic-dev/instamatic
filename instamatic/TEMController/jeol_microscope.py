@@ -214,7 +214,7 @@ class JeolMicroscope(object):
         x, y, z, a, b, result = self.stage3.GetStatus()
         return x or y or z or a or b 
 
-    def waitForStage(self, delay=0.1):
+    def waitForStage(self, delay=0):
         while self.isStageMoving():
             if delay > 0:
                 time.sleep(delay)

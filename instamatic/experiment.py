@@ -49,6 +49,9 @@ def get_gridpoints_in_hole(nx, ny=0, radius=1, borderwidth=0.8):
     else:
         yr = xr
     xgrid, ygrid = np.meshgrid(xr, yr)
+    # reverse order of every other row for more efficient pathing
+    xgrid[1::2] = np.fliplr(xgrid[1::2]) 
+
     sel = xgrid**2 + ygrid**2 < 1.0*(1-borderwidth)
     xvals = xgrid[sel].flatten()
     yvals = ygrid[sel].flatten()
@@ -471,20 +474,21 @@ class Experiment(object):
 
                 write_tiff(outfile, img, header=h)
              
-                for rotation_angle in self.sample_rotation_angles:
-                    print " >> Rotation angle = {}".format(rotation_angle)
-                    self.ctrl.stageposition.a = rotation_angle
+                if self.sample_rotation_angles:
+                    for rotation_angle in self.sample_rotation_angles:
+                        print " >> Rotation angle = {}".format(rotation_angle)
+                        self.ctrl.stageposition.a = rotation_angle
+        
+                        outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
+                        img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
+                        img, h = self.apply_corrections(img, h)
+                                                    
+                        for d in (d_diff, d_pos, d_cryst):
+                            h.update(d)
     
-                    outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
-                    img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
-                    img, h = self.apply_corrections(img, h)
-                                                
-                    for d in (d_diff, d_pos, d_cryst):
-                        h.update(d)
-
-                    write_tiff(outfile, img, header=h)
-    
-                self.ctrl.stageposition.a = 0
+                        write_tiff(outfile, img, header=h)
+                    
+                    self.ctrl.stageposition.a = 0
     
             self.image_mode()
 
