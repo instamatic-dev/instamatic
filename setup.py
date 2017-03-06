@@ -20,8 +20,8 @@ setup(
     ],
 
     packages=["instamatic", 
-              "instamatic.calibrate"
-              "instamatic.camera"
+              "instamatic.calibrate",
+              "instamatic.camera",
               "instamatic.processing",
               "instamatic.formats"],
 
@@ -55,6 +55,8 @@ setup(
             'instamatic.flatfield                     = instamatic.flatfield:main_entry',
             # processing
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main',
+            'instamatic.process                       = instamatic.processing.process_images:main',
+            'instamatic.index                         = instamatic.processing.indexer:main',
         ]
     }
 )
