@@ -24,7 +24,7 @@ def apply_transform_to_image(img, transform):
     displacement = np.dot(transform, center)
     shift = center - displacement
     
-    img_tf = ndimage.interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=3, cval=0.0)
+    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=3, cval=0.0)
     return img_tf
 
 

@@ -1,7 +1,9 @@
 .gitignore
 *.pyc
+*.pyd
 build
 dist
 *.egg-info
 *.ipynb
 .ipynb_checkpoints
+*.c
