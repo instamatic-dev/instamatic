@@ -13,11 +13,11 @@ import numpy as np
 if sys.platform == "win32":
     extensions = [
         Extension(
-            'indexer', ['indexer.pyx'], include_dirs=[np.get_include()]),
+            'get_score_cy', ['get_score_cy.pyx'], include_dirs=[np.get_include()]),
     ]
 else:
     extensions = [
-        Extension('indexer', ['indexer.pyx'],
+        Extension('get_score_cy', ['get_score_cy.pyx'],
                   include_dirs=[np.get_include()]),
     ]
 

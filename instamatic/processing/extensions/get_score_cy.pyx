@@ -22,7 +22,7 @@ cpdef float get_score(np.ndarray[INT_t, ndim=2] img, np.ndarray[DOUBLE_t, ndim=2
     center_x, center_y: float
         Position of the incident beam, origin of the reciprocal lattice
 
-    returns score:float
+    returns score: float
         Sum of the intensity at all pixel positions in the projection
     """
     cdef int xmax = img.shape[0]

@@ -2,7 +2,7 @@ from instamatic.formats import *
 from instamatic.stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
 from scipy import ndimage
 import heapq
-from extensions.indexer import get_score
+from extensions import get_score
 import lmfit
 
 from collections import namedtuple
@@ -51,7 +51,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     return yaml.load(f, OrderedLoader)
 
 
-def get_score_python(img, pks, scale, center_x, center_y):
+def get_score_py(img, pks, scale, center_x, center_y):
     """Equivalent of get_score implemented in python"""
     xmax = img.shape[0]
     ymax = img.shape[1]
