@@ -184,40 +184,56 @@ class Experiment(object):
             self.hole_radius = d["radius"] / 1000 # nm -> um
             border_k = 1
 
+        self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
+        self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
+        self.image_spotsize  = kwargs.get("image_spotsize",      4   )
+        # self.magnification   = kwargs["magnification"]
+        self.image_threshold = kwargs.get("image_threshold",     100)
+         # do not store brightness to self, as this is set later when calibrating the direct beam
+        image_brightness = kwargs.get("diff_brightness", 38000)
+        
         try:
             self.calib_beamshift = CalibBeamShift.from_file()
         except IOError:
             self.ctrl.mode_mag1()
             self.ctrl.store("image")
-            self.ctrl.brightness.set(kwargs.get("diff_brightness", 38000))
+            self.ctrl.brightness.set(image_brightness)
+            self.ctrl.tem.setSpotSize(self.image_spotsize)
+
             self.calib_beamshift = CalibBeamShift.live(self.ctrl, outdir=self.calibdir)
             
             # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
             print self.ctrl.brightness
 
+        self.image_dimensions = config.mag1_dimensions[self.magnification]
+
+        self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
+        self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
+        self.diff_spotsize   = kwargs.get("diff_spotsize",       4   )
+        # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
+
         try:
             self.calib_directbeam = CalibDirectBeam.from_file()
         except IOError:
             self.ctrl.mode_diffraction()
             self.ctrl.store("diffraction")
+            self.ctrl.tem.setSpotSize(self.diff_spotsize)
+
             self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir=self.calibdir)
 
             self.diff_brightness = self.ctrl.brightness.value
             self.diff_difffocus = self.ctrl.difffocus.value
             self.diff_cameralength = self.ctrl.magnification.value
 
-        # self.magnification   = kwargs["magnification"]
-        self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
-        self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
-        self.image_spotsize  = kwargs.get("image_spotsize",      1   )
-        self.image_dimensions = config.mag1_dimensions[self.magnification]
-        self.image_threshold = kwargs.get("image_threshold",     100)
+        self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
+        self.change_spotsize = self.diff_spotsize != self.image_spotsize
+        self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
-            print "Image dimensions (should be close to (6.1, 6.1):", self.image_dimensions
+            print "Image dimensions, should be close to (6.0, 6.0):", self.image_dimensions
             self.find_crystals = find_crystals_timepix
             self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
         else:
@@ -227,14 +243,6 @@ class Experiment(object):
         if self.flatfield is not None:
             self.flatfield, h_flatfield = read_tiff(self.flatfield)
             self.deadpixels = h_flatfield["deadpixels"]
-
-        self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
-        self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
-        self.diff_spotsize   = kwargs.get("diff_spotsize",       5   )
-        # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
-        self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
-    
-        self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         # self.sample_rotation_angles = ( -10, -5, 5, 10 )
         # self.sample_rotation_angles = (-5, 5)
@@ -266,6 +274,7 @@ class Experiment(object):
         self.ctrl.brightness.max()
         self.calib_beamshift.center(self.ctrl)
         self.neutral_beamshift = self.ctrl.beamshift.get()
+        self.ctrl.tem.setSpotSize(self.image_spotsize)
 
     def image_mode(self):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
@@ -435,15 +444,23 @@ class Experiment(object):
                 "exp_neutral_beamshift": self.neutral_diffshift,
                 "exp_diff_brightness": self.diff_brightness,
                 "exp_diff_spotsize": self.diff_spotsize,
+                "exp_diff_cameralength": self.diff_cameralength,
+                "exp_diff_difffocus": self.diff_difffocus,
                 "ImagePixelsize": self.diff_pixelsize
         }
 
         for i, d_pos in enumerate(self.loop_positions()):
    
             outfile = os.path.join(self.imagedir, "image_{:04d}".format(i))
+            
+            if self.change_spotsize:
+                self.ctrl.tem.setSpotSize(self.image_spotsize)
     
-            self.ctrl.tem.setSpotSize(self.image_spotsize)
             img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, header_keys=header_keys)
+    
+            if self.change_spotsize:
+                self.ctrl.tem.setSpotSize(self.image_spotsize)
+    
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
             if img.mean() < self.image_threshold:

@@ -417,7 +417,7 @@ class JeolMicroscope(object):
         comtypes.CoUninitialize()
         print "Connection to microscope released"
 
-    def isBeamBlanked(self, value):
+    def isBeamBlanked(self):
         value, result = self.def3.GetBeamBlank()
         return bool(value)
 

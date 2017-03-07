@@ -64,9 +64,9 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
     
-    print "\nFlat field"
     raw_input("Put a spread beam and press <ENTER> to continue to collect {} flat field images".format(frames))
     
+    print "\nCollecting flatfield"
     for n in range(frames):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
@@ -80,9 +80,10 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
 
-    print "\nDark frame"
-    raw_input("Blank the beam and press <ENTER> to continue to collect {} dark field images".format(frames))
+    # raw_input("Blank the beam and press <ENTER> to continue to collect {} dark field images".format(frames))
+    ctrl.beamblank = True
 
+    print "\nCollecting darkfield"
     for n in range(frames):
         outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
@@ -95,10 +96,12 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     d = d/frames
     d = remove_deadpixels(d, deadpixels=deadpixels)
 
+    ctrl.beamblank = False
+
     date = time.strftime("%Y-%m-%d")
     ff = "flatfield_tpx_{}.tiff".format(date)
     fd = "darkfield_tpx_{}.tiff".format(date)
-    print " >> Writing {} and {}...".format(ff, fd)
+    print "\n >> Writing {} and {}...".format(ff, fd)
     write_tiff(ff, f, header={"deadpixels": deadpixels})
     write_tiff(fd, d, header={"deadpixels": deadpixels})
 
