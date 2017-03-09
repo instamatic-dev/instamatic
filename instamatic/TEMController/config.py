@@ -102,6 +102,43 @@ diffraction_pixeldimensions = {
   4000: 0.00106216  
 }
 
+# Diffraction mode, timepix pixeldimensions
+# To estimate: pixelsize = 1/(cameralength*0.759)
+# or from orius camera: pixelsize = pixeldimensions_orius / 3.349
+diffraction_pixeldimensions_timepix = {
+150 :0.0087845,
+200 :0.0065884,
+250 :0.0052707, 
+300 :0.0043922,
+400 :0.0032942,  # all extrapolated from this one
+500 :0.0026353
+}
+
+## Diffraction mode, timepix pixeldimensions
+## garnet (Hongyi Xu), more reliable according to experience with CRED
+# diffraction_pixeldimensions_timepix = {
+# 150 : 0.00838,
+# 200 : 0.00623,
+# 250 : 0.00499,
+# 300 : 0.00412,
+# 400 : 0.00296,
+# 500 : 0.00238,
+# 600 : 0.00198,
+# 800 : 0.00148
+# }
+
+## Diffraction mode, timepix pixeldimensions
+## gold rings (Hongyi Xu)
+# diffraction_pixeldimensions_timepix = {
+# 150 : 0.00885,
+# 200 : 0.00658,
+# 250 : 0.00527,
+# 300 : 0.00435,
+# 400 : 0.00313,
+# 500 : 0.00251,
+# 600 : 0.00209,
+# 800 : 0.00156
+# }
 # calibration values for the scaling of the diffraction pattern when convergent beam is used
 # To calibrate: Change brightness, adjust diffraction focus, take diffraction pattern
 # use logpolar cross correlation to find scaling between parameters
