@@ -109,14 +109,24 @@ def main():
         print "Or, using a globbing pattern:"
         print "       python process_patterns.py data/image_*.tiff"
         print
+        print "Or, using a file list:"
+        print "       python process_patterns.py filelist.txt"
+        print
         exit()
 
-    if len(fns) == 1 and not os.path.exists(fns[0]):
+    stream = "cli"
+    if len(fns) == 1:
+        if not os.path.exists(fns[0]):
         fns = glob.glob(fns[0])
+            stream = "glob"
+        if "filelist" in fns[0]:
+            fns = [line.strip() for line in open(fns[0], "r") if not line.startswith("#")]
+            stream = "list"
     
     print "Reading {} images".format(len(fns))
     imgs = [read_tiff(fn)[0] for fn in fns]
 
+    if stream != "list":
     print "Calculating Shapiro-Wilk curve"
     s = get_shapiro_curve(imgs)
     r = np.argsort(s)
@@ -140,7 +150,7 @@ def main():
     print "Generating powder image"
     initref = get_initial_reference(imgs)
     print "Aligning images"
-    powder = get_reference(imgs, initref)
+    powder = get_reference(imgs, initref, remove_background=True)
     
     plt.imshow(powder)
     plt.title("Powder pattern ({} imgs)".format(len(imgs)))
@@ -163,8 +173,12 @@ def main():
     df = pd.DataFrame(index=pd.Index(filenames), data=centers, columns=("det_ycent", "det_xcent"))
 
     print >> open(fcalib,"w"), df.to_json(orient="index").replace('},"', '},\n"')
-
     print "Writing incident beam centers to {}".format(fcalib)
+
+    if stream != "list":
+        filelist = "filelist.txt"
+        print >> open(filelist, "w"), "\n".join(fns)
+        print "Writing", filelist
     
 
 if __name__ == '__main__':
