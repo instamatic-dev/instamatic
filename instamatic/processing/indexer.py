@@ -2,7 +2,7 @@ from instamatic.formats import *
 from instamatic.stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
 from scipy import ndimage
 import heapq
-from extensions import get_score
+from extensions import get_score, get_score_mod
 import lmfit
 
 from collections import namedtuple
@@ -172,6 +172,7 @@ class Indexer(object):
         nrotations = int(2*np.pi/self.theta)
         print "{} projections x {} rotations = {} items".format(nprojections, nrotations, nprojections*nrotations)
     
+        self.get_score = get_score
     @classmethod
     def from_projections_file(cls, fn="projections.npy", **kwargs):
         """Initialize instance of Indexing using a projections file

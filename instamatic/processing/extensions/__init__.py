@@ -1,1 +1,1 @@
-from get_score_cy import get_score
+from get_score_cy import get_score, get_score_mod
