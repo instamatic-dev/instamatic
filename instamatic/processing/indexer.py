@@ -437,9 +437,6 @@ class Indexer(object):
             
             return 1e3/(1+score)
         
-        method = kwargs.get("method", "nelder")
-        # should be one of nelder, powell, cobyla, least-squares
-        
         params = lmfit.Parameters()
         params.add("center_x", value=cx, vary=True, min=cx - 2.0, max=cx + 2.0)
         params.add("center_y", value=cy, vary=True, min=cy - 2.0, max=cy + 2.0)
@@ -548,12 +545,10 @@ def main():
     
     for i,fn in enumerate(fns):
         print fn
-        center = settings["det_xcent"], settings["det_ycent"]
           
         img, h = read_tiff(fn)
         
         img = apply_transform_to_image(img, tr_mat)
-        img = remove_background_gauss(img, 3, 30, threshold=2)
         
         cx, cy = find_beam_center(img, sigma=10)
         center = cy, cx
