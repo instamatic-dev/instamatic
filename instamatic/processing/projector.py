@@ -155,11 +155,11 @@ class Projector(object):
         (as 1/thickness) for a reflection to be considered in diffracting condition.
     wavelength: float, optional
         Wavelength in Angstrom defining the curvature of the Ewald sphere
-    dmin: float, optional
-        The d-spacing in Angstrom up to which reflections should be generated.
+    dmin, dmax: float, optional
+        The range of d-spacings in Angstrom in which reflections should be generated.
     """
 
-    def __init__(self, cell, thickness=200, wavelength=0.0251, dmin=1.0):
+    def __init__(self, cell, thickness=200, wavelength=0.0251, dmin=1.0, dmax=np.inf, verbose=False):
         super(Projector, self).__init__()
         self.cell = cell
         
@@ -171,19 +171,24 @@ class Projector(object):
         self.orth  = cell.orthogonalization_matrix()
         self.iorth = np.linalg.inv(self.orth)
         
-        self.hkl = generate_hkl_listing(cell, dmin=1.0, expand=True)
+        self.hkl = generate_hkl_listing(cell, dmin=1.0, dmax=dmax, expand=True)
         self.repl = np.dot(self.hkl, self.iorth)
         
-        print "Shape:", self.repl.shape
-        print "  Min:", self.repl.min(axis=0)
-        print "  Max:", self.repl.max(axis=0)
+        if verbose:
+            self.cell.info()
+
+            print "projection data"
+            print "  range: {} - {} Angstrom".format(dmin, dmax)
+            print "  shape:", self.repl.shape
+            print "    min:", self.repl.min(axis=0)
+            print "    max:", self.repl.max(axis=0)
         
     @classmethod
-    def from_parameters(cls, parameters, spgr, name=None):
+    def from_parameters(cls, parameters, spgr, name=None, **kwargs):
         """Return instance of Projector from cell parameters and space group
 
         See: xcore.unitcell.UnitCell"""
-        return cls(UnitCell(parameters=parameters, spgr=spgr, name=name))
+        return cls(UnitCell(parameters, spgr=spgr, name=name), **kwargs)
         
     def get_projection(self, alpha, beta, gamma=0):
         """Get projection along a particular zone axis

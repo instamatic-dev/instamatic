@@ -1,15 +1,71 @@
 from instamatic.formats import *
 from instamatic.stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
+from instamatic.tools import find_beam_center
 from scipy import ndimage
 import heapq
 from extensions import get_score, get_score_mod
 import lmfit
+import numpy as np
+
+from projector import Projector
 
 from collections import namedtuple
 
 import yaml
 from collections import OrderedDict
 
+import matplotlib.pyplot as plt
+
+import os, sys, glob
+
+
+def get_intensities(img, result, projector):
+    proj = projector.get_projection(result.alpha, result.beta, result.gamma)
+    i, j, hkl = get_indices(proj[:,3:5], result.scale, (result.center_y, result.center_x), img.shape, hkl=proj[:,0:3])
+    inty = img[i, j].reshape(-1,1)
+    return np.hstack((hkl, inty, np.ones_like(inty))).astype(int)
+
+
+def standardize_indices(arr, cell, key=None):
+    """
+    TODO: add to xcore.spacegroup.SpaceGroup
+
+    Standardizes reflection indices
+    From Siena Computing School 2005, Reciprocal Space Tutorial (G. Sheldrick)
+    http://www.iucr.org/resources/commissions/crystallographic-computing/schools
+        /siena-2005-crystallographic-computing-school/speakers-notes
+    """
+    stacked_symops = np.stack([s.r for s in cell.symmetry_operations_p])
+    
+    m = np.dot(arr, stacked_symops).astype(int)
+    m = np.hstack([m, -m])
+    i = np.lexsort(m.transpose((2,0,1)))
+    merged =  m[np.arange(len(m)), i[:,-1]] # there must be a better way to index this, but this works and is quite fast
+
+    return merged
+
+
+def results2df(results, sort=True):
+    """Convert a list of IndexingResult objects to pandas DataFrame"""
+    import pandas as pd
+    df = pd.DataFrame(all_results).T
+    df.columns = all_results.values()[0]._fields
+    if sort:
+        df = df.sort_values("score", ascending=False)
+    return df
+
+
+def write_csv(fname, results):
+    """Write a list of IndexingResult objects to a csv file"""
+    if not hasattr(results, "to_csv"):
+        results = results2df(results)
+    results.to_csv(fname)
+
+
+def read_csv(fname):
+    """Read a csv file into a pandas DataFrame"""
+    import pandas as pd
+    return pd.DataFrame.from_csv(fname)
 
 def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
     """
@@ -39,7 +95,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     f: file-like object or str path to file
     """
     if isinstance(f, str):
-        f = open(f, "w")
+        f = open(f, "r")
     class OrderedLoader(Loader):
         pass
     def construct_mapping(loader, node):
@@ -104,12 +160,15 @@ def make_2d_rotmat(theta):
     return R
 
 
-def get_indices(pks, scale, center, shape):
+def get_indices(pks, scale, center, shape, hkl=None):
     """Get the pixel indices for an image"""
     shapex, shapey = shape
     i, j = (pks * scale + center).astype(int).T
     sel = (0 < j) & (j < shapey) & (0 < i) & (i < shapex)
+    if hkl is None:
     return i[sel], j[sel]
+    else:
+        return i[sel], j[sel], hkl[sel]
 
 
 # store the results of indexing
@@ -243,27 +302,28 @@ class Indexer(object):
             pks = projection[:,3:5]
             
             for m, rotation in enumerate(rotations):
-                score  = get_score(img, pks, scale, center_y, center_x)
+                score  = self.get_score(img, pks, scale, center_y, center_x)
         
                 vals.append(score)
                 
                 heapq.heapreplace(heap, (score, n, m))
                 
                 pks = np.dot(pks, R) # for next round
+        self._vals = vals
         
         t2 = time.time()
-        print "Time total/proj/run: {:.2f} s / {:.2f} ms / {:.2f} us".format(t2-t1, 1e3*(t2-t1) / (n+1), 1e6*(t2-t1)/ ((n+1)*len(rotations)))
+        # print "Time total/proj/run: {:.2f} s / {:.2f} ms / {:.2f} us".format(t2-t1, 1e3*(t2-t1) / (n+1), 1e6*(t2-t1)/ ((n+1)*len(rotations)))
                
         heap = sorted(heap, reverse=True)[0:nsolutions]
         
         results = [IndexingResult(score=score,
                                  number=n,
-                                 alpha=self.infos[n].alpha,
-                                 beta=self.infos[n].beta,
+                                 alpha=round(self.infos[n].alpha, 4),
+                                 beta=round(self.infos[n].beta, 4),
                                  gamma=theta*m,
                                  center_x=center_x,
                                  center_y=center_y,
-                                 scale=scale) for (score,n,m) in heap]
+                                 scale=round(scale, 4)) for (score,n,m) in heap]
 
         return results
     
@@ -278,12 +338,14 @@ class Indexer(object):
         for result in results:
             self.plot(img, result, **kwargs)
     
-    def plot(self, img, result, **kwargs):
+    def plot(self, img, result, projector=None, show_hkl=False, **kwargs):
         """Plot the image with the projection given in 'result'
 
         img: ndarray
             image array
         result: IndexingResult object
+        show_hkl: bool, optional
+            Show hkl values as text
 
         """
         n = result.number
@@ -293,20 +355,26 @@ class Indexer(object):
         alpha = result.alpha
         beta = result.beta
         gamma = result.gamma
+        score = result.score
         
-        pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
+        if not projector:
+            projector = self.projector
         
-        score = get_score(img, pks, scale, cy, cx)
+        proj = projector.get_projection(alpha, beta, gamma)
+        pks = proj[:,3:5]
         
-        i, j = get_indices(pks, scale, (cy, cx), img.shape)
+        i, j, hkl = get_indices(pks, scale, (cy, cx), img.shape, hkl=proj[:,0:3])
         
-        plt.imshow(img, vmax=200)
+        plt.imshow(img, vmax=300)
         plt.plot(cx, cy, marker="o")
+        if show_hkl:
+            for idx, (h, k, l) in enumerate(hkl):
+                plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
         plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {}, proj = {}".format(alpha, beta, gamma, score, n))
         plt.plot(j, i, marker="+", lw=0)
         plt.show()
     
-    def refine_all(self, img, results, projector=None, sort=True, **kwargs):
+    def refine_all(self, img, results, sort=True, **kwargs):
         """
         Refine the orientations of all solutions in results agains the given image
 
@@ -321,7 +389,7 @@ class Indexer(object):
             Sort the result of the refinement
         """
         kwargs.setdefault("verbose", False)
-        new_results = [self.refine(img, result, projector=projector, **kwargs) for result in results]
+        new_results = [self.refine(img, result, **kwargs) for result in results]
 
         # sort in descending order by score
         if sort:
@@ -329,7 +397,7 @@ class Indexer(object):
         else:
             return new_results
     
-    def refine(self, img, result, projector=None, verbose=True, **kwargs):
+    def refine(self, img, result, projector=None, verbose=True, method="least-squares", **kwargs):
         """
         Refine the orientations of all solutions in results agains the given image
 
@@ -340,6 +408,8 @@ class Indexer(object):
         projector: Projector object, optional
             This keyword should be specified if projector is not already an attribute on Indexer,
             or if a different one should be used
+        method: str, optional
+            Minimization method to use, should be one of 'nelder', 'powell', 'cobyla', 'least-squares'
         """
         n = result.number
         cx = result.center_x
@@ -348,7 +418,7 @@ class Indexer(object):
         alpha = result.alpha
         beta = result.beta
         gamma = result.gamma
-        score = result.score
+        # score = result.score
 
         if not projector:
             projector = self.projector
@@ -362,7 +432,7 @@ class Indexer(object):
             scale = params["scale"].value
             
             pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
-            score = get_score(img, pks, scale, cy, cx)
+            score = self.get_score(img, pks, scale, cy, cx)
             # print cx, cy, scale, gamma, score
             
             return 1e3/(1+score)
@@ -388,12 +458,11 @@ class Indexer(object):
                 
         p = res.params
         
-        alpha_new, beta_new, gamma_new = p["alpha"].value, p["beta"].value, p["gamma"].value
-        scale_new, center_x_new, center_y_new = p["scale"].value, p["center_x"].value, p["center_y"].value
+        alpha_new, beta_new, gamma_new, scale_new, center_x_new, center_y_new = [round(val, 4) for val in  p["alpha"].value, p["beta"].value, p["gamma"].value, p["scale"].value, p["center_x"].value, p["center_y"].value]
         
         pks_new = projector.get_projection(alpha_new, beta_new, gamma_new)[:,3:5]
         
-        score_new = get_score(img, pks_new, scale_new, center_y_new, center_x_new)
+        score_new = self.get_score(img, pks_new, scale_new, center_y_new, center_x_new)
         
         # print "Score: {} -> {}".format(int(score), int(score_new))
         
@@ -408,38 +477,106 @@ class Indexer(object):
         
         return refined
 
+TEMPLATE = """title: indexing
+experiment:
+  azimuth: -6.61
+  pixelsize: 0.003957
+  stretch: 2.43
+projections:
+  dmax: 10.0
+  dmin: 1.0
+  thickness: 100
+cell:
+  name: LTA
+  params:
+  - 24.61
+  - 24.61
+  - 24.61
+  - 90
+  - 90
+  - 90
+  spgr: Fm-3c
+data:
+  csv_out: results.csv
+  drc_pit: indexing
+  glob: data/*.tiff
+"""
 
 def main():
-    pixelsize = 0.0031593
+    if len(sys.argv) == 1:
+        print "Usage: instamatic.index indexing.inp"
+        print
+        print "Example input file:"
+        print 
+        print TEMPLATE
+        exit()
 
-    azimuth = np.radians(83.39 - 90)
-    stretch = 2.43 / (2*100)
+    d = yaml_ordered_load(sys.argv[1])
+
+    azimuth   = d["experiment"]["azimuth"]
+    stretch   = d["experiment"]["stretch"]
+    pixelsize = d["experiment"]["pixelsize"]
+    
+    dmin      = d["projections"]["dmin"]
+    dmax      = d["projections"]["dmax"]
+    thickness = d["projections"]["thickness"]
+    
+    params    = d["cell"]["params"]
+    name      = d["cell"]["name"]
+    spgr      = d["cell"]["spgr"]
+    
+    file_pat  = d["data"]["glob"]
+    csv_out   = d["data"]["csv_out"]
+    drc_out   = d["data"]["drc_out"]
+
+    azimuth = np.radians(stretch)
+    stretch = stretch / (2*100)
     tr_mat = affine_transform_ellipse_to_circle(azimuth, stretch)
 
-    filelist = yaml_ordered_load("filelist.yaml")
-    indexer = Indexer.from_projections_file(pixelsize=pixelsize)
+    method = "powell"
 
-    drc = "/images/"
+    projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
+    indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+
+    fns = glob.glob(file_pat)
+    print "Found {} files".format(len(fns))
+    
+    if not os.path.exists(drc_out):
+        os.mkdir(drc_out)
     
     all_results = {}
     
-    for i, (fn, settings) in enumerate(filelist.items()):
+    for i,fn in enumerate(fns):
         print fn
         center = settings["det_xcent"], settings["det_ycent"]
           
-        img, h = read_tiff(os.path.join(drc, fn))
+        img, h = read_tiff(fn)
         
         img = apply_transform_to_image(img, tr_mat)
         img = remove_background_gauss(img, 3, 30, threshold=2)
         
+        cx, cy = find_beam_center(img, sigma=10)
+        center = cy, cx
+        
+        img = remove_background_gauss(img, 2, 30, threshold=10)
         results = indexer.index(img, center, nsolutions=25)
         
-        refined = indexer.refine_all(img, results, method="nelder")
-        # indexer.plot_all(img, refined[0:5])
+        refined = indexer.refine_all(img, results, sort=True, method=method)
         all_results[fn] = refined[0]
             
-        # indexer.plot(img, refined[0])
+        hklie = get_intensities(img, refined[0], projector)
+        hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
 
+        root, ext = os.path.splitext(os.path.basename(fn))
+        out = os.path.join("indexed", root+".hkl")
+
+        np.savetxt(out, hklie, fmt="%4d%4d%4d %7.1f %7.1f")
+
+    write_csv(csv_out, all_refined)
+    
+    print "Writing results to {}".format(csv_out)
+    print
+    print " >> DONE <<"
 
 
 if __name__ == '__main__':
