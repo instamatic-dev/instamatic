@@ -63,7 +63,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
     arr = morphology.remove_small_objects(arr, min_size=4*4, connectivity=0) # remove noise
-    
+
     # magic
     arr = morphology.binary_closing(arr, morphology.disk(footprint)) # dilation + erosion
     arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion

@@ -283,7 +283,7 @@ class Projector(object):
        
         return np.hstack((self.hkl[sel1][sel2], proj[:,1:3]))
 
-    def plot(self, alpha, beta, gamma=0.0):
+    def plot(self, alpha, beta, gamma=0.0, show_hkl=True):
         """Plot projection with given alpha/beta/gamma"""
         vects = self.get_projection(alpha, beta, gamma)
         
@@ -293,21 +293,27 @@ class Projector(object):
         
         plt.scatter(vects[:,3], vects[:,4])
         plt.scatter(0, 0)
-        for h,k,l,x,y in vects:
-            plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
-        plt.title("alpha: {}, beta: {}, gamma: {}\n)".format(alpha, beta, gamma))
-        plt.axis("equal")
+        if show_hkl:
+            for h,k,l,x,y in vects:
+                plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
+        plt.title("alpha: {}, beta: {}, gamma: {}".format(alpha, beta, gamma))
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
+        # plt.axis("equal")
         plt.show()
 
-    def plot_along_axis(self, zone_axis=(1, 0, 0), gamma=0.0):
+    def plot_along_axis(self, zone_axis=(1, 0, 0), gamma=0.0, show_hkl=True):
         """Plot projection with given zone_axis and gamma"""
         vects = self.get_projection_along_axis(zone_axis, gamma)
         plt.scatter(vects[:,3], vects[:,4])
         plt.scatter(0, 0)
-        for h,k,l,x,y in vects:
-            plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
+        if show_hkl:
+            for h,k,l,x,y in vects:
+                plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
         plt.title("zone axis: {}, gamma: {}".format(zone_axis, gamma))
-        plt.axis("equal")
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
+        # plt.axis("equal")
         plt.show()
     
     def generate_all_projections(self, phistep=0.03, psistep=0.03):
