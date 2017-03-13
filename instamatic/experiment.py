@@ -13,7 +13,7 @@ from TEMController import config
 from flatfield import remove_deadpixels, apply_flatfield_correction
 from tools import printer
 
-
+import time
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
     """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
@@ -357,7 +357,7 @@ class Experiment(object):
                 print "Stage position: center {}/{} -> (x={:.1f}, y={:.1f})".format(i, ncenters, x, y)
                 yield i, (x,y)
             
-    def loop_positions(self):
+    def loop_positions(self, delay=0.05):
         """Loop over positions in a hole in the copper grid
         Move the stage to each of the positions in self.offsets
 
@@ -379,13 +379,14 @@ class Experiment(object):
                     print
                     continue
                 else:
+                    time.sleep(delay)
                     printer("Imaging: stage position {}/{} -> (x={:.1f}, y={:.1f})".format(j, noffsets, x, y))
                     dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
                     dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
                     yield dct
 
 
-    def loop_crystals(self, crystal_coords):
+    def loop_crystals(self, crystal_coords, delay=0.05):
         """Loop over crystal coordinates (pixels)
         Switch to diffraction mode, and shift the beam to be on the crystal
 
@@ -412,6 +413,8 @@ class Experiment(object):
             diffshift = self.neutral_diffshift - diffshift_offset
         
             self.ctrl.diffshift.set(*diffshift.astype(int))
+
+            time.sleep(delay)
 
             dct = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
 
