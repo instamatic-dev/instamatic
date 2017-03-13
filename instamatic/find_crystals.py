@@ -93,7 +93,7 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     """Specialized function with better defaults for timepix camera"""
     r = kwargs.get("r", 75)
     offset = kwargs.get("offset", 10)
-    footprint = kwargs.get("footprint", 5)
+    footprint = kwargs.get("footprint", 3)
     k = timepix_conversion_factor
     
     return find_crystals(img=img, 
