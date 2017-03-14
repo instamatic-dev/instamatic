@@ -45,15 +45,11 @@ def printer(data):
     sys.stdout.flush()
 
 
-def merge_csv(csvs, csv_out):
-    """Read amd combine csv files `csvs` into file csv_out
+def merge_csv(csvs):
+    """Read amd combine csv files `csvs` into one df,
 
     Returns: pd.DataFrame with combined items"""
     combined = pd.concat((read_csv(csv) for csv in csvs))
-    
-    if len(combined) > 0:
-        write_csv(csv_out, combined)
-        print "Writing results to {}".format(csv_out)
 
     for csv in csvs:
         os.unlink(csv)
@@ -144,7 +140,12 @@ def multi_run(arg, procs=1, dry_run=False):
 
     t2 = time.time()
 
-    all_results = merge_csv(csv_outs, csv_out)
+    all_results = read_csv(csv_outs)
+    for csv in csv_outs:
+        os.unlink(csv)
+    write_ycsv(csv_out, data=all_results, metadata=d)
+    print "Writing results to {}".format(csv_out)
+
     print "Time taken: {:.0f} s / {:.1f} s per image".format(t2-t1, (t2-t1)/nfiles)
     print
     print " >> Done << "
@@ -233,9 +234,11 @@ def run(arg, chunk=None, dry_run=False):
 
     t2 = time.time()
 
-    if len(all_results) > 0:
+    if chunk:
         write_csv(csv_out, all_results)
-        print "Writing results to {}".format(csv_out)
+    else:
+        write_ycsv(csv_out, data=all_results, metadata=d)
+    print "Writing results to {}".format(csv_out)
     
     print "Time taken: {:.0f} s / {:.1f} s per image".format(t2-t1, (t2-t1)/nfiles)
     print
