@@ -1,5 +1,5 @@
 from instamatic.formats import *
-from instamatic.stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
+from stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
 from instamatic.tools import find_beam_center
 from scipy import ndimage
 import heapq
@@ -301,7 +301,7 @@ class Indexer(object):
             pks = projection[:,3:5]
             
             for m, rotation in enumerate(rotations):
-                score  = self.get_score(img, pks, scale, center_y, center_x)
+                score  = self.get_score(img, pks, scale, center_x, center_y)
         
                 vals.append(score)
                 
@@ -348,8 +348,8 @@ class Indexer(object):
 
         """
         n = result.number
-        cx = result.center_x
-        cy = result.center_y
+        center_x = result.center_x
+        center_y = result.center_y
         scale = result.scale
         alpha = result.alpha
         beta = result.beta
@@ -362,10 +362,10 @@ class Indexer(object):
         proj = projector.get_projection(alpha, beta, gamma)
         pks = proj[:,3:5]
         
-        i, j, hkl = get_indices(pks, scale, (cy, cx), img.shape, hkl=proj[:,0:3])
+        i, j, hkl = get_indices(pks, scale, (center_x, center_y), img.shape, hkl=proj[:,0:3])
         
         plt.imshow(img, vmax=300)
-        plt.plot(cx, cy, marker="o")
+        plt.plot(center_y, center_x, marker="o")
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
                 plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
@@ -411,8 +411,8 @@ class Indexer(object):
             Minimization method to use, should be one of 'nelder', 'powell', 'cobyla', 'least-squares'
         """
         n = result.number
-        cx = result.center_x
-        cy = result.center_y
+        center_x = result.center_x
+        center_y = result.center_y
         scale = result.scale
         alpha = result.alpha
         beta = result.beta
@@ -423,26 +423,26 @@ class Indexer(object):
             projector = self.projector
         
         def objfunc(params, pks, img):
-            cx = params["center_x"].value
-            cy = params["center_y"].value
+            center_x = params["center_x"].value
+            center_y = params["center_y"].value
             alpha = params["alpha"].value
             beta = params["beta"].value
             gamma = params["gamma"].value
             scale = params["scale"].value
             
             pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
-            score = self.get_score(img, pks, scale, cy, cx)
-            # print cx, cy, scale, gamma, score
+            score = self.get_score(img, pks, scale, center_x, center_y)
+            # print center_x, center_y, scale, gamma, score
             
             return 1e3/(1+score)
         
         params = lmfit.Parameters()
-        params.add("center_x", value=cx, vary=True, min=cx - 2.0, max=cx + 2.0)
-        params.add("center_y", value=cy, vary=True, min=cy - 2.0, max=cy + 2.0)
+        params.add("center_x", value=center_x, vary=True, min=center_x - 2.0, max=center_x + 2.0)
+        params.add("center_y", value=center_y, vary=True, min=center_y - 2.0, max=center_y + 2.0)
         params.add("alpha", value=alpha, vary=True)
         params.add("beta",  value=beta,  vary=True)
         params.add("gamma", value=gamma, vary=True)
-        params.add("scale", value=scale, vary=True)
+        params.add("scale", value=scale, vary=True, min=scale*0.9, max=scale*1.1)
         
         pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
         
@@ -458,7 +458,7 @@ class Indexer(object):
         
         pks_new = projector.get_projection(alpha_new, beta_new, gamma_new)[:,3:5]
         
-        score_new = self.get_score(img, pks_new, scale_new, center_y_new, center_x_new)
+        score_new = self.get_score(img, pks_new, scale_new, center_x_new, center_y_new)
         
         # print "Score: {} -> {}".format(int(score), int(score_new))
         

@@ -13,12 +13,14 @@ from scipy.ndimage import interpolation
 import math
 
 
-def apply_transform_to_image(img, transform):
+def apply_transform_to_image(img, transform, center=None):
     """Applies transformation matrix to image and recenters it
     http://docs.sunpy.org/en/stable/_modules/sunpy/image/transform.html
     http://stackoverflow.com/q/20161175
     """
-    center = (np.array(img.shape)[::-1]-1)/2.0
+
+    if center is None:
+        center = (np.array(img.shape)[::-1]-1)/2.0
     # shift = (center - center.dot(transform)).dot(np.linalg.inv(transform))
     
     displacement = np.dot(transform, center)

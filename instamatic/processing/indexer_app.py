@@ -69,7 +69,7 @@ class ProgressBar(object):
         self.a = ' '
         self.b = '='
         self.width = 10
-        self.delay = 1.0
+        self.delay = 0.2
 
     def loop(self):
         for i in range(self.width):
@@ -205,22 +205,25 @@ def run(arg, chunk=None, dry_run=False):
     t1 = time.time()
 
     for i, fn in enumerate(fns):
-        print "{}/{}: {}".format(i, nfiles, fn)
+        print "{}/{}: {}".format(i, nfiles, fn), 
           
         img, h = read_tiff(fn)
         
-        img = apply_transform_to_image(img, tr_mat)
+        center = find_beam_center(img, sigma=10)  # cx cy
         
-        cx, cy = find_beam_center(img, sigma=10)
-        center = cy, cx
+        img = apply_transform_to_image(img, tr_mat, center=center)
         
         img = remove_background_gauss(img, 2, 30, threshold=10)
         results = indexer.index(img, center, nsolutions=25)
         
         refined = indexer.refine_all(img, results, sort=True, method=method)
-        all_results[fn] = refined[0]
+        best = refined[0]
+
+        all_results[fn] = best
+
+        print " -> {:7.0f}".format(best.score)
             
-        hklie = get_intensities(img, refined[0], projector)
+        hklie = get_intensities(img, best, projector)
         hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
 
         root, ext = os.path.splitext(os.path.basename(fn))
