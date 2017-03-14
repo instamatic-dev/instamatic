@@ -228,7 +228,7 @@ def run(arg, chunk=None, dry_run=False):
         hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
 
         root, ext = os.path.splitext(os.path.basename(fn))
-        out = os.path.join("indexed", root+".hkl")
+        out = os.path.join(drc_out, root+".hkl")
 
         np.savetxt(out, hklie, fmt="%4d%4d%4d %7.1f %7.1f")
 

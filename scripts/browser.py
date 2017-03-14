@@ -32,7 +32,7 @@ def run(filepat="images/image_*.tiff", results=None):
     if results:
         df, d = read_ycsv(results)
         projector = Projector.from_parameters(d["cell"]["params"], d["cell"]["spgr"], d["cell"]["name"], thickness=d["projections"]["thickness"])
-        indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
+        # indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
     coords, has_crystals = get_stage_coords(fns)
 
@@ -94,8 +94,8 @@ def run(filepat="images/image_*.tiff", results=None):
                 pks = proj[:,3:5]
                 i, j, hkl = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj[:,0:3])
 
-                plt_diff_center.set_xdata(r.center_x)
-                plt_diff_center.set_ydata(r.center_y)
+                plt_diff_center.set_xdata(r.center_y)
+                plt_diff_center.set_ydata(r.center_x)
 
                 plt_diff.set_xdata(j)
                 plt_diff.set_ydata(i)
@@ -105,7 +105,6 @@ def run(filepat="images/image_*.tiff", results=None):
 
                 plt_diff.set_xdata([])
                 plt_diff.set_ydata([])
-
 
         elif axes == ax3:
             pass

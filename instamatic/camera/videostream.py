@@ -126,22 +126,27 @@ class VideoStream(threading.Thread):
         nframes = 1
         while not self.stopEvent.is_set():
             try:
+                # rotate image by 90 degrees to match DM/SoPhy
                 if self.acquire:
-                    frame = self.cam.getImage(t=self.exposure, fastmode=True)
-                    self.stash = self.frame = np.rot90(frame, k=3)
-                    # self.stash = self.frame = np.random.random((512, 512)) * 256
-                    # time.sleep(self.exposure)
+                    # frame = self.cam.getImage(t=self.exposure, fastmode=True)
+                    # self.stash = self.frame = np.rot90(frame, k=3)
+                    self.stash = self.frame = np.random.random((512, 512)) * 256
+                    time.sleep(self.exposure)
                 else:
-                    frame = self.cam.getImage(t=self.frametime, fastmode=True)
-                    self.frame = np.rot90(frame, k=3)
-                    # self.frame = np.random.random((512, 512)) * 256
-                    # time.sleep(self.frametime)
+                    # frame = self.cam.getImage(t=self.frametime, fastmode=True)
+                    # self.frame = np.rot90(frame, k=3)
+                    self.frame = np.random.random((512, 512)) * 256
+                    time.sleep(self.frametime)
             except Exception as e:
                 print time.time(), e
                 time.sleep(1)
                 continue
 
-            # rotate image by 90 degrees to match DM/SoPhy
+            # if self.acquire:
+            #     image = Image.fromarray(self.frame[::1,::1])
+            # else:
+            #     image = Image.fromarray(self.frame)
+
             image = Image.fromarray(self.frame)
             image = ImageTk.PhotoImage(image)
             
