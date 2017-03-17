@@ -141,6 +141,7 @@ def multi_run(arg, procs=1, dry_run=False):
     t2 = time.time()
 
     all_results = read_csv(csv_outs)
+    all_results = all_results.sort_values(by="score", ascending=False)
     for csv in csv_outs:
         os.unlink(csv)
     write_ycsv(csv_out, data=all_results, metadata=d)

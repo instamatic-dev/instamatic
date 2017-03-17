@@ -57,6 +57,7 @@ setup(
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main',
             'instamatic.process                       = instamatic.processing.process_images:main',
             'instamatic.index                         = instamatic.processing.indexer_app:main',
+            'instamatic.serialmerge                   = instamatic.processing.serialmerge:serialmerge_entry',
         ]
     }
 )

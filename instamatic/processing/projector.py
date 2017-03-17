@@ -177,11 +177,12 @@ class Projector(object):
         if verbose:
             self.cell.info()
 
-            print "projection data"
-            print "  range: {} - {} Angstrom".format(dmin, dmax)
-            print "  shape:", self.repl.shape
-            print "    min:", self.repl.min(axis=0)
-            print "    max:", self.repl.max(axis=0)
+            print "Projection data"
+            print "   Reflections:", self.repl.shape[0]
+            print "         Range: {} - {} Angstrom".format(dmin, dmax)
+            print "    min(u,v,w):", self.repl.min(axis=0)
+            print "    max(u,v,w):", self.repl.max(axis=0)
+            print
         
     @classmethod
     def from_parameters(cls, parameters, spgr, name=None, **kwargs):
@@ -325,8 +326,13 @@ class Projector(object):
         Returns projections, infos: list, list
             Projections is a list of hkl and xy coordinates in reciprocal coordinates
             Infos is a list of accompanying data, such as the number, and alpha/beta angle in radians
-            """
-        genvec = generate_all_vectors(phistep=0.03, psistep=0.03)
+        """
+        if self.cell.crystal_system in ("Triclinic", "Monoclinic"):
+            x2 = 2.0
+        else:
+            x2 = 0.5
+
+        genvec = generate_all_vectors(phistep=phistep, psistep=psistep, x1=0.5, x2=x2)
         projections = []
         infos = []
         for i, (alpha, beta) in enumerate(genvec):

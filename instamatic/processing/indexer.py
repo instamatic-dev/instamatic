@@ -23,7 +23,7 @@ import StringIO
 
 def get_intensities(img, result, projector):
     proj = projector.get_projection(result.alpha, result.beta, result.gamma)
-    i, j, hkl = get_indices(proj[:,3:5], result.scale, (result.center_y, result.center_x), img.shape, hkl=proj[:,0:3])
+    i, j, hkl = get_indices(proj[:,3:5], result.scale, (result.center_x, result.center_y), img.shape, hkl=proj[:,0:3])
     inty = img[i, j].reshape(-1,1)
     return np.hstack((hkl, inty, np.ones_like(inty))).astype(int)
 
@@ -307,7 +307,8 @@ class Indexer(object):
         nrotations = int(2*np.pi/self.theta)
         print "{} projections x {} rotations = {} items".format(nprojections, nrotations, nprojections*nrotations)
     
-        self.get_score = get_score
+        self.get_score = get_score_mod
+    
     @classmethod
     def from_projections_file(cls, fn="projections.npy", **kwargs):
         """Initialize instance of Indexing using a projections file
