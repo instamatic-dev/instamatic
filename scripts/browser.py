@@ -46,13 +46,15 @@ def run(filepat="images/image_*.tiff", results=None):
     
     ax1.scatter(coords[has_crystals==True, 0], coords[has_crystals==True, 1], marker="o", edgecolor="red", facecolor="red")
     ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color="red", picker=8)
+    highlight1, = ax1.plot([], [], marker="o", color="blue")
 
     ax1.set_xlabel("Stage X")
     ax1.set_ylabel("Stage Y")
 
     ax2 = plt.subplot(132, title=fn)
     im2 = ax2.imshow(img)
-    plt_crystals, = ax2.plot([], [], "r+", picker=8, lw=0)
+    plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
+    highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=3)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
     im3 = ax3.imshow(np.zeros_like(img), vmax=250)
@@ -78,14 +80,22 @@ def run(filepat="images/image_*.tiff", results=None):
             else:
                 plt_crystals.set_xdata([])
                 plt_crystals.set_ydata([])
-        
+
+            highlight1.set_xdata(coords[ind, 0])
+            highlight1.set_ydata(coords[ind, 1])
+
+            highlight2.set_xdata([])
+            highlight2.set_ydata([])
+
         elif axes == ax2:
-            fn_diff = ax2.get_title().replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(event.ind[0]))
+            fn_diff = ax2.get_title().replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(ind))
 
             img, h = read_tiff(fn_diff)
             im3.set_data(img)
             ax3.set_title(fn_diff)
 
+            highlight2.set_xdata(plt_crystals.get_xdata()[ind])
+            highlight2.set_ydata(plt_crystals.get_ydata()[ind])
             if results:
                 r = df.ix[fn_diff]
                 print
@@ -99,6 +109,7 @@ def run(filepat="images/image_*.tiff", results=None):
 
                 plt_diff.set_xdata(j)
                 plt_diff.set_ydata(i)
+
             else:
                 plt_diff_center.set_xdata([])
                 plt_diff_center.set_ydata([])

@@ -1,11 +1,11 @@
-from indexer import read_ycsv
 import glob
 from xcore import UnitCell
 from xcore.formats import write_shelx_ins
 from xcore.scattering.dt1968 import table, keys
 from xcore.scattering.atomic_radii import table as radii_table
 
-from serialmerge import serialmerge_fns
+from instamatic.processing.indexer import read_ycsv
+from instamatic.processing.serialmerge import serialmerge_fns
 
 def make_sfac_for_electrons(composition):
     sfac = {}
