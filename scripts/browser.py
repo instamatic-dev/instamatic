@@ -87,7 +87,11 @@ def run(filepat="images/image_*.tiff", results=None):
             highlight2.set_xdata([])
             highlight2.set_ydata([])
 
-        elif axes == ax2:
+            # to preload next diffraction pattern
+            axes = ax2
+            ind = 0
+
+        if axes == ax2:
             fn_diff = ax2.get_title().replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(ind))
 
             img, h = read_tiff(fn_diff)
@@ -117,7 +121,7 @@ def run(filepat="images/image_*.tiff", results=None):
                 plt_diff.set_xdata([])
                 plt_diff.set_ydata([])
 
-        elif axes == ax3:
+        if axes == ax3:
             pass
         
         fig.canvas.draw()

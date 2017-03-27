@@ -7,7 +7,7 @@ from os import path
 
 setup(
     name="instamatic",
-    version="0.3.1",
+    version="0.3.2",
     description="Program for automatic data collection of diffraction snapshots on electron microscopes",
 
     author="Stef Smeets",
@@ -58,6 +58,8 @@ setup(
             'instamatic.process                       = instamatic.processing.process_images:main',
             'instamatic.index                         = instamatic.processing.indexer_app:main',
             'instamatic.serialmerge                   = instamatic.processing.serialmerge:serialmerge_entry',
+            # explore
+            'instamatic.browser                       = scripts.browser:main',
         ]
     }
 )

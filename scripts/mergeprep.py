@@ -17,9 +17,14 @@ def make_sfac_for_electrons(composition):
     return sfac
 
 
-def prepare_shelx(inp="results.csv", composition={"Si":192, "O":384}):
+def prepare_shelx(inp="results.ycsv", composition={"Si":192, "O":384}):
     """Simple function to prepare input files for shelx
     Reads the cell/experimental parameters from the input file"""
+
+    composition={"C": 24, "Ge": 48, "N": 20, "O": 108}
+
+    score_thresh = 1000
+    use_electron_sfac = False
 
     df, d = read_ycsv(inp)
 
@@ -27,11 +32,15 @@ def prepare_shelx(inp="results.csv", composition={"Si":192, "O":384}):
     cell = UnitCell(cell["params"], spgr=cell["spgr"], name=cell["name"])
 
     drc = d["data"]["drc_out"]
-    fns = glob.glob(drc + "\\*.hkl")
 
-    serialmerge_fns(fns)
+    if score_thresh:
+        fns = df[df.score > score_thresh].index
+        fns = [fn.replace("tiff", "hkl").replace("data", drc) for fn in fns]
+    else:
+        fns = glob.glob(drc + "\\*.hkl")
+    
+    serialmerge_fns(fns, fout="shelx.hkl")
 
-    use_electron_sfac = False
     if use_electron_sfac:
         composition = make_sfac_for_electrons(composition)
 

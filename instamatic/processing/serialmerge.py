@@ -221,7 +221,7 @@ def load_hkl_files(fns=[]):
     return dfx
 
 
-def serialmerge_fns(fns, remove_0_reflections=True):
+def serialmerge_fns(fns, remove_0_reflections=True, fout="merged.hkl"):
     dfx = load_hkl_files(fns)
 
     print()
@@ -248,7 +248,7 @@ def serialmerge_fns(fns, remove_0_reflections=True):
 
     print("Kendall's tau: {:.3f}".format(t))
     
-    fout = open("merged.hkl", "w")
+    fout = open(fout, "w")
     for i, row in m.iterrows():
         h,k,l = i
         print("{:4d}{:4d}{:4d}{:8.1f}{:8.1f}".format(h, k, l, row.val, 1.0), file=fout)

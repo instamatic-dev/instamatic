@@ -434,6 +434,8 @@ class Indexer(object):
         gamma = result.gamma
         score = result.score
         
+        vmax = kwargs.get("vmax", 300)
+
         if not projector:
             projector = self.projector
         
@@ -442,12 +444,12 @@ class Indexer(object):
         
         i, j, hkl = get_indices(pks, scale, (center_x, center_y), img.shape, hkl=proj[:,0:3])
         
-        plt.imshow(img, vmax=300)
+        plt.imshow(img, vmax=vmax)
         plt.plot(center_y, center_x, marker="o")
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
                 plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
-        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {}, proj = {}".format(alpha, beta, gamma, score, n))
+        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}".format(alpha, beta, gamma, score, scale, n))
         plt.plot(j, i, marker="+", lw=0)
         plt.show()
     
@@ -474,7 +476,7 @@ class Indexer(object):
         else:
             return new_results
     
-    def refine(self, img, result, projector=None, verbose=True, method="least-squares", **kwargs):
+    def refine(self, img, result, projector=None, verbose=True, method="least-squares", vary_center=False, vary_scale=True, **kwargs):
         """
         Refine the orientations of all solutions in results agains the given image
 
@@ -515,12 +517,12 @@ class Indexer(object):
             return 1e3/(1+score)
         
         params = lmfit.Parameters()
-        params.add("center_x", value=center_x, vary=True, min=center_x - 2.0, max=center_x + 2.0)
-        params.add("center_y", value=center_y, vary=True, min=center_y - 2.0, max=center_y + 2.0)
+        params.add("center_x", value=center_x, vary=vary_center, min=center_x - 2.0, max=center_x + 2.0)
+        params.add("center_y", value=center_y, vary=vary_center, min=center_y - 2.0, max=center_y + 2.0)
         params.add("alpha", value=alpha, vary=True)
         params.add("beta",  value=beta,  vary=True)
         params.add("gamma", value=gamma, vary=True)
-        params.add("scale", value=scale, vary=True, min=scale*0.9, max=scale*1.1)
+        params.add("scale", value=scale, vary=vary_scale, min=scale*0.8, max=scale*1.2)
         
         pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
         
