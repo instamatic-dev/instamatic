@@ -19,6 +19,32 @@ refine_params = {
 }
 
 
+def optimize_diffraction_focus(ctrl):
+    """Function to optimize the diffraction focus live on the microscope
+    It does so by minimizing the halfwidth of the primary beam"""
+    import lmfit
+    
+    params = lmfit.Parameters()
+    params.add("diff_focus", value=ctrl.difffocus.value)
+    
+    def obj_func(p):
+        diff_focus = params["diff_focus"].value
+        
+        ctrl.difffocus.set(diff_focus)
+        img = ctrl.getImage(header_keys=None)
+        
+        return np.sum(img > img.max()/2.0)**2
+    
+    # method = "nelder", "powell", "cobyla", "leastsq"
+    args = (ctrl,)
+    res = lmfit.minimize(obj_func, params, args=args)
+    
+    diff_focus = res.p["diff_focus"].value
+    ctrl.difffocus.set(diff_focus)
+    
+    return diff_focus
+
+
 class CalibDirectBeam(object):
     """docstring for CalibDirectBeam"""
     def __init__(self, dct={}):
@@ -262,7 +288,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     return c
 
 
-def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True):
+def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True, auto_diff_focus=True):
     import glob
     keys = ("BeamShift", "DiffShift")
     if not patterns:
@@ -274,6 +300,10 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".",
  Press <ENTER> to start"""):
             return
         else:
+            if auto_diff_focus:
+                print " >> Optimizing diffraction focus"
+                difffocus = optimize_diffraction_focus(ctrl)
+            
             cs = []
             for key in keys:
                 c = calibrate_directbeam_live(ctrl, save_images=save_images, outdir=outdir, key=key)
