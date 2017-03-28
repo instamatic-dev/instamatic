@@ -1,5 +1,5 @@
 from Tkinter import *
-from PIL import Image
+from PIL import Image, ImageEnhance
 from PIL import ImageTk
 import threading
 import numpy as np
@@ -7,6 +7,8 @@ import time
 import datetime
 from instamatic.formats import write_tiff
 from camera import Camera
+
+from skimage import exposure
 
 class VideoStream(threading.Thread):
     """docstring for VideoStream"""
@@ -37,6 +39,8 @@ class VideoStream(threading.Thread):
         self.frametime = 0.01
         self.exposure = self.frametime
         self.binsize = self.cam.default_binsize
+
+        self.contrast = 1.0
  
         self.root = Tk()
         self.panel = None
@@ -79,6 +83,11 @@ class VideoStream(threading.Thread):
         
         Label(frame, anchor=E, width=lwidth, text="exposure (s)").grid(row=1, column=0)
         self.e_exposure.grid(row=1, column=1)
+
+        self.e_contrast = Spinbox(frame, width=ewidth, textvariable=self.var_contrast, from_=0.0, to=10.0, increment=0.1)
+        
+        Label(frame, anchor=E, width=lwidth, text="Contrast").grid(row=1, column=2)
+        self.e_contrast.grid(row=1, column=3)
         
         frame.pack()
 
@@ -105,9 +114,23 @@ class VideoStream(threading.Thread):
         self.var_exposure.set(self.frametime)
         self.var_exposure.trace("w", self.update_exposure_time)
 
+        self.var_contrast = DoubleVar(value=1.0)
+        self.var_contrast.set(self.contrast)
+        self.var_contrast.trace("w", self.update_contrast)
+
     def update_exposure_time(self, name, index, mode):
         # print name, index, mode
-        self.frametime = self.var_exposure.get()
+        try:
+            self.frametime = self.var_exposure.get()
+        except:
+            pass
+
+    def update_contrast(self, name, index, mode):
+        # print name, index, mode
+        try:
+            self.contrast = self.var_contrast.get()
+        except:
+            pass
 
     def getImage(self, t=None, **kwargs):
         if t:
@@ -147,7 +170,13 @@ class VideoStream(threading.Thread):
             # else:
             #     image = Image.fromarray(self.frame)
 
-            image = Image.fromarray(self.frame)
+            if self.contrast != 1:
+                image = Image.fromarray(self.frame).convert("L")
+                image = ImageEnhance.Contrast(image).enhance(self.contrast)
+                # Can also use ImageEnhance.Sharpness or ImageEnhance.Brightness if needed
+            else:
+                image = Image.fromarray(self.frame)
+
             image = ImageTk.PhotoImage(image)
             
             self.panel.configure(image=image)
