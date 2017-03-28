@@ -8,21 +8,15 @@ import datetime
 from instamatic.formats import write_tiff
 from camera import Camera
 
-from skimage import exposure
 
-class VideoStream(threading.Thread):
-    """docstring for VideoStream"""
-    def __init__(self, cam):
-        threading.Thread.__init__(self)
+class VideoStreamer(object):
+    """docstring for VideoStreamer"""
+    def __init__(self, cam, handler):
+        super(VideoStreamer, self).__init__()
+        
+        self.handler = handler
         self.cam = cam
-        self.start()
 
-    def callback(self):
-        self.stopEvent.set()
-        self.root.quit()
-
-    def run(self):
-        self.cam = Camera(kind=self.cam)
         self.default_exposure = self.cam.default_exposure
         self.default_binsize = self.cam.default_binsize
         self.dimensions = self.cam.dimensions
@@ -34,29 +28,88 @@ class VideoStream(threading.Thread):
         self.stopEvent = None
 
         self.stash = None
-        self.acquire = False
 
-        self.frametime = 0.01
+        self.frametime = 0.1
         self.exposure = self.frametime
         self.binsize = self.cam.default_binsize
 
-        self.contrast = 1.0
- 
-        self.root = Tk()
+        self.lock = threading.Lock()
+
+        self.stopEvent = threading.Event()
+        self.acquireInitiateEvent = threading.Event()
+        self.acquireCompleteEvent = threading.Event()
+
+    def getImage(self, t=None, binsize=1):
+        if not t:
+            t = self.exposure
+
+        self.lock.acquire(True)
+        img = np.ones((512, 512))*256
+        # self.cam.getImage(t=t, binsize=1, fastmode=True)
+        time.sleep(t)
+        self.lock.release()
+        # self.handler.send_frame(img)
+        return img
+
+    def run(self):
+        while not self.stopEvent.is_set():
+            if self.acquireInitiateEvent.is_set():
+                self.acquireInitiateEvent.clear()
+                frame = self.getImage()
+                self.handler.send_acquire(frame)
+            else:
+                frame = np.random.random((512,512)) * 256
+                time.sleep(self.frametime + 0.01)
+                # frame = self.cam.getImage(t=self.frametime, fastmode=True)
+                self.handler.send_frame(frame)
+
+    def start_loop(self):
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.start()
+
+    def end_loop(self):
+        self.thread.stop()
+
+
+class VideoViewer(threading.Thread):
+    """docstring for VideoViewer"""
+    def __init__(self, cam="simulate"):
+        threading.Thread.__init__(self)
+
+        self.cam = Camera(kind=cam)
+        self.stream = self.setup_stream()
+
         self.panel = None
+
+        self.frametime = 0.05
+        self.contrast = 1.0
+
+        self.last = time.time()
+        self.nframes = 1
+        self.update_frequency = 0.5
+
+        self.start()
+
+    def run(self):
+        self.root = Tk()
 
         self.init_vars()
         self.buttonbox(self.root)
         self.header(self.root)
         self.makepanel(self.root)
 
-        self.stopEvent = threading.Event()
-        self.thread = threading.Thread(target=self.videoLoop, args=())
-        self.thread.start()
+        # self.stopEvent = threading.Event()
  
         self.root.wm_title("Instamatic stream")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.close)
 
+        self.root.bind('<Escape>', self.close)
+
+        self.root.bind('<<StreamAcquire>>', self.on_frame)
+        self.root.bind('<<StreamEnd>>', self.close)
+        self.root.bind('<<StreamFrame>>', self.on_frame)
+
+        self.start_stream()
         self.root.mainloop()
 
     def header(self, master):
@@ -111,7 +164,7 @@ class VideoStream(threading.Thread):
         self.var_overhead = DoubleVar()
 
         self.var_exposure = DoubleVar()
-        self.var_exposure.set(self.frametime)
+        self.var_exposure.set(self.cam.default_exposure)
         self.var_exposure.trace("w", self.update_exposure_time)
 
         self.var_contrast = DoubleVar(value=1.0)
@@ -124,6 +177,8 @@ class VideoStream(threading.Thread):
             self.frametime = self.var_exposure.get()
         except:
             pass
+        else:
+            self.stream.frametime = self.frametime
 
     def update_contrast(self, name, index, mode):
         # print name, index, mode
@@ -132,84 +187,104 @@ class VideoStream(threading.Thread):
         except:
             pass
 
-    def getImage(self, t=None, **kwargs):
-        if t:
-            self.exposure = t
-        self.stash = None
-        self.acquire = True
-        
-        while self.stash is None:
-            pass
-
-        self.acquire = False
-        return self.stash.astype(int)
-
-    def videoLoop(self):
-        t0 = time.time()
-        nframes = 1
-        while not self.stopEvent.is_set():
-            try:
-                # rotate image by 90 degrees to match DM/SoPhy
-                if self.acquire:
-                    frame = self.cam.getImage(t=self.exposure, fastmode=True)
-                    self.stash = self.frame = np.rot90(frame, k=3)
-                    # self.stash = self.frame = np.random.random((512, 512)) * 256
-                    # time.sleep(self.exposure)
-                else:
-                    frame = self.cam.getImage(t=self.frametime, fastmode=True)
-                    self.frame = np.rot90(frame, k=3)
-                    # self.frame = np.random.random((512, 512)) * 256
-                    # time.sleep(self.frametime)
-            except Exception as e:
-                print time.time(), e
-                time.sleep(1)
-                continue
-
-            # if self.acquire:
-            #     image = Image.fromarray(self.frame[::1,::1])
-            # else:
-            #     image = Image.fromarray(self.frame)
-
-            if self.contrast != 1:
-                image = Image.fromarray(self.frame).convert("L")
-                image = ImageEnhance.Contrast(image).enhance(self.contrast)
-                # Can also use ImageEnhance.Sharpness or ImageEnhance.Brightness if needed
-            else:
-                image = Image.fromarray(self.frame)
-
-            image = ImageTk.PhotoImage(image)
-            
-            self.panel.configure(image=image)
-            # keep a reference to avoid premature garbage collection
-            self.panel.image = image
-            
-            t1 = time.time()
-            delta = t1 - t0
-
-            if delta > 1:
-                frametime = (delta)/nframes
-                fps = 1.0/(frametime)
-                overhead = frametime - self.frametime
-
-                self.var_fps.set(round(fps, 2))
-                self.var_frametime.set(round(frametime*1000, 2))
-                self.var_overhead.set(round(overhead*1000, 2))
-                t0 = t1
-                nframes = 1
-            else:
-                nframes += 1
-
     def saveImage(self):
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         write_tiff(outfile, self.frame)
         print " >> Wrote file:", outfile
 
     def close(self):
-        self.stopEvent.set()
+        self.stream.stopEvent.set()
         self.root.quit()
 
+    def setup_stream(self):
+        class Handler(object):
+            def need_stop(self_):
+                return self.stream.stopEvent.is_set()
+
+            def send_frame(self_, frame):
+                self.stream.lock.acquire(True)
+                self.frame = frame
+                self.stream.lock.release()
+
+                self.root.event_generate('<<StreamFrame>>', when='tail')
+
+            def send_acquire(self_, acquiredFrame):
+                self.stream.lock.acquire(True)
+                self.acquiredFrame = self.frame = acquiredFrame
+                self.stream.lock.release()
+                self.stream.acquireCompleteEvent.set()
+
+                self.root.event_generate('<<StreamFrame>>', when='tail')
+
+        # self.cam.stopEvent.clear()
+        return VideoStreamer(self.cam, Handler())
+    
+    def start_stream(self):
+        self.stream.start_loop()
+
+    def on_frame(self, event):
+        self.stream.lock.acquire(True)
+        frame = self.frame
+        self.stream.lock.release()
+
+        if self.contrast != 1:
+            image = Image.fromarray(frame).convert("L")
+            image = ImageEnhance.Contrast(image).enhance(self.contrast)
+            # Can also use ImageEnhance.Sharpness or ImageEnhance.Brightness if needed
+        else:
+            image = Image.fromarray(frame)
+
+        image = ImageTk.PhotoImage(image=image)
+
+        self.panel.configure(image=image)
+        # keep a reference to avoid premature garbage collection
+        self.panel.image = image
+
+        self.update_frametimes()
+        self.root.update_idletasks()
+
+    def update_frametimes(self):
+        self.current = time.time()
+        delta = self.current - self.last
+
+        if delta > self.update_frequency:
+            frametime = delta/self.nframes
+            fps = 1.0/frametime
+            overhead = frametime - self.stream.frametime
+
+            self.var_fps.set(round(fps, 2))
+            self.var_frametime.set(round(frametime*1000, 2))
+            self.var_overhead.set(round(overhead*1000, 2))
+            self.last = self.current
+            self.nframes = 1
+        else:
+            self.nframes += 1
+
+    def getImage(self, exposure=None, binsize=1):
+        current_frametime = self.stream.frametime
+
+        # set to 0 to prevent it lagging the acquisition
+        self.stream.frametime = 0
+        self.stream.exposure = exposure
+        self.stream.binsize = binsize
+
+        self.stream.acquireInitiateEvent.set()
+        self.stream.acquireCompleteEvent.wait()
+
+        self.stream.lock.acquire(True)
+        frame = self.acquiredFrame
+        self.stream.lock.release()
+        
+        self.stream.acquireCompleteEvent.clear()
+        self.stream.frametime = current_frametime
+        
+        return frame
+
+
 if __name__ == '__main__':
-    stream = VideoStream(cam="simulate")
+    # stream = VideoStream(cam="simulate")
+    stream = VideoViewer(cam="simulate")
     # stream.root.mainloop()
     from IPython import embed
     embed()
+    stream.close()
