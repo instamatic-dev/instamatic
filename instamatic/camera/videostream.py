@@ -11,10 +11,10 @@ from camera import Camera
 
 class VideoStreamer(object):
     """docstring for VideoStreamer"""
-    def __init__(self, cam, handler):
+    def __init__(self, cam, callback):
         super(VideoStreamer, self).__init__()
         
-        self.handler = handler
+        self.callback = callback
         self.cam = cam
 
         self.default_exposure = self.cam.default_exposure
@@ -38,30 +38,26 @@ class VideoStreamer(object):
         self.stopEvent = threading.Event()
         self.acquireInitiateEvent = threading.Event()
         self.acquireCompleteEvent = threading.Event()
-
-    def getImage(self, t=None, binsize=1):
-        if not t:
-            t = self.exposure
-
-        self.lock.acquire(True)
-        img = np.ones((512, 512))*256
-        # self.cam.getImage(t=t, binsize=1, fastmode=True)
-        time.sleep(t)
-        self.lock.release()
-        # self.handler.send_frame(img)
-        return img
+        self.continuousCollectionEvent = threading.Event()
 
     def run(self):
         while not self.stopEvent.is_set():
+
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
-                frame = self.getImage()
-                self.handler.send_acquire(frame)
-            else:
-                frame = np.random.random((512,512)) * 256
-                time.sleep(self.frametime + 0.01)
-                # frame = self.cam.getImage(t=self.frametime, fastmode=True)
-                self.handler.send_frame(frame)
+                
+                #frame = np.ones((512, 512))*256
+                #time.sleep(self.exposure)
+
+                frame = self.cam.getImage(t=self.exposure, fastmode=True)
+                self.callback(frame, acquire=True)
+
+            elif not self.continuousCollectionEvent.is_set():
+                #frame = np.random.random((512,512)) * 256
+                #time.sleep(max(self.frametime, 0.01))
+                
+                frame = self.cam.getImage(t=self.frametime, fastmode=True)
+                self.callback(frame)
 
     def start_loop(self):
         self.thread = threading.Thread(target=self.run, args=())
@@ -86,7 +82,8 @@ class VideoViewer(threading.Thread):
 
         self.last = time.time()
         self.nframes = 1
-        self.update_frequency = 0.5
+        self.update_frequency = 0.25
+        self.last_frametime = self.stream.frametime
 
         self.start()
 
@@ -196,28 +193,21 @@ class VideoViewer(threading.Thread):
         self.stream.stopEvent.set()
         self.root.quit()
 
+    def send_frame(self, frame, acquire=False):
+        if acquire:
+            self.stream.lock.acquire(True)
+            self.acquired_frame = self.frame = frame
+            self.stream.lock.release()
+            self.stream.acquireCompleteEvent.set()
+        else:
+            self.stream.lock.acquire(True)
+            self.frame = frame
+            self.stream.lock.release()
+
+        self.root.event_generate('<<StreamFrame>>', when='tail')
+
     def setup_stream(self):
-        class Handler(object):
-            def need_stop(self_):
-                return self.stream.stopEvent.is_set()
-
-            def send_frame(self_, frame):
-                self.stream.lock.acquire(True)
-                self.frame = frame
-                self.stream.lock.release()
-
-                self.root.event_generate('<<StreamFrame>>', when='tail')
-
-            def send_acquire(self_, acquiredFrame):
-                self.stream.lock.acquire(True)
-                self.acquiredFrame = self.frame = acquiredFrame
-                self.stream.lock.release()
-                self.stream.acquireCompleteEvent.set()
-
-                self.root.event_generate('<<StreamFrame>>', when='tail')
-
-        # self.cam.stopEvent.clear()
-        return VideoStreamer(self.cam, Handler())
+        return VideoStreamer(self.cam, callback=self.send_frame)
     
     def start_stream(self):
         self.stream.start_loop()
@@ -249,6 +239,9 @@ class VideoViewer(threading.Thread):
 
         if delta > self.update_frequency:
             frametime = delta/self.nframes
+
+            frametime = (frametime * 0.5) + (self.last_frametime * 0.5)
+
             fps = 1.0/frametime
             overhead = frametime - self.stream.frametime
 
@@ -257,34 +250,42 @@ class VideoViewer(threading.Thread):
             self.var_overhead.set(round(overhead*1000, 2))
             self.last = self.current
             self.nframes = 1
+
+            self.last_frametime = frametime
         else:
             self.nframes += 1
 
     def getImage(self, exposure=None, binsize=1):
         current_frametime = self.stream.frametime
 
-        # set to 0 to prevent it lagging the acquisition
+        # set to 0 to prevent it lagging data acquisition
         self.stream.frametime = 0
-        self.stream.exposure = exposure
-        self.stream.binsize = binsize
+        if exposure:
+            self.stream.exposure = exposure
+        if binsize:
+            self.stream.binsize = binsize
 
         self.stream.acquireInitiateEvent.set()
+
         self.stream.acquireCompleteEvent.wait()
 
         self.stream.lock.acquire(True)
-        frame = self.acquiredFrame
+        frame = self.acquired_frame
         self.stream.lock.release()
         
         self.stream.acquireCompleteEvent.clear()
         self.stream.frametime = current_frametime
-        
         return frame
 
+    def block(self):
+        self.stream.continuousCollectionEvent.set()
+
+    def unblock(self):
+        self.stream.continuousCollectionEvent.clear()
+        
 
 if __name__ == '__main__':
-    # stream = VideoStream(cam="simulate")
     stream = VideoViewer(cam="simulate")
-    # stream.root.mainloop()
     from IPython import embed
     embed()
     stream.close()
