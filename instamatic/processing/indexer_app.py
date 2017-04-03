@@ -8,7 +8,6 @@ import time
 from indexer import *
 from tqdm import tqdm
 import logging
-logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', filename='indexing.log', level=logging.DEBUG)
 
 __version__ = "2017-03-09"
 __author__ = "Stef Smeets"
@@ -87,7 +86,7 @@ class ProgressBar(object):
         printer('')
 
 
-def multi_run(arg, procs=1, dry_run=False):
+def multi_run(arg, procs=1, dry_run=False, logfile=None):
     import subprocess as sp
     from multiprocessing import cpu_count
 
@@ -123,6 +122,8 @@ def multi_run(arg, procs=1, dry_run=False):
     print 'Starting processes...'
     for i in xrange(procs):
         cmd = "instamatic.index.exe {} -c {} {}".format(arg, i, procs)
+        if logfile:
+            cmd += " --logfile {}".format(logfile)
 
         print "     >>", cmd,
 
@@ -133,7 +134,9 @@ def multi_run(arg, procs=1, dry_run=False):
             print ';; started (PID={})'.format(p.pid)
         else:
             print ';; not started'
-            
+
+    if dry_run:
+        return
    
     pb = ProgressBar()
     while any(p.poll() == None for p in processes):
@@ -154,7 +157,9 @@ def multi_run(arg, procs=1, dry_run=False):
     print " >> Done << "
 
 
-def run(arg, chunk=None, dry_run=False):
+def run(arg, chunk=None, dry_run=False, log=None):
+    log = log or logging.getLogger(__name__)
+
     if len(sys.argv) == 1:
         print "Usage: instamatic.index indexing.inp"
         print
@@ -204,6 +209,9 @@ def run(arg, chunk=None, dry_run=False):
         root, ext = os.path.splitext(csv_out)
         csv_out = "{}_{}{}".format(root, offset, ext)
         fns = fns[offset::cpu_count]
+        prefix = "Chunk #{}: ".format(offset)
+    else:
+        prefix = ""
 
     nfiles = len(fns)
     print "Found {} files".format(nfiles)
@@ -233,7 +241,6 @@ def run(arg, chunk=None, dry_run=False):
         best = refined[0]
 
         all_results[fn] = best
-
             
         hklie = get_intensities(img, best, projector, radius=radius)
         hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
@@ -243,8 +250,7 @@ def run(arg, chunk=None, dry_run=False):
 
         np.savetxt(out, hklie, fmt="%4d%4d%4d %7.1f %7.1f")
 
-        s = "{}/{}: {} -> {:7.0f}".format(i, nfiles, fn, best.score)
-        logging.info(s)
+        log.info("%s%d/%d %s -> %7.0f", prefix, i, nfiles, fn, best.score)
 
     if chunk:
         write_csv(csv_out, all_results)
@@ -290,11 +296,15 @@ Program for indexing electron diffraction images.
                         action="store_true", dest="dry_run",
                         help="Runs the program, but doesn't start any processes.")
 
+    parser.add_argument("-l", "--logfile",
+                        action="store", type=str, dest="logfile",
+                        help="Specify logfile (default=indexing.log).")
     
     parser.set_defaults(procs=1,
                         chunk=None,
                         dry_run=False,
                         resize=False,
+                        logfile="indexing.log"
                         )
     
     options = parser.parse_args()
@@ -305,6 +315,13 @@ Program for indexing electron diffraction images.
         sys.exit()
 
     if options.procs > 1:
-        multi_run(arg, procs=options.procs, dry_run=options.dry_run)
+        multi_run(arg, procs=options.procs, dry_run=options.dry_run, logfile=options.logfile)
     else:
-        run(arg, options.chunk)
+        logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", filename=options.logfile, level=logging.DEBUG)
+        log = logging.getLogger(__name__)
+        log.info("Start indexing")
+        run(arg, options.chunk, log=log)
+
+
+if __name__ == '__main__':
+    main()
