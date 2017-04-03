@@ -20,10 +20,19 @@ import pandas as pd
 
 import StringIO
 
+from skimage import morphology
 
-def get_intensities(img, result, projector):
+
+def get_intensities(img, result, projector, radius=1):
+    """
+    radius: int, optional
+        Search for largest point in defined radius around projected peak positions
+    """
     proj = projector.get_projection(result.alpha, result.beta, result.gamma)
     i, j, hkl = get_indices(proj[:,3:5], result.scale, (result.center_x, result.center_y), img.shape, hkl=proj[:,0:3])
+    if radius > 1:
+        footprint = morphology.disk(radius)
+        img = ndimage.maximum_filter(img, footprint=footprint)
     inty = img[i, j].reshape(-1,1)
     return np.hstack((hkl, inty, np.ones_like(inty))).astype(int)
 
@@ -309,6 +318,11 @@ class Indexer(object):
     
         self.get_score = get_score_mod
     
+    def set_pixelsize(self, pixelsize):
+        """Sets pixelsize and calculates scale from pixelsize"""
+        self.pixelsize = pixelsize
+        self.scale = 1/pixelsize
+
     @classmethod
     def from_projections_file(cls, fn="projections.npy", **kwargs):
         """Initialize instance of Indexing using a projections file
