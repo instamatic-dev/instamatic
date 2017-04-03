@@ -6,7 +6,9 @@ import pandas as pd
 import time
 
 from indexer import *
-
+from tqdm import tqdm
+import logging
+logging.basicConfig(format='%(levelname)s | %(asctime)s | %(message)s', filename='indexing.log', level=logging.DEBUG)
 
 __version__ = "2017-03-09"
 __author__ = "Stef Smeets"
@@ -179,11 +181,18 @@ def run(arg, chunk=None, dry_run=False):
     csv_out   = d["data"]["csv_out"]
     drc_out   = d["data"]["drc_out"]
 
+    sigma_min  = d["background"]["sigma_min"]
+    sigma_max  = d["background"]["sigma_max"]
+    threshold  = d["background"]["threshold"]
+
     azimuth = np.radians(stretch)
     stretch = stretch / (2*100)
     tr_mat = affine_transform_ellipse_to_circle(azimuth, stretch)
 
     method = "powell"
+    radius = 3
+    nsolutions = 25
+    beam_center_sigma = 10
 
     projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
     indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
@@ -204,28 +213,29 @@ def run(arg, chunk=None, dry_run=False):
     
     all_results = {}
     
-    t1 = time.time()
+    t = tqdm(fns, desc=fns[0])
 
-    for i, fn in enumerate(fns):
-        print "{}/{}: {}".format(i, nfiles, fn), 
-          
+    for i, fn in enumerate(t):
+        # print "{}/{}: {}".format(i, nfiles, fn), 
+        t.set_description(fn)
+        t.update()
+
         img, h = read_tiff(fn)
         
-        center = find_beam_center(img, sigma=10)  # cx cy
+        center = find_beam_center(img, sigma=beam_center_sigma)  # cx cy
         
         img = apply_transform_to_image(img, tr_mat, center=center)
         
-        img = remove_background_gauss(img, 2, 30, threshold=10)
-        results = indexer.index(img, center, nsolutions=25)
+        img = remove_background_gauss(img, sigma_min, sigma_max, threshold=threshold)
+        results = indexer.index(img, center, nsolutions=nsolutions)
         
         refined = indexer.refine_all(img, results, sort=True, method=method)
         best = refined[0]
 
         all_results[fn] = best
 
-        print " -> {:7.0f}".format(best.score)
             
-        hklie = get_intensities(img, best, projector)
+        hklie = get_intensities(img, best, projector, radius=radius)
         hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
 
         root, ext = os.path.splitext(os.path.basename(fn))
@@ -233,7 +243,8 @@ def run(arg, chunk=None, dry_run=False):
 
         np.savetxt(out, hklie, fmt="%4d%4d%4d %7.1f %7.1f")
 
-    t2 = time.time()
+        s = "{}/{}: {} -> {:7.0f}".format(i, nfiles, fn, best.score)
+        logging.info(s)
 
     if chunk:
         write_csv(csv_out, all_results)
@@ -241,10 +252,10 @@ def run(arg, chunk=None, dry_run=False):
         write_ycsv(csv_out, data=all_results, metadata=d)
     print "Writing results to {}".format(csv_out)
     
-    print "Time taken: {:.0f} s / {:.1f} s per image".format(t2-t1, (t2-t1)/nfiles)
+    time_taken = t.last_t - t.start_t
+    print "Time taken: {:.0f} s / {:.1f} s per image".format(time_taken, (time_taken)/nfiles)
     print
     print " >> DONE <<"
-
 
 
 def main():
