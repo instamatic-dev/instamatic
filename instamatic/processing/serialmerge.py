@@ -130,7 +130,7 @@ def pearsonr(x, y):
     return np.sum(xdiff * ydiff) / (np.sum(xdiff * xdiff) * np.sum(ydiff * ydiff))**0.5
 
 
-def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
+def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=False):
     """Implementation based on SerialRank algorithm
     http://arxiv.org/abs/1406.5370
     http://www.di.ens.fr/~fogel/SerialRank/tutorial.html"""
@@ -149,13 +149,13 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
     merged["Nobs"] = df.groupby(df.index).size()
 
     # setup
-    refs = df.index.drop_duplicates()     # get unique set of indices
-    C = np.eye(refs.size)                 # initializing the comparison matrix
-    counter = np.eye(refs.size)           # matrix to keep track of number of observations
+    refs = df.index.drop_duplicates()          # get unique set of indices
+    C = np.eye(refs.size, dtype=np.float32)    # initializing the comparison matrix
+    counter = np.eye(refs.size)                # matrix to keep track of number of observations
 
     # Prepare comparison matrix
     for frame, subdf in df.groupby("frame"):
-        subdf = subdf.groupby(subdf.index)[key].first()   # Check for duplicate reflections from a single frame
+        subdf = subdf.groupby(subdf.index)[key].first()      # Check for duplicate reflections from a single frame
         tri = np.tri(subdf.size, dtype=int)                  # We know that an ordered ranking produces a triangular matrix
                                                              # So we can make use of that here (for speed reasons)
         idx = [refs.get_loc(ref) for ref in subdf.sort_values().index]
@@ -191,6 +191,14 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
     merged.sort_values(key, ascending=False, inplace=True)    # sort the values by intensity
     merged.index = index                                      # overwrite index with new ranking
 
+    if verbose:
+        print("Array shape: {}".format(C.shape))
+        print("Memory usage: {} MB".format(C.nbytes / (1024*1024)))
+        nfilled = np.sum(counter!=0)
+        print("Completeness: {}/{}={:.2%}".format(nfilled, C.size, float(nfilled)/C.size))
+        print("Reflection redundancy: {:.2f}".format(float(len(df)) / len(merged)))
+        print("Pair redundancy: {:.3f}".format(((counter.sum() - refs.size)) / ((nfilled - refs.size))))
+
     return merged
 
 
@@ -221,10 +229,9 @@ def load_hkl_files(fns=[]):
     return dfx
 
 
-def serialmerge_fns(fns, remove_0_reflections=True, fout="merged.hkl"):
+def serialmerge_fns(fns, remove_0_reflections=True, fout="merged.hkl", verbose=False):
     dfx = load_hkl_files(fns)
 
-    print()
     print("Observed reflections: {}".format(len(dfx)))
 
     if remove_0_reflections:
@@ -236,7 +243,7 @@ def serialmerge_fns(fns, remove_0_reflections=True, fout="merged.hkl"):
     print("Unique reflections:", len(dfx.groupby(dfx.index)))
     print("Number of frames:", max(dfx["frame"]+1))
 
-    m = serialmerge(dfx)
+    m = serialmerge(dfx, verbose=verbose)
     
     merged = dfx.groupby(dfx.index).mean()
     
@@ -247,6 +254,10 @@ def serialmerge_fns(fns, remove_0_reflections=True, fout="merged.hkl"):
         t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index, "val"]))
 
     print("Kendall's tau: {:.3f}".format(t))
+    
+    if verbose:
+        print("\nMost common reflections:")
+        print(m.sort_values("Nobs", ascending=False)["Nobs"][0:10])
     
     fout = open(fout, "w")
     for i, row in m.iterrows():
