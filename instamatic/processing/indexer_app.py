@@ -178,10 +178,6 @@ def run(arg, chunk=None, dry_run=False, log=None):
     dmax      = d["projections"]["dmax"]
     thickness = d["projections"]["thickness"]
     
-    params    = d["cell"]["params"]
-    name      = d["cell"]["name"]
-    spgr      = d["cell"]["spgr"]
-    
     file_pat  = d["data"]["glob"]
     csv_out   = d["data"]["csv_out"]
     drc_out   = d["data"]["drc_out"]
@@ -199,8 +195,24 @@ def run(arg, chunk=None, dry_run=False, log=None):
     nsolutions = 25
     beam_center_sigma = 10
 
-    projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
-    indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+    if isinstance(d["cell"], (tuple, list)):
+        indexers = {}
+        for cell in d["cell"]:
+            name = cell["name"]
+            params = cell["params"]
+            spgr = cell["spgr"]
+
+            projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
+            indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+            indexers[name] = indexer
+        indexer = IndexerMulti(indexers)
+    else:
+        params    = d["cell"]["params"]
+        name      = d["cell"]["name"]
+        spgr      = d["cell"]["spgr"]
+
+        projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
+        indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
 
     fns = glob.glob(file_pat)
 
