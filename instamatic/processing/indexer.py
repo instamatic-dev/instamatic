@@ -257,10 +257,99 @@ def get_indices(pks, scale, center, shape, hkl=None):
 
 
 # store the results of indexing
-IndexingResult = namedtuple("IndexingResult", ["score", "number", "alpha", "beta", "gamma", "center_x", "center_y", "scale"])
+IndexingResult = namedtuple("IndexingResult", ["score", "number", "alpha", "beta", "gamma", "center_x", "center_y", "scale", "name"])
 
 # description of each projection
 ProjInfo = namedtuple("ProjectionInfo", ["number", "alpha", "beta"])
+
+
+class IndexerMulti(object):
+    """
+    Indexing class for serial snapshot crystallography. Find the crystal orientations 
+    from a single electron diffraction snapshot using a brute force method
+
+    IndexerMulti allows multiple indexers to be stored for dealing with multiphase problems
+
+    indexers: dict
+        dictionary of indexers to use, the key is used as the identifier in the IndexingResult
+
+    For more information see: Indexer()
+    """
+    def __init__(self, indexers={}):
+        super(IndexerMulti, self).__init__()
+        
+        self._indexers = indexers
+
+    def set_pixelsize(self, pixelsize):
+        """
+        Sets the pixelsize for all indexers
+        """
+        for name, indexer in self._indexers.items():
+            indexer.set_pixelsize(pixelsize)
+
+    def index(self, img, center, **kwargs):
+        """
+        Applied all indexers to img
+        """
+
+        nsolutions = kwargs.get("nsolutions", 20)
+
+        results = []
+        for name, indexer in self._indexers.items():
+            print "name", name
+            res = indexer.index(img, center, name=name, **kwargs)
+
+            # scale score by cell volume as an attempt to normalize the scores
+            # scores are consistent within an indexer class, but difficult to compare between indexers
+            # I suspect smaller unit cells have an advantage over larger ones (because they hit more
+            #     0-pixels using get_score_mod)
+            res = [r._replace(score=r.score*(indexer.projector.cell.volume/5000)) for r in res]
+            results.extend(res)
+
+        return sorted(results, key=lambda t: t.score, reverse=True)[0:nsolutions]
+
+    def refine_all(self, img, results, sort=True, **kwargs):
+        """
+        Optimizes the given solutions using a least-squares minimization.
+        """
+        kwargs.setdefault("verbose", False)
+        
+        refined = []
+
+        for result in results:
+            res = self.refine(img, result, **kwargs)
+            refined.append(res)
+
+        if sort:
+            return sorted(refined, key=lambda t: t.score, reverse=True)
+        else:
+            return refined
+
+    def refine(self, img, result, **kwargs):
+        """
+        Optimizes the given solution using a least-squares minimization.
+        """
+        name = result.name
+        indexer = self._indexers[name]
+        res = indexer.refine(img, result, name=name, **kwargs)
+        res = res._replace(score=res.score*(indexer.projector.cell.volume/5000)) # see comment on .index
+        return res
+
+    def plot_all(self, img, results, **kwargs):
+        """
+        Plot each projection given in results on the image
+        """
+        for result in results:
+            self.plot(img, result, **kwargs)
+    
+    def plot(self, img, result, *args, **kwargs):
+        """
+        Plot the image with the projection given in 'result'
+        """
+        name = result.name
+        indexer = self._indexers[name]
+
+        indexer.plot(img, result, *args, **kwargs)
 
 
 class Indexer(object):
@@ -314,18 +403,21 @@ class Indexer(object):
         
         nprojections = len(self.projections)
         nrotations = int(2*np.pi/self.theta)
-        print "{} projections x {} rotations = {} items".format(nprojections, nrotations, nprojections*nrotations)
+        print "{} projections x {} rotations = {} items\n".format(nprojections, nrotations, nprojections*nrotations)
     
         self.get_score = get_score_mod
     
     def set_pixelsize(self, pixelsize):
-        """Sets pixelsize and calculates scale from pixelsize"""
+        """
+        Sets pixelsize and calculates scale from pixelsize
+        """
         self.pixelsize = pixelsize
         self.scale = 1/pixelsize
 
     @classmethod
     def from_projections_file(cls, fn="projections.npy", **kwargs):
-        """Initialize instance of Indexing using a projections file
+        """
+        Initialize instance of Indexing using a projections file
 
         fn: str
             path to projections.npy
@@ -337,7 +429,8 @@ class Indexer(object):
     
     @classmethod
     def from_projector(cls, projector, **kwargs):
-        """Initialize isntance of Indexer using an instance of Projector
+        """
+        Initialize isntance of Indexer using an instance of Projector
 
         projector: Projector object
         """
@@ -378,7 +471,9 @@ class Indexer(object):
         """
         theta      = kwargs.get("theta", self.theta)
         nsolutions = kwargs.get("nsolutions", 20)
-        
+
+        name = kwargs.get("name", "NoName")
+
         heap = [(0, None, None) for nsolution in range(nsolutions + 1)]
         vals  = []
         
@@ -388,7 +483,6 @@ class Indexer(object):
         rotations = np.arange(0, 2*np.pi, theta)
         R = make_2d_rotmat(theta)
         
-        t1 = time.time()
         for n, projection in enumerate(self.projections):
             pks = projection[:,3:5]
             
@@ -402,19 +496,19 @@ class Indexer(object):
                 pks = np.dot(pks, R) # for next round
         self._vals = vals
         
-        t2 = time.time()
         # print "Time total/proj/run: {:.2f} s / {:.2f} ms / {:.2f} us".format(t2-t1, 1e3*(t2-t1) / (n+1), 1e6*(t2-t1)/ ((n+1)*len(rotations)))
                
         heap = sorted(heap, reverse=True)[0:nsolutions]
         
         results = [IndexingResult(score=score,
-                                 number=n,
-                                 alpha=round(self.infos[n].alpha, 4),
-                                 beta=round(self.infos[n].beta, 4),
-                                 gamma=theta*m,
-                                 center_x=center_x,
-                                 center_y=center_y,
-                                 scale=round(scale, 4)) for (score,n,m) in heap]
+                                  number=n,
+                                  alpha=round(self.infos[n].alpha, 4),
+                                  beta=round(self.infos[n].beta, 4),
+                                  gamma=theta*m,
+                                  center_x=center_x,
+                                  center_y=center_y,
+                                  scale=round(scale, 4),
+                                  name=name) for (score, n, m) in heap]
 
         return results
     
@@ -430,7 +524,8 @@ class Indexer(object):
             self.plot(img, result, **kwargs)
     
     def plot(self, img, result, projector=None, show_hkl=False, **kwargs):
-        """Plot the image with the projection given in 'result'
+        """
+        Plot the image with the projection given in 'result'
 
         img: ndarray
             image array
@@ -447,6 +542,7 @@ class Indexer(object):
         beta = result.beta
         gamma = result.gamma
         score = result.score
+        name = result.name
         
         vmax = kwargs.get("vmax", 300)
 
@@ -463,7 +559,7 @@ class Indexer(object):
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
                 plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
-        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}".format(alpha, beta, gamma, score, scale, n))
+        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}, name = {}".format(alpha, beta, gamma, score, scale, n, name))
         plt.plot(j, i, marker="+", lw=0)
         plt.show()
     
@@ -511,6 +607,7 @@ class Indexer(object):
         alpha = result.alpha
         beta = result.beta
         gamma = result.gamma
+        name = result.name
         # score = result.score
 
         if not projector:
@@ -563,6 +660,7 @@ class Indexer(object):
                                  gamma=gamma_new,
                                  center_x=center_x_new,
                                  center_y=center_y_new,
-                                 scale=scale_new)
+                                 scale=scale_new,
+                                 name=name)
         
         return refined
