@@ -31,7 +31,8 @@ class SimuMicroscope(object):
         self.StagePosition_a = random.randint(MIN, MAX)
         self.StagePosition_b = random.randint(MIN, MAX)
 
-        self.FunctionMode_value = random.randint(0, 2)
+        # self.FunctionMode_value = random.randint(0, 2)
+        self.FunctionMode_value = 0
 
         self.DiffractionFocus_value = random.randint(MIN, MAX)
 
@@ -50,7 +51,8 @@ class SimuMicroscope(object):
         self.MAX = MAX
         self.MIN = MIN
 
-        self.Magnification_value = random.choice(self.MAGNIFICATIONS)
+        # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
+        self.Magnification_value = 2500
 
         self.beamblank = False
 

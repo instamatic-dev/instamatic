@@ -15,6 +15,7 @@ from tools import autoscale
 
 from TEMController.config import mag1_dimensions, timepix_conversion_factor
 
+
 def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
     Uses a histogram to determine if an edge is detected. If the lowest bin is the dominant one,
@@ -62,6 +63,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     arr = filters.threshold_adaptive(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
+
     arr = morphology.remove_small_objects(arr, min_size=4*4, connectivity=0) # remove noise
 
     # magic

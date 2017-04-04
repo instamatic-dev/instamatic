@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-import logging
-logging.basicConfig(
-    filename="instamatic.log", 
-    level=logging.DEBUG, 
-    format='%(asctime)s | %(levelname)8s | %(message)s')
-
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,6 +11,9 @@ from fit import fit_affine_transformation
 from filenames import *
 
 import pickle
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CalibStage(object):
@@ -368,8 +365,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
     else:
         calib = calibrate_stage_lowmag_from_image_fn(center_fn, other_fn)
 
-    print
-    print calib
+    logger.debug(calib)
 
     calib.to_file()
 

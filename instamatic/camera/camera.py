@@ -11,6 +11,8 @@ from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
 import numpy as np
 import os, sys
+import logging
+logger = logging.getLogger(__name__)
 
 import atexit
 
@@ -58,8 +60,7 @@ class Camera(object):
             lib = ctypes.cdll.LoadLibrary(libpath)
         except WindowsError as e:
             print e
-            print "Cannot load DLL:", libpath
-            exit()
+            raise RuntimeError("Cannot load DLL: {}".format(libpath))
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
@@ -86,20 +87,20 @@ class Camera(object):
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
-        print "---"
-        self.establishConnection()
-        print "---"
-
         if kind == "timepix":
+            self.establishConnection() # TODO: redirect to logger somehow...
             self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
             self._setCorrectionRatio.restype = c_bool
             os.chdir(curdir)
+        else:
+            self.establishConnection()
 
         self.load_defaults()
 
-        print "Camera {} initialized".format(self.getName())
-        print "Dimensions {}x{}".format(*self.getDimensions())
-        print 
+        msg = "Camera {} initialized".format(self.getName())
+        logger.info(msg)
+
+        # print "Dimensions {}x{}".format(*self.getDimensions())
         # print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
 
         atexit.register(self.releaseConnection)
@@ -201,7 +202,8 @@ class Camera(object):
     def releaseConnection(self):
         name = self.getName()
         self._releaseCCDCOM()
-        print "Connection to camera {} released".format(name) 
+        msg = "Connection to camera {} released".format(name) 
+        logger.info(msg)
 
 
 def main_entry():

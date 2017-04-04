@@ -1,11 +1,12 @@
-import logging
-
 import atexit
 import comtypes.client
 import time
 import os
 
 from config import specifications
+
+import logging
+logger = logging.getLogger(__name__)
 
 NTRLMAPPING = {
    "GUN1" : 0,
@@ -71,7 +72,7 @@ class JeolMicroscope(object):
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
-        logging.info("Microscope connection established")
+        logger.info("Microscope connection established")
         atexit.register(self.releaseConnection)
 
         self._x_direction = 0
@@ -260,35 +261,35 @@ class JeolMicroscope(object):
             shift_x = x - current_x
             if shift_x < 0 and abs(shift_x) > xy_limit:
                 do_backlash = True
-                print " >> Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x)
+                logger.info("Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x))
                 x = x - xy_limit
         
         if y is not None:
             shift_y = y - current_y
             if shift_y < 0 and abs(shift_y) > xy_limit:
                 do_backlash = True
-                print " >> Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y)
+                logger.info("Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y))
                 y = y - xy_limit
 
         if z is not None:
             shift_z = z - current_z
             if shift_z < 0 and abs(shift_z) > height_limit:
                 do_backlash = True
-                print " >> Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z)
+                logger.info("Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z))
                 z = z - height_limit
         
         if a is not None:
             shift_a = a - current_a
             if shift_a < 0 and abs(shift_a) > angle_limit:
                 do_backlash = True
-                print " >> Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a)
+                logger.info("Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a))
                 a = a - angle_limit
         
         if b is not None:
             shift_b = b - current_b
             if shift_b < 0 and abs(shift_b) > angle_limit:
                 do_backlash = True
-                print " >> Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b)
+                logger.info("Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b))
                 b = b - angle_limit
 
         if do_backlash:
@@ -303,31 +304,31 @@ class JeolMicroscope(object):
 
         if x:
             x = current_x - xy_limit
-            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x)
+            logger.info("Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x))
         else:
             current_x, x = None, None
 
         if y:
             y = current_y - xy_limit
-            print " >> Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
+            logger.info("Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y))
         else:
             current_y, y = None, None
 
         if z:
             z = current_z - height_limit
-            print " >> Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z)
+            logger.info("Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z))
         else:
             current_z, z = None, None
 
         if a:
             a = current_a - angle_limit
-            print " >> Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a)
+            logger.info("Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a))
         else:
             current_a, a = None, None
 
         if b:
             b = current_b - angle_limit
-            print " >> Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b)
+            logger.info("Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b))
         else:
             current_b, b = None, None
 
@@ -346,7 +347,7 @@ class JeolMicroscope(object):
             if b:
                 b = ((n-j)*b + j*current_b) / n
 
-            print " >> Force backlash, stage {}".format(j)
+            logger.info("Force backlash, stage {}".format(j))
             self.setStagePosition(x, y, z, a, b, backlash=False)
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
@@ -365,20 +366,15 @@ class JeolMicroscope(object):
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()
             if x is not None and abs(nx - x) > 150:
-                print " >> Warning: stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx) # +- 150 nm
-                logging.debug("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
+                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
             if y is not None and abs(ny - y) > 150:
-                print " >> Warning: stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny) # +- 150 nm
-                logging.debug("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
+                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
             if z is not None and abs(nz - z) > 500:
-                print " >> Warning: stage.z -> requested: {}, got: {}".format(z, nz) # +- 500 nm
-                logging.debug("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
+                logger.warning("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
             if a is not None and abs(na - a) > 0.057:
-                print " >> Warning: stage.a -> requested: {}, got: {}".format(a, na) # +- 0.057 degrees
-                logging.debug("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
+                logger.warning("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
             if b is not None and abs(nb - b) > 0.057:
-                print " >> Warning: stage.b -> requested: {}, got: {}".format(b, nb) # +- 0.057 degrees
-                logging.debug("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
+                logger.warning("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
@@ -415,7 +411,7 @@ class JeolMicroscope(object):
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
-        print "Connection to microscope released"
+        logger.info("Connection to microscope released")
 
     def isBeamBlanked(self, value):
         value, result = self.def3.GetBeamBlank()

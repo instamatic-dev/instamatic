@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
-from instamatic.camera import Camera
 import time
 from instamatic.formats import write_tiff
 
@@ -15,6 +14,7 @@ __email__ = "stef.smeets@mmk.su.se"
 
 
 def initialize(camera="timepix"):
+    from instamatic.camera import Camera
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
@@ -653,7 +653,7 @@ class TEMController(object):
             except TypeError:
                 func(v)
 
-        print self
+        # print self
 
     def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False, header_keys="all"):
         """Retrieve image as numpy array from camera
@@ -727,7 +727,7 @@ class TEMController(object):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)
-        print "Restored from '{}'".format(name)
+        print "Microscope alignment restored from '{}'".format(name)
 
 
 def main_entry():

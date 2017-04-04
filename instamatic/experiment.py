@@ -14,6 +14,9 @@ from flatfield import remove_deadpixels, apply_flatfield_correction
 from tools import printer
 
 import time
+import logging
+from tqdm import tqdm
+
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
     """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
@@ -133,10 +136,11 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
 
 class Experiment(object):
     """docstring for Experiment"""
-    def __init__(self, ctrl, config):
+    def __init__(self, ctrl, config, log=None):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
+        self.log = log
 
         self.setup_folders()
 
@@ -174,10 +178,12 @@ class Experiment(object):
             self.ctrl.mode_mag1()
             self.ctrl.brightness.max()
 
-            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue...")
+            print "\nSelect area to scan"
+            print "-------------------"
+            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
             x, y, _, _, _ = self.ctrl.stageposition.get()
             self.hole_centers = np.array([[x,y]])            
-            self.hole_radius = float(raw_input("How big of an area do you want to sample (radius in um) ? \n >> [100] ") or 100)
+            self.hole_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
             border_k = 0
         else:
             self.hole_centers = d["centers"]
@@ -204,7 +210,7 @@ class Experiment(object):
             
             # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
-            print self.ctrl.brightness
+            self.log.info("Brightness=%s", self.ctrl.brightness)
 
         self.image_dimensions = config.mag1_dimensions[self.magnification]
 
@@ -233,7 +239,7 @@ class Experiment(object):
         if self.ctrl.cam.name == "timepix":
             timepix_conversion_factor = config.timepix_conversion_factor
             self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
-            print "Image dimensions, should be close to (6.0, 6.0):", self.image_dimensions
+            self.log.info("Image dimensions %s", self.image_dimensions)
             self.find_crystals = find_crystals_timepix
             self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
         else:
@@ -265,9 +271,9 @@ class Experiment(object):
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
-        print raw_input(" >> Press <ENTER> to get neutral diffraction shift")
+        raw_input("\nPress <ENTER> to get neutral diffraction shift")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
-        print " => DiffShift(x={}, y={})".format(*self.neutral_diffshift)
+        self.log.info("DiffShift(x=%d, y=%d)", *self.neutral_diffshift)
     
         self.ctrl.mode_mag1()
         self.ctrl.magnification.value = self.magnification
@@ -279,9 +285,8 @@ class Experiment(object):
     def image_mode(self):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
         
-        print "" # blank line to trigger stdout flush
-        # print " >> Switching back to image mode" 
-        
+        self.log.debug("Switching back to image mode")
+
         self.ctrl.beamshift.set(*self.neutral_beamshift)
         # avoid setting diffshift in image mode, because it messes with the beam position
         if self.ctrl.mode == "diff":
@@ -293,9 +298,8 @@ class Experiment(object):
     def diffraction_mode(self):
         """Switch to diffraction mode, focus the beam, and set the correct focus
         """
-        print "" # blank line to trigger stdout flush
-        # print " >> Switching to diffraction mode"
-        
+        self.log.debug("Switching to diffraction mode")
+
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.mode_diffraction()
         self.ctrl.difffocus.value = self.diff_difffocus # difffocus must be set AFTER switching to diffraction mode
@@ -314,14 +318,6 @@ class Experiment(object):
         print "              exposure = {}".format(self.diff_exposure)
         print "              brightness = {}".format(self.diff_brightness)
         print "              spotsize = {}".format(self.diff_spotsize)
-        print
-        print "Usage:"
-        print "    type 'next' to go to the next hole"
-        print "    type 'auto' to enable automatic data collection (until next hole)"
-        print "    type 'plot' to toggle plotting mode"
-        print "    type 'exit' to quit"
-        print "    hit 'Ctrl+C' to interrupt the script"
-        print ""
 
     def loop_centers(self):
         """Loop over holes in the copper grid
@@ -330,22 +326,9 @@ class Experiment(object):
         Return
             di: dict, contains information on holes
         """
-        auto = False
-
         ncenters = len(self.hole_centers)
 
         for i, (x, y) in enumerate(self.hole_centers):
-            if not auto:
-                answer = raw_input("\n >> Press <ENTER> to start #{}/{}".format(i, len(self.hole_centers)))
-                if answer == "exit":
-                    print " >> Interrupted..."
-                    exit()
-                elif answer == "next":
-                    print " >> Going to next center"
-                    break
-                elif answer == "auto":
-                    auto = True
-
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
@@ -354,7 +337,7 @@ class Experiment(object):
                 print
                 continue
             else:
-                print "Stage position: center {}/{} -> (x={:.1f}, y={:.1f})".format(i, ncenters, x, y)
+                self.log.info("Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)", i, ncenters, x, y)
                 yield i, (x,y)
             
     def loop_positions(self, delay=0.05):
@@ -368,7 +351,9 @@ class Experiment(object):
 
         for i, hole_center in self.loop_centers():
             hole_x, hole_y = hole_center
-            for j, (x_offset, y_offset) in enumerate(self.offsets):
+
+            t = tqdm(self.offsets, desc="                           ")
+            for j, (x_offset, y_offset) in enumerate(t):
                 x = hole_x+x_offset
                 y = hole_y+y_offset
                 try:
@@ -380,7 +365,9 @@ class Experiment(object):
                     continue
                 else:
                     time.sleep(delay)
-                    printer("Imaging: stage position {}/{} -> (x={:.1f}, y={:.1f})".format(j, noffsets, x, y))
+                    self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
+                    t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
+
                     dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
                     dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
                     yield dct
@@ -394,15 +381,17 @@ class Experiment(object):
             dct: dict, contains information on beam/diffshift
 
         """
-
         ncrystals = len(crystal_coords)
         if ncrystals == 0:
             raise StopIteration("No crystals found.")
 
         self.diffraction_mode()
         beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
-        for k, beamshift in enumerate(beamshift_coords):
-            printer("Diffraction: crystal {}/{}".format(k+1, ncrystals))
+
+        t = tqdm(beamshift_coords, desc="                           ")
+
+        for k, beamshift in enumerate(t):
+            self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
             self.ctrl.beamshift.set(*beamshift)
         
             # compensate beamshift
@@ -414,6 +403,7 @@ class Experiment(object):
         
             self.ctrl.diffshift.set(*diffshift.astype(int))
 
+            t.set_description("BeamShift(x={:5.0f}, y={:5.0f})".format(*beamshift))
             time.sleep(delay)
 
             dct = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
@@ -452,6 +442,8 @@ class Experiment(object):
                 "ImagePixelsize": self.diff_pixelsize
         }
 
+        raw_input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
+
         for i, d_pos in enumerate(self.loop_positions()):
    
             outfile = os.path.join(self.imagedir, "image_{:04d}".format(i))
@@ -466,22 +458,26 @@ class Experiment(object):
     
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
-            if img.mean() < self.image_threshold:
-                # print " >> Dark image detected"
+            im_mean = img.mean()
+            if im_mean < self.image_threshold:
+                self.log.debug("Dark image detected (mean=%f)", im_mean)
                 continue
 
             img, h = self.apply_corrections(img, h)
 
             crystal_coords = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
-    
+            
             for d in (d_image, d_pos):
                 h.update(d)
             h["exp_crystal_coords"] = crystal_coords.tolist()
 
             write_tiff(outfile, img, header=h)
 
-            if len(crystal_coords) == 0:
+            ncrystals = len(crystal_coords)
+            if ncrystals == 0:
                 continue
+
+            self.log.info("%d crystals found", ncrystals)
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}".format(i, k))
@@ -496,7 +492,7 @@ class Experiment(object):
              
                 if self.sample_rotation_angles:
                     for rotation_angle in self.sample_rotation_angles:
-                        print " >> Rotation angle = {}".format(rotation_angle)
+                        self.log.debug("Rotation angle = %f", rotation_angle)
                         self.ctrl.stageposition.a = rotation_angle
         
                         outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
@@ -512,7 +508,7 @@ class Experiment(object):
     
             self.image_mode()
 
-        print "\n >> DONE << "
+        print "\n\nData collection finished."
 
 
 def main_gui():
@@ -527,8 +523,15 @@ def main():
     except IOError:
         params = {}
 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
+                        filename="instamatic.log", 
+                        level=logging.DEBUG)
+    logging.captureWarnings(True)
+    log = logging.getLogger(__name__)
+
     ctrl = TEMController.initialize()
-    exp = Experiment(ctrl, params)
+
+    exp = Experiment(ctrl, params, log=log)
     exp.report_status()
     exp.run()
 

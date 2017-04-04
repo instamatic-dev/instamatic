@@ -16,6 +16,10 @@ from instamatic.tools import printer
 
 import pickle
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class CalibBeamShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
@@ -95,7 +99,7 @@ class CalibBeamShift(object):
         """Return beamshift values to center the beam in the frame"""
         pixel_center = [val/2.0 for val in ctrl.cam.dimensions]
 
-        print " >> Moving beam to pixel: {}".format(pixel_center)
+        # print " >> Moving beam to pixel: {}".format(pixel_center)
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
@@ -174,8 +178,10 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         shifts.append(shift)
 
         i += 1
-            
-    print "\n >> Reset to center"
+    
+    print ""
+    # print "\nReset to center"
+    
     ctrl.beamshift.set(*beamshift_cent)
 
     # correct for binsize, store in binsize=1
@@ -249,19 +255,20 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
 def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, outdir=".", confirm=True):
     if not (center_fn or other_fn):
         if confirm and raw_input("""
+Calibrate beamshift
+-------------------
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
     
- Press <ENTER> to start"""):
+ >> Press <ENTER> to start\n"""):
             return
         else:
             calib = calibrate_beamshift_live(ctrl, save_images=save_images, outdir=outdir)
     else:
         calib = calibrate_beamshift_from_image_fn(center_fn, other_fn)
 
-    print
-    print calib
+    logger.debug(calib)
 
     calib.to_file(outdir=outdir)
 

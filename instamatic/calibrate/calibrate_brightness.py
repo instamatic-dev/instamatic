@@ -12,6 +12,10 @@ from instamatic.find_holes import find_holes
 
 import pickle
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class CalibBrightness(object):
     """docstring for calib_brightness"""
     def __init__(self, slope, intercept):
@@ -176,8 +180,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     else:
         calib = calibrate_brightness_from_image_fn(fns)
 
-    print
-    print calib
+    logger.debug(calib)
 
     calib.to_file()
 

@@ -13,6 +13,10 @@ from filenames import *
 from instamatic.tools import printer
 import pickle
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 refine_params = {
     "DiffShift": {"rotation": True, "translation": False, "shear": False},
     "BeamShift": {"rotation": True, "translation": False, "shear": False}
@@ -27,11 +31,11 @@ def optimize_diffraction_focus(ctrl):
     params = lmfit.Parameters()
     params.add("diff_focus", value=ctrl.difffocus.value)
     
-    def obj_func(p):
-        diff_focus = params["diff_focus"].value
+    def obj_func(p, ctrl):
+        diff_focus = p["diff_focus"].value
         
         ctrl.difffocus.set(diff_focus)
-        img = ctrl.getImage(header_keys=None)
+        img, h = ctrl.getImage(header_keys=None)
         
         return np.sum(img > img.max()/2.0)**2
     
@@ -39,7 +43,7 @@ def optimize_diffraction_focus(ctrl):
     args = (ctrl,)
     res = lmfit.minimize(obj_func, params, args=args)
     
-    diff_focus = res.p["diff_focus"].value
+    diff_focus = res.params["diff_focus"].value
     ctrl.difffocus.set(diff_focus)
     
     return diff_focus
@@ -230,8 +234,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         readout = np.array(h[key])
         readouts.append(readout)
         shifts.append(shift)
-            
-    print "\n >> Reset to center"
+    
+    print ""
+    # print "\nReset to center"
     attr.set(*readout_cent)
 
     # correct for binsize, store in binsize=1
@@ -293,16 +298,19 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".",
     keys = ("BeamShift", "DiffShift")
     if not patterns:
         if confirm and raw_input("""
+Calibrate direct beam position
+------------------------------
  1. Go to diffraction mode and select desired camera length (CAM L)
  2. Center the beam with diffraction shift (PLA)
  3. Focus the diffraction pattern (DIFF FOCUS)
     
- Press <ENTER> to start"""):
+ >> Press <ENTER> to start\n"""):
             return
         else:
             if auto_diff_focus:
-                print " >> Optimizing diffraction focus"
+                print "Optimizing diffraction focus"
                 difffocus = optimize_diffraction_focus(ctrl)
+                logger.info("Optimized diffraction focus: %s", difffocus)
             
             cs = []
             for key in keys:
@@ -322,8 +330,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".",
 
         calib = CalibDirectBeam.combine(cs)
 
-    print
-    print calib
+    logger.debug(calib)
 
     calib.to_file(outdir=outdir)
 

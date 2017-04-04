@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-import logging
-logging.basicConfig(
-    filename="instamatic.log", 
-    level=logging.DEBUG, 
-    format='%(asctime)s | %(levelname)8s | %(message)s')
-
 import sys, os
 import numpy as np
 
@@ -16,6 +10,10 @@ from fit import fit_affine_transformation
 from filenames import *
 
 import pickle
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 def plot_it(arr1, arr2, params):
     import matplotlib.pyplot as plt
