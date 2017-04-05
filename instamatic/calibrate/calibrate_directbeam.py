@@ -23,30 +23,32 @@ refine_params = {
 }
 
 
-def optimize_diffraction_focus(ctrl):
+def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
     """Function to optimize the diffraction focus live on the microscope
     It does so by minimizing the halfwidth of the primary beam"""
-    import lmfit
+
+    for step in steps:
+        current = ctrl.difffocus.value
+
+        best_score = np.inf
+        best_delta = 0
     
-    params = lmfit.Parameters()
-    params.add("diff_focus", value=ctrl.difffocus.value)
+        for delta in np.arange(-5, 6)*step:
+            ctrl.difffocus.set(current + delta)
     
-    def obj_func(p, ctrl):
-        diff_focus = p["diff_focus"].value
-        
-        ctrl.difffocus.set(diff_focus)
-        img, h = ctrl.getImage(header_keys=None)
-        
-        return np.sum(img > img.max()/2.0)**2
+            img, h = ctrl.getImage(header_keys=None)
     
-    # method = "nelder", "powell", "cobyla", "leastsq"
-    args = (ctrl,)
-    res = lmfit.minimize(obj_func, params, args=args)
+            score = np.sum(img > img.max()/2.0)**2
     
-    diff_focus = res.params["diff_focus"].value
-    ctrl.difffocus.set(diff_focus)
-    
-    return diff_focus
+            if score < best_score:
+                best_score = score
+                best_delta = delta
+
+        newval = current+best_delta
+        ctrl.difffocus.set(newval)
+        logger.info("Best diff_focus (step=%d): %d, score: %d", step, best_score, newval)
+
+    return newval
 
 
 class CalibDirectBeam(object):
