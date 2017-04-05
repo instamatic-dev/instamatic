@@ -9,10 +9,10 @@ from instamatic.formats import write_tiff
 from camera import Camera
 
 
-class VideoStreamer(object):
-    """docstring for VideoStreamer"""
+class ImageGrabber(object):
+    """docstring for ImageGrabber"""
     def __init__(self, cam, callback):
-        super(VideoStreamer, self).__init__()
+        super(ImageGrabber, self).__init__()
         
         self.callback = callback
         self.cam = cam
@@ -46,15 +46,15 @@ class VideoStreamer(object):
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
                 
-                #frame = np.ones((512, 512))*256
-                #time.sleep(self.exposure)
+                # frame = np.ones((512, 512))*256
+                # time.sleep(self.exposure)
 
                 frame = self.cam.getImage(t=self.exposure, fastmode=True)
                 self.callback(frame, acquire=True)
 
             elif not self.continuousCollectionEvent.is_set():
-                #frame = np.random.random((512,512)) * 256
-                #time.sleep(max(self.frametime, 0.01))
+                # frame = np.random.random((512,512)) * 256
+                # time.sleep(max(self.frametime, 0.01))
                 
                 frame = self.cam.getImage(t=self.frametime, fastmode=True)
                 self.callback(frame)
@@ -67,8 +67,8 @@ class VideoStreamer(object):
         self.thread.stop()
 
 
-class VideoViewer(threading.Thread):
-    """docstring for VideoViewer"""
+class VideoStream(threading.Thread):
+    """docstring for VideoStream"""
     def __init__(self, cam="simulate"):
         threading.Thread.__init__(self)
 
@@ -76,6 +76,12 @@ class VideoViewer(threading.Thread):
         self.stream = self.setup_stream()
 
         self.panel = None
+
+        self.default_exposure = self.cam.default_exposure
+        self.default_binsize = self.cam.default_binsize
+        self.dimensions = self.cam.dimensions
+        self.defaults = self.cam.defaults
+        self.name = self.cam.name
 
         self.frametime = 0.05
         self.contrast = 1.0
@@ -204,22 +210,24 @@ class VideoViewer(threading.Thread):
             self.frame = frame
             self.stream.lock.release()
 
-        self.root.event_generate('<<StreamFrame>>', when='tail')
+        # these events feel fragile if fired in rapid succession
+        # self.root.event_generate('<<StreamFrame>>', when='tail')
 
     def setup_stream(self):
-        return VideoStreamer(self.cam, callback=self.send_frame)
+        return ImageGrabber(self.cam, callback=self.send_frame)
     
     def start_stream(self):
         self.stream.start_loop()
+        self.root.after(500, self.on_frame)
 
-    def on_frame(self, event):
+    def on_frame(self, event=None):
         self.stream.lock.acquire(True)
         frame = self.frame
         self.stream.lock.release()
 
         if self.contrast != 1:
             image = Image.fromarray(frame).convert("L")
-            image = ImageEnhance.Contrast(image).enhance(self.contrast)
+            image = ImageEnhance.Brightness(image).enhance(self.contrast)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Brightness if needed
         else:
             image = Image.fromarray(frame)
@@ -231,7 +239,9 @@ class VideoViewer(threading.Thread):
         self.panel.image = image
 
         self.update_frametimes()
-        self.root.update_idletasks()
+        # self.root.update_idletasks()
+
+        self.root.after(50, self.on_frame)
 
     def update_frametimes(self):
         self.current = time.time()
@@ -255,13 +265,13 @@ class VideoViewer(threading.Thread):
         else:
             self.nframes += 1
 
-    def getImage(self, exposure=None, binsize=1):
+    def getImage(self, t=None, binsize=1):
         current_frametime = self.stream.frametime
 
         # set to 0 to prevent it lagging data acquisition
         self.stream.frametime = 0
-        if exposure:
-            self.stream.exposure = exposure
+        if t:
+            self.stream.exposure = t
         if binsize:
             self.stream.binsize = binsize
 
@@ -282,10 +292,19 @@ class VideoViewer(threading.Thread):
 
     def unblock(self):
         self.stream.continuousCollectionEvent.clear()
-        
+
+    def continuous_collection(self, n=100, exposure=0.1):
+        buffer = []
+        self.block()
+        for i in range(n):
+            img = self.getImage(t=exposure)
+            buffer.append(img)
+        self.unblock()
+        return buffer
+
 
 if __name__ == '__main__':
-    stream = VideoViewer(cam="simulate")
+    stream = VideoStream(cam="timepix")
     from IPython import embed
     embed()
     stream.close()
