@@ -11,7 +11,7 @@ from camera import Camera
 
 class ImageGrabber(object):
     """docstring for ImageGrabber"""
-    def __init__(self, cam, callback):
+    def __init__(self, cam, callback, frametime=0.05):
         super(ImageGrabber, self).__init__()
         
         self.callback = callback
@@ -29,7 +29,7 @@ class ImageGrabber(object):
 
         self.stash = None
 
-        self.frametime = 0.1
+        self.frametime = frametime
         self.exposure = self.frametime
         self.binsize = self.cam.default_binsize
 
@@ -73,7 +73,6 @@ class VideoStream(threading.Thread):
         threading.Thread.__init__(self)
 
         self.cam = Camera(kind=cam)
-        self.stream = self.setup_stream()
 
         self.panel = None
 
@@ -83,14 +82,17 @@ class VideoStream(threading.Thread):
         self.defaults = self.cam.defaults
         self.name = self.cam.name
 
+        self.frame_delay = 100
+
         self.frametime = 0.05
-        self.contrast = 1.0
+        self.brightness = 1.0
 
         self.last = time.time()
         self.nframes = 1
         self.update_frequency = 0.25
-        self.last_frametime = self.stream.frametime
+        self.last_interval = self.frametime
 
+        self.stream = self.setup_stream()
         self.start()
 
     def run(self):
@@ -120,30 +122,30 @@ class VideoStream(threading.Thread):
         lwidth = 12
 
         frame = Frame(master)
-        self.e_fps       = Entry(frame, bd=0, width=ewidth, textvariable=self.var_fps, state=DISABLED)
-        self.e_frametime = Entry(frame, bd=0, width=ewidth, textvariable=self.var_frametime, state=DISABLED)
-        self.e_overhead = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
+        self.e_fps         = Entry(frame, bd=0, width=ewidth, textvariable=self.var_fps, state=DISABLED)
+        self.e_interval = Entry(frame, bd=0, width=ewidth, textvariable=self.var_interval, state=DISABLED)
+        # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
         
         Label(frame, anchor=E, width=lwidth, text="fps:").grid(row=1, column=0)
         self.e_fps.grid(row=1, column=1)
-        Label(frame, anchor=E, width=lwidth, text="frametime (ms):").grid(row=1, column=2)
-        self.e_frametime.grid(row=1, column=3)
-        Label(frame, anchor=E, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
-        self.e_overhead.grid(row=1, column=5)
+        Label(frame, anchor=E, width=lwidth, text="interval (ms):").grid(row=1, column=2)
+        self.e_interval.grid(row=1, column=3)
+        # Label(frame, anchor=E, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
+        # self.e_overhead.grid(row=1, column=5)
         
         frame.pack()
 
         frame = Frame(master)
         
-        self.e_exposure = Spinbox(frame, width=ewidth, textvariable=self.var_exposure, from_=0.0, to=1.0, increment=0.01)
+        self.e_frametime = Spinbox(frame, width=ewidth, textvariable=self.var_frametime, from_=0.0, to=1.0, increment=0.01)
         
         Label(frame, anchor=E, width=lwidth, text="exposure (s)").grid(row=1, column=0)
-        self.e_exposure.grid(row=1, column=1)
+        self.e_frametime.grid(row=1, column=1)
 
-        self.e_contrast = Spinbox(frame, width=ewidth, textvariable=self.var_contrast, from_=0.0, to=10.0, increment=0.1)
+        self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
         
-        Label(frame, anchor=E, width=lwidth, text="Contrast").grid(row=1, column=2)
-        self.e_contrast.grid(row=1, column=3)
+        Label(frame, anchor=E, width=lwidth, text="Brightness").grid(row=1, column=2)
+        self.e_brightness.grid(row=1, column=3)
         
         frame.pack()
 
@@ -163,30 +165,30 @@ class VideoStream(threading.Thread):
 
     def init_vars(self):
         self.var_fps = DoubleVar()
+        self.var_interval = DoubleVar()
+        # self.var_overhead = DoubleVar()
+
         self.var_frametime = DoubleVar()
-        self.var_overhead = DoubleVar()
+        self.var_frametime.set(self.frametime)
+        self.var_frametime.trace("w", self.update_frametime)
 
-        self.var_exposure = DoubleVar()
-        self.var_exposure.set(self.cam.default_exposure)
-        self.var_exposure.trace("w", self.update_exposure_time)
+        self.var_brightness = DoubleVar(value=1.0)
+        self.var_brightness.set(self.brightness)
+        self.var_brightness.trace("w", self.update_brightness)
 
-        self.var_contrast = DoubleVar(value=1.0)
-        self.var_contrast.set(self.contrast)
-        self.var_contrast.trace("w", self.update_contrast)
-
-    def update_exposure_time(self, name, index, mode):
+    def update_frametime(self, name, index, mode):
         # print name, index, mode
         try:
-            self.frametime = self.var_exposure.get()
+            self.frametime = self.var_frametime.get()
         except:
             pass
         else:
             self.stream.frametime = self.frametime
 
-    def update_contrast(self, name, index, mode):
+    def update_brightness(self, name, index, mode):
         # print name, index, mode
         try:
-            self.contrast = self.var_contrast.get()
+            self.brightness = self.var_brightness.get()
         except:
             pass
 
@@ -214,7 +216,7 @@ class VideoStream(threading.Thread):
         # self.root.event_generate('<<StreamFrame>>', when='tail')
 
     def setup_stream(self):
-        return ImageGrabber(self.cam, callback=self.send_frame)
+        return ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
     
     def start_stream(self):
         self.stream.start_loop()
@@ -225,9 +227,9 @@ class VideoStream(threading.Thread):
         frame = self.frame
         self.stream.lock.release()
 
-        if self.contrast != 1:
+        if self.brightness != 1:
             image = Image.fromarray(frame).convert("L")
-            image = ImageEnhance.Brightness(image).enhance(self.contrast)
+            image = ImageEnhance.Brightness(image).enhance(self.brightness)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Brightness if needed
         else:
             image = Image.fromarray(frame)
@@ -241,27 +243,27 @@ class VideoStream(threading.Thread):
         self.update_frametimes()
         # self.root.update_idletasks()
 
-        self.root.after(50, self.on_frame)
+        self.root.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
         self.current = time.time()
         delta = self.current - self.last
 
         if delta > self.update_frequency:
-            frametime = delta/self.nframes
+            interval = delta/self.nframes
 
-            frametime = (frametime * 0.5) + (self.last_frametime * 0.5)
+            interval = (interval * 0.5) + (self.last_interval * 0.5)
 
-            fps = 1.0/frametime
-            overhead = frametime - self.stream.frametime
+            fps = 1.0/interval
+            # overhead = interval - self.stream.frametime
 
             self.var_fps.set(round(fps, 2))
-            self.var_frametime.set(round(frametime*1000, 2))
-            self.var_overhead.set(round(overhead*1000, 2))
+            self.var_interval.set(round(interval*1000, 2))
+            # self.var_overhead.set(round(overhead*1000, 2))
             self.last = self.current
             self.nframes = 1
 
-            self.last_frametime = frametime
+            self.last_interval = interval
         else:
             self.nframes += 1
 
@@ -293,18 +295,45 @@ class VideoStream(threading.Thread):
     def unblock(self):
         self.stream.continuousCollectionEvent.clear()
 
-    def continuous_collection(self, n=100, exposure=0.1):
+    def continuous_collection(self, exposure=0.1, n=100, callback=None):
+        """
+        Function to continuously collect data
+        Blocks the videostream while collecting data, and only shows collected images
+
+        exposure: float
+            exposure time
+        n: int
+            number of frames to collect
+            if defined, returns a list of collected frames
+        callback: function
+            This function is called on every iteration with the image as first argument
+            Should return True or False if data collection is to continue
+        """
         buffer = []
+
+        go_on = True
+        i = 0
+
         self.block()
-        for i in range(n):
+        while go_on:
+            i += 1
+
             img = self.getImage(t=exposure)
-            buffer.append(img)
+
+            if callback:
+                go_on = callback(img)
+            else:
+                buffer.append(img)
+                go_on = i < n
+
         self.unblock()
-        return buffer
+
+        if not callback:
+            return buffer
 
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="timepix")
+    stream = VideoStream(cam="simulate")
     from IPython import embed
     embed()
     stream.close()
