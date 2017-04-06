@@ -25,6 +25,8 @@ from skimage import morphology
 
 def get_intensities(img, result, projector, radius=1):
     """
+    Grab reflection intensities at given projection
+
     radius: int, optional
         Search for largest point in defined radius around projected peak positions
     """
@@ -165,7 +167,7 @@ def read_ycsv(f):
     except pd.io.common.EmptyDataError:
         df = None
         
-    print "".join(yaml_block)
+    # print "".join(yaml_block)
     
     return df, d
 
@@ -257,7 +259,7 @@ def get_indices(pks, scale, center, shape, hkl=None):
 
 
 # store the results of indexing
-IndexingResult = namedtuple("IndexingResult", ["score", "number", "alpha", "beta", "gamma", "center_x", "center_y", "scale", "name"])
+IndexingResult = namedtuple("IndexingResult", ["score", "number", "alpha", "beta", "gamma", "center_x", "center_y", "scale", "phase"])
 
 # description of each projection
 ProjInfo = namedtuple("ProjectionInfo", ["number", "alpha", "beta"])
@@ -280,11 +282,22 @@ class IndexerMulti(object):
         
         self._indexers = indexers
 
+    @classmethod
+    def from_cells(cls, cells, pixelsize, **kwargs):
+        indexers = {}
+        for cell in cells:
+            phase = cell["name"]
+            projector = Projector.from_parameters(**dict(cell.items() + kwargs.items()))
+            indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+            indexers[phase] = indexer
+
+        return cls(indexers)
+
     def set_pixelsize(self, pixelsize):
         """
         Sets the pixelsize for all indexers
         """
-        for name, indexer in self._indexers.items():
+        for phase, indexer in self._indexers.items():
             indexer.set_pixelsize(pixelsize)
 
     def index(self, img, center, **kwargs):
@@ -295,8 +308,8 @@ class IndexerMulti(object):
         nsolutions = kwargs.get("nsolutions", 20)
 
         results = []
-        for name, indexer in self._indexers.items():
-            res = indexer.index(img, center, name=name, **kwargs)
+        for phase, indexer in self._indexers.items():
+            res = indexer.index(img, center, phase=phase, **kwargs)
 
             # scale score by cell volume as an attempt to normalize the scores
             # scores are consistent within an indexer class, but difficult to compare between indexers
@@ -328,9 +341,9 @@ class IndexerMulti(object):
         """
         Optimizes the given solution using a least-squares minimization.
         """
-        name = result.name
-        indexer = self._indexers[name]
-        res = indexer.refine(img, result, name=name, **kwargs)
+        phase = result.phase
+        indexer = self._indexers[phase]
+        res = indexer.refine(img, result, phase=phase, **kwargs)
         res = res._replace(score=res.score*(indexer.projector.cell.volume/5000)) # see comment on .index
         return res
 
@@ -345,10 +358,26 @@ class IndexerMulti(object):
         """
         Plot the image with the projection given in 'result'
         """
-        name = result.name
-        indexer = self._indexers[name]
+        phase = result.phase
+        indexer = self._indexers[phase]
 
         indexer.plot(img, result, *args, **kwargs)
+
+    def get_projection(self, result):
+        """
+        Get projection along a particular zone axis
+        See Projector.get_projection
+        """
+        phase = result.phase
+        return self._indexers[phase].get_projection(result)
+
+    def get_intensities(self, img, result, **kwargs):
+        """
+        Grab reflection intensities at given projection
+        See get_intensities
+        """
+        phase = result.phase
+        return self._indexers[phase].get_intensities(img, result, **kwargs)
 
 
 class Indexer(object):
@@ -471,7 +500,7 @@ class Indexer(object):
         theta      = kwargs.get("theta", self.theta)
         nsolutions = kwargs.get("nsolutions", 20)
 
-        name = kwargs.get("name", "NoName")
+        phase = kwargs.get("phase", "NoName")
 
         heap = [(0, None, None) for nsolution in range(nsolutions + 1)]
         vals  = []
@@ -507,7 +536,7 @@ class Indexer(object):
                                   center_x=center_x,
                                   center_y=center_y,
                                   scale=round(scale, 4),
-                                  name=name) for (score, n, m) in heap]
+                                  phase=phase) for (score, n, m) in heap]
 
         return results
     
@@ -541,7 +570,7 @@ class Indexer(object):
         beta = result.beta
         gamma = result.gamma
         score = result.score
-        name = result.name
+        phase = result.phase
         
         vmax = kwargs.get("vmax", 300)
 
@@ -558,7 +587,7 @@ class Indexer(object):
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
                 plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
-        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}, name = {}".format(alpha, beta, gamma, score, scale, n, name))
+        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}, phase = {}".format(alpha, beta, gamma, score, scale, n, phase))
         plt.plot(j, i, marker="+", lw=0)
         plt.show()
     
@@ -585,7 +614,7 @@ class Indexer(object):
         else:
             return new_results
     
-    def refine(self, img, result, projector=None, verbose=True, method="least-squares", vary_center=False, vary_scale=True, **kwargs):
+    def refine(self, img, result, projector=None, verbose=True, method="least-squares", vary_center=True, vary_scale=True, **kwargs):
         """
         Refine the orientations of all solutions in results agains the given image
 
@@ -606,7 +635,7 @@ class Indexer(object):
         alpha = result.alpha
         beta = result.beta
         gamma = result.gamma
-        name = result.name
+        phase = result.phase
         # score = result.score
 
         if not projector:
@@ -660,6 +689,22 @@ class Indexer(object):
                                  center_x=center_x_new,
                                  center_y=center_y_new,
                                  scale=scale_new,
-                                 name=name)
+                                 phase=phase)
         
         return refined
+
+    def get_projection(self, result):
+        """
+        Get projection along a particular zone axis
+        See Projector.get_projection()
+        """
+        return self.projector.get_projection(result.alpha, result.beta, result.gamma)
+
+    def get_intensities(self, img, result, **kwargs):
+        """
+        Grab reflection intensities at given projection
+        See get_intensities
+        """
+        hklie = get_intensities(img, result, self.projector, **kwargs)
+        hklie[:,0:3] = standardize_indices(hklie[:,0:3], self.projector.cell)
+        return hklie

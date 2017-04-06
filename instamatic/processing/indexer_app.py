@@ -196,23 +196,11 @@ def run(arg, chunk=None, dry_run=False, log=None):
     beam_center_sigma = 10
 
     if isinstance(d["cell"], (tuple, list)):
-        indexers = {}
-        for cell in d["cell"]:
-            name = cell["name"]
-            params = cell["params"]
-            spgr = cell["spgr"]
-
-            projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
-            indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
-            indexers[name] = indexer
-        indexer = IndexerMulti(indexers)
+        pixelsize = d["experiment"]["pixelsize"]
+        indexer = IndexerMulti.from_cells(d["cell"], pixelsize=pixelsize, **d["projections"])
     else:
-        params    = d["cell"]["params"]
-        name      = d["cell"]["name"]
-        spgr      = d["cell"]["spgr"]
-
-        projector = Projector.from_parameters(params, spgr=spgr, name=name, dmin=dmin, dmax=dmax, thickness=thickness, verbose=True)
-        indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+        projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
+        indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
     fns = glob.glob(file_pat)
 
@@ -249,13 +237,13 @@ def run(arg, chunk=None, dry_run=False, log=None):
         img = remove_background_gauss(img, sigma_min, sigma_max, threshold=threshold)
         results = indexer.index(img, center, nsolutions=nsolutions)
         
-        refined = indexer.refine_all(img, results, sort=True, method=method)
+        refined = indexer.refine_all(img, results, sort=True, method=method, vary_center=True, vary_scale=True)
+
         best = refined[0]
 
         all_results[fn] = best
             
-        hklie = get_intensities(img, best, projector, radius=radius)
-        hklie[:,0:3] = standardize_indices(hklie[:,0:3], projector.cell)
+        hklie = indexer.get_intensities(img, best, radius=radius)
 
         root, ext = os.path.splitext(os.path.basename(fn))
         out = os.path.join(drc_out, root+".hkl")
@@ -270,7 +258,7 @@ def run(arg, chunk=None, dry_run=False, log=None):
         write_ycsv(csv_out, data=all_results, metadata=d)
     print "Writing results to {}".format(csv_out)
     
-    time_taken = t.last_t - t.start_t
+    time_taken = t.last_print_t - t.start_t
     print "Time taken: {:.0f} s / {:.1f} s per image".format(time_taken, (time_taken)/nfiles)
     print
     print " >> DONE <<"
