@@ -233,6 +233,7 @@ class VideoStream(threading.Thread):
             image = Image.fromarray(frame).convert("L")
             image = ImageEnhance.Brightness(image).enhance(self.brightness)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+
         else:
             image = Image.fromarray(frame)
 
