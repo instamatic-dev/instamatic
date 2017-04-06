@@ -4,9 +4,10 @@ import os, sys, glob
 import numpy as np
 
 from IPython import embed
-from instamatic.processing.indexer import Indexer, Projector, read_ycsv, get_indices
+from instamatic.processing.indexer import Indexer, IndexerMulti, Projector, read_ycsv, get_indices
 
 import argparse
+import tqdm
 
 __version__ = "2017-03-12"
 
@@ -14,7 +15,8 @@ __version__ = "2017-03-12"
 def get_stage_coords(fns):
     coords = []
     has_crystals = []
-    for fn in fns:
+    t = tqdm.tqdm(fns, desc="Parsing files")
+    for fn in t:
         img, h = read_tiff(fn)
         dx, dy = h["exp_hole_offset"]
         cx, cy = h["exp_hole_center"]
@@ -31,8 +33,13 @@ def run(filepat="images/image_*.tiff", results=None):
 
     if results:
         df, d = read_ycsv(results)
-        projector = Projector.from_parameters(d["cell"]["params"], d["cell"]["spgr"], d["cell"]["name"], thickness=d["projections"]["thickness"])
-        # indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
+        df.index = df.index.map(os.path.relpath)
+        if isinstance(d["cell"], (tuple, list)):
+            pixelsize = d["experiment"]["pixelsize"]
+            indexer = IndexerMulti.from_cells(d["cell"], pixelsize=pixelsize, **d["projections"])
+        else:
+            projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
+            indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
     coords, has_crystals = get_stage_coords(fns)
 
@@ -68,12 +75,25 @@ def run(filepat="images/image_*.tiff", results=None):
 
         if axes == ax1:
             fn = fns[ind]
+            ax2.texts = []
 
             img, h = read_tiff(fn)
             im2.set_data(img)
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
-            
+
+            if results:
+                crystal_fns = [fn.replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(i)) for i in range(len(crystal_coords))]
+                df.ix[crystal_fns]
+
+                for coord, crystal_fn in zip(crystal_coords, crystal_fns):
+                    try:
+                        text = " {}\n {:.0f}".format(df.ix[crystal_fn, "phase"], df.ix[crystal_fn, "score"])
+                    except KeyError: # if crystal_fn not in df.index
+                        pass
+                    else:
+                        ax2.text(coord[1], coord[0], text)
+
             if len(crystal_coords) > 0:
                 plt_crystals.set_xdata(crystal_coords[:,1])
                 plt_crystals.set_ydata(crystal_coords[:,0])
@@ -100,26 +120,28 @@ def run(filepat="images/image_*.tiff", results=None):
 
             highlight2.set_xdata(plt_crystals.get_xdata()[ind])
             highlight2.set_ydata(plt_crystals.get_ydata()[ind])
+            
             if results:
-                r = df.ix[fn_diff]
-                print
-                print r
-                proj = projector.get_projection(r.alpha, r.beta, r.gamma)
-                pks = proj[:,3:5]
-                i, j, hkl = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj[:,0:3])
+                try:
+                    r = df.ix[fn_diff]
+                except KeyError:
+                    plt_diff_center.set_xdata([])
+                    plt_diff_center.set_ydata([])
 
-                plt_diff_center.set_xdata(r.center_y)
-                plt_diff_center.set_ydata(r.center_x)
-
-                plt_diff.set_xdata(j)
-                plt_diff.set_ydata(i)
-
-            else:
-                plt_diff_center.set_xdata([])
-                plt_diff_center.set_ydata([])
-
-                plt_diff.set_xdata([])
-                plt_diff.set_ydata([])
+                    plt_diff.set_xdata([])
+                    plt_diff.set_ydata([])
+                else:
+                    print
+                    print r
+                    proj = indexer.get_projection(r)
+                    pks = proj[:,3:5]
+                    i, j, hkl = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj[:,0:3])
+    
+                    plt_diff_center.set_xdata(r.center_y)
+                    plt_diff_center.set_ydata(r.center_x)
+    
+                    plt_diff.set_xdata(j)
+                    plt_diff.set_ydata(i)
 
         if axes == ax3:
             pass
