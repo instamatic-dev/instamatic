@@ -261,6 +261,10 @@ class Experiment(object):
         offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
         self.offsets = offsets * 1000
 
+        # store kwargs to experiment drc
+        kwargs["diff_brightness"] = image_brightness
+        json.dump(kwargs, open(os.path.join(self.expdir, params)))
+
     def initialize_microscope(self):
         """Intialize microscope"""
 
