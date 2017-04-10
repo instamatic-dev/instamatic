@@ -539,6 +539,8 @@ def main():
     exp.report_status()
     exp.run()
 
+    ctrl.close()
+
 
 if __name__ == '__main__':
     main()

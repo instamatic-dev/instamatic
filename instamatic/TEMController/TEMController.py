@@ -729,6 +729,11 @@ class TEMController(object):
         self.from_dict(d)
         print "Microscope alignment restored from '{}'".format(name)
 
+    def close(self):
+        try:
+            self.cam.close()
+        except AttributeError:
+            pass
 
 def main_entry():
     import argparse
@@ -759,6 +764,7 @@ def main_entry():
     ctrl = initialize()
 
     ipshell()
+    ctrl.close()
 
 
 if __name__ == '__main__':
