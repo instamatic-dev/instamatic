@@ -82,7 +82,7 @@ class VideoStream(threading.Thread):
         self.defaults = self.cam.defaults
         self.name = self.cam.name
 
-        self.frame_delay = 100
+        self.frame_delay = 50
 
         self.frametime = 0.05
         self.brightness = 1.0

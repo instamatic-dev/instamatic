@@ -55,7 +55,7 @@ class DiffFocus(object):
 
     @property
     def value(self):
-            return self.get()
+        return self.get()
 
     @value.setter
     def value(self, value):

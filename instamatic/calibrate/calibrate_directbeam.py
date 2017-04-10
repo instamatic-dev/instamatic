@@ -311,8 +311,9 @@ Calibrate direct beam position
         else:
             if auto_diff_focus:
                 print "Optimizing diffraction focus"
+                current_difffocus = ctrl.difffocus.value
                 difffocus = optimize_diffraction_focus(ctrl)
-                logger.info("Optimized diffraction focus: %s", difffocus)
+                logger.info("Optimized diffraction focus from %s to %s", current_difffocus, difffocus)
             
             cs = []
             for key in keys:
