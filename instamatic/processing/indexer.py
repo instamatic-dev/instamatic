@@ -236,8 +236,9 @@ def remove_background_gauss(img, min_sigma=3, max_sigma=30, threshold=1):
     Returns img: ndarray
         Image array with background removed
     """
-    img = np.maximum(ndimage.gaussian_filter(img, min_sigma) - ndimage.gaussian_filter(img, max_sigma) - threshold, 0)
-    return img
+    img_float = img.astype(float)
+    img_corr = np.maximum(ndimage.gaussian_filter(img_float, min_sigma) - ndimage.gaussian_filter(img_float, max_sigma) - threshold, 0)
+    return img_corr.astype(int)
 
 
 def make_2d_rotmat(theta):
@@ -502,7 +503,6 @@ class Indexer(object):
 
         phase = kwargs.get("phase", "NoName")
 
-        heap = [(0, None, None) for nsolution in range(nsolutions + 1)]
         vals  = []
         
         center_x, center_y = center
@@ -511,17 +511,24 @@ class Indexer(object):
         rotations = np.arange(0, 2*np.pi, theta)
         R = make_2d_rotmat(theta)
         
+        ## Could precalculate pks_list for all in-plane rotations, but it slightly slower
+        ## than doing pks = np.dot(pks, R)
+        # Rs = np.stack([make_2d_rotmat(rot) for rot in rotations])
+        # pks_list = np.tensordot(pks, Rs, axes=([1],[1])).transpose((1,0,2))
+        # for pks in pks_list:
+        #     ...
+
         for n, projection in enumerate(self.projections):
             pks = projection[:,3:5]
-            
+
             for m, rotation in enumerate(rotations):
                 score  = self.get_score(img, pks, scale, center_x, center_y)
         
-                vals.append(score)
-                
-                heapq.heapreplace(heap, (score, n, m))
+                vals.append((score, n, m))
                 
                 pks = np.dot(pks, R) # for next round
+
+        heap = heapq.nlargest(nsolutions, vals)
         self._vals = vals
         
         # print "Time total/proj/run: {:.2f} s / {:.2f} ms / {:.2f} us".format(t2-t1, 1e3*(t2-t1) / (n+1), 1e6*(t2-t1)/ ((n+1)*len(rotations)))
