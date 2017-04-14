@@ -88,11 +88,14 @@ def run(filepat="images/image_*.tiff", results=None):
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
                     try:
-                        text = " {}\n {:.0f}".format(df.ix[crystal_fn, "phase"], df.ix[crystal_fn, "score"])
+                        phase, score = df.ix[crystal_fn, "phase"], df.ix[crystal_fn, "score"]
+                        
                     except KeyError: # if crystal_fn not in df.index
                         pass
                     else:
-                        ax2.text(coord[1], coord[0], text)
+                        if score > 10:
+                            text = " {}\n {:.0f}".format(phase, score)
+                            ax2.text(coord[1], coord[0], text)
 
             if len(crystal_coords) > 0:
                 plt_crystals.set_xdata(crystal_coords[:,1])
@@ -107,9 +110,10 @@ def run(filepat="images/image_*.tiff", results=None):
             highlight2.set_xdata([])
             highlight2.set_ydata([])
 
-            # to preload next diffraction pattern
-            axes = ax2
-            ind = 0
+            if len(crystal_coords) > 0:
+                # to preload next diffraction pattern
+                axes = ax2
+                ind = 0
 
         if axes == ax2:
             fn_diff = ax2.get_title().replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(ind))
