@@ -47,6 +47,7 @@ def run(filepat="images/image_*.tiff", results=None):
     img, h = read_tiff(fn)
 
     fig = plt.figure()
+    fig.canvas.set_window_title('instamatic.browser')
     
     ax1 = plt.subplot(131, title="Stage map", aspect="equal")
     # plt_coords, = ax1.plot(coords[:,0], coords[:,1], marker="+", picker=8, c=has_crystals)
