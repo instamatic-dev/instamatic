@@ -208,7 +208,6 @@ class Experiment(object):
 
             self.calib_beamshift = CalibBeamShift.live(self.ctrl, outdir=self.calibdir)
             
-            # self.image_brightness = self.ctrl.brightness.value # not used
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
@@ -262,8 +261,15 @@ class Experiment(object):
         self.offsets = offsets * 1000
 
         # store kwargs to experiment drc
-        kwargs["diff_brightness"] = image_brightness
-        json.dump(kwargs, open(os.path.join(self.expdir, "params.json"), "w"))
+        kwargs["diff_brightness"]   = self.diff_brightness
+        kwargs["diff_cameralength"] = self.diff_cameralength
+        kwargs["diff_difffocus"]    = self.diff_difffocus
+		kwargs["hole_radius"]       = self.hole_radius
+        kwargs["hole_centers"]      = self.hole_centers.tolist()
+		kwargs["hole_positions"]    = len(self.hole_offsets)
+		kwargs["image_dimensions"]  = self.image_dimensions
+
+        json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"))
 
     def initialize_microscope(self):
         """Intialize microscope"""
