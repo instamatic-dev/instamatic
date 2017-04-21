@@ -286,10 +286,11 @@ class Experiment(object):
         self.neutral_beamshift = self.ctrl.beamshift.get()
         self.ctrl.tem.setSpotSize(self.image_spotsize)
 
-    def image_mode(self):
+    def image_mode(self, delay=0.2):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
         
         self.log.debug("Switching back to image mode")
+        time.sleep(delay)
 
         self.ctrl.beamshift.set(*self.neutral_beamshift)
         # avoid setting diffshift in image mode, because it messes with the beam position
@@ -299,10 +300,11 @@ class Experiment(object):
         self.ctrl.mode_mag1()
         self.ctrl.brightness.max()
 
-    def diffraction_mode(self):
+    def diffraction_mode(self, delay=0.2):
         """Switch to diffraction mode, focus the beam, and set the correct focus
         """
         self.log.debug("Switching to diffraction mode")
+        time.sleep(delay)
 
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.mode_diffraction()
@@ -377,7 +379,7 @@ class Experiment(object):
                     yield dct
 
 
-    def loop_crystals(self, crystal_coords, delay=0.05):
+    def loop_crystals(self, crystal_coords, delay=0):
         """Loop over crystal coordinates (pixels)
         Switch to diffraction mode, and shift the beam to be on the crystal
 
