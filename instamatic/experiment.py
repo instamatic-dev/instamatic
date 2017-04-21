@@ -263,7 +263,7 @@ class Experiment(object):
 
         # store kwargs to experiment drc
         kwargs["diff_brightness"] = image_brightness
-        json.dump(kwargs, open(os.path.join(self.expdir, params)))
+        json.dump(kwargs, open(os.path.join(self.expdir, "params.json"), "w"))
 
     def initialize_microscope(self):
         """Intialize microscope"""
