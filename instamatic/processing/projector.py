@@ -317,7 +317,7 @@ class Projector(object):
         # plt.axis("equal")
         plt.show()
     
-    def generate_all_projections(self, phistep=0.03, psistep=0.03):
+    def generate_all_projections(self):
         """Generates all vectors with a separation of phistep/psistep
 
         phistep, psistep: float
@@ -327,15 +327,16 @@ class Projector(object):
             Projections is a list of hkl and xy coordinates in reciprocal coordinates
             Infos is a list of accompanying data, such as the number, and alpha/beta angle in radians
         """
-        if self.cell.crystal_system in ("Triclinic", "Monoclinic"):
-            x2 = 2.0
-        else:
-            x2 = 0.5
 
-        genvec = generate_all_vectors(phistep=phistep, psistep=psistep, x1=0.5, x2=x2)
+        lauegr = self.cell.laue_group
+
+        from orientations import get_orientations
+
+        alpha_beta = get_orientations(lauegr=lauegr)[:,3:5]
+
         projections = []
         infos = []
-        for i, (alpha, beta) in enumerate(genvec):
+        for i, (alpha, beta) in enumerate(alpha_beta):
             projections.append(self.get_projection(alpha=alpha, beta=beta))
             infos.append((i, alpha, beta))
         return projections, infos
