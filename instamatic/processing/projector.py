@@ -67,6 +67,17 @@ def fromtorotation(v1, v2):
     return mtx
 
 
+def shape_vector(x, mu, sig):
+    """Calculate gaussian distribution
+    x: value, array
+    mu: value
+        offset for gaussian distribution
+    sig: value
+        standard deviation for gaussian distribution
+    """
+    return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
+
 def compose_rotation(angx, angy, angz):
     """
     angx,angy,angz = decompose_rotation(m)
@@ -244,7 +255,8 @@ class Projector(object):
         """        
         thresh1 = 0.05
         radius = 1.0/self.wavelength
-        thresh2 = 1.0/self.thickness
+        thickness = self.thickness
+        thresh2 = 0.1
         basis = self.basis
         
         try:
@@ -265,15 +277,13 @@ class Projector(object):
         CO = basis * radius
         dists = dists_to_sphere(vects, -CO, radius)
 
-        # select vectors in diffracting condition based based on thresh2
-        sel2 = dists < thresh2
+        # select vectors in diffracting condition based based on thickness
+        partiality = shape_vector(dists, 0, 1.0/thickness)
+        sel2 = partiality > thresh2
         vects = vects[sel2]
 
-        # normalize to ewald sphere
-
-        O = np.array([0, 0, 0])
-
         # CP = CO + OP, where OP = vects
+        O = np.array([0, 0, 0])
         CP = CO + vects
 
         # normalize CP vectors
@@ -281,21 +291,21 @@ class Projector(object):
 
         # find intersection of CO vector with detector plane (0, x, y)
         proj = normalized_vects*intersect_plane(-CO, normalized_vects, O, basis).reshape(-1,1) - CO
-       
-        return np.hstack((self.hkl[sel1][sel2], proj[:,1:3]))
+
+        return np.hstack((self.hkl[sel1][sel2], proj[:,1:3], partiality[sel2].reshape(-1,1)))
 
     def plot(self, alpha, beta, gamma=0.0, show_hkl=True):
         """Plot projection with given alpha/beta/gamma"""
-        vects = self.get_projection(alpha, beta, gamma)
+        proj = self.get_projection(alpha, beta, gamma)
         
         # beam_direction = polar2xyz(alpha, beta)
         # axis = np.dot(beam_direction, self.iorth)
         # zone_axis = recover_integer_vector(axis.round(5), denom=5).round(1)
         
-        plt.scatter(vects[:,3], vects[:,4])
+        plt.scatter(proj[:,3], proj[:,4], c=proj[:,5])
         plt.scatter(0, 0)
         if show_hkl:
-            for h,k,l,x,y in vects:
+            for h,k,l,x,y,s in proj:
                 plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
         plt.title("alpha: {}, beta: {}, gamma: {}".format(alpha, beta, gamma))
         plt.xlim(-1, 1)
@@ -305,11 +315,11 @@ class Projector(object):
 
     def plot_along_axis(self, zone_axis=(1, 0, 0), gamma=0.0, show_hkl=True):
         """Plot projection with given zone_axis and gamma"""
-        vects = self.get_projection_along_axis(zone_axis, gamma)
-        plt.scatter(vects[:,3], vects[:,4])
+        proj = self.get_projection_along_axis(zone_axis, gamma)
+        plt.scatter(proj[:,3], proj[:,4], c=proj[:,5])
         plt.scatter(0, 0)
         if show_hkl:
-            for h,k,l,x,y in vects:
+            for h,k,l,x,y,s in proj:
                 plt.text(x, y, "{:.0f} {:.0f} {:.0f}".format(h,k,l))
         plt.title("zone axis: {}, gamma: {}".format(zone_axis, gamma))
         plt.xlim(-1, 1)

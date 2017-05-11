@@ -3,7 +3,7 @@ from stretch_correction import affine_transform_ellipse_to_circle, apply_transfo
 from instamatic.tools import find_beam_center
 from scipy import ndimage
 import heapq
-from extensions import get_score, get_score_mod
+from extensions import get_score, get_score_mod, get_score_shape
 import lmfit
 import numpy as np
 
@@ -434,7 +434,7 @@ class Indexer(object):
         nrotations = int(2*np.pi/self.theta)
         print "{} projections x {} rotations = {} items\n".format(nprojections, nrotations, nprojections*nrotations)
     
-        self.get_score = get_score_mod
+        self.get_score = get_score_shape
     
     def set_pixelsize(self, pixelsize):
         """
@@ -520,9 +520,10 @@ class Indexer(object):
 
         for n, projection in enumerate(self.projections):
             pks = projection[:,3:5]
+            shape_factor = projection[:,5]
 
             for m, rotation in enumerate(rotations):
-                score  = self.get_score(img, pks, scale, center_x, center_y)
+                score  = self.get_score(img, pks, shape_factor, scale, center_x, center_y)
         
                 vals.append((score, n, m))
                 
@@ -587,15 +588,20 @@ class Indexer(object):
         proj = projector.get_projection(alpha, beta, gamma)
         pks = proj[:,3:5]
         
-        i, j, hkl = get_indices(pks, scale, (center_x, center_y), img.shape, hkl=proj[:,0:3])
+        i, j, proj = get_indices(pks, scale, (center_x, center_y), img.shape, hkl=proj)
         
-        plt.imshow(img, vmax=vmax)
+        shape_factor = proj[:,5:6]
+        hkl = proj[:,0:3]
+
+        plt.imshow(img, vmax=vmax, cmap="gray")
         plt.plot(center_y, center_x, marker="o")
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
                 plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
         plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}, phase = {}".format(alpha, beta, gamma, score, scale, n, phase))
-        plt.plot(j, i, marker="+", lw=0)
+        plt.scatter(j, i, marker="+", c=shape_factor)
+        plt.xlim(0, img.shape[0]-1)
+        plt.ylim(img.shape[1]-1, 0)
         plt.show()
     
     def refine_all(self, img, results, sort=True, **kwargs):
@@ -656,8 +662,10 @@ class Indexer(object):
             gamma = params["gamma"].value
             scale = params["scale"].value
             
-            pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
-            score = self.get_score(img, pks, scale, center_x, center_y)
+            proj = projector.get_projection(alpha, beta, gamma)
+            pks = proj[:,3:5]
+            shape_factor = proj[:,5]
+            score = self.get_score(img, pks, shape_factor, scale, center_x, center_y)
             # print center_x, center_y, scale, gamma, score
             
             return 1e3/(1+score)
@@ -682,9 +690,11 @@ class Indexer(object):
         
         alpha_new, beta_new, gamma_new, scale_new, center_x_new, center_y_new = [round(val, 4) for val in  p["alpha"].value, p["beta"].value, p["gamma"].value, p["scale"].value, p["center_x"].value, p["center_y"].value]
         
-        pks_new = projector.get_projection(alpha_new, beta_new, gamma_new)[:,3:5]
+        proj_new = projector.get_projection(alpha_new, beta_new, gamma_new)
+        pks_new = proj_new[:,3:5]
+        shape_factor_new = proj_new[:,5]
         
-        score_new = self.get_score(img, pks_new, scale_new, center_x_new, center_y_new)
+        score_new = self.get_score(img, pks_new, shape_factor_new, scale_new, center_x_new, center_y_new)
         
         # print "Score: {} -> {}".format(int(score), int(score_new))
         
