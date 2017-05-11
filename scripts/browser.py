@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *
 import os, sys, glob
@@ -25,6 +26,15 @@ def get_stage_coords(fns):
         has_crystals.append(len(h["exp_crystal_coords"]) > 0)
     # convert to um
     return np.array(coords) / 1000, np.array(has_crystals)
+
+
+def lst2colormap(lst):
+    """Turn list of values into matplotlib colormap
+    http://stackoverflow.com/a/26552429"""
+    n = matplotlib.colors.Normalize(vmin=min(lst), vmax=max(lst))
+    m = matplotlib.cm.ScalarMappable(norm=n)
+    colormap = m.to_rgba(lst)
+    return colormap
 
 
 def run(filepat="images/image_*.tiff", results=None):
@@ -60,14 +70,16 @@ def run(filepat="images/image_*.tiff", results=None):
     ax1.set_ylabel("Stage Y")
 
     ax2 = plt.subplot(132, title=fn)
-    im2 = ax2.imshow(img)
-    plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
-    highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=3)
+    im2 = ax2.imshow(img, cmap="gray")
+    plt_crystals, = ax2.plot([], [], marker="o", color="red",  mew=2, picker=8, lw=0)
+    highlight2,   = ax2.plot([], [], marker="o", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=250)
-    plt_diff, = ax3.plot([], [], "r+", picker=8, lw=0)
-    plt_diff_center, = ax3.plot([], [], "o", lw=0)
+    im3 = ax3.imshow(np.zeros_like(img), vmax=250, cmap="gray")
+    
+    class plt_diff:
+        center, = ax3.plot([], [], "o", color="red", lw=0)
+        data = None
 
     def onclick(event):
         click = event.mouseevent.button
@@ -125,28 +137,30 @@ def run(filepat="images/image_*.tiff", results=None):
 
             highlight2.set_xdata(plt_crystals.get_xdata()[ind])
             highlight2.set_ydata(plt_crystals.get_ydata()[ind])
-            
+
             if results:
+                if plt_diff.data:
+                    plt_diff.data.remove()
+                    plt_diff.data = None
+
                 try:
                     r = df.ix[fn_diff]
                 except KeyError:
-                    plt_diff_center.set_xdata([])
-                    plt_diff_center.set_ydata([])
-
-                    plt_diff.set_xdata([])
-                    plt_diff.set_ydata([])
+                    plt_diff.center.set_xdata([])
+                    plt_diff.center.set_ydata([])
                 else:
                     print
                     print r
                     proj = indexer.get_projection(r)
                     pks = proj[:,3:5]
-                    i, j, hkl = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj[:,0:3])
-    
-                    plt_diff_center.set_xdata(r.center_y)
-                    plt_diff_center.set_ydata(r.center_x)
-    
-                    plt_diff.set_xdata(j)
-                    plt_diff.set_ydata(i)
+
+                    i, j, proj = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj)
+                    shape_vector = proj[:,5]
+
+                    plt_diff.center.set_xdata(r.center_y)
+                    plt_diff.center.set_ydata(r.center_x)
+
+                    plt_diff.data = ax3.scatter(j, i, c=shape_vector, marker="+")
 
         if axes == ax3:
             pass
@@ -175,7 +189,7 @@ Program for indexing electron diffraction images.
                                     version=__version__)
     
     parser.add_argument("args", 
-                        type=str, metavar="FILE",
+                        type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files")
 
     parser.add_argument("-r", "--results", metavar='RESULTS.csv',
@@ -190,8 +204,11 @@ Program for indexing electron diffraction images.
     arg = options.args
 
     if not arg:
-        parser.print_help()
-        sys.exit()
+        if os.path.exists("images"):
+            arg = "images/*.tiff"
+        else:
+            parser.print_help()
+            sys.exit()
 
     run(filepat=arg, results=options.results)
 
