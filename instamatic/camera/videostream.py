@@ -85,7 +85,7 @@ class VideoStream(threading.Thread):
         self.frame_delay = 50
 
         self.frametime = 0.05
-        self.brightness = 1.0
+        self.brightness = 11800.0
 
         self.last = time.time()
         self.nframes = 1
@@ -142,7 +142,7 @@ class VideoStream(threading.Thread):
         Label(frame, anchor=E, width=lwidth, text="exposure (s)").grid(row=1, column=0)
         self.e_frametime.grid(row=1, column=1)
 
-        self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
+        self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=11800.0, increment=100)
         
         Label(frame, anchor=E, width=lwidth, text="Brightness").grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
@@ -172,7 +172,7 @@ class VideoStream(threading.Thread):
         self.var_frametime.set(self.frametime)
         self.var_frametime.trace("w", self.update_frametime)
 
-        self.var_brightness = DoubleVar(value=1.0)
+        self.var_brightness = DoubleVar(value=11800.0)
         self.var_brightness.set(self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
 
@@ -229,10 +229,13 @@ class VideoStream(threading.Thread):
 
         frame = np.rot90(frame, k=3)
 
-        if self.brightness != 1:
+        if self.brightness != 11800:
             image = Image.fromarray(frame).convert("L")
-            image = ImageEnhance.Brightness(image).enhance(self.brightness)
-            # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+            #image = ImageEnhance.Brightness(image).enhance(self.brightness)
+            ind = np.where(image > self.brightness)
+			image[ind] = self.brightness
+			image = image/self.brightness*11800
+			# Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
 
         else:
             image = Image.fromarray(frame)
