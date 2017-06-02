@@ -430,6 +430,8 @@ class Indexer(object):
         
         self.theta = theta
         
+        self.fit_tol = 0.1
+
         nprojections = len(self.projections)
         nrotations = int(2*np.pi/self.theta)
         print "{} projections x {} rotations = {} items\n".format(nprojections, nrotations, nprojections*nrotations)
@@ -501,7 +503,7 @@ class Indexer(object):
         theta      = kwargs.get("theta", self.theta)
         nsolutions = kwargs.get("nsolutions", 20)
 
-        phase = kwargs.get("phase", "NoName")
+        phase = kwargs.get("name", "NoName")
 
         vals  = []
         
@@ -682,7 +684,7 @@ class Indexer(object):
         
         args = pks, img
         
-        res = lmfit.minimize(objfunc, params, args=args, method=method)
+        res = lmfit.minimize(objfunc, params, args=args, method=method, tol=self.fit_tol)
         if verbose:
             lmfit.report_fit(res)
                 

@@ -190,6 +190,7 @@ def run(arg, chunk=None, dry_run=False, log=None):
     stretch = stretch / (2*100)
     tr_mat = affine_transform_ellipse_to_circle(azimuth, stretch)
 
+    refine = True
     method = "powell"
     radius = 3
     nsolutions = 25

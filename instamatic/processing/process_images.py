@@ -117,7 +117,7 @@ def main():
     stream = "cli"
     if len(fns) == 1:
         if not os.path.exists(fns[0]):
-        fns = glob.glob(fns[0])
+            fns = glob.glob(fns[0])
             stream = "glob"
         if "filelist" in fns[0]:
             fns = [line.strip() for line in open(fns[0], "r") if not line.startswith("#")]
@@ -127,7 +127,7 @@ def main():
     imgs = [read_tiff(fn)[0] for fn in fns]
 
     if stream != "list":
-    print "Calculating Shapiro-Wilk curve"
+        print "Calculating Shapiro-Wilk curve"
     s = get_shapiro_curve(imgs)
     r = np.argsort(s)
     plt.plot(s[r], "r+")
