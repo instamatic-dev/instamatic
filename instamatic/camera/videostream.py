@@ -46,16 +46,10 @@ class ImageGrabber(object):
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
                 
-                # frame = np.ones((512, 512))*256
-                # time.sleep(self.exposure)
-
                 frame = self.cam.getImage(t=self.exposure, fastmode=True)
                 self.callback(frame, acquire=True)
 
             elif not self.continuousCollectionEvent.is_set():
-                # frame = np.random.random((512,512)) * 256
-                # time.sleep(max(self.frametime, 0.01))
-                
                 frame = self.cam.getImage(t=self.frametime, fastmode=True)
                 self.callback(frame)
 

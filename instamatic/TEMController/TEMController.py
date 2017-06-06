@@ -15,19 +15,19 @@ __email__ = "stef.smeets@mmk.su.se"
 
 def initialize(camera="timepix"):
     from instamatic.camera import Camera
+    from instamatic.camera.videostream import VideoStream
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
         if camera == "timepix":
-            from instamatic.camera.videostream import VideoStream
             cam = VideoStream(cam="timepix")
         else:
             cam = Camera(kind=camera)
     except WindowsError:
         from simu_microscope import SimuMicroscope
-        print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
+        # print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
         tem = SimuMicroscope()
-        cam = Camera(kind="simulate")
+        cam = VideoStream(cam="simulate")
     ctrl = TEMController(tem, cam)
     return ctrl
 

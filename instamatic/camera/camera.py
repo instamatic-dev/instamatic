@@ -15,6 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import atexit
+import time
 
 __version__ = "2016-11-11"
 __author__ = "Stef Smeets"
@@ -26,7 +27,21 @@ DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
 DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
 DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 
-class Camera(object):
+
+def Camera(kind):
+    if kind == "simulate":
+        return CameraSimu(kind)
+    elif kind == "simulateDLL":
+        return CameraDLL(kind)
+    elif kind == "orius":
+        return CameraDLL(kind)
+    elif kind == "timepix":
+        return CameraDLL(kind)
+    else:
+        raise ValueError("No such camera: {}".format(kind))
+
+
+class CameraDLL(object):
     """docstring for Camera"""
 
     def __init__(self, kind="orius"):
@@ -35,16 +50,16 @@ class Camera(object):
         kind:
             'orius'
             'timepix'
-            'simulate'
+            'simulateDLL'
         """
-        super(Camera, self).__init__()
+        super(CameraDLL, self).__init__()
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
         self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
         self._curdir = curdir = os.path.abspath(os.curdir)
 
-        if kind == "simulate":
+        if kind == "simulateDLL":
             libpath = os.path.join(cameradir, DLLPATH_SIMU)
         elif kind == "orius":
             libpath = os.path.join(cameradir, DLLPATH_ORIUS)
@@ -59,7 +74,7 @@ class Camera(object):
         try:
             lib = ctypes.cdll.LoadLibrary(libpath)
         except WindowsError as e:
-            print e
+            print(e)
             raise RuntimeError("Cannot load DLL: {}".format(libpath))
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
@@ -206,6 +221,95 @@ class Camera(object):
         logger.info(msg)
 
 
+class CameraSimu(object):
+    """docstring for Camera"""
+
+    def __init__(self, kind="simulate"):
+        """Initialize camera module
+        """
+        super(CameraSimu, self).__init__()
+
+        # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
+
+        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
+        self._curdir = curdir = os.path.abspath(os.curdir)
+
+        self.name = kind
+
+        self.establishConnection()
+
+        self.load_defaults()
+
+        msg = "Camera {} initialized".format(self.getName())
+        logger.info(msg)
+
+        atexit.register(self.releaseConnection)
+
+    def load_defaults(self, fname=None):
+        import json
+
+        if not fname:
+            fname = os.path.join(self._cameradir, self.name+".json")
+
+        with open(fname) as f:
+            dct = json.load(f)
+
+        self.defaults = dct
+
+        self.default_exposure = dct["default_exposure"]
+        self.default_binsize = dct["default_binsize"]
+        self.possible_binsizes = dct["possible_binsizes"]
+        self.dimensions = dct["dimensions"]
+        self.xmax, self.ymax = self.dimensions
+
+    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
+        """Image acquisition routine
+
+        t: exposure time in seconds
+        binsize: which binning to use
+        fastmode: Shaves off approximately 1ms by avoiding conversion to int
+        """
+
+        if not t:
+            t = self.default_exposure
+        if not binsize:
+            binsize = self.default_binsize
+
+        time.sleep(t)
+
+        arr = np.random.random(self.dimensions)*256
+
+        if fastmode:
+            return arr
+        else:
+            return arr.astype(int)
+
+    def getCameraCount(self):
+        return 1
+
+    def isCameraInfoAvailable(self):
+        """Return Boolean"""
+        return True
+
+    def getDimensions(self):
+        """Return tuple shape: x,y"""
+        return self.dimensions
+
+    def getName(self):
+        """Return string"""
+        return self.name
+
+    def establishConnection(self):
+        res = 1
+        if res != 1:
+            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
+
+    def releaseConnection(self):
+        name = self.getName()
+        msg = "Connection to camera {} released".format(name) 
+        logger.info(msg)
+
+
 def main_entry():
     import argparse
     from instamatic.formats import write_tiff
@@ -279,10 +383,10 @@ def main_entry():
     
     if take_series:
         i = 1
-        print "\nUsage:"
-        print "    set b/e/i X -> set binsize/exposure/file number to X"
-        print "    XXX         -> Add comment to header"
-        print "    exit        -> exit the program"
+        print("\nUsage:")
+        print("    set b/e/i X -> set binsize/exposure/file number to X")
+        print("    XXX         -> Add comment to header")
+        print("    exit        -> exit the program")
     while take_series:
         outfile = "image_{:04d}".format(i)
         inp = raw_input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
@@ -292,30 +396,30 @@ def main_entry():
             try:
                 key, value = inp.split()[1:3]
             except ValueError:
-                print "Input not understood"
+                print("Input not understood")
                 continue
             if key == "e":
                 try:
                     value = float(value)
                 except ValueError as e:
-                    print e
+                    print(e)
                 if value > 0:
                     exposure = value
             elif key == "b":
                 try:
                     value = int(value)
                 except ValueError as e:
-                    print e
+                    print(e)
                 if value in (1,2,4):
                     binsize = value
             elif key == "i":
                 try:
                     value = int(value)
                 except ValueError as e:
-                    print e
+                    print(e)
                 if value > 0:
                     i = value
-            print "binsize = {} | exposure = {} | file #{}".format(binsize, exposure, i)
+            print("binsize = {} | exposure = {} | file #{}".format(binsize, exposure, i))
         else:
             arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
 
