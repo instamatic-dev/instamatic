@@ -159,10 +159,10 @@ def run(filepat="data/image_*.tiff"):
     axbgval     = fig.add_axes([0.25, 0.10, 0.65, 0.03])
     axminsize   = fig.add_axes([0.25, 0.05, 0.65, 0.03])
 
-    slider_sig1 = Slider(axsigmin, 'Sigmin',    1, 20,    valinit=callback.sigmin, valfmt='%0.0f')
+    slider_sig1 = Slider(axsigmin, 'Sigmin',    1, 20,    valinit=callback.sigmin, valfmt='%0.1f')
     slider_sig1.on_changed(callback.set_sigmin)
 
-    slider_sig2 = Slider(axsigmax, 'Sigmax',    1, 30,    valinit=callback.sigmax, valfmt='%0.0f')
+    slider_sig2 = Slider(axsigmax, 'Sigmax',    1, 30,    valinit=callback.sigmax, valfmt='%0.1f')
     slider_sig2.on_changed(callback.set_sigmax)
 
     slider2 = Slider(axbgval, 'BG',       1, 25,    valinit=callback.bgval, valfmt='%0.0f')
