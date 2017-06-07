@@ -2,6 +2,7 @@ import os, sys
 
 from instamatic.formats import *
 from instamatic.tools import find_beam_center
+from instamatic.processing.extensions import radial_profile
 
 import argparse, glob
 
@@ -31,7 +32,7 @@ class Handler(object):
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(800,800))
+        wx.Frame.__init__(self, parent, title=title, size=(1000,820))
         
         self.sp = wx.SplitterWindow(self)
 
@@ -184,7 +185,7 @@ class MatplotPanel(wx.Panel):
         self.vmin = 0
 
         self.bg_footprint = 19
-        self.beam_center_sigma = 30
+        self.beam_center_sigma = 10
 
         self.xy = []
         self.numpeaks = 0
@@ -193,7 +194,10 @@ class MatplotPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
 
-        self.fig, self.ax = plt.subplots()
+        self.fig = plt.figure()
+        self.ax = self.fig.add_axes([0,0,1,1])
+        self.ax.axis('off')
+
         self.canvas = FigureCanvas(self, -1, self.fig)
         self.toolbar = NavigationToolbar(self.canvas)
 
@@ -253,8 +257,8 @@ class MatplotPanel(wx.Panel):
             # Multiply by 0.99 seems to be OK
             self.coords.set_xdata(0.99 * self.xy[:,1])
             self.coords.set_ydata(0.99 * self.xy[:,0])
-            self.center.set_xdata(0.99 * self.beam_center[:,1])
-            self.center.set_ydata(0.99 * self.beam_center[:,0])
+            self.center.set_xdata(0.99 * self.beam_center[1])
+            self.center.set_ydata(0.99 * self.beam_center[0])
         else:
             self.coords.set_xdata([])
             self.coords.set_ydata([])
@@ -293,7 +297,7 @@ class MatplotPanel(wx.Panel):
             maximum=total, parent=self,
             style=wx.PD_CAN_ABORT|wx.PD_APP_MODAL|wx.PD_REMAINING_TIME|wx.PD_ESTIMATED_TIME)
 
-        nhits = 0
+        stream = []
 
         for i, fn in enumerate(self.filelist):
             keep_going, skip = dlg.Update(i, "{}/{}\n{}".format(i, total, fn))
@@ -316,17 +320,15 @@ class MatplotPanel(wx.Panel):
                 os.unlink(outfile)
 
             f = h5py.File(outfile)
-            rawdata = f.create_dataset("rawdata", img.shape, dtype=img.dtype)
-            rawdata[...] = img
+            rawdata = f.create_dataset("rawdata", data=img)
 
             for k,v in h.items():
                 try:
-                    f.rawdata[k] = v
+                    rawdata.attrs[k] = v
                 except TypeError:
                     pass
 
-            data = f.create_dataset("data", img_corr.shape, dtype=img_corr.dtype)
-            data[...] = img_corr
+            data = f.create_dataset("data", data=img_corr)
 
             data.attrs["date"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f")
             data.attrs["program"] = __file__
@@ -341,6 +343,10 @@ class MatplotPanel(wx.Panel):
             orientations = np.array([prop.orientation for prop in props])
             eccentricities = np.array([prop.eccentricity for prop in props])
             
+            if len(xy) == 0:
+                f.close()
+                continue
+
             beam_center = find_beam_center(img, self.beam_center_sigma)
             xy_corr = xy - beam_center
             
@@ -364,23 +370,24 @@ class MatplotPanel(wx.Panel):
             f["peakinfo"].attrs["pixelsize"] = pixelsize
             f["peakinfo"].attrs["numpeaks"] = self.numpeaks
 
-            # from instamatic.processing.extensions import radialprofile
-            # rprofile = radialprofile(img_corr, beam_center[0], beam_center[1])
-            # f["data/radialprofile"] = rprofile
+            radialprofile = radial_profile(img_corr, beam_center[0], beam_center[1])
+            f.create_dataset("radialprofile", data=radialprofile)
+            f["radialprofile"].attrs["beam_center"] = beam_center
+            f["radialprofile"].attrs["source_data"] = "/data"
 
             f.close()
 
-            hit = (self.npeaks > 10) and (resolution > 2.0)
-            nhits += hit
+            hit = (self.numpeaks > 10) and (resolution > 2.0)
+            if hit:
+                stream.append(outfile)
 
-            # radialprofile
-            # virtual powder pattern by summing all background corrected hits
-            # hit analysis, hit rate = number of hits / total number
-
-        print "Hitrate {}/{} = {:1%}".format(nhits, total, float(nhits)/total)
-        
         dlg.Destroy()
 
+        nhits = len(stream)
+        with open("stream.txt", "w") as f:
+            f.write(" # Hitrate {}/{} = {:.1%}\n".format(nhits, total, float(nhits)/total))
+            for fn in stream:
+                f.write(fn + "\n")
 
 
 def main():
@@ -401,14 +408,12 @@ Program for identifying useful serial electron diffraction images.
     
     parser.add_argument("args", 
                         type=str, metavar="FILE", nargs="?",
-                        help="File pattern to image files")
+                        help="File pattern to image files (i.e. data/*.tiff)")
 
     parser.set_defaults()
     
     options = parser.parse_args()
     arg = options.args
-
-    arg = "E:\instamatic\work_2017-05-23\experiment6\data\*.tiff"
 
     if not arg:
         if os.path.exists("images"):
