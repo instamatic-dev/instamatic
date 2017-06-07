@@ -2,6 +2,7 @@ from TiffIO import TiffIO
 import time
 import os
 import yaml
+import numpy as np
 
 try:
     import h5py
