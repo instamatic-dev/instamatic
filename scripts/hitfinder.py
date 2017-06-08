@@ -43,9 +43,14 @@ class MainWindow(wx.Frame):
         self.sp.SplitVertically(self.left, self.right, 300)
 
         self.status = self.CreateStatusBar() # A StatusBar in the bottom of the window
+        self.left.status = self.status
+        self.right.status = self.status
 
         # Setting up the menu.
         filemenu = wx.Menu()
+
+        menuOpen = filemenu.Append(wx.ID_OPEN, '&Open')
+        filemenu.AppendSeparator()
 
         # wx.ID_ABOUT and wx.ID_EXIT are standard ids provided by wxWidgets.
         menuAbout = filemenu.Append(wx.ID_ABOUT, "&About"," Information about this program")
@@ -57,23 +62,33 @@ class MainWindow(wx.Frame):
         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 
         # Set events.
+        self.Bind(wx.EVT_MENU, self.OnOpen, menuOpen)
         self.Bind(wx.EVT_MENU, self.OnAbout, menuAbout)
         self.Bind(wx.EVT_MENU, self.OnExit, menuExit)
 
         self.Show(True)
 
-    def OnAbout(self,e):
+    def OnAbout(self, event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
         dlg = wx.MessageDialog( self, "Hitfinder", "About", wx.OK)
         dlg.ShowModal() # Show it
         dlg.Destroy() # finally destroy it when finished.
 
-    def OnExit(self,e):
+    def OnExit(self, event):
         self.Close(True)  # Close the frame.
+
+    def OnOpen(self, event):
+        open_dialog = wx.FileDialog(self, "Open image", "", "", "HDF5 (*.h5, *.hdf5)|*.h5;*.hdf5|TIFF (*.tif, *.tiff)|*.tif;*.tiff", wx.FC_OPEN|wx.FD_MULTIPLE)
+        if open_dialog.ShowModal() == wx.ID_OK:
+            filelist = open_dialog.GetPaths()
+        else:
+            return
+        self.set_filelist(filelist)
 
     def set_filelist(self, filelist):
         self.right.filelist = filelist
         self.right.load_image()
+
 
 class MatControls(wx.Panel):
     def __init__(self, parent, mpp):     
@@ -314,6 +329,7 @@ class MatplotPanel(wx.Panel):
 
     def load_image(self):
         fn = self.filelist[self.index]
+        self.status.SetStatusText("{}/{}: {}".format(self.index, len(self.filelist), fn))
         self.reset_properties()
 
         self.img, h = read_image(fn)
