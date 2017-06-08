@@ -73,7 +73,7 @@ class MainWindow(wx.Frame):
 
     def set_filelist(self, filelist):
         self.right.filelist = filelist
-        self.right.update_image()
+        self.right.load_image()
 
 class MatControls(wx.Panel):
     def __init__(self, parent, mpp):     
@@ -94,12 +94,16 @@ class MatControls(wx.Panel):
         row4 = wx.BoxSizer(wx.HORIZONTAL)
         row5 = wx.BoxSizer(wx.HORIZONTAL)
         row6 = wx.BoxSizer(wx.HORIZONTAL)
+        row7 = wx.BoxSizer(wx.HORIZONTAL)
+        row8 = wx.BoxSizer(wx.HORIZONTAL)
+        row9 = wx.BoxSizer(wx.HORIZONTAL)
+        row10 = wx.BoxSizer(wx.HORIZONTAL)
 
-        lsigmin = wx.StaticText(self, label='Sigma min')
-        lsigmax = wx.StaticText(self, label='Sigma max')
-        lthresh = wx.StaticText(self, label='Threshold')
-        lnmin   = wx.StaticText(self, label='Nmin')
-        lnmax   = wx.StaticText(self, label='Nmax')
+        lsigmin = wx.StaticText(self, label='Sigma min\t')
+        lsigmax = wx.StaticText(self, label='Sigma max\t')
+        lthresh = wx.StaticText(self, label='Threshold\t')
+        lnmin   = wx.StaticText(self, label='Nmin     \t')
+        lnmax   = wx.StaticText(self, label='Nmax     \t')
 
         ssigmin = wx.Slider(self, wx.ID_ANY, value=self.mpp.sigmin, minValue=1, maxValue=20, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
         ssigmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.sigmax, minValue=1, maxValue=20, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
@@ -107,8 +111,21 @@ class MatControls(wx.Panel):
         snmin = wx.Slider(self, wx.ID_ANY, value=self.mpp.nmin,  minValue=1, maxValue=200, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
         snmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.nmax, minValue=10, maxValue=1000, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
 
-        lvmax = wx.StaticText(self, label='Vmax')
+        lvmax = wx.StaticText(self, label='Vmax     \t')
         svmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.vmax, minValue=0, maxValue=1000, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
+
+        lbackground_footprint   = wx.StaticText(self, label='Bkg. footprint')
+        sbackground_footprint = wx.Slider(self, wx.ID_ANY, value=self.mpp.background_footprint, minValue=1, maxValue=50, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
+
+        lbeam_center_sigma   = wx.StaticText(self, label='Beam center sigma')
+        sbeam_center_sigma = wx.Slider(self, wx.ID_ANY, value=self.mpp.beam_center_sigma, minValue=1, maxValue=50, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
+
+        check_show_raw_data = wx.CheckBox(self, wx.ID_ANY, label="Show raw data")
+        check_show_raw_data.SetValue(self.mpp.show_raw_data)
+        check_show_peaks = wx.CheckBox(self, wx.ID_ANY, label="Show peaks")
+        check_show_peaks.SetValue(self.mpp.show_peaks)
+        check_remove_background = wx.CheckBox(self, wx.ID_ANY, label="Remove background")
+        check_remove_background.SetValue(self.mpp.remove_background)
 
         row1.Add(lsigmin, 0, wx.ALL|wx.CENTER, 5)
         row1.Add(ssigmin, 1, wx.ALL|wx.EXPAND, 5)
@@ -120,48 +137,101 @@ class MatControls(wx.Panel):
         row4.Add(snmin, 1, wx.ALL|wx.EXPAND, 5)
         row5.Add(lnmax, 0, wx.ALL|wx.CENTER, 5)
         row5.Add(snmax, 1, wx.ALL|wx.EXPAND, 5)
-        row6.Add(lvmax, 0, wx.ALL|wx.CENTER, 5)
-        row6.Add(svmax, 1, wx.ALL|wx.EXPAND, 5)
+        row6.Add(lbeam_center_sigma, 0, wx.ALL|wx.EXPAND, 5)
+        row6.Add(sbeam_center_sigma, 1, wx.ALL|wx.EXPAND, 5)
+
+        row7.Add(lbackground_footprint, 0, wx.ALL|wx.EXPAND, 5)
+        row7.Add(sbackground_footprint, 1, wx.ALL|wx.EXPAND, 5)
+        row8.Add(check_remove_background, 0, wx.ALL|wx.EXPAND, 5)
+
+        row9.Add(lvmax, 0, wx.ALL|wx.CENTER, 5)
+        row9.Add(svmax, 1, wx.ALL|wx.EXPAND, 5)
+        row10.Add(check_show_raw_data,0, wx.ALL|wx.EXPAND, 5)
+        row10.Add(check_show_peaks, 0, wx.ALL|wx.EXPAND, 5)
 
         ssigmin.Bind(wx.EVT_SLIDER, self.on_sigmin)
         ssigmax.Bind(wx.EVT_SLIDER, self.on_sigmax) 
-        sthresh.Bind(wx.EVT_SLIDER, self.on_thresh) 
+        sthresh.Bind(wx.EVT_SLIDER, self.on_threshold) 
         snmin.Bind(wx.EVT_SLIDER, self.on_nmin) 
         snmax.Bind(wx.EVT_SLIDER, self.on_nmax)
         svmax.Bind(wx.EVT_SLIDER, self.on_vmax)
+        sbackground_footprint.Bind(wx.EVT_SLIDER, self.on_background_footprint)
+        sbeam_center_sigma.Bind(wx.EVT_SLIDER, self.on_beam_center_sigma)
+        
+        check_show_raw_data.Bind(wx.EVT_CHECKBOX, self.on_display_raw_data)
+        check_show_peaks.Bind(wx.EVT_CHECKBOX, self.on_show_peaks)
+        check_remove_background.Bind(wx.EVT_CHECKBOX, self.on_remove_background) 
 
         add_to.Add(row1, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row2, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row3, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row4, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row5, 0, wx.ALL|wx.EXPAND, 5)
-        add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row6, 0, wx.ALL|wx.EXPAND, 5)
+        
+        add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row7, 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row8, 0, wx.ALL|wx.EXPAND, 5)
+
+        add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row9, 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row10, 0, wx.ALL|wx.EXPAND, 5)
 
     def on_sigmin(self, event):
         self.mpp.sigmin = event.GetEventObject().GetValue()
-        self.mpp.process_image()
+        self.mpp._xy = None
+        self.mpp.update_image()
 
     def on_sigmax(self, event):
         self.mpp.sigmax = event.GetEventObject().GetValue()
-        self.mpp.process_image()
+        self.mpp._xy = None
+        self.mpp.update_image()
 
-    def on_thresh(self, event):
+    def on_threshold(self, event):
         self.mpp.threshold = event.GetEventObject().GetValue()
-        self.mpp.process_image()
+        self.mpp._xy = None
+        self.mpp.update_image()
 
     def on_nmin(self, event):
         self.mpp.nmin = event.GetEventObject().GetValue()
-        self.mpp.process_image()
+        self.mpp._xy = None
+        self.mpp.update_image()
 
     def on_nmax(self, event):
         self.mpp.nmax = event.GetEventObject().GetValue()
-        self.mpp.process_image()
+        self.mpp._xy = None
+        self.mpp.update_image()
 
     def on_vmax(self, event):
         self.mpp.vmax = event.GetEventObject().GetValue()
         self.mpp.im.set_clim(vmax=self.mpp.vmax)
         self.mpp.canvas.draw()
+
+    def on_background_footprint(self, event):
+        self.mpp.background_footprint = event.GetEventObject().GetValue()
+        self.mpp._img_corr = None
+        self.mpp._xy = None
+        self.mpp.update_image()
+
+    def on_beam_center_sigma(self, event):
+        self.mpp.beam_center_sigma = event.GetEventObject().GetValue()
+        self.mpp.update_image()
+
+    def on_display_raw_data(self, event):
+        val = event.GetEventObject().GetValue()
+        self.mpp.show_raw_data = val
+        self.mpp.update_image()
+
+    def on_show_peaks(self, event):
+        val = event.GetEventObject().GetValue()
+        self.mpp.show_peaks = val
+        self.mpp.update_image()
+
+    def on_remove_background(self, event):
+        val = event.GetEventObject().GetValue()
+        self.mpp._xy = None
+        self.mpp.remove_background = val
+        self.mpp.update_image()
 
 
 class MatplotPanel(wx.Panel):
@@ -179,15 +249,16 @@ class MatplotPanel(wx.Panel):
         self.nmin = 50
         self.nmax = 5000
 
-        self.display_type = "img"
+        self.show_raw_data = True
         self.show_peaks = True
+        self.remove_background = True
+
         self.vmax = 500
         self.vmin = 0
 
-        self.bg_footprint = 19
+        self.background_footprint = 19
         self.beam_center_sigma = 10
 
-        self.xy = []
         self.numpeaks = 0
         self.beam_center = []
 
@@ -223,6 +294,7 @@ class MatplotPanel(wx.Panel):
         self.im = self.ax.imshow(np.random.random((512,512)), cmap="gray", vmax=500)
         self.coords, = self.ax.plot([], [], marker="o", color="red", mew=1, lw=0, mfc="none")
         self.center, = self.ax.plot([], [], marker="o", color="red", lw=0)
+        self.reset_properties()
 
     @property
     def index(self):
@@ -234,37 +306,81 @@ class MatplotPanel(wx.Panel):
 
     def next_image(self, event):
         self.index += 1
-        self.update_image()
+        self.load_image()
 
     def previous_image(self, event):
         self.index -= 1
+        self.load_image()
+
+    def load_image(self):
+        fn = self.filelist[self.index]
+        self.reset_properties()
+
+        self.img, h = read_image(fn)
         self.update_image()
 
     def update_image(self):
-        fn = self.filelist[self.index]
-
-        self.img, h = read_tiff(fn)
-        self.im.set_data(self.img)
-
-        self.process_image()
-
+        if self.show_raw_data:
+            self.im.set_data(self.img)
+        else:
+            self.im.set_data(self.img_corr)
         self.draw_image()
 
     def update_peaks(self):
-        if self.show_peaks and self.numpeaks:
+        self.beam_center = find_beam_center(self.img, sigma=self.beam_center_sigma)
+        if self.show_peaks:
             # BUG in FigureCanvasWxAgg? 
             # Work-around to fix incorrect display of peak positions on canvas
             # Multiply by 0.99 seems to be OK
-            self.coords.set_xdata(0.99 * self.xy[:,1])
-            self.coords.set_ydata(0.99 * self.xy[:,0])
+            try:
+                self.coords.set_xdata(0.99 * self.xy[:,1])
+                self.coords.set_ydata(0.99 * self.xy[:,0])
+            except IndexError:
+                self.coords.set_xdata([])
+                self.coords.set_ydata([])
             self.center.set_xdata(0.99 * self.beam_center[1])
             self.center.set_ydata(0.99 * self.beam_center[0])
         else:
             self.coords.set_xdata([])
             self.coords.set_ydata([])
+            self.center.set_xdata([])
+            self.center.set_ydata([])
+
+    def reset_properties(self):
+        self.beam_center = []
+        self.coords.set_xdata([])
+        self.coords.set_ydata([])
+        self._img_corr = None
+        self._labels = None
+        self._xy = None
+
+    @property
+    def img_corr(self):
+        if self._img_corr is None:
+            self._img_corr = self.img - ndimage.median_filter(self.img, self.background_footprint)
+        return self._img_corr
+
+    @property
+    def xy(self):
+        if self._xy is None:
+            if self.remove_background:
+                img = self.img_corr
+            else:
+                img = self.img
+            bg = ndimage.gaussian_filter(img, self.sigmin) - ndimage.gaussian_filter(img, self.sigmax)
+        
+            labels, numlabels = ndimage.label(bg > self.threshold)
+            labels = morphology.remove_small_objects(labels, self.nmin)
+            
+            props = measure.regionprops(labels, img)
+            self._xy = np.array([prop.centroid for prop in props])
+        return self._xy
 
     def _process_image(self, img):
-        img_corr = img - ndimage.median_filter(img, self.bg_footprint)
+        if self.correct_background:
+            img_corr = img - ndimage.median_filter(img, self.background_footprint)
+        else:
+            img_corr = img
         bg = ndimage.gaussian_filter(img_corr, self.sigmin) - ndimage.gaussian_filter(img_corr, self.sigmax)
         
         labels, numlabels = ndimage.label(bg > self.threshold)
@@ -272,18 +388,9 @@ class MatplotPanel(wx.Panel):
         
         props = measure.regionprops(labels, img_corr)
         
-        self.numpeaks = len(props)
-    
         img_corr = np.where(labels > 0, img_corr, np.zeros_like(img_corr))
         
         return img_corr, props
-
-    def process_image(self):
-        img_corr, props = self._process_image(self.img)
-        self.beam_center = find_beam_center(self.img, sigma=self.beam_center_sigma)
-        self.xy = np.array([prop.centroid for prop in props])
-        self.img_corr = img_corr
-        self.draw_image()
 
     def draw_image(self):
         self.update_peaks()
@@ -305,7 +412,7 @@ class MatplotPanel(wx.Panel):
                 dlg.Destroy()
                 break
 
-            img, h = read_tiff(fn)
+            img, h = read_image(fn)
             img_corr, props = self._process_image(img)
 
             root, ext = os.path.splitext(os.path.basename(fn))
@@ -332,9 +439,13 @@ class MatplotPanel(wx.Panel):
 
             data.attrs["date"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f")
             data.attrs["program"] = __file__
-            data.attrs["bg_footprint"] = self.bg_footprint
+            data.attrs["background_footprint"] = self.background_footprint
             data.attrs["sigma_min"] = self.sigmin
             data.attrs["sigma_max"] = self.sigmax
+
+            if len(props) == 0:
+                f.close()
+                continue
 
             xy = np.array([prop.centroid for prop in props])
             xyw = np.array([prop.weighted_centroid for prop in props])
@@ -342,10 +453,6 @@ class MatplotPanel(wx.Panel):
             intensities = np.array([prop.intensity_image.sum() for prop in props])
             orientations = np.array([prop.orientation for prop in props])
             eccentricities = np.array([prop.eccentricity for prop in props])
-            
-            if len(xy) == 0:
-                f.close()
-                continue
 
             beam_center = find_beam_center(img, self.beam_center_sigma)
             xy_corr = xy - beam_center
@@ -368,7 +475,9 @@ class MatplotPanel(wx.Panel):
             f["peakinfo"].attrs["resolution"] = resolution
             f["peakinfo"].attrs["beam_center"] = beam_center 
             f["peakinfo"].attrs["pixelsize"] = pixelsize
-            f["peakinfo"].attrs["numpeaks"] = self.numpeaks
+            f["peakinfo"].attrs["numpeaks"] = len(props)
+            f["peakinfo"].attrs["remove_background"] = self.remove_background
+            f["peakinfo"].attrs["background_median_footprint"] = self.background_footprint
 
             radialprofile = radial_profile(img_corr, beam_center[0], beam_center[1])
             f.create_dataset("radialprofile", data=radialprofile)
