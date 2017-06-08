@@ -18,7 +18,7 @@ def get_stage_coords(fns):
     has_crystals = []
     t = tqdm.tqdm(fns, desc="Parsing files")
     for fn in t:
-        img, h = read_tiff(fn)
+        img, h = read_image(fn)
         dx, dy = h["exp_hole_offset"]
         cx, cy = h["exp_hole_center"]
         coords.append((cx + dx, cy + dy))
@@ -53,8 +53,11 @@ def run(filepat="images/image_*.tiff", results=None):
 
     coords, has_crystals = get_stage_coords(fns)
 
+    if len(fns) == 0:
+        sys.exit()
+
     fn = fns[0]
-    img, h = read_tiff(fn)
+    img, h = read_image(fn)
 
     fig = plt.figure()
     fig.canvas.set_window_title('instamatic.browser')
@@ -90,13 +93,14 @@ def run(filepat="images/image_*.tiff", results=None):
             fn = fns[ind]
             ax2.texts = []
 
-            img, h = read_tiff(fn)
+            img, h = read_image(fn)
             im2.set_data(img)
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
 
             if results:
-                crystal_fns = [fn.replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(i)) for i in range(len(crystal_coords))]
+                root, ext = os.path.splitext(fn)
+                crystal_fns = [fn.replace("images", "data").replace(ext, "_{:04d}{}".format(i, ext)) for i in range(len(crystal_coords))]
                 df.ix[crystal_fns]
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
@@ -129,9 +133,11 @@ def run(filepat="images/image_*.tiff", results=None):
                 ind = 0
 
         if axes == ax2:
-            fn_diff = ax2.get_title().replace("images", "data").replace(".tiff", "_{:04d}.tiff".format(ind))
+            fn = ax2.get_title()
+            root, ext = os.path.splitext(fn)
+            fn_diff = fn.replace("images", "data").replace(ext, "_{:04d}{}".format(ind, ext))
 
-            img, h = read_tiff(fn_diff)
+            img, h = read_image(fn_diff)
             im3.set_data(img)
             ax3.set_title(fn_diff)
 

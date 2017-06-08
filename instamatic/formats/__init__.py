@@ -10,6 +10,19 @@ except ImportError:
     pass
 
 
+def read_image(fname):
+    """Guess filetype by extension"""
+    root, ext = os.path.splitext(fname)
+    ext = ext.lower()
+    if ext in (".tif", ".tiff"):
+        img, h = read_tiff(fname)
+    elif ext in (".h5", ".hdf5"):
+        img, h = read_hdf5(fname)
+    else:
+        raise IOError("Cannot open file {}, unknown extension: {}".format(fname, ext))
+    return img, h 
+
+
 def write_tiff(fname, data, header=None):
     """Simple function to write a tiff file
 
@@ -78,8 +91,7 @@ def write_hdf5(fname, data, header=None):
         fname = root + ".h5"
 
     f = h5py.File(fname, "w")
-    h5data = f.create_dataset("data", data.shape, dtype=data.dtype)
-    h5data[...] = data
+    h5data = f.create_dataset("data", data=data)
     if header:
         h5data.attrs.update(header)
     f.close()
@@ -96,4 +108,4 @@ def read_hdf5(fname):
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
     f = h5py.File(fname)
-    return np.array(f["data"]), dict(f.attrs)
+    return np.array(f["data"]), dict(f["data"].attrs)

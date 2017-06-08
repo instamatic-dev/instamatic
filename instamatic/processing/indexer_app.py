@@ -9,6 +9,8 @@ from indexer import *
 from tqdm import tqdm
 import logging
 
+from instamatic.formats import *
+
 __version__ = "2017-03-09"
 __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
@@ -38,6 +40,16 @@ data:
   drc_out: indexing
   glob: data/*.tiff
 """
+
+
+def get_files(file_pat):
+    """Grab files from globbing pattern or stream file"""
+    if os.path.exists(file_pat):
+        f = open(file_pat, "r")
+        fns = [line.strip() for line in f if not line.startswith("#")]
+    else:
+        fns = glob.glob(file_pat)
+    return fns
 
 
 def printer(data):
@@ -95,7 +107,7 @@ def multi_run(arg, procs=1, dry_run=False, logfile=None):
     file_pat  = d["data"]["glob"]
     csv_out   = d["data"]["csv_out"]
 
-    fns = glob.glob(file_pat)
+    fns = get_files(file_pat)
 
     nfiles = len(fns)
     print "Found {} files".format(nfiles)
@@ -203,7 +215,7 @@ def run(arg, chunk=None, dry_run=False, log=None):
         projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
         indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
-    fns = glob.glob(file_pat)
+    fns = get_files(file_pat)
 
     if chunk:
         offset, cpu_count = chunk
@@ -229,7 +241,7 @@ def run(arg, chunk=None, dry_run=False, log=None):
         t.set_description(fn)
         t.update()
 
-        img, h = read_tiff(fn)
+        img, _ = read_image(fn)
         
         center = find_beam_center(img, sigma=beam_center_sigma)  # cx cy
         
