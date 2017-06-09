@@ -393,7 +393,7 @@ class MatplotPanel(wx.Panel):
         return self._xy
 
     def _process_image(self, img):
-        if self.correct_background:
+        if self.remove_background:
             img_corr = img - ndimage.median_filter(img, self.background_footprint)
         else:
             img_corr = img
