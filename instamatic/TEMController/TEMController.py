@@ -14,20 +14,25 @@ __email__ = "stef.smeets@mmk.su.se"
 
 
 def initialize(camera="timepix"):
+    import __main__ as main                    # disable stream if in interactive session -> crashes Tkinter
+    isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
+
     from instamatic.camera import Camera
     from instamatic.camera.videostream import VideoStream
     try:
         from jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
-        if camera == "timepix":
+        if camera == "timepix" and not isInteractive:
             cam = VideoStream(cam="timepix")
         else:
             cam = Camera(kind=camera)
     except WindowsError:
         from simu_microscope import SimuMicroscope
-        # print " >> Could not connect to JEOL, using simulated TEM/CAM instead"
         tem = SimuMicroscope()
-        cam = VideoStream(cam="simulate")
+        if isInteractive:
+            cam = Camera(kind="simulate")
+        else:
+            cam = VideoStream(cam="simulate")
     ctrl = TEMController(tem, cam)
     return ctrl
 
