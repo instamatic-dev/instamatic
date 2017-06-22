@@ -94,7 +94,11 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
 def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     """Specialized function with better defaults for timepix camera"""
     r = kwargs.get("r", 75)
-    offset = kwargs.get("offset", 10)
+
+    # 'offset' determines sensitivity of thresholding
+    #   higher = less sensitive to noise
+    #   lower = more sensitive to noise
+    offset = kwargs.get("offset", 15) 
     footprint = kwargs.get("footprint", 3)
     k = timepix_conversion_factor
     
@@ -107,7 +111,8 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
                          k=k,
                          r=r,
                          remove_carbon_lacing=False)
-    
+
+
 def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     """Function for finding crystals in a low contrast images.
     Used adaptive thresholds to find local features.

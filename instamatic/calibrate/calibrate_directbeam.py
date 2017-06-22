@@ -295,7 +295,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     return c
 
 
-def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True, auto_diff_focus=True):
+def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True, auto_diff_focus=False):
     import glob
     keys = ("BeamShift", "DiffShift")
     if not patterns:
