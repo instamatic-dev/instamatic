@@ -3,6 +3,7 @@ import os, sys
 from instamatic.formats import *
 from instamatic.tools import find_beam_center
 from instamatic.processing.extensions import radial_profile
+from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle, apply_transform_to_image
 
 import argparse, glob
 
@@ -11,6 +12,7 @@ from skimage import feature, morphology, measure
 
 import numpy as np
 import wx
+from wx.lib.masked import NumCtrl
 
 import datetime
 
@@ -113,6 +115,9 @@ class MatControls(wx.Panel):
         row8 = wx.BoxSizer(wx.HORIZONTAL)
         row9 = wx.BoxSizer(wx.HORIZONTAL)
         row10 = wx.BoxSizer(wx.HORIZONTAL)
+        
+        row11 = wx.BoxSizer(wx.HORIZONTAL)
+        row12 = wx.BoxSizer(wx.HORIZONTAL)
 
         lsigmin = wx.StaticText(self, label='Sigma min\t')
         lsigmax = wx.StaticText(self, label='Sigma max\t')
@@ -141,6 +146,16 @@ class MatControls(wx.Panel):
         check_show_peaks.SetValue(self.mpp.show_peaks)
         check_remove_background = wx.CheckBox(self, wx.ID_ANY, label="Remove background")
         check_remove_background.SetValue(self.mpp.remove_background)
+
+        l_stretch_amplitude   = wx.StaticText(self, -1, label='Stretch amplitude')
+        l_stretch_azimuth     = wx.StaticText(self, -1, label='Stretch azimuth')
+        self.mpp.e_stretch_amplitude = NumCtrl(self, -1, value=self.mpp.stretch_amplitude, fractionWidth=4, integerWidth=1)
+        self.mpp.e_stretch_azimuth   = NumCtrl(self, -1, value=self.mpp.stretch_azimuth,   fractionWidth=4, integerWidth=3)
+
+        row11.Add(l_stretch_amplitude, 0, wx.ALL|wx.CENTER, 5)
+        row11.Add(self.mpp.e_stretch_amplitude, 1, wx.ALL|wx.EXPAND, 5)
+        row12.Add(l_stretch_azimuth, 0, wx.ALL|wx.CENTER, 5)
+        row12.Add(self.mpp.e_stretch_azimuth, 1, wx.ALL|wx.EXPAND, 5)
 
         row1.Add(lsigmin, 0, wx.ALL|wx.CENTER, 5)
         row1.Add(ssigmin, 1, wx.ALL|wx.EXPAND, 5)
@@ -177,6 +192,7 @@ class MatControls(wx.Panel):
         check_show_peaks.Bind(wx.EVT_CHECKBOX, self.on_show_peaks)
         check_remove_background.Bind(wx.EVT_CHECKBOX, self.on_remove_background) 
 
+        # processing parameters
         add_to.Add(row1, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row2, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row3, 0, wx.ALL|wx.EXPAND, 5)
@@ -184,13 +200,20 @@ class MatControls(wx.Panel):
         add_to.Add(row5, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row6, 0, wx.ALL|wx.EXPAND, 5)
         
+        #background
         add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row7, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row8, 0, wx.ALL|wx.EXPAND, 5)
 
+        # display
         add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row9, 0, wx.ALL|wx.EXPAND, 5)
         add_to.Add(row10, 0, wx.ALL|wx.EXPAND, 5)
+
+        # stretch corrections
+        add_to.Add(wx.StaticLine(self,), 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row11, 0, wx.ALL|wx.EXPAND, 5)
+        add_to.Add(row12, 0, wx.ALL|wx.EXPAND, 5)
 
     def on_sigmin(self, event):
         self.mpp.sigmin = event.GetEventObject().GetValue()
@@ -276,6 +299,13 @@ class MatplotPanel(wx.Panel):
 
         self.numpeaks = 0
         self.beam_center = []
+
+        self.apply_stretch_correction = True
+        self.stretch_azimuth = -6.61
+        self.stretch_amplitude = 2.43
+
+        self.min_npeaks = 15
+        self.min_resolution = 3.0
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
@@ -422,6 +452,13 @@ class MatplotPanel(wx.Panel):
 
         stream = []
 
+        stretch_amplitude = self.e_stretch_amplitude.GetValue()
+        stretch_azimuth   = self.e_stretch_azimuth.GetValue()
+
+        stretch_azimuth_rad = np.radians(stretch_azimuth)
+        stretch_amplitude_pc = stretch_amplitude/ (2*100)
+        tr_mat = affine_transform_ellipse_to_circle(stretch_azimuth_rad, stretch_amplitude_pc)
+
         for i, fn in enumerate(self.filelist):
             keep_going, skip = dlg.Update(i, "{}/{}\n{}".format(i, total, fn))
             if not keep_going:
@@ -429,7 +466,14 @@ class MatplotPanel(wx.Panel):
                 break
 
             img, h = read_image(fn)
-            img_corr, props = self._process_image(img)
+
+            beam_center = find_beam_center(img, self.beam_center_sigma)
+
+            # stretch correction
+            img_corr = apply_transform_to_image(img, tr_mat, center=beam_center)
+
+            # remove background, find regionprops
+            img_corr, props = self._process_image(img_corr)
 
             root, ext = os.path.splitext(os.path.basename(fn))
             outdir = os.path.join(os.path.dirname(os.path.dirname(fn)), "processed")
@@ -458,8 +502,14 @@ class MatplotPanel(wx.Panel):
             data.attrs["background_footprint"] = self.background_footprint
             data.attrs["sigma_min"] = self.sigmin
             data.attrs["sigma_max"] = self.sigmax
+            data.attrs["stretch_amplitude"] = stretch_amplitude
+            data.attrs["stretch_azimuth"] = stretch_azimuth
+            data.attrs["remove_background"] = self.remove_background
+            data.attrs["apply_stretch_correction"] = self.apply_stretch_correction
 
-            if len(props) == 0:
+            npeaks = len(props)
+
+            if npeaks == 0:
                 f.close()
                 continue
 
@@ -470,7 +520,6 @@ class MatplotPanel(wx.Panel):
             orientations = np.array([prop.orientation for prop in props])
             eccentricities = np.array([prop.eccentricity for prop in props])
 
-            beam_center = find_beam_center(img, self.beam_center_sigma)
             xy_corr = xy - beam_center
             
             pixelsize = h["ImagePixelsize"]
@@ -491,9 +540,17 @@ class MatplotPanel(wx.Panel):
             f["peakinfo"].attrs["resolution"] = resolution
             f["peakinfo"].attrs["beam_center"] = beam_center 
             f["peakinfo"].attrs["pixelsize"] = pixelsize
-            f["peakinfo"].attrs["numpeaks"] = len(props)
+            f["peakinfo"].attrs["num_peaks"] = npeaks
             f["peakinfo"].attrs["remove_background"] = self.remove_background
             f["peakinfo"].attrs["background_median_footprint"] = self.background_footprint
+
+            f["peakinfo"].attrs["sigma_min"] = self.sigmin
+            f["peakinfo"].attrs["sigma_max"] = self.sigmax
+            f["peakinfo"].attrs["threshold"] = self.threshold
+            f["peakinfo"].attrs["n_min_pixels"] = self.nmin
+            f["peakinfo"].attrs["n_max_pixels"] = self.nmax
+            f["peakinfo"].attrs["min_npeaks"] = self.min_npeaks
+            f["peakinfo"].attrs["min_resolution"] = self.min_resolution
 
             radialprofile = radial_profile(img_corr, beam_center[0], beam_center[1])
             f.create_dataset("radialprofile", data=radialprofile)
@@ -502,7 +559,7 @@ class MatplotPanel(wx.Panel):
 
             f.close()
 
-            hit = (self.numpeaks > 10) and (resolution > 2.0)
+            hit = (npeaks > self.min_npeaks) and (resolution < self.min_resolution)
             if hit:
                 stream.append(outfile)
 
