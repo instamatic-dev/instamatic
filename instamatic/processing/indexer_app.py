@@ -18,9 +18,7 @@ __email__ = "stef.smeets@mmk.su.se"
 
 TEMPLATE = """title: indexing
 experiment:
-  azimuth: -6.61
   pixelsize: 0.003957
-  stretch: 2.43
 projections:
   dmax: 10.0
   dmin: 1.0
@@ -38,8 +36,29 @@ cell:
 data:
   csv_out: results.csv
   drc_out: indexing
-  glob: data/*.tiff
+  files: stream.txt
 """
+
+
+def copy_template():
+    """Copy template ipython file to current directory"""
+
+    from shutil import copyfile
+
+    fn = "indexing_template.ipynb"
+    src = os.path.join(os.path.split(os.path.abspath(__file__))[0], fn)
+    dst = os.path.join(os.path.abspath(os.path.curdir), fn)
+
+    if not os.path.exists(src):
+        raise IOError("No such file: {}".format(src))
+        sys.exit()
+    if os.path.exists(dst):
+        raise IOError("File already exists: {}".format(dst))
+        sys.exit()
+
+    copyfile(src, dst)
+
+    return True
 
 
 def get_files(file_pat):
@@ -104,7 +123,7 @@ def multi_run(arg, procs=1, dry_run=False, logfile=None):
 
     d = yaml_ordered_load(sys.argv[1])
 
-    file_pat  = d["data"]["glob"]
+    file_pat  = d["data"]["files"]
     csv_out   = d["data"]["csv_out"]
 
     fns = get_files(file_pat)
@@ -182,38 +201,26 @@ def run(arg, chunk=None, dry_run=False, log=None):
 
     d = yaml_ordered_load(arg)
 
-    azimuth   = d["experiment"]["azimuth"]
-    stretch   = d["experiment"]["stretch"]
     pixelsize = d["experiment"]["pixelsize"]
-    
+
     dmin      = d["projections"]["dmin"]
     dmax      = d["projections"]["dmax"]
     thickness = d["projections"]["thickness"]
     
-    file_pat  = d["data"]["glob"]
+    file_pat  = d["data"]["files"]
     csv_out   = d["data"]["csv_out"]
     drc_out   = d["data"]["drc_out"]
-
-    sigma_min  = d["background"]["sigma_min"]
-    sigma_max  = d["background"]["sigma_max"]
-    threshold  = d["background"]["threshold"]
-
-    azimuth = np.radians(stretch)
-    stretch = stretch / (2*100)
-    tr_mat = affine_transform_ellipse_to_circle(azimuth, stretch)
 
     refine = True
     method = "powell"
     radius = 3
     nsolutions = 25
-    beam_center_sigma = 10
 
     if isinstance(d["cell"], (tuple, list)):
-        pixelsize = d["experiment"]["pixelsize"]
         indexer = IndexerMulti.from_cells(d["cell"], pixelsize=pixelsize, **d["projections"])
     else:
         projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
-        indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
+        indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
 
     fns = get_files(file_pat)
 
@@ -241,22 +248,19 @@ def run(arg, chunk=None, dry_run=False, log=None):
         t.set_description(fn)
         t.update()
 
-        img, _ = read_image(fn)
-        
-        center = find_beam_center(img, sigma=beam_center_sigma)  # cx cy
-        
-        img = apply_transform_to_image(img, tr_mat, center=center)
-        
-        img = remove_background_gauss(img, sigma_min, sigma_max, threshold=threshold)
-        results = indexer.index(img, center, nsolutions=nsolutions)
-        
-        refined = indexer.refine_all(img, results, sort=True, method=method, vary_center=True, vary_scale=True)
+        f = h5py.File(fn)
+
+        data = np.array(f["data"])
+        center = np.array(f["peakinfo/beam_center"])
+
+        results = indexer.index(data, center, nsolutions=nsolutions)
+        refined = indexer.refine_all(data, results, sort=True, method=method, vary_center=False, vary_scale=True)
 
         best = refined[0]
 
         all_results[fn] = best
             
-        hklie = indexer.get_intensities(img, best, radius=radius)
+        hklie = indexer.get_intensities(data, best, radius=radius)
 
         root, ext = os.path.splitext(os.path.basename(fn))
         out = os.path.join(drc_out, root+".hkl")
@@ -294,7 +298,7 @@ Program for indexing electron diffraction images.
                                     version=__version__)
     
     parser.add_argument("args", 
-                        type=str, metavar="FILE",
+                        type=str, metavar="FILE", nargs="?",
                         help="Path to input file.")
 
     parser.add_argument("-j", "--procs", metavar='N',
@@ -312,16 +316,25 @@ Program for indexing electron diffraction images.
     parser.add_argument("-l", "--logfile",
                         action="store", type=str, dest="logfile",
                         help="Specify logfile (default=indexing.log).")
-    
+
+    parser.add_argument("-t", "--template",
+                        action="store_true", dest="template",
+                        help="Copy template notebook for indexing and exit.")
+
     parser.set_defaults(procs=1,
                         chunk=None,
                         dry_run=False,
                         resize=False,
+                        template=None,
                         logfile="indexing.log"
                         )
     
     options = parser.parse_args()
     arg = options.args
+
+    if options.template:
+        copy_template()
+        sys.exit()
 
     if not arg:
         parser.print_help()

@@ -422,22 +422,6 @@ class MatplotPanel(wx.Panel):
             self._xy = np.array([prop.centroid for prop in props])
         return self._xy
 
-    def _process_image(self, img):
-        if self.remove_background:
-            img_corr = img - ndimage.median_filter(img, self.background_footprint)
-        else:
-            img_corr = img
-        bg = ndimage.gaussian_filter(img_corr, self.sigmin) - ndimage.gaussian_filter(img_corr, self.sigmax)
-        
-        labels, numlabels = ndimage.label(bg > self.threshold)
-        labels = morphology.remove_small_objects(labels, self.nmin)
-        
-        props = measure.regionprops(labels, img_corr)
-        
-        img_corr = np.where(labels > 0, img_corr, np.zeros_like(img_corr))
-        
-        return img_corr, props
-
     def draw_image(self):
         self.update_peaks()
         self.Layout()
@@ -469,12 +453,23 @@ class MatplotPanel(wx.Panel):
 
             beam_center = find_beam_center(img, self.beam_center_sigma)
 
-            # stretch correction
+            if self.remove_background:
+                img_corr = img - ndimage.median_filter(img, self.background_footprint)
+            else:
+                img_corr = img
+            
+            # stretch correction second to avoid artifacts at the edges
             img_corr = apply_transform_to_image(img, tr_mat, center=beam_center)
 
-            # remove background, find regionprops
-            img_corr, props = self._process_image(img_corr)
-
+            bg = ndimage.gaussian_filter(img_corr, self.sigmin) - ndimage.gaussian_filter(img_corr, self.sigmax)
+            
+            labels, numlabels = ndimage.label(bg > self.threshold)
+            labels = morphology.remove_small_objects(labels, self.nmin)
+            
+            props = measure.regionprops(labels, img_corr)
+            
+            img_corr = np.where(labels > 0, img_corr, np.zeros_like(img_corr))
+            
             root, ext = os.path.splitext(os.path.basename(fn))
             outdir = os.path.join(os.path.dirname(os.path.dirname(fn)), "processed")
             
@@ -567,7 +562,7 @@ class MatplotPanel(wx.Panel):
 
         nhits = len(stream)
         with open("stream.txt", "w") as f:
-            f.write(" # Hitrate {}/{} = {:.1%}\n".format(nhits, total, float(nhits)/total))
+            f.write("# Hitrate {}/{} = {:.1%}\n".format(nhits, total, float(nhits)/total))
             for fn in stream:
                 f.write(fn + "\n")
 

@@ -503,7 +503,7 @@ class Indexer(object):
         theta      = kwargs.get("theta", self.theta)
         nsolutions = kwargs.get("nsolutions", 20)
 
-        phase = kwargs.get("name", "NoName")
+        phase = kwargs.get("phase", self.projector.cell.name)
 
         vals  = []
         
@@ -561,7 +561,7 @@ class Indexer(object):
         for result in results:
             self.plot(img, result, **kwargs)
     
-    def plot(self, img, result, projector=None, show_hkl=False, **kwargs):
+    def plot(self, img, result, projector=None, show_hkl=False, ax=None, **kwargs):
         """
         Plot the image with the projection given in 'result'
 
@@ -581,6 +581,12 @@ class Indexer(object):
         gamma = result.gamma
         score = result.score
         phase = result.phase
+
+        if not ax:
+            ax = plt.subplot()
+            show = True
+        else:
+            show = False
         
         vmax = kwargs.get("vmax", 300)
 
@@ -595,16 +601,19 @@ class Indexer(object):
         shape_factor = proj[:,5:6]
         hkl = proj[:,0:3]
 
-        plt.imshow(img, vmax=vmax, cmap="gray")
-        plt.plot(center_y, center_x, marker="o")
+        ax.imshow(img, vmax=vmax, cmap="gray")
+        ax.plot(center_y, center_x, marker="o")
         if show_hkl:
             for idx, (h, k, l) in enumerate(hkl):
-                plt.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
-        plt.title("alpha: {:.2f}, beta: {:.2f}, gamma: {:.2f}\n score = {:.1f}, scale = {:.1f}, proj = {}, phase = {}".format(alpha, beta, gamma, score, scale, n, phase))
-        plt.scatter(j, i, marker="+", c=shape_factor)
-        plt.xlim(0, img.shape[0]-1)
-        plt.ylim(img.shape[1]-1, 0)
-        plt.show()
+                ax.text(j[idx], i[idx], "{:.0f} {:.0f} {:.0f}".format(h, k, l), color="white")
+        
+        ax.set_title("al: {:.2f}, be: {:.2f}, ga: {:.2f}\nscore = {:.1f}, scale = {:.1f}\nproj = {}, phase = {}".format(alpha, beta, gamma, score, scale, n, phase))
+        ax.scatter(j, i, marker="+", c=shape_factor)
+        ax.set_xlim(0, img.shape[0]-1)
+        ax.set_ylim(img.shape[1]-1, 0)
+        
+        if show:
+            plt.show()
     
     def refine_all(self, img, results, sort=True, **kwargs):
         """

@@ -58,7 +58,6 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False):
     """Simple function to prepare input files for shelx
     Reads the cell/experimental parameters from the input file"""
 
-    # composition = {"Si":192, "O":384}
     fout_template = "{phase}.{ext}"
     klein_params = 90, 60
 
@@ -76,13 +75,15 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False):
 
     gb = df.groupby("phase")
 
+    print "Score threshold:", score_threshold
+
     for phase, g in gb:
         cell = phases[phase]
         composition = cell.composition
 
         if score_threshold:
             fns = g[g.score > score_threshold].index
-            fns = [fn.replace("tiff", "hkl").replace("data", drc) for fn in fns]
+            fns = [fn.replace("h5", "hkl").replace("processed", drc) for fn in fns]
         else:
             fns = glob.glob(drc + "\\*.hkl")
 

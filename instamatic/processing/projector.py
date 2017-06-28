@@ -196,11 +196,11 @@ class Projector(object):
             print
         
     @classmethod
-    def from_parameters(cls, params=None, spgr=None, name=None, **kwargs):
+    def from_parameters(cls, params=None, spgr=None, name=None, composition=None, **kwargs):
         """Return instance of Projector from cell parameters and space group
 
         See: xcore.unitcell.UnitCell"""
-        return cls(UnitCell(params, spgr=spgr, name=name), **kwargs)
+        return cls(UnitCell(params, spgr=spgr, name=name, composition=composition), **kwargs)
         
     def get_projection(self, alpha, beta, gamma=0):
         """Get projection along a particular zone axis
