@@ -1,13 +1,8 @@
-from scipy.optimize import leastsq
 import numpy as np
-import matplotlib.pyplot as plt
 import lmfit
 from instamatic.tools import *
 
-from scipy.stats import linregress
 from instamatic.TEMController import config
-
-import pickle
 
 
 def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"):
@@ -15,10 +10,7 @@ def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"
     def f(x, a, b, c):
         return a*(x-c) + b
     
-    if camera == "timepix":
-        pixelsize = config.diffraction_pixeldimensions_timepix[cameralength]
-    else:
-        pixelsize = config.diffraction_pixeldimensions[cameralength]/binsize
+    pixelsize = config.diffraction_pixeldimensions[cameralength] / binsize
 
     return f(difffocus, a, b, c) * pixelsize
 

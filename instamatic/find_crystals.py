@@ -13,7 +13,7 @@ from skimage import measure
 
 from tools import autoscale
 
-from TEMController.config import mag1_dimensions, timepix_conversion_factor
+from TEMController.config import mag1_camera_dimensions
 
 
 def isedge(prop):
@@ -100,7 +100,6 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     #   lower = more sensitive to noise
     offset = kwargs.get("offset", 15) 
     footprint = kwargs.get("footprint", 3)
-    k = timepix_conversion_factor
     
     return find_crystals(img=img, 
                          magnification=magnification, 
@@ -108,7 +107,6 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
                          plot=plot, 
                          footprint=footprint, 
                          offset=offset, 
-                         k=k,
                          r=r,
                          remove_carbon_lacing=False)
 
@@ -130,8 +128,6 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     **kwargs:
     keywords to pass to segment_crystals
     """
-    k = kwargs.pop("k", 1) # timepix conversion factor
-    
     img, scale = autoscale(img, maxdim=256)  # scale down for faster
     
     # segment the image, and find objects
@@ -141,9 +137,9 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     props = measure.regionprops(labels, img)
     
     # calculate the pixel dimensions in micrometer
-    px, py = mag1_dimensions[magnification]
-    px = px / (img.shape[0] * k)
-    py = py / (img.shape[1] * k)
+    px, py = mag1_camera_dimensions[magnification]
+    px = px / (img.shape[0])
+    py = py / (img.shape[1])
     
     iters = 20
     

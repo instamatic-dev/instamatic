@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import time
 from instamatic.formats import write_tiff
 
+import config
+
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
 ipshell = InteractiveShellEmbed(banner1='')
@@ -21,18 +23,26 @@ def initialize(camera="timepix"):
     from instamatic.camera.videostream import VideoStream
     try:
         from jeol_microscope import JeolMicroscope
-        tem = JeolMicroscope()
+
         if camera == "timepix" and not isInteractive:
             cam = VideoStream(cam="timepix")
         else:
             cam = Camera(kind=camera)
+
+        ElectronMicroscope = JeolMicroscope
     except WindowsError:
         from simu_microscope import SimuMicroscope
-        tem = SimuMicroscope()
+
         if isInteractive:
             cam = Camera(kind="simulate")
         else:
             cam = VideoStream(cam="simulate")
+
+        ElectronMicroscope = SimuMicroscope
+    
+    config.load(camera=cam.name)
+    tem = ElectronMicroscope()
+
     ctrl = TEMController(tem, cam)
     return ctrl
 
@@ -522,6 +532,7 @@ class TEMController(object):
 
     def __init__(self, tem, cam=None):
         super(TEMController, self).__init__()
+
         self.tem = tem
         self.cam = cam
 

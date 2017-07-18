@@ -214,7 +214,8 @@ class Experiment(object):
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
-        self.image_dimensions = config.mag1_dimensions[self.magnification]
+        self.image_dimensions = config.mag1_camera_dimensions[self.magnification]
+        self.log.info("Image dimensions %s", self.image_dimensions)
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
@@ -239,9 +240,6 @@ class Experiment(object):
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         if self.ctrl.cam.name == "timepix":
-            timepix_conversion_factor = config.timepix_conversion_factor
-            self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
-            self.log.info("Image dimensions %s", self.image_dimensions)
             self.find_crystals = find_crystals_timepix
             self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
         else:
