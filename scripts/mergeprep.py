@@ -3,6 +3,7 @@ from xcore import UnitCell
 from xcore.formats import write_shelx_ins
 from xcore.scattering.dt1968 import table, keys
 from xcore.scattering.atomic_radii import table as radii_table
+from scipy.interpolate import interp1d                                       
 
 from instamatic.processing.indexer import read_ycsv
 from instamatic.processing.serialmerge import serialmerge_fns
@@ -54,11 +55,31 @@ def kleinify_intensities(intensities, thresh_strong=0.5, thresh_weak=0.2):
     return intensities
 
 
-def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False):
+def match_histogram(intensities, histogram):
+    """Prepare function to match histogram"""
+    if isinstance(histogram, str):
+        histogram = np.loadtxt(os.path.join(os.path.dirname(__file__), histogram+".data"))[:,5]
+    
+    histogram.sort()
+    histogram = histogram[::-1]
+
+    x  = np.linspace(0, 100, len(histogram))
+    f = interp1d(x, histogram)
+
+    xi = np.linspace(0, 100, len(intensities))
+    yi = f(xi)
+
+    return yi
+    
+
+def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, histogram=False, drc="."):
     """Simple function to prepare input files for shelx
     Reads the cell/experimental parameters from the input file"""
 
-    fout_template = "{phase}.{ext}"
+    if not os.path.exists(drc):
+        os.mkdir(drc)
+
+    fout_template = os.path.join(drc, "{phase}.{ext}")
     klein_params = 90, 60
 
     df, d = read_ycsv(inp)
@@ -91,7 +112,7 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False):
             print "\nNot enough frames to merge for phase: '{}'".format(phase)
             continue
         else:
-            print "\nNow merging phase: '{}'\n".format(phase)
+            print "\nNow merging phase: '{}' ({} frames)\n".format(phase, len(fns))
         
         fout = fout_template.format(phase=phase, ext="hkl")
         serialmerge_fns(fns, fout=fout, verbose=True)
@@ -99,8 +120,13 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False):
         if kleinify:
             arr = np.loadtxt(fout)
             arr[:,3] = kleinify_intensities(arr[:,3], *klein_params)
-            np.savetxt(fout, arr, fmt="%4d%4d%4d%8.2f%8.2f")
-    
+            np.savetxt(fout, arr, fmt="%4d%4d%4d%8.1f%8.2f")
+
+        if histogram:
+            arr = np.loadtxt(fout)
+            arr[:,3] = match_histogram(arr[:,3], histogram)
+            np.savetxt(fout, arr, fmt="%4d%4d%4d%8.1f%8.2f")
+            
         if table == "electron":
             composition = make_sfac_for_electrons(composition)
     
@@ -141,9 +167,19 @@ Program for merging serial electron diffraction data and preparing input files f
                         action="store_true", dest="kleinify",
                         help="Kleinify reflection intensities, i.e. rank them as strong/medium/weak.")
 
+    parser.add_argument("-d", "--destination", metavar='drc',
+                        action="store", type=str, dest="destination",
+                        help="Directory to save output to.")
+
+    parser.add_argument("-m", "--histogram", metavar='ftc',
+                        action="store", type=str, dest="histogram",
+                        help="Match intensities to histogram")
+
     parser.set_defaults(score_threshold=100,
                         electron_sfac=False,
                         kleinify=False,
+                        destination=".",
+                        histogram=None
                         )
     
     options = parser.parse_args()
@@ -158,7 +194,9 @@ Program for merging serial electron diffraction data and preparing input files f
     prepare_shelx(arg,
                     score_threshold=options.score_threshold,
                     table=table,
-                    kleinify=options.kleinify
+                    kleinify=options.kleinify,
+                    drc=options.destination,
+                    histogram=options.histogram
                     )
 
 
