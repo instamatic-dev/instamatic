@@ -12,8 +12,6 @@ from calibrate import CalibStage, CalibBrightness, CalibBeamShift, CalibDirectBe
 import matplotlib.pyplot as plt
 import fileio
 
-from TEMController import config
-
 def circle_center(A, B, C):
     """Finds the center of a circle from 3 positions on the circumference
 

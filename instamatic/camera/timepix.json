@@ -17,7 +17,7 @@
 				},
 			"BeamShift":
 				{
-					"stepsize": 75,
+					"stepsize": 300,
 					"gridsize": 5
 				}
 		}	

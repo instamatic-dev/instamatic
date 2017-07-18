@@ -40,9 +40,9 @@ class SimuMicroscope(object):
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
         self.model = model
-        self.MAGNIFICATIONS      = specifications[model]["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = specifications[model]["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = specifications[model]["CAMERALENGTHS"]
+        self.MAGNIFICATIONS      = specifications["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = specifications["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = specifications["CAMERALENGTHS"]
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING

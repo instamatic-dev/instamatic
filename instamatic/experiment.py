@@ -149,16 +149,18 @@ class Experiment(object):
         # set flags
         self.ctrl.tem.VERIFY_STAGE_POSITION = False
 
-    def setup_folders(self):
-        n = 1
-        while True:
-            drc = "experiment{}".format(n)
-            if os.path.exists(drc):
-                n += 1
-            else:
-                break
-        self.curdir = os.path.abspath(os.path.curdir)
-        self.expdir = os.path.join(drc)
+    def setup_folders(self, expdir=None):
+        if not expdir:
+            n = 1
+            while True:
+                drc = "experiment{}".format(n)
+                if os.path.exists(drc):
+                    n += 1
+                else:
+                    break
+            self.curdir = os.path.abspath(os.path.curdir)
+            expdir = os.path.join(drc)
+        self.expdir = expdir
         self.calibdir = os.path.join(self.expdir, "calib")
         self.imagedir = os.path.join(self.expdir, "images")
         self.datadir = os.path.join(self.expdir, "data")
@@ -167,6 +169,7 @@ class Experiment(object):
             os.mkdir(self.calibdir)
             os.mkdir(self.imagedir)
             os.mkdir(self.datadir)
+        return self.expdir
 
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
@@ -211,7 +214,8 @@ class Experiment(object):
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
-        self.image_dimensions = config.mag1_dimensions[self.magnification]
+        self.image_dimensions = config.mag1_camera_dimensions[self.magnification]
+        self.log.info("Image dimensions %s", self.image_dimensions)
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
         self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
@@ -236,9 +240,6 @@ class Experiment(object):
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
         if self.ctrl.cam.name == "timepix":
-            timepix_conversion_factor = config.timepix_conversion_factor
-            self.image_dimensions = [val/timepix_conversion_factor for val in self.image_dimensions]
-            self.log.info("Image dimensions %s", self.image_dimensions)
             self.find_crystals = find_crystals_timepix
             self.flatfield = kwargs.get("flatfield", "flatfield.tiff")
         else:
@@ -264,10 +265,10 @@ class Experiment(object):
         kwargs["diff_brightness"]   = self.diff_brightness
         kwargs["diff_cameralength"] = self.diff_cameralength
         kwargs["diff_difffocus"]    = self.diff_difffocus
-		kwargs["hole_radius"]       = self.hole_radius
+        kwargs["hole_radius"]       = self.hole_radius
         kwargs["hole_centers"]      = self.hole_centers.tolist()
-		kwargs["hole_positions"]    = len(self.hole_offsets)
-		kwargs["image_dimensions"]  = self.image_dimensions
+        kwargs["hole_positions"]    = len(self.offsets)
+        kwargs["image_dimensions"]  = self.image_dimensions
 
         json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"))
 
@@ -483,7 +484,7 @@ class Experiment(object):
                 h.update(d)
             h["exp_crystal_coords"] = crystal_coords.tolist()
 
-            write_tiff(outfile, img, header=h)
+            write_hdf5(outfile, img, header=h)
 
             ncrystals = len(crystal_coords)
             if ncrystals == 0:
@@ -500,7 +501,7 @@ class Experiment(object):
                 for d in (d_diff, d_pos, d_cryst):
                     h.update(d)
 
-                write_tiff(outfile, img, header=h)
+                write_hdf5(outfile, img, header=h)
              
                 if self.sample_rotation_angles:
                     for rotation_angle in self.sample_rotation_angles:
@@ -514,7 +515,7 @@ class Experiment(object):
                         for d in (d_diff, d_pos, d_cryst):
                             h.update(d)
     
-                        write_tiff(outfile, img, header=h)
+                        write_hdf5(outfile, img, header=h)
                     
                     self.ctrl.stageposition.a = 0
     

@@ -6,6 +6,7 @@ import time
 from formats import *
 import TEMController
 import glob
+from tqdm import tqdm
 
 __version__ = "2017-01-31"
 
@@ -64,10 +65,11 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
     
-    raw_input("Put a spread beam and press <ENTER> to continue to collect {} flat field images".format(frames))
+    ctrl.brightness.max()
+    raw_input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
     
-    print "\nCollecting flatfield"
-    for n in range(frames):
+    print "\nCollecting flatfield images"
+    for n in tqdm(range(frames)):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
         if n == 0:
@@ -80,11 +82,10 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
 
-    # raw_input("Blank the beam and press <ENTER> to continue to collect {} dark field images".format(frames))
     ctrl.beamblank = True
 
-    print "\nCollecting darkfield"
-    for n in range(frames):
+    print "\nCollecting darkfield images"
+    for n in tqdm(range(frames)):
         outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
 
@@ -157,6 +158,7 @@ def main_entry():
     if options.collect:
         ctrl = TEMController.initialize()
         collect_flatfield(ctrl=ctrl, save_images=False)
+        ctrl.close()
         exit()
 
     if options.flatfield:
@@ -190,6 +192,7 @@ def main_entry():
         
         print name, "->", fout
         write_tiff(fout, img, header=h)
+
 
 
 if __name__ == '__main__':
