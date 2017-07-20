@@ -1,6 +1,6 @@
 import glob
 from xcore import UnitCell
-from xcore.formats import write_shelx_ins, write_focus_inp, read_hkl
+from xcore.formats import write_shelx_ins, write_focus_inp, write_superflip_inp, read_hkl
 from xcore.scattering.dt1968 import table, keys
 from xcore.scattering.atomic_radii import table as radii_table
 from scipy.interpolate import interp1d                                       
@@ -72,7 +72,7 @@ def match_histogram(intensities, histogram):
     return yi
     
 
-def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, histogram=False, drc=".", focus=False):
+def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, histogram=False, drc=".", focus=False, superflip=False):
     """Simple function to prepare input files for shelx
     Reads the cell/experimental parameters from the input file"""
 
@@ -95,6 +95,8 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, hi
     drc = d["data"]["drc_out"]
 
     gb = df.groupby("phase")
+
+    wavelength = d["projections"]["wavelength"]
 
     print "Score threshold:", score_threshold
 
@@ -136,6 +138,10 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, hi
            foc_out = fout_template.format(phase=phase, ext="inp")
            df = read_hkl(fout)
            write_focus_inp(cell, df=df, out=foc_out)
+
+        if superflip:
+           sf_out = fout_template.format(phase=phase, ext="inflip")
+           write_superflip_inp(cell, wavelength=wavelength, composition=composition, datafile=os.path.basename(fout), dataformat="intensity dummy", filename=sf_out)
 
 
 def main():
@@ -184,13 +190,18 @@ Program for merging serial electron diffraction data and preparing input files f
                         action="store_true", dest="focus",
                         help="Additionally prepare a FOCUS input file.")
 
+    parser.add_argument("-s", "--superflip",
+                        action="store_true", dest="superflip",
+                        help="Additionally prepare a SUPERFLIP input file.")
+
 
     parser.set_defaults(score_threshold=100,
                         electron_sfac=False,
                         kleinify=False,
                         destination=".",
                         histogram=None,
-                        focus=False
+                        focus=False,
+                        superflip=False
                         )
     
     options = parser.parse_args()
@@ -208,7 +219,8 @@ Program for merging serial electron diffraction data and preparing input files f
                     kleinify=options.kleinify,
                     drc=options.destination,
                     histogram=options.histogram,
-                    focus=True
+                    focus=options.focus,
+                    superflip=options.superflip
                     )
 
 
