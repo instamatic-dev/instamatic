@@ -25,6 +25,11 @@ from IPython import embed
 
 __version__ = "2017-06-02"
 
+
+MIN_NPEAKS = 50
+MIN_RESOLUTION = 3.0
+
+
 class Handler(object):
     """docstring for Handler"""
     def __init__(self, arg):
@@ -304,8 +309,8 @@ class MatplotPanel(wx.Panel):
         self.stretch_azimuth = -6.61
         self.stretch_amplitude = 2.43
 
-        self.min_npeaks = 15
-        self.min_resolution = 3.0
+        self.min_npeaks = MIN_NPEAKS
+        self.min_resolution = MIN_RESOLUTION
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
@@ -567,6 +572,42 @@ class MatplotPanel(wx.Panel):
                 f.write(fn + "\n")
 
 
+def select(fns, min_npeaks=MIN_NPEAKS, min_resolution=MIN_RESOLUTION):
+    """Reselect diffraction patterns for stream based on min_npeaks and min_resolution"""
+    import tqdm
+
+    counter = 0
+    stream = []
+
+    for fn in tqdm.tqdm(fns):
+        f = h5py.File(fn)
+    
+        try:
+            n, r = f["peakinfo"].attrs["num_peaks"], f["peakinfo"].attrs["resolution"]
+        except KeyError:
+            f.close()
+            continue
+    
+        if n < min_npeaks:
+            f.close()
+            continue
+        if r > min_resolution:
+            f.close()
+            continue
+    
+        counter += 1
+        txt = "\n{}        # {:5d}{:4.1f}".format(fn, n, r)
+    
+        stream.append(txt)
+    
+        f.close()
+    
+    with open("stream.txt", "w") as f:
+        f.write("# Hitrate {}/{} = {:.1%}".format(counter, len(fns), float(counter)/len(fns)))
+        f.writelines(stream)
+        f.write("\n")
+
+
 def main():
     usage = """instamatic.hitfinder data/*.tiff"""
 
@@ -587,19 +628,29 @@ Program for identifying useful serial electron diffraction images.
                         type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files (i.e. data/*.tiff)")
 
-    parser.set_defaults()
+    parser.add_argument("-s", "--select",
+                        action="store_true", dest="select",
+                        help="Reselect diffraction patterns based on number of peaks and resolution")
+
+    parser.set_defaults(select=False)
     
     options = parser.parse_args()
     arg = options.args
 
     if not arg:
         if os.path.exists("images"):
-            arg = "data/*.tiff"
+            arg = "data/*.h5"
         else:
             parser.print_help()
             sys.exit()
 
     filelist = glob.glob(arg)
+
+    if options.select:
+        minpks = float(raw_input("minimum number of reflections? [default] >> ") or MIN_NPEAKS)
+        minres = float(raw_input("minimum resolution? [default] >> ") or MIN_RESOLUTION)
+        select(filelist, min_npeaks=minpks, min_resolution=minres)
+        sys.exit()
 
     app = wx.App(redirect=False)
     frame = MainWindow(None, "hitfinder")
