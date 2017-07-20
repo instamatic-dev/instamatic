@@ -1,6 +1,6 @@
 import glob
 from xcore import UnitCell
-from xcore.formats import write_shelx_ins
+from xcore.formats import write_shelx_ins, write_focus_inp, read_hkl
 from xcore.scattering.dt1968 import table, keys
 from xcore.scattering.atomic_radii import table as radii_table
 from scipy.interpolate import interp1d                                       
@@ -72,7 +72,7 @@ def match_histogram(intensities, histogram):
     return yi
     
 
-def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, histogram=False, drc="."):
+def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, histogram=False, drc=".", focus=False):
     """Simple function to prepare input files for shelx
     Reads the cell/experimental parameters from the input file"""
 
@@ -132,6 +132,11 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, hi
     
         write_shelx_ins(cell, wavelength=0.0251, composition=composition, out=fout_template.format(phase=phase, ext="ins"))
 
+        if focus:
+           foc_out = fout_template.format(phase=phase, ext="inp")
+           df = read_hkl(fout)
+           write_focus_inp(cell, df=df, out=foc_out)
+
 
 def main():
     usage = """instamatic.mergeprep results.ycsv
@@ -175,11 +180,17 @@ Program for merging serial electron diffraction data and preparing input files f
                         action="store", type=str, dest="histogram",
                         help="Match intensities to histogram")
 
+    parser.add_argument("-f", "--focus",
+                        action="store_true", dest="focus",
+                        help="Additionally prepare a FOCUS input file.")
+
+
     parser.set_defaults(score_threshold=100,
                         electron_sfac=False,
                         kleinify=False,
                         destination=".",
-                        histogram=None
+                        histogram=None,
+                        focus=False
                         )
     
     options = parser.parse_args()
@@ -196,7 +207,8 @@ Program for merging serial electron diffraction data and preparing input files f
                     table=table,
                     kleinify=options.kleinify,
                     drc=options.destination,
-                    histogram=options.histogram
+                    histogram=options.histogram,
+                    focus=True
                     )
 
 
