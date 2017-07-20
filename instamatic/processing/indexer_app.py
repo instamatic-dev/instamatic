@@ -65,7 +65,7 @@ def get_files(file_pat):
     """Grab files from globbing pattern or stream file"""
     if os.path.exists(file_pat):
         f = open(file_pat, "r")
-        fns = [line.strip() for line in f if not line.startswith("#")]
+        fns = [line.split("#")[0].strip() for line in f if not line.startswith("#")]
     else:
         fns = glob.glob(file_pat)
     return fns
@@ -202,27 +202,27 @@ def run(arg, chunk=None, dry_run=False, log=None):
     d = yaml_ordered_load(arg)
 
     pixelsize = d["experiment"]["pixelsize"]
-
-    dmin      = d["projections"]["dmin"]
-    dmax      = d["projections"]["dmax"]
-    thickness = d["projections"]["thickness"]
     
-    file_pat  = d["data"]["files"]
+    files  = d["data"]["files"]
     csv_out   = d["data"]["csv_out"]
     drc_out   = d["data"]["drc_out"]
 
-    refine = True
     method = "powell"
     radius = 3
     nsolutions = 25
+    filter1d = False
+    nprojs = 100
+    vary_scale = True
+    vary_center = True
 
     if isinstance(d["cell"], (tuple, list)):
+        pixelsize = d["experiment"]["pixelsize"]
         indexer = IndexerMulti.from_cells(d["cell"], pixelsize=pixelsize, **d["projections"])
     else:
-        projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
-        indexer = Indexer.from_projector(projector, pixelsize=pixelsize)
+        projector = Projector.from_parameters(**dict(d["cell"].items() + d["projections"].items()))
+        indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
-    fns = get_files(file_pat)
+    fns = get_files(files)
 
     if chunk:
         offset, cpu_count = chunk
@@ -251,10 +251,11 @@ def run(arg, chunk=None, dry_run=False, log=None):
         f = h5py.File(fn)
 
         data = np.array(f["data"])
+        data = np.clip(data, 0, data.max())
         center = np.array(f["peakinfo/beam_center"])
 
-        results = indexer.index(data, center, nsolutions=nsolutions)
-        refined = indexer.refine_all(data, results, sort=True, method=method, vary_center=False, vary_scale=True)
+        results = indexer.index(data, center, nsolutions=nsolutions, filter1d=filter1d, nprojs=nprojs)
+        refined = indexer.refine_all(data, results, sort=True, method=method, vary_center=vary_center, vary_scale=vary_scale)
 
         best = refined[0]
 

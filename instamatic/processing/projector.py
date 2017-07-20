@@ -170,7 +170,7 @@ class Projector(object):
         The range of d-spacings in Angstrom in which reflections should be generated.
     """
 
-    def __init__(self, cell, thickness=200, wavelength=0.0251, dmin=1.0, dmax=np.inf, verbose=False):
+    def __init__(self, cell, thickness=200, wavelength=0.0251, dmin=1.0, dmax=np.inf, verbose=True):
         super(Projector, self).__init__()
         self.cell = cell
         
@@ -182,7 +182,7 @@ class Projector(object):
         self.orth  = cell.orthogonalization_matrix()
         self.iorth = np.linalg.inv(self.orth)
         
-        self.hkl = generate_hkl_listing(cell, dmin=1.0, dmax=dmax, expand=True)
+        self.hkl = generate_hkl_listing(cell, dmin=dmin, dmax=dmax, expand=True)
         self.repl = np.dot(self.hkl, self.iorth)
         
         if verbose:
@@ -193,7 +193,8 @@ class Projector(object):
             print "         Range: {} - {} Angstrom".format(dmin, dmax)
             print "    min(u,v,w):", self.repl.min(axis=0)
             print "    max(u,v,w):", self.repl.max(axis=0)
-            print
+            print "    Thickness: {}".format(thickness)
+            print "    Wavelength: {}".format(wavelength)
         
     @classmethod
     def from_parameters(cls, params=None, spgr=None, name=None, composition=None, **kwargs):

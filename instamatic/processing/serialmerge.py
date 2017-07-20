@@ -198,6 +198,7 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=Fal
         print("Completeness: {}/{}={:.2%}".format(nfilled, C.size, float(nfilled)/C.size))
         print("Reflection redundancy: {:.2f}".format(float(len(df)) / len(merged)))
         print("Pair redundancy: {:.3f}".format(((counter.sum() - refs.size)) / ((nfilled - refs.size))))
+        # print("R(serialmerge): {:.3f}".format(np.sum((np.ceil(np.abs(C)) - np.abs(C))**2) / nfilled))
 
     return merged
 
