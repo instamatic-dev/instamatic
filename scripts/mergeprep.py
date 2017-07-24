@@ -1,8 +1,10 @@
 import glob
 from xcore import UnitCell
-from xcore.formats import write_shelx_ins, write_focus_inp, write_superflip_inp, read_hkl
+from xcore.formats import write_shelx_ins, write_focus_inp, write_superflip_inp, read_hkl, read_cif
 from xcore.scattering.dt1968 import table, keys
 from xcore.scattering.atomic_radii import table as radii_table
+from xcore.diffraction import calc_structure_factors
+
 from scipy.interpolate import interp1d                                       
 
 from instamatic.processing.indexer import read_ycsv
@@ -58,7 +60,17 @@ def kleinify_intensities(intensities, thresh_strong=0.5, thresh_weak=0.2):
 def match_histogram(intensities, histogram):
     """Prepare function to match histogram"""
     if isinstance(histogram, str):
-        histogram = np.loadtxt(os.path.join(os.path.dirname(__file__), histogram+".data"))[:,5]
+        if os.path.exists(histogram):
+            root, ext = os.path.splitext(histogram)
+            if ext.lower() == ".cif":
+                cell, atoms = read_cif(histogram, verbose=False)
+                df = calc_structure_factors(cell, atoms, table="xray")
+                histogram = np.array(df["amplitude"]**2)
+                histogram = 9999 * histogram  / histogram.max()
+            else:
+                raise IOError("Unsupported format '{}' for file '{}'".format(ext, histogram))
+        elif histogram in ["MFI"]:
+            histogram = np.loadtxt(os.path.join(os.path.dirname(__file__), histogram+".data"))[:,5]
     
     histogram.sort()
     histogram = histogram[::-1]
