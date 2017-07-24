@@ -68,6 +68,10 @@ def get_files(file_pat):
         fns = [line.split("#")[0].strip() for line in f if not line.startswith("#")]
     else:
         fns = glob.glob(file_pat)
+
+    if len(fns) == 0:
+        raise IOError("No files matching '{}' were found.".format(file_path))
+
     return fns
 
 
