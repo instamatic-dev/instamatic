@@ -694,6 +694,7 @@ class Indexer(object):
         args = pks, img
         
         res = lmfit.minimize(objfunc, params, args=args, method=method, tol=self.fit_tol)
+
         if verbose:
             lmfit.report_fit(res)
                 
@@ -720,6 +721,87 @@ class Indexer(object):
                                  phase=phase)
         
         return refined
+
+    def probability_distribution(self, img, result, projector=None, verbose=True):
+        """https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer.emcee
+
+        Calculate posterior probability distribution of parameters"""
+        import corner
+        import emcee
+
+        n = result.number
+        center_x = result.center_x
+        center_y = result.center_y
+        scale = result.scale
+        alpha = result.alpha
+        beta = result.beta
+        gamma = result.gamma
+        phase = result.phase
+        # score = result.score
+
+        if not projector:
+            projector = self.projector
+        
+        def objfunc(params, pks, img):
+            center_x = params["center_x"].value
+            center_y = params["center_y"].value
+            alpha = params["alpha"].value
+            beta = params["beta"].value
+            gamma = params["gamma"].value
+            scale = params["scale"].value
+            
+            proj = projector.get_projection(alpha, beta, gamma)
+            pks = proj[:,3:5]
+            shape_factor = proj[:,5]
+            score = self.get_score(img, pks, shape_factor, scale, center_x, center_y)
+            # print center_x, center_y, scale, gamma, score
+            
+            resid = 1e3/(1+score)
+            
+            # Log-likelihood probability for the sampling. 
+            # Estimate size of the uncertainties on the data
+            s = params['f']
+            resid *= 1 / s
+            resid *= resid
+            resid += np.log(2 * np.pi * s**2)
+            return -0.5 * np.sum(resid)
+
+        params = lmfit.Parameters()
+        params.add("center_x", value=center_x, vary=True, min=center_x - 2.0, max=center_x + 2.0)
+        params.add("center_y", value=center_y, vary=True, min=center_y - 2.0, max=center_y + 2.0)
+        params.add("alpha", value=alpha, vary=True)
+        params.add("beta",  value=beta + 0.1,  vary=True)
+        params.add("gamma", value=gamma, vary=True)
+        params.add("scale", value=scale, vary=True, min=scale*0.8, max=scale*1.2)
+        
+        # Noise parameter
+        params.add('f', value=1, min=0.001, max=2)
+        
+        pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
+        
+        args = pks, img
+        
+        mini = lmfit.Minimizer(objfunc, params, fcn_args=args)
+        res = mini.emcee(params=params)
+
+        if verbose:
+            print "Median of posterior probability distribution"
+            print '--------------------------------------------'
+            lmfit.report_fit(res)
+
+        # find the maximum likelihood solution
+        highest_prob = np.argmax(res.lnprob)
+        hp_loc = np.unravel_index(highest_prob, res.lnprob.shape)
+        mle_soln = res.chain[hp_loc]
+        for i, par in enumerate(params):
+            params[par].value = mle_soln[i]
+        
+        print "\nMaximum likelihood Estimation"
+        print '-----------------------------'
+        print params
+        
+        corner.corner(res.flatchain, labels=res.var_names, truths=list(res.params.valuesdict().values()))
+        plt.show()
 
     def get_projection(self, result):
         """
