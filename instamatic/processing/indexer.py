@@ -652,46 +652,35 @@ class Indexer(object):
         method: str, optional
             Minimization method to use, should be one of 'nelder', 'powell', 'cobyla', 'least-squares'
         """
-        n = result.number
-        center_x = result.center_x
-        center_y = result.center_y
-        scale = result.scale
-        alpha = result.alpha
-        beta = result.beta
-        gamma = result.gamma
-        phase = result.phase
-        # score = result.score
-
         if not projector:
             projector = self.projector
         
         def objfunc(params, pks, img):
-            center_x = params["center_x"].value
-            center_y = params["center_y"].value
-            alpha = params["alpha"].value
-            beta = params["beta"].value
-            gamma = params["gamma"].value
-            scale = params["scale"].value
+            cx = params["center_x"].value
+            cy = params["center_y"].value
+            al = params["alpha"].value
+            be = params["beta"].value
+            ga = params["gamma"].value
+            sc = params["scale"].value
             
-            proj = projector.get_projection(alpha, beta, gamma)
+            proj = projector.get_projection(al, be, ga)
             pks = proj[:,3:5]
             shape_factor = proj[:,5]
-            score = self.get_score(img, pks, shape_factor, scale, center_x, center_y)
-            # print center_x, center_y, scale, gamma, score
+            score = self.get_score(img, pks, shape_factor, sc, cx, cy)
             
             return 1e3/(1+score)
         
         params = lmfit.Parameters()
-        params.add("center_x", value=center_x, vary=vary_center, min=center_x - 2.0, max=center_x + 2.0)
-        params.add("center_y", value=center_y, vary=vary_center, min=center_y - 2.0, max=center_y + 2.0)
-        params.add("alpha", value=alpha, vary=True)
-        params.add("beta",  value=beta,  vary=True)
-        params.add("gamma", value=gamma, vary=True)
-        params.add("scale", value=scale, vary=vary_scale, min=scale*0.8, max=scale*1.2)
+        params.add("center_x", value=result.center_x, vary=vary_center, min=result.center_x - 2.0, max=result.center_x + 2.0)
+        params.add("center_y", value=result.center_y, vary=vary_center, min=result.center_y - 2.0, max=result.center_y + 2.0)
+        params.add("alpha", value=result.alpha, vary=True)
+        params.add("beta",  value=result.beta,  vary=True)
+        params.add("gamma", value=result.gamma, vary=True)
+        params.add("scale", value=result.scale, vary=vary_scale, min=result.scale*0.8, max=result.scale*1.2)
         
-        pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
+        pks_current = projector.get_projection(result.alpha, result.beta, result.gamma)[:,3:5]
         
-        args = pks, img
+        args = pks_current, img
         
         res = lmfit.minimize(objfunc, params, args=args, method=method, tol=self.fit_tol)
 
@@ -700,61 +689,51 @@ class Indexer(object):
                 
         p = res.params
         
-        alpha_new, beta_new, gamma_new, scale_new, center_x_new, center_y_new = [round(val, 4) for val in  p["alpha"].value, p["beta"].value, p["gamma"].value, p["scale"].value, p["center_x"].value, p["center_y"].value]
+        alpha, beta, gamma = [round(p[key].value, 4) for key in ("alpha", "beta", "gamma")]
+        scale, center_x, center_y = [round(p[key].value, 2) for key in ("scale", "center_x", "center_y")]
         
-        proj_new = projector.get_projection(alpha_new, beta_new, gamma_new)
-        pks_new = proj_new[:,3:5]
-        shape_factor_new = proj_new[:,5]
+        proj = projector.get_projection(alpha, beta, gamma)
+        pks = proj[:,3:5]
+        shape_factor = proj[:,5]
         
-        score_new = self.get_score(img, pks_new, shape_factor_new, scale_new, center_x_new, center_y_new)
+        score = round(self.get_score(img, pks, shape_factor, scale, center_x, center_y), 2)
         
-        # print "Score: {} -> {}".format(int(score), int(score_new))
+        # print "Score: {} -> {}".format(int(score), int(score))
         
-        refined = IndexingResult(score=score_new,
-                                 number=n,
-                                 alpha=alpha_new,
-                                 beta=beta_new,
-                                 gamma=gamma_new,
-                                 center_x=center_x_new,
-                                 center_y=center_y_new,
-                                 scale=scale_new,
-                                 phase=phase)
+        refined = IndexingResult(score=score,
+                                 number=result.number,
+                                 alpha=alpha,
+                                 beta=beta,
+                                 gamma=gamma,
+                                 center_x=center_x,
+                                 center_y=center_y,
+                                 scale=scale,
+                                 phase=result.phase)
         
         return refined
 
-    def probability_distribution(self, img, result, projector=None, verbose=True):
+    def probability_distribution(self, img, result, projector=None, verbose=True, vary_center=False, vary_scale=True):
         """https://lmfit.github.io/lmfit-py/fitting.html#lmfit.minimizer.Minimizer.emcee
 
         Calculate posterior probability distribution of parameters"""
         import corner
         import emcee
 
-        n = result.number
-        center_x = result.center_x
-        center_y = result.center_y
-        scale = result.scale
-        alpha = result.alpha
-        beta = result.beta
-        gamma = result.gamma
-        phase = result.phase
-        # score = result.score
-
         if not projector:
             projector = self.projector
         
         def objfunc(params, pks, img):
-            center_x = params["center_x"].value
-            center_y = params["center_y"].value
-            alpha = params["alpha"].value
-            beta = params["beta"].value
-            gamma = params["gamma"].value
-            scale = params["scale"].value
+            cx = params["center_x"].value
+            cy = params["center_y"].value
+            al = params["alpha"].value
+            be = params["beta"].value
+            ga = params["gamma"].value
+            sc = params["scale"].value
             
-            proj = projector.get_projection(alpha, beta, gamma)
+            proj = projector.get_projection(al, be, ga)
             pks = proj[:,3:5]
             shape_factor = proj[:,5]
-            score = self.get_score(img, pks, shape_factor, scale, center_x, center_y)
-            # print center_x, center_y, scale, gamma, score
+            score = self.get_score(img, pks, shape_factor, sc, cx, cy)
             
             resid = 1e3/(1+score)
             
@@ -767,40 +746,41 @@ class Indexer(object):
             return -0.5 * np.sum(resid)
 
         params = lmfit.Parameters()
-        params.add("center_x", value=center_x, vary=True, min=center_x - 2.0, max=center_x + 2.0)
-        params.add("center_y", value=center_y, vary=True, min=center_y - 2.0, max=center_y + 2.0)
-        params.add("alpha", value=alpha, vary=True)
-        params.add("beta",  value=beta + 0.1,  vary=True)
-        params.add("gamma", value=gamma, vary=True)
-        params.add("scale", value=scale, vary=True, min=scale*0.8, max=scale*1.2)
+        params.add("center_x", value=result.center_x, vary=vary_center, min=result.center_x - 2.0, max=result.center_x + 2.0)
+        params.add("center_y", value=result.center_y, vary=vary_center, min=result.center_y - 2.0, max=result.center_y + 2.0)
+        params.add("alpha", value=result.alpha + 0.01, vary=True, min=result.alpha - 0.1, max=result.alpha + 0.1)
+        params.add("beta",  value=result.beta + 0.01,  vary=True, min=result.beta - 0.1, max=result.beta + 0.1)
+        params.add("gamma", value=result.gamma + 0.01, vary=True, min=result.gamma - 0.1, max=result.gamma + 0.1)
+        params.add("scale", value=result.scale, vary=vary_scale, min=result.scale*0.8, max=result.scale*1.2)
         
         # Noise parameter
         params.add('f', value=1, min=0.001, max=2)
         
-        pks = projector.get_projection(alpha, beta, gamma)[:,3:5]
+        pks_current = projector.get_projection(result.alpha, result.beta, result.gamma)[:,3:5]
         
-        args = pks, img
+        args = pks_current, img
         
         mini = lmfit.Minimizer(objfunc, params, fcn_args=args)
         res = mini.emcee(params=params)
 
         if verbose:
-            print "Median of posterior probability distribution"
-            print '--------------------------------------------'
+            print "\nMedian of posterior probability distribution"
+            print "--------------------------------------------"
             lmfit.report_fit(res)
 
         # find the maximum likelihood solution
         highest_prob = np.argmax(res.lnprob)
         hp_loc = np.unravel_index(highest_prob, res.lnprob.shape)
         mle_soln = res.chain[hp_loc]
-        for i, par in enumerate(params):
-            params[par].value = mle_soln[i]
         
-        print "\nMaximum likelihood Estimation"
-        print '-----------------------------'
-        print params
+        if verbose:
+            for i, par in enumerate(res.var_names):
+                params[par].value = mle_soln[i]
+            print "\nMaximum likelihood Estimation"
+            print "-----------------------------"
+            print params
         
-        corner.corner(res.flatchain, labels=res.var_names, truths=list(res.params.valuesdict().values()))
+        corner.corner(res.flatchain, labels=res.var_names, truths=[res.params[par].value for par in res.params if res.params[par].vary])
         plt.show()
 
     def get_projection(self, result):

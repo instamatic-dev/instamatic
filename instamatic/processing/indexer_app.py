@@ -263,6 +263,8 @@ def run(arg, chunk=None, dry_run=False, log=None):
 
         best = refined[0]
 
+        # indexer.probability_distribution(data, best)
+
         all_results[fn] = best
             
         hklie = indexer.get_intensities(data, best, radius=radius)
