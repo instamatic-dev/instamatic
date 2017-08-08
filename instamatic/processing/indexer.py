@@ -655,7 +655,7 @@ class Indexer(object):
         if not projector:
             projector = self.projector
         
-        def objfunc(params, pks, img):
+        def objfunc(params, img):
             cx = params["center_x"].value
             cy = params["center_y"].value
             al = params["alpha"].value
@@ -667,9 +667,9 @@ class Indexer(object):
             pks = proj[:,3:5]
             shape_factor = proj[:,5]
             score = self.get_score(img, pks, shape_factor, sc, cx, cy)
-            
+
             return 1e3/(1+score)
-        
+
         params = lmfit.Parameters()
         params.add("center_x", value=result.center_x, vary=vary_center, min=result.center_x - 2.0, max=result.center_x + 2.0)
         params.add("center_y", value=result.center_y, vary=vary_center, min=result.center_y - 2.0, max=result.center_y + 2.0)
@@ -678,10 +678,8 @@ class Indexer(object):
         params.add("gamma", value=result.gamma, vary=True)
         params.add("scale", value=result.scale, vary=vary_scale, min=result.scale*0.8, max=result.scale*1.2)
         
-        pks_current = projector.get_projection(result.alpha, result.beta, result.gamma)[:,3:5]
-        
-        args = pks_current, img
-        
+        args = img,
+
         res = lmfit.minimize(objfunc, params, args=args, method=method, tol=self.fit_tol)
 
         if verbose:

@@ -207,17 +207,25 @@ def run(arg, chunk=None, dry_run=False, log=None):
 
     pixelsize = d["experiment"]["pixelsize"]
     
-    files  = d["data"]["files"]
+    files     = d["data"]["files"]
     csv_out   = d["data"]["csv_out"]
     drc_out   = d["data"]["drc_out"]
 
-    method = "powell"
-    radius = 3
-    nsolutions = 25
-    filter1d = False
-    nprojs = 100
-    vary_scale = True
-    vary_center = True
+    method      = d["instructions"].get("method", "powell")
+    radius      = d["instructions"].get("radius", 3)
+    nsolutions  = d["instructions"].get("nsolutions", 25)
+    filter1d    = d["instructions"].get("filter1d", False)
+    nprojs      = d["instructions"].get("nprojs", 100)
+    vary_scale  = d["instructions"].get("vary_scale", True)
+    vary_center = d["instructions"].get("vary_center", True)
+
+    d["instructions"]["method"]     = method
+    d["instructions"]["radius"]     = radius
+    d["instructions"]["nsolutions"] = nsolutions
+    d["instructions"]["filter1d"]   = filter1d
+    d["instructions"]["nprojs"]     = nprojs
+    d["instructions"]["vary_scale"] = vary_scale
+    d["instructions"]["vary_center"]= vary_center
 
     if isinstance(d["cell"], (tuple, list)):
         pixelsize = d["experiment"]["pixelsize"]
@@ -259,6 +267,7 @@ def run(arg, chunk=None, dry_run=False, log=None):
         center = np.array(f["peakinfo/beam_center"])
 
         results = indexer.index(data, center, nsolutions=nsolutions, filter1d=filter1d, nprojs=nprojs)
+
         refined = indexer.refine_all(data, results, sort=True, method=method, vary_center=vary_center, vary_scale=vary_scale)
 
         best = refined[0]
@@ -280,12 +289,17 @@ def run(arg, chunk=None, dry_run=False, log=None):
         write_csv(csv_out, all_results)
     else:
         write_ycsv(csv_out, data=all_results, metadata=d)
+
     print "Writing results to {}".format(csv_out)
     
     time_taken = t.last_print_t - t.start_t
-    print "Time taken: {:.0f} s / {:.1f} s per image".format(time_taken, (time_taken)/nfiles)
+    msg = "Time taken: {:.0f} s / {:.1f} s per image".format(time_taken, (time_taken)/nfiles)
+    print msg
     print
     print " >> DONE <<"
+
+    log.info(projector._get_projection_alpha_beta_cache.cache_info())
+    log.info(msg)
 
 
 def main():

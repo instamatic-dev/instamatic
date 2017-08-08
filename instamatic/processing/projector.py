@@ -4,6 +4,7 @@ from xcore import UnitCell
 from xcore.spacegroup import generate_hkl_listing
 from fractions import Fraction, gcd
 
+from lru_cache import lru_cache
 
 def recover_integer_vector(u, denom=10):
     """
@@ -184,7 +185,7 @@ class Projector(object):
         
         self.hkl = generate_hkl_listing(cell, dmin=dmin, dmax=dmax, expand=True)
         self.repl = np.dot(self.hkl, self.iorth)
-        
+
         if verbose:
             self.cell.info()
 
@@ -203,7 +204,7 @@ class Projector(object):
         See: xcore.unitcell.UnitCell"""
         return cls(UnitCell(params, spgr=spgr, name=name, composition=composition), **kwargs)
         
-    def get_projection(self, alpha, beta, gamma=0):
+    def get_projection(self, alpha, beta, gamma=0, use_cache=True):
         """Get projection along a particular zone axis
 
         alpha, beta: float
@@ -213,14 +214,24 @@ class Projector(object):
 
         Returns array (5, n):
             5-column array hkl indices and xy coordinates in reciprocal coordinates
-        """  
-        beam_direction = polar2xyz(alpha, beta)
-        
-        proj = self._get_projection(beam_direction)
-        
+        """ 
+
+        if use_cache:
+            proj = self._get_projection_alpha_beta_cache(alpha, beta)
+            if use_cache > 1:
+                proj_no_cache = self._get_projection_alpha_beta(alpha, beta)
+                try:
+                    assert np.allclose(proj_no_cache, proj)
+                except AssertionError:
+                    raise RuntimeError("Cache results cannot be verified.")
+        else:
+            proj = self._get_projection_alpha_beta(alpha, beta)
+
         if gamma:
             rot_gamma = make_2d_rotmat(gamma)
-            proj[:,3:5] = np.dot(proj[:,3:5], rot_gamma)
+
+            # NOTE: here it is important not to update inplace to avoid cache corruption
+            proj = np.hstack([proj[:,0:3], np.dot(proj[:,3:5], rot_gamma), proj[:,5:6]])
         
         return proj
 
@@ -244,7 +255,22 @@ class Projector(object):
             proj[:,3:5] = np.dot(proj[:,3:5], rot_gamma)
         
         return proj
-        
+    
+    def _get_projection_alpha_beta(self, alpha, beta):
+        """No caching"""
+        beam_direction = polar2xyz(alpha, beta)
+        return self._get_projection(beam_direction)
+
+    @lru_cache(maxsize=128)
+    def _get_projection_alpha_beta_cache(self, alpha, beta):
+        """For caching purposes"""
+
+        # projector._get_projection_cache.cache_info()
+        # projector._get_projection_cache.cache_clear()
+
+        beam_direction = polar2xyz(alpha, beta)
+        return self._get_projection(beam_direction)
+
     def _get_projection(self, beam_direction):
         """Get projection along a particular beam direction
 
@@ -347,8 +373,10 @@ class Projector(object):
 
         projections = []
         infos = []
+
         for i, (alpha, beta) in enumerate(alpha_beta):
-            projections.append(self.get_projection(alpha=alpha, beta=beta))
+            projections.append(self.get_projection(alpha=alpha, beta=beta, use_cache=False))
             infos.append((i, alpha, beta))
+
         return projections, infos
 
