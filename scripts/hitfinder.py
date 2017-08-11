@@ -8,7 +8,7 @@ from instamatic.processing.stretch_correction import affine_transform_ellipse_to
 import argparse, glob
 
 from scipy import ndimage
-from skimage import feature, morphology, measure
+from skimage import feature, morphology, measure, filters
 
 import numpy as np
 import wx
@@ -133,11 +133,11 @@ class MatControls(wx.Panel):
         ssigmin = wx.Slider(self, wx.ID_ANY, value=self.mpp.sigmin, minValue=1, maxValue=20, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
         ssigmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.sigmax, minValue=1, maxValue=20, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
         sthresh = wx.Slider(self, wx.ID_ANY, value=self.mpp.threshold, minValue=1, maxValue=100, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
-        snmin = wx.Slider(self, wx.ID_ANY, value=self.mpp.nmin,  minValue=1, maxValue=200, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
+        snmin = wx.Slider(self, wx.ID_ANY, value=self.mpp.nmin,  minValue=1, maxValue=50, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
         snmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.nmax, minValue=10, maxValue=1000, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
 
         lvmax = wx.StaticText(self, label='Vmax     \t')
-        svmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.vmax, minValue=0, maxValue=1000, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
+        svmax = wx.Slider(self, wx.ID_ANY, value=self.mpp.vmax, minValue=1, maxValue=500, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
 
         lbackground_footprint   = wx.StaticText(self, label='Bkg. footprint')
         sbackground_footprint = wx.Slider(self, wx.ID_ANY, value=self.mpp.background_footprint, minValue=1, maxValue=50, style=wx.SL_HORIZONTAL | wx.SL_LABELS | wx.SL_VALUE_LABEL | wx.SL_AUTOTICKS)
@@ -341,9 +341,10 @@ class MatplotPanel(wx.Panel):
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW | wx.EXPAND)
         self.sizer.Add(self.nav_sizer, 0, wx.GROW)
 
-        self.im = self.ax.imshow(np.random.random((512,512)), cmap="gray", vmax=500)
+        self.im_shape = 512, 512
+        self.im = self.ax.imshow(np.random.random(self.im_shape), cmap="gray", vmax=self.vmax)
         self.coords, = self.ax.plot([], [], marker="o", color="red", mew=1, lw=0, mfc="none")
-        self.center, = self.ax.plot([], [], marker="o", color="red", lw=0)
+        self.center, = self.ax.plot([], [], marker="o", color="green", lw=0)
         self.reset_properties()
 
     @property
@@ -367,30 +368,41 @@ class MatplotPanel(wx.Panel):
         self.status.SetStatusText("{}/{}: {}".format(self.index, len(self.filelist), fn))
         self.reset_properties()
 
-        self.img, h = read_image(fn)
+        img, h = read_image(fn)
+
+        # unsigned integers are bad for doing subtractions later on
+        if np.issubdtype(img.dtype, np.unsignedinteger):
+            img = img.astype(int)
+
+        self.img = img
+
         self.update_image()
 
     def update_image(self):
         if self.show_raw_data:
-            self.im.set_data(self.img)
+            data = self.img
         else:
-            self.im.set_data(self.img_corr)
+            data = self.img_corr
+
+        if self.im_shape != self.img.shape:
+            self.im_shape = self.img.shape
+            self.im = self.ax.imshow(data, cmap="gray", vmax=self.vmax)
+        else:
+            self.im.set_data(data)
+
         self.draw_image()
 
     def update_peaks(self):
         self.beam_center = find_beam_center(self.img, sigma=self.beam_center_sigma)
         if self.show_peaks:
-            # BUG in FigureCanvasWxAgg? 
-            # Work-around to fix incorrect display of peak positions on canvas
-            # Multiply by 0.99 seems to be OK
             try:
-                self.coords.set_xdata(0.99 * self.xy[:,1])
-                self.coords.set_ydata(0.99 * self.xy[:,0])
+                self.coords.set_xdata(self.xy[:,1])
+                self.coords.set_ydata(self.xy[:,0])
             except IndexError:
                 self.coords.set_xdata([])
                 self.coords.set_ydata([])
-            self.center.set_xdata(0.99 * self.beam_center[1])
-            self.center.set_ydata(0.99 * self.beam_center[0])
+            self.center.set_xdata(self.beam_center[1])
+            self.center.set_ydata(self.beam_center[0])
         else:
             self.coords.set_xdata([])
             self.coords.set_ydata([])
@@ -408,7 +420,9 @@ class MatplotPanel(wx.Panel):
     @property
     def img_corr(self):
         if self._img_corr is None:
-            self._img_corr = self.img - ndimage.median_filter(self.img, self.background_footprint)
+            selem = morphology.square(self.background_footprint)
+            # skimage only accepts input image as uint16
+            self._img_corr = self.img - filters.median(self.img.astype(np.uint16), selem).astype(self.img.dtype)
         return self._img_corr
 
     @property
@@ -456,10 +470,16 @@ class MatplotPanel(wx.Panel):
 
             img, h = read_image(fn)
 
+            # unsigned integers are bad for doing subtractions later on
+            if np.issubdtype(img.dtype, np.unsignedinteger):
+                img = img.astype(int)
+
             beam_center = find_beam_center(img, self.beam_center_sigma)
 
             if self.remove_background:
-                img_corr = img - ndimage.median_filter(img, self.background_footprint)
+                selem = morphology.square(self.background_footprint)
+                # skimage only accepts input image as uint16
+                img_corr = img - filters.median(img.astype(np.uint16), selem).astype(img.dtype)
             else:
                 img_corr = img
             
@@ -522,7 +542,10 @@ class MatplotPanel(wx.Panel):
 
             xy_corr = xy - beam_center
             
-            pixelsize = h["ImagePixelsize"]
+            try:
+                pixelsize = h["ImagePixelsize"]
+            except KeyError:
+                pixelsize = 1.0
 
             dspacings = np.linalg.norm(1/(pixelsize * xy_corr), axis=1)
             resolution = np.percentile(dspacings, 20) 
