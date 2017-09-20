@@ -27,7 +27,7 @@ __version__ = "2017-06-02"
 
 
 MIN_NPEAKS = 50
-MIN_RESOLUTION = 3.0
+MIN_RESOLUTION = 9999
 
 
 class Handler(object):
