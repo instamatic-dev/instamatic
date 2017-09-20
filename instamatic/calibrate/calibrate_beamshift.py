@@ -254,17 +254,28 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
 
 def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, outdir=".", confirm=True):
     if not (center_fn or other_fn):
-        if confirm and raw_input("""
+        if confirm:
+            ctrl.store("calib_beamshift")
+            while True:
+                inp = raw_input("""
 Calibrate beamshift
 -------------------
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
     
- >> Press <ENTER> to start\n"""):
-            return
-        else:
-            calib = calibrate_beamshift_live(ctrl, save_images=save_images, outdir=outdir)
+ >> Press <ENTER> to start >> \n""")
+                if inp == "x":
+                    ctrl.restore()
+                    ctrl.close()
+                    sys.exit()
+                elif inp == "r":
+                    ctrl.restore("calib_beamshift")
+                elif inp == "go":
+                    break
+                elif not inp:
+                    break
+        calib = calibrate_beamshift_live(ctrl, save_images=save_images, outdir=outdir)
     else:
         calib = calibrate_beamshift_from_image_fn(center_fn, other_fn)
 

@@ -3,7 +3,7 @@
 	"default_binsize": 1,
 	"possible_binsizes": [1],
 	"dimensions": [512, 512],
-	"correction_ratio": 2.7,
+	"correction_ratio": 2.15,
 	"calib_beamshift": {
 		"stepsize": 500,
 		"gridsize": 5
