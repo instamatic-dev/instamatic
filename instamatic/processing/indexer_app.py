@@ -10,6 +10,8 @@ from tqdm import tqdm
 import logging
 
 from instamatic.formats import *
+from instamatic.tools import get_files, ProgressBar
+from instamatic.formats.csvIO import yaml_ordered_load
 
 __version__ = "2017-03-09"
 __author__ = "Stef Smeets"
@@ -61,31 +63,6 @@ def copy_template():
     return True
 
 
-def get_files(file_pat):
-    """Grab files from globbing pattern or stream file"""
-    if os.path.exists(file_pat):
-        root, ext = os.path.splitext(file_pat)
-        if ext.lower() == ".ycsv":
-            df, d = read_ycsv(file_pat)
-            fns = df.index.tolist()
-        else:
-            f = open(file_pat, "r")
-            fns = [line.split("#")[0].strip() for line in f if not line.startswith("#")]
-    else:
-        fns = glob.glob(file_pat)
-
-    if len(fns) == 0:
-        raise IOError("No files matching '{}' were found.".format(file_path))
-
-    return fns
-
-
-def printer(data):
-    """Print things to stdout on one line dynamically"""
-    sys.stdout.write("\r\x1b[K"+data.__str__())
-    sys.stdout.flush()
-
-
 def merge_csv(csvs):
     """Read amd combine csv files `csvs` into one df,
 
@@ -96,34 +73,6 @@ def merge_csv(csvs):
         os.unlink(csv)
 
     return combined
-
-
-class ProgressBar(object):
-    """docstring for ProgressBar"""
-    def __init__(self):
-        
-        self.reverse = False
-        self.a = ' '
-        self.b = '='
-        self.width = 10
-        self.delay = 0.2
-
-    def loop(self):
-        for i in range(self.width):
-            if self.reverse:
-                i = self.width-i
-            time.sleep(self.delay)
-            printer('['+self.b*(i)+self.a*(self.width-i)+']')
-        self.reverse = not self.reverse
-        for i in range(self.width):
-            if self.reverse:
-                i = self.width-i
-            time.sleep(self.delay)
-            printer('['+self.a*(self.width-i)+self.b*i+']')
-        self.a,self.b = self.b,self.a
-        
-    def clear(self):
-        printer('')
 
 
 def multi_run(arg, procs=1, dry_run=False, logfile=None):
@@ -224,6 +173,8 @@ def run(arg, chunk=None, dry_run=False, log=None):
     vary_scale  = d["instructions"].get("vary_scale", True)
     vary_center = d["instructions"].get("vary_center", True)
 
+    digitize = False
+
     d["instructions"]["method"]     = method
     d["instructions"]["radius"]     = radius
     d["instructions"]["nsolutions"] = nsolutions
@@ -267,9 +218,12 @@ def run(arg, chunk=None, dry_run=False, log=None):
 
         f = h5py.File(fn)
 
-        data = np.array(f["data"])
+        data = np.array(f["data"]).astype(int)
         data = np.clip(data, 0, data.max())
         center = np.array(f["peakinfo/beam_center"])
+        if digitize:
+            digi_threshold = 1
+            data = np.digitize(data, (digi_threshold,)).astype(data.dtype)
 
         results = indexer.index(data, center, nsolutions=nsolutions, filter1d=filter1d, nprojs=nprojs)
 
