@@ -26,8 +26,10 @@ def initialize(camera="timepix"):
 
         if camera == "timepix" and not isInteractive:
             cam = VideoStream(cam="timepix")
-        else:
+        elif isinstance(camera, str):
             cam = Camera(kind=camera)
+        else:
+            cam = camera
 
         ElectronMicroscope = JeolMicroscope
     except WindowsError:
