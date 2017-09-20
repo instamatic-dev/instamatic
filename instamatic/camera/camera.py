@@ -25,6 +25,8 @@ __all__ = ["Camera"]
 
 DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
 DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
+# SoPhy > File > Medipix/Timepix control > Save parametrized settings
+# Save updated config for timepix camera
 DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 
 
