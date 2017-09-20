@@ -270,7 +270,7 @@ class Experiment(object):
         kwargs["hole_positions"]    = len(self.offsets)
         kwargs["image_dimensions"]  = self.image_dimensions
 
-        json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"))
+        json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"), indent=2)
 
     def initialize_microscope(self):
         """Intialize microscope"""
