@@ -136,24 +136,24 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
 
 class Experiment(object):
     """docstring for Experiment"""
-    def __init__(self, ctrl, config, log=None):
+    def __init__(self, ctrl, config, expdir=None, log=None):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
         self.log = log
 
-        self.setup_folders()
+        self.setup_folders(expdir=expdir)
 
         self.load_calibration(**config)
 
         # set flags
         self.ctrl.tem.VERIFY_STAGE_POSITION = False
 
-    def setup_folders(self, expdir=None):
+    def setup_folders(self, expdir=None, name="experiment"):
         if not expdir:
             n = 1
             while True:
-                drc = "experiment{}".format(n)
+                drc = "{}{}".format(name, n)
                 if os.path.exists(drc):
                     n += 1
                 else:

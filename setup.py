@@ -35,8 +35,8 @@ setup(
         'console_scripts': [
             # main
             'instamatic                               = instamatic.experiment:main',
+            'instamatic.gui                           = instamatic.data_collection:main',
             # experiment
-            'instamatic.gui                           = instamatic.experiment:main_gui',
             'instamatic.find_crystals                 = instamatic.find_crystals:find_crystals_entry',
             'instamatic.find_holes                    = instamatic.find_holes:find_holes_entry',
             'instamatic.camera                        = instamatic.camera.camera:main_entry',
