@@ -153,6 +153,34 @@ class VideoStream(threading.Thread):
             self.panel.pack(side="left", padx=10, pady=10)
 
     def buttonbox(self, master):
+        ewidth = 10
+        lwidth = 12
+
+        frame = Frame(master)
+
+        self.saving_path = Entry(frame, width = 50, textvariable=self.var_saving_path)
+        self.name_data = Entry(frame, width = 50, textvariable=self.var_name_dataset)
+        self.Expt = Entry(frame,width=50,textvariable=self.var_dataRecordExpt)
+
+        self.coll=self.coll_init(self.ctrl)
+        self.CollectionButton=Button(frame,text="Start Collection",command=self.coll.start_collection)
+        self.CollectionButton.grid(row=3,column=4)
+        self.CollectionStopButton=Button(frame,text="Stop Collection",command=self.coll.collectionstop)
+        self.CollectionStopButton.grid(row=3,column=5)
+        self.CollectionContButton=Button(frame,text="Continue Collection",command=self.coll.continuecollection)
+        self.CollectionContButton.grid(row=3,column=6)
+        self.exitButton=Button(frame,text="EXIT",command=self.close_window)
+        self.exitButton.grid(row=3,column=7)
+
+        Label(frame, anchor=E, width=30, text="Saving path:").grid(row=2, column=0)
+        self.saving_path.grid(row=2,column=2)
+        Label(frame, anchor=E, width=30, text="Name of current dataset:").grid(row=3,column=0)
+        self.name_data.grid(row=3,column=2)
+        Label(frame, anchor=E, width=30,text="Exposure time for data collection").grid(row=4,column=0)
+        self.Expt.grid(row=4,column=2)
+
+        frame.pack()
+
         btn = Button(master, text="Save image",
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
@@ -169,6 +197,9 @@ class VideoStream(threading.Thread):
         self.var_brightness = DoubleVar(value=1.0)
         self.var_brightness.set(self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
+
+        # Button box
+        self.var_saving_path = StringVar(value="C:/")
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode

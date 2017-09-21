@@ -16,6 +16,9 @@ def load(fn="config.yaml", camera=None):
   path = os.path.join(os.path.dirname(__file__), fn)
   d = yaml.load(open(path, "r"))
 
+  if camera == "simulate":
+    camera = "timepix"
+
   if not camera:
     camera = d["cameras"][0]
   else:
