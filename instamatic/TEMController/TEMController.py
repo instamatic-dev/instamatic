@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import time
 from instamatic.formats import write_tiff
+import sys
 
 import config
 
@@ -21,27 +22,33 @@ def initialize(camera="timepix"):
 
     from instamatic.camera import Camera
     from instamatic.camera.videostream import VideoStream
-    try:
-        from jeol_microscope import JeolMicroscope
-
-        if camera == "timepix" and not isInteractive:
-            cam = VideoStream(cam="timepix")
-        elif isinstance(camera, str):
-            cam = Camera(kind=camera)
-        else:
-            cam = camera
-
-        ElectronMicroscope = JeolMicroscope
-    except WindowsError:
-        from simu_microscope import SimuMicroscope
-
-        if isInteractive:
-            cam = Camera(kind="simulate")
-        else:
-            cam = VideoStream(cam="simulate")
-
-        ElectronMicroscope = SimuMicroscope
     
+    if sys.platform == "win32":
+        try:
+            from jeol_microscope import JeolMicroscope
+    
+            if camera == "timepix" and not isInteractive:
+                cam = VideoStream(cam="timepix")
+            elif isinstance(camera, str):
+                cam = Camera(kind=camera)
+            else:
+                cam = camera
+    
+            ElectronMicroscope = JeolMicroscope
+        except WindowsError:
+            from simu_microscope import SimuMicroscope
+    
+            if isInteractive:
+                cam = Camera(kind="simulate")
+            else:
+                cam = VideoStream(cam="simulate")
+    
+            ElectronMicroscope = SimuMicroscope
+    else:
+        from simu_microscope import SimuMicroscope
+        ElectronMicroscope = SimuMicroscope
+        cam = VideoStream(cam="simulate")
+
     config.load(camera=cam.name)
     tem = ElectronMicroscope()
 

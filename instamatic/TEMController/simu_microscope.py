@@ -1,5 +1,28 @@
-from jeol_microscope import ZERO, MIN, MAX, FUNCTION_MODES, NTRLMAPPING
 from config import specifications
+
+NTRLMAPPING = {
+   "GUN1" : 0,
+   "GUN2" : 1,
+   "CLA1" : 2,
+   "CLA2" : 3,
+   "SHIFT" : 4,
+   "TILT" : 5,
+   "ANGLE" : 6,
+   "CLS" : 7,
+   "IS1" : 8,
+   "IS2" : 9,
+   "SPOT?" : 10,
+   "PLA" : 11,
+   "OLS" : 12,
+   "ILS" : 13
+}
+
+FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
+
+# constants for Jeol Hex value
+ZERO = 32768
+MAX = 65535
+MIN = 0
 
 
 class SimuMicroscope(object):
