@@ -100,7 +100,7 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    ctrl = TEMController.initialize(camera="timepix")
+    ctrl = TEMController.initialize()
 
     gui = GUI(ctrl, log=log)
 

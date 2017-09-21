@@ -26,6 +26,7 @@ def initialize(camera="timepix"):
     if sys.platform == "win32":
         try:
             from jeol_microscope import JeolMicroscope
+            tem = JeolMicroscope()
     
             if camera == "timepix" and not isInteractive:
                 cam = VideoStream(cam="timepix")
@@ -34,7 +35,6 @@ def initialize(camera="timepix"):
             else:
                 cam = camera
     
-            ElectronMicroscope = JeolMicroscope
         except WindowsError:
             from simu_microscope import SimuMicroscope
     
@@ -43,15 +43,13 @@ def initialize(camera="timepix"):
             else:
                 cam = VideoStream(cam="simulate")
     
-            ElectronMicroscope = SimuMicroscope
+            tem = SimuMicroscope()
     else:
         from simu_microscope import SimuMicroscope
-        ElectronMicroscope = SimuMicroscope
+        tem = SimuMicroscope()
         cam = VideoStream(cam="simulate")
 
     config.load(camera=cam.name)
-    tem = ElectronMicroscope()
-
     ctrl = TEMController(tem, cam)
     return ctrl
 
