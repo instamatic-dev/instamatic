@@ -22,23 +22,21 @@ class GUI(object):
         
         self.stopEvent_SED = threading.Event()
         self.startEvent_SED = threading.Event()
-        self.exitEvent = threading.Event()
-
-        self.triggerEvent = threading.Event()
-
+        
         self.ctrl.cam.set_cred_events(startEvent=self.startEvent_cRED, 
-                                      stopEvent=self.stopEvent_cRED,
-                                      exitEvent=self.exitEvent)
+                                      stopEvent=self.stopEvent_cRED)
 
         self.ctrl.cam.set_sed_events(startEvent=self.startEvent_SED, 
-                                      stopEvent=self.stopEvent_SED,
-                                      exitEvent=self.exitEvent)
+                                     stopEvent=self.stopEvent_SED)
 
+        self.triggerEvent = threading.Event()
         self.ctrl.cam.set_trigger(trigger=self.triggerEvent)
 
+        self.exitEvent = threading.Event()
+        self.ctrl.cam._atexit_funcs.append(self.exitEvent.set)
+        self.ctrl.cam._atexit_funcs.append(self.triggerEvent.set)
 
         self.wait_for_event()
-
 
     def wait_for_event(self):
         while True:

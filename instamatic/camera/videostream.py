@@ -87,12 +87,14 @@ class VideoStream(threading.Thread):
         self.update_frequency = 0.25
         self.last_interval = self.frametime
 
+        self._atexit_funcs = []
         self.stream = self.setup_stream()
+
         self.start()
 
     def run(self):
         self.root = Tk()
-
+        
         self.init_vars()
         self.buttonbox(self.root)
         self.header(self.root)
@@ -194,9 +196,6 @@ class VideoStream(threading.Thread):
         self.CollectionContButton = Button(frame_cred, text="Continue Collection", command=None, anchor=W)
         self.CollectionContButton.grid(row=12, column=0)
 
-        self.CollectionContButton = Button(frame_cred, text="Exit", command=self.exit_collection, anchor=W)
-        self.CollectionContButton.grid(row=13, column=0)
-
         frame_cred.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
             
         ########################################################
@@ -238,10 +237,9 @@ class VideoStream(threading.Thread):
     def set_trigger(self, trigger=None):
         self.triggerEvent = trigger
 
-    def set_sed_events(self, startEvent=None, stopEvent=None, exitEvent=None):
+    def set_sed_events(self, startEvent=None, stopEvent=None):
         self.startEvent_SED = startEvent
         self.stopEvent_SED = stopEvent
-        self.exitEvent = exitEvent
 
     def start_sed_collection(self):
         print "Start button pressed"
@@ -252,10 +250,9 @@ class VideoStream(threading.Thread):
         print "Stop button pressed"
         self.stopEvent_SED.set()
 
-    def set_cred_events(self, startEvent=None, stopEvent=None, exitEvent=None):
+    def set_cred_events(self, startEvent=None, stopEvent=None):
         self.startEvent_cRED = startEvent
         self.stopEvent_cRED = stopEvent
-        self.exitEvent = exitEvent
 
     def start_cred_collection(self):
         print "Start button pressed"
@@ -265,11 +262,6 @@ class VideoStream(threading.Thread):
     def stop_cred_collection(self):
         print "Stop button pressed"
         self.stopEvent_cRED.set()
-
-    def exit_collection(self):
-        print "exiting"
-        self.exitEvent.set()
-        self.triggerEvent.set()
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -318,7 +310,8 @@ class VideoStream(threading.Thread):
         print " >> Wrote file:", outfile
 
     def close(self):
-        self.stream.stopEvent.set()
+        for func in self._atexit_funcs:
+            func()
         self.root.quit()
 
     def send_frame(self, frame, acquire=False):
@@ -336,7 +329,9 @@ class VideoStream(threading.Thread):
         # self.root.event_generate('<<StreamFrame>>', when='tail')
 
     def setup_stream(self):
-        return ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
+        stream = ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
+        self._atexit_funcs.append(stream.stopEvent.set)
+        return stream
     
     def start_stream(self):
         self.stream.start_loop()
