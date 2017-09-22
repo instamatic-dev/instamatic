@@ -156,112 +156,9 @@ class VideoStream(threading.Thread):
             self.panel.pack(side="left", padx=10, pady=10)
 
     def buttonbox(self, master):
-        frame = LabelFrame(master, text="Experiment control")
-        frame.pack(side="right", fill="both", expand="yes", padx=10, pady=10)
-
-        ########################################################
-        
-        frame_io = LabelFrame(frame, text="Input/output")
-
-        self.directory = Entry(frame_io, width=50, textvariable=self.var_directory)
-        self.directory.grid(row=2, column=1)
-
-        self.BrowseButton = Button(frame_io, text="Browse..", command=self.browse_directory)
-        self.BrowseButton.grid(row=2, column=2)
-        
-        self.sample_name = Entry(frame_io, width=50, textvariable=self.var_sample_name)
-        self.sample_name.grid(row=3, column=1)
-        
-        Label(frame_io, width=30, text="Directory:").grid(row=2, column=0)
-        Label(frame_io, width=30, text="Sample name:").grid(row=3, column=0)
-
-        self.incrementer = Spinbox(frame_io, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
-        self.incrementer.grid(row=3, column=2)
-
-        frame_io.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        
-        ########################################################
-
-        frame_cred = LabelFrame(frame, text="Continuous rotation electron diffraction")
-        Label(frame_cred, width=30,text="Exposure time").grid(row=4, column=0)
-        self.exposure_time = Entry(frame_cred, width=50, textvariable=self.var_exposure_time)
-        self.exposure_time.grid(row=4, column=1)
-
-        self.CollectionButton = Button(frame_cred, text="Start Collection", command=self.start_cred_collection, anchor=W)
-        self.CollectionButton.grid(row=10, column=0)
-
-        self.CollectionStopButton = Button(frame_cred, text="Stop Collection", command=self.stop_cred_collection, anchor=W)
-        self.CollectionStopButton.grid(row=11 , column=0)
-
-        self.CollectionContButton = Button(frame_cred, text="Continue Collection", command=None, anchor=W)
-        self.CollectionContButton.grid(row=12, column=0)
-
-        frame_cred.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-            
-        ########################################################
-
-        frame_sed = LabelFrame(frame, text="Serial electron diffraction")
-
-        self.CollectionButton = Button(frame_sed, text="Start Collection", command=self.start_sed_collection, anchor=W)
-        self.CollectionButton.grid(row=10, column=0)
-
-        self.CollectionStopButton = Button(frame_sed, text="Stop Collection (Does nothing)", command=self.stop_sed_collection, anchor=W)
-        self.CollectionStopButton.grid(row=11 , column=0)
-
-        frame_sed.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-
-        ########################################################
-
         btn = Button(master, text="Save image",
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
-
-    def browse_directory(self):
-        import tkFileDialog
-        drc = tkFileDialog.askdirectory(parent=self.root, title="Select working directory")
-        self.var_directory.set(drc)
-        print self.get_experiment_directory()
-        return drc
-
-    def get_working_directory(self):
-        drc = self.var_directory.get()
-        return drc
-
-    def get_experiment_directory(self):
-        drc = self.var_directory.get()
-        name = self.var_sample_name.get()
-        number = self.var_experiment_number.get()
-        path = os.path.join(drc, "{}_{}".format(name, number))
-        return path
-
-    def set_trigger(self, trigger=None):
-        self.triggerEvent = trigger
-
-    def set_sed_events(self, startEvent=None, stopEvent=None):
-        self.startEvent_SED = startEvent
-        self.stopEvent_SED = stopEvent
-
-    def start_sed_collection(self):
-        print "Start button pressed"
-        self.startEvent_SED.set()
-        self.triggerEvent.set()
-
-    def stop_sed_collection(self):
-        print "Stop button pressed"
-        self.stopEvent_SED.set()
-
-    def set_cred_events(self, startEvent=None, stopEvent=None):
-        self.startEvent_cRED = startEvent
-        self.stopEvent_cRED = stopEvent
-
-    def start_cred_collection(self):
-        print "Start button pressed"
-        self.startEvent_cRED.set()
-        self.triggerEvent.set()
-
-    def stop_cred_collection(self):
-        print "Stop button pressed"
-        self.stopEvent_cRED.set()
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -275,14 +172,6 @@ class VideoStream(threading.Thread):
         self.var_brightness = DoubleVar(value=1.0)
         self.var_brightness.set(self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
-
-        # Button box
-        self.var_fps = DoubleVar()
-        self.var_interval = DoubleVar()
-        self.var_directory = StringVar(value="C:/")
-        self.var_sample_name = StringVar(value="experiment")
-        self.var_exposure_time = DoubleVar(value=0.5)
-        self.var_experiment_number = IntVar(value=1)
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode
@@ -301,11 +190,7 @@ class VideoStream(threading.Thread):
             pass
 
     def saveImage(self):
-        drc = self.get_directory()
-        if not os.path.exists(drc):
-            os.mkdir(drc)
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
-        outfile = os.path.join(drc, outfile)
         write_tiff(outfile, self.frame)
         print " >> Wrote file:", outfile
 

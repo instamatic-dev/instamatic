@@ -37,8 +37,10 @@ def initialize(camera="timepix"):
     
         except WindowsError:
             from simu_microscope import SimuMicroscope
-    
-            if isInteractive:
+            
+            if not isinstance(camera, str):
+                cam = camera
+            elif isInteractive:
                 cam = Camera(kind="simulate")
             else:
                 cam = VideoStream(cam="simulate")
