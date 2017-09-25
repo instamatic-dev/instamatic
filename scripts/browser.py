@@ -4,6 +4,8 @@ from instamatic.formats import *
 import os, sys, glob
 import numpy as np
 
+from scipy import ndimage
+
 from IPython import embed
 from instamatic.processing.indexer import Indexer, IndexerMulti, Projector, read_ycsv, get_indices
 
@@ -12,11 +14,18 @@ import tqdm
 
 __version__ = "2017-03-12"
 
+ANGLE = -0.88 + np.pi/2
+R = np.array([
+            [ np.cos(ANGLE), -np.sin(ANGLE)],
+            [ np.sin(ANGLE),  np.cos(ANGLE)]])
 
-def get_stage_coords(fns):
+def get_stage_coords(fns, return_ims=False):
     coords = []
     has_crystals = []
     t = tqdm.tqdm(fns, desc="Parsing files")
+
+    imgs = []
+
     for fn in t:
         img, h = read_image(fn)
         dx, dy = h["exp_hole_offset"]
@@ -24,8 +33,12 @@ def get_stage_coords(fns):
         coords.append((cx + dx, cy + dy))
 
         has_crystals.append(len(h["exp_crystal_coords"]) > 0)
+        if return_ims:
+            img = ndimage.zoom(img, 0.0969)
+            imgs.append(img)
     # convert to um
-    return np.array(coords) / 1000, np.array(has_crystals)
+
+    return np.array(coords) / 1000, np.array(has_crystals), imgs
 
 
 def lst2colormap(lst):
@@ -37,9 +50,12 @@ def lst2colormap(lst):
     return colormap
 
 
-def run(filepat="images/image_*.tiff", results=None):
+def run(filepat="images/image_*.tiff", results=None, stitch=False):
      # use relpath to normalizes path
     fns = map(os.path.relpath, glob.glob(filepat))
+
+    coord_color = "red"
+    picked_color = "blue"
 
     if results:
         df, d = read_ycsv(results)
@@ -51,13 +67,14 @@ def run(filepat="images/image_*.tiff", results=None):
             projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
             indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
 
-    coords, has_crystals = get_stage_coords(fns)
+    coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
 
     if len(fns) == 0:
         sys.exit()
 
     fn = fns[0]
     img, h = read_image(fn)
+    imdim_x, imdim_y = np.array(h["ImageDimensions"]) / 2
 
     fig = plt.figure()
     fig.canvas.set_window_title('instamatic.browser')
@@ -65,9 +82,18 @@ def run(filepat="images/image_*.tiff", results=None):
     ax1 = plt.subplot(131, title="Stage map", aspect="equal")
     # plt_coords, = ax1.plot(coords[:,0], coords[:,1], marker="+", picker=8, c=has_crystals)
     
-    ax1.scatter(coords[has_crystals==True, 0], coords[has_crystals==True, 1], marker="o", edgecolor="red", facecolor="red")
-    ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color="red", picker=8)
-    highlight1, = ax1.plot([], [], marker="o", color="blue")
+    coords = np.dot(coords, R)
+
+    if stitch:
+        for mini_img, coord in zip(imgs, coords):
+            sx, sy = coord
+            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx-imdim_x, sx+imdim_x, sy-imdim_y, sy+imdim_y], vmax=100)
+        # coord_color = "None"
+        # picked_color = "red"
+    
+    ax1.scatter(coords[has_crystals==True, 0], coords[has_crystals==True, 1], marker="o", facecolor=coord_color)
+    ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color=coord_color, picker=8)
+    highlight1, = ax1.plot([], [], marker="o", color=picked_color)
 
     ax1.set_xlabel("Stage X")
     ax1.set_ylabel("Stage Y")
@@ -202,8 +228,12 @@ Program for indexing electron diffraction images.
                         action="store", type=str, dest="results",
                         help="Path to .csv with results from indexing")
 
+    parser.add_argument("-s", "--stitch",
+                        action="store_true", dest="stitch",
+                        help="Stitch images together.")
     
     parser.set_defaults(results=None,
+                        stitch=False
                         )
     
     options = parser.parse_args()
@@ -216,7 +246,7 @@ Program for indexing electron diffraction images.
             parser.print_help()
             sys.exit()
 
-    run(filepat=arg, results=options.results)
+    run(filepat=arg, results=options.results, stitch=options.stitch)
 
 
 if __name__ == '__main__':
