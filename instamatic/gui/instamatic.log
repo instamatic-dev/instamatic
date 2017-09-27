@@ -1,0 +1,855 @@
+2017-09-26 11:46:12,127 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 11:46:12,158 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 11:46:12,173 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 11:46:12,174 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 11:46:28,568 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 11:46:28,569 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 11:46:28,569 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 11:58:46,740 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 11:58:46,776 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 11:58:46,789 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 11:58:46,789 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 11:59:08,322 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 11:59:08,323 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 11:59:08,323 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 11:59:11,138 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 11:59:11,171 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 11:59:11,184 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 11:59:11,184 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 12:01:26,220 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 12:01:26,220 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 12:01:26,220 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 12:05:30,892 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 12:05:30,926 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 12:05:30,938 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 12:05:30,940 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 12:05:38,694 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 12:05:38,696 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 12:05:38,696 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 13:06:15,933 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 13:06:15,970 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 13:06:15,983 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 13:06:15,983 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 13:06:32,783 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 13:06:32,785 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 13:06:32,785 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 13:07:49,645 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 13:07:49,678 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 13:07:49,693 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 13:07:49,693 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 13:10:15,019 | camera:244 | INFO | Camera simulate initialized
+2017-09-26 13:10:15,055 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 13:10:15,069 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 13:10:15,071 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 13:10:32,618 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 13:10:32,619 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 13:10:32,619 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 13:11:46,296 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 13:11:46,332 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 13:11:46,345 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 13:11:46,346 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 13:11:46,346 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 13:11:46,348 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 13:11:46,348 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 13:11:46,385 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 13:11:54,354 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 13:11:54,355 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 13:11:54,355 | camera:312 | INFO | Connection to camera simulate released
+2017-09-26 13:11:57,844 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 13:11:57,845 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 13:11:57,845 | camera:310 | INFO | Connection to camera simulate released
+2017-09-26 14:03:00,194 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 14:03:00,230 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:03:00,243 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 14:03:00,243 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 14:03:00,243 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 14:03:00,243 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:03:00,244 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 14:03:00,280 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 14:03:16,772 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 14:03:16,773 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 14:03:16,773 | camera:312 | INFO | Connection to camera simulate released
+2017-09-26 14:15:48,799 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 14:15:48,832 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:15:48,845 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 14:15:48,846 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 14:15:48,846 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 14:15:48,846 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:15:48,848 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 14:15:48,884 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 14:16:11,361 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 14:16:11,361 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 14:16:11,361 | camera:312 | INFO | Connection to camera simulate released
+2017-09-26 14:16:36,963 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 14:16:36,997 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:16:37,010 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 14:16:37,012 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 14:16:37,012 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 14:16:37,012 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:16:37,013 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 14:16:37,051 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 14:17:18,898 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 14:17:18,898 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 14:17:18,898 | camera:312 | INFO | Connection to camera simulate released
+2017-09-26 14:28:24,342 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 14:28:24,377 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:28:24,391 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 14:28:24,391 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 14:28:24,391 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 14:28:24,391 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:28:24,391 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 14:28:24,430 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 14:28:39,246 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 14:28:39,247 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 14:28:39,247 | camera:312 | INFO | Connection to camera simulate released
+2017-09-26 14:56:09,993 | camera:246 | INFO | Camera simulate initialized
+2017-09-26 14:56:10,028 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:56:10,040 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-26 14:56:10,042 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-26 14:56:10,042 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-26 14:56:10,042 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-26 14:56:10,042 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-26 14:56:10,078 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-26 14:56:26,262 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-26 14:56:26,263 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-26 14:56:26,263 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 10:48:47,510 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 10:48:47,552 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:48:47,565 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 10:48:47,566 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 10:48:47,566 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 10:48:47,566 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:48:47,566 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 10:48:47,608 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 10:51:46,720 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 10:51:46,720 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 10:51:46,720 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 10:54:53,953 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 10:54:53,986 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:54:54,000 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 10:54:54,000 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 10:54:54,000 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 10:54:54,000 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:54:54,000 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 10:54:54,039 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 10:56:56,693 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 10:56:56,696 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 10:56:56,696 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 10:58:06,608 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 10:58:06,641 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:58:06,654 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 10:58:06,655 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 10:58:06,655 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 10:58:06,655 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 10:58:06,655 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 10:58:06,694 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 10:58:23,334 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 10:58:23,335 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 10:58:23,335 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:00:58,618 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:00:58,653 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:00:58,668 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:00:58,668 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:00:58,670 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:00:58,670 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:00:58,670 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:00:58,707 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:01:08,470 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:01:08,470 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:01:08,470 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:06:00,720 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:06:00,753 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:06:00,766 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:06:00,766 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:06:00,766 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:06:00,766 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:06:00,767 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:06:00,805 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:06:21,624 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:06:21,624 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:06:21,624 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:09:22,607 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:09:22,640 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:09:22,653 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:09:22,654 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:09:22,654 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:09:22,654 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:09:22,654 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:09:22,691 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:09:39,108 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:09:39,109 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:09:39,109 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:12:06,782 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:12:06,816 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:12:06,829 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:12:06,831 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:12:06,831 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:12:06,832 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:12:06,832 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:12:06,869 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:12:09,013 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:12:15,417 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:12:15,418 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:12:15,418 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:16:57,538 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:16:57,571 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:16:57,585 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:16:57,585 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:16:57,585 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:16:57,586 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:16:57,586 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:16:57,625 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:17:00,467 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:17:09,138 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:17:09,138 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:17:09,138 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:17:46,025 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:17:46,056 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:17:46,072 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'c:\python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:17:46,072 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'c:\python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:17:46,072 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:17:46,072 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:17:46,072 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:17:46,114 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:20:21,293 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:20:21,328 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:20:21,342 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:20:21,342 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:20:21,342 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:20:21,342 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:20:21,342 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:20:21,381 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:20:24,137 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:20:24,194 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:20:24,194 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:20:24,197 | cRED_experiment:61 | INFO | Data recording started at: 2017-09-27 11:20:24
+2017-09-27 11:20:29,134 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:20:29,134 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:20:29,134 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:23:21,891 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:23:21,926 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:23:21,938 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:23:21,938 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:23:21,940 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:23:21,940 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:23:21,940 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:23:21,976 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:23:25,467 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:23:25,525 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:23:25,525 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:23:25,529 | cRED_experiment:70 | INFO | Data recording started at: 2017-09-27 11:23:25
+2017-09-27 11:23:25,529 | cRED_experiment:71 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:23:25,529 | cRED_experiment:72 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:23:25,529 | cRED_experiment:74 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:23:25,529 | cRED_experiment:75 | INFO | Data collection spot size: 1
+2017-09-27 11:31:08,499 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:31:08,532 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:31:08,546 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:31:08,546 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:31:08,546 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:31:08,546 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:31:08,546 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:31:08,585 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:31:10,286 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:31:10,345 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:31:10,346 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:31:10,349 | cRED_experiment:71 | INFO | Data recording started at: 2017-09-27 11:31:10
+2017-09-27 11:31:10,349 | cRED_experiment:72 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:31:10,349 | cRED_experiment:73 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:31:10,349 | cRED_experiment:75 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:31:10,349 | cRED_experiment:76 | INFO | Data collection spot size: 1
+2017-09-27 11:32:00,714 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:32:00,747 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:32:00,760 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:32:00,762 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:32:00,762 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:32:00,763 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:32:00,763 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:32:00,799 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:32:02,989 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:32:03,039 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:32:03,039 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:32:03,040 | cRED_experiment:71 | INFO | Data recording started at: 2017-09-27 11:32:03
+2017-09-27 11:32:03,042 | cRED_experiment:72 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:32:03,042 | cRED_experiment:73 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:32:03,042 | cRED_experiment:75 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:32:03,042 | cRED_experiment:76 | INFO | Data collection spot size: 1
+2017-09-27 11:32:25,536 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:32:25,569 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:32:25,582 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:32:25,582 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:32:25,584 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:32:25,584 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:32:25,584 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:32:25,622 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:32:28,081 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:32:28,134 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:32:28,134 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:32:28,137 | cRED_experiment:71 | INFO | Data recording started at: 2017-09-27 11:32:28
+2017-09-27 11:32:28,137 | cRED_experiment:72 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:32:28,137 | cRED_experiment:73 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:32:28,137 | cRED_experiment:75 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:32:28,137 | cRED_experiment:76 | INFO | Data collection spot size: 1
+2017-09-27 11:32:38,691 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:32:38,693 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:32:38,693 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:35:53,065 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:35:53,099 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:35:53,112 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:35:53,114 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:35:53,114 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:35:53,115 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:35:53,115 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:35:53,153 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:35:54,611 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:35:54,667 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:35:54,667 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:35:54,670 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 11:35:54
+2017-09-27 11:35:54,670 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:35:54,671 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:35:54,671 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:35:54,671 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 11:35:59,642 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:35:59,642 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:35:59,644 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:37:02,901 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:37:02,936 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:37:02,950 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:37:02,950 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:37:02,950 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:37:02,950 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:37:02,951 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:37:02,990 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:37:04,950 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:37:05,009 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:37:05,010 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:37:05,013 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 11:37:05
+2017-09-27 11:37:05,013 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:37:05,013 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:37:05,013 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:37:05,013 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 11:43:47,701 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:43:47,736 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:43:47,750 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:43:47,750 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:43:47,750 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:43:47,752 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:43:47,752 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:43:47,789 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:43:52,157 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 11:43:52,217 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 11:43:52,217 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 11:43:52,220 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 11:43:52
+2017-09-27 11:43:52,220 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 11:43:52,220 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 11:43:52,220 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 11:43:52,220 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 11:43:59,563 | cRED_experiment:122 | INFO | Data collected from 18374 degree to 18384 degree.
+2017-09-27 11:43:59,563 | cRED_experiment:128 | INFO | Oscillation angle: 10
+2017-09-27 11:43:59,563 | cRED_experiment:132 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 11:43:59,563 | cRED_experiment:133 | INFO | XDS INP file created as usual.
+2017-09-27 11:44:04,855 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:44:04,855 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:44:04,855 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:49:47,575 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:49:47,609 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:49:47,622 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:49:47,624 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:49:47,624 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:49:47,624 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:49:47,625 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:49:47,657 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 11:49:47,661 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 11:49:47,661 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 11:49:47,663 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 11:50:27,345 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 11:50:27,378 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:50:27,391 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 11:50:27,391 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 11:50:27,392 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 11:50:27,392 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 11:50:27,392 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 11:50:27,428 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:01:51,026 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:01:51,059 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:01:51,072 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:01:51,072 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:01:51,072 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:01:51,072 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:01:51,073 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:01:51,111 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:01:54,142 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:01:54,200 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 12:01:54,201 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 12:01:54,204 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 12:01:54
+2017-09-27 12:01:54,204 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 12:01:54,204 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 12:01:54,204 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 12:01:54,204 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 12:01:56,875 | cRED_experiment:122 | INFO | Data collected from 6486 degree to 6496 degree.
+2017-09-27 12:01:56,875 | cRED_experiment:128 | INFO | Oscillation angle: 10
+2017-09-27 12:01:56,875 | cRED_experiment:132 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 12:01:56,875 | cRED_experiment:133 | INFO | XDS INP file created as usual.
+2017-09-27 12:02:02,460 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:02:02,460 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:02:02,460 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:02:11,181 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:02:11,216 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:02:11,229 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:02:11,230 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:02:11,230 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:02:11,230 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:02:11,230 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:02:11,269 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:02:12,678 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:02:12,733 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 12:02:12,734 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 12:02:12,737 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 12:02:12
+2017-09-27 12:02:12,737 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 12:02:12,737 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 12:02:12,737 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 12:02:12,737 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 12:02:15,950 | cRED_experiment:122 | INFO | Data collected from 43873 degree to 43883 degree.
+2017-09-27 12:02:15,950 | cRED_experiment:128 | INFO | Oscillation angle: 10
+2017-09-27 12:02:15,950 | cRED_experiment:132 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 12:02:15,950 | cRED_experiment:133 | INFO | XDS INP file created as usual.
+2017-09-27 12:02:17,190 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:02:17,190 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:02:17,190 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:09:38,230 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:09:38,265 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:09:38,278 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:09:38,278 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:09:38,279 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:09:38,279 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:09:38,279 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:09:38,315 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:09:40,187 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:09:50,153 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:09:50,154 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:09:50,154 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:11:05,951 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:11:05,983 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:11:05,996 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:11:05,997 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:11:05,997 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:11:05,999 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:11:05,999 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:11:06,036 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:11:08,684 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:11:13,012 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:11:13,012 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:11:13,012 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:13:09,372 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:13:09,407 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:13:09,418 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:13:09,420 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:13:09,420 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:13:09,421 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:13:09,421 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:13:09,459 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:13:12,907 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:14:08,233 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:14:08,266 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:14:08,279 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:14:08,280 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:14:08,280 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:14:08,280 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:14:08,280 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:14:08,319 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:14:09,730 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:14:09,884 | openimage:151 | DEBUG | Attempting to open flatfield_tpx_2017-06-21.tiff
+2017-09-27 12:14:09,885 | openimage:202 | ERROR | [Errno 2] No such file or directory: 'flatfield_tpx_2017-06-21.tiff': File probably does not exist
+2017-09-27 12:14:15,203 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:14:15,204 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:14:15,204 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:16:26,805 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:16:26,838 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:16:26,851 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:16:26,852 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:16:26,852 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:16:26,852 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:16:26,852 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:16:26,891 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:16:28,401 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:16:28,555 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 12:16:28,555 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 12:16:28,558 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 12:16:28
+2017-09-27 12:16:28,558 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 12:16:28,558 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 12:16:28,558 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 12:16:28,558 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 12:16:32,697 | cRED_experiment:115 | INFO | Data collected from 44744 degree to 44754 degree.
+2017-09-27 12:16:32,697 | cRED_experiment:121 | INFO | Oscillation angle: 10
+2017-09-27 12:16:32,697 | cRED_experiment:125 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 12:16:32,697 | cRED_experiment:126 | INFO | XDS INP file created as usual.
+2017-09-27 12:16:32,697 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 12:16:32,697 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 12:16:32,706 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 12:16:32,706 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 12:16:32,706 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 12:16:32,713 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 12:16:32,713 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 12:16:32,720 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 12:16:32,720 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 12:16:32,730 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 12:16:32,730 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 12:16:32,739 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 12:16:32,739 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 12:16:32,746 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 12:16:32,746 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 12:16:32,755 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 12:16:32,755 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 12:16:32,762 | ImgConversion:73 | DEBUG | An error caught.
+2017-09-27 12:16:32,763 | ImgConversion:75 | DEBUG | Primary beam at: (array([], dtype=int64), array([], dtype=int64))
+2017-09-27 12:17:43,141 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:17:43,141 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:17:43,142 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 12:18:13,503 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 12:18:13,536 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:18:13,549 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 12:18:13,551 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 12:18:13,551 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 12:18:13,552 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 12:18:13,552 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 12:18:13,588 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 12:18:14,882 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 12:18:15,042 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 12:18:15,043 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 12:18:15,046 | cRED_experiment:72 | INFO | Data recording started at: 2017-09-27 12:18:15
+2017-09-27 12:18:15,046 | cRED_experiment:73 | INFO | Data saving path: C:/experiment_1
+2017-09-27 12:18:15,046 | cRED_experiment:74 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 12:18:15,046 | cRED_experiment:76 | INFO | Data collection camera length: 250 cm
+2017-09-27 12:18:15,046 | cRED_experiment:77 | INFO | Data collection spot size: 1
+2017-09-27 12:18:19,710 | cRED_experiment:115 | INFO | Data collected from 39258 degree to 39268 degree.
+2017-09-27 12:18:19,710 | cRED_experiment:121 | INFO | Oscillation angle: 10
+2017-09-27 12:18:19,710 | cRED_experiment:125 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 12:18:19,710 | cRED_experiment:126 | INFO | XDS INP file created as usual.
+2017-09-27 12:18:19,710 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 12:18:19,711 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 12:18:19,720 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 12:18:19,720 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 12:18:19,721 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 12:18:19,730 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 12:18:19,730 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 12:18:19,736 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 12:18:19,736 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 12:18:19,744 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 12:18:19,744 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 12:18:19,752 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 12:18:19,753 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 12:18:19,759 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 12:18:19,759 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 12:18:19,767 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 12:18:19,767 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 12:18:19,775 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10009.tiff
+2017-09-27 12:18:19,776 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10009.tiff with reader TifImage
+2017-09-27 12:18:19,782 | ImgConversion:71 | DEBUG | An error caught.
+2017-09-27 12:18:19,782 | ImgConversion:73 | DEBUG | Primary beam at: (array([], dtype=int64), array([], dtype=int64))
+2017-09-27 12:18:19,782 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 12:18:19,783 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 12:18:26,536 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 12:18:26,538 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 12:18:26,538 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:12:57,551 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:12:57,594 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:12:57,607 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:12:57,608 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:12:57,608 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:12:57,608 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:12:57,608 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:12:57,650 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:13:00,380 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:13:01,266 | openimage:151 | DEBUG | Attempting to open C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:13:01,267 | openimage:153 | DEBUG | Attempting to read frame None from C:\Users\bwang\workspace\cRED_Collection_Structured\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:13:01,270 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:13:01
+2017-09-27 16:13:01,270 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:13:01,270 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:13:01,270 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:13:01,270 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:13:06,960 | cRED_experiment:117 | INFO | Data collected from 32962 degree to 32972 degree.
+2017-09-27 16:13:06,960 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:13:06,960 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:13:06,960 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:13:06,960 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:13:06,960 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:13:06,967 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:13:06,967 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:13:06,969 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:13:06,976 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:13:06,976 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:13:06,983 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:13:06,983 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:13:06,990 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:13:06,990 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:13:06,997 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:13:06,999 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:13:07,006 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:13:07,006 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:13:07,013 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 16:13:07,013 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 16:13:07,023 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10009.tiff
+2017-09-27 16:13:07,023 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10009.tiff with reader TifImage
+2017-09-27 16:13:07,030 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10010.tiff
+2017-09-27 16:13:07,032 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10010.tiff with reader TifImage
+2017-09-27 16:13:07,039 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10011.tiff
+2017-09-27 16:13:07,039 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10011.tiff with reader TifImage
+2017-09-27 16:13:07,046 | ImgConversion:71 | DEBUG | An error caught.
+2017-09-27 16:13:07,046 | ImgConversion:73 | DEBUG | Primary beam at: (array([], dtype=int64), array([], dtype=int64))
+2017-09-27 16:13:07,046 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:13:07,048 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:13:10,372 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:13:10,374 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:13:10,374 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:13:55,055 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:13:55,088 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:13:55,101 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:13:55,104 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:13:55,104 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:13:55,104 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:13:55,104 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:13:55,141 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:13:57,141 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:13:57,289 | openimage:151 | DEBUG | Attempting to open c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:13:57,292 | openimage:153 | DEBUG | Attempting to read frame None from c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:13:57,292 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:13:57
+2017-09-27 16:13:57,292 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:13:57,293 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:13:57,293 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:13:57,293 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:14:00,941 | cRED_experiment:117 | INFO | Data collected from 54650 degree to 54660 degree.
+2017-09-27 16:14:00,941 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:14:00,941 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:14:00,941 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:14:00,941 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:14:00,943 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:14:00,951 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:14:00,951 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:14:00,951 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:14:00,960 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:14:00,960 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:14:00,967 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:14:00,967 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:14:00,982 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:14:00,984 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:14:00,999 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:14:00,999 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:14:01,006 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:14:01,006 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:14:01,013 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 16:14:01,013 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 16:14:01,020 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10009.tiff
+2017-09-27 16:14:01,020 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10009.tiff with reader TifImage
+2017-09-27 16:14:01,029 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10010.tiff
+2017-09-27 16:14:01,029 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10010.tiff with reader TifImage
+2017-09-27 16:14:01,038 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10011.tiff
+2017-09-27 16:14:01,038 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10011.tiff with reader TifImage
+2017-09-27 16:14:01,049 | ImgConversion:71 | DEBUG | An error caught.
+2017-09-27 16:14:01,049 | ImgConversion:73 | DEBUG | Primary beam at: (array([], dtype=int64), array([], dtype=int64))
+2017-09-27 16:14:01,049 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:14:01,049 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:14:14,786 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:14:14,786 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:14:14,786 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:17:30,342 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:17:30,375 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:17:30,388 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:17:30,390 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:17:30,390 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:17:30,390 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:17:30,391 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:17:30,427 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:17:37,884 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:17:37,885 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:17:37,885 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:18:20,569 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:18:20,602 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:18:20,615 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:18:20,617 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:18:20,617 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:18:20,617 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:18:20,617 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:18:20,654 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:18:24,476 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:18:24,624 | openimage:151 | DEBUG | Attempting to open c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:18:24,624 | openimage:153 | DEBUG | Attempting to read frame None from c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:18:24,627 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:18:24
+2017-09-27 16:18:24,627 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:18:24,627 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:18:24,627 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:18:24,627 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:18:28,257 | cRED_experiment:117 | INFO | Data collected from 36997 degree to 37007 degree.
+2017-09-27 16:18:28,257 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:18:28,257 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:18:28,257 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:18:28,257 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:18:28,259 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:18:28,266 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:18:28,266 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:18:28,266 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:18:28,273 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:18:28,275 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:18:28,282 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:18:28,282 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:18:28,289 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:18:28,289 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:18:28,299 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:18:28,299 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:18:28,306 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:18:28,306 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:18:28,315 | ImgConversion:71 | DEBUG | An error caught.
+2017-09-27 16:18:28,315 | ImgConversion:73 | DEBUG | Primary beam at: (array([], dtype=int64), array([], dtype=int64))
+2017-09-27 16:18:28,315 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:18:28,315 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:18:37,644 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:18:37,645 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:18:37,645 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:28:01,851 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:28:01,887 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:28:01,900 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:28:01,900 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:28:01,901 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:28:01,901 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:28:01,901 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:28:01,937 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:28:03,283 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:28:03,447 | openimage:151 | DEBUG | Attempting to open c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:28:03,447 | openimage:153 | DEBUG | Attempting to read frame None from c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:28:03,448 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:28:03
+2017-09-27 16:28:03,450 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:28:03,450 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:28:03,450 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:28:03,450 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:28:07,078 | cRED_experiment:117 | INFO | Data collected from 42787 degree to 42797 degree.
+2017-09-27 16:28:07,078 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:28:07,078 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:28:07,078 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:28:07,079 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:28:07,079 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:28:07,088 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:28:07,089 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:28:07,089 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:28:07,098 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:28:07,098 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:28:07,105 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:28:07,105 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:28:07,112 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:28:07,114 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:28:07,121 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:28:07,121 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:28:07,128 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:28:07,128 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:28:07,137 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:28:07,137 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:28:24,956 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:28:24,957 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:28:24,957 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:36:28,137 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:36:28,170 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:36:28,183 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:36:28,184 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:36:28,184 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:36:28,184 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:36:28,184 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:36:28,220 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:36:31,750 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:36:31,926 | openimage:151 | DEBUG | Attempting to open c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:36:31,927 | openimage:153 | DEBUG | Attempting to read frame None from c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:36:31,928 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:36:31
+2017-09-27 16:36:31,928 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:36:31,928 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:36:31,928 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:36:31,928 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:36:37,622 | cRED_experiment:117 | INFO | Data collected from 12976 degree to 12986 degree.
+2017-09-27 16:36:37,622 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:36:37,622 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:36:37,622 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:36:37,624 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:36:37,624 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:36:37,631 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:36:37,631 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:36:37,631 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:36:37,640 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:36:37,640 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:36:37,647 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:36:37,648 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:36:37,654 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:36:37,654 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:36:37,661 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:36:37,663 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:36:37,670 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:36:37,670 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:36:37,677 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 16:36:37,677 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 16:36:37,687 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10009.tiff
+2017-09-27 16:36:37,687 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10009.tiff with reader TifImage
+2017-09-27 16:36:37,694 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10010.tiff
+2017-09-27 16:36:37,696 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10010.tiff with reader TifImage
+2017-09-27 16:36:37,703 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10011.tiff
+2017-09-27 16:36:37,703 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10011.tiff with reader TifImage
+2017-09-27 16:36:37,710 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:36:37,711 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:36:53,479 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-09-27 16:36:53,480 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-09-27 16:36:53,480 | camera:312 | INFO | Connection to camera simulate released
+2017-09-27 16:46:00,568 | camera:246 | INFO | Camera simulate initialized
+2017-09-27 16:46:00,601 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:46:00,614 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-09-27 16:46:00,615 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-09-27 16:46:00,615 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-09-27 16:46:00,615 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-09-27 16:46:00,615 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-09-27 16:46:00,653 | __init__:171 | DEBUG | CoUninitialize()
+2017-09-27 16:46:02,332 | edfimage:87 | DEBUG | No support for float128 in your code
+2017-09-27 16:46:02,486 | openimage:151 | DEBUG | Attempting to open c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff
+2017-09-27 16:46:02,486 | openimage:153 | DEBUG | Attempting to read frame None from c:\users\bwang\workspace\instamatic\instamatic\flatfield_tpx_2017-06-21.tiff with reader TifImage
+2017-09-27 16:46:02,490 | cRED_experiment:74 | INFO | Data recording started at: 2017-09-27 16:46:02
+2017-09-27 16:46:02,490 | cRED_experiment:75 | INFO | Data saving path: C:/experiment_1
+2017-09-27 16:46:02,490 | cRED_experiment:76 | INFO | Data collection exposure time: 0.5 s
+2017-09-27 16:46:02,490 | cRED_experiment:78 | INFO | Data collection camera length: 250 cm
+2017-09-27 16:46:02,490 | cRED_experiment:79 | INFO | Data collection spot size: 1
+2017-09-27 16:46:11,640 | cRED_experiment:117 | INFO | Data collected from 24039 degree to 24049 degree.
+2017-09-27 16:46:11,640 | cRED_experiment:123 | INFO | Oscillation angle: 10
+2017-09-27 16:46:11,640 | cRED_experiment:127 | INFO | Pixel size and actual camera length updated in SMV file headers for DIALS processing.
+2017-09-27 16:46:11,640 | cRED_experiment:128 | INFO | XDS INP file created as usual.
+2017-09-27 16:46:11,640 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:46:11,641 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage
+2017-09-27 16:46:11,642 | _methods:60 | WARNING | C:\Python27\lib\site-packages\numpy\core\fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+
+2017-09-27 16:46:11,642 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10002.tiff
+2017-09-27 16:46:11,644 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10002.tiff with reader TifImage
+2017-09-27 16:46:11,645 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10003.tiff
+2017-09-27 16:46:11,645 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10003.tiff with reader TifImage
+2017-09-27 16:46:11,648 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10004.tiff
+2017-09-27 16:46:11,648 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10004.tiff with reader TifImage
+2017-09-27 16:46:11,650 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10005.tiff
+2017-09-27 16:46:11,650 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10005.tiff with reader TifImage
+2017-09-27 16:46:11,651 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10006.tiff
+2017-09-27 16:46:11,651 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10006.tiff with reader TifImage
+2017-09-27 16:46:11,654 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10007.tiff
+2017-09-27 16:46:11,654 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10007.tiff with reader TifImage
+2017-09-27 16:46:11,654 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10008.tiff
+2017-09-27 16:46:11,654 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10008.tiff with reader TifImage
+2017-09-27 16:46:11,657 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10009.tiff
+2017-09-27 16:46:11,657 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10009.tiff with reader TifImage
+2017-09-27 16:46:11,660 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10010.tiff
+2017-09-27 16:46:11,660 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10010.tiff with reader TifImage
+2017-09-27 16:46:11,667 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10011.tiff
+2017-09-27 16:46:11,668 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10011.tiff with reader TifImage
+2017-09-27 16:46:11,677 | openimage:151 | DEBUG | Attempting to open C:/experiment_1\tiff\10001.tiff
+2017-09-27 16:46:11,677 | openimage:153 | DEBUG | Attempting to read frame None from C:/experiment_1\tiff\10001.tiff with reader TifImage

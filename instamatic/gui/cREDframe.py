@@ -21,7 +21,14 @@ class ExperimentalcRED(LabelFrame):
 
         self.CollectionContButton = Button(self, text="Continue Collection", command=None, anchor=W)
         self.CollectionContButton.grid(row=12, column=0)
-
+        
+        self.lb_coll1=Label(self,width=50,text="Now you can start to rotate the goniometer at any time.")
+        self.lb_coll2=Label(self,width=50,text="Remove your foot from the pedal BEFORE click STOP COLLECTION!")
+        self.lb_coll1.grid(row=6,column=0)
+        self.lb_coll2.grid(row=7,column=0)
+        self.lb_coll1.grid_forget()
+        self.lb_coll2.grid_forget()
+        
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
 
@@ -34,12 +41,23 @@ class ExperimentalcRED(LabelFrame):
 
     def start_collection(self):
         print "Start button pressed"
+        self.lb_coll1.grid(row=6,column=0)
+        self.lb_coll2.grid(row=7,column=0)
         self.startEvent.set()
         self.triggerEvent.set()
 
     def stop_collection(self):
         print "Stop button pressed"
+        self.lb_coll1.grid_forget()
+        self.lb_coll2.grid_forget()
         self.stopEvent.set()
+        
+    def continue_collection(self):
+        print "Continue button pressed"
+        self.stopEvent.clear()
+        
+    def get_expt(self):
+        return self.var_exposure_time.get()
 
 
 if __name__ == '__main__':
