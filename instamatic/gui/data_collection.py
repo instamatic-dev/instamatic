@@ -72,6 +72,12 @@ class DataCollectionController(object):
         
         expdir = self.module_io.get_experiment_directory()
         workdir = self.module_io.get_working_directory()
+
+        if not os.path.exists(expdir):
+            os.makedirs(expdir)
+
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
         
         expt=self.module_cred.get_expt()
         

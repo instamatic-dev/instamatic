@@ -83,7 +83,7 @@ class cRED_experiment(object):
                 a=self.ctrl.stageposition.a
                 if abs(a-a0)>0.5:
                     break
-            
+            print "Data Recording started."
             self.startangle=a
             
             self.ctrl.cam.block()
@@ -116,7 +116,7 @@ class cRED_experiment(object):
         
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle,self.endangle))
         
-        listing=glob.glob(self.pathtiff)
+        listing=glob.glob(os.path.join(self.pathtiff,"*.tiff"))
         numfr=len(listing)
         osangle=(self.endangle-self.startangle)/numfr
         if osangle>0:
@@ -125,12 +125,15 @@ class cRED_experiment(object):
             self.logger.info("Oscillation angle: {}".format(-osangle))
         
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
-        self.logger.info("XDS INP file created as usual.")
-        buf=ImgConversion.ImgConversion(flatfield,pxd)
-        pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,str(camlen),self.startangle,osangle,self.logger)
+        
+        buf=ImgConversion.ImgConversion(expdir=self.path)
+        pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,str(camlen),self.startangle,osangle)
         pxs=pxd[str(camlen)]
-        buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle,self.logger)
-        buf.MRCCreator(self.pathtiff,self.pathred,header=ImgConversion.ImgConversion.mrc_header,pb=pb,logger=self.logger)
+        buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle)
+        buf.MRCCreator(self.pathtiff,self.pathred,header=buf.mrc_header,pb=pb)
         
         RA=-38.5
-        buf.XDSINPCreator(self.pathsmv,self.ind,self.startangle,20,0.8,pb,str(camlen),osangle,RA,self.logger)
+        buf.XDSINPCreator(self.pathsmv,self.ind,self.startangle,20,0.8,pb,str(camlen),osangle,RA)
+        self.logger.info("XDS INP file created as usual.")
+
+        print "Data Collection and Conversion Done."
