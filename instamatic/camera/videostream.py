@@ -64,7 +64,7 @@ class ImageGrabber(object):
 
 class VideoStream(threading.Thread):
     """docstring for VideoStream"""
-    def __init__(self, cam="simulate"):
+    def __init__(self, cam="timepix"):
         threading.Thread.__init__(self)
 
         self.cam = Camera(kind=cam)

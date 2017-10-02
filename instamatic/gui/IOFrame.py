@@ -8,6 +8,8 @@ class IOFrame(LabelFrame):
         LabelFrame.__init__(self, parent, text="Input/Output")
 
         self.init_vars()
+        
+        self.root = parent
 
         self.directory = Entry(self, width=50, textvariable=self.var_directory)
         self.directory.grid(row=2, column=1)

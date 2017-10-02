@@ -68,12 +68,33 @@ class DataCollectionController(object):
                 self.acquire_data_SED()
 
     def acquire_data_cRED(self):
-        i = 0
-        while not self.stopEvent_cRED.is_set():
-            img = self.ctrl.cam.getImage()
-            print i, img.shape
-            i += 1
-        self.stopEvent_cRED.clear()
+        from instamatic.cRED_experiment import cRED_experiment
+        
+        expdir = self.module_io.get_experiment_directory()
+        workdir = self.module_io.get_working_directory()
+
+        if not os.path.exists(expdir):
+            os.makedirs(expdir)
+
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
+        
+        expt=self.module_cred.get_expt()
+        
+        if self.camera == "simulate":
+            camtyp=0
+        else:
+            camtyp=1
+            
+        cREDLog=logging.getLogger(__name__)
+        hdlr=logging.FileHandler(os.path.join(expdir,'cREDCollection.log'))
+        formatter=logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        hdlr.setFormatter(formatter)
+        cREDLog.addHandler(hdlr)
+        cREDLog.setLevel(logging.INFO)
+        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=cREDLog,camtyp=camtyp,t=self.stopEvent_cRED)
+        cexp.report_status()
+        cexp.start_collection()
 
     def acquire_data_SED(self):
         from instamatic.experiment import Experiment
