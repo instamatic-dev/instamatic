@@ -6,6 +6,7 @@ import numpy as np
 import glob
 import time
 import ImgConversion
+from TEMController import config
 
 class cRED_experiment(object):
     def __init__(self, ctrl,expt,camtyp,t,path=None,log=None, flatfield=None):
@@ -41,7 +42,7 @@ class cRED_experiment(object):
         
         curdir = os.path.dirname(os.path.realpath(__file__))
 
-        pxd={'15': 0.00838, '20': 0.00623, '25': 0.00499, '30': 0.00412, '40': 0.00296, '50': 0.00238, '60': 0.00198, '80': 0.00148}
+        pxd=config.diffraction_pixeldimensions
         a0=self.ctrl.stageposition.a
         a=a0
         ind_set=[]
@@ -64,8 +65,8 @@ class cRED_experiment(object):
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        camlen = int(self.ctrl.magnification.get())/10
-        self.logger.info("Data collection camera length: {} cm".format(camlen))
+        camlen = int(self.ctrl.magnification.get())
+        self.logger.info("Data collection camera length: {} mm".format(camlen))
         self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
         
         if self.camtyp == 1:
@@ -88,7 +89,7 @@ class cRED_experiment(object):
             
         else:
             self.startangle=a
-            camlen=30
+            camlen=300
             self.ctrl.cam.block()
             while not self.t.is_set():
                 self.ctrl.getImage(self.expt,1,out=os.path.join(self.pathtiff,"{}.tiff".format(ind)),header_keys=None)
@@ -116,12 +117,12 @@ class cRED_experiment(object):
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
         
         buf=ImgConversion.ImgConversion(expdir=self.path, flatfield=self.flatfield)
-        pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,str(camlen),self.startangle,osangle)
-        pxs=pxd[str(camlen)]
+        pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,camlen,self.startangle,osangle)
+        pxs=pxd[camlen]
         buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle)
         buf.MRCCreator(self.pathtiff,self.pathred,header=buf.mrc_header,pb=pb)
         
-        RA=-38.5
+        RA = config.camera_rotation_vs_stage_xy
         buf.XDSINPCreator(self.pathsmv,self.ind,self.startangle,20,0.8,pb,str(camlen),osangle,RA)
         self.logger.info("XDS INP file created as usual.")
 

@@ -11,13 +11,14 @@ from instamatic.formats import read_tiff
 import msvcrt
 import logging
 from instamatic.processing.stretch_correction import apply_transform_to_image, affine_transform_circle_to_ellipse
+from instamatic.TEMController import config
 
 class ImgConversion(object):
     
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
 
     def __init__(self,expdir, flatfield='flatfield_tpx_2017-06-21.tiff'):
-        pxd={'15': 0.00838, '20': 0.00623, '25': 0.00499, '30': 0.00412, '40': 0.00296, '50': 0.00238, '60': 0.00198, '80': 0.00148}
+        self.pxd = config.diffraction_pixeldimensions
         curdir = os.path.dirname(os.path.realpath(__file__))
         flatfield, h = read_tiff(os.path.join(curdir, flatfield))
         data=flatfield
@@ -37,7 +38,6 @@ class ImgConversion(object):
         ConvLog.setLevel(logging.DEBUG)
 
         self.flatfield=flatfield
-        self.pxd=pxd
         self.mrc_header=mrc_header
         self.logger=ConvLog
         
@@ -246,7 +246,7 @@ class ImgConversion(object):
             elif nb_line==159:
                 f_xds.write(" OSCILLATION_RANGE= {}\n".format(osangle))
             elif nb_line==162:
-                f_xds.write("ROTATION_AXIS= {} {} 0\n".format(cos(RA/180*pi),cos((RA+90)/180*pi)))
+                f_xds.write("ROTATION_AXIS= {} {} 0\n".format(cos(RA),cos((RA+np.pi/2))))
             else:
                 f_xds.write(line)
             nb_line=nb_line+1
