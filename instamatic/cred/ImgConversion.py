@@ -213,39 +213,31 @@ class ImgConversion(object):
         
     def XDSINPCreator(self,pathsmv,indend,startangle,lowres,highres,pb,cl,osangle,RA):
         print ("Creating XDS inp file......")
-        from math import cos,pi
+        from XDS_template import XDS_template
+        from math import cos, pi
         if osangle < 0:
-            osangle=-osangle
-        px=self.pxd[cl]
-        distance=483.89*0.00412/px
-        curdir = os.path.dirname(os.path.realpath(__file__))
-        f=open(os.path.join(curdir,'XDS_template.INP'),'r')
-        f_xds=open(os.path.join(pathsmv,'XDS.INP'),'w')
-        nb_line=1
-        for line in f:
-            if nb_line==54:
-                f_xds.write("DATA_RANGE=           {} {}\n".format(1,indend-10001))
-            elif nb_line==56:
-                f_xds.write("SPOT_RANGE=           {} {}\n".format(1,indend-10001))
-            elif nb_line==58:
-                f_xds.write("BACKGROUND_RANGE=           {} {}\n".format(1,indend-10001))
-            elif nb_line==69:
-                f_xds.write("STARTING_ANGLE= {}\n".format(startangle))
-            elif nb_line==134:
-                f_xds.write("INCLUDE_RESOLUTION_RANGE= {}   {}\n".format(lowres,highres))
-            elif nb_line==156:
-                f_xds.write("ORGX= {}    ORGY= {}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2\n".format(pb[0],pb[1]))
-            elif nb_line==157:
-                f_xds.write("DETECTOR_DISTANCE= +{}   ! can be negative. Positive because the detector normal points away from the crystal.\n".format(distance))
-            elif nb_line==159:
-                f_xds.write(" OSCILLATION_RANGE= {}\n".format(osangle))
-            elif nb_line==162:
-                f_xds.write("ROTATION_AXIS= {} {} 0\n".format(cos(RA),cos((RA+np.pi/2))))
-            else:
-                f_xds.write(line)
-            nb_line=nb_line+1
+            osangle =- osangle
+        px = self.pxd[cl]
+        distance = 483.89*0.00412/px
+        f_xds = open(os.path.join(pathsmv,'XDS.INP'),'w')
+
+        s = XDS_template.format(
+            data_begin=1,
+            data_end=indend-10001,
+            starting_angle=startangle,
+            lowres=lowres,
+            highres=highres,
+            origin_x=pb[0],
+            origin_y=pb[1],
+            sign="+",
+            detdist=distance,
+            rot_x=cos(RA),
+            rot_y=cos(RA+np.pi/2),
+            rot_z=0.0
+            )
+        f_xds.write(s)
         
-        logger.debug("XDS.inp file created. Modify .img path accordingly in your Linux machine.")
+        logger.debug(" >> Wrote XDS.inp.")
         
     def wait(self):
         msvcrt.getch()

@@ -1,3 +1,4 @@
+XDS_template = """
 ! XDS.INP file for Rotation Electron Diffraction - Hongyi and Hugo, version Feb.2017
 !
 ! For definitions of input parameters, see: 
@@ -51,11 +52,11 @@
 ! ********** Data images **********
 
  NAME_TEMPLATE_OF_DATA_FRAMES= /home/justin/Desktop/1????.img   SMV
- DATA_RANGE=           4 850
+ DATA_RANGE=           {data_begin:d} {data_end:d}
  !EXCLUDE_DATA_RANGE=
- SPOT_RANGE=           4 850
+ SPOT_RANGE=           {data_begin:d} {data_end:d}
  !SPOT_RANGE=
- BACKGROUND_RANGE=     4 850
+ BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
  !MINIMUM_FRACTION_OF_BACKGROUND_REGION=  !0.01 is default. Rarely needs to be changed.
 
 ! ********** Crystal **********
@@ -66,7 +67,7 @@
  !UNIT_CELL_A-AXIS=  UNIT_CELL_B-AXIS=  UNIT_CELL_C-AXIS=
  !REIDX=  !Optional reindexing transformation to apply on reflection indices
  FRIEDEL'S_LAW=TRUE
- STARTING_ANGLE= -40.5
+ STARTING_ANGLE= {starting_angle:0.2f}
  STARTING_FRAME= 1
  !phi(i) = STARTING_ANGLE + OSCILLATION_RANGE * (i - STARTING_FRAME)
 
@@ -96,7 +97,7 @@
  OVERLOAD= 130000             !default value dependent on the detector used
  !MINIMUM_VALID_PIXEL_VALUE=   !default value dependent on the detector used, 0 in most cases
 
- TRUSTED_REGION= 0.0   1.4142  !default "0.0 1.05". Corners for square detector max "0.0 1.4142"
+ TRUSTED_REGION= 0.0   1.4142  !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
  !UNTRUSTED_RECTANGLE=
  !UNTRUSTED_ELLIPSE=
  !UNTRUSTED_QUADRILATERAL=
@@ -131,7 +132,7 @@
  ! ??? VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=    ! 6000 30000 is default, for excluding shaded parts of the detector.
  !MINIMUM_ZETA=   !0.05 is default
  
- INCLUDE_RESOLUTION_RANGE= 15   0.90
+ INCLUDE_RESOLUTION_RANGE= {lowres:.2f} {highres:.2f}
 
  !Ice Ring exclusion, important for data collected using cryo holders
  !EXCLUDE_RESOLUTION_RANGE=
@@ -153,20 +154,20 @@
  DIRECTION_OF_DETECTOR_X-AXIS= 1 0 0
  DIRECTION_OF_DETECTOR_Y-AXIS= 0 1 0
 
- ORGX= 252    ORGY= 267       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
- DETECTOR_DISTANCE= +483.50   ! can be negative. Positive because the detector normal points away from the crystal.
+ ORGX= {origin_x:d}    ORGY= {origin_y:d}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
+ DETECTOR_DISTANCE= {sign}{detdist:.2f}   ! can be negative. Positive because the detector normal points away from the crystal.
 
- OSCILLATION_RANGE= 0.115    
+ OSCILLATION_RANGE= {osangle:.2f}
  !XDS assumes a right handed rotation of the crystal about the rotation axis when proceeding to the next data image.
 
- ROTATION_AXIS= -0.755 0.656 0    !cos(139) cos(49)  !in XDS.INP emailed: 0.078605 0.996888 -0.005940
+ ROTATION_AXIS= {rot_x:.3f} {rot_y:.3f} {rot_z:.3f}    !cos(139) cos(49)  !in XDS.INP emailed: 0.078605 0.996888 -0.005940
  !Nota on Rotation Axis: Direction cosines of the rotation axis with respect to the laboratory system. 
  !The length of this vector will be normalized by XDS. 
  !The direction of the axis is chosen to describe a right-handed rotation.
  !Example:ROTATION_AXIS= 0.0 1.0 0.0
  !The rotation axis points along the laboratory y-axis. When looking along the axis, 
  !the crystal would rotate clockwise when proceeding to the next data image.
- !Often "1 0 0" at synchrotron
+ !Often \"1 0 0\" at synchrotron
 
  !SEGMENT=
  !REFINE_SEGMENT=
@@ -222,7 +223,7 @@
  !ORIENTATION - refine unit cell orientation
  !CELL - refine unit cell constants
  !SEGMENT - refine internal segment assembly of the detector
- ! Nota: "ALL" does not work in XDS version July 2016
+ ! Nota: \"ALL\" does not work in XDS version July 2016
 
  !DEFAULT_REFINE_SEGMENT=
  !MINIMUM_NUMBER_OF_REFLECTIONS/SEGMENT=
@@ -254,7 +255,7 @@
  !Definitions:
  !REFLECTING_RANGE=
  !Angular life time (degrees) of a reflection to pass completely through the Ewald sphere on shortest route. 
- !The parameter value controls the raster size along gamma of the reflection profiles in step "INTEGRATE". 
+ !The parameter value controls the raster size along gamma of the reflection profiles in step \"INTEGRATE\". 
  !A slightly larger value should be specified to include some background from adjacent data images.
  !Parameter is used by COLSPOT, IDXREF, INTEGRATE
  !REFLECTING_RANGE_E.S.D.=
@@ -302,5 +303,5 @@
  !REFLECTIONS/CORRECTION_FACTOR=
  !REJECT_ALIEN=                    !20.0 is default
  !DATA_RANGE_FIXED_SCALE_FACTOR=
-
+"""
 
