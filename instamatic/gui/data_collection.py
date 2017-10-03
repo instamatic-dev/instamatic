@@ -92,7 +92,7 @@ class DataCollectionController(object):
         hdlr.setFormatter(formatter)
         cREDLog.addHandler(hdlr)
         cREDLog.setLevel(logging.INFO)
-        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=cREDLog,camtyp=camtyp,t=self.stopEvent_cRED)
+        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=cREDLog,camtyp=camtyp,t=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
 

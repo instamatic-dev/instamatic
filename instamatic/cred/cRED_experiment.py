@@ -8,7 +8,7 @@ import time
 import ImgConversion
 
 class cRED_experiment(object):
-    def __init__(self, ctrl,expt,camtyp,t,path=None,log=None):
+    def __init__(self, ctrl,expt,camtyp,t,path=None,log=None, flatfield=None):
         super(cRED_experiment,self).__init__()
         self.ctrl=ctrl
         self.path=path
@@ -16,6 +16,7 @@ class cRED_experiment(object):
         self.logger=log
         self.camtyp=camtyp
         self.t=t
+        self.flatfield = flatfield
         
     def report_status(self):
         self.image_binsize=self.ctrl.cam.default_binsize
@@ -114,7 +115,7 @@ class cRED_experiment(object):
         
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
         
-        buf=ImgConversion.ImgConversion(expdir=self.path)
+        buf=ImgConversion.ImgConversion(expdir=self.path, flatfield=self.flatfield)
         pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,str(camlen),self.startangle,osangle)
         pxs=pxd[str(camlen)]
         buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle)

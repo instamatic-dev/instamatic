@@ -19,15 +19,23 @@ class IOFrame(LabelFrame):
         
         self.sample_name = Entry(self, width=50, textvariable=self.var_sample_name)
         self.sample_name.grid(row=3, column=1)
+
+        self.flatfield = Entry(self, width=50, textvariable=self.var_flatfield)
+        self.flatfield.grid(row=4, column=1)
+
+        self.BrowseFFButton = Button(self, text="Browse..", command=self.browse_flatfield)
+        self.BrowseFFButton.grid(row=4, column=2)
         
         Label(self, width=30, text="Directory:").grid(row=2, column=0)
         Label(self, width=30, text="Sample name:").grid(row=3, column=0)
+        Label(self, width=30, text="Flatfield:").grid(row=4, column=0)
 
         self.incrementer = Spinbox(self, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
         self.incrementer.grid(row=3, column=2)
 
     def init_vars(self):
         self.var_directory = StringVar(value="C:/")
+        self.var_flatfield = StringVar(value="C:/flatfield.tiff")
         self.var_sample_name = StringVar(value="experiment")
         self.var_experiment_number = IntVar(value=1)
 
@@ -48,6 +56,15 @@ class IOFrame(LabelFrame):
         self.var_directory.set(drc)
         print self.get_experiment_directory()
         return drc
+
+    def browse_flatfield(self):
+        import tkFileDialog
+        ff = tkFileDialog.askopenfilename(parent=self.root, initialdir=self.var_directory.get(), title="Select flatfield")
+        self.var_flatfield.set(ff)
+        return ff
+
+    def get_flatfield(self):
+        return self.var_flatfield.get()
 
 
 if __name__ == '__main__':
