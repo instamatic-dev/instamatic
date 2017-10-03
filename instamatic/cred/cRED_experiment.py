@@ -116,14 +116,14 @@ class cRED_experiment(object):
         
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
         
+        RA = config.camera_rotation_vs_stage_xy
         buf=ImgConversion.ImgConversion(expdir=self.path, flatfield=self.flatfield)
         pb=buf.TiffToIMG(self.pathtiff,self.pathsmv,camlen,self.startangle,osangle)
         pxs=pxd[camlen]
-        buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle)
+        buf.ED3DCreator(self.pathtiff,self.pathred,pxs,self.startangle,self.endangle,RA)
         buf.MRCCreator(self.pathtiff,self.pathred,header=buf.mrc_header,pb=pb)
         
-        RA = config.camera_rotation_vs_stage_xy
-        buf.XDSINPCreator(self.pathsmv,self.ind,self.startangle,20,0.8,pb,str(camlen),osangle,RA)
+        buf.XDSINPCreator(self.pathsmv,self.ind,self.startangle,20,0.8,pb,camlen,osangle,RA)
         self.logger.info("XDS INP file created as usual.")
 
         print "Data Collection and Conversion Done."

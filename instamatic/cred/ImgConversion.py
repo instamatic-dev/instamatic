@@ -175,7 +175,7 @@ class ImgConversion(object):
             
         logger.debug("MRC files created in folder: {}".format(pathred))
         
-    def ED3DCreator(self,pathtiff,pathred,pxs,startangle,endangle):
+    def ED3DCreator(self,pathtiff,pathred,pxs,startangle,endangle,RA):
         print ("Creating ed3d file......")
         listing=glob.glob(os.path.join(pathtiff,"*.tiff"))
         filenamelist=[]
@@ -191,7 +191,7 @@ class ImgConversion(object):
         step=(up-low)/nb
         
         ed3d.write("WAVELENGTH    0.02508\n")
-        ed3d.write("ROTATIONAXIS    -38.5\n")
+        ed3d.write("ROTATIONAXIS    {}\n".format(RA))
         ed3d.write("CCDPIXELSIZE    {}\n".format(pxs))
         ed3d.write("GINIOTILTSTEP    {}\n".format(step))
         ed3d.write("BEAMTILTSTEP    0\n")
