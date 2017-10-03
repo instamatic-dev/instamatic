@@ -1,4 +1,3 @@
-import fabio
 import os
 import datetime
 import logging
@@ -6,7 +5,6 @@ from Tkinter import *
 import numpy as np
 import glob
 import time
-from instamatic.formats import write_tiff
 import ImgConversion
 
 class cRED_experiment(object):
@@ -41,16 +39,7 @@ class cRED_experiment(object):
     def start_collection(self):
         
         curdir = os.path.dirname(os.path.realpath(__file__))
-        
-        flatfield=fabio.open(os.path.join(curdir,'flatfield_tpx_2017-06-21.tiff'))
-        data=flatfield.data
-        newdata=np.zeros([512,512],dtype=np.ushort)
-        newdata[0:256,0:256]=data[0:256,0:256]
-        newdata[256:,0:256]=data[260:,0:256]
-        newdata[0:256,256:]=data[0:256,260:]
-        newdata[256:,256:]=data[260:,260:]
-        flatfield=newdata
-        
+
         pxd={'15': 0.00838, '20': 0.00623, '25': 0.00499, '30': 0.00412, '40': 0.00296, '50': 0.00238, '60': 0.00198, '80': 0.00148}
         a0=self.ctrl.stageposition.a
         a=a0
@@ -99,7 +88,6 @@ class cRED_experiment(object):
         else:
             self.startangle=a
             camlen=30
-            flatfield=np.random.rand(1024,1024)
             self.ctrl.cam.block()
             while not self.t.is_set():
                 self.ctrl.getImage(self.expt,1,out=os.path.join(self.pathtiff,"{}.tiff".format(ind)),header_keys=None)

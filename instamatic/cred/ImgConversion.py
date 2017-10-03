@@ -1,26 +1,26 @@
 #! python2
 
 from __future__ import division
-import adscimage
+from instamatic.formats import adscimage
 import datetime
 import glob
 import os
-import fabio
 import numpy as np
 from instamatic.flatfield import apply_flatfield_correction
-from scipy import ndimage
+from instamatic.formats import read_tiff
 import msvcrt
 import logging
+from instamatic.processing.stretch_correction import apply_transform_to_image, affine_transform_circle_to_ellipse
 
-class ImgConversion:
+class ImgConversion(object):
     
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
 
-    def __init__(self,expdir):
+    def __init__(self,expdir, flatfield='flatfield_tpx_2017-06-21.tiff'):
         pxd={'15': 0.00838, '20': 0.00623, '25': 0.00499, '30': 0.00412, '40': 0.00296, '50': 0.00238, '60': 0.00198, '80': 0.00148}
         curdir = os.path.dirname(os.path.realpath(__file__))
-        flatfield=fabio.open(os.path.join(curdir,'flatfield_tpx_2017-06-21.tiff'))
-        data=flatfield.data
+        flatfield, h = read_tiff(os.path.join(curdir, flatfield))
+        data=flatfield
         newdata=np.zeros([512,512],dtype=np.ushort)
         newdata[0:256,0:256]=data[0:256,0:256]
         newdata[256:,0:256]=data[260:,0:256]
@@ -64,7 +64,7 @@ class ImgConversion:
         
         pbc=[]
         for f in filenamelist:
-            img=fabio.open(os.path.join(pathtiff,"{}.tiff".format(f)))
+            img, h = read_tiff(os.path.join(pathtiff,"{}.tiff".format(f)))
             pb=np.where(img.data>10000)
             pbc.append([np.mean(pb[0]),np.mean(pb[1])])
         
@@ -81,7 +81,7 @@ class ImgConversion:
         self.logger.debug("Primary beam at: {}".format(pb))
 
         for f in filenamelist:
-            img=fabio.open(os.path.join(pathtiff,"{}.tiff".format(f)))
+            img, h = read_tiff(os.path.join(pathtiff,"{}.tiff".format(f)))
             data=np.ushort(img.data)
             ## if it's original tiff image from Sophy need to correct the intensity at cross
             if len(data)==512:
@@ -132,53 +132,7 @@ class ImgConversion:
         
         self.logger.debug("SMV files (size 512*512) saved in folder: {}".format(pathsmv))
         return pb
-    
-    def affine_transform_ellipse_to_circle(self,azimuth, stretch, inverse=False):
-        """Usage: 
-        r = circle_to_ellipse_affine_transform(azimuth, stretch):
-        np.dot(x, r) # x.shape == (n, 2)
-        
-        http://math.stackexchange.com/q/619037
-        """
-        sin = np.sin(azimuth)
-        cos = np.cos(azimuth)
-        sx    = 1 - stretch
-        sy    = 1 + stretch
-        
-        # apply in this order
-        rot1 = np.array((cos, -sin,  sin, cos)).reshape(2,2)
-        scale = np.array((sx, 0, 0, sy)).reshape(2,2)
-        rot2 = np.array((cos,  sin, -sin, cos)).reshape(2,2)
-        
-        composite = rot1.dot(scale).dot(rot2)
-        
-        if inverse:
-            return np.linalg.inv(composite)
-        else:
-            return composite
-           
-    def affine_transform_circle_to_ellipse(self,azimuth, stretch):
-        """Usage: 
-        r = circle_to_ellipse_affine_transform(azimuth, stretch):
-        np.dot(x, r) # x.shape == (n, 2)
-        """
-        return self.affine_transform_ellipse_to_circle(azimuth, stretch, inverse=True)
-    
-    def apply_transform_to_image(self,img, transform, center=None):
-        """Applies transformation matrix to image and recenters it
-        http://docs.sunpy.org/en/stable/_modules/sunpy/image/transform.html
-        http://stackoverflow.com/q/20161175
-        """
-        
-        if center is None:
-            center = (np.array(img.shape)[::-1]-1)/2.0
-        
-        displacement = np.dot(transform, center)
-        shift = center - displacement
-        
-        img_tf = ndimage.interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=3, cval=0.0)
-        return img_tf
-    
+     
     def fixDistortion(self,image,directXY):
     
         radianAzimuth = np.radians(90)
@@ -200,7 +154,7 @@ class ImgConversion:
             center[1] += 1
              
         c2e = self.affine_transform_circle_to_ellipse(radianAzimuth, stretch)
-        newImage = self.apply_transform_to_image(image[::-1,:], c2e, center)[::-1,:]
+        newImage = apply_transform_to_image(image[::-1,:], c2e, center)[::-1,:]
     
         return newImage
             
@@ -215,7 +169,7 @@ class ImgConversion:
         filenamelist=np.sort(filenamelist)
         ind=10000
         for f in filenamelist:
-            img=fabio.open(os.path.join(pathtiff,"{}.tiff".format(f)))
+            img, h = read_tiff(os.path.join(pathtiff,"{}.tiff".format(f)))
             data=img.data
             data=data.astype(np.int16)[::-1,:]
             

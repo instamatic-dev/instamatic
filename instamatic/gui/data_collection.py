@@ -68,7 +68,7 @@ class DataCollectionController(object):
                 self.acquire_data_SED()
 
     def acquire_data_cRED(self):
-        from instamatic.cRED_experiment import cRED_experiment
+        from instamatic.cred.cRED_experiment import cRED_experiment
         
         expdir = self.module_io.get_experiment_directory()
         workdir = self.module_io.get_working_directory()
