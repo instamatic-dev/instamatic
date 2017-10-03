@@ -51,7 +51,7 @@ XDS_template = """
 
 ! ********** Data images **********
 
- NAME_TEMPLATE_OF_DATA_FRAMES= /home/justin/Desktop/1????.img   SMV
+ NAME_TEMPLATE_OF_DATA_FRAMES= 1????.img   SMV
  DATA_RANGE=           {data_begin:d} {data_end:d}
  !EXCLUDE_DATA_RANGE=
  SPOT_RANGE=           {data_begin:d} {data_end:d}
