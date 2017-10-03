@@ -86,13 +86,7 @@ class DataCollectionController(object):
         else:
             camtyp=1
             
-        cREDLog=logging.getLogger(__name__)
-        hdlr=logging.FileHandler(os.path.join(expdir,'cREDCollection.log'))
-        formatter=logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        hdlr.setFormatter(formatter)
-        cREDLog.addHandler(hdlr)
-        cREDLog.setLevel(logging.INFO)
-        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=cREDLog,camtyp=camtyp,t=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
+        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=self.log,camtyp=camtyp,t=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
 
