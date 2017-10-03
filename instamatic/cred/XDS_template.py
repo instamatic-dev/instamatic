@@ -132,7 +132,7 @@ XDS_template = """
  ! ??? VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=    ! 6000 30000 is default, for excluding shaded parts of the detector.
  !MINIMUM_ZETA=   !0.05 is default
  
- INCLUDE_RESOLUTION_RANGE= {lowres:.2f} {highres:.2f}
+ INCLUDE_RESOLUTION_RANGE= {dmax:.2f} {dmin:.2f}
 
  !Ice Ring exclusion, important for data collected using cryo holders
  !EXCLUDE_RESOLUTION_RANGE=
@@ -154,7 +154,7 @@ XDS_template = """
  DIRECTION_OF_DETECTOR_X-AXIS= 1 0 0
  DIRECTION_OF_DETECTOR_Y-AXIS= 0 1 0
 
- ORGX= {origin_x:d}    ORGY= {origin_y:d}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
+ ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
  DETECTOR_DISTANCE= {sign}{detdist:.2f}   ! can be negative. Positive because the detector normal points away from the crystal.
 
  OSCILLATION_RANGE= {osangle:.2f}

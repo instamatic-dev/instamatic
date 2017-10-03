@@ -45,6 +45,7 @@ class ExperimentalcRED(LabelFrame):
 
     def start_collection(self):
         print "Start button pressed"
+        # TODO: make button inactive when it is clicked
         self.lb_coll3.grid_forget()
         self.lb_coll1.grid(row=6,column=0)
         self.lb_coll2.grid(row=7,column=0)
@@ -53,12 +54,14 @@ class ExperimentalcRED(LabelFrame):
 
     def stop_collection(self):
         print "Stop button pressed"
+        # TODO: make button active only during experiment
         self.lb_coll1.grid_forget()
         self.lb_coll2.grid_forget()
         self.stopEvent.set()
         
     def continue_collection(self):
         print "Continue button pressed"
+        # NOTE: why is this button necessary?
         self.lb_coll1.grid_forget()
         self.lb_coll2.grid_forget()
         self.lb_coll3.grid(row=6,column=0)

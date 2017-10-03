@@ -34,8 +34,8 @@ class IOFrame(LabelFrame):
         self.incrementer.grid(row=3, column=2)
 
     def init_vars(self):
-        self.var_directory = StringVar(value="C:/")
-        self.var_flatfield = StringVar(value="C:/flatfield.tiff")
+        self.var_directory = StringVar(value="C:/test-gui")
+        self.var_flatfield = StringVar(value="C:/test-gui/flatfield.tiff")
         self.var_sample_name = StringVar(value="experiment")
         self.var_experiment_number = IntVar(value=1)
 
@@ -48,6 +48,10 @@ class IOFrame(LabelFrame):
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
         path = os.path.join(drc, "{}_{}".format(name, number))
+        while os.path.exists(path):
+            number += 1
+            path = os.path.join(drc, "{}_{}".format(name, number))
+        self.var_experiment_number.set(number)
         return path
 
     def browse_directory(self):

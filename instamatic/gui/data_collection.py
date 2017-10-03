@@ -79,16 +79,13 @@ class DataCollectionController(object):
         if not os.path.exists(workdir):
             os.makedirs(workdir)
         
-        expt=self.module_cred.get_expt()
+        expt = self.module_cred.get_expt()
         
-        if self.camera == "simulate":
-            camtyp=0
-        else:
-            camtyp=1
-            
-        cexp=cRED_experiment(ctrl=self.ctrl, path=expdir,expt=expt,log=self.log,camtyp=camtyp,t=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
+        cexp = cRED_experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
+        
+        self.stopEvent_cRED.clear()
 
     def acquire_data_SED(self):
         from instamatic.experiment import Experiment
