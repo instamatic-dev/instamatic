@@ -72,7 +72,7 @@ class ImgConversion(object):
         import collections
         print ("Writing SMV files......")
     
-        for i, (img, h) in enumerate(izip(self.data, self.header)):
+        for i, (img, h) in enumerate(izip(self.data, self.headers)):
             j = i + 1
 
             img = np.ushort(img)
