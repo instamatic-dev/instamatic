@@ -1,136 +1,114 @@
-# coding: utf-8
-#
-#    Project: X-ray image reader
-#             https://github.com/silx-kit/fabio
-#
-#
-#    Copyright (C) European Synchrotron Radiation Facility, Grenoble, France
-#
-#    Principal author:       Jérôme Kieffer (Jerome.Kieffer@ESRF.eu)
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-"""
+import numpy as np
 
-Authors: Henning O. Sorensen & Erik Knudsen
-         Center for Fundamental Research: Metal Structures in Four Dimensions
-         Risoe National Laboratory
-         Frederiksborgvej 399
-         DK-4000 Roskilde
-         email:erik.knudsen@risoe.dk
-
-+ mods for fabio by JPW
-
-"""
-# Get ready for python3:
-from __future__ import with_statement, print_function
-import numpy, logging
-from fabio.fabioimage import FabioImage
-from fabio.fabioutils import to_str
-logger = logging.getLogger("adscimage")
+# from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py
 
 
-class AdscImage(FabioImage):
-    """ Read an image in ADSC format (quite similar to edf?) """
-    def __init__(self, *args, **kwargs):
-        FabioImage.__init__(self, *args, **kwargs)
+def swap_needed(header):
+    if "BYTE_ORDER" not in header:
+        # logger.warning("No byte order specified, assuming little_endian")
+        BYTE_ORDER = "little_endian"
+    else:
+        BYTE_ORDER = header["BYTE_ORDER"]
+    if "little" in BYTE_ORDER and np.little_endian:
+        return False
+    elif "big" in BYTE_ORDER and not np.little_endian:
+        return False
+    elif  "little" in BYTE_ORDER and not np.little_endian:
+        return True
+    elif  "big" in BYTE_ORDER and np.little_endian:
+        return True
 
-    def read(self, fname, frame=None):
-        """ read in the file """
-        with self._open(fname, "rb") as infile:
-            try:
-                self._readheader(infile)
-            except:
-                raise Exception("Error processing adsc header")
-            # banned by bzip/gzip???
-            try:
-                infile.seek(int(self.header['HEADER_BYTES']), 0)
-            except TypeError:
-                # Gzipped does not allow a seek and read header is not
-                # promising to stop in the right place
-                infile.close()
-                infile = self._open(fname, "rb")
-                infile.read(int(self.header['HEADER_BYTES']))
-            binary = infile.read()
-        # infile.close()
 
-        # now read the data into the array
-        self.dim1 = int(self.header['SIZE1'])
-        self.dim2 = int(self.header['SIZE2'])
-        data = numpy.fromstring(binary, numpy.uint16)
-        if self.swap_needed():
-            data.byteswap(True)
-        try:
-            data.shape = (self.dim2, self.dim1)
-        except ValueError:
-                raise IOError('Size spec in ADSC-header does not match ' + \
-                              'size of image data field %sx%s != %s' % (self.dim1, self.dim2, data.size))
-        self.data = data
-        self.bytecode = numpy.uint16
-        self.resetvals()
-        return self
+def write_adsc(fname, data, header={}):
+    """
+    Write adsc format
+    """
+    out = b'{\n'
+    for key in header:
+        out += b"%s=%s;\n" % (key, header[key])
+    if header.has_key("HEADER_BYTES"):
+        pad = int(header["HEADER_BYTES"]) - len(out) - 2
+    else:
+#         hsize = ((len(out) + 23) // 512 + 1) * 512
+        hsize = (len(out) + 533) & ~(512 - 1)
+        out += b"HEADER_BYTES=%d;\n" % (hsize)
+        pad = hsize - len(out) - 2
+    out +=  b"}" + (pad+1) * b'\x00' 
+    assert len(out) % 512 == 0 , "Header is not multiple of 512"
 
-    def _readheader(self, infile):
-        """ read an adsc header """
+    data = data.astype(np.uint16)
+    if swap_needed(header):
+        data.byteswap(True)
+
+    with open(fname, "wb") as outf:
+        outf.write(out)
+        outf.write(data.tostring())
+
+
+def readheader(infile):
+    """ read an adsc header """
+    header = {}
+    line = infile.readline()
+    bytesread = len(line)
+    while b'}' not in line:
+        if b'=' in line:
+            (key, val) = str(line).split('=')
+            header[key.strip()] = val.strip(';\n\r')
         line = infile.readline()
-        bytesread = len(line)
-        while b'}' not in line:
-            if b'=' in line:
-                (key, val) = to_str(line).split('=')
-                self.header[key.strip()] = val.strip(';\n\r')
-            line = infile.readline()
-            bytesread = bytesread + len(line)
+        bytesread = bytesread + len(line)
+    return header
 
-    def write(self, fname):
-        """
-        Write adsc format
-        """
-        out = b'{\n'
-        for key in self.header:
-            out += b"%s=%s;\n" % (key, self.header[key])
-        if self.header.has_key("HEADER_BYTES"):
-            pad = int(self.header["HEADER_BYTES"]) - len(out) - 2
-        else:
-#             hsize = ((len(out) + 23) // 512 + 1) * 512
-            hsize = (len(out) + 533) & ~(512 - 1)
-            out += b"HEADER_BYTES=%d;\n" % (hsize)
-            pad = hsize - len(out) - 2
-        out +=  b"}" + (pad+1) * b'\x00' 
-        assert len(out) % 512 == 0 , "Header is not multiple of 512"
 
-        data = self.data.astype(numpy.uint16)
-        if self.swap_needed():
-            data.byteswap(True)
+def read_adsc(fname):
+    """ read in the file """
+    with open(fname, "rb", buffering=0) as infile:
+        try:
+            header = readheader(infile)
+        except:
+            raise Exception("Error processing adsc header")
+        # banned by bzip/gzip???
+        try:
+            infile.seek(int(header['HEADER_BYTES']), 0)
+        except TypeError:
+            # Gzipped does not allow a seek and read header is not
+            # promising to stop in the right place
+            infile.close()
+            infile = open(fname, "rb", buffering=0)
+            infile.read(int(header['HEADER_BYTES']))
+        binary = infile.read()
+    # infile.close()
 
-        with open(fname, "wb") as outf:
-            outf.write(out)
-            outf.write(data.tostring())
-        # outf.close()
+    # now read the data into the array
+    dim1 = int(header['SIZE1'])
+    dim2 = int(header['SIZE2'])
+    data = np.fromstring(binary, np.uint16)
+    if swap_needed(header):
+        data.byteswap(True)
+    try:
+        data.shape = (dim2, dim1)
+    except ValueError:
+            raise IOError('Size spec in ADSC-header does not match ' + \
+                          'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
+    
+    return data, header
 
-    def swap_needed(self):
-        if "BYTE_ORDER" not in self.header:
-            logger.warning("No byte order specified, assuming little_endian")
-            BYTE_ORDER = "little_endian"
-        else:
-            BYTE_ORDER = self.header["BYTE_ORDER"]
-        if "little" in BYTE_ORDER and numpy.little_endian:
-            return False
-        elif "big" in BYTE_ORDER and not numpy.little_endian:
-            return False
-        elif  "little" in BYTE_ORDER and not numpy.little_endian:
-            return True
-        elif  "big" in BYTE_ORDER and numpy.little_endian:
-            return True
 
-adscimage = AdscImage
+if __name__ == '__main__':
+    fn = "test.img"
+    img = (np.random.random((512, 512)) * 100000).astype(np.uint16)
+
+    header = {}
+    header['SIZE1'] = 512
+    header['SIZE2'] = 512
+    
+    write_adsc(fn, img, header=header)
+    print "writing:", img.shape
+    print "header:", header
+    print
+
+    arr,h = read_adsc(fn)
+    print "reading", arr.shape
+    print "header", h
+    
+    print
+    print "allclose:", np.allclose(img, arr)

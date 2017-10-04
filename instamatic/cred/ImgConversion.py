@@ -1,7 +1,7 @@
 #! python2
 
 from __future__ import division
-from instamatic.formats import adscimage
+from instamatic.formats import write_adsc
 import datetime
 import os
 import numpy as np
