@@ -8,7 +8,12 @@ specifications:
     15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000,
     200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000,
     2000000]
-  MAGNIFICATION_MODES: {lowmag: 50, mag1: 2500}
+  MAGNIFICATION_MODES: {
+    lowmag: 50, 
+    mag1: 2500 }
+  rotation_speeds: {
+    fine: [ 0.114, 0.45, 1.126 ], 
+    coarse: [ 0.45, 1.8, 4.5 ] }
 timepix:
   diffraction_pixeldimensions: 
     150: 0.0087845

@@ -45,5 +45,4 @@ def load(fn="config.yaml", camera=None):
   global camera_rotation_vs_stage_xy
   camera_rotation_vs_stage_xy = CFG["camera_rotation_vs_stage_xy"]
 
-
 load()

@@ -15,6 +15,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def pixelsize2cameralength(pixelsize):
+    # TODO: fix magic number, can this be calculated from the pixelsize directly?
+    # for physical_pixelsize = 0.055 mm
+    magic_number = 2.19122
+    return magic_number / pixelsize
+
+
+def get_closest_calibrated_speed(val):
+    """Correct for the overestimation of the oscillation angle if the rotation 
+    was stopped before interrupting the data collection. It uses calibrated values for the 
+    rotation speeds of the microscope, and matches them to the observed one"""
+
+    rotation_speeds = set(config.specifications["rotation_speeds"]["coarse"] + config.specifications["rotation_speeds"]["fine"])
+    calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
+    print "Correcting oscillation angle from {} to calibrated value {}".format(val, calibrated_value)
+    return calibrated_value
+
+
 class ImgConversion(object):
     
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
@@ -48,8 +66,8 @@ class ImgConversion(object):
         self.physical_pixelsize = 0.055 # mm
         self.wavelength = 0.025080
         self.beam_center = self.get_average_beam_center()
-        self.distance = 483.89*0.00412/self.pixelsize
-        self.osangle = osangle
+        self.distance = pixelsize2cameralength(self.pixelsize)
+        self.osangle = get_closest_calibrated_speed(osangle)
         self.startangle = startangle
         self.endangle = endangle
         self.rotation_angle = rotation_angle
@@ -104,10 +122,7 @@ class ImgConversion(object):
             header['DETECTOR_SN'] = 901         # special ID for DIALS
             header['DATE'] = str(h["ImageGetTime"])
             header['TIME'] = str(h["ImageExposureTime"])
-
-            # TODO: fix magic numbers, can this be calculated from the pixelsize directly?
-            # Distance *1.1 to facilitate DIALS processing since pixel size was changed to 0.055
-            header['DISTANCE'] = "{:.2f}".format(self.distance*1.1)
+            header['DISTANCE'] = "{:.2f}".format(self.distance)
             header['TWOTHETA'] = 0.00
             header['PHI'] = self.startangle
             header['OSC_START'] = self.startangle
@@ -206,7 +221,10 @@ class ImgConversion(object):
             origin_x=self.beam_center[0],
             origin_y=self.beam_center[1],
             sign="+",
-            detdist=self.distance,
+
+            # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
+            # in XDS input file (0.050 instead of 0.055 mm)
+            detdist=self.distance/1.1,
             osangle=self.osangle,
             rot_x=cos(rotation_angle),
             rot_y=cos(rotation_angle+np.pi/2),

@@ -8,6 +8,7 @@ import time
 import ImgConversion
 from instamatic.TEMController import config
 
+
 class Experiment(object):
     def __init__(self, ctrl, expt, stopEvent, path=None, log=None, flatfield=None):
         super(Experiment,self).__init__()
@@ -21,12 +22,12 @@ class Experiment(object):
         
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
-        self.magnification = self.ctrl.magnification.get()
+        self.magnification = self.ctrl.magnification.value
         self.image_spotsize = self.ctrl.spotsize
         
         self.diff_binsize = self.image_binsize
         self.diff_exposure = self.expt
-        self.diff_brightness = self.ctrl.brightness
+        self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.image_spotsize
         print ("Output directory:\n{}".format(self.path))
         print "Imaging     : binsize = {}".format(self.image_binsize)
@@ -88,12 +89,13 @@ class Experiment(object):
                 print("Generating random images... {}".format(img.mean()))
 
             self.ctrl.cam.unblock()
-            self.endangle = self.startangle + 10
+            self.endangle = self.startangle + np.random.random()*50
+
 
         pxd = config.diffraction_pixeldimensions
-        #TODO: use calibrated numbers for oscillation angle, this fails if people forget to stop the measurement
+
         nframes = len(buffer)
-        osangle = abs((self.endangle - self.startangle) / nframes)
+        osangle = abs(self.endangle - self.startangle) / nframes
 
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
