@@ -40,7 +40,6 @@ class cRED_experiment(object):
         
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
-        ind = 1
         
         self.pathtiff = os.path.join(self.path,"tiff")
         self.pathsmv = os.path.join(self.path,"SMV")
@@ -55,14 +54,15 @@ class cRED_experiment(object):
         if not os.path.exists(self.pathred):
             os.makedirs(self.pathred)
         
-        camlen = int(self.ctrl.magnification.get())
+        camera_length = int(self.ctrl.magnification.get())
 
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        self.logger.info("Data collection camera length: {} mm".format(camlen))
+        self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
         
+        buffer = []
         if self.camtype != "simulate":
             while abs(a - a0) < 0.5:
                 a = self.ctrl.stageposition.a
@@ -72,28 +72,28 @@ class cRED_experiment(object):
             self.startangle = a
             
             self.ctrl.cam.block()
-            
             while not self.stopEvent.is_set():
-                self.ctrl.getImage(self.expt, out=os.path.join(self.pathtiff,"{:05d}.tiff".format(ind)), header_keys=None)
-                ind += 1
+                img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                buffer.append((img, h))
 
             self.ctrl.cam.unblock()
             self.endangle = self.ctrl.stageposition.a
         else:
             self.startangle = a
-            camlen = 300
+            camera_length = 300
             self.ctrl.cam.block()
             while not self.stopEvent.is_set():
-                self.ctrl.getImage(self.expt, out=os.path.join(self.pathtiff, "{:05d}.tiff".format(ind)), header_keys=None)
-                print("Generating random images... angle: {}".format(self.ctrl.stageposition.a))
-                ind += 1
+                img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                buffer.append((img, h))
+                print("Generating random images... {}".format(img.mean()))
 
             self.ctrl.cam.unblock()
             self.endangle = self.startangle + 10
 
         pxd = config.diffraction_pixeldimensions
         #TODO: use calibrated numbers for oscillation angle, this fails if people forget to stop the measurement
-        osangle = abs((self.endangle - self.startangle) / ind)
+        nframes = len(buffer)
+        osangle = abs((self.endangle - self.startangle) / nframes)
 
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
@@ -101,8 +101,8 @@ class cRED_experiment(object):
         
         rotation_angle = config.camera_rotation_vs_stage_xy
 
-        buf = ImgConversion.ImgConversion(pathtiff=self.pathtiff, 
-                 camera_length=camlen,
+        img_conv = ImgConversion.ImgConversion(buffer=buffer, 
+                 camera_length=camera_length,
                  osangle=osangle,
                  startangle=self.startangle,
                  endangle=self.endangle,
@@ -110,9 +110,11 @@ class cRED_experiment(object):
                  rotation_angle=rotation_angle,
                  flatfield=self.flatfield)
         
-        buf.ED3DCreator(self.pathred, rotation_angle)
-        buf.MRCCreator(self.pathred)
-        buf.XDSINPCreator(self.pathsmv, rotation_angle)
+        img_conv.writeTiff(self.pathtiff)
+        img_conv.writeIMG(self.pathsmv)
+        img_conv.ED3DCreator(self.pathred, rotation_angle)
+        img_conv.MRCCreator(self.pathred)
+        img_conv.XDSINPCreator(self.pathsmv, rotation_angle)
         self.logger.info("XDS INP file created as usual.")
 
         print "Data Collection and Conversion Done."
