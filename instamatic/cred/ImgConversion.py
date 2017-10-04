@@ -103,8 +103,8 @@ class ImgConversion(object):
             header['BIN_TYPE'] = "HW"
             header['ADC'] = "fast"
             header['CREV'] = 1
-            header['BEAMLINE'] = "TIMEPIX_SU"
-            header['DETECTOR_SN'] = 901
+            header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
+            header['DETECTOR_SN'] = 901         # special ID for DIALS
             header['DATE'] = "{}".format(nowt)
             header['TIME'] = 0.096288  # NOTE: where does this number come from?
 
@@ -123,8 +123,7 @@ class ImgConversion(object):
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
             
             fn = os.path.join(path, "{:05d}.img".format(j))
-            newimg = adscimage.adscimage(img, header)
-            newimg.write(fn)
+            newimg = write_adsc(fn, img, header=header)
         
         logger.debug("SMV files (size 512*512) saved in folder: {}".format(path))
      
