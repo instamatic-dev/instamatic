@@ -4,14 +4,11 @@ import json
 
 import matplotlib.pyplot as plt
 
-import fileio
-
-from formats import *
-from find_crystals import find_crystals, find_crystals_timepix
-from calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
-from TEMController import config
-from flatfield import remove_deadpixels, apply_flatfield_correction
-from tools import printer
+from instamatic.formats import *
+from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
+from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
+from instamatic.calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
+from instamatic.TEMController import config
 
 import time
 import logging
@@ -174,24 +171,16 @@ class Experiment(object):
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
         
-        try:
-            d = fileio.load_experiment()
-            self.calib_stage = CalibStage.from_file()
-        except IOError:
-            self.ctrl.mode_mag1()
-            self.ctrl.brightness.max()
+        self.ctrl.mode_mag1()
+        self.ctrl.brightness.max()
 
-            print "\nSelect area to scan"
-            print "-------------------"
-            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
-            x, y, _, _, _ = self.ctrl.stageposition.get()
-            self.hole_centers = np.array([[x,y]])            
-            self.hole_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
-            border_k = 0
-        else:
-            self.hole_centers = d["centers"]
-            self.hole_radius = d["radius"] / 1000 # nm -> um
-            border_k = 1
+        print "\nSelect area to scan"
+        print "-------------------"
+        raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
+        x, y, _, _, _ = self.ctrl.stageposition.get()
+        self.hole_centers = np.array([[x,y]])            
+        self.hole_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
+        border_k = 0
 
         self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
         self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
@@ -530,7 +519,7 @@ def main_gui():
 
 
 def main():
-    import TEMController
+    from instamatic import TEMController
     try:
         params = json.load(open("params.json","r"))
     except IOError:

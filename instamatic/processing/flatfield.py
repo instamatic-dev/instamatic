@@ -3,8 +3,8 @@
 import sys, os
 import numpy as np
 import time
-from formats import *
-import TEMController
+from instamatic.formats import *
+from instamatic import TEMController
 import glob
 from tqdm import tqdm
 

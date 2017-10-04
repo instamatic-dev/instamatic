@@ -186,7 +186,7 @@ def get_ring_props(edges):
     return props
 
 
-def main(sigma=None):
+def main_entry(sigma=None):
     if len(sys.argv) != 2:
         print "Program to find microscope stretch percent/azimuth from a powder pattern"
         print
@@ -210,4 +210,4 @@ def main(sigma=None):
 
 
 if __name__ == '__main__':
-    main()
+    main_entry()

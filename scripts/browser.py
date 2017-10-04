@@ -6,13 +6,12 @@ import numpy as np
 
 from scipy import ndimage
 
-from IPython import embed
-from instamatic.processing.indexer import Indexer, IndexerMulti, Projector, read_ycsv, get_indices
-
 import argparse
 import tqdm
 
 __version__ = "2017-03-12"
+
+CMAP = None # "viridis", "gray"
 
 ANGLE = -0.88 + np.pi/2
 R = np.array([
@@ -87,9 +86,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     if stitch:
         for mini_img, coord in zip(imgs, coords):
             sx, sy = coord
-            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx-imdim_x, sx+imdim_x, sy-imdim_y, sy+imdim_y], vmax=100)
-        # coord_color = "None"
-        # picked_color = "red"
+            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx-imdim_x, sx+imdim_x, sy-imdim_y, sy+imdim_y], cmap=CMAP)
     
     ax1.scatter(coords[has_crystals==True, 0], coords[has_crystals==True, 1], marker="o", facecolor=coord_color)
     ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color=coord_color, picker=8)
@@ -99,12 +96,12 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax1.set_ylabel("Stage Y")
 
     ax2 = plt.subplot(132, title=fn)
-    im2 = ax2.imshow(img, cmap="gray")
+    im2 = ax2.imshow(img, cmap=CMAP)
     plt_crystals, = ax2.plot([], [], marker="o", color="red",  mew=2, picker=8, lw=0)
     highlight2,   = ax2.plot([], [], marker="o", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=250, cmap="gray")
+    im3 = ax3.imshow(np.zeros_like(img), vmax=250, cmap=CMAP)
     
     class plt_diff:
         center, = ax3.plot([], [], "o", color="red", lw=0)
@@ -224,10 +221,6 @@ Program for indexing electron diffraction images.
                         type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files")
 
-    parser.add_argument("-r", "--results", metavar='RESULTS.csv',
-                        action="store", type=str, dest="results",
-                        help="Path to .csv with results from indexing")
-
     parser.add_argument("-s", "--stitch",
                         action="store_true", dest="stitch",
                         help="Stitch images together.")
@@ -241,7 +234,7 @@ Program for indexing electron diffraction images.
 
     if not arg:
         if os.path.exists("images"):
-            arg = "images/*.tiff"
+            arg = "images/*.h5"
         else:
             parser.print_help()
             sys.exit()

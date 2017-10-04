@@ -8,7 +8,7 @@ from instamatic.tools import *
 from instamatic.TEMController import initialize
 from filenames import *
 
-from instamatic.find_holes import find_holes
+from instamatic.processing.find_holes import find_holes
 
 import pickle
 

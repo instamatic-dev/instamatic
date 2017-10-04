@@ -11,9 +11,9 @@ from skimage import filters
 from skimage import segmentation
 from skimage import measure
 
-from tools import autoscale
+from instamatic.tools import autoscale
 
-from TEMController.config import mag1_camera_dimensions
+from instamatic.TEMController.config import mag1_camera_dimensions
 
 
 def isedge(prop):
@@ -188,10 +188,10 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
 
 
 def find_crystals_entry():
-    from formats import read_tiff
+    from instamatic.formats import read_image
 
     for fn in sys.argv[1:]:
-        img, h = read_tiff(fn)
+        img, h = read_image(fn)
         
         centroids = find_crystals(img, h["Magnification"], spread=2.50, plot=True)
     

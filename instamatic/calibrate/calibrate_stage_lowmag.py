@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
-from instamatic.cross_correlate import cross_correlate
+from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
@@ -392,18 +392,6 @@ prepare
         center_fn = sys.argv[1]
         other_fn = sys.argv[2:]
         calibrate_stage_lowmag(center_fn, other_fn)
-
-    from instamatic import fileio
-    from instamatic import app
-    if not os.path.exists(fileio.HOLE_COORDS):
-        #TODO: generalize filenames
-        app.map_holes_on_grid(
-            ("calib_0000.tiff",
-             "calib_0004.tiff",
-             "calib_0020.tiff",
-             "calib_0024.tiff"), plot=True)
-
-        print "To use: instamatic.goto_hole"
 
 
 if __name__ == '__main__':
