@@ -25,7 +25,7 @@ setup(
               "instamatic.processing",
               "instamatic.formats"],
 
-    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit"],
+    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py"],
 
     extras_require=["pandas", "matplotlib", "fabio"],
 
@@ -51,6 +51,7 @@ setup(
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main',
             # explore
             'instamatic.browser                       = scripts.browser:main',
+            'instamatic.viewer                        = scripts.viewer:main',
         ]
     }
 )

@@ -3,6 +3,7 @@ import time
 import os
 import yaml
 import numpy as np
+import h5py
 
 from csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
 
