@@ -11,6 +11,7 @@ Program for automatic data collection of diffraction snapshots on electron micro
 - comptypes
 - lmfit
 - pyyaml
+- h5py
 
 ## Installation
 
