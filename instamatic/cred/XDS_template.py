@@ -180,7 +180,7 @@ XDS_template = """
 
 ! ********** Incident beam **********
 
- X-RAY_WAVELENGTH= 0.02510       !used by IDXREF
+ X-RAY_WAVELENGTH= {wavelength:.4f}      !used by IDXREF
  INCIDENT_BEAM_DIRECTION= 0 0 39.84  !used by IDXREF +CORRECT(?) ???? (REC. ANGSTROM)  !The vector points from the source towards the crystal
 
  ! ??? FRACTION_OF_POLARIZATION=     !0.5 is default, for unpolarized beam
