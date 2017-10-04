@@ -3,11 +3,10 @@
 from __future__ import division
 from instamatic.formats import adscimage
 import datetime
-import glob
 import os
 import numpy as np
-from instamatic.flatfield import apply_flatfield_correction
 from instamatic.formats import read_tiff, write_tiff
+from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic.TEMController import config
 from instamatic.tools import find_beam_center

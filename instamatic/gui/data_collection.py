@@ -68,7 +68,7 @@ class DataCollectionController(object):
                 self.acquire_data_SED()
 
     def acquire_data_cRED(self):
-        from instamatic.cred.cRED_experiment import cRED_experiment
+        from instamatic.experiments import cRED
         
         expdir = self.module_io.get_experiment_directory()
         workdir = self.module_io.get_working_directory()
@@ -81,14 +81,14 @@ class DataCollectionController(object):
         
         expt = self.module_cred.get_expt()
         
-        cexp = cRED_experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
+        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
         
         self.stopEvent_cRED.clear()
 
     def acquire_data_SED(self):
-        from instamatic.experiment import Experiment
+        from instamatic.experiments import serialED
 
         expdir = self.module_io.get_experiment_directory()
         workdir = self.module_io.get_working_directory()
@@ -99,7 +99,7 @@ class DataCollectionController(object):
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
 
-        exp = Experiment(self.ctrl, params, expdir=expdir, log=self.log)
+        exp = serialED.Experiment(self.ctrl, params, expdir=expdir, log=self.log)
         exp.report_status()
         exp.run()
 

@@ -8,9 +8,9 @@ import time
 import ImgConversion
 from instamatic.TEMController import config
 
-class cRED_experiment(object):
+class Experiment(object):
     def __init__(self, ctrl, expt, stopEvent, path=None, log=None, flatfield=None):
-        super(cRED_experiment,self).__init__()
+        super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
         self.expt = expt
