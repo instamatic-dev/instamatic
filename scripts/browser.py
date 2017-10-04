@@ -6,9 +6,6 @@ import numpy as np
 
 from scipy import ndimage
 
-from IPython import embed
-from instamatic.processing.indexer import Indexer, IndexerMulti, Projector, read_ycsv, get_indices
-
 import argparse
 import tqdm
 
@@ -223,10 +220,6 @@ Program for indexing electron diffraction images.
     parser.add_argument("args", 
                         type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files")
-
-    parser.add_argument("-r", "--results", metavar='RESULTS.csv',
-                        action="store", type=str, dest="results",
-                        help="Path to .csv with results from indexing")
 
     parser.add_argument("-s", "--stitch",
                         action="store_true", dest="stitch",

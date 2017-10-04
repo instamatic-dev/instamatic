@@ -69,6 +69,24 @@ def affine_transform_circle_to_ellipse(azimuth, stretch):
     return affine_transform_ellipse_to_circle(azimuth, stretch, inverse=True)
 
 
+def apply_stretch_correction(z, center=None, azimuth=0, amplitude=0):
+    """Apply stretch correction to image using calibrated values
+    center: list of floats
+        pixel coordinates of the center of the direct beam
+    azimuth: float
+        Direction of the azimuth in degrees with respect to the vertical axis (TODO: check this)
+    amplitude: float
+        The difference in percent between the long and short axes
+    returns:
+        (N,N) ndarray
+    """
+    azimuth_rad = np.radians(azimuth)    # go to radians
+    amplitude_pc = amplitude / (2*100)   # as percentage
+    tr_mat = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
+    z = apply_transform_to_image(z, tr_mat, center=center)
+    return z
+
+
 def make_title(prop):
     azimuth = np.degrees(prop.orientation)
     stretch = -1 + prop.major_axis_length/prop.minor_axis_length
@@ -166,7 +184,7 @@ def get_ring_props(edges):
     return props
 
 
-def main(sigma=None):
+def main_entry(sigma=None):
     if len(sys.argv) != 2:
         print "Program to find microscope stretch percent/azimuth from a powder pattern"
         print
@@ -190,4 +208,4 @@ def main(sigma=None):
 
 
 if __name__ == '__main__':
-    main()
+    main_entry()

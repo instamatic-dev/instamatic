@@ -27,8 +27,6 @@ setup(
 
     install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py"],
 
-    extras_require=["pandas", "matplotlib", "fabio"],
-
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
     },
@@ -36,8 +34,9 @@ setup(
     entry_points={
         'console_scripts': [
             # main
-            'instamatic                               = instamatic.experiment:main',
+            'instamatic                               = instamatic.gui:main',
             'instamatic.gui                           = instamatic.gui:main',
+            'instamatic.serialed                      = instamatic.serialed.experiment:main',
             # experiment
             'instamatic.camera                        = instamatic.camera.camera:main_entry',
             'instamatic.controller                    = instamatic.TEMController.TEMController:main_entry',
@@ -46,9 +45,9 @@ setup(
             'instamatic.calibrate_stage_mag1          = instamatic.calibrate.calibrate_stage_mag1:main_entry',
             'instamatic.calibrate_beamshift           = instamatic.calibrate.calibrate_beamshift:main_entry',
             'instamatic.calibrate_directbeam          = instamatic.calibrate.calibrate_directbeam:main_entry',
-            'instamatic.flatfield                     = instamatic.flatfield:main_entry',
             # processing
-            'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main',
+            'instamatic.flatfield                     = instamatic.processing.flatfield:main_entry',
+            'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main_entry',
             # explore
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',

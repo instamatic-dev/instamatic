@@ -1,34 +1,10 @@
 from scipy import ndimage
-from formats import read_tiff, write_tiff
-import json
+from instamatic.formats import read_tiff, write_tiff
 import sys, os
 import numpy as np
 import glob
 import time
-
-
-def load_img(fn):
-    root, ext = os.path.splitext(fn)
-    ext = ext.lower()
-    if ext == "tiff" or ext == "tif":
-        arr, h = read_tiff(fn)
-    elif ext != ".npy":
-        import fabio
-        arr = fabio.openimage.openimage(fn)
-        # workaround to fix headers
-        if ext == ".edf":
-            for key in ("BeamShift", "BeamTilt", "GunShift", "GunTilt", "ImageShift", "StagePosition"):
-                if arr.header.has_key(key):
-                    arr.header[key] = eval("{" + arr.header[key] + "}")
-        return arr.data, arr.header
-    else:
-        arr = np.load(fn)
-    
-        root, ext = os.path.splitext(fn)
-        fnh = root + ".json"
-    
-        d = json.load(open(fnh, "r"))
-        return arr, d
+from skimage import exposure
 
 
 def autoscale(img, maxdim=512):
@@ -80,7 +56,7 @@ def get_files(file_pat):
         fns = glob.glob(file_pat)
 
     if len(fns) == 0:
-        raise IOError("No files matching '{}' were found.".format(file_path))
+        raise IOError("No files matching '{}' were found.".format(file_pat))
 
     return fns
 

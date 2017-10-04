@@ -19,8 +19,8 @@ import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
-from TEMController.config import lowmag_pixeldimensions
-from tools import *
+from instamatic.TEMController.config import lowmag_pixeldimensions
+from instamatic.tools import *
 
 
 def plot_features(img, segmented):
@@ -196,10 +196,10 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
 
 
 def find_holes_entry():
-    from formats import read_tiff
+    from formats import read_image
 
     for fn in sys.argv[1:]:
-        img, h = read_tiff(fn)
+        img, h = read_image(fn)
 
         img_zoomed, scale = autoscale(img, maxdim=512)
         

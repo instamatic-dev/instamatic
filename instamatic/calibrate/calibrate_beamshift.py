@@ -5,12 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
-from instamatic.cross_correlate import cross_correlate
+from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
 from fit import fit_affine_transformation
 from filenames import *
 
-from instamatic.find_holes import find_holes
+from instamatic.processing.find_holes import find_holes
 
 from instamatic.tools import printer
 
