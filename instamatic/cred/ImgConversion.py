@@ -2,7 +2,6 @@
 
 from __future__ import division
 from instamatic.formats import write_adsc
-import datetime
 import os
 import numpy as np
 from instamatic.formats import read_tiff, write_tiff
@@ -73,9 +72,7 @@ class ImgConversion(object):
         import collections
         print ("Writing SMV files......")
     
-        nowt = datetime.datetime.now()
-
-        for i, img in enumerate(self.data):
+        for i, (img, h) in enumerate(izip(self.data, self.header)):
             j = i + 1
 
             img = np.ushort(img)
@@ -105,8 +102,8 @@ class ImgConversion(object):
             header['CREV'] = 1
             header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
             header['DETECTOR_SN'] = 901         # special ID for DIALS
-            header['DATE'] = "{}".format(nowt)
-            header['TIME'] = 0.096288  # NOTE: where does this number come from?
+            header['DATE'] = str(h["ImageGetTime"])
+            header['TIME'] = str(h["ImageExposureTime"])
 
             # TODO: fix magic numbers, can this be calculated from the pixelsize directly?
             # Distance *1.1 to facilitate DIALS processing since pixel size was changed to 0.055
