@@ -22,7 +22,7 @@ def pixelsize2cameralength(pixelsize):
     return magic_number / pixelsize
 
 
-def get_closest_calibrated_speed(val):
+def get_calibrated_rotation_speed(val):
     """Correct for the overestimation of the oscillation angle if the rotation 
     was stopped before interrupting the data collection. It uses calibrated values for the 
     rotation speeds of the microscope, and matches them to the observed one"""
@@ -67,13 +67,17 @@ class ImgConversion(object):
         self.wavelength = 0.025080
         self.beam_center = self.get_average_beam_center()
         self.distance = pixelsize2cameralength(self.pixelsize)
-        self.osangle = get_closest_calibrated_speed(osangle)
+        self.osangle = osangle
         self.startangle = startangle
         self.endangle = endangle
         self.rotation_angle = rotation_angle
         self.dmax, self.dmin = resolution_range
-        logger.debug("Primary beam at: {}".format(self.beam_center))
         
+        self.acquisition_time = np.mean([h["ImageAcquisitionTime"] for h in self.headers])
+        self.rotation_speed = get_calibrated_rotation_speed(osangle / self.acquisition_time) 
+
+        logger.debug("Primary beam at: {}".format(self.beam_center))
+
     def get_average_beam_center(self):
         return np.mean([find_beam_center(img, sigma=10) for img in self.data], axis=0)
 
@@ -226,6 +230,7 @@ class ImgConversion(object):
             # in XDS input file (0.050 instead of 0.055 mm)
             detdist=self.distance/1.1,
             osangle=self.osangle,
+            calib_osangle=self.rotation_speed * self.acquisition_time,
             rot_x=cos(rotation_angle),
             rot_y=cos(rotation_angle+np.pi/2),
             rot_z=0.0

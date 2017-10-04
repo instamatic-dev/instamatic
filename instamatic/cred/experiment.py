@@ -73,19 +73,33 @@ class Experiment(object):
             self.startangle = a
             
             self.ctrl.cam.block()
+            t0 = time.time()
             while not self.stopEvent.is_set():
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                
+                t1 = time.time()
+                h["ImageAcquisitionTime"] = (t1 - t0)
+                
                 buffer.append((img, h))
+                t0 = t1
 
             self.ctrl.cam.unblock()
             self.endangle = self.ctrl.stageposition.a
         else:
             self.startangle = a
             camera_length = 300
+
             self.ctrl.cam.block()
+            t0 = time.time()
             while not self.stopEvent.is_set():
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
+
+                t1 = time.time()
+                h["ImageAcquisitionTime"] = (t1 - t0)
+                
                 buffer.append((img, h))
+                t0 = t1
+                
                 print("Generating random images... {}".format(img.mean()))
 
             self.ctrl.cam.unblock()

@@ -158,6 +158,7 @@ XDS_template = """
  DETECTOR_DISTANCE= {sign}{detdist:.2f}   ! can be negative. Positive because the detector normal points away from the crystal.
 
  OSCILLATION_RANGE= {osangle:.2f}
+ !OSCILLATION_RANGE {calib_osangle:.2f} ! Calibrated value
  !XDS assumes a right handed rotation of the crystal about the rotation axis when proceeding to the next data image.
 
  ROTATION_AXIS= {rot_x:.3f} {rot_y:.3f} {rot_z:.3f}    !cos(139) cos(49)  !in XDS.INP emailed: 0.078605 0.996888 -0.005940
