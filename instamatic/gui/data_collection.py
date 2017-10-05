@@ -55,7 +55,6 @@ class DataCollectionController(object):
             self.triggerEvent.clear()
 
             if self.exitEvent.is_set():
-                print "exiting..."
                 self.ctrl.close()
                 sys.exit()
             
@@ -99,17 +98,16 @@ class DataCollectionController(object):
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
 
-        exp = serialED.Experiment(self.ctrl, params, expdir=expdir, log=self.log)
         exp.report_status()
         exp.run()
 
         self.stopEvent_SED.clear()
 
     def get_working_directory(self):
-        return self.ctrl.cam.get_working_directory()
+        return self.module_io.get_working_directory()
 
     def get_experiment_directory(self):
-        return self.ctrl.cam.get_experiment_directory()
+        return self.module_io.get_experiment_directory()
 
 
 class DataCollectionGUI(VideoStream):
