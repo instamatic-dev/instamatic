@@ -44,6 +44,7 @@ class ImgConversion(object):
                  startangle,
                  endangle,
                  rotation_angle,
+                 acquisition_time,
                  resolution_range=(20, 0.8),
                  flatfield='flatfield.tiff'
                  ):
@@ -73,7 +74,7 @@ class ImgConversion(object):
         self.rotation_angle = rotation_angle
         self.dmax, self.dmin = resolution_range
         
-        self.acquisition_time = np.mean([h["ImageAcquisitionTime"] for h in self.headers])
+        self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osangle / self.acquisition_time) 
 
         logger.debug("Primary beam at: {}".format(self.beam_center))

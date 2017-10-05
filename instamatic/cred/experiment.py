@@ -76,15 +76,13 @@ class Experiment(object):
             t0 = time.time()
             while not self.stopEvent.is_set():
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                
-                t1 = time.time()
-                h["ImageAcquisitionTime"] = (t1 - t0)
-                
                 buffer.append((img, h))
-                t0 = t1
+
+            t1 = time.time()
 
             self.ctrl.cam.unblock()
             self.endangle = self.ctrl.stageposition.a
+                
         else:
             self.startangle = a
             camera_length = 300
@@ -93,14 +91,11 @@ class Experiment(object):
             t0 = time.time()
             while not self.stopEvent.is_set():
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
-
-                t1 = time.time()
-                h["ImageAcquisitionTime"] = (t1 - t0)
-                
                 buffer.append((img, h))
-                t0 = t1
                 
                 print("Generating random images... {}".format(img.mean()))
+
+            t1 = time.time()
 
             self.ctrl.cam.unblock()
             self.endangle = self.startangle + np.random.random()*50
@@ -110,6 +105,7 @@ class Experiment(object):
 
         nframes = len(buffer)
         osangle = abs(self.endangle - self.startangle) / nframes
+        acquisition_time = (t1 - t0) / nframes
 
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
@@ -122,8 +118,9 @@ class Experiment(object):
                  osangle=osangle,
                  startangle=self.startangle,
                  endangle=self.endangle,
-                 resolution_range=(20, 0.8),
                  rotation_angle=rotation_angle,
+                 acquisition_time=acquisition_time,
+                 resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
         img_conv.writeTiff(self.pathtiff)
