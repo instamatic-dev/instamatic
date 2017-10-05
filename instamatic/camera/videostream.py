@@ -1,4 +1,5 @@
 from Tkinter import *
+from ttk import *
 from PIL import Image, ImageEnhance
 from PIL import ImageTk
 import threading
@@ -119,15 +120,15 @@ class VideoStream(threading.Thread):
         lwidth = 12
 
         frame = Frame(master)
-        self.e_fps         = Entry(frame, bd=0, width=ewidth, textvariable=self.var_fps, state=DISABLED)
-        self.e_interval = Entry(frame, bd=0, width=ewidth, textvariable=self.var_interval, state=DISABLED)
+        self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
+        self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
         
-        Label(frame, anchor=E, width=lwidth, text="fps:").grid(row=1, column=0)
-        self.e_fps.grid(row=1, column=1)
-        Label(frame, anchor=E, width=lwidth, text="interval (ms):").grid(row=1, column=2)
-        self.e_interval.grid(row=1, column=3)
-        # Label(frame, anchor=E, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
+        Label(frame, width=lwidth, text="fps:").grid(row=1, column=0)
+        self.e_fps.grid(row=1, column=1, sticky='we')
+        Label(frame, width=lwidth, text="interval (ms):").grid(row=1, column=2)
+        self.e_interval.grid(row=1, column=3, sticky='we')
+        # Label(frame, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
         # self.e_overhead.grid(row=1, column=5)
         
         frame.pack()
@@ -136,12 +137,12 @@ class VideoStream(threading.Thread):
         
         self.e_frametime = Spinbox(frame, width=ewidth, textvariable=self.var_frametime, from_=0.0, to=1.0, increment=0.01)
         
-        Label(frame, anchor=E, width=lwidth, text="exposure (s)").grid(row=1, column=0)
+        Label(frame, width=lwidth, text="exposure (s)").grid(row=1, column=0)
         self.e_frametime.grid(row=1, column=1)
 
         self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
         
-        Label(frame, anchor=E, width=lwidth, text="Brightness").grid(row=1, column=2)
+        Label(frame, width=lwidth, text="Brightness").grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
         
         frame.pack()
@@ -158,7 +159,7 @@ class VideoStream(threading.Thread):
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
             command=self.saveImage)
-        btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
+        btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def init_vars(self):
         self.var_fps = DoubleVar()

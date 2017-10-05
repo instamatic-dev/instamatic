@@ -1,4 +1,5 @@
 from Tkinter import *
+from ttk import *
 import tkMessageBox
 import os, sys
 
@@ -6,7 +7,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
-
 
 message1 = """
  1. Go to diffraction mode and select desired camera length (CAM L)
@@ -41,16 +41,16 @@ class ExperimentalSED(object, LabelFrame):
         self.e_start_x = Entry(self, width=20, textvariable=self.var_scan_area)
         self.e_start_x.grid(row=5, column=1)
 
-        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection, anchor=W, state=NORMAL)
+        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection, state=NORMAL)
         self.CollectionButton.grid(row=10, column=0)
 
-        self.ShowCalibBeamshift = Button(self, text="Show calib beamshift", command=self.show_calib_beamshift, anchor=W, state=NORMAL)
+        self.ShowCalibBeamshift = Button(self, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=9, column=0)
 
-        self.ShowCalibDirectBeam1 = Button(self, text="Show calib directbeam1", command=self.show_calib_directbeam1, anchor=W, state=NORMAL)
+        self.ShowCalibDirectBeam1 = Button(self, text="Show calib directbeam1", command=self.show_calib_directbeam1, state=NORMAL)
         self.ShowCalibDirectBeam1.grid(row=9, column=1)
         
-        self.ShowCalibDirectBeam2 = Button(self, text="Show calib directbeam2", command=self.show_calib_directbeam2, anchor=W, state=NORMAL)
+        self.ShowCalibDirectBeam2 = Button(self, text="Show calib directbeam2", command=self.show_calib_directbeam2, state=NORMAL)
         self.ShowCalibDirectBeam2.grid(row=9, column=2)
 
     def init_vars(self):

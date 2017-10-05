@@ -1,4 +1,5 @@
 from Tkinter import *
+from ttk import *
 import os, sys
 
 
@@ -54,12 +55,13 @@ class IOFrame(LabelFrame):
             number += 1
             path = os.path.join(drc, "{}_{}".format(name, number))
         self.var_experiment_number.set(number)
+        return number
 
     def get_experiment_directory(self):
-        self.update_experiment_number()
+        number = self.update_experiment_number()
         drc = self.var_directory.get()
         name = self.var_sample_name.get()
-        number = self.var_experiment_number.get()
+        path = os.path.join(drc, "{}_{}".format(name, number))
         return path
 
     def browse_directory(self):

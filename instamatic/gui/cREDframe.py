@@ -1,4 +1,5 @@
 from Tkinter import *
+from ttk import *
 
 
 class ExperimentalcRED(LabelFrame):
@@ -13,14 +14,14 @@ class ExperimentalcRED(LabelFrame):
         self.exposure_time = Entry(self, width=70, textvariable=self.var_exposure_time)
         self.exposure_time.grid(row=4, column=1)
 
-        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection, anchor=W)
+        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=10, column=0)
 
-        self.CollectionStopButton = Button(self, text="Stop Collection", command=self.stop_collection, anchor=W, state=DISABLED)
+        self.CollectionStopButton = Button(self, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=11 , column=0)
 
-        self.lb_coll1 = Label(self, width=60, text="Now you can start to rotate the goniometer at any time.", fg="red")
-        self.lb_coll2 = Label(self, width=60, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!", fg="red")
+        self.lb_coll1 = Label(self, width=60, text="Now you can start to rotate the goniometer at any time.")
+        self.lb_coll2 = Label(self, width=60, text="Click STOP COLLECTION BEFORE removing foot from the pedal!")
         
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)

@@ -135,7 +135,7 @@ class DataCollectionGUI(VideoStream):
 
         btn = Button(master, text="Save image",
             command=self.saveImage)
-        btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
+        btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def module_io(self, parent):
         module = IOFrame(parent)
