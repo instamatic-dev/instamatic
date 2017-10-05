@@ -33,6 +33,8 @@ class IOFrame(LabelFrame):
         self.incrementer = Spinbox(self, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
         self.incrementer.grid(row=3, column=2)
 
+        self.update_experiment_number()
+
     def init_vars(self):
         self.var_directory = StringVar(value="C:/test-gui")
         self.var_flatfield = StringVar(value="C:/test-gui/flatfield.tiff")
@@ -43,7 +45,7 @@ class IOFrame(LabelFrame):
         drc = self.var_directory.get()
         return drc
 
-    def get_experiment_directory(self):
+    def update_experiment_number(self):
         drc = self.var_directory.get()
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
@@ -52,6 +54,12 @@ class IOFrame(LabelFrame):
             number += 1
             path = os.path.join(drc, "{}_{}".format(name, number))
         self.var_experiment_number.set(number)
+
+    def get_experiment_directory(self):
+        self.update_experiment_number()
+        drc = self.var_directory.get()
+        name = self.var_sample_name.get()
+        number = self.var_experiment_number.get()
         return path
 
     def browse_directory(self):
@@ -59,6 +67,7 @@ class IOFrame(LabelFrame):
         drc = tkFileDialog.askdirectory(parent=self.root, title="Select working directory")
         self.var_directory.set(drc)
         print self.get_experiment_directory()
+        self.update_experiment_number()
         return drc
 
     def browse_flatfield(self):
