@@ -24,6 +24,7 @@ Press <OK> to start"""
 
 message3 = """
  1. Move the stage to where you want to begin
+ 2. Follow the instructions in the terminal
 
 Press <OK> to start"""
 
