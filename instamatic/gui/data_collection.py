@@ -28,6 +28,10 @@ class DataCollectionController(object):
         
         self.stopEvent_SED = threading.Event()
         self.startEvent_SED = threading.Event()
+        self.start_calib_directbeam = threading.Event()
+        self.stop_calib_directbeam = threading.Event()
+        self.start_calib_beamshift = threading.Event()
+        self.stop_calib_beamshift = threading.Event()
         
         self.triggerEvent = threading.Event()
         
@@ -41,7 +45,11 @@ class DataCollectionController(object):
         self.module_cred.set_events(startEvent=self.startEvent_cRED, 
                                     stopEvent=self.stopEvent_cRED)
         self.module_sed.set_events(startEvent=self.startEvent_SED, 
-                                    stopEvent=self.stopEvent_SED)
+                                   stopEvent=self.stopEvent_SED,
+                                   start_calib_directbeam=self.start_calib_directbeam, 
+                                   stop_calib_directbeam=self.stop_calib_directbeam,
+                                   start_calib_beamshift=self.start_calib_beamshift, 
+                                   stop_calib_beamshift=self.stop_calib_beamshift)
 
         self.exitEvent = threading.Event()
         self.stream._atexit_funcs.append(self.exitEvent.set)
@@ -66,6 +74,16 @@ class DataCollectionController(object):
                 self.startEvent_SED.clear()
                 self.acquire_data_SED()
 
+            if self.start_calib_directbeam.is_set():
+                self.start_calib_directbeam.clear()
+                self.acquire_directbeam_calibration()
+                print "calib directbeam"
+
+            if self.start_calib_beamshift.is_set():
+                self.start_calib_beamshift.clear()
+                self.acquire_beamshift_calibration()
+                print "calib beamshift"
+
     def acquire_data_cRED(self):
         from instamatic.experiments import cRED
         
@@ -79,12 +97,44 @@ class DataCollectionController(object):
             os.makedirs(workdir)
         
         expt = self.module_cred.get_expt()
-        
+
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
         
         self.stopEvent_cRED.clear()
+
+    def acquire_beamshift_calibration(self):
+        from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
+        from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+
+        workdir = self.module_io.get_working_directory()
+        expdir = os.path.join(workdir, "calib")
+        if not os.path.exists(expdir):
+            os.mkdir(expdir)
+
+        calib = calibrate_beamshift(ctrl=self.ctrl, outdir=expdir, confirm=False)
+        fn = os.path.join(expdir, CALIB_BEAMSHIFT)
+        self.module_sed.beamshift_fn = fn
+
+        self.stop_calib_beamshift.set()
+        self.module_sed.beamshift_calibration = calib
+
+    def acquire_directbeam_calibration(self):
+        from instamatic.calibrate.calibrate_directbeam import calibrate_directbeam
+        from instamatic.calibrate.filenames import CALIB_DIRECTBEAM
+
+        workdir = self.module_io.get_working_directory()
+        expdir = os.path.join(workdir, "calib")
+        if not os.path.exists(expdir):
+            os.mkdir(expdir)
+
+        calib = calibrate_directbeam(ctrl=self.ctrl, outdir=expdir, confirm=False)
+        fn = os.path.join(expdir, CALIB_DIRECTBEAM)
+        self.module_sed.directbeam_fn = fn
+
+        self.stop_calib_directbeam.set()
+        self.module_sed.directbeam_calibration = calib
 
     def acquire_data_SED(self):
         from instamatic.experiments import serialED
@@ -98,6 +148,12 @@ class DataCollectionController(object):
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
 
+        scan_area = self.module_sed.get_scan_area()
+
+        exp = serialED.Experiment(self.ctrl, params, expdir=expdir, log=self.log,
+            calib_directbeam=self.module_sed.directbeam_calibration,
+            calib_beamshift=self.module_sed.beamshift_calibration,
+            scan_area=scan_area)
         exp.report_status()
         exp.run()
 
