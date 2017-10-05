@@ -154,7 +154,7 @@ class CalibDirectBeam(object):
         """
         self._dct[key] = dct
 
-    def plot(self, key):
+    def plot(self, key, to_file=None):
         data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
         data_readout = self._dct[key]["data_readout"] # microscope readout
 
@@ -164,7 +164,10 @@ class CalibDirectBeam(object):
         plt.scatter(*shifts_.T, label="Calculated shift from readout from BeamShift")
         plt.title(key + " vs. Direct beam position")
         plt.legend()
-        plt.show()
+        if to_file:
+            plt.savefig(to_file)
+        else:
+            plt.show()
 
 
 def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):

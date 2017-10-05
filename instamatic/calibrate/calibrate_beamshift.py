@@ -80,7 +80,7 @@ class CalibBeamShift(object):
         fout = os.path.join(outdir, fn)
         pickle.dump(self, open(fout, "w"))
 
-    def plot(self):
+    def plot(self, to_file=None):
         if not self.has_data:
             return
 
@@ -93,7 +93,10 @@ class CalibBeamShift(object):
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*beampos_.T, label="Positions in pixel coords")
         plt.legend()
-        plt.show()
+        if to_file:
+            plt.savefig(to_file)
+        else:
+            plt.show()
 
     def center(self, ctrl):
         """Return beamshift values to center the beam in the frame"""
