@@ -133,11 +133,14 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
 
 class Experiment(object):
     """docstring for Experiment"""
-    def __init__(self, ctrl, config, expdir=None, log=None):
+    def __init__(self, ctrl, config, scan_radius=None, begin_here=False, expdir=None, log=None):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
         self.log = log
+
+        self.scan_radius = scan_radius
+        self.begin_here = begin_here
 
         self.setup_folders(expdir=expdir)
 
@@ -174,12 +177,15 @@ class Experiment(object):
         self.ctrl.mode_mag1()
         self.ctrl.brightness.max()
 
-        print "\nSelect area to scan"
-        print "-------------------"
-        raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
+        if (not self.begin_here) or (not self.scan_radius):
+            print "\nSelect area to scan"
+            print "-------------------"
+        if not self.begin_here:
+            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stageposition.get()
         self.hole_centers = np.array([[x,y]])            
-        self.hole_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
+        if not self.scan_radius:
+            self.scan_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
 
         self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
@@ -247,14 +253,14 @@ class Experiment(object):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets_in_hole(box_x, box_y, self.hole_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
+        offsets = get_offsets_in_hole(box_x, box_y, self.scan_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
         self.offsets = offsets * 1000
 
         # store kwargs to experiment drc
         kwargs["diff_brightness"]   = self.diff_brightness
         kwargs["diff_cameralength"] = self.diff_cameralength
         kwargs["diff_difffocus"]    = self.diff_difffocus
-        kwargs["hole_radius"]       = self.hole_radius
+        kwargs["scan_radius"]       = self.scan_radius
         kwargs["hole_centers"]      = self.hole_centers.tolist()
         kwargs["hole_positions"]    = len(self.offsets)
         kwargs["image_dimensions"]  = self.image_dimensions
