@@ -10,19 +10,24 @@ class ExperimentalcRED(LabelFrame):
 
         self.init_vars()
 
-        Label(self, width=30,text="Exposure time").grid(row=4, column=0)
-        self.exposure_time = Entry(self, width=70, textvariable=self.var_exposure_time)
-        self.exposure_time.grid(row=4, column=1)
+        frame = Frame(self)
+        Label(frame, text="Exposure time:").grid(row=4, column=0)
+        self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
+        self.exposure_time.grid(row=4, column=1, sticky="W")
 
+        self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
+        self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        frame.grid_columnconfigure(1, weight=1)
+        frame.pack(side="top", fill="both", expand=True, padx=10)
+
+        frame = Frame(self)
         self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection)
-        self.CollectionButton.grid(row=10, column=0)
+        self.CollectionButton.pack(side="left", expand=True, fill="x", padx=10, pady=10)
 
         self.CollectionStopButton = Button(self, text="Stop Collection", command=self.stop_collection, state=DISABLED)
-        self.CollectionStopButton.grid(row=11 , column=0)
+        self.CollectionStopButton.pack(side="right", expand=True, fill="x", padx=10, pady=10)
+        frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
-        self.lb_coll1 = Label(self, width=60, text="Now you can start to rotate the goniometer at any time.")
-        self.lb_coll2 = Label(self, width=60, text="Click STOP COLLECTION BEFORE removing foot from the pedal!")
-        
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
 
@@ -34,17 +39,15 @@ class ExperimentalcRED(LabelFrame):
         self.stopEvent = stopEvent
 
     def start_collection(self):
-        print "Start button pressed"
         # TODO: make a pop up window with the STOP button?
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll1.grid(row=10, column=1)
-        self.lb_coll2.grid(row=11, column=1)
+        self.lb_coll1.grid(row=10, column=0, columnspan=2, sticky="EW")
+        self.lb_coll2.grid(row=11, column=0, columnspan=2, sticky="EW")
         self.startEvent.set()
         self.triggerEvent.set()
 
     def stop_collection(self):
-        print "Stop button pressed"
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
         self.lb_coll1.grid_forget()

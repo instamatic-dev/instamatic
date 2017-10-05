@@ -37,21 +37,31 @@ class ExperimentalSED(object, LabelFrame):
 
         self.init_vars()
 
-        Label(self, text="Scan area (um)").grid(row=5, column=0)
-        self.e_start_x = Entry(self, width=20, textvariable=self.var_scan_area)
+        frame = Frame(self)
+
+        Label(frame, text="Scan area (um)").grid(row=5, column=0, sticky="W")
+        self.e_start_x = Entry(frame, width=20, textvariable=self.var_scan_area)
         self.e_start_x.grid(row=5, column=1)
 
-        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection, state=NORMAL)
-        self.CollectionButton.grid(row=10, column=0)
+        frame.pack(side="top", fill="x", padx=10)
 
-        self.ShowCalibBeamshift = Button(self, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
-        self.ShowCalibBeamshift.grid(row=9, column=0)
+        frame = Frame(self)        
+        self.ShowCalibBeamshift = Button(frame, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
+        self.ShowCalibBeamshift.pack(side="left", expand=True, fill="x", padx=10)
 
-        self.ShowCalibDirectBeam1 = Button(self, text="Show calib directbeam1", command=self.show_calib_directbeam1, state=NORMAL)
-        self.ShowCalibDirectBeam1.grid(row=9, column=1)
-        
-        self.ShowCalibDirectBeam2 = Button(self, text="Show calib directbeam2", command=self.show_calib_directbeam2, state=NORMAL)
-        self.ShowCalibDirectBeam2.grid(row=9, column=2)
+        self.ShowCalibDirectBeam1 = Button(frame, text="Show calib directbeam1", command=self.show_calib_directbeam1, state=NORMAL)
+        self.ShowCalibDirectBeam1.pack(side="left", expand=True, fill="x", padx=10)
+
+        self.ShowCalibDirectBeam2 = Button(frame, text="Show calib directbeam2", command=self.show_calib_directbeam2, state=NORMAL)
+        self.ShowCalibDirectBeam2.pack(side="left", expand=True, fill="x", padx=10)
+        frame.pack(side="top", fill="both", expand=True)
+
+        frame = Frame(self)
+
+        self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection, state=NORMAL)
+        self.CollectionButton.pack(side="bottom", fill="both")
+
+        frame.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def init_vars(self):
         self.var_scan_area = DoubleVar(value=100)
@@ -65,14 +75,12 @@ class ExperimentalSED(object, LabelFrame):
         self.stopEvent = stopEvent
 
     def start_collection(self):
-        print "Start button pressed"
         okay = tkMessageBox.askokcancel("Start experiment", message3, icon='warning')
         if okay:
             self.startEvent.set()
             self.triggerEvent.set()
 
     def stop_collection(self):
-        print "Stop button pressed"
         self.stopEvent.set()
 
     def show_calib_beamshift(self):
