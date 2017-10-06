@@ -179,7 +179,7 @@ def main_entry():
             args = glob.glob(fobj)
 
     if not os.path.isdir(options.drc):
-        os.mkdir(options.drc)
+        os.makedirs(options.drc)
 
     for f in args:
         img,h = read_tiff(f)

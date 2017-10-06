@@ -160,15 +160,16 @@ class Experiment(object):
                     break
             self.curdir = os.path.abspath(os.path.curdir)
             expdir = os.path.join(drc)
+        
         self.expdir = expdir
         self.calibdir = os.path.join(self.expdir, "calib")
         self.imagedir = os.path.join(self.expdir, "images")
         self.datadir = os.path.join(self.expdir, "data")
-        if not os.path.exists(self.expdir):
-            os.mkdir(self.expdir)
-            os.mkdir(self.calibdir)
-            os.mkdir(self.imagedir)
-            os.mkdir(self.datadir)
+
+        for drc in self.expdir, self.calibdir, self.imagedir, self.datadir:
+            if not os.path.exists(drc):
+                os.makedirs(drc)
+
         return self.expdir
 
     def load_calibration(self, **kwargs):

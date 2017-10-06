@@ -117,6 +117,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             ax2.texts = []
 
             img, h = read_image(fn)
+            # img = np.rot90(img, k=3)
             im2.set_data(img)
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])

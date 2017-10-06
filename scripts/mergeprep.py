@@ -89,7 +89,7 @@ def prepare_shelx(inp, score_threshold=100, table="electron", kleinify=False, hi
     Reads the cell/experimental parameters from the input file"""
 
     if not os.path.exists(drc):
-        os.mkdir(drc)
+        os.makedirs(drc)
 
     fout_template = os.path.join(drc, "{phase}.{ext}")
     klein_params = 90, 60

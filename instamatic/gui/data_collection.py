@@ -8,6 +8,8 @@ import logging
 
 import threading
 
+import datetime
+
 from instamatic.camera.videostream import VideoStream
 from SEDframe import *
 from cREDframe import *
@@ -69,14 +71,10 @@ class DataCollectionController(object):
     def acquire_data_cRED(self):
         from instamatic.experiments import cRED
         
-        expdir = self.module_io.get_experiment_directory()
-        workdir = self.module_io.get_working_directory()
+        expdir = self.module_io.get_new_experiment_directory()
 
         if not os.path.exists(expdir):
             os.makedirs(expdir)
-
-        if not os.path.exists(workdir):
-            os.makedirs(workdir)
         
         expt = self.module_cred.get_expt()
 
@@ -89,11 +87,11 @@ class DataCollectionController(object):
     def acquire_data_SED(self):
         from instamatic.experiments import serialED
 
-        expdir = self.module_io.get_experiment_directory()
         workdir = self.module_io.get_working_directory()
+        expdir = self.module_io.get_new_experiment_directory()
 
-        # expdir = "C:/Users/VALUEDGATANCUSTOMER/Documents/Stef/portable/work/test1/"
-        # workdir = "C:/Users/VALUEDGATANCUSTOMER/Documents/Stef/portable/work/"
+        if not os.path.exists(expdir):
+            os.makedirs(expdir)
 
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
@@ -118,8 +116,8 @@ class DataCollectionController(object):
 
 class DataCollectionGUI(VideoStream):
     """docstring for DataCollectionGUI"""
-    def __init__(self):
-        super(DataCollectionGUI, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(DataCollectionGUI, self).__init__(*args, **kwargs)
         self.modules = {}
 
     def buttonbox(self, master):
@@ -155,10 +153,10 @@ class DataCollectionGUI(VideoStream):
     def get_module(self, module):
         return self.modules[module]
 
-    def SaveImage(self):
-        drc = self.get_directory()
+    def saveImage(self):
+        drc = self.module_io.get_experiment_directory()
         if not os.path.exists(drc):
-            os.mkdir(drc)
+            os.makedirs(drc)
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         outfile = os.path.join(drc, outfile)
         write_tiff(outfile, self.frame)
@@ -175,7 +173,7 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    data_collection_gui = DataCollectionGUI()
+    data_collection_gui = DataCollectionGUI(cam="timepix")
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 
     experiment_ctrl = DataCollectionController(tem_ctrl, log=log)
