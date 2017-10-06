@@ -173,7 +173,7 @@ class ImgConversion(object):
 
         for i, img in enumerate(self.data):
             j = i + 1
-            fn = os.path.join(path, "{:05d}.img".format(j))
+            fn = os.path.join(path, "{:05d}.mrc".format(j))
 
             img = img.astype(np.int16)[::-1,:]  # NOTE: what is this trickery with reversing the image?
             img = self.fixDistortion(img, self.beam_center)
@@ -202,7 +202,7 @@ class ImgConversion(object):
     
         for i in range(len(self.data)):
             j = i + 1
-            fn = os.path.join(path, "{:05d}.img".format(j))
+            fn = "{:05d}.img".format(j)
             ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+self.osangle*i))
         
         ed3d.write("ENDFILELIST")
