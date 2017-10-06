@@ -42,19 +42,23 @@ Usage:
 
 ### instamatic.flatfield
 
-Program to collect flatfield images.
-
-Usage:
+This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
     
     instamatic.flatfield --collect
 
+This will collect 100 images and average them to determine the flatfield image. A darkfield image is also collected by applying the same routine with the beam blanked. Dead pixels are identified as pixels with 0 intensities. To apply these corrections:
+
+    instamatic.flatfield image.tiff [image.tiff ..] -f flatfield.tiff [-d darkfield.tiff] [-o drc]
+   
+This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`.
+
 ### instamatic.stretch_correction
 
-Program to determine the stretch correction from a series of powder diffraction patterns.
+Program to determine the stretch correction from a series of powder diffraction patterns. It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis.
 
 Usage:
     
-    instamatic.stretch_correction
+    instamatic.stretch_correction powder_pattern.tiff
 
 ### instamatic.browser
 
@@ -66,7 +70,7 @@ Usage:
 
 ### instamatic.viewer
 
-Open any image collected collected using instamatic.
+Open any image collected collected using instamatic. Supported formats include [`hdf5`](http://www.h5py.org/), `TIFF`, and [`SMV`](https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php/SMV_file_format).
 
 Usage:
     
@@ -98,6 +102,8 @@ A convenient way to experiment with the options available is to run `instamatic.
 - lmfit
 - pyyaml
 - h5py
+- IPython (optional)
+- matplotlib (optional)
 
 ## Installation
 
