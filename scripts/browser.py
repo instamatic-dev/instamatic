@@ -27,8 +27,12 @@ def get_stage_coords(fns, return_ims=False):
 
     for fn in t:
         img, h = read_image(fn)
-        dx, dy = h["exp_hole_offset"]
-        cx, cy = h["exp_hole_center"]
+        try:
+            dx, dy = h["exp_hole_offset"]
+            cx, cy = h["exp_hole_center"]
+        except KeyError:
+            dx, dy = h["exp_scan_offset"]
+            cx, cy = h["exp_scan_center"]
         coords.append((cx + dx, cy + dy))
 
         has_crystals.append(len(h["exp_crystal_coords"]) > 0)
