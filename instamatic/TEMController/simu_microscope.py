@@ -76,6 +76,7 @@ class SimuMicroscope(object):
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
         self.Magnification_value = 2500
+        self.Magnification_value_diff = 300
 
         self.beamblank = False
 
@@ -98,7 +99,10 @@ class SimuMicroscope(object):
         self.Brightness_value = value
 
     def getMagnification(self):
-        return self.Magnification_value
+        if self.getFunctionMode() == "diff":
+            return self.Magnification_value_diff
+        else:
+            return self.Magnification_value
 
     def setMagnification(self, value):
         if value not in self.MAGNIFICATIONS:
@@ -119,7 +123,10 @@ class SimuMicroscope(object):
         ## i = 0-29 for mag1
         selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
                 
-        self.Magnification_value = value
+        if self.getFunctionMode() == "diff":
+            self.Magnification_value_diff = value
+        else:
+            self.Magnification_value = value
 
     def getMagnificationIndex(self):
         value = self.getMagnification()

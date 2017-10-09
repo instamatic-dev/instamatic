@@ -9,32 +9,47 @@ class IOFrame(LabelFrame):
     """docstring for ExperimentalSED"""
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Input/Output")
+        self.parent = parent
 
         self.init_vars()
-        
-        self.root = parent
 
-        self.directory = Entry(self, width=50, textvariable=self.var_directory)
-        self.directory.grid(row=2, column=1)
+        frame = Frame(self)
 
-        self.BrowseButton = Button(self, text="Browse..", command=self.browse_directory)
+        self.directory = Entry(frame, width=50, textvariable=self.var_directory)
+        self.directory.grid(row=2, column=1, sticky="EW")
+
+        self.BrowseButton = Button(frame, text="Browse..", command=self.browse_directory)
         self.BrowseButton.grid(row=2, column=2, sticky="EW", padx=10)
         
-        self.sample_name = Entry(self, width=50, textvariable=self.var_sample_name)
-        self.sample_name.grid(row=3, column=1)
+        self.sample_name = Entry(frame, width=50, textvariable=self.var_sample_name)
+        self.sample_name.grid(row=3, column=1, sticky="EW")
 
-        self.flatfield = Entry(self, width=50, textvariable=self.var_flatfield)
-        self.flatfield.grid(row=4, column=1)
+        self.flatfield = Entry(frame, width=50, textvariable=self.var_flatfield)
+        self.flatfield.grid(row=4, column=1, sticky="EW")
 
-        self.BrowseFFButton = Button(self, text="Browse..", command=self.browse_flatfield)
+        self.BrowseFFButton = Button(frame, text="Browse..", command=self.browse_flatfield)
         self.BrowseFFButton.grid(row=4, column=2, sticky="EW", padx=10)
         
-        Label(self, text="Directory:").grid(row=2, column=0, sticky="W", padx=10)
-        Label(self, text="Sample name:").grid(row=3, column=0, sticky="W", padx=10)
-        Label(self, text="Flatfield:").grid(row=4, column=0, sticky="W", padx=10)
+        Label(frame, text="Directory:").grid(row=2, column=0, sticky="W", padx=10)
+        Label(frame, text="Sample name:").grid(row=3, column=0, sticky="W", padx=10)
+        Label(frame, text="Flatfield:").grid(row=4, column=0, sticky="W", padx=10)
 
-        self.incrementer = Spinbox(self, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
+        self.incrementer = Spinbox(frame, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
         self.incrementer.grid(row=3, column=2, padx=10)
+
+        self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
+        self.OpenDatadirButton.grid(row=5, column=0, sticky="EW", padx=10)
+
+        frame.grid_columnconfigure(1, weight=1)
+
+        frame.pack(side="top", fill="x", padx=10)
+
+        frame = Frame(self)
+
+        self.CollectionButton = Button(frame, text="Delete last experiment because it was awful =(", command=self.delete_last, state=NORMAL)
+        self.CollectionButton.pack(side="bottom", fill="both")
+
+        frame.pack(side="bottom", fill="both", padx=10, pady=10)
 
         self.update_experiment_number()
 
@@ -76,7 +91,7 @@ class IOFrame(LabelFrame):
         return path
 
     def browse_directory(self):
-        drc = tkFileDialog.askdirectory(parent=self.root, title="Select working directory")
+        drc = tkFileDialog.askdirectory(parent=self.parent, title="Select working directory")
         drc = os.path.realpath(drc)
         self.var_directory.set(drc)
         print self.get_experiment_directory()
@@ -84,13 +99,26 @@ class IOFrame(LabelFrame):
         return drc
 
     def browse_flatfield(self):
-        ff = tkFileDialog.askopenfilename(parent=self.root, initialdir=self.var_directory.get(), title="Select flatfield")
+        ff = tkFileDialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select flatfield")
         ff = os.path.realpath(ff)
         self.var_flatfield.set(ff)
         return ff
 
     def get_flatfield(self):
         return self.var_flatfield.get()
+
+    def delete_last(self):
+        drc = self.get_experiment_directory()
+        newdrc = drc+"-delete_me-"+datetime.datetime.now().strftime("%H%M%S")
+        if os.path.exists(drc):
+            os.rename(drc, newdrc)
+            print "Marked {} for deletion".format(drc)
+        else:
+            print "{} does not exist".format(drc)
+
+    def open_data_directory(self):
+        drc = self.get_working_directory()
+        os.startfile(drc)
 
 
 if __name__ == '__main__':

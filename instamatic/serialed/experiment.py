@@ -31,14 +31,14 @@ def make_grid_on_stage(startpoint, endpoint, padding=2.0):
     return np.stack((xgrid.flatten(), ygrid.flatten())).T
 
 
-def get_gridpoints_in_hole(nx, ny=0, radius=1, borderwidth=0.8):
+def get_gridpoints_in_circle(nx, ny=0, radius=1, borderwidth=0.8):
     """Make a grid (size=n*n), and return the coordinates of those
     fitting inside a circle (radius=r)
     nx: `int`
     ny: `int` (optional)
         Used to define a mesh nx*ny, if ny is missing, nx*nx is used
     radius: `float`
-        radius of hole
+        radius of circle
     borderwidth: `float`, 0.0 - 1.0
         define a border around the circumference not to place any points
         should probably be related to the effective camera size: 
@@ -58,7 +58,7 @@ def get_gridpoints_in_hole(nx, ny=0, radius=1, borderwidth=0.8):
     return xvals*radius, yvals*radius
 
 
-def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
+def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
     """
     box_x: float or int,
         x-dimensions of the box in micrometers. 
@@ -66,7 +66,7 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
     box_y: float or int,
         y-dimension of the box in micrometers (optional)
     radius: int or float,
-        size of the hole in micrometer
+        radius of the scan_area in micrometer
     padding: int or float
         distance between boxes in micrometers
     k: float,
@@ -83,7 +83,7 @@ def get_offsets_in_hole(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, pl
     
     borderwidth = k*(1.0 - (radius - diff) / radius)
        
-    x_offsets, y_offsets = get_gridpoints_in_hole(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
+    x_offsets, y_offsets = get_gridpoints_in_circle(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
     
     if angle:
         sin = np.sin(angle)
@@ -184,7 +184,7 @@ class Experiment(object):
         if not self.begin_here:
             raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stageposition.get()
-        self.hole_centers = np.array([[x,y]])            
+        self.scan_centers = np.array([[x,y]])            
         if not self.scan_radius:
             self.scan_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
@@ -254,7 +254,7 @@ class Experiment(object):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets_in_hole(box_x, box_y, self.scan_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
+        offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
         self.offsets = offsets * 1000
 
         # store kwargs to experiment drc
@@ -262,8 +262,8 @@ class Experiment(object):
         kwargs["diff_cameralength"] = self.diff_cameralength
         kwargs["diff_difffocus"]    = self.diff_difffocus
         kwargs["scan_radius"]       = self.scan_radius
-        kwargs["hole_centers"]      = self.hole_centers.tolist()
-        kwargs["hole_positions"]    = len(self.offsets)
+        kwargs["scan_centers"]      = self.scan_centers.tolist()
+        kwargs["stage_positions"]   = len(self.offsets)
         kwargs["image_dimensions"]  = self.image_dimensions
 
         json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"), indent=2)
@@ -329,15 +329,15 @@ class Experiment(object):
         print "              spotsize = {}".format(self.diff_spotsize)
 
     def loop_centers(self):
-        """Loop over holes in the copper grid
+        """Loop over scan centers defined
         Move the stage to all positions defined in centers
 
         Return
-            di: dict, contains information on holes
+            di: dict, contains information on scan areas
         """
-        ncenters = len(self.hole_centers)
+        ncenters = len(self.scan_centers)
 
-        for i, (x, y) in enumerate(self.hole_centers):
+        for i, (x, y) in enumerate(self.scan_centers):
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
@@ -350,7 +350,7 @@ class Experiment(object):
                 yield i, (x,y)
             
     def loop_positions(self, delay=0.05):
-        """Loop over positions in a hole in the copper grid
+        """Loop over positions defined
         Move the stage to each of the positions in self.offsets
 
         Return
@@ -358,13 +358,13 @@ class Experiment(object):
         """
         noffsets = len(self.offsets)
 
-        for i, hole_center in self.loop_centers():
-            hole_x, hole_y = hole_center
+        for i, scan_center in self.loop_centers():
+            center_x, center_y = scan_center
 
             t = tqdm(self.offsets, desc="                           ")
             for j, (x_offset, y_offset) in enumerate(t):
-                x = hole_x+x_offset
-                y = hole_y+y_offset
+                x = center_x + x_offset
+                y = center_y + y_offset
                 try:
                     self.ctrl.stageposition.set(x=x, y=y)
                 except ValueError as e:
@@ -377,8 +377,8 @@ class Experiment(object):
                     self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
                     t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
 
-                    dct = {"exp_hole_number": i, "exp_image_number": j, "exp_hole_offset": (x_offset, y_offset), "exp_hole_center": (hole_x, hole_y)}
-                    dct["ImageComment"] = "Hole {exp_hole_number} image {exp_image_number}\n".format(**dct)
+                    dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
+                    dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}\n".format(**dct)
                     yield dct
 
 

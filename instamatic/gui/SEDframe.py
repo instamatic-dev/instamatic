@@ -42,7 +42,25 @@ class ExperimentalSED(object, LabelFrame):
 
         Label(frame, text="Scan area (um)").grid(row=5, column=0, sticky="W")
         self.e_start_x = Entry(frame, width=20, textvariable=self.var_scan_area)
-        self.e_start_x.grid(row=5, column=1)
+        self.e_start_x.grid(row=5, column=1, padx=10)
+
+        Label(frame, text="Exp. time image:").grid(row=6, column=0, sticky="W")
+        self.e_exp_time_image = Entry(frame, width=20, textvariable=self.var_exp_time_image)
+        self.e_exp_time_image.grid(row=6, column=1, padx=10)
+
+        Label(frame, text="Exp. time diff:").grid(row=7, column=0, sticky="W")
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_exp_time_diff)
+        self.e_exp_time_diff.grid(row=7, column=1, padx=10)
+
+        Label(frame, text="Brightness:").grid(row=6, column=2, sticky="W")
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_brightness)
+        self.e_exp_time_diff.grid(row=6, column=3, padx=10)
+
+        Label(frame, text="Spot size:").grid(row=7, column=2, sticky="W")
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_spotsize)
+        self.e_exp_time_diff.grid(row=7, column=3, padx=10)
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(2, weight=1)
 
         frame.pack(side="top", fill="x", padx=10)
 
@@ -66,6 +84,10 @@ class ExperimentalSED(object, LabelFrame):
 
     def init_vars(self):
         self.var_scan_area = DoubleVar(value=100)
+        self.var_exp_time_image = DoubleVar(value=0.5)
+        self.var_exp_time_diff = DoubleVar(value=0.1)
+        self.var_spotsize = IntVar(value=4)
+        self.var_brightness = IntVar(value=40000)
 
     def set_trigger(self, trigger=None):
         self.triggerEvent = trigger
@@ -101,6 +123,13 @@ class ExperimentalSED(object, LabelFrame):
 
     def get_scan_area(self):
         return self.var_scan_area.get()
+
+    def get_params(self):
+        return {"image_exposure": self.var_exp_time_image.get(),
+                "image_spotsize": self.var_spotsize.get(),
+                "diff_exposure": self.var_exp_time_diff.get(),
+                "diff_spotsize": self.var_spotsize.get(),
+                "diff_brightness": self.var_brightness.get()}
 
 
 if __name__ == '__main__':

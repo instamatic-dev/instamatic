@@ -77,8 +77,11 @@ class DataCollectionController(object):
             os.makedirs(expdir)
         
         expt = self.module_cred.get_expt()
+        unblank_beam = self.module_cred.get_unblank_beam()
 
-        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
+        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, unblank_beam=unblank_beam, 
+                               log=self.log, stopEvent=self.stopEvent_cRED, 
+                               flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
         
@@ -95,6 +98,8 @@ class DataCollectionController(object):
 
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
+        params.update(self.module_sed.get_params())
+        params["flatfield"] = self.module_io.get_flatfield()
 
         scan_radius = self.module_sed.get_scan_area()
 
@@ -165,6 +170,10 @@ class DataCollectionGUI(VideoStream):
 
 def main():
     from instamatic import TEMController
+    if "simulate" in sys.argv[1:]:
+        cam = "simulate"
+    else:
+        cam = "timepix"
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename="instamatic.log", 
@@ -174,6 +183,7 @@ def main():
     log = logging.getLogger(__name__)
 
     data_collection_gui = DataCollectionGUI(cam="simulate")
+
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 
     experiment_ctrl = DataCollectionController(tem_ctrl, log=log)
