@@ -15,16 +15,16 @@ class IOFrame(LabelFrame):
         self.root = parent
 
         self.directory = Entry(self, width=50, textvariable=self.var_directory)
-        self.directory.grid(row=2, column=1)
+        self.directory.grid(row=2, column=1, sticky="EW")
 
         self.BrowseButton = Button(self, text="Browse..", command=self.browse_directory)
         self.BrowseButton.grid(row=2, column=2, sticky="EW", padx=10)
         
         self.sample_name = Entry(self, width=50, textvariable=self.var_sample_name)
-        self.sample_name.grid(row=3, column=1)
+        self.sample_name.grid(row=3, column=1, sticky="EW")
 
         self.flatfield = Entry(self, width=50, textvariable=self.var_flatfield)
-        self.flatfield.grid(row=4, column=1)
+        self.flatfield.grid(row=4, column=1, sticky="EW")
 
         self.BrowseFFButton = Button(self, text="Browse..", command=self.browse_flatfield)
         self.BrowseFFButton.grid(row=4, column=2, sticky="EW", padx=10)
@@ -35,6 +35,7 @@ class IOFrame(LabelFrame):
 
         self.incrementer = Spinbox(self, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
         self.incrementer.grid(row=3, column=2, padx=10)
+        self.grid_columnconfigure(1, weight=1)
 
         self.update_experiment_number()
 

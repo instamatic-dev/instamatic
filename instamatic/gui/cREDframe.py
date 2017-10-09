@@ -13,7 +13,7 @@ class ExperimentalcRED(LabelFrame):
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=4, column=0)
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
-        self.exposure_time.grid(row=4, column=1, sticky="W")
+        self.exposure_time.grid(row=4, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2)
 

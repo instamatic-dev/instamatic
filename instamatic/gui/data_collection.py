@@ -98,6 +98,8 @@ class DataCollectionController(object):
 
         params = os.path.join(workdir, "params.json")
         params = json.load(open(params,"r"))
+        params.update(self.module_sed.get_params())
+        params["flatfield"] = self.module_io.get_flatfield()
 
         scan_radius = self.module_sed.get_scan_area()
 
