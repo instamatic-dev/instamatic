@@ -8,13 +8,17 @@ import time
 import ImgConversion
 from instamatic.TEMController import config
 
+# degrees to rotate before activating data collection procedure
+ACTIVATION_THRESHOLD = 0.5
+
 
 class Experiment(object):
-    def __init__(self, ctrl, expt, stopEvent, path=None, log=None, flatfield=None):
+    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
         self.expt = expt
+        self.unblank_beam = unblank_beam
         self.logger = log
         self.camtype = ctrl.cam.name
         self.stopEvent = stopEvent
@@ -65,12 +69,16 @@ class Experiment(object):
         
         buffer = []
         if self.camtype != "simulate":
-            while abs(a - a0) < 0.5:
+            while abs(a - a0) < ACTIVATION_THRESHOLD:
                 a = self.ctrl.stageposition.a
-                if abs(a - a0) > 0.5:
+                if abs(a - a0) > ACTIVATION_THRESHOLD:
                     break
             print "Data Recording started."
             self.startangle = a
+
+            if self.unblank_beam:
+                print "Unblanking beam"
+                self.ctrl.beamblank = False
             
             self.ctrl.cam.block()
             t0 = time.time()
@@ -84,8 +92,13 @@ class Experiment(object):
             self.endangle = self.ctrl.stageposition.a
                 
         else:
-            self.startangle = a
             camera_length = 300
+
+            self.startangle = a
+
+            if self.unblank_beam:
+                print "Unblanking beam"
+                self.ctrl.beamblank = False
 
             self.ctrl.cam.block()
             t0 = time.time()
@@ -100,6 +113,9 @@ class Experiment(object):
             self.ctrl.cam.unblock()
             self.endangle = self.startangle + np.random.random()*50
 
+        if self.unblank_beam:
+            print "Blanking beam"
+            self.ctrl.beamblank = True
 
         pxd = config.diffraction_pixeldimensions
 

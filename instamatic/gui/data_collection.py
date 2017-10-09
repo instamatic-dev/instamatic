@@ -77,8 +77,11 @@ class DataCollectionController(object):
             os.makedirs(expdir)
         
         expt = self.module_cred.get_expt()
+        unblank_beam = self.module_cred.get_unblank_beam()
 
-        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, log=self.log, stopEvent=self.stopEvent_cRED, flatfield=self.module_io.get_flatfield())
+        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, unblank_beam=unblank_beam, 
+                               log=self.log, stopEvent=self.stopEvent_cRED, 
+                               flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
         

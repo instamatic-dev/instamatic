@@ -14,6 +14,8 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text="Exposure time:").grid(row=4, column=0)
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
         self.exposure_time.grid(row=4, column=1, sticky="W")
+        
+        Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2)
 
         self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
         self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
@@ -30,6 +32,7 @@ class ExperimentalcRED(LabelFrame):
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
+        self.var_unblank_beam = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None):
         self.triggerEvent = trigger
@@ -56,6 +59,9 @@ class ExperimentalcRED(LabelFrame):
 
     def get_expt(self):
         return self.var_exposure_time.get()
+
+    def get_unblank_beam(self):
+        return self.var_unblank_beam.get()
 
 
 if __name__ == '__main__':
