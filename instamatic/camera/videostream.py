@@ -148,7 +148,7 @@ class VideoStream(threading.Thread):
         self.e_brightness.grid(row=1, column=3)
         
         Label(frame, width=lwidth, text="DisplayRange").grid(row=1, column=4)
-        self.e_disprang = Spinbox(frame,width=ewidth, textvariable=self.var_disprang,from_=0.0, to=11800, increment=1000)
+        self.e_disprang = Spinbox(frame,width=ewidth, textvariable=self.var_disprang,from_=0.0, to=self.disprang_default, increment=1000)
         self.e_disprang.grid(row=1,column=5)
         
         frame.pack()
@@ -180,7 +180,7 @@ class VideoStream(threading.Thread):
         self.var_brightness.set(self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
         
-        self.var_disprang = DoubleVar(value=11800)
+        self.var_disprang = DoubleVar(value=self.disprang_default)
         self.var_disprang.set(self.disprang)
         self.var_disprang.trace("w",self.update_disprang)
 
@@ -247,8 +247,8 @@ class VideoStream(threading.Thread):
         frame = np.rot90(frame, k=3)
 
         if self.disprang != self.disprang_default:
-            image = np.clip(frame,0,self.disprang)
-            image = image/self.disprang*self.disprang_default
+            image = np.clip(frame, 0, self.disprang)
+            image = (self.disprang/self.disprang_default) * image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
