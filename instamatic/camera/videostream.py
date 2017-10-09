@@ -82,6 +82,8 @@ class VideoStream(threading.Thread):
 
         self.frametime = 0.05
         self.brightness = 1.0
+        self.disprang = self.disprang_default = self.defaults["dynamic_range"]
+        # Maximum number from image readout
 
         self.last = time.time()
         self.nframes = 1
@@ -145,6 +147,10 @@ class VideoStream(threading.Thread):
         Label(frame, width=lwidth, text="Brightness").grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
         
+        Label(frame, width=lwidth, text="DisplayRange").grid(row=1, column=4)
+        self.e_disprang = Spinbox(frame,width=ewidth, textvariable=self.var_disprang,from_=0.0, to=11800, increment=1000)
+        self.e_disprang.grid(row=1,column=5)
+        
         frame.pack()
 
     def makepanel(self, master, resolution=(512,512)):
@@ -173,6 +179,10 @@ class VideoStream(threading.Thread):
         self.var_brightness = DoubleVar(value=1.0)
         self.var_brightness.set(self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
+        
+        self.var_disprang = DoubleVar(value=11800)
+        self.var_disprang.set(self.disprang)
+        self.var_disprang.trace("w",self.update_disprang)
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode
@@ -181,12 +191,18 @@ class VideoStream(threading.Thread):
         except:
             pass
         else:
-            self.stream.frametime = self.frametime
+            self.stream.frametime = self.frametime 
 
     def update_brightness(self, name, index, mode):
         # print name, index, mode
         try:
             self.brightness = self.var_brightness.get()
+        except:
+            pass
+        
+    def update_disprang(self, name, index, mode):
+        try:
+            self.disprang = self.var_disprang.get()
         except:
             pass
 
@@ -230,14 +246,17 @@ class VideoStream(threading.Thread):
 
         frame = np.rot90(frame, k=3)
 
-        if self.brightness != 1:
-            image = Image.fromarray(frame).convert("L")
-            image = ImageEnhance.Brightness(image).enhance(self.brightness)
-            # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
-
+        if self.disprang != self.disprang_default:
+            image = np.clip(frame,0,self.disprang)
+            image = image/self.disprang*self.disprang_default
+            image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
-
+            
+        if self.brightness != 1:
+            image = ImageEnhance.Brightness(image.convert("L")).enhance(self.brightness)
+            # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+        
         image = ImageTk.PhotoImage(image=image)
 
         self.panel.configure(image=image)

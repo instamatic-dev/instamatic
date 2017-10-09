@@ -1,0 +1,607 @@
+2017-10-06 23:20:45,252 | camera:246 | INFO | Camera simulate initialized
+2017-10-06 23:20:45,289 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:20:45,302 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-06 23:20:45,302 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-06 23:20:45,303 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-06 23:20:45,303 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:20:45,303 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-06 23:20:45,358 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-06 23:20:54,365 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-06 23:20:54,365 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-06 23:20:54,365 | camera:312 | INFO | Connection to camera simulate released
+2017-10-06 23:23:15,217 | camera:246 | INFO | Camera simulate initialized
+2017-10-06 23:23:15,253 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:23:15,267 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-06 23:23:15,269 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-06 23:23:15,269 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-06 23:23:15,270 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:23:15,270 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-06 23:23:15,311 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-06 23:23:30,976 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-06 23:23:30,977 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-06 23:23:30,977 | camera:312 | INFO | Connection to camera simulate released
+2017-10-06 23:24:09,119 | camera:246 | INFO | Camera simulate initialized
+2017-10-06 23:24:09,154 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:24:09,168 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-06 23:24:09,170 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-06 23:24:09,171 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-06 23:24:09,171 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:24:09,171 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-06 23:24:09,210 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-06 23:24:25,168 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-06 23:24:25,168 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-06 23:24:25,170 | camera:312 | INFO | Connection to camera simulate released
+2017-10-06 23:26:25,088 | camera:246 | INFO | Camera simulate initialized
+2017-10-06 23:26:25,125 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:26:25,138 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-06 23:26:25,140 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-06 23:26:25,141 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-06 23:26:25,141 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-06 23:26:25,141 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-06 23:26:25,180 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-06 23:28:08,194 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-06 23:28:08,194 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-06 23:28:08,194 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 09:55:04,319 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 09:55:04,500 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:55:04,700 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 09:55:04,703 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 09:55:04,707 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 09:55:04,707 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:55:04,710 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 09:55:04,792 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 09:55:45,575 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 09:55:45,576 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 09:55:45,576 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 09:55:49,351 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 09:55:49,384 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:55:49,398 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 09:55:49,400 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 09:55:49,401 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 09:55:49,401 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:55:49,401 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 09:55:49,440 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 09:55:51,612 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 09:55:51,612 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 09:55:51,612 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 09:57:02,875 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 09:57:02,910 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:02,923 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 09:57:02,924 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 09:57:02,924 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 09:57:02,924 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:02,924 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 09:57:02,963 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 09:57:10,762 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 09:57:10,763 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 09:57:10,763 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 09:57:20,904 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 09:57:20,937 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:20,951 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 09:57:20,951 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 09:57:20,953 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 09:57:20,953 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:20,953 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 09:57:20,992 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 09:57:24,765 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 09:57:24,765 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 09:57:24,766 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 09:57:50,605 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 09:57:50,638 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:50,651 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 09:57:50,653 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 09:57:50,654 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 09:57:50,654 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 09:57:50,654 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 09:57:50,691 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 09:57:58,714 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 09:57:58,716 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 09:57:58,717 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:00:44,191 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:00:44,226 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:00:44,239 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:00:44,240 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:00:44,240 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:00:44,242 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:00:44,242 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:00:44,279 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:00:51,198 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:00:51,200 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:00:51,200 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:12:37,559 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:12:37,595 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:12:37,608 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:12:37,609 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:12:37,611 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:12:37,611 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:12:37,611 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:12:37,648 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:12:45,887 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:12:45,888 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:12:45,890 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:14:45,191 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:14:45,226 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:14:45,239 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:14:45,240 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:14:45,240 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:14:45,240 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:14:45,240 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:14:45,279 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:14:47,950 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:14:47,950 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:14:47,950 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:16:19,302 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:16:19,349 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:21:15,170 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:21:15,204 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:21:15,219 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:21:15,220 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:21:15,220 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:21:15,220 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:21:15,220 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:21:15,259 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:21:19,332 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:21:19,338 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:21:19,338 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:38:37,956 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:38:37,993 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:38:38,006 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:38:38,006 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:38:38,007 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:38:38,007 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:38:38,009 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:38:38,040 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:38:38,045 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:38:38,045 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:38:38,046 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:39:22,075 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:39:22,109 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:39:22,122 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:39:22,124 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:39:22,125 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:39:22,125 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:39:22,125 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:39:22,157 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:39:22,161 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:39:22,161 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:39:22,161 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:39:42,230 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:39:42,265 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:39:42,278 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:39:42,279 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:39:42,279 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:39:42,280 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:39:42,280 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:39:42,318 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:39:44,627 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:39:44,628 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:39:44,628 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:40:03,746 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:40:03,780 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:40:03,795 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:40:03,795 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:40:03,796 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:40:03,796 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:40:03,796 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:40:03,835 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:40:59,305 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:40:59,338 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:40:59,352 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:40:59,354 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:40:59,355 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:40:59,355 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:40:59,355 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:40:59,394 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:41:01,118 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:41:01,118 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:41:01,118 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:41:45,226 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:41:45,259 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:41:45,273 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:41:45,275 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:41:45,276 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:41:45,276 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:41:45,276 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:41:45,315 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:43:34,897 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:43:34,931 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:43:34,946 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:43:34,947 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:43:34,947 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:43:34,947 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:43:34,947 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:43:34,987 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:43:36,803 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:43:36,805 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:43:36,805 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:45:59,006 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:45:59,007 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:45:59,009 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:45:59,009 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:45:59,009 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:45:59,009 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:57:32,798 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:57:32,832 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:57:32,846 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:57:32,848 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:57:32,848 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:57:32,848 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:57:32,848 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:57:32,881 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:57:32,885 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:57:32,887 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:57:32,887 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 10:58:12,832 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 10:58:12,865 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:58:12,878 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 10:58:12,878 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 10:58:12,880 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 10:58:12,881 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 10:58:12,881 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 10:58:12,914 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 10:58:12,918 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 10:58:12,918 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 10:58:12,918 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:00:31,265 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:00:31,301 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:00:31,313 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:00:31,315 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:00:31,315 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:00:31,315 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:00:31,315 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:00:31,348 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:00:31,352 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:00:31,354 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:00:31,354 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:00:54,234 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:00:54,269 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:00:54,282 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:00:54,282 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:00:54,283 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:00:54,285 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:00:54,285 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:00:54,322 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:00:59,431 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:00:59,433 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:00:59,433 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:04:25,243 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:04:25,279 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:04:25,292 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:04:25,292 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:04:25,293 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:04:25,293 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:04:25,295 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:04:25,332 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:04:27,941 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:04:27,943 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:04:27,943 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:07:09,242 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:07:09,278 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:07:09,290 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:07:09,292 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:07:09,292 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:07:09,292 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:07:09,292 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:07:09,331 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:07:12,746 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:07:12,746 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:07:12,746 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:12:58,216 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:12:58,252 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:12:58,265 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:12:58,266 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:12:58,266 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:12:58,266 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:12:58,266 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:12:58,305 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:13:03,786 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:13:03,786 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:13:03,786 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:13:19,085 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:13:19,119 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:13:19,132 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:13:19,134 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:13:19,134 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:13:19,134 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:13:19,135 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:13:19,174 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:13:24,645 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:13:24,647 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:13:24,647 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:13:40,532 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:13:40,565 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:13:40,579 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:13:40,579 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:13:40,581 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:13:40,582 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:13:40,582 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:13:40,619 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:13:53,882 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:13:53,882 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:13:53,884 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:20:48,592 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:20:48,627 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:20:48,640 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:20:48,641 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:20:48,641 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:20:48,641 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:20:48,642 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:20:48,680 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:20:52,473 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:20:52,473 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:20:52,474 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:26:10,447 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:26:10,482 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:26:10,494 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:26:10,496 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:26:10,496 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:26:10,496 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:26:10,496 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:26:10,529 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:26:10,532 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:26:10,532 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:26:10,532 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:27:05,834 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:27:05,868 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:27:05,881 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:27:05,881 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:27:05,882 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:27:05,884 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:27:05,884 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:27:05,914 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:27:05,920 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:27:05,920 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:27:05,920 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:27:59,532 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:27:59,565 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:27:59,578 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:27:59,578 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:27:59,579 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:27:59,581 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:27:59,581 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:27:59,611 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:27:59,615 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:27:59,615 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:27:59,615 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:29:43,190 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:29:43,233 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:29:43,246 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:29:43,247 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:29:43,249 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:29:43,249 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:29:43,250 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:29:43,280 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:29:43,285 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:29:43,286 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:29:43,286 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:32:52,720 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:32:52,760 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:32:52,773 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:32:52,775 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:32:52,776 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:32:52,776 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:32:52,776 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:32:52,808 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:32:52,812 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:32:52,812 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:32:52,812 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:34:23,816 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:34:23,852 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:34:23,865 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:34:23,867 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:34:23,868 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:34:23,868 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:34:23,868 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:34:23,900 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:34:23,904 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:34:23,904 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:34:23,904 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:34:45,858 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:34:45,891 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:34:45,904 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:34:45,904 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:34:45,905 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:34:45,905 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:34:45,907 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:34:45,937 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:34:45,941 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:34:45,941 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:34:45,941 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:36:05,588 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:36:05,621 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:36:05,634 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:36:05,635 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:36:05,637 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:36:05,637 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:36:05,638 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:36:05,668 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:36:05,674 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:36:05,674 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:36:05,674 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:39:06,233 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:39:06,267 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:39:06,282 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:39:06,282 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:39:06,283 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:39:06,283 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:39:06,283 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:39:06,315 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:39:06,321 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:39:06,321 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:39:06,321 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:41:54,088 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:41:54,121 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:41:54,134 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:41:54,135 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:41:54,135 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:41:54,137 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:41:54,137 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:41:54,168 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:41:54,174 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:41:54,174 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:41:54,174 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:42:30,595 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:42:30,628 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:30,641 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:42:30,642 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:42:30,642 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:42:30,644 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:30,644 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:42:30,676 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:42:30,680 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:42:30,680 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:42:30,680 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:42:44,516 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:42:44,549 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:44,563 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:42:44,563 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:42:44,565 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:42:44,565 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:44,565 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:42:44,598 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:42:44,601 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:42:44,601 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:42:44,601 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:42:53,615 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:42:53,648 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:53,661 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:42:53,663 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:42:53,663 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:42:53,664 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:42:53,664 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:42:53,694 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:42:53,700 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:42:53,700 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:42:53,700 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:43:12,997 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:43:13,030 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:43:13,043 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:43:13,045 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:43:13,045 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:43:13,045 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:43:13,046 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:43:13,078 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:43:13,082 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:43:13,082 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:43:13,082 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:43:31,430 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:43:31,463 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:43:31,476 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:43:31,476 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:43:31,476 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:43:31,476 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:43:31,477 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:43:31,517 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:43:37,823 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:43:37,826 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:43:37,826 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:44:11,609 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:44:11,642 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:11,657 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:44:11,657 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:44:11,657 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:44:11,657 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:11,657 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:44:11,697 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:44:24,325 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:44:24,359 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:24,374 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:44:24,374 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:44:24,375 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:44:24,375 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:24,375 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:44:24,414 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:44:32,789 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:44:32,789 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:44:32,789 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:44:43,951 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:44:43,986 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:44,000 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:44:44,000 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:44:44,000 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:44:44,000 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:44:44,000 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:44:44,039 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:44:55,983 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:44:55,984 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:44:55,984 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:45:23,122 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:45:23,157 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:45:23,171 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:45:23,171 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:45:23,171 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:45:23,171 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:45:23,173 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:45:23,210 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:45:26,585 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:45:26,586 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:45:26,586 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:45:38,184 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:45:38,184 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:45:38,184 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:45:54,930 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:45:54,964 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:45:54,977 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:45:54,977 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:45:54,979 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:45:54,979 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:45:54,979 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:45:55,017 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:46:03,441 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:46:03,443 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:46:03,443 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:46:14,479 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:46:14,513 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:46:14,526 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:46:14,526 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:46:14,526 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:46:14,526 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:46:14,528 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:46:14,565 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:46:21,428 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:46:21,431 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:46:21,431 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:46:30,690 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:46:30,724 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:46:30,739 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:46:30,739 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:46:30,740 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:46:30,740 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:46:30,740 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:46:30,779 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:46:54,223 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:46:54,223 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:46:54,223 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 11:48:00,328 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 11:48:00,362 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:48:00,375 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 11:48:00,375 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 11:48:00,377 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 11:48:00,377 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 11:48:00,377 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 11:48:00,414 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 11:48:52,174 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 11:48:52,174 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 11:48:52,174 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 12:08:05,309 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 12:08:05,344 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 12:08:05,357 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 12:08:05,358 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 12:08:05,358 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 12:08:05,358 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 12:08:05,358 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 12:08:05,395 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 12:08:17,677 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 12:08:17,677 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 12:08:17,677 | camera:312 | INFO | Connection to camera simulate released
+2017-10-09 12:16:12,229 | camera:246 | INFO | Camera simulate initialized
+2017-10-09 12:16:12,263 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 12:16:12,276 | _code_cache:82 | INFO | Imported existing <module 'comtypes.gen' from 'C:\Python27\lib\site-packages\comtypes\gen\__init__.pyc'>
+2017-10-09 12:16:12,278 | _code_cache:59 | INFO | Using writeable comtypes cache directory: 'C:\Python27\lib\site-packages\comtypes\gen'
+2017-10-09 12:16:12,278 | __init__:155 | DEBUG | CoInitializeEx(None, 0)
+2017-10-09 12:16:12,278 | __init__:155 | DEBUG | CoInitializeEx(None, 2)
+2017-10-09 12:16:12,279 | _generate:100 | DEBUG | GetModule((('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0),))
+2017-10-09 12:16:12,316 | __init__:171 | DEBUG | CoUninitialize()
+2017-10-09 12:16:21,298 | __init__:183 | DEBUG | Calling CoUnititialize()
+2017-10-09 12:16:21,298 | __init__:193 | DEBUG | CoUnititialize() done.
+2017-10-09 12:16:21,299 | camera:312 | INFO | Connection to camera simulate released

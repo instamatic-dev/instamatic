@@ -3,6 +3,7 @@
 	"default_binsize": 1,
 	"possible_binsizes": [1],
 	"dimensions": [516, 516],
+	"dynamic_range": 11800,
 	"calib_beamshift": {
 		"stepsize": 500,
 		"gridsize": 5
