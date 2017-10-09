@@ -1,4 +1,4 @@
-camera_rotation_vs_stage_xy: -0.71
+camera_rotation_vs_stage_xy: -0.672
 cameras: [timepix, orius, simulate]
 specifications:
   CAMERALENGTHS: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200,
@@ -16,12 +16,14 @@ specifications:
     coarse: [ 0.45, 1.8, 4.5 ] }
 timepix:
   diffraction_pixeldimensions: 
-    150: 0.0087845
-    200: 0.0065884
-    250: 0.0052707
-    300: 0.0043922
-    400: 0.0032942
-    500: 0.0026353
+    150: 0.00838
+    200: 0.00623
+    250: 0.00499
+    300: 0.00412
+    400: 0.00296
+    500: 0.00238
+    600: 0.00198
+    800: 0.00148
   mag1_camera_dimensions:
     2500: [5.958436571428572, 5.958436571428572]
     3000: [4.8972434285714295, 4.8972434285714295]
