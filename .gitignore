@@ -9,3 +9,4 @@ dist
 *.c
 .pydevproject
 .project
+instamatic.log
