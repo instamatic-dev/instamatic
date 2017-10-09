@@ -144,6 +144,6 @@ class Experiment(object):
         img_conv.ED3DCreator(self.pathred, rotation_angle)
         img_conv.MRCCreator(self.pathred)
         img_conv.XDSINPCreator(self.pathsmv, rotation_angle)
-        self.logger.info("XDS INP file created as usual.")
+        self.logger.info("XDS INP file created.")
 
         print "Data Collection and Conversion Done."

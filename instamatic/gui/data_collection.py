@@ -182,7 +182,8 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    data_collection_gui = DataCollectionGUI(cam=cam)
+    data_collection_gui = DataCollectionGUI(cam="simulate")
+
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 
     experiment_ctrl = DataCollectionController(tem_ctrl, log=log)
