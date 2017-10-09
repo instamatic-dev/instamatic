@@ -248,7 +248,7 @@ class VideoStream(threading.Thread):
 
         if self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
-            image = (self.disprang/self.disprang_default) * image
+            image = (self.disprang_default/self.disprang)*image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
