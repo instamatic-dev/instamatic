@@ -170,6 +170,10 @@ class DataCollectionGUI(VideoStream):
 
 def main():
     from instamatic import TEMController
+    if "simulate" in sys.argv[1:]:
+        cam = "simulate"
+    else:
+        cam = "timepix"
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename="instamatic.log", 
@@ -178,7 +182,7 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    data_collection_gui = DataCollectionGUI(cam="timepix")
+    data_collection_gui = DataCollectionGUI(cam=cam)
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 
     experiment_ctrl = DataCollectionController(tem_ctrl, log=log)
