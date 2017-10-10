@@ -69,6 +69,7 @@ class DataCollectionController(object):
                 self.acquire_data_SED()
 
     def acquire_data_cRED(self):
+        self.log.info("Start cRED experiment")
         from instamatic.experiments import cRED
         
         expdir = self.module_io.get_new_experiment_directory()
@@ -86,8 +87,10 @@ class DataCollectionController(object):
         cexp.start_collection()
         
         self.stopEvent_cRED.clear()
+        self.log.info("Finish cRED experiment")
 
     def acquire_data_SED(self):
+        self.log.info("Start serialED experiment")
         from instamatic.experiments import serialED
 
         workdir = self.module_io.get_working_directory()
@@ -111,6 +114,7 @@ class DataCollectionController(object):
         exp.run()
 
         self.stopEvent_SED.clear()
+        self.log.info("Finish serialED experiment")
 
     def get_working_directory(self):
         return self.module_io.get_working_directory()
@@ -170,17 +174,26 @@ class DataCollectionGUI(VideoStream):
 
 def main():
     from instamatic import TEMController
+    from os.path import dirname as up
+    
     if "simulate" in sys.argv[1:]:
         cam = "simulate"
     else:
         cam = "timepix"
 
+    logging_dir = up(up(up(up(__file__))))
+
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    logfile = os.path.join(logging_dir, "logs", "instamatic_{}.log".format(date))
+
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename="instamatic.log", 
+                        filename=logfile, 
                         level=logging.DEBUG)
     
+
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
+    log.info("Instamatic.gui started, cam: %s", cam)
 
     data_collection_gui = DataCollectionGUI(cam="simulate")
 

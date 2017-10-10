@@ -7,9 +7,10 @@ import datetime
 
 class IOFrame(LabelFrame):
     """docstring for ExperimentalSED"""
-    def __init__(self, parent):
+    def __init__(self, parent, basedrc="C:/instamatic"):
         LabelFrame.__init__(self, parent, text="Input/Output")
         self.parent = parent
+        self.basedrc = basedrc
 
         self.init_vars()
 
@@ -54,7 +55,7 @@ class IOFrame(LabelFrame):
         self.update_experiment_number()
 
     def init_vars(self):
-        basedrc = "C:/instamatic"
+        basedrc = self.basedrc
         subdrc = "work_{}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
         drc = os.path.join(basedrc, subdrc)
         ff_path = os.path.join(basedrc, "flatfield.tiff")

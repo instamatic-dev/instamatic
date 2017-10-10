@@ -266,6 +266,8 @@ class Experiment(object):
         kwargs["stage_positions"]   = len(self.offsets)
         kwargs["image_dimensions"]  = self.image_dimensions
 
+        self.log.info("params", kwargs)
+
         json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"), indent=2)
 
     def initialize_microscope(self):
@@ -292,7 +294,7 @@ class Experiment(object):
     def image_mode(self, delay=0.2):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
         
-        self.log.debug("Switching back to image mode")
+        # self.log.debug("Switching back to image mode")
         time.sleep(delay)
 
         self.ctrl.beamshift.set(*self.neutral_beamshift)
@@ -306,7 +308,7 @@ class Experiment(object):
     def diffraction_mode(self, delay=0.2):
         """Switch to diffraction mode, focus the beam, and set the correct focus
         """
-        self.log.debug("Switching to diffraction mode")
+        # self.log.debug("Switching to diffraction mode")
         time.sleep(delay)
 
         self.ctrl.brightness.set(self.diff_brightness)
@@ -374,7 +376,7 @@ class Experiment(object):
                     continue
                 else:
                     time.sleep(delay)
-                    self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
+                    # self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
                     t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
@@ -400,7 +402,7 @@ class Experiment(object):
         t = tqdm(beamshift_coords, desc="                           ")
 
         for k, beamshift in enumerate(t):
-            self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
+            # self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
             self.ctrl.beamshift.set(*beamshift)
         
             # compensate beamshift
@@ -451,6 +453,9 @@ class Experiment(object):
                 "ImagePixelsize": self.diff_pixelsize
         }
 
+        self.log.info("d_image", d_image)
+        self.log.info("d_tiff", d_diff)
+
         raw_input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
 
         for i, d_pos in enumerate(self.loop_positions()):
@@ -469,7 +474,7 @@ class Experiment(object):
 
             im_mean = img.mean()
             if im_mean < self.image_threshold:
-                self.log.debug("Dark image detected (mean=%f)", im_mean)
+                # self.log.debug("Dark image detected (mean=%f)", im_mean)
                 continue
 
             img, h = self.apply_corrections(img, h)
@@ -486,7 +491,7 @@ class Experiment(object):
             if ncrystals == 0:
                 continue
 
-            self.log.info("%d crystals found", ncrystals)
+            self.log.info("%d crystals found in %s", ncrystals, outfile)
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}".format(i, k))
