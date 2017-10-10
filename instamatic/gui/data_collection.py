@@ -195,7 +195,7 @@ def main():
     log = logging.getLogger(__name__)
     log.info("Instamatic.gui started, cam: %s", cam)
 
-    data_collection_gui = DataCollectionGUI(cam="simulate")
+    data_collection_gui = DataCollectionGUI(cam="timepix")
 
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 
