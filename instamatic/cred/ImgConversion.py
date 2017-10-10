@@ -188,9 +188,14 @@ class ImgConversion(object):
         print ("Creating ed3d file......")
     
         ed3d = open(os.path.join(path, "1.ed3d"), 'w')
+
+        if self.startangle > self.endangle:
+            sign = -1
+        else:
+            sign = 1
         
         ed3d.write("WAVELENGTH    {}\n".format(self.wavelength))
-        ed3d.write("ROTATIONAXIS    {}\n".format(rotation_angle))
+        ed3d.write("ROTATIONAXIS    {}\n".format(rotation_angle-(sign-1)*90))
         ed3d.write("CCDPIXELSIZE    {}\n".format(self.pixelsize))
         ed3d.write("GONIOTILTSTEP    {}\n".format(self.osangle))
         ed3d.write("BEAMTILTSTEP    0\n")
@@ -203,7 +208,7 @@ class ImgConversion(object):
         for i in range(len(self.data)):
             j = i + 1
             fn = "{:05d}.mrc".format(j)
-            ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+self.osangle*i))
+            ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+sign*self.osangle*i))
         
         ed3d.write("ENDFILELIST")
         ed3d.close()
@@ -215,6 +220,11 @@ class ImgConversion(object):
         from math import cos, pi
 
         indend = len(self.data)
+
+        if self.startangle > self.endangle:
+            sign = -1
+        else:
+            sign = 1
 
         s = XDS_template.format(
             data_begin=1,
@@ -232,8 +242,8 @@ class ImgConversion(object):
             detdist=self.distance/1.1,
             osangle=self.osangle,
             calib_osangle=self.rotation_speed * self.acquisition_time,
-            rot_x=cos(rotation_angle),
-            rot_y=cos(rotation_angle+np.pi/2),
+            rot_x=cos(rotation_angle-(sign-1)*np.pi/2),
+            rot_y=cos(rotation_angle-(sign-1)*np.pi/2+np.pi/2),
             rot_z=0.0
             )
        

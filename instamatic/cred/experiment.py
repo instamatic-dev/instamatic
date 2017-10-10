@@ -141,9 +141,18 @@ class Experiment(object):
         
         img_conv.writeTiff(self.pathtiff)
         img_conv.writeIMG(self.pathsmv)
-        img_conv.ED3DCreator(self.pathred, rotation_angle)
+        img_conv.ED3DCreator(self.pathred, rotation_angle*57.3)
         img_conv.MRCCreator(self.pathred)
         img_conv.XDSINPCreator(self.pathsmv, rotation_angle)
         self.logger.info("XDS INP file created.")
+
+        f=open(os.path.join(self.path,"cRED_log.txt"),"w")
+        f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        f.write("Starting angle: {}\n".format(self.startangle))
+        f.write("Ending angle: {}\n".format(self.endangle))
+        f.write("Exposure Time: {} s\n".format(self.expt))
+        f.write("Spot Size: {}\n".format(self.ctrl.spotsize))
+        f.write("Camera length: {} mm\n".format(camera_length))
+        f.close()
 
         print "Data Collection and Conversion Done."
