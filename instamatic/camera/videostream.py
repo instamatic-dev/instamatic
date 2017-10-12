@@ -85,6 +85,8 @@ class VideoStream(threading.Thread):
         self.disprang = self.disprang_default = self.defaults["dynamic_range"]
         # Maximum number from image readout
 
+        self.resize_image = False
+
         self.last = time.time()
         self.nframes = 1
         self.update_frequency = 0.25
@@ -122,6 +124,11 @@ class VideoStream(threading.Thread):
         lwidth = 12
 
         frame = Frame(master)
+
+        self.cb_resize = Checkbutton(frame, text="Increase size", variable=self.var_resize_image)
+        self.cb_resize.grid(row=1, column=4)
+
+
         self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
@@ -148,8 +155,8 @@ class VideoStream(threading.Thread):
         self.e_brightness.grid(row=1, column=3)
         
         Label(frame, width=lwidth, text="DisplayRange").grid(row=1, column=4)
-        self.e_disprang = Spinbox(frame,width=ewidth, textvariable=self.var_disprang,from_=0.0, to=self.disprang_default, increment=1000)
-        self.e_disprang.grid(row=1,column=5)
+        self.e_disprang = Spinbox(frame, width=ewidth, textvariable=self.var_disprang, from_=1, to=self.disprang_default, increment=1000)
+        self.e_disprang.grid(row=1, column=5)
         
         frame.pack()
 
@@ -176,13 +183,21 @@ class VideoStream(threading.Thread):
         self.var_frametime.set(self.frametime)
         self.var_frametime.trace("w", self.update_frametime)
 
-        self.var_brightness = DoubleVar(value=1.0)
-        self.var_brightness.set(self.brightness)
+        self.var_brightness = DoubleVar(value=self.brightness)
         self.var_brightness.trace("w", self.update_brightness)
         
         self.var_disprang = DoubleVar(value=self.disprang_default)
-        self.var_disprang.set(self.disprang)
         self.var_disprang.trace("w",self.update_disprang)
+
+        self.var_resize_image = BooleanVar(value=self.resize_image)
+        self.var_resize_image.trace("w",self.update_resize_image)
+
+    def update_resize_image(self, name, index, mode):
+        # print name, index, mode
+        try:
+            self.resize_image = self.var_resize_image.get()
+        except:
+            pass
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode
@@ -257,6 +272,9 @@ class VideoStream(threading.Thread):
             image = ImageEnhance.Brightness(image.convert("L")).enhance(self.brightness)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
         
+        if self.resize_image:
+            image = image.resize((1032, 1032))
+
         image = ImageTk.PhotoImage(image=image)
 
         self.panel.configure(image=image)
