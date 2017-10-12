@@ -59,12 +59,9 @@ class Experiment(object):
         if not os.path.exists(self.pathred):
             os.makedirs(self.pathred)
         
-        camera_length = int(self.ctrl.magnification.get())
-
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
         
         buffer = []
@@ -92,8 +89,6 @@ class Experiment(object):
             self.endangle = self.ctrl.stageposition.a
                 
         else:
-            camera_length = 300
-
             self.startangle = a
 
             if self.unblank_beam:
@@ -117,12 +112,17 @@ class Experiment(object):
             print "Blanking beam"
             self.ctrl.beamblank = True
 
-        pxd = config.diffraction_pixeldimensions
-
+        print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
         nframes = len(buffer)
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
 
+        if self.camtype == "simulate":
+            camera_length = 300
+        else:
+            camera_length = int(self.ctrl.magnification.get())
+    
+        self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
@@ -146,7 +146,7 @@ class Experiment(object):
         img_conv.XDSINPCreator(self.pathsmv, rotation_angle)
         self.logger.info("XDS INP file created.")
 
-        with open(os.path.join(self.path, "cRED_log.txt")," w") as f
+        with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
             f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             f.write("Starting angle: {}\n".format(self.startangle))
             f.write("Ending angle: {}\n".format(self.endangle))

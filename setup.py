@@ -23,7 +23,10 @@ setup(
               "instamatic.calibrate",
               "instamatic.camera",
               "instamatic.processing",
-              "instamatic.formats"],
+              "instamatic.formats",
+              "instamatic.gui",
+              "instamatic.serialed",
+              "instamatic.cred"],
 
     install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py"],
 

@@ -29,7 +29,7 @@ def get_calibrated_rotation_speed(val):
 
     rotation_speeds = set(config.specifications["rotation_speeds"]["coarse"] + config.specifications["rotation_speeds"]["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
-    print "Correcting oscillation angle from {} to calibrated value {}".format(val, calibrated_value)
+    print "Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value)
     return calibrated_value
 
 
