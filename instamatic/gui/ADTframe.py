@@ -12,16 +12,16 @@ class ExperimentalADT(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=4, column=0)
-        self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
-        self.exposure_time.grid(row=4, column=1, sticky="W", padx=10)
+        self.e_exposure_time = Entry(frame, textvariable=self.var_exposure_time)
+        self.e_exposure_time.grid(row=4, column=1, sticky="W", padx=10)
         
         Label(frame, text="Tilt range (deg):").grid(row=5, column=0)
-        self.exposure_time = Entry(frame, textvariable=self.var_tilt_range)
-        self.exposure_time.grid(row=5, column=1, sticky="W", padx=10)
+        self.e_tilt_range = Entry(frame, textvariable=self.var_tilt_range)
+        self.e_tilt_range.grid(row=5, column=1, sticky="W", padx=10)
 
         Label(frame, text="Step size (deg):").grid(row=6, column=0)
-        self.exposure_time = Entry(frame, textvariable=self.var_stepsize)
-        self.exposure_time.grid(row=6, column=1, sticky="W", padx=10)
+        self.e_stepsize = Entry(frame, textvariable=self.var_stepsize)
+        self.e_stepsize.grid(row=6, column=1, sticky="W", padx=10)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -52,6 +52,8 @@ class ExperimentalADT(LabelFrame):
         self.StartButton.config(state=DISABLED)
         self.ContinueButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)
+        self.e_exposure_time.config(state=DISABLED)
+        self.e_stepsize.config(state=DISABLED)
         self.startEvent.set()
         self.triggerEvent.set()
 
@@ -63,6 +65,8 @@ class ExperimentalADT(LabelFrame):
         self.StartButton.config(state=NORMAL)
         self.ContinueButton.config(state=DISABLED)
         self.FinalizeButton.config(state=DISABLED)
+        self.e_exposure_time.config(state=NORMAL)
+        self.e_stepsize.config(state=NORMAL)
         self.triggerEvent.set()
         self.stopEvent.set()
 

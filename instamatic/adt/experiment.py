@@ -18,6 +18,7 @@ class Experiment(object):
         self.camtype = ctrl.cam.name
         self.flatfield = flatfield
         self.offset = 0
+        self.current_angle = None
         
     def start_collection(self, expt, tilt_range, stepsize):
         path = self.path
@@ -34,14 +35,19 @@ class Experiment(object):
 
         ctrl = self.ctrl
 
-        startangle = ctrl.stageposition.a
+        if not self.current_angle:
+            startangle = ctrl.stageposition.a
+        else:
+            startangle = self.current_angle + stepsize
 
         tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
+        print "Startangle", startangle
+        print "Angles:", tilt_positions
 
         ctrl.cam.block()
         # for i, a in enumerate(tilt_positions):
-        for i, a in enumerate(tqdm.tqdm(tilt_positions)):
-            ctrl.stageposition.a = a
+        for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
+            ctrl.stageposition.a = angle
 
             j = i + self.offset
 
@@ -63,7 +69,9 @@ class Experiment(object):
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collected from {} degree to {} degree.".format(startangle, endangle))
         
-        print "Data Collection Done."
+        self.current_angle = angle
+        print "Current angle", self.current_angle
+        print "Data Collection Done\n"
 
     def finalize(self):
         print "ADT data collection finalized"
