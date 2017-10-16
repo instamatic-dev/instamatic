@@ -67,6 +67,23 @@ class ImgConversion(object):
         self.physical_pixelsize = 0.055 # mm
         self.wavelength = 0.025080
         self.beam_center = self.get_average_beam_center()
+        
+        self.beam_center_xds = self.beam_center
+        
+        if self.beam_center[0] > (257):
+            self.beam_center_xds[0] -= 1
+        if self.beam_center[0] > (256):
+            self.beam_center_xds[0] -= 2
+        if self.beam_center[0] > (255):
+            self.beam_center_xds[0] -= 1
+            
+        if self.beam_center[1] > (257):
+            self.beam_center_xds[1] -= 1
+        if self.beam_center[1] > (256):
+            self.beam_center_xds[1] -= 2
+        if self.beam_center[1] > (255):
+            self.beam_center_xds[1] -= 1
+            
         self.distance = pixelsize2cameralength(self.pixelsize)
         self.osangle = osangle
         self.startangle = startangle
@@ -100,24 +117,17 @@ class ImgConversion(object):
 
             img = np.ushort(img)
 
-            # NOTE: Stretch correction?
+            # NOTE: Stretch correction: not sure if the azimuth and amplitude are correct.
             
-            ## if it's corrected image, need to take away the two extra rows and columns
-            if len(img) == 516:
-                newimg = np.zeros([512,512], dtype=np.ushort)
-                newimg[0:256,0:256] = img[0:256,0:256]
-                newimg[256:,0:256] = img[260:,0:256]
-                newimg[0:256,256:] = img[0:256,260:]
-                newimg[256:,256:] = img[260:,260:]
-                img = newimg
+            img = self.fixStretchCorrection(img, self.beam_center)
             
             header = collections.OrderedDict()
             header['HEADER_BYTES'] = 512
             header['DIM'] = 2
             header['BYTE_ORDER'] = "little_endian"
             header['TYPE'] = "unsigned_short"
-            header['SIZE1'] = 512
-            header['SIZE2'] = 512
+            header['SIZE1'] = 516
+            header['SIZE2'] = 516
             header['PIXEL_SIZE'] = self.physical_pixelsize
             header['BIN'] = "1x1"
             header['BIN_TYPE'] = "HW"
@@ -144,22 +154,8 @@ class ImgConversion(object):
         
         logger.debug("SMV files (size 512*512) saved in folder: {}".format(path))
      
-    def fixDistortion(self, image, directXY):
+    def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
-        
-        if directXY[0] > (255):
-            center[0] += 1
-        if directXY[0] > (256):
-            center[0] += 2
-        if directXY[0] > (257):
-            center[0] += 1
-                
-        if directXY[1] > (255):
-            center[1] += 1
-        if directXY[1] > (256):
-            center[1] += 2
-        if directXY[1] > (257):
-            center[1] += 1
              
         azimuth   = -6.61
         amplitude =  2.43
@@ -176,7 +172,7 @@ class ImgConversion(object):
             fn = os.path.join(path, "{:05d}.mrc".format(j))
 
             img = img.astype(np.int16)[::-1,:]  # NOTE: what is this trickery with reversing the image?
-            img = self.fixDistortion(img, self.beam_center)
+            img = self.fixStretchCorrection(img, self.beam_center)
            
             with open(fn, "wb") as mrcf:
                 mrcf.write(self.mrc_header)
@@ -233,8 +229,8 @@ class ImgConversion(object):
             wavelength=self.wavelength,
             dmin=self.dmin,
             dmax=self.dmax,
-            origin_x=self.beam_center[0],
-            origin_y=self.beam_center[1],
+            origin_x=self.beam_center_xds[0],
+            origin_y=self.beam_center_xds[1],
             sign="+",
 
             # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
