@@ -167,17 +167,29 @@ class DataCollectionGUI(VideoStream):
         self.modules = {}
 
     def buttonbox(self, master):
-        frame = LabelFrame(master, text="Experiment control")
-        frame.pack(side="right", fill="both", expand="yes", padx=10, pady=10)
+        frame = Frame(master)
+        frame.pack(side="right", fill="both", expand="yes")
 
         self.module_io = self.module_io(frame)
         self.modules["io"] = self.module_io 
-        self.module_cred = self.module_cred(frame)
+
+        self.nb = Notebook(frame)
+        self.page1 = Frame(self.nb)
+        self.page2 = Frame(self.nb)
+        self.page3 = Frame(self.nb)
+
+        self.module_cred = self.module_cred(self.page1)
         self.modules["cred"] = self.module_cred
-        self.module_sed = self.module_sed(frame)
+        self.module_sed = self.module_sed(self.page2)
         self.modules["sed"] = self.module_sed
-        self.module_red = self.module_red(frame)
+        self.module_red = self.module_red(self.page3)
         self.modules["red"] = self.module_red
+
+        self.nb.add(self.page1, text='cRED')
+        self.nb.add(self.page2, text='serialED')
+        self.nb.add(self.page3, text='RED')
+
+        self.nb.pack(fill="both", expand="yes")
 
         btn = Button(master, text="Save image",
             command=self.saveImage)
