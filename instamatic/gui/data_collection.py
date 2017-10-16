@@ -173,7 +173,7 @@ class DataCollectionGUI(VideoStream):
         self.module_io = self.module_io(frame)
         self.modules["io"] = self.module_io 
 
-        self.nb = Notebook(frame)
+        self.nb = Notebook(frame, padding=10)
         self.page1 = Frame(self.nb)
         self.page2 = Frame(self.nb)
         self.page3 = Frame(self.nb)

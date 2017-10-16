@@ -20,14 +20,17 @@ class ExperimentalcRED(LabelFrame):
         self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
         self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
         frame.grid_columnconfigure(1, weight=1)
-        frame.pack(side="top", fill="both", expand=True, padx=10)
+        frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
 
         frame = Frame(self)
-        self.CollectionButton = Button(self, text="Start Collection", command=self.start_collection)
-        self.CollectionButton.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
+        self.CollectionButton.grid(row=1, column=0, sticky="EW")
 
-        self.CollectionStopButton = Button(self, text="Stop Collection", command=self.stop_collection, state=DISABLED)
-        self.CollectionStopButton.pack(side="right", expand=True, fill="x", padx=10, pady=10)
+        self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
+        self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
+        
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
     def init_vars(self):

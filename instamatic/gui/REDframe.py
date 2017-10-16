@@ -26,14 +26,19 @@ class ExperimentalRED(LabelFrame):
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
-        self.StartButton = Button(self, text="Start Collection", command=self.start_collection)
-        self.StartButton.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        self.StartButton = Button(frame, text="Start Collection", command=self.start_collection)
+        self.StartButton.grid(row=1, column=0, sticky="EW")
 
-        self.ContinueButton = Button(self, text="Continue", command=self.continue_collection, state=DISABLED)
-        self.ContinueButton.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        self.ContinueButton = Button(frame, text="Continue", command=self.continue_collection, state=DISABLED)
+        self.ContinueButton.grid(row=1, column=1, sticky="EW")
 
-        self.FinalizeButton = Button(self, text="Finalize", command=self.stop_collection, state=DISABLED)
-        self.FinalizeButton.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        self.FinalizeButton = Button(frame, text="Finalize", command=self.stop_collection, state=DISABLED)
+        self.FinalizeButton.grid(row=1, column=2, sticky="EW")
+
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=1)
+
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
     def init_vars(self):

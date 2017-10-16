@@ -20,7 +20,7 @@ class IOFrame(LabelFrame):
         self.directory.grid(row=2, column=1, sticky="EW")
 
         self.BrowseButton = Button(frame, text="Browse..", command=self.browse_directory)
-        self.BrowseButton.grid(row=2, column=2, sticky="EW", padx=10)
+        self.BrowseButton.grid(row=2, column=2, sticky="EW")
         
         self.sample_name = Entry(frame, width=50, textvariable=self.var_sample_name)
         self.sample_name.grid(row=3, column=1, sticky="EW")
@@ -29,17 +29,17 @@ class IOFrame(LabelFrame):
         self.flatfield.grid(row=4, column=1, sticky="EW")
 
         self.BrowseFFButton = Button(frame, text="Browse..", command=self.browse_flatfield)
-        self.BrowseFFButton.grid(row=4, column=2, sticky="EW", padx=10)
+        self.BrowseFFButton.grid(row=4, column=2, sticky="EW")
         
-        Label(frame, text="Directory:").grid(row=2, column=0, sticky="W", padx=10)
-        Label(frame, text="Sample name:").grid(row=3, column=0, sticky="W", padx=10)
-        Label(frame, text="Flatfield:").grid(row=4, column=0, sticky="W", padx=10)
+        Label(frame, text="Directory:").grid(row=2, column=0, sticky="W")
+        Label(frame, text="Sample name:").grid(row=3, column=0, sticky="W")
+        Label(frame, text="Flatfield:").grid(row=4, column=0, sticky="W")
 
         self.incrementer = Spinbox(frame, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
-        self.incrementer.grid(row=3, column=2, padx=10)
+        self.incrementer.grid(row=3, column=2)
 
         self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
-        self.OpenDatadirButton.grid(row=5, column=0, sticky="EW", padx=10)
+        self.OpenDatadirButton.grid(row=5, column=0, sticky="EW")
 
         frame.grid_columnconfigure(1, weight=1)
 

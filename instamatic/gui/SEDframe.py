@@ -62,18 +62,21 @@ class ExperimentalSED(object, LabelFrame):
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(2, weight=1)
 
-        frame.pack(side="top", fill="x", padx=10)
+        frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)        
         self.ShowCalibBeamshift = Button(frame, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
-        self.ShowCalibBeamshift.pack(side="left", expand=True, fill="x", padx=10)
+        self.ShowCalibBeamshift.grid(row=1, column=0, sticky="EW")
 
         self.ShowCalibDirectBeam1 = Button(frame, text="Show calib directbeam1", command=self.show_calib_directbeam1, state=NORMAL)
-        self.ShowCalibDirectBeam1.pack(side="left", expand=True, fill="x", padx=10)
+        self.ShowCalibDirectBeam1.grid(row=1, column=1, sticky="EW")
 
         self.ShowCalibDirectBeam2 = Button(frame, text="Show calib directbeam2", command=self.show_calib_directbeam2, state=NORMAL)
-        self.ShowCalibDirectBeam2.pack(side="left", expand=True, fill="x", padx=10)
-        frame.pack(side="top", fill="both", expand=True)
+        self.ShowCalibDirectBeam2.grid(row=1, column=2, sticky="EW")
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=1)
+        frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
 
         frame = Frame(self)
 
