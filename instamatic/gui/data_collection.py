@@ -14,7 +14,7 @@ from instamatic.camera.videostream import VideoStream
 from SEDframe import *
 from cREDframe import *
 from IOFrame import *
-from ADTframe import *
+from REDframe import *
 
 
 class DataCollectionController(object):
@@ -32,26 +32,26 @@ class DataCollectionController(object):
         self.stopEvent_SED = threading.Event()
         self.startEvent_SED = threading.Event()
         
-        self.stopEvent_ADT = threading.Event()
-        self.startEvent_ADT = threading.Event()
+        self.stopEvent_RED = threading.Event()
+        self.startEvent_RED = threading.Event()
 
         self.triggerEvent = threading.Event()
         
         self.module_io = self.stream.get_module("io")
         self.module_sed = self.stream.get_module("sed")
         self.module_cred = self.stream.get_module("cred")
-        self.module_adt = self.stream.get_module("adt")
+        self.module_red = self.stream.get_module("red")
 
         self.module_sed.set_trigger(trigger=self.triggerEvent)
         self.module_cred.set_trigger(trigger=self.triggerEvent)
-        self.module_adt.set_trigger(trigger=self.triggerEvent)
+        self.module_red.set_trigger(trigger=self.triggerEvent)
 
         self.module_cred.set_events(startEvent=self.startEvent_cRED, 
                                     stopEvent=self.stopEvent_cRED)
         self.module_sed.set_events(startEvent=self.startEvent_SED, 
                                    stopEvent=self.stopEvent_SED)
-        self.module_adt.set_events(startEvent=self.startEvent_ADT, 
-                                   stopEvent=self.stopEvent_ADT)
+        self.module_red.set_events(startEvent=self.startEvent_RED, 
+                                   stopEvent=self.stopEvent_RED)
 
         self.exitEvent = threading.Event()
         self.stream._atexit_funcs.append(self.exitEvent.set)
@@ -76,13 +76,13 @@ class DataCollectionController(object):
                 self.startEvent_SED.clear()
                 self.acquire_data_SED()
 
-            if self.startEvent_ADT.is_set():
-                self.startEvent_ADT.clear()
-                self.acquire_data_ADT()
+            if self.startEvent_RED.is_set():
+                self.startEvent_RED.clear()
+                self.acquire_data_RED()
 
-            if self.stopEvent_ADT.is_set():
-                self.stopEvent_ADT.clear()
-                self.finalize_data_ADT()
+            if self.stopEvent_RED.is_set():
+                self.stopEvent_RED.clear()
+                self.finalize_data_RED()
 
     def acquire_data_cRED(self):
         self.log.info("Start cRED experiment")
@@ -132,26 +132,26 @@ class DataCollectionController(object):
         self.stopEvent_SED.clear()
         self.log.info("Finish serialED experiment")
 
-    def acquire_data_ADT(self):
-        self.log.info("Start ADT experiment")
-        from instamatic.experiments import ADT
+    def acquire_data_RED(self):
+        self.log.info("Start RED experiment")
+        from instamatic.experiments import RED
         
-        if not hasattr(self, "adt_exp"):
+        if not hasattr(self, "red_exp"):
 
             expdir = self.module_io.get_new_experiment_directory()
 
             if not os.path.exists(expdir):
                 os.makedirs(expdir)
         
-            self.adt_exp = ADT.Experiment(ctrl=self.ctrl, path=expdir, log=self.log,
+            self.red_exp = RED.Experiment(ctrl=self.ctrl, path=expdir, log=self.log,
                                flatfield=self.module_io.get_flatfield())
         
-        expt, tilt_range, stepsize = self.module_adt.get_params()
-        self.adt_exp.start_collection(expt=expt, tilt_range=tilt_range, stepsize=stepsize)
+        expt, tilt_range, stepsize = self.module_red.get_params()
+        self.red_exp.start_collection(expt=expt, tilt_range=tilt_range, stepsize=stepsize)
 
-    def finalize_data_ADT(self):
-        self.adt_exp.finalize()
-        del self.adt_exp
+    def finalize_data_RED(self):
+        self.red_exp.finalize()
+        del self.red_exp
 
     def get_working_directory(self):
         return self.module_io.get_working_directory()
@@ -176,8 +176,8 @@ class DataCollectionGUI(VideoStream):
         self.modules["cred"] = self.module_cred
         self.module_sed = self.module_sed(frame)
         self.modules["sed"] = self.module_sed
-        self.module_adt = self.module_adt(frame)
-        self.modules["adt"] = self.module_adt
+        self.module_red = self.module_red(frame)
+        self.modules["red"] = self.module_red
 
         btn = Button(master, text="Save image",
             command=self.saveImage)
@@ -198,8 +198,8 @@ class DataCollectionGUI(VideoStream):
         module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
         return module
 
-    def module_adt(self, parent):
-        module = ExperimentalADT(parent)
+    def module_red(self, parent):
+        module = ExperimentalRED(parent)
         module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
         return module
 

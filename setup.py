@@ -26,6 +26,7 @@ setup(
               "instamatic.formats",
               "instamatic.gui",
               "instamatic.serialed",
+              "instamatic.red",
               "instamatic.cred"],
 
     install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py"],

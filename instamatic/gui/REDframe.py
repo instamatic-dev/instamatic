@@ -2,10 +2,10 @@ from Tkinter import *
 from ttk import *
 
 
-class ExperimentalADT(LabelFrame):
-    """docstring for ExperimentalADT"""
+class ExperimentalRED(LabelFrame):
+    """docstring for ExperimentalRED"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Assisted Diffraction Tomography")
+        LabelFrame.__init__(self, parent, text="Rotation electron diffraction")
         self.parent = parent
 
         self.init_vars()
@@ -76,6 +76,6 @@ class ExperimentalADT(LabelFrame):
 
 if __name__ == '__main__':
     root = Tk()
-    ExperimentalcRED(root).pack(side="top", fill="both", expand=True)
+    ExperimentalRED(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
 
