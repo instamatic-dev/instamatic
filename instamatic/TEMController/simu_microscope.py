@@ -48,11 +48,11 @@ class SimuMicroscope(object):
         self.ImageShift_x = random.randint(MIN, MAX)
         self.ImageShift_y = random.randint(MIN, MAX)
 
-        self.StagePosition_x = random.randint(MIN, MAX)
-        self.StagePosition_y = random.randint(MIN, MAX)
-        self.StagePosition_z = random.randint(MIN, MAX)
-        self.StagePosition_a = random.randint(MIN, MAX)
-        self.StagePosition_b = random.randint(MIN, MAX)
+        self.StagePosition_x = random.randint(-100000, 100000)
+        self.StagePosition_y = random.randint(-100000, 100000)
+        self.StagePosition_z = random.randint(-10000,  10000)
+        self.StagePosition_a = random.randint(-40, 40)
+        self.StagePosition_b = random.randint(-40, 40)
 
         # self.FunctionMode_value = random.randint(0, 2)
         self.FunctionMode_value = 0
