@@ -67,23 +67,6 @@ class ImgConversion(object):
         self.physical_pixelsize = 0.055 # mm
         self.wavelength = 0.025080
         self.beam_center = self.get_average_beam_center()
-        
-        self.beam_center_xds = self.beam_center
-        
-        if self.beam_center[0] > (257):
-            self.beam_center_xds[0] -= 1
-        if self.beam_center[0] > (256):
-            self.beam_center_xds[0] -= 2
-        if self.beam_center[0] > (255):
-            self.beam_center_xds[0] -= 1
-            
-        if self.beam_center[1] > (257):
-            self.beam_center_xds[1] -= 1
-        if self.beam_center[1] > (256):
-            self.beam_center_xds[1] -= 2
-        if self.beam_center[1] > (255):
-            self.beam_center_xds[1] -= 1
-            
         self.distance = pixelsize2cameralength(self.pixelsize)
         self.osangle = osangle
         self.startangle = startangle
@@ -117,8 +100,6 @@ class ImgConversion(object):
 
             img = np.ushort(img)
 
-            # NOTE: Stretch correction: not sure if the azimuth and amplitude are correct.
-            
             img = self.fixStretchCorrection(img, self.beam_center)
             
             header = collections.OrderedDict()
@@ -145,7 +126,6 @@ class ImgConversion(object):
             header['WAVELENGTH'] = self.wavelength
             header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[0]
             header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[1]
-            # NOTE: where does the 0.05 come from?
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
             
@@ -156,7 +136,9 @@ class ImgConversion(object):
      
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
-             
+        
+        # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct.
+        # TODO: put these numbers in config
         azimuth   = -6.61
         amplitude =  2.43
         
@@ -171,8 +153,9 @@ class ImgConversion(object):
             j = i + 1
             fn = os.path.join(path, "{:05d}.mrc".format(j))
 
-            img = img.astype(np.int16)[::-1,:]  # NOTE: what is this trickery with reversing the image?
+            # flip up/down because RED reads images from the bottom left corner
             img = self.fixStretchCorrection(img, self.beam_center)
+            img = np.flipud(img.astype(np.int16))
            
             with open(fn, "wb") as mrcf:
                 mrcf.write(self.mrc_header)
@@ -229,8 +212,8 @@ class ImgConversion(object):
             wavelength=self.wavelength,
             dmin=self.dmin,
             dmax=self.dmax,
-            origin_x=self.beam_center_xds[0],
-            origin_y=self.beam_center_xds[1],
+            origin_x=self.beam_center[0],
+            origin_y=self.beam_center[1],
             sign="+",
 
             # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
