@@ -99,7 +99,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax1.set_xlabel("Stage X")
     ax1.set_ylabel("Stage Y")
 
-    ax2 = plt.subplot(132, title=fn)
+    ax2 = plt.subplot(132, title="{}\nx={}, y={}".format(fn, 0, 0))
     im2 = ax2.imshow(img, cmap=CMAP)
     plt_crystals, = ax2.plot([], [], marker="o", color="red",  mew=2, picker=8, lw=0)
     highlight2,   = ax2.plot([], [], marker="o", color="blue", mew=2)
@@ -123,7 +123,9 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             img, h = read_image(fn)
             # img = np.rot90(img, k=3)
             im2.set_data(img)
-            ax2.set_title(fn)
+
+            stage_x, stage_y = h.get("exp_stage_position", (0, 0))
+            ax2.set_title(title="{}\nx={:.0f}, y={:.0f}".format(fn, stage_x, stage_y))
             crystal_coords = np.array(h["exp_crystal_coords"])
 
             if results:
