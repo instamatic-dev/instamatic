@@ -576,6 +576,9 @@ class TEMController(object):
     def mode_mag1(self):
         self.tem.setFunctionMode("mag1")
 
+    def mode_samag(self):
+        self.tem.setFunctionMode("samag")
+
     def mode_diffraction(self):
         self.tem.setFunctionMode("diff")
 
@@ -583,6 +586,11 @@ class TEMController(object):
     def mode(self):
         """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
         return self.tem.getFunctionMode()
+
+    @mode.setter
+    def mode(self, value):
+        """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
+        self.tem.setFunctionMode(value)
 
     @property
     def beamblank(self):

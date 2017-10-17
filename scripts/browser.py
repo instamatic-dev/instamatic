@@ -105,7 +105,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     highlight2,   = ax2.plot([], [], marker="o", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=250, cmap=CMAP)
+    im3 = ax3.imshow(np.zeros_like(img), vmax=1000, cmap=CMAP)
     
     class plt_diff:
         center, = ax3.plot([], [], "o", color="red", lw=0)
@@ -125,7 +125,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             im2.set_data(img)
 
             stage_x, stage_y = h.get("exp_stage_position", (0, 0))
-            ax2.set_title(title="{}\nx={:.0f}, y={:.0f}".format(fn, stage_x, stage_y))
+            print "x={:.0f} y={:.0f}".format(stage_x, stage_y)
+            ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
 
             if results:

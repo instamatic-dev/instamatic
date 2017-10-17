@@ -42,7 +42,7 @@ def write_ED3D(path, fns, **kwargs):
         sign = 1
 
     ed3d.write("WAVELENGTH    {}\n".format(wavelength))
-    ed3d.write("ROTATIONAXIS    {}\n".format(rotation_angle))
+    ed3d.write("ROTATIONAXIS    {:.2f}\n".format(rotation_angle))
     ed3d.write("CCDPIXELSIZE    {}\n".format(pixelsize))
     ed3d.write("GONIOTILTSTEP    {}\n".format(osangle))
     ed3d.write("BEAMTILTSTEP    0\n")
@@ -53,7 +53,7 @@ def write_ED3D(path, fns, **kwargs):
     ed3d.write("FILELIST\n")
     
     for i, fn in enumerate(fns):
-        ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=startangle+sign*osangle*i))
+        ed3d.write("FILE {fn}    {ang:.2f}    0    {ang:.2f}\n".format(fn=fn, ang=startangle+sign*osangle*i))
     
     ed3d.write("ENDFILELIST")
     ed3d.close()
@@ -106,6 +106,13 @@ class Experiment(object):
 
         data, headers = [], []
 
+        image_mode = ctrl.mode
+        if image_mode != "diff":
+            fn = os.path.join(path, "image_{}.h5".format(offset))
+            img, h = self.ctrl.getImage(expt)
+            write_hdf5(fn, img, header=h)
+            ctrl.mode_diffraction()
+
         ctrl.cam.block()
         # for i, a in enumerate(tilt_positions):
         for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
@@ -132,13 +139,17 @@ class Experiment(object):
         self.stepsize = stepsize
 
         with open(os.path.join(self.path, "summary.txt"), "a") as f:
-            print
+            print >> f, "Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions))
+            print "Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions))
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Data collected from {} degree to {} degree.".format(startangle, endangle))
+        self.logger.info("Data collected from {:.2f} degree to {:.2f} degree.".format(startangle, endangle))
         
         self.current_angle = angle
-        print "Done, current angle =", self.current_angle
+        print "Done, current angle = {:.2f} degrees".format(self.current_angle)
+
+        if image_mode != "diff":
+            ctrl.mode = image_mode
 
     def finalize(self):
         path = self.path_mrc
@@ -147,7 +158,7 @@ class Experiment(object):
         azimuth   = -6.61
         amplitude =  2.43
 
-        for fn in self.data_files:
+        for fn in tqdm.tqdm(self.data_files):
             img, h = read_hdf5(fn)
 
             center = find_beam_center(img, sigma=10)
@@ -172,4 +183,4 @@ class Experiment(object):
                             endangle=self.current_angle)
 
         print "Write ED3D file"
-        print "ADT data collection finalized"
+        print "RED data collection finalized"
