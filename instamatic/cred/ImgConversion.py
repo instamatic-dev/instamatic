@@ -100,24 +100,15 @@ class ImgConversion(object):
 
             img = np.ushort(img)
 
-            # NOTE: Stretch correction?
-            
-            ## if it's corrected image, need to take away the two extra rows and columns
-            if len(img) == 516:
-                newimg = np.zeros([512,512], dtype=np.ushort)
-                newimg[0:256,0:256] = img[0:256,0:256]
-                newimg[256:,0:256] = img[260:,0:256]
-                newimg[0:256,256:] = img[0:256,260:]
-                newimg[256:,256:] = img[260:,260:]
-                img = newimg
+            img = self.fixStretchCorrection(img, self.beam_center)
             
             header = collections.OrderedDict()
             header['HEADER_BYTES'] = 512
             header['DIM'] = 2
             header['BYTE_ORDER'] = "little_endian"
             header['TYPE'] = "unsigned_short"
-            header['SIZE1'] = 512
-            header['SIZE2'] = 512
+            header['SIZE1'] = 516
+            header['SIZE2'] = 516
             header['PIXEL_SIZE'] = self.physical_pixelsize
             header['BIN'] = "1x1"
             header['BIN_TYPE'] = "HW"
@@ -135,7 +126,6 @@ class ImgConversion(object):
             header['WAVELENGTH'] = self.wavelength
             header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[0]
             header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[1]
-            # NOTE: where does the 0.05 come from?
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
             
@@ -144,23 +134,11 @@ class ImgConversion(object):
         
         logger.debug("SMV files (size 512*512) saved in folder: {}".format(path))
      
-    def fixDistortion(self, image, directXY):
+    def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
         
-        if directXY[0] > (255):
-            center[0] += 1
-        if directXY[0] > (256):
-            center[0] += 2
-        if directXY[0] > (257):
-            center[0] += 1
-                
-        if directXY[1] > (255):
-            center[1] += 1
-        if directXY[1] > (256):
-            center[1] += 2
-        if directXY[1] > (257):
-            center[1] += 1
-             
+        # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct.
+        # TODO: put these numbers in config
         azimuth   = -6.61
         amplitude =  2.43
         
@@ -175,8 +153,9 @@ class ImgConversion(object):
             j = i + 1
             fn = os.path.join(path, "{:05d}.mrc".format(j))
 
-            img = img.astype(np.int16)[::-1,:]  # NOTE: what is this trickery with reversing the image?
-            img = self.fixDistortion(img, self.beam_center)
+            # flip up/down because RED reads images from the bottom left corner
+            img = self.fixStretchCorrection(img, self.beam_center)
+            img = np.flipud(img.astype(np.int16))
            
             with open(fn, "wb") as mrcf:
                 mrcf.write(self.mrc_header)
