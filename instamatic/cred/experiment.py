@@ -79,9 +79,21 @@ class Experiment(object):
             
             self.ctrl.cam.block()
             t0 = time.time()
+
+            i = 0
             while not self.stopEvent.is_set():
-                img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                buffer.append((img, h))
+
+                
+                if i % 10 == 0:
+                    self.ctrl.mode = "samag"
+                    img, h = self.ctrl.getImage(0.05, header_keys=None)
+                    self.ctrl.mode = "diff"
+                    time.sleep(0.3)
+                else:
+                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                    buffer.append((img, h))
+
+                i += 1
 
             t1 = time.time()
 
