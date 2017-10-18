@@ -33,6 +33,19 @@ def get_calibrated_rotation_speed(val):
     return calibrated_value
 
 
+def beamcenter2xds(xy):
+    x, y = xy
+    if 255 < x <= 258:
+        x = 255
+    elif 259 <= x < 262:
+        x = 262
+    if 255 < y <= 258:
+        y = 255
+    elif 259 <= y < 262:
+        y = 262
+    return x, y
+
+
 class ImgConversion(object):
     
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
@@ -67,6 +80,9 @@ class ImgConversion(object):
         self.physical_pixelsize = 0.055 # mm
         self.wavelength = 0.025080
         self.beam_center = self.get_average_beam_center()
+
+        self.beam_center_512 = beamcenter2xds(self.beam_center)
+
         self.distance = pixelsize2cameralength(self.pixelsize)
         self.osangle = osangle
         self.startangle = startangle
@@ -98,17 +114,24 @@ class ImgConversion(object):
         for i, (img, h) in enumerate(izip(self.data, self.headers)):
             j = i + 1
 
-            img = np.ushort(img)
-
             img = self.fixStretchCorrection(img, self.beam_center)
+
+            new_img = np.empty(512, 512, dtype=np.ushort)
+            new_img[:256, :256] = img[:256, :256]
+            new_img[:256, 256:] = img[:256, 260:]
+            new_img[256:, :256] = img[260:, :256]
+            new_img[256:, 256:] = img[260:, 260:]
+
+            new_img = np.ushort(new_img)
+            shape_x, shape_y = new_img.shape
             
             header = collections.OrderedDict()
             header['HEADER_BYTES'] = 512
             header['DIM'] = 2
             header['BYTE_ORDER'] = "little_endian"
             header['TYPE'] = "unsigned_short"
-            header['SIZE1'] = 516
-            header['SIZE2'] = 516
+            header['SIZE1'] = shape_x
+            header['SIZE2'] = shape_y
             header['PIXEL_SIZE'] = self.physical_pixelsize
             header['BIN'] = "1x1"
             header['BIN_TYPE'] = "HW"
@@ -124,15 +147,16 @@ class ImgConversion(object):
             header['OSC_START'] = self.startangle
             header['OSC_RANGE'] = self.osangle
             header['WAVELENGTH'] = self.wavelength
-            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[0]
-            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[1]
-            header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
-            header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
+            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center_512[0]
+            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center_512[1]
+            header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center_512[0]*self.physical_pixelsize)
+            header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center_512[1]*self.physical_pixelsize)
             
             fn = os.path.join(path, "{:05d}.img".format(j))
-            newimg = write_adsc(fn, img, header=header)
+            newimg = write_adsc(fn, new_img, header=header)
         
-        logger.debug("SMV files (size 512*512) saved in folder: {}".format(path))
+        self.shape_SMV = shape_x, shape_y
+        logger.debug("SMV files (size {}*{}) saved in folder: {}".format(shape_x, shape_y, path))
      
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
@@ -205,6 +229,8 @@ class ImgConversion(object):
         if self.startangle > self.endangle:
             rotation_angle += np.pi
 
+        shape_x, shape_y = self.shape_SMV
+
         s = XDS_template.format(
             data_begin=1,
             data_end=indend,
@@ -212,8 +238,10 @@ class ImgConversion(object):
             wavelength=self.wavelength,
             dmin=self.dmin,
             dmax=self.dmax,
-            origin_x=self.beam_center[0],
-            origin_y=self.beam_center[1],
+            origin_x=self.beam_center_512[0],
+            origin_y=self.beam_center_512[1],
+            NX=self.shape_x,
+            NY=self.shape_y,
             sign="+",
 
             # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
