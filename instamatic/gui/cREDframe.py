@@ -17,6 +17,10 @@ class ExperimentalcRED(LabelFrame):
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2)
 
+        Label(frame, text="Image interval:").grid(row=5, column=0)
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1)
+        self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
+
         self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
         self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
         frame.grid_columnconfigure(1, weight=1)
@@ -36,6 +40,7 @@ class ExperimentalcRED(LabelFrame):
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_unblank_beam = BooleanVar(value=False)
+        self.var_image_interval = IntVar(value=10)
 
     def set_trigger(self, trigger=None):
         self.triggerEvent = trigger
@@ -65,6 +70,16 @@ class ExperimentalcRED(LabelFrame):
 
     def get_unblank_beam(self):
         return self.var_unblank_beam.get()
+    
+    def get_image_interval(self):
+        return self.var_image_interval.get()
+
+    def get_params(self):
+        return {
+        "exposure_time": self.var_exposure_time.get(),
+        "unblank_beam": self.var_unblank_beam.get(),
+        "image_interval": self.var_image_interval.get()
+        }
 
 
 if __name__ == '__main__':

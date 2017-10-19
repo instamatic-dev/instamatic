@@ -95,9 +95,10 @@ class DataCollectionController(object):
         
         expt = self.module_cred.get_expt()
         unblank_beam = self.module_cred.get_unblank_beam()
+        image_interval = self.module_cred.get_image_interval()
 
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, unblank_beam=unblank_beam, 
-                               log=self.log, stopEvent=self.stopEvent_cRED, 
+                               log=self.log, stopEvent=self.stopEvent_cRED, image_interval=image_interval,
                                flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
