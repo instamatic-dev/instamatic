@@ -7,85 +7,71 @@ XDS_template = """
 ! NOTE: Please convert the tiff files into SMV fomat using RED before processing
 ! Images are expected to be already corrected for spatial distortions.
 
- ! TimePix Detector Segment (Remove Cross)
- ! Top left segment
- SEGMENT= 2 255 2 255
- DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
- DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
- SEGMENT_ORGX=-2.18182
- SEGMENT_ORGY=-2.18182
- SEGMENT_DISTANCE=0.0
- ! Top right segment
- SEGMENT= 258 511 2 255
- DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
- DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
- SEGMENT_ORGX=-6.54545
- SEGMENT_ORGY=-2.18182
- SEGMENT_DISTANCE=0.0
- ! Bottom left segment
- SEGMENT= 2 255 258 511
- DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
- DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
- SEGMENT_ORGX=-2.18182
- SEGMENT_ORGY=-6.54545
- SEGMENT_DISTANCE=0.0
- ! Bottom right segment
- SEGMENT= 258 511 258 511
- DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
- DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
- SEGMENT_ORGX=-6.54545
- SEGMENT_ORGY=-6.54545
- SEGMENT_DISTANCE=0.0
+! TimePix Detector Segment (Remove Cross)
 
+SEGMENT= 2 255 2 255   ! Top left segment
+DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
+DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
+SEGMENT_ORGX=-2.18182
+SEGMENT_ORGY=-2.18182
+SEGMENT_DISTANCE=0.0
+
+SEGMENT= 262 515 2 255  ! Top right segment
+DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
+DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
+SEGMENT_ORGX=-6.54545
+SEGMENT_ORGY=-2.18182
+SEGMENT_DISTANCE=0.0
+
+SEGMENT= 2 255 262 515  ! Bottom left segment
+DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
+DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
+SEGMENT_ORGX=-2.18182
+SEGMENT_ORGY=-6.54545
+SEGMENT_DISTANCE=0.0
+
+SEGMENT= 262 515 262 515  ! Bottom right segment
+DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
+DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
+SEGMENT_ORGX=-6.54545
+SEGMENT_ORGY=-6.54545
+SEGMENT_DISTANCE=0.0
 
 ! ********** Job control **********
 
- !JOB= XYCORR INIT COLSPOT IDXREF
- !JOB= DEFPIX XPLAN INTEGRATE CORRECT
- !JOB= CORRECT
+!JOB= XYCORR INIT COLSPOT IDXREF
+!JOB= DEFPIX XPLAN INTEGRATE CORRECT
+!JOB= CORRECT
 
- MAXIMUM_NUMBER_OF_JOBS=4
- MAXIMUM_NUMBER_OF_PROCESSORS=4
- !SECONDS=
- !NUMBER_OF_IMAGES_IN_CACHE=
- !TEST=  !1 : default. Generates the control image FRAME.cbf
-         !2 : additional diagnostics like overloaded pixels are provided
-
+MAXIMUM_NUMBER_OF_JOBS=4
+MAXIMUM_NUMBER_OF_PROCESSORS=4
 
 ! ********** Data images **********
 
- NAME_TEMPLATE_OF_DATA_FRAMES= 0????.img   SMV
- DATA_RANGE=           {data_begin:d} {data_end:d}
- !EXCLUDE_DATA_RANGE=
- SPOT_RANGE=           {data_begin:d} {data_end:d}
- !SPOT_RANGE=
- BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
- !MINIMUM_FRACTION_OF_BACKGROUND_REGION=  !0.01 is default. Rarely needs to be changed.
+NAME_TEMPLATE_OF_DATA_FRAMES= 0????.img   SMV
+DATA_RANGE=           {data_begin:d} {data_end:d}
+{exclude:s}
+SPOT_RANGE=           {data_begin:d} {data_end:d}
+BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
 
 ! ********** Crystal **********
 
- !SPACE_GROUP_NUMBER= 16
- !UNIT_CELL_CONSTANTS=  !27.86  57.66 92.75  90 90 90
+!SPACE_GROUP_NUMBER= 0
+!UNIT_CELL_CONSTANTS=  10 20 30 90 90 90
 
- !UNIT_CELL_A-AXIS=  UNIT_CELL_B-AXIS=  UNIT_CELL_C-AXIS=
- !REIDX=  !Optional reindexing transformation to apply on reflection indices
- FRIEDEL'S_LAW=TRUE
- STARTING_ANGLE= {starting_angle:0.2f}
- STARTING_FRAME= 1
- !phi(i) = STARTING_ANGLE + OSCILLATION_RANGE * (i - STARTING_FRAME)
+!REIDX=  !Optional reindexing transformation to apply on reflection indices
+FRIEDEL'S_LAW=TRUE
 
- !STARTING_ANGLES_OF_SPINDLE_ROTATION=   !used by XPLAN
- !TOTAL_SPINDLE_ROTATION_RANGES=         !used by XPLAN
- !RESOLUTION_SHELLS=                     !used by XPLAN
- !REFERENCE_DATA_SET=
- !FIT_B-FACTOR_TO_REFERENCE_DATA_SET=
+!phi(i) = STARTING_ANGLE + OSCILLATION_RANGE * (i - STARTING_FRAME)
+STARTING_ANGLE= {starting_angle:0.2f}
+STARTING_FRAME= 1
 
- !MAX_CELL_AXIS_ERROR=         !0.03 is default
- !MAX_CELL_ANGLE_ERROR=        !2.0  is default
+!MAX_CELL_AXIS_ERROR=         !0.03 is default
+!MAX_CELL_ANGLE_ERROR=        !2.0  is default
 
- !TEST_RESOLUTION_RANGE=    !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
- !MIN_RFL_Rmeas=    !50 is default - used in the CORRECT step for identification of possible space groups.
- !MAX_FAC_Rmeas=    !2.0 is default - used in the CORRECT step for identification of possible space groups.
+!TEST_RESOLUTION_RANGE=    !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
+!MIN_RFL_Rmeas=    !50 is default - used in the CORRECT step for identification of possible space groups.
+!MAX_FAC_Rmeas=    !2.0 is default - used in the CORRECT step for identification of possible space groups.
 
 
 ! ************************************************
@@ -93,126 +79,58 @@ XDS_template = """
 
 ! ********** Detector hardware **********
 
- ! ??? DETECTOR=  !ADSC,MAR345,MAR,CCDCHESS,RAXIS,SATURN,SMARTCCD,CCDBRANDEIS,SIEMENS,CRYSALIS,STOE,PILATUS,EIGER 
-
- NX={NX:d}  NY={NY:d}  QX=0.0500  QY=0.0500  !Number and Size (mm) of pixels
-
- OVERLOAD= 130000             !default value dependent on the detector used
- !MINIMUM_VALID_PIXEL_VALUE=   !default value dependent on the detector used, 0 in most cases
-
- TRUSTED_REGION= 0.0   1.4142  !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
- !UNTRUSTED_RECTANGLE=
- !UNTRUSTED_ELLIPSE=
- !UNTRUSTED_QUADRILATERAL=
-
- ! ??? SILICON=
- SENSOR_THICKNESS=0.30
-
-
- !********** Detector distortions **********
-
- ! ??? ROFF=     TOFF=      
- !Radial and tangential offset correction for spiral read-out scanners like MAR or MAC. 
- !At present XDS cannot determine these values and only computes a look-up table of spatial corrections from the given values 
- !(coming from somewhere else). Usually, both values are zero.
-
- !STOE_CALIBRATION_PARAMETERS=
- !BRASS_PLATE_IMAGE=
- !HOLE_DISTANCE=
- !MXHOLE=
- !MNHOLE=
-
- ! ??? X-GEO_CORR=
- ! ??? Y-GEO_CORR=
-
-! ********** Detector noise **********
-
- ! ??? DARK_CURRENT_IMAGE=
- ! ??? OFFSET=
+NX=512  NY=512  QX=0.0500  QY=0.0500  !Number and Size (mm) of pixels
+OVERLOAD= 130000              !default value dependent on the detector used
+TRUSTED_REGION= 0.0   1.4142  !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
+SENSOR_THICKNESS=0.30
 
 ! ********** Trusted detector region **********
 
- ! ??? VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=    ! 6000 30000 is default, for excluding shaded parts of the detector.
- !MINIMUM_ZETA=   !0.05 is default
+! ??? VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=    ! 6000 30000 is default, for excluding shaded parts of the detector.
+!MINIMUM_ZETA=   !0.05 is default
  
- INCLUDE_RESOLUTION_RANGE= {dmax:.2f} {dmin:.2f}
+INCLUDE_RESOLUTION_RANGE= {dmax:.2f} {dmin:.2f}
 
- !Ice Ring exclusion, important for data collected using cryo holders
- !EXCLUDE_RESOLUTION_RANGE=
- !EXCLUDE_RESOLUTION_RANGE= 3.93 3.87 !ice-ring at 3.897 Angstrom
- !EXCLUDE_RESOLUTION_RANGE= 3.70 3.64 !ice-ring at 3.669 Angstrom
- !EXCLUDE_RESOLUTION_RANGE= 3.47 3.41 !ice-ring at 3.441 Angstrom (Main)
- !EXCLUDE_RESOLUTION_RANGE= 2.70 2.64 !ice-ring at 2.671 Angstrom
- !EXCLUDE_RESOLUTION_RANGE= 2.28 2.22 !ice-ring at 2.249 Angstrom (Main)
- !EXCLUDE_RESOLUTION_RANGE= 2.102 2.042 !ice-ring at 2.072 Angstrom - strong
- !EXCLUDE_RESOLUTION_RANGE= 1.978 1.918 !ice-ring at 1.948 Angstrom - weak
- !EXCLUDE_RESOLUTION_RANGE= 1.948 1.888 !ice-ring at 1.918 Angstrom - strong
- !EXCLUDE_RESOLUTION_RANGE= 1.913 1.853 !ice-ring at 1.883 Angstrom - weak
- !EXCLUDE_RESOLUTION_RANGE= 1.751 1.691 !ice-ring at 1.721 Angstrom - weak
+!Ice Ring exclusion, important for data collected using cryo holders
+!EXCLUDE_RESOLUTION_RANGE= 3.93 3.87   !ice-ring at 3.897 Angstrom
+!EXCLUDE_RESOLUTION_RANGE= 3.70 3.64   !ice-ring at 3.669 Angstrom
+!EXCLUDE_RESOLUTION_RANGE= 3.47 3.41   !ice-ring at 3.441 Angstrom (Main)
+!EXCLUDE_RESOLUTION_RANGE= 2.70 2.64   !ice-ring at 2.671 Angstrom
+!EXCLUDE_RESOLUTION_RANGE= 2.28 2.22   !ice-ring at 2.249 Angstrom (Main)
+!EXCLUDE_RESOLUTION_RANGE= 2.102 2.042 !ice-ring at 2.072 Angstrom - strong
+!EXCLUDE_RESOLUTION_RANGE= 1.978 1.918 !ice-ring at 1.948 Angstrom - weak
+!EXCLUDE_RESOLUTION_RANGE= 1.948 1.888 !ice-ring at 1.918 Angstrom - strong
+!EXCLUDE_RESOLUTION_RANGE= 1.913 1.853 !ice-ring at 1.883 Angstrom - weak
+!EXCLUDE_RESOLUTION_RANGE= 1.751 1.691 !ice-ring at 1.721 Angstrom - weak
 
 
 ! ********** Detector geometry & Rotation axis **********
-! see http://xds.mpimf-heidelberg.mpg.de/html_doc/coordinate_systems.html
 
- DIRECTION_OF_DETECTOR_X-AXIS= 1 0 0
- DIRECTION_OF_DETECTOR_Y-AXIS= 0 1 0
+DIRECTION_OF_DETECTOR_X-AXIS= 1 0 0
+DIRECTION_OF_DETECTOR_Y-AXIS= 0 1 0
 
- ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
- DETECTOR_DISTANCE= {sign}{detdist:.2f}   ! can be negative. Positive because the detector normal points away from the crystal.
+ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}       !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
+DETECTOR_DISTANCE= {sign}{detdist:.2f}   ! can be negative. Positive because the detector normal points away from the crystal.
 
- OSCILLATION_RANGE= {osangle:.2f}
- !OSCILLATION_RANGE {calib_osangle:.2f} ! Calibrated value
- !XDS assumes a right handed rotation of the crystal about the rotation axis when proceeding to the next data image.
+OSCILLATION_RANGE= {osangle:.2f}
+!OSCILLATION_RANGE {calib_osangle:.2f} ! Calibrated value if above one is too far off
 
- ROTATION_AXIS= {rot_x:.3f} {rot_y:.3f} {rot_z:.3f}    !cos(139) cos(49)  !in XDS.INP emailed: 0.078605 0.996888 -0.005940
- !Nota on Rotation Axis: Direction cosines of the rotation axis with respect to the laboratory system. 
- !The length of this vector will be normalized by XDS. 
- !The direction of the axis is chosen to describe a right-handed rotation.
- !Example:ROTATION_AXIS= 0.0 1.0 0.0
- !The rotation axis points along the laboratory y-axis. When looking along the axis, 
- !the crystal would rotate clockwise when proceeding to the next data image.
- !Often \"1 0 0\" at synchrotron
-
- !SEGMENT=
- !REFINE_SEGMENT=
- !DIRECTION_OF_SEGMENT_X-AXIS=
- !DIRECTION_OF_SEGMENT_Y-AXIS=
- !SEGMENT_ORGX=
- !SEGMENT_ORGY=
- !SEGMENT_DISTANCE=
-
+ROTATION_AXIS= {rot_x:.3f} {rot_y:.3f} {rot_z:.3f}    !cos(139) cos(49)  !in XDS.INP emailed: 0.078605 0.996888 -0.005940
 
 ! ********** Incident beam **********
 
- X-RAY_WAVELENGTH= {wavelength:.4f}      !used by IDXREF
- INCIDENT_BEAM_DIRECTION= 0 0 39.84  !used by IDXREF +CORRECT(?) ???? (REC. ANGSTROM)  !The vector points from the source towards the crystal
-
- ! ??? FRACTION_OF_POLARIZATION=     !0.5 is default, for unpolarized beam
- !Fraction of polarization of direct beam in a plane specified by its normal. (0 < FRACTION_OF_POLARIZATION < 1). 
- !For a negative value of FRACTION_OF_POLARIZATION or a value larger than 1 no polarization correction is carried out.
-
- ! ??? POLARIZATION_PLANE_NORMAL=
- !x, y, z components of the polarization plane normal with respect to the laboratory coordinate system.
- !Example :
- !FRACTION_OF_POLARIZATION=0.95
- !POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0
- !The electrical field vector of the incident beam is found in the x,z-plane of the laboratory coordinate system with a probability of 0.95.
-
- ! ??? AIR=   
- !Fraction of intensity loss per mm due to air absorption. The absorption of x-rays by air depends on the wavelength.
- !XDS will provide the appropriate value unless specified by the user. 
-
+X-RAY_WAVELENGTH= {wavelength:.4f}      !used by IDXREF
+INCIDENT_BEAM_DIRECTION= 0 0 39.84  !used by IDXREF +CORRECT(?) ???? (REC. ANGSTROM)  !The vector points from the source towards the crystal
 
 ! ********** Background and peak pixels **********
 
- !NBX=     NBY=                         !3 is default
- BACKGROUND_PIXEL= 20                    !6.0 is default
- STRONG_PIXEL= 2.5                      !3.0 is default
- !MAXIMUM_NUMBER_OF_STRONG_PIXELS=      !1500000 is default
- !MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT=   !6 is default         ?????
- !SPOT_MAXIMUM-CENTROID=                !2.0 is default
- SIGNAL_PIXEL= 6                        !3.0 is default
-
+!NBX=     NBY=                         !3 is default
+BACKGROUND_PIXEL= 20                    !6.0 is default
+STRONG_PIXEL= 2.5                      !3.0 is default
+!MAXIMUM_NUMBER_OF_STRONG_PIXELS=      !1500000 is default
+!MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT=   !6 is default         ?????
+!SPOT_MAXIMUM-CENTROID=                !2.0 is default
+SIGNAL_PIXEL= 6                        !3.0 is default
 
 ! ********************************
 ! ********** Refinement **********
@@ -220,92 +138,11 @@ XDS_template = """
  REFINE(IDXREF)=    BEAM AXIS       ORIENTATION CELL SEGMENT !POSITION 
  REFINE(INTEGRATE)= !POSITION BEAM AXIS       !ORIENTATION CELL
  REFINE(CORRECT)=   BEAM AXIS ORIENTATION CELL        !SEGMENT !POSITION 
- ! Parameter Keywords:
- !POSITION - refine the position of the origin of the detector system
- !BEAM - refine direct beam direction
- !AXIS - refine rotation axis
- !ORIENTATION - refine unit cell orientation
- !CELL - refine unit cell constants
- !SEGMENT - refine internal segment assembly of the detector
- ! Nota: \"ALL\" does not work in XDS version July 2016
-
- !DEFAULT_REFINE_SEGMENT=
- !MINIMUM_NUMBER_OF_REFLECTIONS/SEGMENT=
-
 
 ! *********************************************
 ! ********** Processing Optimization **********
 
 ! ********** Indexing **********
 
- !INDEX_ORIGIN=      !0 0 0 is default. Used by IDXREF to add an index offset
- !INDEX_ERROR=       !0.05 is default
- !INDEX_MAGNITUDE=   !8 is default
- !INDEX_QUALITY=     !0.8 is default
-
- !SEPMIN=            !6.0 is default, hardly needs to be changed
- !CLUSTER_RADIUS=    !3 is default, hardly needs to be changed.
-
- !MAXIMUM_ERROR_OF_SPOT_POSITION=       !3.0 is default, hardly needs to be changed.
- !MAXIMUM_ERROR_OF_SPINDLE_POSITION=    !2.0 is default, hardly needs to be changed.
-
  MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    !0.50 is default.
-
-
-! ********** Peak profiles and Integration **********
-
- !REFLECTING_RANGE=     REFLECTING_RANGE_E.S.D.=
- !BEAM_DIVERGENCE=      BEAM_DIVERGENCE_E.S.D.=
- !Definitions:
- !REFLECTING_RANGE=
- !Angular life time (degrees) of a reflection to pass completely through the Ewald sphere on shortest route. 
- !The parameter value controls the raster size along gamma of the reflection profiles in step \"INTEGRATE\". 
- !A slightly larger value should be specified to include some background from adjacent data images.
- !Parameter is used by COLSPOT, IDXREF, INTEGRATE
- !REFLECTING_RANGE_E.S.D.=
- !Describes the mosaicity (degrees) of the crystal.
- !Parameter is used by INTEGRATE 
- !BEAM_DIVERGENCE=
- !This value is approximately arctan(spot diameter/DETECTOR_DISTANCE) in degrees.
- !The parameter value defines the raster size along alpha/beta of the reflection profiles.
- !A slightly larger value should be given to include some background pixels around each spot. 
- !To compute the spot diameter you need the pixel lengths (QX=, QY=) in mm. 
- !Example: 0.10, the value defines the solid angle of a diffraction spot in degrees.
- !Parameter is used by INTEGRATE
- !BEAM_DIVERGENCE_E.S.D.=
- !Defines the standard deviation of BEAM_DIVERGENCE=.
- ! Nota:
- !If any of these 4 parameters is left unspecified by the user, all these values will be determined automatically from the data images.
-
-
- !NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA=    !9 is default
- !NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA=         !9 is default
- ! Each reflection when mapped to the surface of the Ewald sphere is sampled by 9 x 9 raster points in the plane tangential to the sphere 
- ! and by 9 points along the shortest rotation route through the sphere.
-
- !CUT=        !2.0 is default. Grid points in the reflection profile less than 2% of the maximum are not used for integration.
- ! used by INTEGRATE
- !DELPHI=     !5.0 is default = 5 degrees of spindle rotation.
- ! If there are too few strong spots which could be used for learning spot profiles, it may be useful to specify a larger value.
- ! used by INTEGRATE
-
- !MINPK=   !75.0 is default, hardly needs to be changed.
- ! Defines the minimum required percentage of observed reflection intensity.
-
- !WFAC1=   !1.0 is default, hardly needs to be changed.
- ! used for recognizing MISFITS. A larger value, like 1.5, would reduce the number of MISFITS (and increase the R-factors).
-
- !PROFILE_FITTING=    !TRUE is default
-
-! ********** Correction factors **********
-
- !STRICT_ABSORPTION_CORRECTION=    !FALSE is default
- !PATCH_SHUTTER_PROBLEM=           !FALSE is default
- !CORRECTIONS=                     !DECAY MODULATION ABSORPTION  !ALL is default
- !MINIMUM_I/SIGMA=                 !3.0 is default. For determination of correction factors.
- !NBATCH=                          !XDS will determine a reasonable value
- !REFLECTIONS/CORRECTION_FACTOR=
- !REJECT_ALIEN=                    !20.0 is default
- !DATA_RANGE_FIXED_SCALE_FACTOR=
 """
-

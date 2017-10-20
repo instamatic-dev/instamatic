@@ -59,6 +59,7 @@ class ImgConversion(object):
                  rotation_angle,
                  acquisition_time,
                  resolution_range=(20, 0.8),
+                 excludes=[],
                  flatfield='flatfield.tiff'
                  ):
         self.pxd = config.diffraction_pixeldimensions
@@ -70,6 +71,8 @@ class ImgConversion(object):
 
         self.headers = []
         self.data = []
+
+        self.excludes = excludes
 
         while len(buffer) != 0:
             img, h = buffer.pop(0)
@@ -112,6 +115,9 @@ class ImgConversion(object):
         print ("Writing SMV files......")
     
         for i, (img, h) in enumerate(izip(self.data, self.headers)):
+            if i in self.excludes:
+                continue
+
             j = i + 1
 
             img = self.fixStretchCorrection(img, self.beam_center)
@@ -177,6 +183,9 @@ class ImgConversion(object):
             j = i + 1
             fn = os.path.join(path, "{:05d}.mrc".format(j))
 
+            if i in self.excludes:
+                continue
+
             # flip up/down because RED reads images from the bottom left corner
             img = self.fixStretchCorrection(img, self.beam_center)
             img = np.flipud(img.astype(np.int16))
@@ -211,6 +220,8 @@ class ImgConversion(object):
         ed3d.write("FILELIST\n")
     
         for i in range(len(self.data)):
+            if i in self.excludes:
+                continue
             j = i + 1
             fn = "{:05d}.mrc".format(j)
             ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+sign*self.osangle*i))
@@ -231,9 +242,15 @@ class ImgConversion(object):
 
         shape_x, shape_y = self.shape_SMV
 
+        if self.excludes:
+            exclude = "\n".join(["EXCLUDE_DATA_RANGE={}".format(i+1) for i in self.excludes])
+        else:
+            exclude = " !EXCLUDE_DATA_RANGE="
+
         s = XDS_template.format(
             data_begin=1,
             data_end=indend,
+            exclude=exclude,
             starting_angle=self.startangle,
             wavelength=self.wavelength,
             dmin=self.dmin,
