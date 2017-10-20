@@ -3,9 +3,9 @@ from ttk import *
 
 
 class DebugFrame(LabelFrame):
-    """docstring for ExperimentalSED"""
+    """docstring for DebugFrame"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction")
+        LabelFrame.__init__(self, parent, text="For debugging, be careful!")
         self.parent = parent
 
         self.init_vars()

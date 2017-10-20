@@ -186,7 +186,7 @@ class DataCollectionController(object):
         task = kwargs.pop("task")
         if task == "open_ipython":
             from IPython import embed
-            embed(banner="\nAssuming direct control.\n")
+            embed(banner1="\nAssuming direct control.\n")
 
 
 class DataCollectionGUI(VideoStream):

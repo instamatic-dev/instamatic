@@ -3,9 +3,9 @@ from ttk import *
 
 
 class ExperimentalCtrl(object, LabelFrame):
-    """docstring for ExperimentalSED"""
+    """docstring for ExperimentalCtrl"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Serial electron diffraction")
+        LabelFrame.__init__(self, parent, text="Stage Control")
         self.parent = parent
 
         self.init_vars()
