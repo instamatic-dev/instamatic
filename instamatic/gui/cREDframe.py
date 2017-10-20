@@ -1,5 +1,6 @@
 from Tkinter import *
 from ttk import *
+import threading
 
 
 class ExperimentalcRED(LabelFrame):
@@ -33,16 +34,15 @@ class ExperimentalcRED(LabelFrame):
         frame.columnconfigure(1, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
+        self.stopEvent = threading.Event()
+
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_unblank_beam = BooleanVar(value=False)
 
-    def set_trigger(self, trigger=None):
+    def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
-
-    def set_events(self, startEvent=None, stopEvent=None):
-        self.startEvent = startEvent
-        self.stopEvent = stopEvent
+        self.q = q
 
     def start_collection(self):
         # TODO: make a pop up window with the STOP button?
@@ -50,7 +50,10 @@ class ExperimentalcRED(LabelFrame):
         self.CollectionButton.config(state=DISABLED)
         self.lb_coll1.grid(row=10, column=0, columnspan=2, sticky="EW")
         self.lb_coll2.grid(row=11, column=0, columnspan=2, sticky="EW")
-        self.startEvent.set()
+
+        params = self.get_params()
+        self.q.put(("cred", params))
+
         self.triggerEvent.set()
 
     def stop_collection(self):
@@ -60,11 +63,11 @@ class ExperimentalcRED(LabelFrame):
         self.lb_coll2.grid_forget()
         self.stopEvent.set()
 
-    def get_expt(self):
-        return self.var_exposure_time.get()
-
-    def get_unblank_beam(self):
-        return self.var_unblank_beam.get()
+    def get_params(self):
+        params = { "exposure_time": self.var_exposure_time.get(),
+                   "unblank_beam": self.var_unblank_beam.get(),
+                   "stop_event": self.stopEvent }
+        return params
 
 
 if __name__ == '__main__':

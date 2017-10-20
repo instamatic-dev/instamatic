@@ -46,12 +46,9 @@ class ExperimentalRED(LabelFrame):
         self.var_tilt_range = DoubleVar(value=10.0)
         self.var_stepsize = DoubleVar(value=0.2)
 
-    def set_trigger(self, trigger=None):
+    def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
-
-    def set_events(self, startEvent=None, stopEvent=None):
-        self.startEvent = startEvent
-        self.stopEvent = stopEvent
+        self.q = q
 
     def start_collection(self):
         self.StartButton.config(state=DISABLED)
@@ -59,11 +56,13 @@ class ExperimentalRED(LabelFrame):
         self.FinalizeButton.config(state=NORMAL)
         self.e_exposure_time.config(state=DISABLED)
         self.e_stepsize.config(state=DISABLED)
-        self.startEvent.set()
+        params = self.get_params(task="start")
+        self.q.put(("red", params))
         self.triggerEvent.set()
 
     def continue_collection(self):
-        self.startEvent.set()
+        params = self.get_params(task="continue")
+        self.q.put(("red", params))
         self.triggerEvent.set()
 
     def stop_collection(self):
@@ -72,11 +71,16 @@ class ExperimentalRED(LabelFrame):
         self.FinalizeButton.config(state=DISABLED)
         self.e_exposure_time.config(state=NORMAL)
         self.e_stepsize.config(state=NORMAL)
+        params = self.get_params(task="stop")
+        self.q.put(("red", params))
         self.triggerEvent.set()
-        self.stopEvent.set()
 
-    def get_params(self):
-        return self.var_exposure_time.get(), self.var_tilt_range.get(), self.var_stepsize.get()
+    def get_params(self, task=None):
+        params = { "exposure_time": self.var_exposure_time.get(), 
+                   "tilt_range": self.var_tilt_range.get(), 
+                   "stepsize": self.var_stepsize.get(),
+                   "task": task }
+        return params
 
 
 if __name__ == '__main__':

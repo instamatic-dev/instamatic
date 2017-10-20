@@ -41,23 +41,23 @@ class ExperimentalSED(object, LabelFrame):
         frame = Frame(self)
 
         Label(frame, text="Scan area (um)").grid(row=5, column=0, sticky="W")
-        self.e_start_x = Entry(frame, width=20, textvariable=self.var_scan_area)
+        self.e_start_x = Entry(frame, width=20, textvariable=self.var_scan_radius)
         self.e_start_x.grid(row=5, column=1, padx=10)
 
         Label(frame, text="Exp. time image:").grid(row=6, column=0, sticky="W")
-        self.e_exp_time_image = Entry(frame, width=20, textvariable=self.var_exp_time_image)
+        self.e_exp_time_image = Entry(frame, width=20, textvariable=self.var_image_exposure)
         self.e_exp_time_image.grid(row=6, column=1, padx=10)
 
         Label(frame, text="Exp. time diff:").grid(row=7, column=0, sticky="W")
-        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_exp_time_diff)
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_diff_exposure)
         self.e_exp_time_diff.grid(row=7, column=1, padx=10)
 
         Label(frame, text="Brightness:").grid(row=6, column=2, sticky="W")
-        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_brightness)
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_diff_brightness)
         self.e_exp_time_diff.grid(row=6, column=3, padx=10)
 
         Label(frame, text="Spot size:").grid(row=7, column=2, sticky="W")
-        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_spotsize)
+        self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_image_spotsize)
         self.e_exp_time_diff.grid(row=7, column=3, padx=10)
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(2, weight=1)
@@ -86,28 +86,22 @@ class ExperimentalSED(object, LabelFrame):
         frame.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def init_vars(self):
-        self.var_scan_area = DoubleVar(value=100)
-        self.var_exp_time_image = DoubleVar(value=0.5)
-        self.var_exp_time_diff = DoubleVar(value=0.1)
-        self.var_spotsize = IntVar(value=4)
-        self.var_brightness = IntVar(value=40000)
+        self.var_scan_radius = DoubleVar(value=100)
+        self.var_image_exposure = DoubleVar(value=0.5)
+        self.var_diff_exposure = DoubleVar(value=0.1)
+        self.var_image_spotsize = IntVar(value=4)
+        self.var_diff_brightness = IntVar(value=40000)
 
-    def set_trigger(self, trigger=None):
+    def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
-
-    def set_events(self, startEvent=None,
-                         stopEvent=None):
-        self.startEvent = startEvent
-        self.stopEvent = stopEvent
+        self.q = q
 
     def start_collection(self):
         okay = tkMessageBox.askokcancel("Start experiment", message3, icon='warning')
         if okay:
-            self.startEvent.set()
+            params = self.get_params()
+            self.q.put(("sed", params))
             self.triggerEvent.set()
-
-    def stop_collection(self):
-        self.stopEvent.set()
 
     def show_calib_beamshift(self):
         path = os.path.join(self.calib_path, CALIB_BEAMSHIFT)
@@ -124,15 +118,14 @@ class ExperimentalSED(object, LabelFrame):
         c = CalibDirectBeam.from_file(path)
         c.plot("BeamShift")
 
-    def get_scan_area(self):
-        return self.var_scan_area.get()
-
     def get_params(self):
-        return {"image_exposure": self.var_exp_time_image.get(),
-                "image_spotsize": self.var_spotsize.get(),
-                "diff_exposure": self.var_exp_time_diff.get(),
-                "diff_spotsize": self.var_spotsize.get(),
-                "diff_brightness": self.var_brightness.get()}
+        params = { "image_exposure": self.var_image_exposure.get(),
+                   "image_spotsize": self.var_image_spotsize.get(),
+                   "diff_exposure": self.var_diff_exposure.get(),
+                   "diff_spotsize": self.var_image_spotsize.get(),
+                   "diff_brightness": self.var_diff_brightness.get(),
+                   "scan_radius": self.var_scan_radius.get() }
+        return params
 
 
 if __name__ == '__main__':

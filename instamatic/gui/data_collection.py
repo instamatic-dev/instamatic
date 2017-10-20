@@ -7,6 +7,7 @@ import time
 import logging
 
 import threading
+import Queue
 
 import datetime
 
@@ -15,6 +16,19 @@ from SEDframe import *
 from cREDframe import *
 from IOFrame import *
 from REDframe import *
+
+PARAMS = { 
+ "flatfield": "C:/instamatic/flatfield.tiff",
+ "diff_binsize": 1,
+ "diff_brightness": 39422,
+ "diff_exposure": 0.1,
+ "diff_spotsize": 4,
+ "image_binsize": 1,
+ "image_exposure": 0.5,
+ "image_spotsize": 4,
+ "image_threshold": 10,
+ "crystal_spread": 0.6
+}
 
 
 class DataCollectionController(object):
@@ -26,15 +40,7 @@ class DataCollectionController(object):
         self.camera = ctrl.cam.name
         self.log = log
 
-        self.stopEvent_cRED = threading.Event()
-        self.startEvent_cRED = threading.Event()
-        
-        self.stopEvent_SED = threading.Event()
-        self.startEvent_SED = threading.Event()
-        
-        self.stopEvent_RED = threading.Event()
-        self.startEvent_RED = threading.Event()
-
+        self.q = Queue.Queue()
         self.triggerEvent = threading.Event()
         
         self.module_io = self.stream.get_module("io")
@@ -42,16 +48,9 @@ class DataCollectionController(object):
         self.module_cred = self.stream.get_module("cred")
         self.module_red = self.stream.get_module("red")
 
-        self.module_sed.set_trigger(trigger=self.triggerEvent)
-        self.module_cred.set_trigger(trigger=self.triggerEvent)
-        self.module_red.set_trigger(trigger=self.triggerEvent)
-
-        self.module_cred.set_events(startEvent=self.startEvent_cRED, 
-                                    stopEvent=self.stopEvent_cRED)
-        self.module_sed.set_events(startEvent=self.startEvent_SED, 
-                                   stopEvent=self.stopEvent_SED)
-        self.module_red.set_events(startEvent=self.startEvent_RED, 
-                                   stopEvent=self.stopEvent_RED)
+        self.module_sed.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_cred.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_red.set_trigger(trigger=self.triggerEvent, q=self.q)
 
         self.exitEvent = threading.Event()
         self.stream._atexit_funcs.append(self.exitEvent.set)
@@ -67,24 +66,23 @@ class DataCollectionController(object):
             if self.exitEvent.is_set():
                 self.ctrl.close()
                 sys.exit()
-            
-            if self.startEvent_cRED.is_set():
-                self.startEvent_cRED.clear()
-                self.acquire_data_cRED()
-            
-            if self.startEvent_SED.is_set():
-                self.startEvent_SED.clear()
-                self.acquire_data_SED()
 
-            if self.startEvent_RED.is_set():
-                self.startEvent_RED.clear()
-                self.acquire_data_RED()
+            job, kwargs = self.q.get()
 
-            if self.stopEvent_RED.is_set():
-                self.stopEvent_RED.clear()
-                self.finalize_data_RED()
+            if job == "cred":
+                self.acquire_data_cRED(**kwargs)
 
-    def acquire_data_cRED(self):
+            elif job == "sed":
+                self.acquire_data_SED(**kwargs)
+
+            elif job == "red":
+                self.acquire_data_RED(**kwargs)
+
+            else:
+                print "Unknown job: {}".format(jobs)
+                print "Kwargs:\n{}".format(kwargs)
+
+    def acquire_data_cRED(self, **kwargs):
         self.log.info("Start cRED experiment")
         from instamatic.experiments import cRED
         
@@ -93,19 +91,20 @@ class DataCollectionController(object):
         if not os.path.exists(expdir):
             os.makedirs(expdir)
         
-        expt = self.module_cred.get_expt()
-        unblank_beam = self.module_cred.get_unblank_beam()
+        exposure_time = kwargs["exposure_time"]
+        unblank_beam = kwargs["unblank_beam"]
+        stop_event = kwargs["stop_event"]
 
-        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=expt, unblank_beam=unblank_beam, 
-                               log=self.log, stopEvent=self.stopEvent_cRED, 
+        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
+                               log=self.log, stopEvent=stop_event, 
                                flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()
         
-        self.stopEvent_cRED.clear()
+        stop_event.clear()
         self.log.info("Finish cRED experiment")
 
-    def acquire_data_SED(self):
+    def acquire_data_SED(self, **kwargs):
         self.log.info("Start serialED experiment")
         from instamatic.experiments import serialED
 
@@ -116,11 +115,15 @@ class DataCollectionController(object):
             os.makedirs(expdir)
 
         params = os.path.join(workdir, "params.json")
-        params = json.load(open(params,"r"))
-        params.update(self.module_sed.get_params())
+        try:
+            params = json.load(open(params,"r"))
+        except IOError:
+            params = PARAMS
+        
+        params.update(kwargs)
         params["flatfield"] = self.module_io.get_flatfield()
 
-        scan_radius = self.module_sed.get_scan_area()
+        scan_radius = kwargs["scan_radius"]
 
         self.module_sed.calib_path = os.path.join(expdir, "calib")
 
@@ -129,14 +132,20 @@ class DataCollectionController(object):
         exp.report_status()
         exp.run()
 
-        self.stopEvent_SED.clear()
         self.log.info("Finish serialED experiment")
 
-    def acquire_data_RED(self):
+    def acquire_data_RED(self, **kwargs):
         self.log.info("Start RED experiment")
         from instamatic.experiments import RED
-        
-        if not hasattr(self, "red_exp"):
+
+        task = kwargs["task"]
+
+        exposure_time = kwargs["exposure_time"]
+        tilt_range = kwargs["tilt_range"]
+        stepsize = kwargs["stepsize"]
+
+        if task == "start":
+            flatfield = self.module_io.get_flatfield()
 
             expdir = self.module_io.get_new_experiment_directory()
 
@@ -144,20 +153,13 @@ class DataCollectionController(object):
                 os.makedirs(expdir)
         
             self.red_exp = RED.Experiment(ctrl=self.ctrl, path=expdir, log=self.log,
-                               flatfield=self.module_io.get_flatfield())
-        
-        expt, tilt_range, stepsize = self.module_red.get_params()
-        self.red_exp.start_collection(expt=expt, tilt_range=tilt_range, stepsize=stepsize)
-
-    def finalize_data_RED(self):
-        self.red_exp.finalize()
-        del self.red_exp
-
-    def get_working_directory(self):
-        return self.module_io.get_working_directory()
-
-    def get_experiment_directory(self):
-        return self.module_io.get_experiment_directory()
+                               flatfield=flatfield)
+            self.red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+        elif task == "continue":
+            self.red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+        elif task == "stop":
+            self.red_exp.finalize()
+            del self.red_exp
 
 
 class DataCollectionGUI(VideoStream):
