@@ -101,14 +101,14 @@ class Experiment(object):
             startangle = self.current_angle + stepsize
 
         tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
-        print "Startangle", startangle
-        print "Angles:", tilt_positions
+        print "\nStartangle", startangle
+        # print "Angles:", tilt_positions
 
         data, headers = [], []
 
         image_mode = ctrl.mode
         if image_mode != "diff":
-            fn = os.path.join(path, "image_{}.h5".format(offset))
+            fn = os.path.join(path, "image_{}.h5".format(self.offset))
             img, h = self.ctrl.getImage(expt)
             write_hdf5(fn, img, header=h)
             ctrl.mode_diffraction()
@@ -158,6 +158,7 @@ class Experiment(object):
         azimuth   = -6.61
         amplitude =  2.43
 
+        print "\nWriting MRC files"
         for fn in tqdm.tqdm(self.data_files):
             img, h = read_hdf5(fn)
 
@@ -182,5 +183,5 @@ class Experiment(object):
                             startangle=self.startangle,
                             endangle=self.current_angle)
 
-        print "Write ED3D file"
+        print "Writing ED3D file"
         print "RED data collection finalized"

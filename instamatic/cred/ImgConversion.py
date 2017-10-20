@@ -116,7 +116,7 @@ class ImgConversion(object):
 
             img = self.fixStretchCorrection(img, self.beam_center)
 
-            new_img = np.empty(512, 512, dtype=np.ushort)
+            new_img = np.empty((512, 512), dtype=np.ushort)
             new_img[:256, :256] = img[:256, :256]
             new_img[:256, 256:] = img[:256, 260:]
             new_img[256:, :256] = img[260:, :256]
@@ -240,8 +240,8 @@ class ImgConversion(object):
             dmax=self.dmax,
             origin_x=self.beam_center_512[0],
             origin_y=self.beam_center_512[1],
-            NX=self.shape_x,
-            NY=self.shape_y,
+            NX=shape_x,
+            NY=shape_y,
             sign="+",
 
             # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
