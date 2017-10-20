@@ -16,6 +16,7 @@ from SEDframe import *
 from cREDframe import *
 from IOFrame import *
 from REDframe import *
+from CtrlFrame import *
 
 PARAMS = { 
  "flatfield": "C:/instamatic/flatfield.tiff",
@@ -47,10 +48,12 @@ class DataCollectionController(object):
         self.module_sed = self.stream.get_module("sed")
         self.module_cred = self.stream.get_module("cred")
         self.module_red = self.stream.get_module("red")
+        self.module_ctrl = self.stream.get_module("ctrl")
 
         self.module_sed.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_cred.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_red.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_ctrl.set_trigger(trigger=self.triggerEvent, q=self.q)
 
         self.exitEvent = threading.Event()
         self.stream._atexit_funcs.append(self.exitEvent.set)
@@ -77,6 +80,9 @@ class DataCollectionController(object):
 
             elif job == "red":
                 self.acquire_data_RED(**kwargs)
+
+            elif job == "ctrl":
+                self.move_stage(**kwargs)
 
             else:
                 print "Unknown job: {}".format(jobs)
@@ -161,6 +167,14 @@ class DataCollectionController(object):
             self.red_exp.finalize()
             del self.red_exp
 
+    def move_stage(self, **kwargs):
+        task = kwargs.pop("task")
+
+        f = getattr(self.ctrl, task)
+        f.set(**kwargs)
+
+        print self.ctrl.stageposition
+
 
 class DataCollectionGUI(VideoStream):
     """docstring for DataCollectionGUI"""
@@ -179,6 +193,7 @@ class DataCollectionGUI(VideoStream):
         self.page1 = Frame(self.nb)
         self.page2 = Frame(self.nb)
         self.page3 = Frame(self.nb)
+        self.page4 = Frame(self.nb)
 
         self.module_cred = self.module_cred(self.page1)
         self.modules["cred"] = self.module_cred
@@ -186,10 +201,13 @@ class DataCollectionGUI(VideoStream):
         self.modules["sed"] = self.module_sed
         self.module_red = self.module_red(self.page3)
         self.modules["red"] = self.module_red
+        self.module_ctrl = self.module_ctrl(self.page4)
+        self.modules["ctrl"] = self.module_ctrl
 
         self.nb.add(self.page1, text='cRED')
         self.nb.add(self.page2, text='serialED')
         self.nb.add(self.page3, text='RED')
+        self.nb.add(self.page4, text='ctrl')
 
         self.nb.pack(fill="both", expand="yes")
 
@@ -214,6 +232,11 @@ class DataCollectionGUI(VideoStream):
 
     def module_red(self, parent):
         module = ExperimentalRED(parent)
+        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+        return module
+
+    def module_ctrl(self, parent):
+        module = ExperimentalCtrl(parent)
         module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
         return module
 
