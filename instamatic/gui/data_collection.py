@@ -17,6 +17,8 @@ from cREDframe import *
 from IOFrame import *
 from REDframe import *
 from CtrlFrame import *
+from debugframe import *
+
 
 PARAMS = { 
  "flatfield": "C:/instamatic/flatfield.tiff",
@@ -49,11 +51,13 @@ class DataCollectionController(object):
         self.module_cred = self.stream.get_module("cred")
         self.module_red = self.stream.get_module("red")
         self.module_ctrl = self.stream.get_module("ctrl")
+        self.module_debug = self.stream.get_module("debug")
 
         self.module_sed.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_cred.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_red.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_ctrl.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_debug.set_trigger(trigger=self.triggerEvent, q=self.q)
 
         self.exitEvent = threading.Event()
         self.stream._atexit_funcs.append(self.exitEvent.set)
@@ -83,6 +87,9 @@ class DataCollectionController(object):
 
             elif job == "ctrl":
                 self.move_stage(**kwargs)
+
+            elif job == "debug":
+                self.debug(**kwargs)
 
             else:
                 print "Unknown job: {}".format(jobs)
@@ -175,6 +182,12 @@ class DataCollectionController(object):
 
         print self.ctrl.stageposition
 
+    def debug(self, **kwargs):
+        task = kwargs.pop("task")
+        if task == "open_ipython":
+            from IPython import embed
+            embed(banner="\nAssuming direct control.\n")
+
 
 class DataCollectionGUI(VideoStream):
     """docstring for DataCollectionGUI"""
@@ -194,6 +207,7 @@ class DataCollectionGUI(VideoStream):
         self.page2 = Frame(self.nb)
         self.page3 = Frame(self.nb)
         self.page4 = Frame(self.nb)
+        self.page5 = Frame(self.nb)
 
         self.module_cred = self.module_cred(self.page1)
         self.modules["cred"] = self.module_cred
@@ -203,11 +217,14 @@ class DataCollectionGUI(VideoStream):
         self.modules["red"] = self.module_red
         self.module_ctrl = self.module_ctrl(self.page4)
         self.modules["ctrl"] = self.module_ctrl
+        self.module_debug = self.module_debug(self.page5)
+        self.modules["debug"] = self.module_debug
 
         self.nb.add(self.page1, text='cRED')
         self.nb.add(self.page2, text='serialED')
         self.nb.add(self.page3, text='RED')
         self.nb.add(self.page4, text='ctrl')
+        self.nb.add(self.page5, text='debug')
 
         self.nb.pack(fill="both", expand="yes")
 
@@ -237,6 +254,11 @@ class DataCollectionGUI(VideoStream):
 
     def module_ctrl(self, parent):
         module = ExperimentalCtrl(parent)
+        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+        return module
+
+    def module_debug(self, parent):
+        module = DebugFrame(parent)
         module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
         return module
 
