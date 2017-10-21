@@ -12,6 +12,12 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
+        self.resetTriggers = Button(frame, text="Report status", command=self.report_status)
+        self.resetTriggers.grid(row=0, column=0, sticky="EW")
+
+        self.resetTriggers = Button(frame, text="Close down", command=self.close_down)
+        self.resetTriggers.grid(row=0, column=1, sticky="EW")
+
         self.resetTriggers = Button(frame, text="Reset triggers", command=self.reset_triggers)
         self.resetTriggers.grid(row=1, column=0, sticky="EW")
 
@@ -36,6 +42,14 @@ class DebugFrame(LabelFrame):
 
     def open_ipython(self):
         self.q.put(("debug", { "task": "open_ipython" } ))
+        self.triggerEvent.set()
+
+    def report_status(self):
+        self.q.put(("debug", { "task": "report_status" } ))
+        self.triggerEvent.set()
+
+    def close_down(self):
+        self.q.put(("debug", { "task": "close_down" } ))
         self.triggerEvent.set()
 
 

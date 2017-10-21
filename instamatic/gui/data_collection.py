@@ -1,3 +1,6 @@
+from Tkinter import *
+from ttk import *
+
 import os, sys
 import numpy as np
 import json
@@ -12,13 +15,7 @@ import Queue
 import datetime
 
 from instamatic.camera.videostream import VideoStream
-from SEDframe import *
-from cREDframe import *
-from IOFrame import *
-from REDframe import *
-from CtrlFrame import *
-from debugframe import *
-
+from modules import MODULES
 
 PARAMS = { 
  "flatfield": "C:/instamatic/flatfield.tiff",
@@ -32,7 +29,6 @@ PARAMS = {
  "image_threshold": 10,
  "crystal_spread": 0.6
 }
-
 
 class DataCollectionController(object):
     """docstring for DataCollectionController"""
@@ -75,25 +71,27 @@ class DataCollectionController(object):
                 sys.exit()
 
             job, kwargs = self.q.get()
-
-            if job == "cred":
-                self.acquire_data_cRED(**kwargs)
-
-            elif job == "sed":
-                self.acquire_data_SED(**kwargs)
-
-            elif job == "red":
-                self.acquire_data_RED(**kwargs)
-
-            elif job == "ctrl":
-                self.move_stage(**kwargs)
-
-            elif job == "debug":
-                self.debug(**kwargs)
-
-            else:
-                print "Unknown job: {}".format(jobs)
-                print "Kwargs:\n{}".format(kwargs)
+            try:
+                if job == "cred":
+                    self.acquire_data_cRED(**kwargs)
+    
+                elif job == "sed":
+                    self.acquire_data_SED(**kwargs)
+    
+                elif job == "red":
+                    self.acquire_data_RED(**kwargs)
+    
+                elif job == "ctrl":
+                    self.move_stage(**kwargs)
+    
+                elif job == "debug":
+                    self.debug(**kwargs)
+    
+                else:
+                    print "Unknown job: {}".format(jobs)
+                    print "Kwargs:\n{}".format(kwargs)
+            except Exception as e:
+                print "\nError caught -> {} while running '{}' with {}".format(repr(e), job, kwargs)
 
     def acquire_data_cRED(self, **kwargs):
         self.log.info("Start cRED experiment")
@@ -194,6 +192,14 @@ class DataCollectionController(object):
         if task == "open_ipython":
             from IPython import embed
             embed(banner1="\nAssuming direct control.\n")
+        elif task == "report_status":
+            print self.ctrl
+        elif task == "close_down":
+            self.ctrl.stageposition.neutral()
+            self.ctrl.mode = "mag1"
+            self.ctrl.brightness.max()
+            self.ctrl.magnification.value = 500000
+            self.ctrl.spotsize = 1
 
 
 class DataCollectionGUI(VideoStream):
@@ -206,68 +212,25 @@ class DataCollectionGUI(VideoStream):
         frame = Frame(master)
         frame.pack(side="right", fill="both", expand="yes")
 
-        self.module_io = self.module_io(frame)
-        self.modules["io"] = self.module_io 
-
         self.nb = Notebook(frame, padding=10)
-        self.page1 = Frame(self.nb)
-        self.page2 = Frame(self.nb)
-        self.page3 = Frame(self.nb)
-        self.page4 = Frame(self.nb)
-        self.page5 = Frame(self.nb)
 
-        self.module_cred = self.module_cred(self.page1)
-        self.modules["cred"] = self.module_cred
-        self.module_sed = self.module_sed(self.page2)
-        self.modules["sed"] = self.module_sed
-        self.module_red = self.module_red(self.page3)
-        self.modules["red"] = self.module_red
-        self.module_ctrl = self.module_ctrl(self.page4)
-        self.modules["ctrl"] = self.module_ctrl
-        self.module_debug = self.module_debug(self.page5)
-        self.modules["debug"] = self.module_debug
-
-        self.nb.add(self.page1, text='cRED')
-        self.nb.add(self.page2, text='serialED')
-        self.nb.add(self.page3, text='RED')
-        self.nb.add(self.page4, text='ctrl')
-        self.nb.add(self.page5, text='debug')
+        for module in MODULES:
+            if module.tabbed:
+                page = Frame(self.nb)
+                module_frame = module.tk_frame(page)
+                module_frame.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+                self.modules[module.name] = module_frame
+                self.nb.add(page, text=module.display_name)
+            else:
+                module_frame = module.tk_frame(frame)
+                module_frame.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+                self.modules[module.name] = module_frame
 
         self.nb.pack(fill="both", expand="yes")
 
         btn = Button(master, text="Save image",
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
-
-    def module_io(self, parent):
-        module = IOFrame(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
-
-    def module_cred(self, parent):
-        module = ExperimentalcRED(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
-
-    def module_sed(self, parent):
-        module = ExperimentalSED(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
-
-    def module_red(self, parent):
-        module = ExperimentalRED(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
-
-    def module_ctrl(self, parent):
-        module = ExperimentalCtrl(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
-
-    def module_debug(self, parent):
-        module = DebugFrame(parent)
-        module.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
-        return module
 
     def get_module(self, module):
         return self.modules[module]
@@ -278,7 +241,14 @@ class DataCollectionGUI(VideoStream):
             os.makedirs(drc)
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         outfile = os.path.join(drc, outfile)
-        write_tiff(outfile, self.frame)
+
+        try:
+            from instamatic.processing.flatfield import apply_flatfield_correction
+            flatfield, h = read_tiff(self.module_io.get_flatfield())
+            frame = apply_flatfield_correction(self.frame, flatfield)
+        except:
+            frame = self.frame
+        write_tiff(outfile, frame)
         print " >> Wrote file:", outfile
 
 
