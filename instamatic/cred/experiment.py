@@ -13,7 +13,7 @@ ACTIVATION_THRESHOLD = 0.2
 
 
 class Experiment(object):
-    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, image_interval=10, flatfield=None):
+    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
@@ -24,7 +24,9 @@ class Experiment(object):
         self.stopEvent = stopEvent
         self.flatfield = flatfield
 
-        self.image_interval = image_interval
+        self.diff_defocus = 0
+        self.image_interval = 99999
+
         self.excludes = []
         
     def report_status(self):
@@ -45,7 +47,11 @@ class Experiment(object):
         print "              exposure = {}".format(self.diff_exposure)
         print "              brightness = {}".format(self.diff_brightness)
         print "              spotsize = {}".format(self.diff_spotsize)        
-        
+    
+    def enable_image_interval(interval, defocus):
+        self.diff_defocus = defocus
+        self.image_interval = interval
+
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         
@@ -88,7 +94,7 @@ class Experiment(object):
         i = 1
 
         diff_focus_proper = self.ctrl.difffocus.value
-        diff_focus_defocused = 23843
+        diff_focus_defocused = self.diff_defocus
 
         while not self.stopEvent.is_set():
 

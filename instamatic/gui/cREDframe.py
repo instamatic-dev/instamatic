@@ -12,16 +12,22 @@ class ExperimentalcRED(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        Label(frame, text="Exposure time:").grid(row=4, column=0)
+        Label(frame, text="Exposure time:").grid(row=4, column=0, sticky="W")
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
         self.exposure_time.grid(row=4, column=1, sticky="W", padx=10)
         
-        Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2)
+        Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2, sticky="W")
+        Checkbutton(frame, text="Enable image interval", variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky="W")
 
-        Label(frame, text="Image interval:").grid(row=5, column=0)
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1)
+        Label(frame, text="Image interval:").grid(row=5, column=0, sticky="W")
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1, state=DISABLED)
         self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
 
+        Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
+        self.e_diff_defocus = Entry(frame, textvariable=self.var_diff_defocus, state=DISABLED)
+        self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+
+        self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
         self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
         frame.grid_columnconfigure(1, weight=1)
@@ -43,7 +49,9 @@ class ExperimentalcRED(LabelFrame):
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_unblank_beam = BooleanVar(value=False)
-        self.var_image_interval = IntVar(value=9999)
+        self.var_image_interval = IntVar(value=10)
+        self.var_diff_defocus = IntVar(value=25000)
+        self.var_enable_image_interval = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -53,8 +61,9 @@ class ExperimentalcRED(LabelFrame):
         # TODO: make a pop up window with the STOP button?
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll1.grid(row=10, column=0, columnspan=2, sticky="EW")
-        self.lb_coll2.grid(row=11, column=0, columnspan=2, sticky="EW")
+        self.lb_coll0.grid(row=10, column=0, columnspan=3, sticky="EW")
+        self.lb_coll1.grid(row=11, column=0, columnspan=3, sticky="EW")
+        self.lb_coll2.grid(row=12, column=0, columnspan=3, sticky="EW")
 
         params = self.get_params()
         self.q.put(("cred", params))
@@ -64,6 +73,7 @@ class ExperimentalcRED(LabelFrame):
     def stop_collection(self):
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
+        self.lb_coll0.grid_forget()
         self.lb_coll1.grid_forget()
         self.lb_coll2.grid_forget()
         self.stopEvent.set()
@@ -71,9 +81,20 @@ class ExperimentalcRED(LabelFrame):
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
+                   "enable_image_interval": self.var_enable_image_interval.get(),
                    "image_interval": self.var_image_interval.get(),
+                   "diff_defocus": self.var_diff_defocus.get(),
                    "stop_event": self.stopEvent }
         return params
+
+    def toggle_interval_buttons(self):
+        enable = self.var_enable_image_interval.get()
+        if enable:
+            self.e_image_interval.config(state=NORMAL)
+            self.e_diff_defocus.config(state=NORMAL)
+        else:
+            self.e_image_interval.config(state=DISABLED)
+            self.e_diff_defocus.config(state=DISABLED)
 
 
 if __name__ == '__main__':
