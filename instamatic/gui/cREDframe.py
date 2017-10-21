@@ -28,10 +28,13 @@ class ExperimentalcRED(LabelFrame):
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
 
         self.lb_coll0 = Label(frame, text="")
-        self.lb_coll1 = Label(frame, text="Now you can start to rotate the goniometer at any time.")
-        self.lb_coll2 = Label(frame, text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        self.lb_coll1 = Label(frame, text="")
+        self.lb_coll2 = Label(frame, text="")
+        self.lb_coll0.grid(row=10, column=0, columnspan=3, sticky="EW")
+        self.lb_coll1.grid(row=11, column=0, columnspan=3, sticky="EW")
+        self.lb_coll2.grid(row=12, column=0, columnspan=3, sticky="EW")
         frame.grid_columnconfigure(1, weight=1)
-        frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+        frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
@@ -61,9 +64,8 @@ class ExperimentalcRED(LabelFrame):
         # TODO: make a pop up window with the STOP button?
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll0.grid(row=10, column=0, columnspan=3, sticky="EW")
-        self.lb_coll1.grid(row=11, column=0, columnspan=3, sticky="EW")
-        self.lb_coll2.grid(row=12, column=0, columnspan=3, sticky="EW")
+        self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
+        self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
         params = self.get_params()
         self.q.put(("cred", params))
@@ -73,9 +75,9 @@ class ExperimentalcRED(LabelFrame):
     def stop_collection(self):
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
-        self.lb_coll0.grid_forget()
-        self.lb_coll1.grid_forget()
-        self.lb_coll2.grid_forget()
+        self.lb_coll1.config(text="")
+        self.lb_coll2.config(text="")
+
         self.stopEvent.set()
 
     def get_params(self):

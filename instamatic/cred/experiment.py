@@ -38,7 +38,7 @@ class Experiment(object):
         self.diff_exposure = self.expt
         self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.image_spotsize
-        print ("Output directory:\n{}".format(self.path))
+        print "Output directory:\n{}".format(self.path)
         print "Imaging     : binsize = {}".format(self.image_binsize)
         print "              exposure = {}".format(self.expt)
         print "              magnification = {}".format(self.magnification)
@@ -48,9 +48,10 @@ class Experiment(object):
         print "              brightness = {}".format(self.diff_brightness)
         print "              spotsize = {}".format(self.diff_spotsize)        
     
-    def enable_image_interval(interval, defocus):
+    def enable_image_interval(self, interval, defocus):
         self.diff_defocus = defocus
         self.image_interval = interval
+        print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
 
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
