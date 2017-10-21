@@ -71,25 +71,27 @@ class DataCollectionController(object):
                 sys.exit()
 
             job, kwargs = self.q.get()
-
-            if job == "cred":
-                self.acquire_data_cRED(**kwargs)
-
-            elif job == "sed":
-                self.acquire_data_SED(**kwargs)
-
-            elif job == "red":
-                self.acquire_data_RED(**kwargs)
-
-            elif job == "ctrl":
-                self.move_stage(**kwargs)
-
-            elif job == "debug":
-                self.debug(**kwargs)
-
-            else:
-                print "Unknown job: {}".format(jobs)
-                print "Kwargs:\n{}".format(kwargs)
+            try:
+                if job == "cred":
+                    self.acquire_data_cRED(**kwargs)
+    
+                elif job == "sed":
+                    self.acquire_data_SED(**kwargs)
+    
+                elif job == "red":
+                    self.acquire_data_RED(**kwargs)
+    
+                elif job == "ctrl":
+                    self.move_stage(**kwargs)
+    
+                elif job == "debug":
+                    self.debug(**kwargs)
+    
+                else:
+                    print "Unknown job: {}".format(jobs)
+                    print "Kwargs:\n{}".format(kwargs)
+            except Exception as e:
+                print "\nError caught -> {} while running '{}' with {}".format(repr(e), job, kwargs)
 
     def acquire_data_cRED(self, **kwargs):
         self.log.info("Start cRED experiment")
@@ -183,6 +185,14 @@ class DataCollectionController(object):
         if task == "open_ipython":
             from IPython import embed
             embed(banner1="\nAssuming direct control.\n")
+        elif task == "report_status":
+            print self.ctrl
+        elif task == "close_down":
+            self.ctrl.stageposition.neutral()
+            self.ctrl.mode = "mag1"
+            self.ctrl.brightness.max()
+            self.ctrl.magnification.value = 500000
+            self.ctrl.spotsize = 1
 
 
 class DataCollectionGUI(VideoStream):
@@ -224,7 +234,14 @@ class DataCollectionGUI(VideoStream):
             os.makedirs(drc)
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         outfile = os.path.join(drc, outfile)
-        write_tiff(outfile, self.frame)
+
+        try:
+            from instamatic.processing.flatfield import apply_flatfield_correction
+            flatfield, h = read_tiff(self.module_io.get_flatfield())
+            frame = apply_flatfield_correction(self.frame, flatfield)
+        except:
+            frame = self.frame
+        write_tiff(outfile, frame)
         print " >> Wrote file:", outfile
 
 

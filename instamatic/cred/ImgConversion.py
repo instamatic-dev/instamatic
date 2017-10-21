@@ -62,7 +62,6 @@ class ImgConversion(object):
                  flatfield='flatfield.tiff'
                  ):
         self.pxd = config.diffraction_pixeldimensions
-        curdir = os.path.dirname(os.path.realpath(__file__))
         flatfield, h = read_tiff(os.path.join(curdir, flatfield))
         self.flatfield = flatfield
 

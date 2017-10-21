@@ -93,6 +93,8 @@ class IOFrame(LabelFrame):
 
     def browse_directory(self):
         drc = tkFileDialog.askdirectory(parent=self.parent, title="Select working directory")
+        if not drc:
+            return
         drc = os.path.realpath(drc)
         self.var_directory.set(drc)
         print self.get_experiment_directory()
@@ -101,6 +103,8 @@ class IOFrame(LabelFrame):
 
     def browse_flatfield(self):
         ff = tkFileDialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select flatfield")
+        if not ff:
+            return
         ff = os.path.realpath(ff)
         self.var_flatfield.set(ff)
         return ff
