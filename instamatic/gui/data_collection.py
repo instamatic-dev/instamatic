@@ -107,9 +107,10 @@ class DataCollectionController(object):
         exposure_time = kwargs["exposure_time"]
         unblank_beam = kwargs["unblank_beam"]
         stop_event = kwargs["stop_event"]
+        image_interval = kwargs["image_interval"]
 
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
-                               log=self.log, stopEvent=stop_event, 
+                               log=self.log, stopEvent=stop_event, image_interval=image_interval,
                                flatfield=self.module_io.get_flatfield())
         cexp.report_status()
         cexp.start_collection()

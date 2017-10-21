@@ -13,7 +13,7 @@ ACTIVATION_THRESHOLD = 0.2
 
 
 class Experiment(object):
-    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, image_interval=99999, flatfield=None):
+    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, image_interval=10, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
@@ -86,16 +86,20 @@ class Experiment(object):
         t0 = time.time()
 
         i = 1
+
+        diff_focus_proper = self.ctrl.difffocus.value
+        diff_focus_defocused = 23843
+
         while not self.stopEvent.is_set():
 
             if i % self.image_interval == 0:
                 t_start = time.time()
                 acquisition_time = (t_start - t0) / len(buffer)
 
-                self.ctrl.mode = "samag"
-                img, h = self.ctrl.getImage(self.expt / 10.0, header_keys=None)
+                self.ctrl.difffocus.value = diff_focus_defocused
+                img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
                 # print i, "BLOOP!"
-                self.ctrl.mode = "diff"
+                self.ctrl.difffocus.value = diff_focus_proper
 
                 self.excludes.append(i-1)
 
@@ -118,16 +122,16 @@ class Experiment(object):
 
         self.ctrl.cam.unblock()
 
-        if self.unblank_beam:
-            print "Blanking beam"
-            self.ctrl.beamblank = True
-
         if self.camtype == "simulate":
             self.endangle = self.startangle + np.random.random()*50
             camera_length = 300
         else:
             self.endangle = self.ctrl.stageposition.a
             camera_length = int(self.ctrl.magnification.get())
+
+        if self.unblank_beam:
+            print "Blanking beam"
+            self.ctrl.beamblank = True
 
         print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
         nframes = len(buffer)

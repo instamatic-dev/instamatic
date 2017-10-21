@@ -43,7 +43,7 @@ class ExperimentalcRED(LabelFrame):
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_unblank_beam = BooleanVar(value=False)
-        self.var_image_interval = IntVar(value=10)
+        self.var_image_interval = IntVar(value=9999)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -71,6 +71,7 @@ class ExperimentalcRED(LabelFrame):
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
+                   "image_interval": self.var_image_interval.get(),
                    "stop_event": self.stopEvent }
         return params
 
