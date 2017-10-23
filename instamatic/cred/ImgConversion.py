@@ -242,7 +242,7 @@ class ImgConversion(object):
         shape_x, shape_y = self.shape_SMV
 
         if self.excludes:
-            exclude = "\n".join(["EXCLUDE_DATA_RANGE={}".format(i+1) for i in self.excludes])
+            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i+1, i+1) for i in self.excludes])
         else:
             exclude = " !EXCLUDE_DATA_RANGE="
 

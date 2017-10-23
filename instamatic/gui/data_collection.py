@@ -87,6 +87,9 @@ class DataCollectionController(object):
                 elif job == "debug":
                     self.debug(**kwargs)
     
+                elif job == "toggle_difffocus":
+                    self.toggle_difffocus(**kwargs)
+
                 else:
                     print "Unknown job: {}".format(jobs)
                     print "Kwargs:\n{}".format(kwargs)
@@ -185,7 +188,7 @@ class DataCollectionController(object):
         f = getattr(self.ctrl, task)
         f.set(**kwargs)
 
-        print self.ctrl.stageposition
+        print f
 
     def debug(self, **kwargs):
         task = kwargs.pop("task")
@@ -200,6 +203,18 @@ class DataCollectionController(object):
             self.ctrl.brightness.max()
             self.ctrl.magnification.value = 500000
             self.ctrl.spotsize = 1
+
+    def toggle_difffocus(self, **kwargs):
+        toggle = kwargs["toggle"]
+
+        if toggle:
+            self._difffocus_proper = self.ctrl.difffocus.value
+            value = kwargs["value"]
+        else:
+            value = self._difffocus_proper
+
+        self.ctrl.difffocus.set(value=value)
+        print self.ctrl.difffocus
 
 
 class DataCollectionGUI(VideoStream):
@@ -236,7 +251,9 @@ class DataCollectionGUI(VideoStream):
         return self.modules[module]
 
     def saveImage(self):
-        drc = self.module_io.get_experiment_directory()
+        module_io = self.get_module("io")
+
+        drc = module_io.get_experiment_directory()
         if not os.path.exists(drc):
             os.makedirs(drc)
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
@@ -244,7 +261,7 @@ class DataCollectionGUI(VideoStream):
 
         try:
             from instamatic.processing.flatfield import apply_flatfield_correction
-            flatfield, h = read_tiff(self.module_io.get_flatfield())
+            flatfield, h = read_tiff(module_io.get_flatfield())
             frame = apply_flatfield_correction(self.frame, flatfield)
         except:
             frame = self.frame

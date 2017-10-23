@@ -12,12 +12,17 @@ class ExperimentalcRED(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        Label(frame, text="Exposure time:").grid(row=4, column=0, sticky="W")
+        Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
-        self.exposure_time.grid(row=4, column=1, sticky="W", padx=10)
+        self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
-        Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=4, column=2, sticky="W")
+        Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
+        
+        Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky="ew", pady=10)
+
         Checkbutton(frame, text="Enable image interval", variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky="W")
+        self.c_toggle_defocus = Checkbutton(frame, text="Toggle defocus", variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
+        self.c_toggle_defocus.grid(row=6, column=2, sticky="W")
 
         Label(frame, text="Image interval:").grid(row=5, column=0, sticky="W")
         self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1, state=DISABLED)
@@ -55,6 +60,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_image_interval = IntVar(value=10)
         self.var_diff_defocus = IntVar(value=25000)
         self.var_enable_image_interval = BooleanVar(value=False)
+        self.var_toggle_diff_defocus = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -67,18 +73,22 @@ class ExperimentalcRED(LabelFrame):
         self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
         self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
+        self.parent.bind_all("<space>", self.stop_collection)
+
         params = self.get_params()
         self.q.put(("cred", params))
 
         self.triggerEvent.set()
 
-    def stop_collection(self):
+    def stop_collection(self, event=None):
+        self.stopEvent.set()
+
+        self.parent.unbind_all("<space>")
+
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
         self.lb_coll1.config(text="")
         self.lb_coll2.config(text="")
-
-        self.stopEvent.set()
 
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
@@ -94,9 +104,18 @@ class ExperimentalcRED(LabelFrame):
         if enable:
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
+            self.c_toggle_defocus.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
+            self.c_toggle_defocus.config(state=DISABLED)
+
+    def toggle_diff_defocus(self):
+        toggle = self.var_toggle_diff_defocus.get()
+        difffocus = self.var_diff_defocus.get()
+
+        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
+        self.triggerEvent.set()
 
 
 if __name__ == '__main__':
