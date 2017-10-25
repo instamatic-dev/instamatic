@@ -244,7 +244,7 @@ class ImgConversion(object):
         if self.excludes:
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i+1, i+1) for i in self.excludes])
         else:
-            exclude = " !EXCLUDE_DATA_RANGE="
+            exclude = "!EXCLUDE_DATA_RANGE="
 
         s = XDS_template.format(
             data_begin=1,

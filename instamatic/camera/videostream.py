@@ -217,7 +217,8 @@ class VideoStream(threading.Thread):
         
     def update_disprang(self, name, index, mode):
         try:
-            self.disprang = self.var_disprang.get()
+            val = self.var_disprang.get()
+            self.disprang = max(1, val)
         except:
             pass
 
