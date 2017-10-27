@@ -152,8 +152,9 @@ class ImgConversion(object):
             header['OSC_START'] = self.startangle
             header['OSC_RANGE'] = self.osangle
             header['WAVELENGTH'] = self.wavelength
-            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center_512[0]
-            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center_512[1]
+            # reverse XY coordinates for XDS
+            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center_512[1]
+            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center_512[0]
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center_512[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center_512[1]*self.physical_pixelsize)
             
@@ -254,8 +255,9 @@ class ImgConversion(object):
             wavelength=self.wavelength,
             dmin=self.dmin,
             dmax=self.dmax,
-            origin_x=self.beam_center_512[0],
-            origin_y=self.beam_center_512[1],
+            # reverse XY coordinates for XDS
+            origin_x=self.beam_center_512[1],
+            origin_y=self.beam_center_512[0],
             NX=shape_x,
             NY=shape_y,
             sign="+",
