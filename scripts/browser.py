@@ -11,7 +11,7 @@ import tqdm
 
 __version__ = "2017-03-12"
 
-CMAP = None # "viridis", "gray"
+CMAP = "gray" # "viridis", "gray"
 
 ANGLE = -0.88 + np.pi/2
 R = np.array([
@@ -57,7 +57,10 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
      # use relpath to normalizes path
     fns = map(os.path.relpath, glob.glob(filepat))
 
-    coord_color = "red"
+    if stitch:
+        coord_color = "none"
+    else:
+        coord_color = "red"
     picked_color = "blue"
 
     if results:
@@ -101,11 +104,11 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
     ax2 = plt.subplot(132, title="{}\nx={}, y={}".format(fn, 0, 0))
     im2 = ax2.imshow(img, cmap=CMAP)
-    plt_crystals, = ax2.plot([], [], marker="o", color="red",  mew=2, picker=8, lw=0)
-    highlight2,   = ax2.plot([], [], marker="o", color="blue", mew=2)
+    plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
+    highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=1000, cmap=CMAP)
+    im3 = ax3.imshow(np.zeros_like(img), vmax=500, cmap=CMAP)
     
     class plt_diff:
         center, = ax3.plot([], [], "o", color="red", lw=0)

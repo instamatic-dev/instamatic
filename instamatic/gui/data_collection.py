@@ -208,9 +208,12 @@ class DataCollectionController(object):
         toggle = kwargs["toggle"]
 
         if toggle:
+            print "Proper:", self.ctrl.difffocus
             self._difffocus_proper = self.ctrl.difffocus.value
             value = kwargs["value"]
         else:
+            if self.ctrl.difffocus.value != kwargs["value"]:
+                print "Value changed:", self.ctrl.difffocus
             value = self._difffocus_proper
 
         self.ctrl.difffocus.set(value=value)
