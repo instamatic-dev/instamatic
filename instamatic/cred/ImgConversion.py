@@ -15,13 +15,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def pixelsize2cameralength(pixelsize):
-    # TODO: fix magic number, can this be calculated from the pixelsize directly?
-    # for physical_pixelsize = 0.055 mm
-    magic_number = 2.19122
-    return magic_number / pixelsize
-
-
 def get_calibrated_rotation_speed(val):
     """Correct for the overestimation of the oscillation angle if the rotation 
     was stopped before interrupting the data collection. It uses calibrated values for the 
@@ -78,14 +71,12 @@ class ImgConversion(object):
             self.headers.append(h)
             self.data.append(apply_flatfield_correction(img, self.flatfield))
 
-        self.pixelsize = self.pxd[camera_length]
+        self.pixelsize = self.pxd[camera_length] # px / Angstrom
         self.physical_pixelsize = 0.055 # mm
-        self.wavelength = 0.025080
+        self.wavelength = 0.025080 # angstrom
         self.beam_center = self.get_average_beam_center()
-
         self.beam_center_512 = beamcenter2xds(self.beam_center)
-
-        self.distance = pixelsize2cameralength(self.pixelsize)
+        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osangle = osangle
         self.startangle = startangle
         self.endangle = endangle
@@ -157,7 +148,6 @@ class ImgConversion(object):
             header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center_512[0]
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center_512[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center_512[1]*self.physical_pixelsize)
-            
             fn = os.path.join(path, "{:05d}.img".format(j))
             newimg = write_adsc(fn, new_img, header=header)
         
@@ -261,10 +251,8 @@ class ImgConversion(object):
             NX=shape_x,
             NY=shape_y,
             sign="+",
-
-            # Divide distnace by 1.1 to account for wrongly defined physical pixelsize 
-            # in XDS input file (0.050 instead of 0.055 mm)
-            detdist=self.distance/1.1,
+            detdist=self.distance,
+            pixelsize=self.physical_pixelsize,
             osangle=self.osangle,
             calib_osangle=self.rotation_speed * self.acquisition_time,
             rot_x=cos(rotation_angle),

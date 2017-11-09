@@ -12,6 +12,7 @@ DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
 SEGMENT_ORGX=-2.18182
 SEGMENT_ORGY=-2.18182
 SEGMENT_DISTANCE=0.0
+!REFINE_SEGMENT=POSITION ORIENTATION
 
 SEGMENT= 258 511 2 255  ! Top right segment
 DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
@@ -19,6 +20,7 @@ DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
 SEGMENT_ORGX=-6.54545
 SEGMENT_ORGY=-2.18182
 SEGMENT_DISTANCE=0.0
+!REFINE_SEGMENT=POSITION ORIENTATION
 
 SEGMENT= 2 255 258 511  ! Bottom left segment
 DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
@@ -26,6 +28,7 @@ DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
 SEGMENT_ORGX=-2.18182
 SEGMENT_ORGY=-6.54545
 SEGMENT_DISTANCE=0.0
+!REFINE_SEGMENT=POSITION ORIENTATION
 
 SEGMENT= 258 511 258 511  ! Bottom right segment
 DIRECTION_OF_SEGMENT_X-AXIS= 1.0 0.0 0.0
@@ -33,6 +36,7 @@ DIRECTION_OF_SEGMENT_Y-AXIS= 0.0 1.0 0.0
 SEGMENT_ORGX=-6.54545
 SEGMENT_ORGY=-6.54545
 SEGMENT_DISTANCE=0.0
+!REFINE_SEGMENT=POSITION ORIENTATION
 
 ! ********** Job control **********
 
@@ -57,7 +61,7 @@ BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
 !UNIT_CELL_CONSTANTS= 10 20 30 90 90 90
 
 !REIDX=                       !Optional reindexing transformation to apply on reflection indices
-FRIEDEL'S_LAW=TRUE
+FRIEDEL'S_LAW=TRUE            !TRUE is default
 
 !phi(i) = STARTING_ANGLE + OSCILLATION_RANGE * (i - STARTING_FRAME)
 STARTING_ANGLE= {starting_angle:0.2f}
@@ -73,10 +77,11 @@ STARTING_FRAME= 1
 ! ********** Detector hardware **********
 
 NX=512     NY=512             !Number of pixels
-QX=0.0500  QY=0.0500          !Physical size of pixels (mm)
+QX={pixelsize:.4f}  QY={pixelsize:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
 TRUSTED_REGION= 0.0  1.4142   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
 SENSOR_THICKNESS=0.30
+AIR=0.0
 
 ! ********** Trusted detector region **********
 
