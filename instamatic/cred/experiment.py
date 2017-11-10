@@ -9,7 +9,7 @@ import ImgConversion
 from instamatic.TEMController import config
 
 # degrees to rotate before activating data collection procedure
-ACTIVATION_THRESHOLD = 0.5
+ACTIVATION_THRESHOLD = 0.2
 
 
 class Experiment(object):
@@ -23,6 +23,11 @@ class Experiment(object):
         self.camtype = ctrl.cam.name
         self.stopEvent = stopEvent
         self.flatfield = flatfield
+
+        self.diff_defocus = 0
+        self.image_interval = 99999
+
+        self.excludes = []
         
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
@@ -33,7 +38,7 @@ class Experiment(object):
         self.diff_exposure = self.expt
         self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.image_spotsize
-        print ("Output directory:\n{}".format(self.path))
+        print "Output directory:\n{}".format(self.path)
         print "Imaging     : binsize = {}".format(self.image_binsize)
         print "              exposure = {}".format(self.expt)
         print "              magnification = {}".format(self.magnification)
@@ -42,7 +47,12 @@ class Experiment(object):
         print "              exposure = {}".format(self.diff_exposure)
         print "              brightness = {}".format(self.diff_brightness)
         print "              spotsize = {}".format(self.diff_spotsize)        
-        
+    
+    def enable_image_interval(self, interval, defocus):
+        self.diff_defocus = defocus
+        self.image_interval = interval
+        print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
+
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         
@@ -65,7 +75,9 @@ class Experiment(object):
         self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
         
         buffer = []
-        if self.camtype != "simulate":
+        if self.camtype == "simulate":
+            self.startangle = a
+        else:
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 a = self.ctrl.stageposition.a
                 if abs(a - a0) > ACTIVATION_THRESHOLD:
@@ -73,40 +85,56 @@ class Experiment(object):
             print "Data Recording started."
             self.startangle = a
 
-            if self.unblank_beam:
-                print "Unblanking beam"
-                self.ctrl.beamblank = False
+        if self.unblank_beam:
+            print "Unblanking beam"
+            self.ctrl.beamblank = False
+        
+        self.ctrl.cam.block()
+        t0 = time.time()
+
+        i = 1
+
+        diff_focus_proper = self.ctrl.difffocus.value
+        diff_focus_defocused = self.diff_defocus
+
+        while not self.stopEvent.is_set():
+
+            if i % self.image_interval == 0:
+                t_start = time.time()
+                acquisition_time = (t_start - t0) / len(buffer)
+
+                self.ctrl.difffocus.value = diff_focus_defocused
+                img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                # print i, "BLOOP!"
+                self.ctrl.difffocus.value = diff_focus_proper
+
+                self.excludes.append(i-1)
+
+                while True:
+                    dt = time.time() - t_start
+                    # print "Waiting while {:.2f} < {:.2f}".format(dt, acquisition_time)
+                    if dt >= acquisition_time:
+                        break
+                    time.sleep(0.001)
+
+            else:
+                img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                # print i, "Image!"
             
-            self.ctrl.cam.block()
-            t0 = time.time()
-            while not self.stopEvent.is_set():
-                img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                buffer.append((img, h))
+            buffer.append((img, h))
 
-            t1 = time.time()
+            i += 1
 
-            self.ctrl.cam.unblock()
-            self.endangle = self.ctrl.stageposition.a
-                
-        else:
-            self.startangle = a
+        t1 = time.time()
 
-            if self.unblank_beam:
-                print "Unblanking beam"
-                self.ctrl.beamblank = False
+        self.ctrl.cam.unblock()
 
-            self.ctrl.cam.block()
-            t0 = time.time()
-            while not self.stopEvent.is_set():
-                img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                buffer.append((img, h))
-                
-                print("Generating random images... {}".format(img.mean()))
-
-            t1 = time.time()
-
-            self.ctrl.cam.unblock()
+        if self.camtype == "simulate":
             self.endangle = self.startangle + np.random.random()*50
+            camera_length = 300
+        else:
+            self.endangle = self.ctrl.stageposition.a
+            camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
             print "Blanking beam"
@@ -117,11 +145,6 @@ class Experiment(object):
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
 
-        if self.camtype == "simulate":
-            camera_length = 300
-        else:
-            camera_length = int(self.ctrl.magnification.get())
-    
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
@@ -137,6 +160,7 @@ class Experiment(object):
                  rotation_angle=rotation_angle,
                  acquisition_time=acquisition_time,
                  resolution_range=(20, 0.8),
+                 excludes=self.excludes,
                  flatfield=self.flatfield)
         
         img_conv.writeTiff(self.pathtiff)

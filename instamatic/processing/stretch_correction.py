@@ -26,7 +26,8 @@ def apply_transform_to_image(img, transform, center=None):
     displacement = np.dot(transform, center)
     shift = center - displacement
     
-    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=3, cval=0.0)
+    # order=1; linear interpolation, anything higher may introduce artifacts
+    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=1, cval=0.0)
     return img_tf
 
 
