@@ -729,7 +729,7 @@ class TEMController(object):
         if self.autoblank:
             self.beamblank = True
 
-        h["ImageGetTime"] = time.ctime()
+        h["ImageGetTime"] = time.time()
         h["ImageExposureTime"] = exposure
         h["ImageBinSize"] = binsize
         h["ImageResolution"] = arr.shape

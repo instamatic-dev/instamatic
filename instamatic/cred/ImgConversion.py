@@ -4,6 +4,8 @@ from __future__ import division
 from instamatic.formats import write_adsc
 import os
 import numpy as np
+from datetime import datetime
+import time
 from instamatic.formats import read_tiff, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
@@ -26,19 +28,6 @@ def get_calibrated_rotation_speed(val):
     return calibrated_value
 
 
-def beamcenter2xds(xy):
-    x, y = xy
-    if 255 < x <= 258:
-        x = 255
-    elif 259 <= x < 262:
-        x = 262
-    if 255 < y <= 258:
-        y = 255
-    elif 259 <= y < 262:
-        y = 262
-    return x, y
-
-
 class ImgConversion(object):
     
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
@@ -49,7 +38,7 @@ class ImgConversion(object):
                  osangle,
                  startangle,
                  endangle,
-                 rotation_angle,
+                 rotation_angle,              # radians
                  acquisition_time,
                  resolution_range=(20, 0.8),
                  excludes=[],
@@ -69,13 +58,22 @@ class ImgConversion(object):
         while len(buffer) != 0:
             img, h = buffer.pop(0)
             self.headers.append(h)
-            self.data.append(apply_flatfield_correction(img, self.flatfield))
+            if flatfield is not None:
+                self.data.append(apply_flatfield_correction(img, self.flatfield))
+            else:
+                self.data.append(img)
 
+        self.data_shape = self.data[0].shape
         self.pixelsize = self.pxd[camera_length] # px / Angstrom
+
+        # TODO: put these numbers in config
         self.physical_pixelsize = 0.055 # mm
         self.wavelength = 0.025080 # angstrom
+        # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
+        self.stretch_azimuth = -6.61
+        self.stretch_amplitude = 2.43
+
         self.beam_center = self.get_average_beam_center()
-        self.beam_center_512 = beamcenter2xds(self.beam_center)
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osangle = osangle
         self.startangle = startangle
@@ -112,14 +110,8 @@ class ImgConversion(object):
 
             img = self.fixStretchCorrection(img, self.beam_center)
 
-            new_img = np.empty((512, 512), dtype=np.ushort)
-            new_img[:256, :256] = img[:256, :256]
-            new_img[:256, 256:] = img[:256, 260:]
-            new_img[256:, :256] = img[260:, :256]
-            new_img[256:, 256:] = img[260:, 260:]
-
-            new_img = np.ushort(new_img)
-            shape_x, shape_y = new_img.shape
+            img = np.ushort(img)
+            shape_x, shape_y = img.shape
             
             header = collections.OrderedDict()
             header['HEADER_BYTES'] = 512
@@ -135,7 +127,7 @@ class ImgConversion(object):
             header['CREV'] = 1
             header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
             header['DETECTOR_SN'] = 901         # special ID for DIALS
-            header['DATE'] = str(h["ImageGetTime"])
+            header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
             header['TIME'] = str(h["ImageExposureTime"])
             header['DISTANCE'] = "{:.2f}".format(self.distance)
             header['TWOTHETA'] = 0.00
@@ -144,23 +136,20 @@ class ImgConversion(object):
             header['OSC_RANGE'] = self.osangle
             header['WAVELENGTH'] = self.wavelength
             # reverse XY coordinates for XDS
-            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center_512[1]
-            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center_512[0]
-            header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center_512[0]*self.physical_pixelsize)
-            header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center_512[1]*self.physical_pixelsize)
+            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[1]
+            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[0]
+            header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
+            header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
             fn = os.path.join(path, "{:05d}.img".format(j))
-            newimg = write_adsc(fn, new_img, header=header)
+            newimg = write_adsc(fn, img, header=header)
         
-        self.shape_SMV = shape_x, shape_y
         logger.debug("SMV files (size {}*{}) saved in folder: {}".format(shape_x, shape_y, path))
      
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
         
-        # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct.
-        # TODO: put these numbers in config
-        azimuth   = -6.61
-        amplitude =  2.43
+        azimuth   = self.stretch_azimuth
+        amplitude = self.stretch_amplitude
         
         newImage = apply_stretch_correction(image, center=center, azimuth=azimuth, amplitude=amplitude)
     
@@ -186,12 +175,12 @@ class ImgConversion(object):
             
         logger.debug("MRC files created in folder: {}".format(path))
         
-    def ED3DCreator(self, path, rotation_angle):
+    def ED3DCreator(self, path):
         print ("Creating ed3d file......")
     
         ed3d = open(os.path.join(path, "1.ed3d"), 'w')
 
-        rotation_angle = np.degrees(rotation_angle)
+        rotation_angle = np.degrees(self.rotation_angle)
 
         if self.startangle > self.endangle:
             sign = -1
@@ -220,17 +209,18 @@ class ImgConversion(object):
         ed3d.close()
         logger.debug("Ed3d file created in path: {}".format(path))
         
-    def XDSINPCreator(self, pathsmv, rotation_angle):
+    def XDSINPCreator(self, pathsmv):
         print ("Creating XDS inp file......")
         from XDS_template import XDS_template
         from math import cos, pi
 
         indend = len(self.data)
+        rotation_angle = self.rotation_angle # radians
 
         if self.startangle > self.endangle:
             rotation_angle += np.pi
 
-        shape_x, shape_y = self.shape_SMV
+        shape_x, shape_y = self.data_shape
 
         if self.excludes:
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i+1, i+1) for i in self.excludes])
@@ -238,6 +228,7 @@ class ImgConversion(object):
             exclude = "!EXCLUDE_DATA_RANGE="
 
         s = XDS_template.format(
+            date=str(time.ctime()),
             data_begin=1,
             data_end=indend,
             exclude=exclude,
@@ -246,13 +237,14 @@ class ImgConversion(object):
             dmin=self.dmin,
             dmax=self.dmax,
             # reverse XY coordinates for XDS
-            origin_x=self.beam_center_512[1],
-            origin_y=self.beam_center_512[0],
-            NX=shape_x,
-            NY=shape_y,
+            origin_x=self.beam_center[1],
+            origin_y=self.beam_center[0],
+            NX=shape_y,
+            NY=shape_x,
             sign="+",
             detdist=self.distance,
-            pixelsize=self.physical_pixelsize,
+            QX=self.physical_pixelsize,
+            QY=self.physical_pixelsize,
             osangle=self.osangle,
             calib_osangle=self.rotation_speed * self.acquisition_time,
             rot_x=cos(rotation_angle),

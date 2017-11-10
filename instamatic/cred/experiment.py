@@ -165,9 +165,9 @@ class Experiment(object):
         
         img_conv.writeTiff(self.pathtiff)
         img_conv.writeIMG(self.pathsmv)
-        img_conv.ED3DCreator(self.pathred, rotation_angle)
+        img_conv.ED3DCreator(self.pathred)
         img_conv.MRCCreator(self.pathred)
-        img_conv.XDSINPCreator(self.pathsmv, rotation_angle)
+        img_conv.XDSINPCreator(self.pathsmv)
         self.logger.info("XDS INP file created.")
 
         with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
