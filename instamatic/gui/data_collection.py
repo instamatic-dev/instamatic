@@ -2,6 +2,7 @@ from Tkinter import *
 from ttk import *
 
 import os, sys
+import traceback
 import numpy as np
 import json
 from instamatic.formats import *
@@ -94,7 +95,9 @@ class DataCollectionController(object):
                     print "Unknown job: {}".format(jobs)
                     print "Kwargs:\n{}".format(kwargs)
             except Exception as e:
-                print "\nError caught -> {} while running '{}' with {}".format(repr(e), job, kwargs)
+                traceback.print_exc()
+                self.log.debug("Error caught -> {} while running '{}' with {}".format(repr(e), job, kwargs))
+                self.log.exception(e)
 
     def acquire_data_cRED(self, **kwargs):
         self.log.info("Start cRED experiment")
