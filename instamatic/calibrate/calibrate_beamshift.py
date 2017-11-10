@@ -80,9 +80,12 @@ class CalibBeamShift(object):
         fout = os.path.join(outdir, fn)
         pickle.dump(self, open(fout, "w"))
 
-    def plot(self, to_file=None):
+    def plot(self, to_file=None, outdir=""):
         if not self.has_data:
             return
+
+        if to_file == True:
+            to_file = "calib_{}.png".format(beamshift)
 
         beampos = self.data_beampos
         shifts = self.data_shifts
@@ -90,11 +93,13 @@ class CalibBeamShift(object):
         r_i = np.linalg.inv(self.transform)
         beampos_ = np.dot(beampos, r_i)
 
-        plt.scatter(*shifts.T, label="Observed pixel shifts")
-        plt.scatter(*beampos_.T, label="Positions in pixel coords")
+        plt.scatter(*shifts.T, marker=">", label="Observed pixel shifts")
+        plt.scatter(*beampos_.T, marker="<", label="Positions in pixel coords")
         plt.legend()
+        plt.title("BeamShift vs. Direct beam position (Imaging)")
         if to_file:
-            plt.savefig(to_file)
+            plt.savefig(os.path.join(outdir, to_file))
+            plt.close()
         else:
             plt.show()
 
@@ -285,6 +290,7 @@ Calibrate beamshift
     logger.debug(calib)
 
     calib.to_file(outdir=outdir)
+    calib.plot(to_file=True, outdir=outdir)
 
     return calib
 
