@@ -1,8 +1,10 @@
 {
-	"default_exposure": 0.1,
+	"default_exposure": 0.02,
 	"default_binsize": 1,
 	"possible_binsizes": [1],
 	"dimensions": [516, 516],
+	"physical_pixelsize": 0.055,
+	"correction_ratio": 2.15,
 	"dynamic_range": 11800,
 	"calib_beamshift": {
 		"stepsize": 500,
@@ -17,7 +19,7 @@
 				},
 			"BeamShift":
 				{
-					"stepsize": 75,
+					"stepsize": 300,
 					"gridsize": 5
 				}
 		}	

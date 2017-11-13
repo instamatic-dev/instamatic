@@ -3,6 +3,7 @@ from ttk import *
 import tkFileDialog
 import os, sys
 import datetime
+from instamatic import config
 
 
 class IOFrame(LabelFrame):
@@ -38,18 +39,23 @@ class IOFrame(LabelFrame):
         self.incrementer = Spinbox(frame, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
         self.incrementer.grid(row=3, column=2)
 
-        self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
-        self.OpenDatadirButton.grid(row=5, column=0, sticky="EW")
-
         frame.grid_columnconfigure(1, weight=1)
 
         frame.pack(side="top", fill="x", padx=10)
 
-        frame = Frame(self)
+        frame = Frame(self)        
+        self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
+        self.OpenDatadirButton.grid(row=1, column=0, sticky="EW")
 
-        self.CollectionButton = Button(frame, text="Delete last experiment because it was awful =(", command=self.delete_last, state=NORMAL)
-        self.CollectionButton.pack(side="bottom", fill="both")
+        self.OpenConfigdirButton = Button(frame, text="Open config directory", command=self.open_config_directory)
+        self.OpenConfigdirButton.grid(row=1, column=1, sticky="EW")
 
+        self.DeleteButton = Button(frame, text="Delete last experiment", command=self.delete_last)
+        self.DeleteButton.grid(row=1, column=2, sticky="EW")
+
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=1)
         frame.pack(side="bottom", fill="both", padx=10, pady=10)
 
         self.update_experiment_number()
@@ -123,6 +129,10 @@ class IOFrame(LabelFrame):
 
     def open_data_directory(self):
         drc = self.get_working_directory()
+        os.startfile(drc)
+
+    def open_config_directory(self):
+        drc = config.config_dir
         os.startfile(drc)
 
 

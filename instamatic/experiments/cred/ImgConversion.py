@@ -66,12 +66,11 @@ class ImgConversion(object):
         self.data_shape = self.data[0].shape
         self.pixelsize = self.pxd[camera_length] # px / Angstrom
 
-        # TODO: put these numbers in config
-        self.physical_pixelsize = 0.055 # mm
-        self.wavelength = 0.025080 # angstrom
+        self.physical_pixelsize = config.CFG_CAMERA["physical_pixelsize"] # mm
+        self.wavelength = config.wavelength # angstrom
         # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
-        self.stretch_azimuth = -6.61
-        self.stretch_amplitude = 2.43
+        self.stretch_azimuth = config.stretch_azimuth
+        self.stretch_amplitude = config.stretch_amplitude
 
         self.beam_center = self.get_average_beam_center()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)

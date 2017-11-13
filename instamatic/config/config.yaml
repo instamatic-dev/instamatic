@@ -1,4 +1,7 @@
 camera_rotation_vs_stage_xy: -0.672
+stretch_azimuth: -6.63
+stretch_amplitude: 2.43
+wavelength: 0.025080
 cameras: [timepix, orius, simulate]
 specifications:
   CAMERALENGTHS: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200,

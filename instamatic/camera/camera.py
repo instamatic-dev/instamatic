@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 import atexit
 import time
 
+from instamatic import config
+
 __version__ = "2016-11-11"
 __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
@@ -126,7 +128,7 @@ class CameraDLL(object):
         import json
 
         if not fname:
-            fname = os.path.join(self._cameradir, self.name+".json")
+            fname = getattr(config, self.name+"_config")
 
         with open(fname) as f:
             dct = json.load(f)
@@ -251,7 +253,7 @@ class CameraSimu(object):
         import json
 
         if not fname:
-            fname = os.path.join(self._cameradir, self.name+".json")
+            fname = getattr(config, self.name+"_config")
 
         with open(fname) as f:
             dct = json.load(f)
@@ -447,4 +449,8 @@ def main_entry():
 
 
 if __name__ == '__main__':
-    main_entry()
+    # main_entry()
+    cam = Camera(kind="timepix")
+    arr = cam.getImage(t=0.1)
+    print arr
+    print arr.shape
