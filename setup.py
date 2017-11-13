@@ -25,11 +25,9 @@ setup(
               "instamatic.processing",
               "instamatic.formats",
               "instamatic.gui",
-              "instamatic.serialed",
-              "instamatic.red",
-              "instamatic.cred"],
+              "instamatic.experiments"],
 
-    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py"],
+    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py", "tqdm"],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
@@ -40,7 +38,7 @@ setup(
             # main
             'instamatic                               = instamatic.gui:main',
             'instamatic.gui                           = instamatic.gui:main',
-            'instamatic.serialed                      = instamatic.serialed.experiment:main',
+            'instamatic.serialed                      = instamatic.experiments.serialed.experiment:main',
             # experiment
             'instamatic.camera                        = instamatic.camera.camera:main_entry',
             'instamatic.controller                    = instamatic.TEMController.TEMController:main_entry',

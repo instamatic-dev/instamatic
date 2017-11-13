@@ -99,6 +99,7 @@ class DataCollectionController(object):
                 self.log.debug("Error caught -> {} while running '{}' with {}".format(repr(e), job, kwargs))
                 self.log.exception(e)
 
+
     def acquire_data_cRED(self, **kwargs):
         self.log.info("Start cRED experiment")
         from instamatic.experiments import cRED
@@ -206,6 +207,8 @@ class DataCollectionController(object):
             self.ctrl.brightness.max()
             self.ctrl.magnification.value = 500000
             self.ctrl.spotsize = 1
+
+            print "All done!"
 
     def toggle_difffocus(self, **kwargs):
         toggle = kwargs["toggle"]

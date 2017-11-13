@@ -32,6 +32,29 @@ ZERO = 32768
 MAX = 65535
 MIN = 0
 
+## Control the Screen:
+# screen = ctrl.tem.tem3.CreateScreen2()
+# UP = 0
+# DOWN = 2
+# screen.SelectAngle(UP)     # screen up
+# screen.SelectAngle(DOWN)   # screen down
+# screen.GetAngle()
+
+## faster stage readout
+# g = ctrl.tem.tem3.CreateGonio2()
+# g.GetPosition() -> get stage position, 78 ms
+# ctrl.tem.stage3.GetPos() -> 277 ms
+
+## get the direction of movement
+# ctrl.tem.stage3.GetDirection()
+# >>> (0, 1, 0, 0, 1, 0)
+
+## control piezo stage
+# ctrl.tem.stage3.SelDrvMode(1) -> on
+# ctrl.tem.stage3.SelDrvMode(0) -> off
+## when selected, do we have precise control over the stage position?
+## Piezo stage seems to operate on a different level than standard XY
+
 class JeolMicroscope(object):
     """docstring for microscope"""
     def __init__(self, model="lab6"):
@@ -162,18 +185,18 @@ class JeolMicroscope(object):
         self.setMagnification(value)
 
     def getGunShift(self):
-        x, y, result = self.def3.GetGunA2()
-        return x, y
-
-    def setGunShift(self, x, y):
-        self.def3.SetGunA2(x, y)
-
-    def getGunTilt(self):
         x, y, result = self.def3.GetGunA1()
         return x, y
 
-    def setGunTilt(self, x, y):
+    def setGunShift(self, x, y):
         self.def3.SetGunA1(x, y)
+
+    def getGunTilt(self):
+        x, y, result = self.def3.GetGunA2()
+        return x, y
+
+    def setGunTilt(self, x, y):
+        self.def3.SetGunA2(x, y)
 
     def getBeamShift(self):
         x, y, result = self.def3.GetCLA1()

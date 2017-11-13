@@ -1,4 +1,4 @@
-import yaml
+import yaml, json
 import os
 
 from instamatic import config
@@ -19,7 +19,7 @@ wavelength = None
 
 diffraction_pixelsize_fit_parameters = [ -3.72964471e-05,  -1.00023069e+00,   7.36028832e+04]
 
-def load(fn="config.yaml", camera=None):
+def load(fn=None, camera=None):
     if not fn:
         fn = cfg_file
     d = yaml.load(open(fn, "r"))
@@ -60,7 +60,8 @@ def load(fn="config.yaml", camera=None):
     wavelength = CFG["wavelength"]
 
     global CFG_CAMERA
-    CFG_CAMERA = config.get_camera_config(camera)
+    fn = config.get_camera_config(camera)
+    CFG_CAMERA = json.load(open(fn))
 
 load()
 
