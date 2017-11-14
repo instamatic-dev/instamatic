@@ -4,6 +4,7 @@ from IOFrame import *
 from REDframe import *
 from CtrlFrame import *
 from debugframe import *
+from aboutframe import *
 
 from collections import namedtuple
 
@@ -15,4 +16,5 @@ Module("cred", "cRED", True, ExperimentalcRED),
 Module("sed", "serialED", True, ExperimentalSED),
 Module("red", "RED", True, ExperimentalRED),
 Module("ctrl", "ctrl", True, ExperimentalCtrl),
-Module("debug", "debug", True, DebugFrame) )
+Module("debug", "debug", True, DebugFrame),
+Module("about", "about", True, About) )
