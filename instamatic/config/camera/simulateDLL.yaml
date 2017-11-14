@@ -1,0 +1,9 @@
+'calib_beamshift': {'gridsize': 5, 'stepsize': 2500}
+'calib_directbeam':
+  'BeamShift': {'gridsize': 5, 'stepsize': 350}
+  'DiffShift': {'gridsize': 5, 'stepsize': 1500}
+'default_binsize': 2
+'default_exposure': 0.1
+'dimensions': [2048, 2048]
+'name': 'simulateDLL'
+'possible_binsizes': [1, 2, 4]

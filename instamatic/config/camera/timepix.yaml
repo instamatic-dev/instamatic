@@ -1,0 +1,12 @@
+'calib_beamshift': {'gridsize': 5, 'stepsize': 500}
+'calib_directbeam':
+  'BeamShift': {'gridsize': 5, 'stepsize': 300}
+  'DiffShift': {'gridsize': 5, 'stepsize': 300}
+'correction_ratio': 2.15
+'default_binsize': 1
+'default_exposure': 0.02
+'dimensions': [516, 516]
+'dynamic_range': 11800
+'name': 'timepix'
+'physical_pixelsize': 0.055
+'possible_binsizes': [1]
