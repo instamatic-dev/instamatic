@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import matplotlib.pyplot as plt
 import time
 from instamatic.formats import write_tiff
 import sys
 
-import config
+from instamatic import config
 
 from IPython.terminal.embed import InteractiveShellEmbed
 InteractiveShellEmbed.confirm_exit = False
@@ -16,42 +15,36 @@ __author__ = "Stef Smeets"
 __email__ = "stef.smeets@mmk.su.se"
 
 
-def initialize(camera="timepix"):
-    import __main__ as main                    # disable stream if in interactive session -> crashes Tkinter
+def initialize(camera=None):
+    import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
     isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
 
     from instamatic.camera import Camera
     from instamatic.camera.videostream import VideoStream
-    
-    if sys.platform == "win32":
-        try:
-            from jeol_microscope import JeolMicroscope
-            tem = JeolMicroscope()
-    
-            if camera == "timepix" and not isInteractive:
-                cam = VideoStream(cam="timepix")
-            elif isinstance(camera, str):
-                cam = Camera(kind=camera)
-            else:
-                cam = camera
-    
-        except WindowsError:
-            from simu_microscope import SimuMicroscope
-            
-            if not isinstance(camera, str):
-                cam = camera
-            elif isInteractive:
-                cam = Camera(kind="simulate")
-            else:
-                cam = VideoStream(cam="simulate")
-    
-            tem = SimuMicroscope()
-    else:
+
+    microscope_id = config.cfg.microscope
+    camera_id = config.cfg.camera
+    print "Microscope:", microscope_id
+    print "Camera    :", camera_id
+
+    if microscope_id == "jeol":
+        from jeol_microscope import JeolMicroscope
+        tem = JeolMicroscope()
+    elif microscope_id == "simulate":
         from simu_microscope import SimuMicroscope
         tem = SimuMicroscope()
-        cam = VideoStream(cam="simulate")
+    else:
+        raise ValueError("No such microscope: `{}`".format(microscope_id))
 
-    config.load(camera=cam.name)
+    if camera:
+        cam = camera
+    elif isInteractive:
+        cam = Camera(kind=camera_id)
+    elif not isInteracive:
+        cam = VideoStream(cam=camera_id)
+    else:
+        raise ValueError("No such microscope: `{}`".format(camera_id))
+
     ctrl = TEMController(tem, cam)
     return ctrl
 
@@ -744,6 +737,7 @@ class TEMController(object):
             write_tiff(out, arr, header=h)
 
         if plot:
+            import matplotlib.pyplot as plt
             plt.imshow(arr)
             plt.show()
 

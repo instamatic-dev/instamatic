@@ -9,7 +9,7 @@ import time
 from instamatic.formats import read_tiff, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
-from instamatic.TEMController import config
+from instamatic import config
 from instamatic.tools import find_beam_center
 from itertools import izip
 
@@ -22,7 +22,7 @@ def get_calibrated_rotation_speed(val):
     was stopped before interrupting the data collection. It uses calibrated values for the 
     rotation speeds of the microscope, and matches them to the observed one"""
 
-    rotation_speeds = set(config.specifications["rotation_speeds"]["coarse"] + config.specifications["rotation_speeds"]["fine"])
+    rotation_speeds = set(config.microscope.specifications["rotation_speeds"]["coarse"] + config.microscope.specifications["rotation_speeds"]["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
     print "Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value)
     return calibrated_value
@@ -44,7 +44,7 @@ class ImgConversion(object):
                  excludes=[],
                  flatfield='flatfield.tiff'
                  ):
-        self.pxd = config.diffraction_pixeldimensions
+        self.pxd = config.calibration.diffraction_pixeldimensions
         flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
@@ -66,11 +66,11 @@ class ImgConversion(object):
         self.data_shape = self.data[0].shape
         self.pixelsize = self.pxd[camera_length] # px / Angstrom
 
-        self.physical_pixelsize = config.CFG_CAMERA["physical_pixelsize"] # mm
-        self.wavelength = config.wavelength # angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize # mm
+        self.wavelength = config.microscope.wavelength # angstrom
         # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
-        self.stretch_azimuth = config.stretch_azimuth
-        self.stretch_amplitude = config.stretch_amplitude
+        self.stretch_azimuth = config.microscope.stretch_azimuth
+        self.stretch_amplitude = config.microscope.stretch_amplitude
 
         self.beam_center = self.get_average_beam_center()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)

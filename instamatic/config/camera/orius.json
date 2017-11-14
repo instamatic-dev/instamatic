@@ -1,4 +1,5 @@
 {
+	"name": "orius",
 	"default_exposure": 0.1,
 	"default_binsize": 2,
 	"possible_binsizes": [1, 2, 4],

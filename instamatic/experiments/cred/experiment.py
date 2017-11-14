@@ -6,7 +6,7 @@ import numpy as np
 import glob
 import time
 import ImgConversion
-from instamatic.TEMController import config
+from instamatic import config
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -150,7 +150,7 @@ class Experiment(object):
         self.logger.info("Oscillation angle: {}".format(osangle))
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
         
-        rotation_angle = config.camera_rotation_vs_stage_xy
+        rotation_angle = config.microscope.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=camera_length,

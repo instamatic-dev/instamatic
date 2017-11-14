@@ -1,9 +1,9 @@
+from instamatic import config
+
 import atexit
 import comtypes.client
 import time
 import os
-
-from config import specifications
 
 import logging
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ MIN = 0
 
 class JeolMicroscope(object):
     """docstring for microscope"""
-    def __init__(self, model="lab6"):
+    def __init__(self, name="jeol"):
         super(JeolMicroscope, self).__init__()
         
         # initial COM in multithread mode if not initialized otherwise
@@ -101,10 +101,10 @@ class JeolMicroscope(object):
         self._x_direction = 0
         self._y_direction = 0
 
-        self.model = model
-        self.MAGNIFICATIONS      = specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = specifications["CAMERALENGTHS"]
+        self.name = name
+        self.MAGNIFICATIONS      = config.microscope.specifications["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = config.microscope.specifications["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = config.microscope.specifications["CAMERALENGTHS"]
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING

@@ -231,6 +231,7 @@ class DataCollectionGUI(VideoStream):
     def __init__(self, *args, **kwargs):
         super(DataCollectionGUI, self).__init__(*args, **kwargs)
         self.modules = {}
+        self._modules_have_loaded = False
 
     def buttonbox(self, master):
         frame = Frame(master)
@@ -255,6 +256,8 @@ class DataCollectionGUI(VideoStream):
         btn = Button(master, text="Save image",
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
+
+        self._modules_have_loaded = True
 
     def get_module(self, module):
         return self.modules[module]
@@ -281,11 +284,9 @@ class DataCollectionGUI(VideoStream):
 def main():
     from instamatic import TEMController
     from os.path import dirname as up
+    from instamatic import config
     
-    if "simulate" in sys.argv[1:]:
-        cam = "simulate"
-    else:
-        cam = "timepix"
+    cam = config.cfg.camera
 
     logging_dir = up(up(up(up(__file__))))
 
@@ -295,13 +296,17 @@ def main():
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=logfile, 
                         level=logging.DEBUG)
-    
 
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
     log.info("Instamatic.gui started, cam: %s", cam)
 
     data_collection_gui = DataCollectionGUI(cam=cam)
+
+    # Work-around for race condition (errors) that occurs when 
+    # DataCollectionController tries to access them
+    while not data_collection_gui._modules_have_loaded:
+        time.sleep(0.1)
 
     tem_ctrl = TEMController.initialize(camera=data_collection_gui)
 

@@ -19,7 +19,7 @@ import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
-from instamatic.TEMController.config import lowmag_pixeldimensions
+from instamatic.config import calibration
 from instamatic.tools import *
 
 
@@ -127,7 +127,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
             apprximate feature size in pixels
     """
 
-    pxx, pxy = lowmag_pixeldimensions[magnification]
+    pxx, pxy = calibration.lowmag_pixeldimensions[magnification]
     pxx *= (binsize / img_scale)
     pxy *= (binsize / img_scale)
     hole_area = (np.pi*(diameter/2.0)**2) / (pxx * pxy)
@@ -213,7 +213,7 @@ def find_holes_entry():
         print
         for hole in holes:
             x,y = hole.centroid
-            px, py = lowmag_pixeldimensions[magnification]
+            px, py = calibration.lowmag_pixeldimensions[magnification]
             area = hole.area*px*py / scale**2
             d = 2*(area/np.pi)**0.5
             print "x: {:.2f}, y: {:.2f}, d: {:.2f} um".format(x*scale, y*scale, d)

@@ -8,7 +8,7 @@ from instamatic.formats import *
 from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
 from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
 from instamatic.calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
-from instamatic.TEMController import config
+from instamatic import config
 
 import time
 import logging
@@ -133,7 +133,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
 
 class Experiment(object):
     """docstring for Experiment"""
-    def __init__(self, ctrl, config, scan_radius=None, begin_here=False, expdir=None, log=None):
+    def __init__(self, ctrl, params, scan_radius=None, begin_here=False, expdir=None, log=None):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
@@ -144,7 +144,7 @@ class Experiment(object):
 
         self.setup_folders(expdir=expdir)
 
-        self.load_calibration(**config)
+        self.load_calibration(**params)
 
         # set flags
         self.ctrl.tem.VERIFY_STAGE_POSITION = False
@@ -210,7 +210,7 @@ class Experiment(object):
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
-        self.image_dimensions = config.mag1_camera_dimensions[self.magnification]
+        self.image_dimensions = config.calibration.mag1_camera_dimensions[self.magnification]
         self.log.info("Image dimensions %s", self.image_dimensions)
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
@@ -250,7 +250,7 @@ class Experiment(object):
         # self.sample_rotation_angles = (-5, 5)
         self.sample_rotation_angles = ()
     
-        self.camera_rotation_angle = config.camera_rotation_vs_stage_xy
+        self.camera_rotation_angle = config.microscope.camera_rotation_vs_stage_xy
 
         box_x, box_y = self.image_dimensions
 

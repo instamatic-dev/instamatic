@@ -1,4 +1,5 @@
 import os
+import json, yaml
 
 import logging
 logger = logging.getLogger(__name__)
@@ -10,15 +11,28 @@ if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 
 search_drcs = (config_dir, os.path.dirname(__file__)) 
-print "config dir: ", config_dir
-print "search dirs:", search_drcs
+# print "config dir: ", config_dir
+# print "search dirs:", search_drcs
 
-for drc in search_drcs:
-    TEM_config = os.path.join(drc, "config.yaml")
-    if os.path.exists(TEM_config):
-        break
 
-print TEM_config
+class ConfigObject(object):
+    """docstring for ConfigObject"""
+    def __init__(self, d):
+        super(ConfigObject, self).__init__()
+        self.d = d
+
+        for key, value in d.items():
+            setattr(self, key, value)
+
+
+def get_global_config():
+    fn = os.path.join("global.yaml")
+    for drc in search_drcs:
+        config = os.path.join(drc, fn)
+        if os.path.exists(config):
+            break
+    return ConfigObject(yaml.load(open(config, "r")))
+
 
 def get_camera_config(name):
     fn = os.path.join("camera", "{}.json".format(name))
@@ -26,14 +40,31 @@ def get_camera_config(name):
         config = os.path.join(drc, fn)
         if os.path.exists(config):
             break
-    return config
+    return ConfigObject(json.load(open(config, "r")))
 
-orius_config = get_camera_config("orius")
-simulate_config = get_camera_config("simulate")
-simulateDLL_config = get_camera_config("simulateDLL")
-timepix_config = get_camera_config("timepix")
 
-print orius_config
-print simulate_config
-print simulateDLL_config
-print timepix_config
+def get_microscope_config(name):
+    fn = os.path.join("microscope", "{}.yaml".format(name))
+    for drc in search_drcs:
+        config = os.path.join(drc, fn)
+        if os.path.exists(config):
+            break
+    return ConfigObject(yaml.load(open(config, "r")))
+
+
+def get_calibration_config(name):
+    fn = os.path.join("calibration", "{}.yaml".format(name))
+    for drc in search_drcs:
+        config = os.path.join(drc, fn)
+        if os.path.exists(config):
+            break
+    return ConfigObject(yaml.load(open(config, "r")))
+
+cfg = get_global_config()
+
+microscope = get_microscope_config(cfg.microscope)
+calibration = get_calibration_config(cfg.calibration)
+camera = get_camera_config(cfg.camera)
+
+
+

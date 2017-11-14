@@ -13,8 +13,7 @@ from skimage import measure
 
 from instamatic.tools import autoscale
 
-from instamatic.TEMController.config import mag1_camera_dimensions
-
+from instamatic.config import calibration
 
 def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
@@ -137,7 +136,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     props = measure.regionprops(labels, img)
     
     # calculate the pixel dimensions in micrometer
-    px, py = mag1_camera_dimensions[magnification]
+    px, py = calibration.mag1_camera_dimensions[magnification]
     px = px / (img.shape[0])
     py = py / (img.shape[1])
     

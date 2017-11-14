@@ -82,7 +82,7 @@ class VideoStream(threading.Thread):
 
         self.frametime = 0.05
         self.brightness = 1.0
-        self.disprang = self.disprang_default = self.defaults["dynamic_range"]
+        self.disprang = self.disprang_default = self.defaults.dynamic_range
         # Maximum number from image readout
 
         self.resize_image = False

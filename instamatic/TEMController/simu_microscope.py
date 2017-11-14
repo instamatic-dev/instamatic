@@ -1,4 +1,4 @@
-from config import specifications
+from instamatic import config
 
 NTRLMAPPING = {
    "GUN1" : 0,
@@ -27,7 +27,7 @@ MIN = 0
 
 class SimuMicroscope(object):
     """docstring for microscope"""
-    def __init__(self, model="lab6"):
+    def __init__(self, name="simulate"):
         super(SimuMicroscope, self).__init__()
         import random
         
@@ -62,10 +62,10 @@ class SimuMicroscope(object):
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
-        self.model = model
-        self.MAGNIFICATIONS      = specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = specifications["CAMERALENGTHS"]
+        self.name = name
+        self.MAGNIFICATIONS      = config.microscope.specifications["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = config.microscope.specifications["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = config.microscope.specifications["CAMERALENGTHS"]
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
@@ -91,6 +91,12 @@ class SimuMicroscope(object):
 
         self.spotsize = 1
 
+    def load_specifications(self):
+        config.load_microscope(self.name)
+
+        self.MAGNIFICATIONS      = config.CFG.microscope.specifications["MAGNIFICATIONS"]
+        self.MAGNIFICATION_MODES = config.CFG.microscope.specifications["MAGNIFICATION_MODES"]
+        self.CAMERALENGTHS       = config.CFG.microscope.specifications["CAMERALENGTHS"]
 
     def getBrightness(self):
         return self.Brightness_value

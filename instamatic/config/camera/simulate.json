@@ -1,4 +1,5 @@
 {
+	"name": "simulate",
 	"default_exposure": 0.1,
 	"default_binsize": 1,
 	"possible_binsizes": [1],

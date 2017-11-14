@@ -124,26 +124,18 @@ class CameraDLL(object):
 
         atexit.register(self.releaseConnection)
 
-    def load_defaults(self, fname=None):
-        import json
+    def load_defaults(self):
+        self.defaults = config.camera
 
-        if not fname:
-            fname = getattr(config, self.name+"_config")
-
-        with open(fname) as f:
-            dct = json.load(f)
-
-        self.defaults = dct
-
-        self.default_exposure = dct["default_exposure"]
-        self.default_binsize = dct["default_binsize"]
-        self.possible_binsizes = dct["possible_binsizes"]
-        self.dimensions = dct["dimensions"]
+        self.default_exposure = self.defaults.default_exposure
+        self.default_binsize = self.defaults.default_binsize
+        self.possible_binsizes = self.defaults.possible_binsizes
+        self.dimensions = self.defaults.dimensions
         self.xmax, self.ymax = self.dimensions
 
         try:
-            correction_ratio = dct["correction_ratio"]
-        except KeyError:
+            correction_ratio = self.defaults.correction_ratio
+        except AttributeError:
             pass
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
@@ -248,23 +240,22 @@ class CameraSimu(object):
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
+    
+    def load_defaults(self):
+        self.defaults = config.camera
 
-    def load_defaults(self, fname=None):
-        import json
-
-        if not fname:
-            fname = getattr(config, self.name+"_config")
-
-        with open(fname) as f:
-            dct = json.load(f)
-
-        self.defaults = dct
-
-        self.default_exposure = dct["default_exposure"]
-        self.default_binsize = dct["default_binsize"]
-        self.possible_binsizes = dct["possible_binsizes"]
-        self.dimensions = dct["dimensions"]
+        self.default_exposure = self.defaults.default_exposure
+        self.default_binsize = self.defaults.default_binsize
+        self.possible_binsizes = self.defaults.possible_binsizes
+        self.dimensions = self.defaults.dimensions
         self.xmax, self.ymax = self.dimensions
+
+        try:
+            correction_ratio = self.defaults.correction_ratio
+        except AttributeError:
+            pass
+        else:
+            self._setCorrectionRatio(c_double(1/correction_ratio))
 
     def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
         """Image acquisition routine

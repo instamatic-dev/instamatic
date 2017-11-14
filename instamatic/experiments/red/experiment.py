@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import glob
 import time
-from instamatic.TEMController import config
+from instamatic import config
 from instamatic.formats import write_hdf5, read_hdf5, read_tiff
 import tqdm
 import numpy as np
@@ -178,8 +178,8 @@ class Experiment(object):
             fp_mrc = os.path.join(path, fn_mrc)
             write_mrc(fp_mrc, new_img)
 
-        rotation_angle = config.camera_rotation_vs_stage_xy
-        pixelsize = config.diffraction_pixeldimensions[self.camera_length]
+        rotation_angle = config.microscope.camera_rotation_vs_stage_xy
+        pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length]
 
         write_ED3D(path, fns, rotation_angle=rotation_angle,
                             wavelength=0.0251,
