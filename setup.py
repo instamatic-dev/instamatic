@@ -5,10 +5,21 @@ from os import path
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
+execfile('xcore/version.py')  # grab __version__
+
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+try:
+    long_description = read('README.rst')
+except IOError:
+    long_description = read('README.md')
+
 setup(
     name="instamatic",
-    version="0.3.3",
-    description="Program for automatic data collection of diffraction snapshots on electron microscopes",
+    version=__version__,
+    description="Python program to collect serial and rotation electron diffraction data",
+    long_description=long_description,
 
     author="Stef Smeets",
     author_email="stef.smeets@mmk.su.se",
