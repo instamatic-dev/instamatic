@@ -1,10 +1,10 @@
-from SEDframe import *
-from cREDframe import *
-from IOFrame import *
-from REDframe import *
-from CtrlFrame import *
-from debugframe import *
-from aboutframe import *
+from sed_frame import *
+from cred_frame import *
+from io_frame import *
+from red_frame import *
+from ctrl_frame import *
+from debug_frame import *
+from about_frame import *
 
 from collections import namedtuple
 
