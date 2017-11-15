@@ -7,6 +7,7 @@ import glob
 import time
 import ImgConversion
 from instamatic import config
+from instamatic.formats import write_tiff
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -27,8 +28,6 @@ class Experiment(object):
         self.diff_defocus = 0
         self.image_interval = 99999
 
-        self.excludes = []
-        
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
         self.magnification = self.ctrl.magnification.value
@@ -60,14 +59,9 @@ class Experiment(object):
         self.pathsmv = os.path.join(self.path,"SMV")
         self.pathred = os.path.join(self.path,"RED")
         
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
-        if not os.path.exists(self.pathtiff):
-            os.makedirs(self.pathtiff)
-        if not os.path.exists(self.pathsmv):
-            os.makedirs(self.pathsmv)
-        if not os.path.exists(self.pathred):
-            os.makedirs(self.pathred)
+        for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
+            if not os.path.exists(path):
+                os.makedirs(path)
         
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
@@ -75,6 +69,8 @@ class Experiment(object):
         self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
         
         buffer = []
+        image_buffer = []
+
         if self.camtype == "simulate":
             self.startangle = a
         else:
@@ -89,39 +85,43 @@ class Experiment(object):
             print "Unblanking beam"
             self.ctrl.beamblank = False
         
-        self.ctrl.cam.block()
-        t0 = time.time()
-
-        i = 1
-
         diff_focus_proper = self.ctrl.difffocus.value
         diff_focus_defocused = self.diff_defocus
 
-        while not self.stopEvent.is_set():
+        i = 1
 
+        self.ctrl.cam.block()
+
+        t0 = time.time()
+
+        while not self.stopEvent.is_set():
             if i % self.image_interval == 0:
                 t_start = time.time()
-                acquisition_time = (t_start - t0) / len(buffer)
+                acquisition_time = (t_start - t0) / (i-1)
 
                 self.ctrl.difffocus.value = diff_focus_defocused
                 img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
-                # print i, "BLOOP!"
                 self.ctrl.difffocus.value = diff_focus_proper
 
-                self.excludes.append(i-1)
+                image_buffer.append((i, img, h))
 
-                while True:
-                    dt = time.time() - t_start
-                    # print "Waiting while {:.2f} < {:.2f}".format(dt, acquisition_time)
-                    if dt >= acquisition_time:
-                        break
+                next_interval = t_start + acquisition_time
+                # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+
+                t = time.time()
+
+                while time.time() > next_interval:
+                    next_interval += acquisition_time
+                    i += 1
+                    # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+
+                while time.time() < next_interval:
                     time.sleep(0.001)
 
             else:
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
                 # print i, "Image!"
-            
-            buffer.append((img, h))
+                buffer.append((i, img, h))
 
             i += 1
 
@@ -141,7 +141,7 @@ class Experiment(object):
             self.ctrl.beamblank = True
 
         print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
-        nframes = len(buffer)
+        nframes = i + 1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
 
@@ -150,6 +150,16 @@ class Experiment(object):
         self.logger.info("Oscillation angle: {}".format(osangle))
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
         
+        with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
+            f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            f.write("Starting angle: {}\n".format(self.startangle))
+            f.write("Ending angle: {}\n".format(self.endangle))
+            f.write("Exposure Time: {} s\n".format(self.expt))
+            f.write("Spot Size: {}\n".format(self.ctrl.spotsize))
+            f.write("Camera length: {} mm\n".format(camera_length))
+            f.write("Oscillation angle: {} degrees\n".format(osangle))
+            f.write("Number of frames: {}\n".format(len(buffer)))
+
         rotation_angle = config.microscope.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
@@ -160,7 +170,6 @@ class Experiment(object):
                  rotation_angle=rotation_angle,
                  acquisition_time=acquisition_time,
                  resolution_range=(20, 0.8),
-                 excludes=self.excludes,
                  flatfield=self.flatfield)
         
         img_conv.writeTiff(self.pathtiff)
@@ -170,12 +179,12 @@ class Experiment(object):
         img_conv.XDSINPCreator(self.pathsmv)
         self.logger.info("XDS INP file created.")
 
-        with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
-            f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {}\n".format(self.startangle))
-            f.write("Ending angle: {}\n".format(self.endangle))
-            f.write("Exposure Time: {} s\n".format(self.expt))
-            f.write("Spot Size: {}\n".format(self.ctrl.spotsize))
-            f.write("Camera length: {} mm\n".format(camera_length))
+        if image_buffer:
+            drc = os.path.join(self.path,"tiff_image")
+            os.makedirs(drc)
+            while len(image_buffer) != 0:
+                i, img, h = image_buffer.pop(0)
+                fn = os.path.join(drc, "{:05d}.tiff".format(i))
+                write_tiff(fn, img, header=h)
 
         print "Data Collection and Conversion Done."

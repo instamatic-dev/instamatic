@@ -41,30 +41,28 @@ class ImgConversion(object):
                  rotation_angle,              # radians
                  acquisition_time,
                  resolution_range=(20, 0.8),
-                 excludes=[],
                  flatfield='flatfield.tiff'
                  ):
-        self.pxd = config.calibration.diffraction_pixeldimensions
         flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
         self.mrc_header = b'\x04\x02\x00\x00\x04\x02\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x02\x00\x00\x04\x02\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xb4B\x00\x00\xb4B\x00\x00\xb4B\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x888Fx\x06sA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00MAP DA\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00aaaaaaaaaaaaaaaaaaaaaa,aaaaaaaaaaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
-        self.headers = []
-        self.data = []
-
-        self.excludes = excludes
+        self.headers = {}
+        self.data = {}
 
         while len(buffer) != 0:
-            img, h = buffer.pop(0)
-            self.headers.append(h)
-            if flatfield is not None:
-                self.data.append(apply_flatfield_correction(img, self.flatfield))
-            else:
-                self.data.append(img)
+            i, img, h = buffer.pop(0)
 
-        self.data_shape = self.data[0].shape
-        self.pixelsize = self.pxd[camera_length] # px / Angstrom
+            self.headers[i] = h
+
+            if self.flatfield is not None:
+                self.data[i] = apply_flatfield_correction(img, self.flatfield)
+            else:
+                self.data[i] = img
+
+        self.data_shape = img.shape
+        self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
 
         self.physical_pixelsize = config.camera.physical_pixelsize # mm
         self.wavelength = config.microscope.wavelength # angstrom
@@ -79,6 +77,7 @@ class ImgConversion(object):
         self.endangle = endangle
         self.rotation_angle = rotation_angle
         self.dmax, self.dmin = resolution_range
+        self.nframes = max(self.data.keys())
         
         self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osangle / self.acquisition_time) 
@@ -86,14 +85,17 @@ class ImgConversion(object):
         logger.debug("Primary beam at: {}".format(self.beam_center))
 
     def get_average_beam_center(self):
-        return np.mean([find_beam_center(img, sigma=10) for img in self.data], axis=0)
+        return np.mean([find_beam_center(img, sigma=10) for img in self.data.values()], axis=0)
 
     def writeTiff(self, path):
         print ("Writing TIFF files......")
 
-        for i, (img, h) in enumerate(izip(self.data, self.headers)):
-            j = i + 1
-            fn = os.path.join(path, "{:05d}.tiff".format(j))
+        for i in self.data.keys():
+
+            img = self.data[i]
+            h = self.headers[i]
+
+            fn = os.path.join(path, "{:05d}.tiff".format(i))
             write_tiff(fn, img, header=h)
         logger.debug("Tiff files saved in folder: {}".format(path))
 
@@ -101,11 +103,10 @@ class ImgConversion(object):
         import collections
         print ("Writing SMV files......")
     
-        for i, (img, h) in enumerate(izip(self.data, self.headers)):
-            if i in self.excludes:
-                continue
+        for i in self.data.keys():
 
-            j = i + 1
+            img = self.data[i]
+            h = self.headers[i]
 
             img = self.fixStretchCorrection(img, self.beam_center)
 
@@ -139,7 +140,7 @@ class ImgConversion(object):
             header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[0]
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
-            fn = os.path.join(path, "{:05d}.img".format(j))
+            fn = os.path.join(path, "{:05d}.img".format(i))
             newimg = write_adsc(fn, img, header=header)
         
         logger.debug("SMV files (size {}*{}) saved in folder: {}".format(shape_x, shape_y, path))
@@ -157,12 +158,12 @@ class ImgConversion(object):
     def MRCCreator(self, path):
         print ("Writing MRC files......")
 
-        for i, img in enumerate(self.data):
-            j = i + 1
-            fn = os.path.join(path, "{:05d}.mrc".format(j))
+        for i in self.data.keys():
 
-            if i in self.excludes:
-                continue
+            img = self.data[i]
+            h = self.headers[i]
+
+            fn = os.path.join(path, "{:05d}.mrc".format(i))
 
             # flip up/down because RED reads images from the bottom left corner
             img = self.fixStretchCorrection(img, self.beam_center)
@@ -197,11 +198,12 @@ class ImgConversion(object):
         ed3d.write("\n")
         ed3d.write("FILELIST\n")
     
-        for i in range(len(self.data)):
-            if i in self.excludes:
-                continue
-            j = i + 1
-            fn = "{:05d}.mrc".format(j)
+        for i in self.data.keys():
+
+            img = self.data[i]
+            h = self.headers[i]
+
+            fn = os.path.join(path, "{:05d}.mrc".format(i))
             ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+sign*self.osangle*i))
         
         ed3d.write("ENDFILELIST")
@@ -213,7 +215,7 @@ class ImgConversion(object):
         from XDS_template import XDS_template
         from math import cos, pi
 
-        indend = len(self.data)
+        nframes = self.nframes
         rotation_angle = self.rotation_angle # radians
 
         if self.startangle > self.endangle:
@@ -221,15 +223,17 @@ class ImgConversion(object):
 
         shape_x, shape_y = self.data_shape
 
-        if self.excludes:
-            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i+1, i+1) for i in self.excludes])
+        print nframes, len(self.data.keys())
+
+        if nframes != len(self.data.keys()):
+            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, i) for i in range(1, nframes+1) if i not in self.data.keys()])
         else:
             exclude = "!EXCLUDE_DATA_RANGE="
 
         s = XDS_template.format(
             date=str(time.ctime()),
             data_begin=1,
-            data_end=indend,
+            data_end=nframes,
             exclude=exclude,
             starting_angle=self.startangle,
             wavelength=self.wavelength,
