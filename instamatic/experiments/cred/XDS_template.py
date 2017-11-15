@@ -51,8 +51,8 @@ AIR=0.0
 ! ********** Trusted detector region **********
 
 !Mark cross as untrusted region
-UNTRUSTED_RECTANGLE= 255 262 2 516
-UNTRUSTED_RECTANGLE= 2 516 255 262
+UNTRUSTED_RECTANGLE= 255 262 0 517
+UNTRUSTED_RECTANGLE= 0 517 255 262
 
 !VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=  !6000 30000 is default, for excluding shaded parts of the detector.
 !MINIMUM_ZETA=                             !0.05 is default
@@ -91,7 +91,7 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 ! ********** Background and peak pixels **********
 
-!NBX=     NBY=                        !3 is default
+!NBX=7     NBY=7                      !3 is default
 BACKGROUND_PIXEL= 20                  !6.0 is default
 STRONG_PIXEL= 2.5                     !3.0 is default
 !MAXIMUM_NUMBER_OF_STRONG_PIXELS=     !1500000 is default

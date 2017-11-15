@@ -203,7 +203,7 @@ class ImgConversion(object):
             img = self.data[i]
             h = self.headers[i]
 
-            fn = os.path.join(path, "{:05d}.mrc".format(i))
+            fn = "{:05d}.mrc".format(i)
             ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+sign*self.osangle*i))
         
         ed3d.write("ENDFILELIST")
