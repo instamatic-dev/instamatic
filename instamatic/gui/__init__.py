@@ -1,1 +1,1 @@
-from data_collection import main
+from gui import main
