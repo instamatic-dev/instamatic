@@ -223,8 +223,6 @@ class ImgConversion(object):
 
         shape_x, shape_y = self.data_shape
 
-        print nframes, len(self.data.keys())
-
         if nframes != len(self.data.keys()):
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, i) for i in range(1, nframes+1) if i not in self.data.keys()])
         else:

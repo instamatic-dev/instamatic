@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from instamatic.formats import *
 from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
 from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
-from instamatic.calibrate import CalibStage, CalibBeamShift, CalibDirectBeam, get_diffraction_pixelsize
+from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic import config
 
 import time
@@ -231,7 +231,7 @@ class Experiment(object):
             self.diff_difffocus = self.ctrl.difffocus.value
             self.diff_cameralength = self.ctrl.magnification.value
 
-        self.diff_pixelsize  = get_diffraction_pixelsize(self.diff_difffocus, self.diff_cameralength, binsize=self.diff_binsize, camera=self.camera)
+        self.diff_pixelsize  = config.calibration.diffraction_pixeldimensions[self.diff_cameralength]
         self.change_spotsize = self.diff_spotsize != self.image_spotsize
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
