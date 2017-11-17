@@ -274,7 +274,7 @@ class VideoStream(threading.Thread):
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
         
         if self.resize_image:
-            image = image.resize((1032, 1032))
+            image = image.resize((950, 950))
 
         image = ImageTk.PhotoImage(image=image)
 

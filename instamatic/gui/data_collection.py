@@ -286,8 +286,6 @@ def main():
     from os.path import dirname as up
     from instamatic import config
     
-    cam = config.cfg.camera
-
     logging_dir = up(up(up(up(__file__))))
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -299,16 +297,15 @@ def main():
 
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
-    log.info("Instamatic.gui started, cam: %s", cam)
-
-    data_collection_gui = DataCollectionGUI(cam=cam)
+    log.info("Instamatic.gui started")
 
     # Work-around for race condition (errors) that occurs when 
     # DataCollectionController tries to access them
-    while not data_collection_gui._modules_have_loaded:
-        time.sleep(0.1)
 
-    tem_ctrl = TEMController.initialize(camera=data_collection_gui)
+    tem_ctrl = TEMController.initialize(camera=DataCollectionGUI)
+    
+    while not tem_ctrl.cam._modules_have_loaded:
+        time.sleep(0.1)
 
     experiment_ctrl = DataCollectionController(tem_ctrl, log=log)
 

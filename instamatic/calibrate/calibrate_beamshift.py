@@ -85,7 +85,7 @@ class CalibBeamShift(object):
             return
 
         if to_file == True:
-            to_file = "calib_{}.png".format(beamshift)
+            to_file = "calib_{}.png".format("beamshift")
 
         beampos = self.data_beampos
         shifts = self.data_shifts
@@ -141,9 +141,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = ctrl.cam.defaults.get("calib_beamshift", {}).get("gridsize", 5)
+        gridsize = ctrl.cam.defaults.calib_beamshift.get("gridsize", 5)
     if not stepsize:
-        stepsize = ctrl.cam.defaults.get("calib_beamshift", {}).get("stepsize", 2500)
+        stepsize = ctrl.cam.defaults.calib_beamshift.get("stepsize", 2500)
 
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
@@ -290,7 +290,7 @@ Calibrate beamshift
     logger.debug(calib)
 
     calib.to_file(outdir=outdir)
-    calib.plot(to_file=True, outdir=outdir)
+    # calib.plot(to_file=True, outdir=outdir)  # FIXME: this causes a freeze
 
     return calib
 

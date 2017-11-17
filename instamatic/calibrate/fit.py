@@ -2,18 +2,6 @@ import numpy as np
 import lmfit
 from instamatic.tools import *
 
-from instamatic import config
-
-
-def get_diffraction_pixelsize(difffocus, cameralength, binsize=1, camera="orius"):
-    a,b,c = config.diffraction_pixelsize_fit_parameters
-    def f(x, a, b, c):
-        return a*(x-c) + b
-    
-    pixelsize = config.diffraction_pixeldimensions[cameralength] / binsize
-
-    return f(difffocus, a, b, c) * pixelsize
-
 
 def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, verbose=False, **x0):
     params = lmfit.Parameters()

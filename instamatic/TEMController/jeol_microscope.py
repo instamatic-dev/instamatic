@@ -45,6 +45,13 @@ MIN = 0
 # g.GetPosition() -> get stage position, 78 ms
 # ctrl.tem.stage3.GetPos() -> 277 ms
 
+# g.GetPosition() -> drop in replacement for stage3.GetPos
+# g.SetPosition(x, y) # XY ONLY
+# g.SetTiltXAngle(a) # set xtilt
+# g.GetStatus() # -> isStageMoving
+
+# g.SetRotationAngle() # -> b?
+
 ## get the direction of movement
 # ctrl.tem.stage3.GetDirection()
 # >>> (0, 1, 0, 0, 1, 0)

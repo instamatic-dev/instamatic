@@ -37,10 +37,11 @@ def initialize(camera=None):
         raise ValueError("No such microscope: `{}`".format(microscope_id))
 
     if camera:
-        cam = camera
+        # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
+        cam = camera(cam=camera_id)
     elif isInteractive:
         cam = Camera(kind=camera_id)
-    elif not isInteracive:
+    elif not isInteractive:
         cam = VideoStream(cam=camera_id)
     else:
         raise ValueError("No such microscope: `{}`".format(camera_id))

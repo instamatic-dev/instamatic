@@ -54,6 +54,7 @@ class Experiment(object):
 
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
+        spotsize = self.ctrl.spotsize
         
         self.pathtiff = os.path.join(self.path,"tiff")
         self.pathsmv = os.path.join(self.path,"SMV")
@@ -66,8 +67,10 @@ class Experiment(object):
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
+        self.logger.info("Data collection spot size: {}".format(spotsize))
         
+        # TODO: Mostly above is setup, split off into own function
+
         buffer = []
         image_buffer = []
 
@@ -140,6 +143,8 @@ class Experiment(object):
             print "Blanking beam"
             self.ctrl.beamblank = True
 
+        # TODO: all the rest here is io+logistics, split off in to own function
+
         print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
         nframes = i + 1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
@@ -155,7 +160,7 @@ class Experiment(object):
             f.write("Starting angle: {}\n".format(self.startangle))
             f.write("Ending angle: {}\n".format(self.endangle))
             f.write("Exposure Time: {} s\n".format(self.expt))
-            f.write("Spot Size: {}\n".format(self.ctrl.spotsize))
+            f.write("Spot Size: {}\n".format(spotsize))
             f.write("Camera length: {} mm\n".format(camera_length))
             f.write("Oscillation angle: {} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
