@@ -216,10 +216,8 @@ class DataCollectionController(object):
         if toggle:
             print "Proper:", self.ctrl.difffocus
             self._difffocus_proper = self.ctrl.difffocus.value
-            value = kwargs["value"]
+            value = self._difffocus_proper + kwargs["value"]
         else:
-            if self.ctrl.difffocus.value != kwargs["value"]:
-                print "Value changed:", self.ctrl.difffocus
             value = self._difffocus_proper
 
         self.ctrl.difffocus.set(value=value)

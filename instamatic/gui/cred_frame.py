@@ -29,7 +29,7 @@ class ExperimentalcRED(LabelFrame):
         self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
 
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
-        self.e_diff_defocus = Entry(frame, textvariable=self.var_diff_defocus, state=DISABLED)
+        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
 
         self.lb_coll0 = Label(frame, text="")
@@ -58,7 +58,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_unblank_beam = BooleanVar(value=False)
         self.var_image_interval = IntVar(value=10)
-        self.var_diff_defocus = IntVar(value=25000)
+        self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
 
