@@ -114,7 +114,7 @@ class DataCollectionController(object):
         stop_event = kwargs["stop_event"]
         enable_image_interval = kwargs["enable_image_interval"]
         image_interval = kwargs["image_interval"]
-        diff_defocus = kwargs["diff_defocus"]
+        diff_defocus = self.ctrl.difffocus.value + kwargs["diff_defocus"]
 
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
                                log=self.log, stopEvent=stop_event,
