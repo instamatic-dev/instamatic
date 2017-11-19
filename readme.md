@@ -18,21 +18,31 @@ This panel deals with input and output of the experimental data.
 
 ![Input and output](docs/gui_io.png)
 
-Directory: Root directory to work in. By default this is C:/instamatic/work_$date/
+* **Directory**: Root directory to work in. By default this is C:/instamatic/work_$date/
 
-Sample name and number: This determines the subdirectory where experimental data are stored. The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
+* Sample name and number: This determines the subdirectory where experimental data are stored. The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
 
-Flatfield: Here the path to the flatfield image can be specified. This hardly needs to be changed.
+* **Flatfield**: Here the path to the flatfield image can be specified. This hardly needs to be changed.
 
-Open work directory: Open the current work directory, which is a combination of the root directory, sample name, and experiment number. In this case `C:/instamatic/work_2017-11-19/experiment_1`. All experimental data for the current experiment will be saved here.
+* **Open work directory**: Open the current work directory, which is a combination of the root directory, sample name, and experiment number. In this case `C:/instamatic/work_2017-11-19/experiment_1`. All experimental data for the current experiment will be saved here.
 
-Open config directory: By default `%APPDATA%/instamatic/`. The configuration files for the microscope, camera, and calibration files go here.
+* **Open config directory**: By default `%APPDATA%/instamatic/`. The configuration files for the microscope, camera, and calibration files go here.
 
-Delete last experiment: Sometimes, a data collection will go wrong... Pressing this button will mark the last experiment directy for deletion. It will not actually delete anything.
+* **Delete last experiment**: Sometimes, a data collection will go wrong... Pressing this button will mark the last experiment directy for deletion. It will not actually delete anything.
 
 ### serialED data collection
 
+Serial electron diffraction (serialED) is a technique to collect diffraction data on a large number of crystals. One diffraction pattern per crystal is collected. These can then be combined for structure determination, or used for screening/phase analysis.
+
 ![serial electron diffraction pane](docs/gui_serialed.png)
+
+Data collection can be started from the ‘serialED’ tab by pressing the ‘Start Collection’ button. Follow the instructions in the terminal to setup and calibrate the experiment.
+
+* **Scan area**: radius for the area to scan area for crystals (in micrometer).
+* **Exp. time image**: Exposure time for images.
+* **Exp. time diff**: Exposure time for diffraction pattern.
+* **Brightness**: Default value for the brightness of the focused beam.
+* **Spot size**: Spot size to use.
 
 ### cRED data collection
 
@@ -42,16 +52,16 @@ The data collection procedure can be initiated by pressing ‘Start Collection�
 
 ![Continous rotation electron diffraction pane](docs/gui_cred.png)
 
-Exposure time: change the data collection time for each image.
-Beam unblanker: If this option is selected, the beam will be automatically unblanked when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
+* **Exposure time**: change the data collection time for each image.
+* **Beam unblanker**: If this option is selected, the beam will be automatically unblanked when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
 
-Image interval
+### Image interval
 With this feature, an image of the crystal will be shown every N frames. This is useful to control the position of the crystal in the beam for more reliable and reproducable data collections. This is achieved by applying a small defocus (diffraction focus) to every Nth image. a small defocus of the diffraction focus. If the defocus is large enough, this will show a view of the crystal in the aperture. 
 
-Enable Image interval: This option will enable the image interval.
-Image interval: Change the interval at which the image will be defocused. For example, if the value is 10, then every 10th image will be defocused.
-Diff. defocus: This is the defocus value to apply. It is better not to make this value too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example). 
-Toggle defocus: This toggle applies the defocus value, which is used for checking. It does not affect the data collection.
+* **Enable Image interval**: This option will enable the image interval.
+* **Image interval**: Change the interval at which the image will be defocused. For example, if the value is 10, then every 10th image will be defocused.
+* **Diff. defocus**: This is the defocus value to apply. It is better not to make this value too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example). 
+* **Toggle defocus**: This toggle applies the defocus value, which is used for checking. It does not affect the data collection.
 
 
 ## Programs included
@@ -150,7 +160,7 @@ A convenient way to experiment with the options available is to run `instamatic.
 
     pip install https://github.com/stefsmeets/instamatic/archive/master.zip
 
-### Cite
+## Cite
 
 If you found this software useful, please cite:
 
