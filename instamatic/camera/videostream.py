@@ -85,6 +85,8 @@ class VideoStream(threading.Thread):
         self.disprang = self.disprang_default = self.defaults.dynamic_range
         # Maximum number from image readout
 
+        self.auto_contrast = False
+
         self.resize_image = False
 
         self.last = time.time()
@@ -128,6 +130,8 @@ class VideoStream(threading.Thread):
         self.cb_resize = Checkbutton(frame, text="Increase size", variable=self.var_resize_image)
         self.cb_resize.grid(row=1, column=4)
 
+        self.cb_contrast = Checkbutton(frame, text="Auto contrast", variable=self.var_auto_contrast)
+        self.cb_contrast.grid(row=1, column=5)
 
         self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
@@ -192,10 +196,20 @@ class VideoStream(threading.Thread):
         self.var_resize_image = BooleanVar(value=self.resize_image)
         self.var_resize_image.trace("w",self.update_resize_image)
 
+        self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
+        self.var_auto_contrast.trace("w",self.update_auto_contrast)
+
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
         try:
             self.resize_image = self.var_resize_image.get()
+        except:
+            pass
+
+    def update_auto_contrast(self, name, index, mode):
+        # print name, index, mode
+        try:
+            self.auto_contrast = self.var_auto_contrast.get()
         except:
             pass
 
@@ -262,7 +276,10 @@ class VideoStream(threading.Thread):
 
         frame = np.rot90(frame, k=3)
 
-        if self.disprang != self.disprang_default:
+        if self.auto_contrast:
+            frame = frame * (256 / (1+ frame.max()))
+            image = Image.fromarray(frame)
+        elif self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
             image = (self.disprang_default/self.disprang)*image
             image = Image.fromarray(image)
@@ -375,7 +392,7 @@ class VideoStream(threading.Thread):
 
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="simulate")
+    stream = VideoStream(cam="timepix")
     from IPython import embed
     embed()
     stream.close()
