@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-from os import path
+import os
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
-execfile('xcore/version.py')  # grab __version__
+execfile('instamatic/version.py')  # grab __version__
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -33,10 +33,12 @@ setup(
     packages=["instamatic", 
               "instamatic.calibrate",
               "instamatic.camera",
-              "instamatic.processing",
+              "instamatic.config",
+              "instamatic.experiments",
               "instamatic.formats",
               "instamatic.gui",
-              "instamatic.experiments"],
+              "instamatic.processing",
+              "instamatic.TEMController"],
 
     install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py", "tqdm"],
 
