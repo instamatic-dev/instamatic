@@ -1,5 +1,6 @@
 from Tkinter import *
 from ttk import *
+from instamatic.calibrate import calibrate_beamshift
 import threading
 
 
@@ -31,6 +32,8 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+        
+        Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack).grid(row=7, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -61,6 +64,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
+        self.var_enable_autotrack = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -109,6 +113,35 @@ class ExperimentalcRED(LabelFrame):
             self.e_image_interval.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
+            
+    def autotrack(self):
+        enable = self.var_enable_autotrack.get()
+        if enable:
+            self.var_enable_image_interval = False
+            self.e_image_interval.config(state=NORMAL)
+            self.e_diff_defocus.config(state=NORMAL)
+            self.c_toggle_defocus.config(state=NORMAL)
+            self.calibrate_beamshift_FB()
+        else:
+            self.e_image_interval.config(state=DISABLED)
+            self.e_diff_defocus.config(state=DISABLED)
+            self.c_toggle_defocus.config(state=DISABLED)
+    ##Focused beam, CC, Calibration for beam shift
+    
+    def calibrate_beamshift_FB(self):
+        ready = raw_input("""Calibrate beamshift
+-------------------
+ 1. Focus your diffraction
+ 2. Select desired defocus value
+ 3. Center the beam with beamshift
+    
+ >> Press any key to abort >> \n
+ >> Press <ENTER> to start >> \n""")
+        if ready == "":
+            print ("go")
+        else:
+            print ready                
+        
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()

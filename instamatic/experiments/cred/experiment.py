@@ -8,6 +8,7 @@ import time
 import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
+from scipy.signal import correlate2d
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -27,6 +28,11 @@ class Experiment(object):
 
         self.diff_defocus = 0
         self.image_interval = 99999
+        
+        self.mode = "manual"
+        ## Modes: manual, auto, no-interval.
+        self.transfmat = np.ones((2,2))
+        ## transfmat comes from calibration of beam shift in focused beam mode
 
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
@@ -51,6 +57,11 @@ class Experiment(object):
         self.diff_defocus = defocus
         self.image_interval = interval
         print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
+        
+    def enable_autotrack(self, interval, defocus):
+        self.diff_defocus = defocus
+        self.image_interval = interval
+        print "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
 
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
@@ -73,6 +84,16 @@ class Experiment(object):
 
         buffer = []
         image_buffer = []
+        
+        diff_focus_proper = self.ctrl.difffocus.value
+        diff_focus_defocused = self.diff_defocus    
+            
+        if self.mode == "auto":
+            self.ctrl.difffocus.value = diff_focus_defocused
+            img0, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+            self.ctrl.difffocus.value = diff_focus_proper
+            brightarea = np.where(img0 > np.max(img0)/2)
+            img0_cropped = img0[np.min(brightarea[0]):np.max(brightarea[0]),np.min(brightarea[1]):np.max(brightarea[1])]
 
         if self.camtype == "simulate":
             self.startangle = a
@@ -87,9 +108,6 @@ class Experiment(object):
         if self.unblank_beam:
             print "Unblanking beam"
             self.ctrl.beamblank = False
-        
-        diff_focus_proper = self.ctrl.difffocus.value
-        diff_focus_defocused = self.diff_defocus
 
         i = 1
 
@@ -98,35 +116,76 @@ class Experiment(object):
         t0 = time.time()
 
         while not self.stopEvent.is_set():
-            if i % self.image_interval == 0:
-                t_start = time.time()
-                acquisition_time = (t_start - t0) / (i-1)
-
-                self.ctrl.difffocus.value = diff_focus_defocused
-                img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
-                self.ctrl.difffocus.value = diff_focus_proper
-
-                image_buffer.append((i, img, h))
-
-                next_interval = t_start + acquisition_time
-                # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-
-                t = time.time()
-
-                while time.time() > next_interval:
-                    next_interval += acquisition_time
-                    i += 1
-                    # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
-
-                while time.time() < next_interval:
-                    time.sleep(0.001)
-
+            
+            if self.mode == "auto":
+                if i % self.image_interval == 0:
+                    t_start = time.time()
+                    acquisition_time = (t_start - t0) / (i-1)
+    
+                    self.ctrl.difffocus.value = diff_focus_defocused
+                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                    self.ctrl.difffocus.value = diff_focus_proper
+    
+                    image_buffer.append((i, img, h))
+                    
+                    brightarea = np.where(img > np.max(img)/2)
+                    img_cropped = img[np.min(brightarea[0]):np.max(brightarea[0]),np.min(brightarea[1]):np.max(brightarea[1])]
+                    
+                    cc = correlate2d(img0_cropped,img_cropped)
+                    shft = np.argmax(cc) + 1
+                    shftx = shft/len(img_cropped)
+                    shfty = shft - shftx*len(img_cropped)
+    
+                    next_interval = t_start + acquisition_time
+                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+    
+                    t = time.time()
+    
+                    while time.time() > next_interval:
+                        next_interval += acquisition_time
+                        i += 1
+                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+    
+                    while time.time() < next_interval:
+                        time.sleep(0.001)
+    
+                else:
+                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                    # print i, "Image!"
+                    buffer.append((i, img, h))
+    
+                i += 1
+            
             else:
-                img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                # print i, "Image!"
-                buffer.append((i, img, h))
-
-            i += 1
+                if i % self.image_interval == 0:
+                    t_start = time.time()
+                    acquisition_time = (t_start - t0) / (i-1)
+    
+                    self.ctrl.difffocus.value = diff_focus_defocused
+                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                    self.ctrl.difffocus.value = diff_focus_proper
+    
+                    image_buffer.append((i, img, h))
+    
+                    next_interval = t_start + acquisition_time
+                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+    
+                    t = time.time()
+    
+                    while time.time() > next_interval:
+                        next_interval += acquisition_time
+                        i += 1
+                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+    
+                    while time.time() < next_interval:
+                        time.sleep(0.001)
+    
+                else:
+                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                    # print i, "Image!"
+                    buffer.append((i, img, h))
+    
+                i += 1
 
         t1 = time.time()
 
