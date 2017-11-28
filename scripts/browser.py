@@ -9,6 +9,13 @@ from scipy import ndimage
 import argparse
 import tqdm
 
+from neural_network import preprocess_image
+from neural_network import neural_network
+
+import pickle
+with open(os.path.join(os.path.dirname(__file__), "neural_network/weights-py2.p"), "rb") as p_file:
+    weights = pickle.load(p_file)
+
 __version__ = "2017-03-12"
 
 CMAP = "gray" # "viridis", "gray"
@@ -128,7 +135,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             im2.set_data(img)
 
             stage_x, stage_y = h.get("exp_stage_position", (0, 0))
-            print "x={:.0f} y={:.0f}".format(stage_x, stage_y)
+            ax2.set_xlabel("x={:.0f} y={:.0f}".format(stage_x, stage_y))
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
 
@@ -172,6 +179,11 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             fn_diff = fn.replace("images", "data").replace(ext, "_{:04d}{}".format(ind, ext))
 
             img, h = read_image(fn_diff)
+
+            img_processed = preprocess_image.red_find_center_reduce(img.astype(np.float), 4).reshape((150, 150, 1))
+            quality = neural_network.predict(img_processed, weights)[0][0]
+            ax3.set_xlabel("Crystal quality: {:.2%}".format(quality))
+
             im3.set_data(img)
             ax3.set_title(fn_diff)
 
