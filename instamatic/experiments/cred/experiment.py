@@ -59,11 +59,7 @@ class Experiment(object):
         self.pathtiff = os.path.join(self.path,"tiff")
         self.pathsmv = os.path.join(self.path,"SMV")
         self.pathred = os.path.join(self.path,"RED")
-        
-        for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
-            if not os.path.exists(path):
-                os.makedirs(path)
-        
+              
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
@@ -110,8 +106,6 @@ class Experiment(object):
 
                 next_interval = t_start + acquisition_time
                 # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-
-                t = time.time()
 
                 while time.time() > next_interval:
                     next_interval += acquisition_time
@@ -164,6 +158,11 @@ class Experiment(object):
             f.write("Camera length: {} mm\n".format(camera_length))
             f.write("Oscillation angle: {} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
+
+        if nframes <= 3:
+            self.logger.info("Not enough frames collected. Data will not be written (nframes={}).".format(nframes))
+            print "Data collection done. Not enough frames collected (nframes={}).".format(nframes)
+            return
 
         rotation_angle = config.microscope.camera_rotation_vs_stage_xy
 

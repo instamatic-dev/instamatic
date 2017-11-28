@@ -51,6 +51,8 @@ class ImgConversion(object):
         self.headers = {}
         self.data = {}
 
+        self.smv_subdrc = "data"
+
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)
 
@@ -62,7 +64,12 @@ class ImgConversion(object):
                 self.data[i] = img
 
         self.data_shape = img.shape
-        self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+        try:
+            self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+        except KeyError:
+            self.pixelsize = 1
+            print "No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length)
+            logger.warning("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))
 
         self.physical_pixelsize = config.camera.physical_pixelsize # mm
         self.wavelength = config.microscope.wavelength # angstrom
@@ -90,6 +97,8 @@ class ImgConversion(object):
     def writeTiff(self, path):
         print ("Writing TIFF files......")
 
+        os.makedirs(path)
+
         for i in self.data.keys():
 
             img = self.data[i]
@@ -102,6 +111,9 @@ class ImgConversion(object):
     def writeIMG(self, path):
         import collections
         print ("Writing SMV files......")
+
+        path = os.path.join(path, self.smv_subdrc)
+        self.makedirs(path)
     
         for i in self.data.keys():
 
@@ -141,7 +153,7 @@ class ImgConversion(object):
             header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
             header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
             fn = os.path.join(path, "{:05d}.img".format(i))
-            newimg = write_adsc(fn, img, header=header)
+            write_adsc(fn, img, header=header)
         
         logger.debug("SMV files (size {}*{}) saved in folder: {}".format(shape_x, shape_y, path))
      
@@ -157,6 +169,8 @@ class ImgConversion(object):
             
     def MRCCreator(self, path):
         print ("Writing MRC files......")
+
+        self.makedirs(path)
 
         for i in self.data.keys():
 
@@ -177,7 +191,9 @@ class ImgConversion(object):
         
     def ED3DCreator(self, path):
         print ("Creating ed3d file......")
-    
+        
+        self.makedirs(path)
+
         ed3d = open(os.path.join(path, "1.ed3d"), 'w')
 
         rotation_angle = np.degrees(self.rotation_angle)
@@ -210,10 +226,12 @@ class ImgConversion(object):
         ed3d.close()
         logger.debug("Ed3d file created in path: {}".format(path))
         
-    def XDSINPCreator(self, pathsmv):
+    def XDSINPCreator(self, path):
         print ("Creating XDS inp file......")
         from XDS_template import XDS_template
         from math import cos, pi
+
+        self.makedirs(path)
 
         nframes = self.nframes
         rotation_angle = self.rotation_angle # radians
@@ -230,6 +248,7 @@ class ImgConversion(object):
 
         s = XDS_template.format(
             date=str(time.ctime()),
+            data_drc=self.smv_subdrc,
             data_begin=1,
             data_end=nframes,
             exclude=exclude,
@@ -253,7 +272,11 @@ class ImgConversion(object):
             rot_z=0.0
             )
        
-        with open(os.path.join(pathsmv, 'XDS.INP'),'w') as f:
+        with open(os.path.join(path, 'XDS.INP'),'w') as f:
             f.write(s)
         
         logger.debug(" >> Wrote XDS.inp.")
+
+    def makedirs(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)

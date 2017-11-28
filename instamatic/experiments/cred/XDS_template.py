@@ -14,7 +14,7 @@ MAXIMUM_NUMBER_OF_PROCESSORS=4
 
 ! ********** Data images **********
 
-NAME_TEMPLATE_OF_DATA_FRAMES= 0????.img   SMV
+NAME_TEMPLATE_OF_DATA_FRAMES= {data_drc}/0????.img   SMV
 DATA_RANGE=           {data_begin:d} {data_end:d}
 SPOT_RANGE=           {data_begin:d} {data_end:d}
 BACKGROUND_RANGE=     {data_begin:d} {data_end:d}

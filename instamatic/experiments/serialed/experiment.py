@@ -380,7 +380,7 @@ class Experiment(object):
                     t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
-                    dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}\n".format(**dct)
+                    dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}".format(**dct)
                     yield dct
 
 
