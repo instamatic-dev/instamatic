@@ -29,19 +29,12 @@ class Experiment(object):
         self.image_interval = 99999
 
     def report_status(self):
-        self.image_binsize = self.ctrl.cam.default_binsize
-        self.magnification = self.ctrl.magnification.value
-        self.image_spotsize = self.ctrl.spotsize
-        
-        self.diff_binsize = self.image_binsize
+        self.diff_binsize = self.ctrl.cam.default_binsize
         self.diff_exposure = self.expt
         self.diff_brightness = self.ctrl.brightness.value
-        self.diff_spotsize = self.image_spotsize
-        print "Output directory:\n{}".format(self.path)
-        print "Imaging     : binsize = {}".format(self.image_binsize)
-        print "              exposure = {}".format(self.expt)
-        print "              magnification = {}".format(self.magnification)
-        print "              spotsize = {}".format(self.image_spotsize)
+        self.diff_spotsize = self.ctrl.spotsize
+
+        print "\nOutput directory: {}".format(self.path)
         print "Diffraction : binsize = {}".format(self.diff_binsize)
         print "              exposure = {}".format(self.diff_exposure)
         print "              brightness = {}".format(self.diff_brightness)
@@ -56,9 +49,9 @@ class Experiment(object):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
         
-        self.pathtiff = os.path.join(self.path,"tiff")
-        self.pathsmv = os.path.join(self.path,"SMV")
-        self.pathred = os.path.join(self.path,"RED")
+        self.pathtiff = os.path.join(self.path, "tiff")
+        self.pathsmv = os.path.join(self.path, "SMV")
+        self.pathmrc = os.path.join(self.path, "RED")
               
         self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         self.logger.info("Data saving path: {}".format(self.path))
@@ -139,24 +132,23 @@ class Experiment(object):
 
         # TODO: all the rest here is io+logistics, split off in to own function
 
-        print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
         nframes = i + 1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
+        print "\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.endangle-self.startangle), self.startangle, self.endangle, nframes, osangle)
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
-        self.logger.info("Oscillation angle: {}".format(osangle))
-        self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
+        self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.4f})".format(abs(self.endangle-self.startangle), self.startangle, self.endangle, nframes, osangle))
         
         with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
             f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {}\n".format(self.startangle))
-            f.write("Ending angle: {}\n".format(self.endangle))
+            f.write("Starting angle: {:.2f}\n".format(self.startangle))
+            f.write("Ending angle: {:.2f}\n".format(self.endangle))
+            f.write("Rotation range: {:.2f}\n".format(self.endangle-self.startangle))
             f.write("Exposure Time: {} s\n".format(self.expt))
             f.write("Spot Size: {}\n".format(spotsize))
             f.write("Camera length: {} mm\n".format(camera_length))
-            f.write("Oscillation angle: {} degrees\n".format(osangle))
+            f.write("Oscillation angle: {:.4f} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
 
         if nframes <= 3:
@@ -176,15 +168,23 @@ class Experiment(object):
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-        img_conv.writeTiff(self.pathtiff)
-        img_conv.writeIMG(self.pathsmv)
-        img_conv.ED3DCreator(self.pathred)
-        img_conv.MRCCreator(self.pathred)
-        img_conv.XDSINPCreator(self.pathsmv)
-        self.logger.info("XDS INP file created.")
+
+        print "Writing files..."
+
+        img_conv.threadpoolwriter(tiff_path=self.pathtiff,
+                                  mrc_path=self.pathmrc,
+                                  smv_path=self.pathsmv,
+                                  workers=8)
+        
+        # img_conv.tiff_writer(self.pathtiff)
+        # img_conv.smv_writer(self.pathsmv)
+        # img_conv.mrc_writer(self.pathmrc)
+
+        img_conv.write_ed3d(self.pathmrc)
+        img_conv.write_xds_inp(self.pathsmv)
 
         if image_buffer:
-            drc = os.path.join(self.path,"tiff_image")
+            drc = os.path.join(self.path, "tiff_image")
             os.makedirs(drc)
             while len(image_buffer) != 0:
                 i, img, h = image_buffer.pop(0)

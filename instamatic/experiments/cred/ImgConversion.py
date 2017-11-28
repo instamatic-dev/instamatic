@@ -12,6 +12,7 @@ from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic import config
 from instamatic.tools import find_beam_center
 from itertools import izip
+import collections
 
 import logging
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def get_calibrated_rotation_speed(val):
 
     rotation_speeds = set(config.microscope.specifications["rotation_speeds"]["coarse"] + config.microscope.specifications["rotation_speeds"]["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
-    print "Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value)
+    logger.info("Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value))
     return calibrated_value
 
 
@@ -92,71 +93,9 @@ class ImgConversion(object):
         logger.debug("Primary beam at: {}".format(self.beam_center))
 
     def get_average_beam_center(self):
-        return np.mean([find_beam_center(img, sigma=10) for img in self.data.values()], axis=0)
+        # take every 10th frame for beam center determination to speed up the calculation
+        return np.mean([find_beam_center(img, sigma=10) for img in self.data.values()[1::10]], axis=0)
 
-    def writeTiff(self, path):
-        print ("Writing TIFF files......")
-
-        os.makedirs(path)
-
-        for i in self.data.keys():
-
-            img = self.data[i]
-            h = self.headers[i]
-
-            fn = os.path.join(path, "{:05d}.tiff".format(i))
-            write_tiff(fn, img, header=h)
-        logger.debug("Tiff files saved in folder: {}".format(path))
-
-    def writeIMG(self, path):
-        import collections
-        print ("Writing SMV files......")
-
-        path = os.path.join(path, self.smv_subdrc)
-        self.makedirs(path)
-    
-        for i in self.data.keys():
-
-            img = self.data[i]
-            h = self.headers[i]
-
-            img = self.fixStretchCorrection(img, self.beam_center)
-
-            img = np.ushort(img)
-            shape_x, shape_y = img.shape
-            
-            header = collections.OrderedDict()
-            header['HEADER_BYTES'] = 512
-            header['DIM'] = 2
-            header['BYTE_ORDER'] = "little_endian"
-            header['TYPE'] = "unsigned_short"
-            header['SIZE1'] = shape_x
-            header['SIZE2'] = shape_y
-            header['PIXEL_SIZE'] = self.physical_pixelsize
-            header['BIN'] = "1x1"
-            header['BIN_TYPE'] = "HW"
-            header['ADC'] = "fast"
-            header['CREV'] = 1
-            header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
-            header['DETECTOR_SN'] = 901         # special ID for DIALS
-            header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
-            header['TIME'] = str(h["ImageExposureTime"])
-            header['DISTANCE'] = "{:.2f}".format(self.distance)
-            header['TWOTHETA'] = 0.00
-            header['PHI'] = self.startangle
-            header['OSC_START'] = self.startangle
-            header['OSC_RANGE'] = self.osangle
-            header['WAVELENGTH'] = self.wavelength
-            # reverse XY coordinates for XDS
-            header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[1]
-            header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[0]
-            header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
-            header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
-            fn = os.path.join(path, "{:05d}.img".format(i))
-            write_adsc(fn, img, header=header)
-        
-        logger.debug("SMV files (size {}*{}) saved in folder: {}".format(shape_x, shape_y, path))
-     
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
         
@@ -166,32 +105,139 @@ class ImgConversion(object):
         newImage = apply_stretch_correction(image, center=center, azimuth=azimuth, amplitude=amplitude)
     
         return newImage
-            
-    def MRCCreator(self, path):
+
+    def makedirs(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    def tiff_writer(self, path):
+        print ("Writing TIFF files......")
+
+        os.makedirs(path)
+
+        for i in self.data.keys():
+            self.write_tiff(path, i)
+
+        logger.debug("Tiff files saved in folder: {}".format(path))
+
+    def smv_writer(self, path):
+        print ("Writing SMV files......")
+
+        path = os.path.join(path, self.smv_subdrc)
+        self.makedirs(path)
+    
+        for i in self.data.keys():
+            self.write_smv(path, i)
+               
+        logger.debug("SMV files saved in folder: {}".format(path))
+     
+    def mrc_writer(self, path):
         print ("Writing MRC files......")
 
         self.makedirs(path)
 
         for i in self.data.keys():
+            self.write_mrc(path, i)
 
-            img = self.data[i]
-            h = self.headers[i]
-
-            fn = os.path.join(path, "{:05d}.mrc".format(i))
-
-            # flip up/down because RED reads images from the bottom left corner
-            img = self.fixStretchCorrection(img, self.beam_center)
-            img = np.flipud(img.astype(np.int16))
-           
-            with open(fn, "wb") as mrcf:
-                mrcf.write(self.mrc_header)
-                mrcf.write(img.tobytes())
-            
         logger.debug("MRC files created in folder: {}".format(path))
+
+    def threadpoolwriter(self, tiff_path=None, smv_path=None, mrc_path=None, workers=8):
+        write_tiff = tiff_path is not None
+        write_smv  = smv_path  is not None
+        write_mrc  = mrc_path  is not None
+
+        if write_smv:
+            smv_path = os.path.join(smv_path, self.smv_subdrc)
+            self.makedirs(smv_path)
+            logger.debug("SMV files saved in folder: {}".format(smv_path))
+
+        if write_tiff:
+            self.makedirs(tiff_path)
+            logger.debug("Tiff files saved in folder: {}".format(tiff_path))
+
+        if write_mrc:
+            self.makedirs(mrc_path)
+            logger.debug("MRC files saved in folder: {}".format(mrc_path))
+
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = []
+            for i in self.data.keys():
+                
+                if write_tiff:
+                    futures.append(executor.submit(self.write_tiff, tiff_path, i))
+                if write_mrc:
+                    futures.append(executor.submit(self.write_mrc, mrc_path, i))
+                if write_smv:
+                    futures.append(executor.submit(self.write_smv, smv_path, i))
+
+            for future in futures:
+                ret = future.result()
+
+    def write_tiff(self, path, i):
+        img = self.data[i]
+        h = self.headers[i]
+
+        fn = os.path.join(path, "{:05d}.tiff".format(i))
+        write_tiff(fn, img, header=h)
+        return fn
+
+    def write_smv(self, path, i):
+        img = self.data[i]
+        h = self.headers[i]
+
+        img = self.fixStretchCorrection(img, self.beam_center)
+        img = np.ushort(img)
+        shape_x, shape_y = img.shape
         
-    def ED3DCreator(self, path):
-        print ("Creating ed3d file......")
+        header = collections.OrderedDict()
+        header['HEADER_BYTES'] = 512
+        header['DIM'] = 2
+        header['BYTE_ORDER'] = "little_endian"
+        header['TYPE'] = "unsigned_short"
+        header['SIZE1'] = shape_x
+        header['SIZE2'] = shape_y
+        header['PIXEL_SIZE'] = self.physical_pixelsize
+        header['BIN'] = "1x1"
+        header['BIN_TYPE'] = "HW"
+        header['ADC'] = "fast"
+        header['CREV'] = 1
+        header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
+        header['DETECTOR_SN'] = 901         # special ID for DIALS
+        header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
+        header['TIME'] = str(h["ImageExposureTime"])
+        header['DISTANCE'] = "{:.2f}".format(self.distance)
+        header['TWOTHETA'] = 0.00
+        header['PHI'] = self.startangle
+        header['OSC_START'] = self.startangle
+        header['OSC_RANGE'] = self.osangle
+        header['WAVELENGTH'] = self.wavelength
+        # reverse XY coordinates for XDS
+        header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[1]
+        header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[0]
+        header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
+        header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
+        fn = os.path.join(path, "{:05d}.img".format(i))
+        write_adsc(fn, img, header=header)
+        return fn
+
+    def write_mrc(self, path, i):
+        img = self.data[i]
+        h = self.headers[i]
+
+        fn = os.path.join(path, "{:05d}.mrc".format(i))
+
+        # flip up/down because RED reads images from the bottom left corner
+        img = self.fixStretchCorrection(img, self.beam_center)
+        img = np.flipud(img.astype(np.int16))
         
+        with open(fn, "wb") as mrcf:
+            mrcf.write(self.mrc_header)
+            mrcf.write(img.tobytes())
+        return fn
+
+
+    def write_ed3d(self, path):
         self.makedirs(path)
 
         ed3d = open(os.path.join(path, "1.ed3d"), 'w')
@@ -226,8 +272,7 @@ class ImgConversion(object):
         ed3d.close()
         logger.debug("Ed3d file created in path: {}".format(path))
         
-    def XDSINPCreator(self, path):
-        print ("Creating XDS inp file......")
+    def write_xds_inp(self, path):
         from XDS_template import XDS_template
         from math import cos, pi
 
@@ -275,8 +320,6 @@ class ImgConversion(object):
         with open(os.path.join(path, 'XDS.INP'),'w') as f:
             f.write(s)
         
-        logger.debug(" >> Wrote XDS.inp.")
+        logger.info("XDS INP file created.")
 
-    def makedirs(self, path):
-        if not os.path.exists(path):
-            os.makedirs(path)
+
