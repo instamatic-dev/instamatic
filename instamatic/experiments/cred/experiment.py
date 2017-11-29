@@ -9,6 +9,8 @@ import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from scipy.signal import correlate2d
+from instamatic.calibrate import CalibBeamShift
+from instamatic.experiments.serialed.experiment import find_crystals
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -29,10 +31,7 @@ class Experiment(object):
         self.diff_defocus = 0
         self.image_interval = 99999
         
-        self.mode = "manual"
-        ## Modes: manual, auto, no-interval.
-        self.transfmat = np.ones((2,2))
-        ## transfmat comes from calibration of beam shift in focused beam mode
+        self.mode = "initial"
 
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
@@ -57,12 +56,14 @@ class Experiment(object):
         self.diff_defocus = defocus
         self.image_interval = interval
         print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
+        self.mode = "manual"
         
     def enable_autotrack(self, interval, defocus):
         self.diff_defocus = defocus
         self.image_interval = interval
         print "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-
+        self.mode = "auto"
+        
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
@@ -89,11 +90,18 @@ class Experiment(object):
         diff_focus_defocused = self.diff_defocus    
             
         if self.mode == "auto":
+            window_size = 50
+            ## find the center of the particle and circle a 50*50 area for reference for correlate2d
+            self.calib_beamshift = CalibBeamShift.from_file()
             self.ctrl.difffocus.value = diff_focus_defocused
-            img0, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+            img0, h = self.ctrl.getImage(self.expt * 2, header_keys=None)
             self.ctrl.difffocus.value = diff_focus_proper
-            brightarea = np.where(img0 > np.max(img0)/2)
-            img0_cropped = img0[np.min(brightarea[0]):np.max(brightarea[0]),np.min(brightarea[1]):np.max(brightarea[1])]
+            mag = self.ctrl.magnification.get()
+            crystal_pos = find_crystals(img0,mag)
+            if len(crystal_pos) == 1:
+                img0_cropped = img0[crystal_pos[0]-window_size/2:crystal_pos[0]+window_size/2,crystal_pos[1]-window_size/2:crystal_pos[1]+window_size/2]
+            else:
+                print "Please find an area with only one crystal!"
 
         if self.camtype == "simulate":
             self.startangle = a
@@ -127,14 +135,16 @@ class Experiment(object):
                     self.ctrl.difffocus.value = diff_focus_proper
     
                     image_buffer.append((i, img, h))
-                    
-                    brightarea = np.where(img > np.max(img)/2)
-                    img_cropped = img[np.min(brightarea[0]):np.max(brightarea[0]),np.min(brightarea[1]):np.max(brightarea[1])]
+
+                    img_cropped = img[crystal_pos[0]-window_size/2:crystal_pos[0]+window_size/2,crystal_pos[1]-window_size/2:crystal_pos[1]+window_size/2]
                     
                     cc = correlate2d(img0_cropped,img_cropped)
                     shft = np.argmax(cc) + 1
                     shftx = shft/len(img_cropped)
                     shfty = shft - shftx*len(img_cropped)
+                    
+                    beamshiftcoord = self.calib_beamshift.pixelcoord_to_beamshift([shftx,shfty])
+                    self.ctrl.beamshift.set(beamshiftcoord)
     
                     next_interval = t_start + acquisition_time
                     # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)

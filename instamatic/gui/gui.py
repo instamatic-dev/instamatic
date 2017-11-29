@@ -113,6 +113,7 @@ class DataCollectionController(object):
         unblank_beam = kwargs["unblank_beam"]
         stop_event = kwargs["stop_event"]
         enable_image_interval = kwargs["enable_image_interval"]
+        enable_autotrack = kwargs["enable_autotrack"]
         image_interval = kwargs["image_interval"]
         diff_defocus = self.ctrl.difffocus.value + kwargs["diff_defocus"]
 
@@ -120,9 +121,13 @@ class DataCollectionController(object):
                                log=self.log, stopEvent=stop_event,
                                flatfield=self.module_io.get_flatfield())
 
-        if enable_image_interval:
-            cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus)
-
+        if enable_autotrack:
+                cexp.enable_autotrack(interval=image_interval, defocus=diff_defocus)
+        else:
+            if enable_image_interval:
+                cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus)
+            
+                
         cexp.report_status()
         cexp.start_collection()
         

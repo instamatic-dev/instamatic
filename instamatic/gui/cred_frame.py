@@ -1,6 +1,5 @@
 from Tkinter import *
 from ttk import *
-from instamatic.calibrate import calibrate_beamshift
 import threading
 
 
@@ -98,6 +97,7 @@ class ExperimentalcRED(LabelFrame):
         params = { "exposure_time": self.var_exposure_time.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
+                   "enable_autotrack": self.var_enable_autotrack.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
                    "stop_event": self.stopEvent }
@@ -117,30 +117,14 @@ class ExperimentalcRED(LabelFrame):
     def autotrack(self):
         enable = self.var_enable_autotrack.get()
         if enable:
-            self.var_enable_image_interval = False
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
-            self.calibrate_beamshift_FB()
         else:
             self.e_image_interval.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
-    ##Focused beam, CC, Calibration for beam shift
-    
-    def calibrate_beamshift_FB(self):
-        ready = raw_input("""Calibrate beamshift
--------------------
- 1. Focus your diffraction
- 2. Select desired defocus value
- 3. Center the beam with beamshift
-    
- >> Press any key to abort >> \n
- >> Press <ENTER> to start >> \n""")
-        if ready == "":
-            print ("go")
-        else:
-            print ready                
+    ##Focused beam, CC, Calibration for beam shift        
         
 
     def toggle_diff_defocus(self):
