@@ -48,12 +48,14 @@ class DataCollectionController(object):
         self.module_cred = self.stream.get_module("cred")
         self.module_red = self.stream.get_module("red")
         self.module_ctrl = self.stream.get_module("ctrl")
+        self.module_learning = self.stream.get_module("learning")
         self.module_debug = self.stream.get_module("debug")
 
         self.module_sed.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_cred.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_red.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_ctrl.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_learning.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_debug.set_trigger(trigger=self.triggerEvent, q=self.q)
 
         self.exitEvent = threading.Event()
