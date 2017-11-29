@@ -9,6 +9,7 @@ from instamatic.processing.find_crystals import find_crystals, find_crystals_tim
 from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic import config
+from instamatic import neural_network
 
 import time
 import logging
@@ -417,7 +418,11 @@ class Experiment(object):
             t.set_description("BeamShift(x={:5.0f}, y={:5.0f})".format(*beamshift))
             time.sleep(delay)
 
-            dct = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
+            dct = {"exp_pattern_number": k, 
+                   "exp_diffshift_offset": diffshift_offset, 
+                   "exp_beamshift_offset": beamshift_offset, 
+                   "exp_beamshift": beamshift, 
+                   "exp_diffshift": diffshift}
 
             yield dct
 
@@ -479,11 +484,12 @@ class Experiment(object):
 
             img, h = self.apply_corrections(img, h)
 
-            crystal_coords = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
-            
+            crystal_positions = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
+            crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
+
             for d in (d_image, d_pos):
                 h.update(d)
-            h["exp_crystal_coords"] = crystal_coords.tolist()
+            h["exp_crystal_coords"] = crystal_coords
 
             write_hdf5(outfile, img, header=h)
 
@@ -501,6 +507,15 @@ class Experiment(object):
 
                 for d in (d_diff, d_pos, d_cryst):
                     h.update(d)
+
+                h["crystal_is_isolated"]   = crystal_positions[k].isolated
+                h["crystal_clusters"]      = crystal_positions[k].n_clusters
+                h["total_area_micrometer"] = crystal_positions[k].area_micrometer
+                h["total_area_pixel"]      = crystal_positions[k].area_pixel
+
+                # img_processed = neural_network.preprocess(img.astype(np.float))
+                # quality = neural_network.predict(img_processed)
+                # h["crystal_quality"] = quality
 
                 write_hdf5(outfile, img, header=h)
              
