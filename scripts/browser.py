@@ -9,12 +9,7 @@ from scipy import ndimage
 import argparse
 import tqdm
 
-from neural_network import preprocess_image
-from neural_network import neural_network
-
-import pickle
-with open(os.path.join(os.path.dirname(__file__), "neural_network/weights-py2.p"), "rb") as p_file:
-    weights = pickle.load(p_file)
+from instamatic import neural_network
 
 __version__ = "2017-03-12"
 
@@ -180,8 +175,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
             img, h = read_image(fn_diff)
 
-            img_processed = preprocess_image.red_find_center_reduce(img.astype(np.float), 4).reshape((150, 150, 1))
-            quality = neural_network.predict(img_processed, weights)[0][0]
+            img_processed = neural_network.preprocess(img.astype(np.float))
+            quality = neural_network.predict(img_processed)
             ax3.set_xlabel("Crystal quality: {:.2%}".format(quality))
 
             im3.set_data(img)

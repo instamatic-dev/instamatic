@@ -93,6 +93,7 @@ class About(LabelFrame):
         Label(frame, text="Magdalena O. Cichocka [Testing + ideas]").grid(row=2, column=1, sticky="W")
         Label(frame, text="Bin Wang [cRED implementation]").grid(row=3, column=1, sticky="W")
         Label(frame, text="Wei Wan [Orius/Timepix C-interface]").grid(row=4, column=1, sticky="W")
+        Label(frame, text="Jonas Angstrom [Neural network]").grid(row=4, column=1, sticky="W")
         Label(frame, text="").grid(row=5, column=0, sticky="W")
 
         Label(frame, text="Source code:").grid(row=10, column=0, sticky="W", padx=10)

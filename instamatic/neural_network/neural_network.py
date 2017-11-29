@@ -1,4 +1,9 @@
 import numpy as np
+import os
+import pickle
+
+with open(os.path.join(os.path.dirname(__file__), "weights-py2.p"), "rb") as p_file:
+    weights = pickle.load(p_file)
 
 def conv_layer(in_layer, weight, offset):
     first_layer = np.ones([(in_layer.shape[0]-2)*(in_layer.shape[1]-2), in_layer.shape[2], 3, 3])
@@ -12,6 +17,7 @@ def conv_layer(in_layer, weight, offset):
     convoluted_reshaped += offset
 
     return convoluted_reshaped
+    
 def relu(convoluted):
     convoluted[convoluted<0] = 0
     return convoluted
@@ -26,7 +32,7 @@ def max_pooling(convoluted):
 def logistic(x):
     return 1/(1+np.exp(-x))
 
-def predict(image, weights):
+def predict(image, weights=weights):
     convoluted1 = relu(conv_layer(image, weights[0], weights[1]))
     pooled1 = max_pooling(convoluted1)
     convoluted2 = relu(conv_layer(pooled1, weights[2], weights[3]))
@@ -40,4 +46,4 @@ def predict(image, weights):
     dense1 = relu(np.tensordot(flattened, weights[10], axes=(1, 0)) + weights[11])
     dense2 = relu(np.tensordot(dense1, weights[12], axes=(1, 0)) + weights[13])
     dense3 = np.tensordot(dense2, weights[14], axes=(1, 0)) + weights[15]
-    return logistic(dense3)
+    return logistic(dense3)[0][0]

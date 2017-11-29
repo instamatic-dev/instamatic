@@ -63,6 +63,7 @@ setup(
             # processing
             'instamatic.flatfield                     = instamatic.processing.flatfield:main_entry',
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main_entry',
+            'instamatic.learn                         = scripts.learn:main_entry',
             # explore
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',
