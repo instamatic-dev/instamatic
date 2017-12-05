@@ -1,6 +1,6 @@
 # Instamatic
 
-Program for automatic data collection of diffraction snapshots on electron microscopes. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electrion diffraction (cRED) data.
+Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
 
 ## Usage
 
@@ -145,14 +145,17 @@ A convenient way to experiment with the options available is to run `instamatic.
 ## Requirements
 
 - Python2.7
-- numpy
-- scipy
-- scikit-image
-- comptypes
+- comtypes
 - lmfit
-- pyyaml
-- h5py
+- numpy
+- pandas
+- PIL
+- scipy
+- skimage
 - tqdm
+- yaml
+- futures
+- h5py
 - IPython (optional)
 - matplotlib (optional)
 
