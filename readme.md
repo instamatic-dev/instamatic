@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/85934744.svg)](https://zenodo.org/badge/latestdoi/85934744)
+
 # Instamatic
 
 Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
@@ -167,4 +169,4 @@ A convenient way to experiment with the options available is to run `instamatic.
 
 If you found this software useful, please cite:
 
-Stef Smeets. (2017) Instamatic (Version 0.4.0) [Software]. Available from http://github.com/stefsmeets/instamatic
+Stef Smeets, Bin Wang, Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2017, December 5). stefsmeets/instamatic: Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389
