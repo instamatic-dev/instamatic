@@ -169,4 +169,4 @@ A convenient way to experiment with the options available is to run `instamatic.
 
 If you found this software useful, please cite:
 
-Stef Smeets, Bin Wang, Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2017, December 5). stefsmeets/instamatic: Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389
+Stef Smeets, Bin Wang, Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389
