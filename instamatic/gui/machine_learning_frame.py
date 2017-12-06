@@ -2,13 +2,10 @@ from Tkinter import *
 from ttk import *
 import tkFileDialog
 
-import matplotlib
-matplotlib.use('TkAgg')
-
 from instamatic.formats import read_image
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_frame import ShowMatplotlibFig
 
 import os
 
@@ -111,9 +108,11 @@ class MachineLearningFrame(object, LabelFrame):
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
+            print "No row selected"
             return
 
         fn = row["text"]
+
         up = os.path.dirname
         root = up(up(fn))
         name = os.path.basename(fn).replace("_{:04d}.".format(number), ".")
@@ -136,8 +135,7 @@ class MachineLearningFrame(object, LabelFrame):
 
         ax2.imshow(data, vmax=500)
 
-        canvas = FigureCanvasTkAgg(fig, master=self)
-        canvas.show()
+        ShowMatplotlibFig(self, fig, title=fn)
 
 
 if __name__ == '__main__':
