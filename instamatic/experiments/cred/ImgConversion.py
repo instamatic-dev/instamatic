@@ -202,7 +202,7 @@ class ImgConversion(object):
         header['BIN_TYPE'] = "HW"
         header['ADC'] = "fast"
         header['CREV'] = 1
-        header['BEAMLINE'] = "TIMEPIX_SU"   # special ID for DIALS
+        header['BEAMLINE'] = "TimePix_SU"   # special ID for DIALS
         header['DETECTOR_SN'] = 901         # special ID for DIALS
         header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
         header['TIME'] = str(h["ImageExposureTime"])
