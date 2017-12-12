@@ -277,11 +277,11 @@ class VideoStream(threading.Thread):
         frame = np.rot90(frame, k=3)
 
         if self.auto_contrast:
-            frame = frame * (256 / (1+ frame.max()))
+            frame = frame * (256 / (1 + np.percentile(frame, 95)))
             image = Image.fromarray(frame)
         elif self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
-            image = (self.disprang_default/self.disprang)*image
+            image = (256 / self.disprang)*image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)

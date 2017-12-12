@@ -13,7 +13,7 @@ class ExperimentalcRED(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
-        self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
+        self.exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, from_=0.0, to=100.0, increment=0.01)
         self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
@@ -31,6 +31,10 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+
+        Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
+        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
+        self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -61,6 +65,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
+        self.var_exposure_time_image = DoubleVar(value=0.1)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -92,6 +97,7 @@ class ExperimentalcRED(LabelFrame):
 
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
+                   "exposure_time_image": self.var_exposure_time_image.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "image_interval": self.var_image_interval.get(),
@@ -103,10 +109,12 @@ class ExperimentalcRED(LabelFrame):
         enable = self.var_enable_image_interval.get()
         if enable:
             self.e_image_interval.config(state=NORMAL)
+            self.e_image_exposure.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
+            self.e_image_exposure.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
 

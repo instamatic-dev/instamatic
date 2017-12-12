@@ -25,8 +25,10 @@ class Experiment(object):
         self.stopEvent = stopEvent
         self.flatfield = flatfield
 
-        self.diff_defocus = 0
+        self.image_interval_enabled = False
         self.image_interval = 99999
+        self.diff_defocus = 0
+        self.expt_image = 0.1
 
     def report_status(self):
         self.diff_binsize = self.ctrl.cam.default_binsize
@@ -40,10 +42,15 @@ class Experiment(object):
         print "              brightness = {}".format(self.diff_brightness)
         print "              spotsize = {}".format(self.diff_spotsize)        
     
-    def enable_image_interval(self, interval, defocus):
+    def enable_image_interval(self, interval, defocus, exposure_time_image):
         self.diff_defocus = defocus
         self.image_interval = interval
-        print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
+        self.expt_image = exposure_time_image
+        self.image_interval_enabled = True
+
+        msg = "Image interval enabled: every {} frames an image with defocus {} will be displayed (t={} s).".format(interval, defocus, exposure_time_image)
+        print msg
+        self.logger.info(msg)
 
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
@@ -79,6 +86,8 @@ class Experiment(object):
         
         diff_focus_proper = self.ctrl.difffocus.value
         diff_focus_defocused = self.diff_defocus
+        image_interval = self.image_interval
+        expt_image = self.expt_image
 
         i = 1
 
@@ -92,7 +101,7 @@ class Experiment(object):
                 acquisition_time = (t_start - t0) / (i-1)
 
                 self.ctrl.difffocus.value = diff_focus_defocused
-                img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                img, h = self.ctrl.getImage(expt_image, header_keys=None)
                 self.ctrl.difffocus.value = diff_focus_proper
 
                 image_buffer.append((i, img, h))
@@ -151,6 +160,9 @@ class Experiment(object):
             f.write("Oscillation angle: {:.4f} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
 
+            if self.image_interval_enabled:
+                f.write("Image interval: every {} frames an image with defocus {} (t={} s).".format(image_interval, diff_focus_defocused, expt_image))
+
         if nframes <= 3:
             self.logger.info("Not enough frames collected. Data will not be written (nframes={}).".format(nframes))
             print "Data collection done. Not enough frames collected (nframes={}).".format(nframes)
@@ -168,7 +180,6 @@ class Experiment(object):
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-
         print "Writing files..."
 
         img_conv.threadpoolwriter(tiff_path=self.pathtiff,

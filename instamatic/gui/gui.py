@@ -116,6 +116,7 @@ class DataCollectionController(object):
         stop_event = kwargs["stop_event"]
         enable_image_interval = kwargs["enable_image_interval"]
         image_interval = kwargs["image_interval"]
+        exposure_time_image = kwargs["exposure_time_image"]
         diff_defocus = self.ctrl.difffocus.value + kwargs["diff_defocus"]
 
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
@@ -123,7 +124,7 @@ class DataCollectionController(object):
                                flatfield=self.module_io.get_flatfield())
 
         if enable_image_interval:
-            cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus)
+            cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus, exposure_time_image=exposure_time_image)
 
         cexp.report_status()
         cexp.start_collection()
