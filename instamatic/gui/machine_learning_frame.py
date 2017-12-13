@@ -93,14 +93,16 @@ class MachineLearningFrame(object, LabelFrame):
         print "CSV data `{}` loaded".format(fn)
 
     def go_to_crystal(self):
+        row = self.tv.item(self.tv.focus())
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
+            print "No row selected"
             return
 
         self.q.put(("ctrl", { "task": "stageposition", 
-                        "x": float(x),
-                        "y": float(y) } ))
+                        "x": float(stage_x),
+                        "y": float(stage_y) } ))
         self.triggerEvent.set()
 
     def show_image(self):
@@ -129,11 +131,16 @@ class MachineLearningFrame(object, LabelFrame):
         
         img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates
+
+        coords = img_h["exp_crystal_coords"]
+        for c_x, c_y in coords:
+            c_y, c_x = img.shape[0] - c_x, c_y
+            ax1.plot(c_y, c_x, marker="+", color="blue",  mew=2)
         
-        ax1.imshow(img)
+        ax1.imshow(img, vmax=np.percentile(img, 99.5))
         ax1.plot(cryst_y, cryst_x, marker="+", color="red",  mew=2)
 
-        ax2.imshow(data, vmax=500)
+        ax2.imshow(data, vmax=np.percentile(data, 99.5))
 
         ShowMatplotlibFig(self, fig, title=fn)
 
