@@ -85,7 +85,7 @@ class VideoStream(threading.Thread):
         self.disprang = self.disprang_default = self.defaults.dynamic_range
         # Maximum number from image readout
 
-        self.auto_contrast = False
+        self.auto_contrast = True
 
         self.resize_image = False
 
@@ -276,12 +276,13 @@ class VideoStream(threading.Thread):
 
         frame = np.rot90(frame, k=3)
 
+        # the display range in ImageTk is from 0 to 256
         if self.auto_contrast:
-            frame = frame * (256 / (1 + np.percentile(frame, 95)))
+            frame = frame * (256.0 / (1 + np.percentile(frame, 99.5)))
             image = Image.fromarray(frame)
         elif self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
-            image = (256 / self.disprang)*image
+            image = (256.0 / self.disprang)*image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
