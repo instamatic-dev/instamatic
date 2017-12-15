@@ -10,7 +10,7 @@ from instamatic import config
 from instamatic.formats import write_tiff
 from scipy.signal import correlate2d
 from instamatic.calibrate import CalibBeamShift
-from instamatic.experiments.serialed.experiment import find_crystals
+from instamatic.processing.find_crystals import find_crystals
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -94,14 +94,16 @@ class Experiment(object):
             ## find the center of the particle and circle a 50*50 area for reference for correlate2d
             self.calib_beamshift = CalibBeamShift.from_file()
             self.ctrl.difffocus.value = diff_focus_defocused
-            img0, h = self.ctrl.getImage(self.expt * 2, header_keys=None)
+            img0, h = self.ctrl.getImage(self.expt /4.0, header_keys=None)
             self.ctrl.difffocus.value = diff_focus_proper
-            mag = self.ctrl.magnification.get()
-            crystal_pos = find_crystals(img0,mag)
-            if len(crystal_pos) == 1:
-                img0_cropped = img0[crystal_pos[0]-window_size/2:crystal_pos[0]+window_size/2,crystal_pos[1]-window_size/2:crystal_pos[1]+window_size/2]
-            else:
-                print "Please find an area with only one crystal!"
+            ## need to find accurately the center of the particle
+            crystal_pos = find_crystals(img0,2500)
+
+            a1 = int(crystal_pos[0]-window_size/2)
+            b1 = int(crystal_pos[0]+window_size/2)
+            a2 = int(crystal_pos[1]-window_size/2)
+            b2 = int(crystal_pos[1]+window_size/2)
+            img0_cropped = img0[a1:b1,a2:b2]
 
         if self.camtype == "simulate":
             self.startangle = a
@@ -119,6 +121,8 @@ class Experiment(object):
 
         i = 1
 
+        print self.mode
+
         self.ctrl.cam.block()
 
         t0 = time.time()
@@ -131,12 +135,12 @@ class Experiment(object):
                     acquisition_time = (t_start - t0) / (i-1)
     
                     self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                    img, h = self.ctrl.getImage(self.expt / 10.0, header_keys=None)
                     self.ctrl.difffocus.value = diff_focus_proper
     
                     image_buffer.append((i, img, h))
 
-                    img_cropped = img[crystal_pos[0]-window_size/2:crystal_pos[0]+window_size/2,crystal_pos[1]-window_size/2:crystal_pos[1]+window_size/2]
+                    img_cropped = img[a1:b1,a2:b2]
                     
                     cc = correlate2d(img0_cropped,img_cropped)
                     shft = np.argmax(cc) + 1
@@ -144,7 +148,8 @@ class Experiment(object):
                     shfty = shft - shftx*len(img_cropped)
                     
                     beamshiftcoord = self.calib_beamshift.pixelcoord_to_beamshift([shftx,shfty])
-                    self.ctrl.beamshift.set(beamshiftcoord)
+                    print beamshiftcoord
+                    self.ctrl.beamshift.set(beamshiftcoord[0],beamshiftcoord[1])
     
                     next_interval = t_start + acquisition_time
                     # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
