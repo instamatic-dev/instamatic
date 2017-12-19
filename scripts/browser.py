@@ -105,12 +105,12 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax1.set_ylabel("Stage Y")
 
     ax2 = plt.subplot(132, title="{}\nx={}, y={}".format(fn, 0, 0))
-    im2 = ax2.imshow(img, cmap=CMAP)
+    im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
     plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
     highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=500, cmap=CMAP)
+    im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
     
     class plt_diff:
         center, = ax3.plot([], [], "o", color="red", lw=0)
@@ -128,6 +128,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             img, h = read_image(fn)
             # img = np.rot90(img, k=3)
             im2.set_data(img)
+            im2.set_clim(vmax=np.percentile(img, 99.5))
 
             stage_x, stage_y = h.get("exp_stage_position", (0, 0))
             ax2.set_xlabel("x={:.0f} y={:.0f}".format(stage_x, stage_y))
@@ -180,6 +181,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             ax3.set_xlabel("Crystal quality: {:.2%}".format(quality))
 
             im3.set_data(img)
+            im3.set_clim(vmax=np.percentile(img, 99.5))
             ax3.set_title(fn_diff)
 
             highlight2.set_xdata(plt_crystals.get_xdata()[ind])

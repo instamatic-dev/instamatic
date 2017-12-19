@@ -278,7 +278,8 @@ class VideoStream(threading.Thread):
 
         # the display range in ImageTk is from 0 to 256
         if self.auto_contrast:
-            frame = frame * (256.0 / (1 + np.percentile(frame, 99.5)))
+            frame = frame * (256.0 / (1 + np.percentile(frame[::4,::4], 99.5)))  # use 128x128 array for faster calculation
+                                                                                 
             image = Image.fromarray(frame)
         elif self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
