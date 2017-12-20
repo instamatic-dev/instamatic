@@ -227,9 +227,17 @@ class ImgConversion(object):
 
         fn = os.path.join(path, "{:05d}.mrc".format(i))
 
-        # flip up/down because RED reads images from the bottom left corner
         img = self.fixStretchCorrection(img, self.beam_center)
-        img = np.flipud(img.astype(np.int16))
+        # flip up/down because RED reads images from the bottom left corner
+        # for RED these need to be as integers
+
+        dtype = np.int16
+        if False:
+            dynamic_range = 11900  # a little bit higher just in case
+            maxval = np.iinfo(dtype).max
+            img = (img / dynamic_range)*maxval
+        img = np.round(img, 0).astype(dtype)
+        img = np.flipud(img)
         
         with open(fn, "wb") as mrcf:
             mrcf.write(self.mrc_header)

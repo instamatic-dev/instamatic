@@ -36,7 +36,10 @@ def write_adsc(fname, data, header={}):
     out +=  b"}" + (pad+1) * b'\x00' 
     assert len(out) % 512 == 0 , "Header is not multiple of 512"
 
-    data = data.astype(np.uint16)
+    # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
+    dtype = np.uint16
+    data = np.round(data, 0).astype(dtype)
+    data = data.astype(dtype)
     if swap_needed(header):
         data.byteswap(True)
 
