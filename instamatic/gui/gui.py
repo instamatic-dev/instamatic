@@ -200,6 +200,7 @@ class DataCollectionController(object):
     def debug(self, **kwargs):
         task = kwargs.pop("task")
         if task == "open_ipython":
+            ctrl = self.ctrl
             from IPython import embed
             embed(banner1="\nAssuming direct control.\n")
         elif task == "report_status":
@@ -212,6 +213,10 @@ class DataCollectionController(object):
             self.ctrl.spotsize = 1
 
             print "All done!"
+        elif task == "run_script":
+            ctrl = self.ctrl
+            script = kwargs.pop("script")
+            execfile(script)
 
     def toggle_difffocus(self, **kwargs):
         toggle = kwargs["toggle"]

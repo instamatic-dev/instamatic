@@ -1,5 +1,7 @@
 from Tkinter import *
 from ttk import *
+import tkFileDialog
+import os, sys
 
 
 class DebugFrame(LabelFrame):
@@ -9,6 +11,19 @@ class DebugFrame(LabelFrame):
         self.parent = parent
 
         self.init_vars()
+
+        frame = Frame(self)
+
+        self.e_script_file = Entry(frame, width=50, textvariable=self.script_file)
+        self.e_script_file.grid(row=2, column=1, sticky="EW")
+
+        self.BrowseButton = Button(frame, text="Browse..", command=self.browse)
+        self.BrowseButton.grid(row=2, column=2, sticky="EW")
+        
+        self.RunButton = Button(frame, text="Run", command=self.run_script)
+        self.RunButton.grid(row=2, column=3, sticky="EW")
+
+        frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
 
@@ -30,7 +45,7 @@ class DebugFrame(LabelFrame):
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
     def init_vars(self):
-        pass
+        self.script_file = StringVar(value="script.py")
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -50,6 +65,19 @@ class DebugFrame(LabelFrame):
 
     def close_down(self):
         self.q.put(("debug", { "task": "close_down" } ))
+        self.triggerEvent.set()
+
+    def browse(self):
+        fn = tkFileDialog.askopenfilename(parent=self.parent, title="Select Python script")
+        if not fn:
+            return
+        fn = os.path.realpath(fn)
+        self.script_file.set(fn)
+        return fn
+
+    def run_script(self):
+        script = self.script_file.get()
+        self.q.put(("debug", { "task": "run_script", "script": script } ))
         self.triggerEvent.set()
 
 
