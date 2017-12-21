@@ -67,6 +67,11 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     # ctrl.brightness.max()
     raw_input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
     
+    img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
+
+    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10) / img.mean() 
+    print "exposure:", exposure
+
     print "\nCollecting flatfield images"
     for n in tqdm(range(frames)):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None

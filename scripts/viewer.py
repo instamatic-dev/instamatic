@@ -20,7 +20,8 @@ def main():
         size: {} kB
        shape: {}
        range: {}-{}
-""".format(fn, img.nbytes / 1024, img.shape, img.min(), img.max())
+       dtype: {}
+""".format(fn, img.nbytes / 1024, img.shape, img.min(), img.max(), img.dtype)
 
     max_len = max([len(s) for s in h.keys()])
 

@@ -42,7 +42,7 @@ def write_tiff(fname, data, header=None):
     if isinstance(header, dict):
         header = yaml.dump(header)
     if not header:
-        header = ""
+        header = "No description"
 
     if ext == "":
         fname = root + ".tiff"
