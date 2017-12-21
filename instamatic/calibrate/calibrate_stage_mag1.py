@@ -61,9 +61,6 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, save_images=False):
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
-    # Ensure that backlash is eliminated
-    # ctrl.stageposition.reset_xy()
-
     outfile = "calib_start" if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,

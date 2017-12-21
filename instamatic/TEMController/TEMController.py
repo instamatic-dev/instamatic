@@ -414,7 +414,6 @@ class StagePosition(object):
         super(StagePosition, self).__init__()
         self._setter = tem.setStagePosition
         self._getter = tem.getStagePosition
-        self._reset = tem.forceStageBacklashCorrection
         self._tem = tem
         
     def __repr__(self):
@@ -481,9 +480,6 @@ class StagePosition(object):
     @b.setter
     def b(self, value):
         self.set(b=value)
-
-    def reset_xy(self):
-        self._reset(x=True, y=True)
 
     def neutral(self):
         self.set(x=0, y=0, z=0, a=0, b=0)

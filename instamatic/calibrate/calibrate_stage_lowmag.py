@@ -228,9 +228,6 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
-    # Ensure that backlash is eliminated
-    ctrl.stageposition.reset_xy()
-
     outfile = "calib_start" if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
