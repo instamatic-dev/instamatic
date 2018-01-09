@@ -22,7 +22,7 @@ This panel deals with input and output of the experimental data.
 
 * **Directory**: Root directory to work in. By default this is C:/instamatic/work_$date/
 
-* Sample name and number: This determines the subdirectory where experimental data are stored. The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
+* **Sample name and number**: This determines the subdirectory where experimental data are stored. The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
 
 * **Flatfield**: Here the path to the flatfield image can be specified. This hardly needs to be changed.
 
@@ -147,26 +147,30 @@ A convenient way to experiment with the options available is to run `instamatic.
 ## Requirements
 
 - Python2.7
-- comtypes
-- lmfit
-- numpy
-- pandas
-- PIL
-- scipy
-- skimage
-- tqdm
-- yaml
-- futures
-- h5py
-- IPython (optional)
-- matplotlib (optional)
+ - comtypes
+ - lmfit
+ - matplotlib
+ - numpy
+ - pandas
+ - Pillow
+ - scipy
+ - scikit-image
+ - tqdm
+ - pyyaml
+ - futures
+ - h5py
+ - IPython
 
 ## Installation
 
+The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases. Extract the archive, and open a terminal by double-clicking `Cmder.exe`.
+
+Alternatively, the latest development version can always be installed via:
+    
     pip install https://github.com/stefsmeets/instamatic/archive/master.zip
 
-## Cite
+## Citing instamatic
 
-If you found this software useful, please cite:
+If you found this software useful, please consider citing the software:
 
 Stef Smeets, Bin Wang, Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389
