@@ -16,3 +16,7 @@ instamatic.log
 TODO
 files
 images
+EMCamera
+scripts
+*.bpc
+*.dacs
