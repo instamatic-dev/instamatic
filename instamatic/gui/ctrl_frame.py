@@ -43,6 +43,18 @@ class ExperimentalCtrl(object, LabelFrame):
 
         # frame.grid_columnconfigure(1, weight=1)
 
+        Separator(frame, orient=HORIZONTAL).grid(row=10, columnspan=3, sticky="ew", pady=10)
+        
+        Label(frame, text="Brightness", width=20).grid(row=11, column=0, sticky="W")
+        self.e_brightness = Entry(frame, width=10, textvariable=self.var_brightness)
+        self.e_brightness.grid(row=11, column=1, sticky="W")
+
+        b_brightness = Button(frame, text="Set", command=self.set_brightness)
+        b_brightness.grid(row=11, column=2, sticky="W")
+
+        slider = Scale(frame, variable=self.var_brightness, from_=0, to=2**16-1, orient=HORIZONTAL, command=self.set_brightness)
+        slider.grid(row=12, column=0, columnspan=3, sticky="EW")
+
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
     def init_vars(self):
@@ -52,10 +64,18 @@ class ExperimentalCtrl(object, LabelFrame):
 
         self.var_stage_x = DoubleVar(value=0)
         self.var_stage_y = DoubleVar(value=0)
+        
+        self.var_brightness = IntVar(value=0)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
+
+    def set_brightness(self, event=None):
+        self.var_brightness.set((self.var_brightness.get()))
+        self.q.put(("ctrl", { "task": "brightness", 
+                              "value": self.var_brightness.get() } ))
+        self.triggerEvent.set()
 
     def set_negative_angle(self):
         self.q.put(("ctrl", { "task": "stageposition", 
@@ -81,6 +101,6 @@ class ExperimentalCtrl(object, LabelFrame):
 
 if __name__ == '__main__':
     root = Tk()
-    ExperimentalCTRL(root).pack(side="top", fill="both", expand=True)
+    ExperimentalCtrl(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
 
