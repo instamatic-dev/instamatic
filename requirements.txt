@@ -3,11 +3,11 @@ lmfit
 matplotlib
 numpy
 pandas
-PIL
+Pillow
 scipy
-skimage
+scikit-image
 tqdm
-yaml
+pyyaml
 futures
 h5py
 # optional

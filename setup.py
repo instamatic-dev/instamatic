@@ -28,6 +28,13 @@ setup(
 
     classifiers=[
         'Programming Language :: Python :: 2.7',
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Operating System :: Microsoft :: Windows',
+        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
+        'Topic :: Scientific/Engineering :: Chemistry',
+        'Topic :: Software Development :: Libraries'
     ],
 
     packages=["instamatic", 
@@ -40,7 +47,19 @@ setup(
               "instamatic.processing",
               "instamatic.TEMController"],
 
-    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py", "tqdm"],
+    install_requires=['comtypes', 
+                      'lmfit', 
+                      'matplotlib', 
+                      'numpy', 
+                      'pandas', 
+                      'Pillow', 
+                      'scipy', 
+                      'scikit-image', 
+                      'tqdm', 
+                      'pyyaml', 
+                      'futures', 
+                      'h5py', 
+                      'IPython'],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
