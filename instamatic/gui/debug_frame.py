@@ -2,6 +2,8 @@ from Tkinter import *
 from ttk import *
 import tkFileDialog
 import os, sys
+import glob
+from instamatic.config import config_dir
 
 
 class DebugFrame(LabelFrame):
@@ -14,14 +16,19 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
-        self.e_script_file = Entry(frame, width=50, textvariable=self.script_file)
-        self.e_script_file.grid(row=2, column=1, sticky="EW")
+        Label(frame, text="Run custom python scripts").grid(row=1, column=0, sticky="W")
+
+        self.e_script_file = Combobox(frame, width=50, textvariable=self.script_file, values=self.scripts.keys())
+        self.e_script_file.grid(row=2, column=0, columnspan=2, sticky="EW")
+        self.scripts_combobox_update()
 
         self.BrowseButton = Button(frame, text="Browse..", command=self.browse)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
         
         self.RunButton = Button(frame, text="Run", command=self.run_script)
         self.RunButton.grid(row=2, column=3, sticky="EW")
+        
+        Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky="ew", pady=10)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -45,7 +52,18 @@ class DebugFrame(LabelFrame):
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
     def init_vars(self):
-        self.script_file = StringVar(value="script.py")
+        self.script_file = StringVar()
+        self.scripts = {}
+        self.scripts_dir = os.path.join(config_dir, "scripts")
+
+    def scripts_combobox_update(self, event=None):
+        for fn in glob.glob(os.path.join(self.scripts_dir, "*.py")):
+            self.scripts[os.path.basename(fn)] = fn
+        self.e_script_file['values'] = self.scripts.keys()
+
+    def scripts_combobox_add(self, fn):
+        self.scripts[os.path.basename(fn)] = fn
+        self.e_script_file['values'] = self.scripts.keys()
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -72,11 +90,14 @@ class DebugFrame(LabelFrame):
         if not fn:
             return
         fn = os.path.realpath(fn)
+        self.scripts_combobox_add(fn)
         self.script_file.set(fn)
         return fn
 
     def run_script(self):
         script = self.script_file.get()
+        if script in self.scripts:
+            script = self.scripts[script]
         self.q.put(("debug", { "task": "run_script", "script": script } ))
         self.triggerEvent.set()
 
