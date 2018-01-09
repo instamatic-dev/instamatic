@@ -5,7 +5,7 @@ import os
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
-execfile('instamatic/version.py')  # grab __version__
+execfile('instamatic/version.py')  # grab __version__, __author__, etc.
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -16,15 +16,15 @@ except IOError:
     long_description = read('README.md')
 
 setup(
-    name="instamatic",
+    name=__title__,
     version=__version__,
-    description="Python program to collect serial and rotation electron diffraction data",
+    description=__description__,
     long_description=long_description,
 
-    author="Stef Smeets",
-    author_email="stef.smeets@mmk.su.se",
-    license="GPL",
-    url="https://github.com/stefsmeets/instamatic",
+    author=__author__,
+    author_email=__author_email__,
+    license=__license__,
+    url=__url__,
 
     classifiers=[
         'Programming Language :: Python :: 2.7',
