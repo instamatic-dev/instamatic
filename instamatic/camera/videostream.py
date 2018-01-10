@@ -89,7 +89,7 @@ class VideoStream(threading.Thread):
 
         self.resize_image = False
 
-        self.last = time.time()
+        self.last = time.clock()
         self.nframes = 1
         self.update_frequency = 0.25
         self.last_interval = self.frametime
@@ -307,7 +307,7 @@ class VideoStream(threading.Thread):
         self.root.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
-        self.current = time.time()
+        self.current = time.clock()
         delta = self.current - self.last
 
         if delta > self.update_frequency:

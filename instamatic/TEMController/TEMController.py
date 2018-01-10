@@ -509,9 +509,9 @@ class StagePosition(object):
         
         angle = start
         
-        t0 = time.time()
+        t0 = time.clock()
         while cmp(angle, target) == m:
-            t1 = time.time()
+            t1 = time.clock()
             angle = start - m * (t1 - t0) * speed
             self._tem.stage3.SetTiltXAngle(angle)
             time.sleep(delay)

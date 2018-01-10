@@ -8,6 +8,7 @@ import time
 import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
+from timer import wait
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -93,11 +94,11 @@ class Experiment(object):
 
         self.ctrl.cam.block()
 
-        t0 = time.time()
+        t0 = time.clock()
 
         while not self.stopEvent.is_set():
             if i % self.image_interval == 0:
-                t_start = time.time()
+                t_start = time.clock()
                 acquisition_time = (t_start - t0) / (i-1)
 
                 self.ctrl.difffocus.value = diff_focus_defocused
@@ -109,13 +110,13 @@ class Experiment(object):
                 next_interval = t_start + acquisition_time
                 # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
 
-                while time.time() > next_interval:
+                while time.clock() > next_interval:
                     next_interval += acquisition_time
                     i += 1
                     # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
 
-                while time.time() < next_interval:
-                    time.sleep(0.001)
+                diff = next_interval - time.clock() # seconds
+                wait(int(diff * 1000))              # milliseconds
 
             else:
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)
@@ -124,7 +125,7 @@ class Experiment(object):
 
             i += 1
 
-        t1 = time.time()
+        t1 = time.clock()
 
         self.ctrl.cam.unblock()
 
@@ -139,11 +140,16 @@ class Experiment(object):
             print "Blanking beam"
             self.ctrl.beamblank = True
 
+        # in case something went wrong starting data collection, return gracefully
+        if i == 1:
+            return
+
         # TODO: all the rest here is io+logistics, split off in to own function
 
-        nframes = i + 1 # len(buffer) can lie in case of frame skipping
+        nframes = i-1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
-        acquisition_time = (t1 - t0) / nframes
+        total_time = t1 - t0
+        acquisition_time = total_time / nframes
         print "\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.endangle-self.startangle), self.startangle, self.endangle, nframes, osangle)
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
@@ -151,17 +157,20 @@ class Experiment(object):
         
         with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
             f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {:.2f}\n".format(self.startangle))
-            f.write("Ending angle: {:.2f}\n".format(self.endangle))
-            f.write("Rotation range: {:.2f}\n".format(self.endangle-self.startangle))
-            f.write("Exposure Time: {} s\n".format(self.expt))
+            f.write("Starting angle: {:.2f} degrees\n".format(self.startangle))
+            f.write("Ending angle: {:.2f} degrees\n".format(self.endangle))
+            f.write("Rotation range: {:.2f} degrees\n".format(self.endangle-self.startangle))
+            f.write("Exposure Time: {:.3f} s\n".format(self.expt))
+            f.write("Acquisition time: {:.3f} s\n".format(acquisition_time))
+            f.write("Total time: {:.3f} s\n".format(total_time))
             f.write("Spot Size: {}\n".format(spotsize))
             f.write("Camera length: {} mm\n".format(camera_length))
             f.write("Oscillation angle: {:.4f} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
 
             if self.image_interval_enabled:
-                f.write("Image interval: every {} frames an image with defocus {} (t={} s).".format(image_interval, diff_focus_defocused, expt_image))
+                f.write("Image interval: every {} frames an image with defocus {} (t={} s).\n".format(image_interval, diff_focus_defocused, expt_image))
+                f.write("Number of images: {}\n".format(len(image_buffer)))
 
         if nframes <= 3:
             self.logger.info("Not enough frames collected. Data will not be written (nframes={}).".format(nframes))
