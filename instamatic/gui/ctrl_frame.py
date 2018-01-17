@@ -65,7 +65,7 @@ class ExperimentalCtrl(object, LabelFrame):
         self.var_stage_x = DoubleVar(value=0)
         self.var_stage_y = DoubleVar(value=0)
         
-        self.var_brightness = IntVar(value=0)
+        self.var_brightness = IntVar(value=65535)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger

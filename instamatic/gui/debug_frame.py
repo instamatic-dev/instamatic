@@ -45,6 +45,9 @@ class DebugFrame(LabelFrame):
 
         self.openIPython = Button(frame, text="Open IPython shell", command=self.open_ipython)
         self.openIPython.grid(row=1, column=1, sticky="EW")
+
+        self.resetTriggers = Button(frame, text="Empty queue", command=self.empty_queue)
+        self.resetTriggers.grid(row=2, column=0, sticky="EW")
         
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -72,6 +75,12 @@ class DebugFrame(LabelFrame):
     def reset_triggers(self):
         self.triggerEvent.clear()
         print ">> trigger event has been reset."
+
+    def empty_queue(self):
+        print "There are {} items left in the queue.".format(self.q.qsize())
+        while not self.q.empty():
+            job, kwargs = self.q.get()
+            print "Flushed job: {}->{}".format(job, kwargs)
 
     def open_ipython(self):
         self.q.put(("debug", { "task": "open_ipython" } ))

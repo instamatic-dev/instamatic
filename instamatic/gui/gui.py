@@ -40,7 +40,7 @@ class DataCollectionController(object):
         self.camera = ctrl.cam.name
         self.log = log
 
-        self.q = Queue.Queue()
+        self.q = Queue.LifoQueue(maxsize=1)
         self.triggerEvent = threading.Event()
         
         self.module_io = self.stream.get_module("io")
@@ -85,7 +85,7 @@ class DataCollectionController(object):
                     self.acquire_data_RED(**kwargs)
     
                 elif job == "ctrl":
-                    self.move_stage(**kwargs)
+                    self.microscope_control(**kwargs)
     
                 elif job == "debug":
                     self.debug(**kwargs)
@@ -117,7 +117,7 @@ class DataCollectionController(object):
         enable_image_interval = kwargs["enable_image_interval"]
         image_interval = kwargs["image_interval"]
         exposure_time_image = kwargs["exposure_time_image"]
-        diff_defocus = self.ctrl.difffocus.value + kwargs["diff_defocus"]
+        diff_defocus = kwargs["diff_defocus"]
 
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
                                log=self.log, stopEvent=stop_event,
@@ -189,13 +189,13 @@ class DataCollectionController(object):
             self.red_exp.finalize()
             del self.red_exp
 
-    def move_stage(self, **kwargs):
+    def microscope_control(self, **kwargs):
         task = kwargs.pop("task")
 
         f = getattr(self.ctrl, task)
         f.set(**kwargs)
 
-        print f
+        # print f
 
     def debug(self, **kwargs):
         task = kwargs.pop("task")

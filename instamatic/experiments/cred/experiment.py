@@ -71,6 +71,9 @@ class Experiment(object):
         buffer = []
         image_buffer = []
 
+        if self.ctrl.mode != 'diff':
+            self.ctrl.mode = 'diff'
+
         if self.camtype == "simulate":
             self.startangle = a
         else:
@@ -86,7 +89,7 @@ class Experiment(object):
             self.ctrl.beamblank = False
         
         diff_focus_proper = self.ctrl.difffocus.value
-        diff_focus_defocused = self.diff_defocus
+        diff_focus_defocused = self.diff_defocus + diff_focus_proper
         image_interval = self.image_interval
         expt_image = self.expt_image
 
