@@ -75,14 +75,14 @@ class Experiment(object):
             self.ctrl.mode = 'diff'
 
         if self.camtype == "simulate":
-            self.startangle = a
+            self.start_angle = a
         else:
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 a = self.ctrl.stageposition.a
                 if abs(a - a0) > ACTIVATION_THRESHOLD:
                     break
             print "Data Recording started."
-            self.startangle = a
+            self.start_angle = a
 
         if self.unblank_beam:
             print "Unblanking beam"
@@ -133,10 +133,10 @@ class Experiment(object):
         self.ctrl.cam.unblock()
 
         if self.camtype == "simulate":
-            self.endangle = self.startangle + np.random.random()*50
+            self.end_angle = self.start_angle + np.random.random()*50
             camera_length = 300
         else:
-            self.endangle = self.ctrl.stageposition.a
+            self.end_angle = self.ctrl.stageposition.a
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
@@ -150,25 +150,25 @@ class Experiment(object):
         # TODO: all the rest here is io+logistics, split off in to own function
 
         nframes = i-1 # len(buffer) can lie in case of frame skipping
-        osangle = abs(self.endangle - self.startangle) / nframes
+        osc_angle = abs(self.end_angle - self.start_angle) / nframes
         total_time = t1 - t0
         acquisition_time = total_time / nframes
-        print "\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.endangle-self.startangle), self.startangle, self.endangle, nframes, osangle)
+        print "\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle)
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.4f})".format(abs(self.endangle-self.startangle), self.startangle, self.endangle, nframes, osangle))
+        self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.4f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle))
         
         with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
             f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {:.2f} degrees\n".format(self.startangle))
-            f.write("Ending angle: {:.2f} degrees\n".format(self.endangle))
-            f.write("Rotation range: {:.2f} degrees\n".format(self.endangle-self.startangle))
+            f.write("Starting angle: {:.2f} degrees\n".format(self.start_angle))
+            f.write("Ending angle: {:.2f} degrees\n".format(self.end_angle))
+            f.write("Rotation range: {:.2f} degrees\n".format(self.end_angle-self.start_angle))
             f.write("Exposure Time: {:.3f} s\n".format(self.expt))
             f.write("Acquisition time: {:.3f} s\n".format(acquisition_time))
             f.write("Total time: {:.3f} s\n".format(total_time))
             f.write("Spot Size: {}\n".format(spotsize))
             f.write("Camera length: {} mm\n".format(camera_length))
-            f.write("Oscillation angle: {:.4f} degrees\n".format(osangle))
+            f.write("Oscillation angle: {:.4f} degrees\n".format(osc_angle))
             f.write("Number of frames: {}\n".format(len(buffer)))
 
             if self.image_interval_enabled:
@@ -180,14 +180,14 @@ class Experiment(object):
             print "Data collection done. Not enough frames collected (nframes={}).".format(nframes)
             return
 
-        rotation_angle = config.microscope.camera_rotation_vs_stage_xy
+        rotation_axis = config.microscope.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=camera_length,
-                 osangle=osangle,
-                 startangle=self.startangle,
-                 endangle=self.endangle,
-                 rotation_angle=rotation_angle,
+                 osc_angle=osc_angle,
+                 start_angle=self.start_angle,
+                 end_angle=self.end_angle,
+                 rotation_axis=rotation_axis,
                  acquisition_time=acquisition_time,
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
@@ -197,7 +197,7 @@ class Experiment(object):
         img_conv.threadpoolwriter(tiff_path=self.pathtiff,
                                   mrc_path=self.pathmrc,
                                   smv_path=self.pathsmv,
-                                  workers=8)
+                                  workers=1)
         
         # img_conv.tiff_writer(self.pathtiff)
         # img_conv.smv_writer(self.pathsmv)

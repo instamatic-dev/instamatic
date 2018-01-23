@@ -34,15 +34,15 @@ class ImgConversion(object):
     'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
 
     def __init__(self, 
-                 buffer, 
-                 camera_length,
-                 osangle,
-                 startangle,
-                 endangle,
-                 rotation_angle,              # radians
-                 acquisition_time,
-                 resolution_range=(20, 0.8),
-                 flatfield='flatfield.tiff'
+                 buffer,                     # image buffer, list of (index [int], image data [2D numpy array], header [dict])
+                 camera_length,              # virtual camera length read from the microscope
+                 osc_angle,                  # degrees, oscillation angle of the rotation
+                 start_angle,                # degrees, start angle of the rotation
+                 end_angle,                  # degrees, end angle of the rotation
+                 rotation_axis,              # radians, specifies the position of the rotation axis
+                 acquisition_time,           # seconds, acquisition time (exposure time + overhead)
+                 resolution_range=(20, 0.8), # reciprocal angstrong (dmax, dmin)
+                 flatfield='flatfield.tiff'  
                  ):
         flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
@@ -80,15 +80,15 @@ class ImgConversion(object):
 
         self.beam_center = self.get_average_beam_center()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
-        self.osangle = osangle
-        self.startangle = startangle
-        self.endangle = endangle
-        self.rotation_angle = rotation_angle
+        self.osc_angle = osc_angle
+        self.start_angle = start_angle
+        self.end_angle = end_angle
+        self.rotation_axis = rotation_axis
         self.dmax, self.dmin = resolution_range
         self.nframes = max(self.data.keys())
         
         self.acquisition_time = acquisition_time
-        self.rotation_speed = get_calibrated_rotation_speed(osangle / self.acquisition_time) 
+        self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
         logger.debug("Primary beam at: {}".format(self.beam_center))
 
@@ -190,6 +190,8 @@ class ImgConversion(object):
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
+        phi = self.start_angle + self.osc_angle * (i-1)
+        
         header = collections.OrderedDict()
         header['HEADER_BYTES'] = 512
         header['DIM'] = 2
@@ -206,17 +208,17 @@ class ImgConversion(object):
         header['DETECTOR_SN'] = 901         # special ID for DIALS
         header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
         header['TIME'] = str(h["ImageExposureTime"])
-        header['DISTANCE'] = "{:.2f}".format(self.distance)
+        header['DISTANCE'] = "{:.4f}".format(self.distance)
         header['TWOTHETA'] = 0.00
-        header['PHI'] = self.startangle
-        header['OSC_START'] = self.startangle
-        header['OSC_RANGE'] = self.osangle
-        header['WAVELENGTH'] = self.wavelength
+        header['PHI'] = "{:.4f}".format(phi)
+        header['OSC_START'] = "{:.4f}".format(phi)
+        header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
+        header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = "%.2f" % self.beam_center[1]
-        header['BEAM_CENTER_Y'] = "%.2f" % self.beam_center[0]
-        header['DENZO_X_BEAM'] = "%.2f" % (self.beam_center[0]*self.physical_pixelsize)
-        header['DENZO_Y_BEAM'] = "%.2f" % (self.beam_center[1]*self.physical_pixelsize)
+        header['BEAM_CENTER_X'] = "{:.4f}".format(self.beam_center[1])
+        header['BEAM_CENTER_Y'] = "{:.4f}".format(self.beam_center[0])
+        header['DENZO_X_BEAM'] = "{:.4f}".format((self.beam_center[0]*self.physical_pixelsize))
+        header['DENZO_Y_BEAM'] = "{:.4f}".format((self.beam_center[1]*self.physical_pixelsize))
         fn = os.path.join(path, "{:05d}.img".format(i))
         write_adsc(fn, img, header=header)
         return fn
@@ -250,17 +252,17 @@ class ImgConversion(object):
 
         ed3d = open(os.path.join(path, "1.ed3d"), 'w')
 
-        rotation_angle = np.degrees(self.rotation_angle)
+        rotation_axis = np.degrees(self.rotation_axis)
 
-        if self.startangle > self.endangle:
+        if self.start_angle > self.end_angle:
             sign = -1
         else:
             sign = 1
 
         ed3d.write("WAVELENGTH    {}\n".format(self.wavelength))
-        ed3d.write("ROTATIONAXIS    {}\n".format(rotation_angle))
+        ed3d.write("ROTATIONAXIS    {}\n".format(rotation_axis))
         ed3d.write("CCDPIXELSIZE    {}\n".format(self.pixelsize))
-        ed3d.write("GONIOTILTSTEP    {}\n".format(self.osangle))
+        ed3d.write("GONIOTILTSTEP    {}\n".format(self.osc_angle))
         ed3d.write("BEAMTILTSTEP    0\n")
         ed3d.write("BEAMTILTRANGE    0.000\n")
         ed3d.write("STRETCHINGMP    0.0\n")
@@ -274,7 +276,7 @@ class ImgConversion(object):
             h = self.headers[i]
 
             fn = "{:05d}.mrc".format(i)
-            ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.startangle+sign*self.osangle*i))
+            ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.start_angle+sign*self.osc_angle*i))
         
         ed3d.write("ENDFILELIST")
         ed3d.close()
@@ -287,10 +289,10 @@ class ImgConversion(object):
         self.makedirs(path)
 
         nframes = self.nframes
-        rotation_angle = self.rotation_angle # radians
+        rotation_axis = self.rotation_axis # radians
 
-        if self.startangle > self.endangle:
-            rotation_angle += np.pi
+        if self.start_angle > self.end_angle:
+            rotation_axis += np.pi
 
         shape_x, shape_y = self.data_shape
 
@@ -305,7 +307,7 @@ class ImgConversion(object):
             data_begin=1,
             data_end=nframes,
             exclude=exclude,
-            starting_angle=self.startangle,
+            starting_angle=self.start_angle,
             wavelength=self.wavelength,
             dmin=self.dmin,
             dmax=self.dmax,
@@ -315,13 +317,13 @@ class ImgConversion(object):
             NX=shape_y,
             NY=shape_x,
             sign="+",
-            detdist=self.distance,
+            detector_distance=self.distance,
             QX=self.physical_pixelsize,
             QY=self.physical_pixelsize,
-            osangle=self.osangle,
-            calib_osangle=self.rotation_speed * self.acquisition_time,
-            rot_x=cos(rotation_angle),
-            rot_y=cos(rotation_angle+np.pi/2),
+            osc_angle=self.osc_angle,
+            calib_osc_angle=self.rotation_speed * self.acquisition_time,
+            rot_x=cos(rotation_axis),
+            rot_y=cos(rotation_axis+np.pi/2),
             rot_z=0.0
             )
        
