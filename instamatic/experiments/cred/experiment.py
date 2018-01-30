@@ -8,13 +8,25 @@ import time
 import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
-from scipy.signal import correlate2d
+from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift
-from instamatic.processing.find_crystals import find_crystals
+from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
+from scipy import ndimage
+from instamatic.processing.find_holes import find_holes
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
 
+#def Calibrate_Imageshift():
+#    from fit import fit_affine_transformation
+#    inp = raw_input("""Calibrate beamshift
+#-------------------
+# 1. Go to desired magnification (e.g. 2500x)
+# 2. Select desired beam size (BRIGHTNESS)
+# 3. Center the beam with beamshift
+#    
+# >> Press <ENTER> to start >> \n""")
+    
 
 class Experiment(object):
     def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
@@ -90,21 +102,59 @@ class Experiment(object):
         diff_focus_defocused = self.diff_defocus    
             
         if self.mode == "auto":
-            window_size = 50
+            print "Auto tracking-back mode activated. Please ensure that you put the particle in the middle of the aperture."
             ## find the center of the particle and circle a 50*50 area for reference for correlate2d
-            self.calib_beamshift = CalibBeamShift.from_file()
+            try:
+                self.calib_beamshift = CalibBeamShift.from_file()
+            except IOError:
+                print "No calibration result found. Running instamatic.calibrate_beamshift first...\n"
+                print "Find a clear area, focus the beam by brightness."
+                calibrate_beamshift(ctrl = self.ctrl)
+                print "Beam shift calibration done. Click stop collection, then restart experiment."
+                
             self.ctrl.difffocus.value = diff_focus_defocused
             img0, h = self.ctrl.getImage(self.expt /4.0, header_keys=None)
             self.ctrl.difffocus.value = diff_focus_proper
-            ## need to find accurately the center of the particle
-            crystal_pos = find_crystals(img0,2500)
 
-            a1 = int(crystal_pos[0]-window_size/2)
-            b1 = int(crystal_pos[0]+window_size/2)
-            a2 = int(crystal_pos[1]-window_size/2)
-            b2 = int(crystal_pos[1]+window_size/2)
-            img0_cropped = img0[a1:b1,a2:b2]
+            bs_x0, bs_y0 = self.ctrl.beamshift.get()
 
+            print bs_x0, bs_y0
+            ## need to find accurately the center of the particle, which is quite difficult with the defocused images with SA aperture.
+            ## remember to using focused beam instead of using SA aperture
+            """img_sobel = ndimage.filters.sobel(img0)
+            bn_img = np.zeros(img_sobel.shape[0],img_sobel.shape[1])
+            sbl_max = np.amax(abs(img_sobel))
+            bn_img = np.abs(img_sobel) >= (sbl_max/10.0)
+            crystal_pos = np.average(np.where(bn_img == True),axis = 1)"""
+            aperture_position = find_holes(img0.astype(float), area = 500, plot = False)
+
+            if len(aperture_position) == 1:
+                for i, prop in enumerate(aperture_position):
+                    cy, cx = prop.weighted_centroid
+                    y1,x1,y2,x2 = [x for x in prop.bbox]
+                
+                crystal_pos = [cy, cx]
+                d_SA = y2-y1
+                window_size = int(d_SA/1.414)
+                if window_size % 2 == 1:
+                    window_size = window_size + 1
+                
+                a1 = int(crystal_pos[0]-window_size/2)
+                b1 = int(crystal_pos[0]+window_size/2)
+                a2 = int(crystal_pos[1]-window_size/2)
+                b2 = int(crystal_pos[1]+window_size/2)
+                img0_cropped = img0[a1:b1,a2:b2]
+                print img0_cropped.shape
+                
+            else:
+                print "Please find another nicely SEPARATED crystal for autotracking."
+                return None
+
+        ## Instead of beam shift, try image shift. Calibrate imageshift first.
+        #if self.mode == "auto":
+        #    print "Auto tracking-back mode activated. Please ensure that you put the particle in the middle of the aperture"
+            
+            
         if self.camtype == "simulate":
             self.startangle = a
         else:
@@ -140,16 +190,40 @@ class Experiment(object):
     
                     image_buffer.append((i, img, h))
 
-                    img_cropped = img[a1:b1,a2:b2]
+                    aperture_position = find_holes(img.astype(float), area = 500, plot = False)
+
+                    if len(aperture_position) == 1:
+                        for i, prop in enumerate(aperture_position):
+                            cy, cx = prop.weighted_centroid
+                            y1,x1,y2,x2 = [x for x in prop.bbox]
+
+                            crystal_pos = [cy, cx]
+                            #d_SA = y2-y1
+                            #window_size = d_SA/1.414
+                            
+                            a1 = int(crystal_pos[0]-window_size/2)
+                            b1 = int(crystal_pos[0]+window_size/2)
+                            a2 = int(crystal_pos[1]-window_size/2)
+                            b2 = int(crystal_pos[1]+window_size/2)
+                            img_cropped = img[a1:b1,a2:b2]
+                            print img_cropped.shape
+                    else:
+                        print "wrong"
+                        break
+                    ## Here we can use imageshift suggested by S. Smeets
+                    ## Presumably the position of the beam (aperture) does not move; and then we can crop the image at the same position with same cropping size.
+                    #img_cropped = img[a1:b1,a2:b2]
                     
-                    cc = correlate2d(img0_cropped,img_cropped)
-                    shft = np.argmax(cc) + 1
-                    shftx = shft/len(img_cropped)
-                    shfty = shft - shftx*len(img_cropped)
+                    cc,err,diffphase = register_translation(img0_cropped,img_cropped)
+
+                    print cc
                     
-                    beamshiftcoord = self.calib_beamshift.pixelcoord_to_beamshift([shftx,shfty])
-                    print beamshiftcoord
-                    self.ctrl.beamshift.set(beamshiftcoord[0],beamshiftcoord[1])
+                    delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
+                    print delta_beamshiftcoord
+                    self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
+                    bs_x0 = bs_x0 + delta_beamshiftcoord[0]
+                    bs_y0 = bs_y0 + delta_beamshiftcoord[1]
+                    ## not sure if it should be + or - here
     
                     next_interval = t_start + acquisition_time
                     # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
