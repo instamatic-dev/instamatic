@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Tkinter import *
 from ttk import *
 import tkFileDialog
@@ -5,7 +7,7 @@ import tkFileDialog
 from instamatic.formats import read_image
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_frame import ShowMatplotlibFig
+from .mpl_frame import ShowMatplotlibFig
 
 import os
 
@@ -90,14 +92,14 @@ class MachineLearningFrame(object, LabelFrame):
                 self.tv.insert('', 'end', text=fn, values=(frame, number, quality, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
-        print "CSV data `{}` loaded".format(fn)
+        print("CSV data `{}` loaded".format(fn))
 
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
-            print "No row selected"
+            print("No row selected")
             return
 
         self.q.put(("ctrl", { "task": "stageposition", 
@@ -110,7 +112,7 @@ class MachineLearningFrame(object, LabelFrame):
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
-            print "No row selected"
+            print("No row selected")
             return
 
         fn = row["text"]

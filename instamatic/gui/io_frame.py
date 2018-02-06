@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from ttk import *
 import tkFileDialog
@@ -103,7 +104,7 @@ class IOFrame(LabelFrame):
             return
         drc = os.path.realpath(drc)
         self.var_directory.set(drc)
-        print self.get_experiment_directory()
+        print(self.get_experiment_directory())
         self.update_experiment_number()       # TODO: set to 1 on experiment update
         return drc
 
@@ -123,9 +124,9 @@ class IOFrame(LabelFrame):
         newdrc = drc+"-delete_me-"+datetime.datetime.now().strftime("%H%M%S")
         if os.path.exists(drc):
             os.rename(drc, newdrc)
-            print "Marked {} for deletion".format(drc)
+            print("Marked {} for deletion".format(drc))
         else:
-            print "{} does not exist".format(drc)
+            print("{} does not exist".format(drc))
 
     def open_data_directory(self):
         drc = self.get_working_directory()

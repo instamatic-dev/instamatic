@@ -1,3 +1,4 @@
+from __future__ import print_function
 from instamatic import config
 
 import atexit
@@ -85,7 +86,7 @@ class JeolMicroscope(object):
             time.sleep(1)
             t += 1
             if t > 3:
-                print "Waiting for microscope, t = {}s".format(t)
+                print("Waiting for microscope, t = {}s".format(t))
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
@@ -393,42 +394,42 @@ class JeolMicroscope(object):
             raise ValueError("No such screen position:", value, "(must be 'up'/'down')")
 
     def getAll(self):
-        print "## lens3"
-        print "CL1", self.lens3.GetCL1()
-        print "CL2", self.lens3.GetCL2()
-        print "CL3", self.lens3.GetCL3()
-        print "CM", self.lens3.GetCM()
-        print "FLc", self.lens3.GetFLc()
-        print "FLcomp1", self.lens3.GetFLcomp1()
-        print "FLcomp2", self.lens3.GetFLcomp2()
-        print "FLf", self.lens3.GetFLf()
-        print "IL1", self.lens3.GetIL1()
-        print "IL2", self.lens3.GetIL2()
-        print "IL3", self.lens3.GetIL3()
-        print "IL4", self.lens3.GetIL4()
-        print "OLc", self.lens3.GetOLc()
-        print "OLf", self.lens3.GetOLf()
-        print "OM", self.lens3.GetOM()
-        print "OM2", self.lens3.GetOM2()
-        print "OM2Flag", self.lens3.GetOM2Flag()
-        print "PL1", self.lens3.GetPL1()
-        print "PL2", self.lens3.GetPL2()
-        print "PL3", self.lens3.GetPL3()
-        print
-        print "## def3"
-        print "CLA1", self.def3.GetCLA1()
-        print "CLA2", self.def3.GetCLA2()
-        print "CLs", self.def3.GetCLs()
-        print "FLA1", self.def3.GetFLA1()
-        print "FLA2", self.def3.GetFLA2()
-        print "FLs1", self.def3.GetFLs1()
-        print "FLs2", self.def3.GetFLs2()
-        print "GUNA1", self.def3.GetGUNA1()
-        print "GUNA2", self.def3.GetGUNA2()
-        print "ILs", self.def3.GetILs()
-        print "IS1", self.def3.GetIS1()
-        print "IS2", self.def3.GetIS2()
-        print "OLs", self.def3.GetOLs()
-        print "PLA", self.def3.GetPLA()
+        print("## lens3")
+        print("CL1", self.lens3.GetCL1())
+        print("CL2", self.lens3.GetCL2())
+        print("CL3", self.lens3.GetCL3())
+        print("CM", self.lens3.GetCM())
+        print("FLc", self.lens3.GetFLc())
+        print("FLcomp1", self.lens3.GetFLcomp1())
+        print("FLcomp2", self.lens3.GetFLcomp2())
+        print("FLf", self.lens3.GetFLf())
+        print("IL1", self.lens3.GetIL1())
+        print("IL2", self.lens3.GetIL2())
+        print("IL3", self.lens3.GetIL3())
+        print("IL4", self.lens3.GetIL4())
+        print("OLc", self.lens3.GetOLc())
+        print("OLf", self.lens3.GetOLf())
+        print("OM", self.lens3.GetOM())
+        print("OM2", self.lens3.GetOM2())
+        print("OM2Flag", self.lens3.GetOM2Flag())
+        print("PL1", self.lens3.GetPL1())
+        print("PL2", self.lens3.GetPL2())
+        print("PL3", self.lens3.GetPL3())
+        print()
+        print("## def3")
+        print("CLA1", self.def3.GetCLA1())
+        print("CLA2", self.def3.GetCLA2())
+        print("CLs", self.def3.GetCLs())
+        print("FLA1", self.def3.GetFLA1())
+        print("FLA2", self.def3.GetFLA2())
+        print("FLs1", self.def3.GetFLs1())
+        print("FLs2", self.def3.GetFLs2())
+        print("GUNA1", self.def3.GetGUNA1())
+        print("GUNA2", self.def3.GetGUNA2())
+        print("ILs", self.def3.GetILs())
+        print("IS1", self.def3.GetIS1())
+        print("IS2", self.def3.GetIS2())
+        print("OLs", self.def3.GetOLs())
+        print("PLA", self.def3.GetPLA())
 
 

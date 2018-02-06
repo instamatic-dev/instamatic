@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Tkinter import *
 from ttk import *
 from PIL import Image, ImageEnhance
@@ -7,7 +9,7 @@ import numpy as np
 import time
 import datetime
 from instamatic.formats import write_tiff
-from camera import Camera
+from .camera import Camera
 import os, sys
 
 
@@ -239,7 +241,7 @@ class VideoStream(threading.Thread):
     def saveImage(self):
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         write_tiff(outfile, self.frame)
-        print " >> Wrote file:", outfile
+        print(" >> Wrote file:", outfile)
 
     def close(self):
         for func in self._atexit_funcs:

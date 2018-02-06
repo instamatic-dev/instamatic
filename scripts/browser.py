@@ -1,3 +1,4 @@
+from __future__ import print_function
 import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *
@@ -198,8 +199,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                     plt_diff.center.set_xdata([])
                     plt_diff.center.set_ydata([])
                 else:
-                    print
-                    print r
+                    print()
+                    print(r)
                     proj = indexer.get_projection(r)
                     pks = proj[:,3:5]
 

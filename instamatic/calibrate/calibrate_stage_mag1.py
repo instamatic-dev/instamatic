@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
 import sys, os
 import numpy as np
 
 from instamatic.tools import *
 from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
-from fit import fit_affine_transformation
-from filenames import *
+from .fit import fit_affine_transformation
+from .filenames import *
 
 import pickle
 
@@ -83,9 +85,9 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, save_images=False):
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
 
-        print
-        print "Position {}/{}".format(i+1, tot)
-        print ctrl.stageposition
+        print()
+        print("Position {}/{}".format(i+1, tot))
+        print(ctrl.stageposition)
         
         outfile = "calib_{:04d}".format(i) if save_images else None
 
@@ -102,7 +104,7 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, save_images=False):
         
         i += 1
     
-    print " >> Reset to center"
+    print(" >> Reset to center")
     ctrl.stageposition.set(x=x_cent, y=y_cent)
     ctrl.stageposition.reset_xy()
 
@@ -112,16 +114,16 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, save_images=False):
 
     m = gridsize**2 // 2 
     if gridsize % 2 and stagepos[m].max() > 50:
-        print " >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m)
-        print "    Difference:", stagepos[m]
-        print
+        print(" >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m))
+        print("    Difference:", stagepos[m])
+        print()
     
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
     params = fit_affine_transformation(shifts, stagepos, as_params=True)
     angle = params["angle"].value
-    print "Angle =", angle
+    print("Angle =", angle)
 
     plot_it(shifts, stagepos, params)
 
@@ -151,9 +153,9 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
     x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
-    print "Center:", center_fn
-    print "Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent)
-    print
+    print("Center:", center_fn)
+    print("Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent))
+    print()
 
     binsize = h_cent["ImageBinSize"]
 
@@ -172,9 +174,9 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
         img = imgscale(img, scale)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
-        print "Image:", fn
-        print "Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs)
-        print
+        print("Image:", fn)
+        print("Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs))
+        print()
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -187,7 +189,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
     params = fit_affine_transformation(shifts, stagepos, translation=True, as_params=True)
     angle = params["angle"].value
-    print "\nMag1 correction angle = {:.2f}".format(np.degrees(angle))
+    print("\nMag1 correction angle = {:.2f}".format(np.degrees(angle)))
 
     plot_it(shifts, stagepos, params)
 
@@ -220,7 +222,7 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
 def main_entry():
 
     if "help" in sys.argv:
-        print """
+        print("""
 Program to calibrate mag1 (100x) of microscope
 
 Usage: 
@@ -230,7 +232,7 @@ prepare
 
     instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
-"""
+""")
         exit()
     elif len(sys.argv) == 1:
         ctrl = initialize()

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import datetime
 import logging
@@ -105,7 +106,7 @@ class Experiment(object):
             startangle = self.current_angle + stepsize
 
         tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
-        print "\nStartangle", startangle
+        print("\nStartangle", startangle)
         # print "Angles:", tilt_positions
 
         data, headers = [], []
@@ -143,14 +144,14 @@ class Experiment(object):
         self.stepsize = stepsize
 
         with open(os.path.join(self.path, "summary.txt"), "a") as f:
-            print >> f, "Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions))
-            print "Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions))
+            print("Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions)), file=f)
+            print("Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions)))
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Data collected from {:.2f} degree to {:.2f} degree.".format(startangle, endangle))
         
         self.current_angle = angle
-        print "Done, current angle = {:.2f} degrees".format(self.current_angle)
+        print("Done, current angle = {:.2f} degrees".format(self.current_angle))
 
         if image_mode != "diff":
             ctrl.mode = image_mode
@@ -162,7 +163,7 @@ class Experiment(object):
         azimuth   = -6.61
         amplitude =  2.43
 
-        print "\nWriting MRC files"
+        print("\nWriting MRC files")
         for fn in tqdm.tqdm(self.data_files):
             img, h = read_hdf5(fn)
 
@@ -188,5 +189,5 @@ class Experiment(object):
                             startangle=self.startangle,
                             endangle=self.current_angle)
 
-        print "Writing ED3D file"
-        print "RED data collection finalized"
+        print("Writing ED3D file")
+        print("RED data collection finalized")

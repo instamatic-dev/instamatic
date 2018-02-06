@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys, os
 import numpy as np
 import time
@@ -43,7 +44,7 @@ def get_center_pixel_correction(img):
     avg2 = edge/28.0
     k = avg2/avg1
     
-    print "timepix central pixel correction factor:", k
+    print("timepix central pixel correction factor:", k)
     return k
 
 
@@ -70,9 +71,9 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
     exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10) / img.mean() 
-    print "exposure:", exposure
+    print("exposure:", exposure)
 
-    print "\nCollecting flatfield images"
+    print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
@@ -88,7 +89,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
 
     ctrl.beamblank = True
 
-    print "\nCollecting darkfield images"
+    print("\nCollecting darkfield images")
     for n in tqdm(range(frames)):
         outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
@@ -106,14 +107,14 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     date = time.strftime("%Y-%m-%d")
     ff = "flatfield_tpx_{}.tiff".format(date)
     fd = "darkfield_tpx_{}.tiff".format(date)
-    print "\n >> Writing {} and {}...".format(ff, fd)
+    print("\n >> Writing {} and {}...".format(ff, fd))
     write_tiff(ff, f, header={"deadpixels": deadpixels})
     write_tiff(fd, d, header={"deadpixels": deadpixels})
 
     fp = "deadpixels_tpx_{}.npy".format(date)
     np.save(fp, deadpixels)
 
-    print "\n >> DONE << "
+    print("\n >> DONE << ")
 
 
 def main_entry():
@@ -169,7 +170,7 @@ def main_entry():
         flatfield,h = read_tiff(options.flatfield)
         deadpixels = h["deadpixels"]
     else:
-        print "No flatfield file specified"
+        print("No flatfield file specified")
         exit()
 
     if options.darkfield:
@@ -194,7 +195,7 @@ def main_entry():
         name = os.path.basename(f)
         fout = os.path.join(options.drc, name)
         
-        print name, "->", fout
+        print(name, "->", fout)
         write_tiff(fout, img, header=h)
 
 

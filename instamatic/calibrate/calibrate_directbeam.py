@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,8 +9,8 @@ import matplotlib.pyplot as plt
 from instamatic.tools import *
 from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
-from fit import fit_affine_transformation
-from filenames import *
+from .fit import fit_affine_transformation
+from .filenames import *
 
 from instamatic.tools import printer
 import pickle
@@ -197,7 +199,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     """
 
     if not ctrl.mode == "diff":
-        print " >> Switching to diffraction mode"
+        print(" >> Switching to diffraction mode")
         ctrl.mode_diffraction()
 
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
@@ -216,7 +218,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
     img_cent, scale = autoscale(img_cent)
 
-    print "{}: x={} | y={}".format(key, *readout_cent)
+    print("{}: x={} | y={}".format(key, *readout_cent))
             
     shifts = []
     readouts = []
@@ -244,7 +246,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         readouts.append(readout)
         shifts.append(shift)
     
-    print ""
+    print("")
     # print "\nReset to center"
     attr.set(*readout_cent)
 
@@ -262,8 +264,8 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
 
 def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
-    print
-    print "Center:", center_fn
+    print()
+    print("Center:", center_fn)
     
     img_cent, h_cent = load_img(center_fn)
     readout_cent = np.array(h_cent[key])
@@ -272,20 +274,20 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
 
     binsize = h_cent["ImageBinSize"]
 
-    print "{}: x={} | y={}".format(key, *readout_cent)
+    print("{}: x={} | y={}".format(key, *readout_cent))
     
     shifts = []
     readouts = []
 
     for i, fn in enumerate(other_fn):
-        print fn
+        print(fn)
         img, h = load_img(fn)
         img = imgscale(img, scale)
         
         readout = np.array((h[key]))
-        print
-        print "Image:", fn
-        print "{}: dx={} | dy={}".format(key, *readout)
+        print()
+        print("Image:", fn)
+        print("{}: dx={} | dy={}".format(key, *readout))
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -317,7 +319,7 @@ Calibrate direct beam position
             return
         else:
             if auto_diff_focus:
-                print "Optimizing diffraction focus"
+                print("Optimizing diffraction focus")
                 current_difffocus = ctrl.difffocus.value
                 difffocus = optimize_diffraction_focus(ctrl)
                 logger.info("Optimized diffraction focus from %s to %s", current_difffocus, difffocus)
@@ -350,7 +352,7 @@ Calibrate direct beam position
 
 def main_entry():
     if "help" in sys.argv:
-        print """
+        print("""
 Program to calibrate PLA to compensate for beamshift movements
 
 Usage: 
@@ -359,7 +361,7 @@ Usage:
     
     instamatic.calibrate_directbeam (DiffShift:pattern.tiff) (BeamShift:pattern.tiff)
         To perform calibration from saved images
-"""
+""")
         exit()
     if len(sys.argv[1:]) > 0:
         calibrate_directbeam(patterns=sys.argv[1:])

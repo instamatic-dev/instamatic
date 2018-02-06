@@ -1,3 +1,4 @@
+from __future__ import print_function
 from instamatic import config
 
 NTRLMAPPING = {
@@ -243,7 +244,7 @@ class SimuMicroscope(object):
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
-        print "Connection to microscope released"
+        print("Connection to microscope released")
 
     def isBeamBlanked(self, value):
         return self.beamblank

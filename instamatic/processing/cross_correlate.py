@@ -6,6 +6,7 @@ http://www.mathworks.com/matlabcentral/fileexchange/18401-efficient-subpixel-ima
 Adapted from:
 https://github.com/scikit-image/scikit-image/blob/master/skimage/feature/register_translation.py
 """
+from __future__ import print_function
 
 import numpy as np
 
@@ -13,9 +14,9 @@ def cross_correlate(src_image, target_image, upsample_factor=1, verbose=True):
     """Simple wrapper function"""
     shift, error, diffphase = register_translation(src_image, target_image, upsample_factor)
     if verbose:
-        print "Detected shift:", shift
-        print "Error:", error
-        print "Global phase difference:", diffphase
+        print("Detected shift:", shift)
+        print("Error:", error)
+        print("Global phase difference:", diffphase)
     return shift
 
 def _upsampled_dft(data, upsampled_region_size,

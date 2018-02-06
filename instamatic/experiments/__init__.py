@@ -1,3 +1,4 @@
-from serialed import experiment as serialED
-from cred import experiment as cRED
-from red import experiment as RED
+from __future__ import absolute_import
+from .serialed import experiment as serialED
+from .cred import experiment as cRED
+from .red import experiment as RED

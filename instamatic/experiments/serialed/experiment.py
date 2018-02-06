@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys
 import numpy as np
 import json
@@ -100,8 +101,8 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         num = len(x_offsets)
         textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {:.2f}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
         
-        print
-        print textstr
+        print()
+        print(textstr)
         
         cx, cy = (box_x/2.0, box_y/2.0)
         if angle:
@@ -180,8 +181,8 @@ class Experiment(object):
         self.ctrl.brightness.max()
 
         if (not self.begin_here) or (not self.scan_radius):
-            print "\nSelect area to scan"
-            print "-------------------"
+            print("\nSelect area to scan")
+            print("-------------------")
         if not self.begin_here:
             raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stageposition.get()
@@ -319,17 +320,17 @@ class Experiment(object):
     def report_status(self):
         """Report experiment status"""
 
-        print
-        print "Output directory:\n{}".format(self.expdir)
-        print
-        print "Imaging     : binsize = {}".format(self.image_binsize)
-        print "              exposure = {}".format(self.image_exposure)
-        print "              magnification = {}".format(self.magnification)
-        print "              spotsize = {}".format(self.image_spotsize)
-        print "Diffraction : binsize = {}".format(self.diff_binsize)
-        print "              exposure = {}".format(self.diff_exposure)
-        print "              brightness = {}".format(self.diff_brightness)
-        print "              spotsize = {}".format(self.diff_spotsize)
+        print()
+        print("Output directory:\n{}".format(self.expdir))
+        print()
+        print("Imaging     : binsize = {}".format(self.image_binsize))
+        print("              exposure = {}".format(self.image_exposure))
+        print("              magnification = {}".format(self.magnification))
+        print("              spotsize = {}".format(self.image_spotsize))
+        print("Diffraction : binsize = {}".format(self.diff_binsize))
+        print("              exposure = {}".format(self.diff_exposure))
+        print("              brightness = {}".format(self.diff_brightness))
+        print("              spotsize = {}".format(self.diff_spotsize))
 
     def loop_centers(self):
         """Loop over scan centers defined
@@ -344,9 +345,9 @@ class Experiment(object):
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
-                print e
-                print " >> Moving to next center..."
-                print
+                print(e)
+                print(" >> Moving to next center...")
+                print()
                 continue
             else:
                 self.log.info("Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)", i, ncenters, x, y)
@@ -371,9 +372,9 @@ class Experiment(object):
                 try:
                     self.ctrl.stageposition.set(x=x, y=y)
                 except ValueError as e:
-                    print e
-                    print " >> Moving to next position..."
-                    print
+                    print(e)
+                    print(" >> Moving to next position...")
+                    print()
                     continue
                 else:
                     time.sleep(delay)
@@ -537,7 +538,7 @@ class Experiment(object):
     
             self.image_mode()
 
-        print "\n\nData collection finished."
+        print("\n\nData collection finished.")
 
 
 def main_gui():

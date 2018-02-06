@@ -1,1 +1,2 @@
-from gui import main
+from __future__ import absolute_import
+from .gui import main
