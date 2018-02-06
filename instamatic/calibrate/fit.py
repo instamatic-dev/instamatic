@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import lmfit
 from instamatic.tools import *
@@ -38,7 +39,7 @@ def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=Fal
     res = lmfit.minimize(objective_func, params, args=args, method=method)
     
     if res.success and not verbose:
-        print "Minimization converged after {} cycles with chisqr of {}".format(res.nfev, res.chisqr)
+        print("Minimization converged after {} cycles with chisqr of {}".format(res.nfev, res.chisqr))
     else:
         lmfit.report_fit(res)
 

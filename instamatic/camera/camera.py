@@ -1,3 +1,4 @@
+from __future__ import print_function
 import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
@@ -443,5 +444,5 @@ if __name__ == '__main__':
     # main_entry()
     cam = Camera(kind="timepix")
     arr = cam.getImage(t=0.1)
-    print arr
-    print arr.shape
+    print(arr)
+    print(arr.shape)

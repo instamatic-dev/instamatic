@@ -1,6 +1,7 @@
 #! python2
 
 from __future__ import division
+from __future__ import print_function
 from instamatic.formats import write_adsc
 import os
 import numpy as np
@@ -69,7 +70,7 @@ class ImgConversion(object):
             self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
         except KeyError:
             self.pixelsize = 1
-            print "No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length)
+            print("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))
             logger.warning("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))
 
         self.physical_pixelsize = config.camera.physical_pixelsize # mm

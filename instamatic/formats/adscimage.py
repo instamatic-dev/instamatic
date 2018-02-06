@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py
@@ -105,13 +106,13 @@ if __name__ == '__main__':
     header['SIZE2'] = 512
     
     write_adsc(fn, img, header=header)
-    print "writing:", img.shape
-    print "header:", header
-    print
+    print("writing:", img.shape)
+    print("header:", header)
+    print()
 
     arr,h = read_adsc(fn)
-    print "reading", arr.shape
-    print "header", h
+    print("reading", arr.shape)
+    print("header", h)
     
-    print
-    print "allclose:", np.allclose(img, arr)
+    print()
+    print("allclose:", np.allclose(img, arr))

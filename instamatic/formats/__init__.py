@@ -1,3 +1,4 @@
+from __future__ import print_function
 from TiffIO import TiffIO
 import time
 import os
@@ -69,7 +70,7 @@ def read_tiff(fname):
         try:
             d = yaml.load(header.get("imageDescription"))
         except (Exception, ValueError) as e:
-            print "Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription"))
+            print("Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription")))
         else:
             if isinstance(d, dict):
                 header.update(d)

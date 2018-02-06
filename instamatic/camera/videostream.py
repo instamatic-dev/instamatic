@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from ttk import *
 from PIL import Image, ImageEnhance
@@ -239,7 +240,7 @@ class VideoStream(threading.Thread):
     def saveImage(self):
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         write_tiff(outfile, self.frame)
-        print " >> Wrote file:", outfile
+        print(" >> Wrote file:", outfile)
 
     def close(self):
         for func in self._atexit_funcs:

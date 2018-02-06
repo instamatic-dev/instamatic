@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from ttk import *
 import tkFileDialog
@@ -74,13 +75,13 @@ class DebugFrame(LabelFrame):
 
     def reset_triggers(self):
         self.triggerEvent.clear()
-        print ">> trigger event has been reset."
+        print(">> trigger event has been reset.")
 
     def empty_queue(self):
-        print "There are {} items left in the queue.".format(self.q.qsize())
+        print("There are {} items left in the queue.".format(self.q.qsize()))
         while not self.q.empty():
             job, kwargs = self.q.get()
-            print "Flushed job: {}->{}".format(job, kwargs)
+            print("Flushed job: {}->{}".format(job, kwargs))
 
     def open_ipython(self):
         self.q.put(("debug", { "task": "open_ipython" } ))

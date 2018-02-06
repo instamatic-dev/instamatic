@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from ttk import *
 
@@ -94,8 +95,8 @@ class DataCollectionController(object):
                     self.toggle_difffocus(**kwargs)
 
                 else:
-                    print "Unknown job: {}".format(jobs)
-                    print "Kwargs:\n{}".format(kwargs)
+                    print("Unknown job: {}".format(jobs))
+                    print("Kwargs:\n{}".format(kwargs))
             except Exception as e:
                 traceback.print_exc()
                 self.log.debug("Error caught -> {} while running '{}' with {}".format(repr(e), job, kwargs))
@@ -204,7 +205,7 @@ class DataCollectionController(object):
             from IPython import embed
             embed(banner1="\nAssuming direct control.\n")
         elif task == "report_status":
-            print self.ctrl
+            print(self.ctrl)
         elif task == "close_down":
             self.ctrl.stageposition.neutral()
             self.ctrl.mode = "mag1"
@@ -212,7 +213,7 @@ class DataCollectionController(object):
             self.ctrl.magnification.value = 500000
             self.ctrl.spotsize = 1
 
-            print "All done!"
+            print("All done!")
         elif task == "run_script":
             ctrl = self.ctrl
             script = kwargs.pop("script")
@@ -222,14 +223,14 @@ class DataCollectionController(object):
         toggle = kwargs["toggle"]
 
         if toggle:
-            print "Proper:", self.ctrl.difffocus
+            print("Proper:", self.ctrl.difffocus)
             self._difffocus_proper = self.ctrl.difffocus.value
             value = self._difffocus_proper + kwargs["value"]
         else:
             value = self._difffocus_proper
 
         self.ctrl.difffocus.set(value=value)
-        print self.ctrl.difffocus
+        print(self.ctrl.difffocus)
 
 
 class DataCollectionGUI(VideoStream):
@@ -284,7 +285,7 @@ class DataCollectionGUI(VideoStream):
         except:
             frame = self.frame
         write_tiff(outfile, frame)
-        print " >> Wrote file:", outfile
+        print(" >> Wrote file:", outfile)
 
 
 def main():

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Tkinter import *
 from ttk import *
 import tkFileDialog
@@ -90,14 +91,14 @@ class MachineLearningFrame(object, LabelFrame):
                 self.tv.insert('', 'end', text=fn, values=(frame, number, quality, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
-        print "CSV data `{}` loaded".format(fn)
+        print("CSV data `{}` loaded".format(fn))
 
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
-            print "No row selected"
+            print("No row selected")
             return
 
         self.q.put(("ctrl", { "task": "stageposition", 
@@ -110,7 +111,7 @@ class MachineLearningFrame(object, LabelFrame):
         try:
             frame, number, quality, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
-            print "No row selected"
+            print("No row selected")
             return
 
         fn = row["text"]

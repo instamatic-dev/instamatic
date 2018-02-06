@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import datetime
 import logging
@@ -37,11 +38,11 @@ class Experiment(object):
         self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.ctrl.spotsize
 
-        print "\nOutput directory: {}".format(self.path)
-        print "Diffraction : binsize = {}".format(self.diff_binsize)
-        print "              exposure = {}".format(self.diff_exposure)
-        print "              brightness = {}".format(self.diff_brightness)
-        print "              spotsize = {}".format(self.diff_spotsize)        
+        print("\nOutput directory: {}".format(self.path))
+        print("Diffraction : binsize = {}".format(self.diff_binsize))
+        print("              exposure = {}".format(self.diff_exposure))
+        print("              brightness = {}".format(self.diff_brightness))
+        print("              spotsize = {}".format(self.diff_spotsize))        
     
     def enable_image_interval(self, interval, defocus, exposure_time_image):
         self.diff_defocus = defocus
@@ -50,7 +51,7 @@ class Experiment(object):
         self.image_interval_enabled = True
 
         msg = "Image interval enabled: every {} frames an image with defocus {} will be displayed (t={} s).".format(interval, defocus, exposure_time_image)
-        print msg
+        print(msg)
         self.logger.info(msg)
 
     def start_collection(self):
@@ -81,11 +82,11 @@ class Experiment(object):
                 a = self.ctrl.stageposition.a
                 if abs(a - a0) > ACTIVATION_THRESHOLD:
                     break
-            print "Data Recording started."
+            print("Data Recording started.")
             self.start_angle = a
 
         if self.unblank_beam:
-            print "Unblanking beam"
+            print("Unblanking beam")
             self.ctrl.beamblank = False
         
         diff_focus_proper = self.ctrl.difffocus.value
@@ -140,7 +141,7 @@ class Experiment(object):
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
-            print "Blanking beam"
+            print("Blanking beam")
             self.ctrl.beamblank = True
 
         # in case something went wrong starting data collection, return gracefully
@@ -153,7 +154,7 @@ class Experiment(object):
         osc_angle = abs(self.end_angle - self.start_angle) / nframes
         total_time = t1 - t0
         acquisition_time = total_time / nframes
-        print "\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle)
+        print("\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle))
 
         self.logger.info("Data collection camera length: {} mm".format(camera_length))
         self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.4f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle))
@@ -177,7 +178,7 @@ class Experiment(object):
 
         if nframes <= 3:
             self.logger.info("Not enough frames collected. Data will not be written (nframes={}).".format(nframes))
-            print "Data collection done. Not enough frames collected (nframes={}).".format(nframes)
+            print("Data collection done. Not enough frames collected (nframes={}).".format(nframes))
             return
 
         rotation_axis = config.microscope.camera_rotation_vs_stage_xy
@@ -192,7 +193,7 @@ class Experiment(object):
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-        print "Writing files..."
+        print("Writing files...")
 
         img_conv.threadpoolwriter(tiff_path=self.pathtiff,
                                   mrc_path=self.pathmrc,
@@ -214,4 +215,4 @@ class Experiment(object):
                 fn = os.path.join(drc, "{:05d}.tiff".format(i))
                 write_tiff(fn, img, header=h)
 
-        print "Data Collection and Conversion Done."
+        print("Data Collection and Conversion Done.")

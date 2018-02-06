@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import time
 from instamatic.formats import write_tiff
 import sys
@@ -24,8 +25,8 @@ def initialize(camera=None):
 
     microscope_id = config.cfg.microscope
     camera_id = config.cfg.camera
-    print "Microscope:", microscope_id
-    print "Camera    :", camera_id
+    print("Microscope:", microscope_id)
+    print("Camera    :", camera_id)
 
     if microscope_id == "jeol":
         from jeol_microscope import JeolMicroscope
@@ -153,13 +154,13 @@ class Magnification(object):
         try:
             self.index += 1
         except ValueError:
-            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
     def decrease(self):
         try:
             self.index -= 1
         except ValueError:
-            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
 
 class GunShift(object):
@@ -517,9 +518,9 @@ class StagePosition(object):
             time.sleep(delay)
             while wait_for_stage and self._tem.stage3.GetStatus()[3]:  # is stage moving?
                 pass
-            print round(t1-t0,2), round(angle,2)
+            print(round(t1-t0,2), round(angle,2))
 
-        print "speed:", round((target-start) / (t1-t0),2)
+        print("speed:", round((target-start) / (t1-t0),2))
 
 
 class TEMController(object):
@@ -549,8 +550,8 @@ class TEMController(object):
         self.autoblank = False
         self._saved_settings = {}
         self.store()
-        print
-        print self
+        print()
+        print(self)
 
     @property
     def spotsize(self):
@@ -728,7 +729,7 @@ class TEMController(object):
         h["ImageCameraDimensions"] = self.cam.dimensions
 
         if verbose:
-            print "Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024)
+            print("Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024))
 
         if out:
             write_tiff(out, arr, header=h)
@@ -751,7 +752,7 @@ class TEMController(object):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)
-        print "Microscope alignment restored from '{}'".format(name)
+        print("Microscope alignment restored from '{}'".format(name))
 
     def close(self):
         try:

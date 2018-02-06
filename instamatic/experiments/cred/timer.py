@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ctypes import *
 from ctypes.wintypes import UINT
 from ctypes.wintypes import DWORD
@@ -40,10 +41,10 @@ if __name__ == '__main__':
     wait(20)
     t1 = time.clock()
     
-    print "time", t1-t0
+    print("time", t1-t0)
 
     t0 = time.clock()
     wait(2)
     t1 = time.clock()
-    print "time", t1-t0
+    print("time", t1-t0)
     

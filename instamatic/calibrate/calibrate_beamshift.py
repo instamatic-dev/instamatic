@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -157,8 +158,8 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     
     pixel_cent = find_beam_center(img_cent) * binsize / scale
 
-    print "Beamshift: x={} | y={}".format(*beamshift_cent)
-    print "Pixel: x={} | y={}".format(*pixel_cent)
+    print("Beamshift: x={} | y={}".format(*beamshift_cent))
+    print("Pixel: x={} | y={}".format(*pixel_cent))
         
     shifts = []
     beampos = []
@@ -187,7 +188,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
         i += 1
     
-    print ""
+    print("")
     # print "\nReset to center"
     
     ctrl.beamshift.set(*beamshift_cent)
@@ -217,8 +218,8 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    print
-    print "Center:", center_fn
+    print()
+    print("Center:", center_fn)
     
     img_cent, h_cent = load_img(center_fn)
     beamshift_cent = np.array(h_cent["BeamShift"])
@@ -230,8 +231,8 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
     pixel_cent = np.array(holes[0].centroid) * binsize / scale
     
-    print "Beamshift: x={} | y={}".format(*beamshift_cent)
-    print "Pixel: x={:.2f} | y={:.2f}".format(*pixel_cent)
+    print("Beamshift: x={} | y={}".format(*beamshift_cent))
+    print("Pixel: x={:.2f} | y={:.2f}".format(*pixel_cent))
     
     shifts = []
     beampos = []
@@ -241,9 +242,9 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         img = imgscale(img, scale)
         
         beamshift = np.array((h["BeamShift"]))
-        print
-        print "Image:", fn
-        print "Beamshift: x={} | y={}".format(*beamshift)
+        print()
+        print("Image:", fn)
+        print("Beamshift: x={} | y={}".format(*beamshift))
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -297,7 +298,7 @@ Calibrate beamshift
 
 def main_entry():
     if "help" in sys.argv:
-        print """
+        print("""
 Program to calibrate beamshift of microscope
 
 Usage: 
@@ -306,7 +307,7 @@ Usage:
 
     instamatic.calibrate_beamshift CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
-"""
+""")
         exit()
     elif len(sys.argv) == 1:
         ctrl = initialize()

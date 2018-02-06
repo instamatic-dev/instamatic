@@ -1,3 +1,4 @@
+from __future__ import print_function
 from scipy.cluster.vq import kmeans2
 from scipy._lib._util import _asarray_validated
 from scipy import ndimage
@@ -202,7 +203,7 @@ def main_entry():
         crystals = find_crystals_timepix(img, h["exp_magnification"], plot=True)
     
         for crystal in crystals:
-            print crystal
+            print(crystal)
 
 
 if __name__ == '__main__':
