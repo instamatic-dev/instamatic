@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import time
 from instamatic.formats import write_tiff
 import sys
@@ -730,7 +731,7 @@ class TEMController(object):
         h["ImageCameraDimensions"] = self.cam.dimensions
 
         if verbose:
-            print("Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024))
+            print("Image acquired - shape: {}, size: {:.0f} kB".format(arr.shape, arr.nbytes / 1024))
 
         if out:
             write_tiff(out, arr, header=h)

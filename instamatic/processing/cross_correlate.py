@@ -7,6 +7,7 @@ Adapted from:
 https://github.com/scikit-image/scikit-image/blob/master/skimage/feature/register_translation.py
 """
 from __future__ import print_function
+from __future__ import division
 
 import numpy as np
 

@@ -1,3 +1,4 @@
+from __future__ import division
 from scipy import ndimage
 from instamatic.formats import read_tiff, write_tiff
 import sys, os

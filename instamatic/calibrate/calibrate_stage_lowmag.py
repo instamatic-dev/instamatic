@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -244,7 +245,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     stagepos = []
     shifts = []
     
-    n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
 import sys, os
 import numpy as np
 import time
@@ -70,7 +71,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
-    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10) / img.mean() 
+    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
     print("exposure:", exposure)
 
     print("\nCollecting flatfield images")

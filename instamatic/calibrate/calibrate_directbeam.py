@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,7 +41,7 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
     
             img, h = ctrl.getImage(header_keys=None)
     
-            score = np.sum(img > img.max()/2.0)**2
+            score = np.sum(img > img.max()/2)**2
     
             if score < best_score:
                 best_score = score
@@ -223,7 +224,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     shifts = []
     readouts = []
     
-    n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 

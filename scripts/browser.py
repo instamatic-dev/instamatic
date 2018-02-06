@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *

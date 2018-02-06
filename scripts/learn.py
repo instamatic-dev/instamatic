@@ -1,3 +1,4 @@
+from __future__ import division
 import glob
 from instamatic.formats import *
 from instamatic import neural_network

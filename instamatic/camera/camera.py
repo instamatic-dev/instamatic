@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
