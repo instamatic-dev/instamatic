@@ -94,7 +94,7 @@ class DataCollectionController(object):
                     self.toggle_difffocus(**kwargs)
 
                 else:
-                    print "Unknown job: {}".format(jobs)
+                    print "Unknown job: {}".format(job)
                     print "Kwargs:\n{}".format(kwargs)
             except Exception as e:
                 traceback.print_exc()

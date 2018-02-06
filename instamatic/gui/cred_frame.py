@@ -65,7 +65,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
-        self.var_exposure_time_image = DoubleVar(value=0.1)
+        self.var_exposure_time_image = DoubleVar(value=0.01)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger

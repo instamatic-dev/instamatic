@@ -29,7 +29,7 @@ class Experiment(object):
         self.image_interval_enabled = False
         self.image_interval = 99999
         self.diff_defocus = 0
-        self.expt_image = 0.1
+        self.expt_image = 0.01
 
     def report_status(self):
         self.diff_binsize = self.ctrl.cam.default_binsize
