@@ -27,7 +27,7 @@ def write_adsc(fname, data, header={}):
     out = b'{\n'
     for key in header:
         out += b"%s=%s;\n" % (key, header[key])
-    if header.has_key("HEADER_BYTES"):
+    if "HEADER_BYTES" in header:
         pad = int(header["HEADER_BYTES"]) - len(out) - 2
     else:
 #         hsize = ((len(out) + 23) // 512 + 1) * 512
