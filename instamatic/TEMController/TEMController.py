@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import absolute_import
 import time
 from instamatic.formats import write_tiff
 import sys
@@ -29,10 +30,10 @@ def initialize(camera=None):
     print("Camera    :", camera_id)
 
     if microscope_id == "jeol":
-        from jeol_microscope import JeolMicroscope
+        from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
     elif microscope_id == "simulate":
-        from simu_microscope import SimuMicroscope
+        from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()
     else:
         raise ValueError("No such microscope: `{}`".format(microscope_id))

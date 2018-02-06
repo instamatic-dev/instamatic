@@ -1,11 +1,12 @@
-from sed_frame import *
-from cred_frame import *
-from io_frame import *
-from red_frame import *
-from ctrl_frame import *
-from debug_frame import *
-from about_frame import *
-from machine_learning_frame import *
+from __future__ import absolute_import
+from .sed_frame import *
+from .cred_frame import *
+from .io_frame import *
+from .red_frame import *
+from .ctrl_frame import *
+from .debug_frame import *
+from .about_frame import *
+from .machine_learning_frame import *
 
 from collections import namedtuple
 

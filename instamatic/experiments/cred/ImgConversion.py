@@ -2,6 +2,7 @@
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 from instamatic.formats import write_adsc
 import os
 import numpy as np
@@ -284,7 +285,7 @@ class ImgConversion(object):
         logger.debug("Ed3d file created in path: {}".format(path))
         
     def write_xds_inp(self, path):
-        from XDS_template import XDS_template
+        from .XDS_template import XDS_template
         from math import cos, pi
 
         self.makedirs(path)

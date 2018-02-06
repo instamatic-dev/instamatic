@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import datetime
 import logging
@@ -6,10 +7,10 @@ from Tkinter import *
 import numpy as np
 import glob
 import time
-import ImgConversion
+from . import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
-from timer import wait
+from .timer import wait
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2

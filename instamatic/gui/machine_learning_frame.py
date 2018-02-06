@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from Tkinter import *
 from ttk import *
 import tkFileDialog
@@ -6,7 +7,7 @@ import tkFileDialog
 from instamatic.formats import read_image
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_frame import ShowMatplotlibFig
+from .mpl_frame import ShowMatplotlibFig
 
 import os
 

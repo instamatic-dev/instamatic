@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from Tkinter import *
 from ttk import *
 from PIL import Image, ImageEnhance
@@ -8,7 +9,7 @@ import numpy as np
 import time
 import datetime
 from instamatic.formats import write_tiff
-from camera import Camera
+from .camera import Camera
 import os, sys
 
 

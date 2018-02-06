@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
 from instamatic.TEMController import initialize
-from filenames import *
+from .filenames import *
 
 from instamatic.processing.find_holes import find_holes
 

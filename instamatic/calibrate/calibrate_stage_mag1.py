@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys, os
 import numpy as np
 
 from instamatic.tools import *
 from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
-from fit import fit_affine_transformation
-from filenames import *
+from .fit import fit_affine_transformation
+from .filenames import *
 
 import pickle
 

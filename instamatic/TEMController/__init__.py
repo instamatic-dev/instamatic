@@ -1,1 +1,2 @@
-from TEMController import initialize
+from __future__ import absolute_import
+from .TEMController import initialize

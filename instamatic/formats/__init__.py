@@ -1,13 +1,14 @@
 from __future__ import print_function
-from TiffIO import TiffIO
+from __future__ import absolute_import
+from .TiffIO import TiffIO
 import time
 import os
 import yaml
 import numpy as np
 import h5py
 
-from csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
-from adscimage import write_adsc, read_adsc
+from .csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
+from .adscimage import write_adsc, read_adsc
 
 try:
     import h5py
