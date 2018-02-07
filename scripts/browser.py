@@ -59,7 +59,10 @@ def lst2colormap(lst):
 
 def run(filepat="images/image_*.tiff", results=None, stitch=False):
      # use relpath to normalizes path
-    fns = map(os.path.relpath, glob.glob(filepat))
+    fns = [os.path.relpath(fn) for fn in  glob.glob(filepat)]
+
+    if len(fns) == 0:
+        sys.exit()
 
     if stitch:
         coord_color = "none"
@@ -79,8 +82,6 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
     coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
 
-    if len(fns) == 0:
-        sys.exit()
 
     fn = fns[0]
     img, h = read_image(fn)
