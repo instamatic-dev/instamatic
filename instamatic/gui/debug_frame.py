@@ -19,7 +19,7 @@ class DebugFrame(LabelFrame):
 
         Label(frame, text="Run custom python scripts").grid(row=1, column=0, sticky="W")
 
-        self.e_script_file = Combobox(frame, width=50, textvariable=self.script_file, values=self.scripts.keys())
+        self.e_script_file = Combobox(frame, width=50, textvariable=self.script_file, values=list(self.scripts.keys()))
         self.e_script_file.grid(row=2, column=0, columnspan=2, sticky="EW")
         self.scripts_combobox_update()
 
@@ -63,11 +63,11 @@ class DebugFrame(LabelFrame):
     def scripts_combobox_update(self, event=None):
         for fn in glob.glob(os.path.join(self.scripts_dir, "*.py")):
             self.scripts[os.path.basename(fn)] = fn
-        self.e_script_file['values'] = self.scripts.keys()
+        self.e_script_file['values'] = list(self.scripts.keys())
 
     def scripts_combobox_add(self, fn):
         self.scripts[os.path.basename(fn)] = fn
-        self.e_script_file['values'] = self.scripts.keys()
+        self.e_script_file['values'] = list(self.scripts.keys())
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger

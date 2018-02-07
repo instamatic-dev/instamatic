@@ -8,7 +8,7 @@ def results2df(results, sort=True):
     """Convert a list of IndexingResult objects to pandas DataFrame"""
     import pandas as pd
     df = pd.DataFrame(results).T
-    df.columns = results.values()[0]._fields
+    df.columns = list(results.values())[0]._fields
     if sort:
         df = df.sort_values("score", ascending=False)
     return df
@@ -29,7 +29,7 @@ def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
     def _dict_representer(dumper, obj):
         return dumper.represent_mapping(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            obj.items())
+            list(obj.items()))
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
     return yaml.dump(obj, f, OrderedDumper, **kwds)
 
