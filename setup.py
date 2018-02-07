@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from past.builtins import execfile
 from setuptools import setup, find_packages
 import os
 
