@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import division
+from builtins import object
 import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *
@@ -115,7 +116,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax3 = plt.subplot(133, title="Diffraction pattern")
     im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
     
-    class plt_diff:
+    class plt_diff(object):
         center, = ax3.plot([], [], "o", color="red", lw=0)
         data = None
 
