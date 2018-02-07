@@ -13,7 +13,7 @@ from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic import config
 from instamatic.tools import find_beam_center
-from itertools import izip
+
 import collections
 
 import logging
