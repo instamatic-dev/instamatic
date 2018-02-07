@@ -487,43 +487,6 @@ class StagePosition(object):
     def neutral(self):
         self.set(x=0, y=0, z=0, a=0, b=0)
 
-    def rotate_to(self, target, start=None, speed=1.0, delay=0.05, wait_for_stage=False):
-        """
-        Control rotation of the microscope
-
-        target: float
-            final angle in degrees
-        start: float
-            starting angle in degrees (optional)
-        speed: float
-            overall rate of rotation in degrees / second
-        delay: float
-            delay in seconds between updates sent to the microscope (accurate to 10 - 13 milliseconds)
-        """
-
-        if start is None:
-            start = self.a
-        else:
-            self.a = start
-        speed = abs(speed)
-
-        # m equals -1 for positive direction, 1 for negative direction
-        m = cmp(start, target)
-        
-        angle = start
-        
-        t0 = time.clock()
-        while cmp(angle, target) == m:
-            t1 = time.clock()
-            angle = start - m * (t1 - t0) * speed
-            self._tem.stage3.SetTiltXAngle(angle)
-            time.sleep(delay)
-            while wait_for_stage and self._tem.stage3.GetStatus()[3]:  # is stage moving?
-                pass
-            print(round(t1-t0,2), round(angle,2))
-
-        print("speed:", round((target-start) / (t1-t0),2))
-
 
 class TEMController(object):
     """docstring for TEMController
