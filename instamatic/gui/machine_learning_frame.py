@@ -13,6 +13,7 @@ from .mpl_frame import ShowMatplotlibFig
 
 import os
 
+
 def treeview_sort_column(tv, col, reverse):
     """https://stackoverflow.com/a/22032582"""
     l = [(tv.set(k, col), k) for k in tv.get_children('')]
@@ -23,7 +24,8 @@ def treeview_sort_column(tv, col, reverse):
 
     tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
 
-class MachineLearningFrame(object, LabelFrame):
+
+class MachineLearningFrame(LabelFrame):
     """docstring for MachineLearningFrame"""
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Neural Network")

@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter.ttk import *
 
 
-class ExperimentalCtrl(object, LabelFrame):
+class ExperimentalCtrl(LabelFrame):
     """docstring for ExperimentalCtrl"""
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Stage Control")

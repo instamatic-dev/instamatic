@@ -30,7 +30,8 @@ message3 = """
 
 Press <OK> to start"""
 
-class ExperimentalSED(object, LabelFrame):
+
+class ExperimentalSED(LabelFrame):
     """docstring for ExperimentalSED"""
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial electron diffraction")
