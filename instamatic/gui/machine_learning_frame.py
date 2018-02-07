@@ -89,7 +89,7 @@ class MachineLearningFrame(LabelFrame):
 
         import csv
 
-        with open(fn, 'rb') as f:
+        with open(fn, 'r') as f:
             reader = csv.reader(f)
             for row in reader:
                 fn, frame, number, quality, size, stage_x, stage_y = row

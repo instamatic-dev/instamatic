@@ -27,13 +27,13 @@ def write_adsc(fname, data, header={}):
     """
     out = b'{\n'
     for key in header:
-        out += b"%s=%s;\n" % (key, header[key])
+        out += "{:}={:};\n".format(key, header[key]).encode()
     if "HEADER_BYTES" in header:
         pad = int(header["HEADER_BYTES"]) - len(out) - 2
     else:
 #         hsize = ((len(out) + 23) // 512 + 1) * 512
         hsize = (len(out) + 533) & ~(512 - 1)
-        out += b"HEADER_BYTES=%d;\n" % (hsize)
+        out += "HEADER_BYTES={:d};\n".format(hsize).encode()
         pad = hsize - len(out) - 2
     out +=  b"}" + (pad+1) * b'\x00' 
     assert len(out) % 512 == 0 , "Header is not multiple of 512"

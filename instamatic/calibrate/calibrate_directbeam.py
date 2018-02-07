@@ -149,7 +149,7 @@ class CalibDirectBeam(object):
     def to_file(self, fn=CALIB_DIRECTBEAM, outdir="."):
         """Save calibration to file"""
         fout = os.path.join(outdir, fn)
-        pickle.dump(self, open(fout, "w"))
+        pickle.dump(self, open(fout, "wb"))
 
     def add(self, key, dct):
         """Add calibrations to self._dct

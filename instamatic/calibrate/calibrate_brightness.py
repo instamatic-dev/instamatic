@@ -61,7 +61,7 @@ class CalibBrightness(object):
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     def to_file(self, fn=CALIB_BRIGHTNESS):
-        pickle.dump(self, open(fn, "w"))
+        pickle.dump(self, open(fn, "wb"))
 
     def plot(self):
         if not self.has_data:

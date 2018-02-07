@@ -98,7 +98,7 @@ class ImgConversion(object):
 
     def get_average_beam_center(self):
         # take every 10th frame for beam center determination to speed up the calculation
-        return np.mean([find_beam_center(img, sigma=10) for img in self.data.values()[1::10]], axis=0)
+        return np.mean([find_beam_center(img, sigma=10) for img in list(self.data.values())[1::10]], axis=0)
 
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)

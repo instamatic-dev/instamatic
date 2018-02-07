@@ -82,7 +82,7 @@ class CalibBeamShift(object):
     def to_file(self, fn=CALIB_BEAMSHIFT, outdir="."):
         """Save calibration to file"""
         fout = os.path.join(outdir, fn)
-        pickle.dump(self, open(fout, "w"))
+        pickle.dump(self, open(fout, "wb"))
 
     def plot(self, to_file=None, outdir=""):
         if not self.has_data:
