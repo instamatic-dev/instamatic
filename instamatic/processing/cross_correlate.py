@@ -9,6 +9,7 @@ https://github.com/scikit-image/scikit-image/blob/master/skimage/feature/registe
 from __future__ import print_function
 from __future__ import division
 
+from builtins import range
 import numpy as np
 
 def cross_correlate(src_image, target_image, upsample_factor=1, verbose=True):
