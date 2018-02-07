@@ -1,7 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
 import yaml
 from collections import OrderedDict
 import pandas as pd
-import StringIO
+import io
 
 
 def results2df(results, sort=True):
@@ -103,7 +105,7 @@ def read_ycsv(f):
             yaml_block.append(line)
     
     # white space is important when reading yaml
-    d = yaml_ordered_load(StringIO.StringIO("".join(yaml_block)))
+    d = yaml_ordered_load(io.StringIO("".join(yaml_block)))
     
     # workaround to fix pandas crash when it is not at the first line for some reason
     f.seek(first_line)

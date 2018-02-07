@@ -1,8 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
 from past.builtins import execfile
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 
 import os, sys
 import traceback
@@ -14,7 +16,7 @@ import time
 import logging
 
 import threading
-import Queue
+import queue
 
 import datetime
 
@@ -43,7 +45,7 @@ class DataCollectionController(object):
         self.camera = ctrl.cam.name
         self.log = log
 
-        self.q = Queue.LifoQueue(maxsize=1)
+        self.q = queue.LifoQueue(maxsize=1)
         self.triggerEvent = threading.Event()
         
         self.module_io = self.stream.get_module("io")

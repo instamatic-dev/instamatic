@@ -1,5 +1,7 @@
-from Tkinter import *
-from ttk import *
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
 
 
 class ExperimentalCtrl(object, LabelFrame):

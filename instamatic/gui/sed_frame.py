@@ -1,6 +1,8 @@
-from Tkinter import *
-from ttk import *
-import tkMessageBox
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
+import tkinter.messagebox
 import os, sys
 
 import matplotlib
@@ -97,7 +99,7 @@ class ExperimentalSED(object, LabelFrame):
         self.q = q
 
     def start_collection(self):
-        okay = tkMessageBox.askokcancel("Start experiment", message3, icon='warning')
+        okay = tkinter.messagebox.askokcancel("Start experiment", message3, icon='warning')
         if okay:
             params = self.get_params()
             self.q.put(("sed", params))

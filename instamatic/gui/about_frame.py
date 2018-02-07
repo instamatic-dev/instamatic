@@ -1,7 +1,9 @@
-from Tkinter import *
-from ttk import *
-from Tkinter import Label as tkLabel
-from tkFont import Font, nametofont
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
+from tkinter import Label as tkLabel
+from tkinter.font import Font, nametofont
 from instamatic import version
 
 

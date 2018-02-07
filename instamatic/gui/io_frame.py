@@ -1,7 +1,9 @@
 from __future__ import print_function
-from Tkinter import *
-from ttk import *
-import tkFileDialog
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
+import tkinter.filedialog
 import os, sys
 import datetime
 from instamatic import config
@@ -99,7 +101,7 @@ class IOFrame(LabelFrame):
         return path
 
     def browse_directory(self):
-        drc = tkFileDialog.askdirectory(parent=self.parent, title="Select working directory")
+        drc = tkinter.filedialog.askdirectory(parent=self.parent, title="Select working directory")
         if not drc:
             return
         drc = os.path.realpath(drc)
@@ -109,7 +111,7 @@ class IOFrame(LabelFrame):
         return drc
 
     def browse_flatfield(self):
-        ff = tkFileDialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select flatfield")
+        ff = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select flatfield")
         if not ff:
             return
         ff = os.path.realpath(ff)

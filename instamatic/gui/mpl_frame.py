@@ -1,9 +1,11 @@
+from future import standard_library
+standard_library.install_aliases()
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 
 
 class ShowMatplotlibFig(Toplevel):

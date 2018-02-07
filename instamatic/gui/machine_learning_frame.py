@@ -1,8 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from Tkinter import *
-from ttk import *
-import tkFileDialog
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
+import tkinter.filedialog
 
 from instamatic.formats import read_image
 import numpy as np
@@ -78,7 +80,7 @@ class MachineLearningFrame(object, LabelFrame):
         self.q = q
 
     def load_table(self):
-        fn = tkFileDialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select crystal data")
+        fn = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select crystal data")
         if not fn:
             return
         fn = os.path.realpath(fn)

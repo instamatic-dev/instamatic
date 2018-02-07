@@ -1,7 +1,9 @@
 from __future__ import print_function
-from Tkinter import *
-from ttk import *
-import tkFileDialog
+from future import standard_library
+standard_library.install_aliases()
+from tkinter import *
+from tkinter.ttk import *
+import tkinter.filedialog
 import os, sys
 import glob
 from instamatic.config import config_dir
@@ -96,7 +98,7 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def browse(self):
-        fn = tkFileDialog.askopenfilename(parent=self.parent, title="Select Python script")
+        fn = tkinter.filedialog.askopenfilename(parent=self.parent, title="Select Python script")
         if not fn:
             return
         fn = os.path.realpath(fn)
