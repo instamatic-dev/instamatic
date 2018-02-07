@@ -207,7 +207,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
 def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go to 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): """) == "go":
+        if confirm and not input("\n >> Go to 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): """) == "go":
             return
         else:
             calib = calibrate_mag1_live(ctrl, save_images=True)

@@ -142,7 +142,7 @@ class CalibDirectBeam(object):
     def live(cls, ctrl, outdir="."):
         while True:
             c = calibrate_directbeam(ctrl=ctrl, save_images=True, outdir=outdir)
-            if raw_input(" >> Accept? [y/n] ") == "y":
+            if input(" >> Accept? [y/n] ") == "y":
                 return c
 
     def to_file(self, fn=CALIB_DIRECTBEAM, outdir="."):
@@ -309,7 +309,7 @@ def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".",
     import glob
     keys = ("BeamShift", "DiffShift")
     if not patterns:
-        if confirm and raw_input("""
+        if confirm and input("""
 Calibrate direct beam position
 ------------------------------
  1. Go to diffraction mode and select desired camera length (CAM L)

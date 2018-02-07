@@ -386,7 +386,7 @@ def main_entry():
         print("    exit        -> exit the program")
     while take_series:
         outfile = "image_{:04d}".format(i)
-        inp = raw_input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
+        inp = input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
         if inp == "exit":
             break
         elif inp.startswith("set"):

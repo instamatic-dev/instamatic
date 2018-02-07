@@ -67,7 +67,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
     
     # ctrl.brightness.max()
-    raw_input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
+    input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 

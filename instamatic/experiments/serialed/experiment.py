@@ -185,11 +185,11 @@ class Experiment(object):
             print("\nSelect area to scan")
             print("-------------------")
         if not self.begin_here:
-            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
+            input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stageposition.get()
         self.scan_centers = np.array([[x,y]])            
         if not self.scan_radius:
-            self.scan_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
+            self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
 
         self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
@@ -283,7 +283,7 @@ class Experiment(object):
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
-        raw_input("\nPress <ENTER> to get neutral diffraction shift")
+        input("\nPress <ENTER> to get neutral diffraction shift")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         self.log.info("DiffShift(x=%d, y=%d)", *self.neutral_diffshift)
     
@@ -463,7 +463,7 @@ class Experiment(object):
         self.log.info("d_image", d_image)
         self.log.info("d_tiff", d_diff)
 
-        raw_input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
+        input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
 
         for i, d_pos in enumerate(self.loop_positions()):
    

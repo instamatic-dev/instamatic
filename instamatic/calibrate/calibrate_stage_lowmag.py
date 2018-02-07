@@ -358,7 +358,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
 def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
+        if confirm and not input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
             return
         else:
             calib = calibrate_stage_lowmag_live(ctrl, save_images=True)

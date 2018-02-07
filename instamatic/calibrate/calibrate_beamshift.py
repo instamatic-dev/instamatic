@@ -75,7 +75,7 @@ class CalibBeamShift(object):
     def live(cls, ctrl, outdir="."):
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
-            if raw_input(" >> Accept? [y/n] ") == "y":
+            if input(" >> Accept? [y/n] ") == "y":
                 return c
 
     def to_file(self, fn=CALIB_BEAMSHIFT, outdir="."):
@@ -268,7 +268,7 @@ def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=Tr
         if confirm:
             ctrl.store("calib_beamshift")
             while True:
-                inp = raw_input("""
+                inp = input("""
 Calibrate beamshift
 -------------------
  1. Go to desired magnification (e.g. 2500x)
