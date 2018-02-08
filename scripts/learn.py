@@ -44,7 +44,7 @@ def main(file_pattern):
         
         lst.append((os.path.abspath(fn), frame, number, prediction, size, x, y))
 
-    with open('learning.csv', 'wb') as csvfile:
+    with open('learning.csv', 'w', newline="") as csvfile:
         # writer = csv.DictWriter(csvfile, fieldnames=["filename", "frame", "number", "quality", "size", "xpos", "ypos"])
         # writer.writeheader()
         writer = csv.writer(csvfile)

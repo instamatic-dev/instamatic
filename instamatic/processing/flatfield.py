@@ -8,7 +8,6 @@ from instamatic import TEMController
 import glob
 from tqdm import tqdm
 
-__version__ = "2017-01-31"
 
 def apply_corrections(img, deadpixels=None):
     if deadpixels is None:
@@ -120,13 +119,9 @@ def main_entry():
     import argparse
     description = """Program to collect and apply flatfield/darkfield corrections"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument("args",
                         type=str, nargs="*", metavar="image.tiff",
@@ -196,7 +191,6 @@ def main_entry():
         
         print(name, "->", fout)
         write_tiff(fout, img, header=h)
-
 
 
 if __name__ == '__main__':
