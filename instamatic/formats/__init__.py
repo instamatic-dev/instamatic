@@ -3,15 +3,16 @@ import time
 import os
 import yaml
 import numpy as np
-import h5py
 
 from .csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
 from .adscimage import write_adsc, read_adsc
 
-try:
+import warnings
+with warnings.catch_warnings():
+    # TODO: remove me later
+    # Catch annoying futurewarning on import
+    warnings.simplefilter("ignore")
     import h5py
-except ImportError:
-    pass
 
 
 def read_image(fname):
