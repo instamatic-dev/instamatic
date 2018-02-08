@@ -61,8 +61,11 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     Constant subtracted from weighted mean of neighborhood to calculate
         the local threshold value
     """
+    # workaround, because segmentation.random_walker no longer accepts floats from 0-255.0
+    offset = offset / 255.0
+
     # normalize
-    img = img * (255.0/img.max())
+    img = img * (1.0/img.max())
     
     # adaptive thresholding, because contrast is not equal over image
     arr = img > filters.threshold_local(img, r, method="mean", offset=offset)

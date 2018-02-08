@@ -8,7 +8,7 @@ scipy
 scikit-image
 tqdm
 pyyaml
-futures
+# futures
 h5py
 # optional
 IPython # instamatic.controller

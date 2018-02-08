@@ -16,8 +16,6 @@ import tqdm
 
 from instamatic import neural_network
 
-__version__ = "2017-03-12"
-
 CMAP = "gray" # "viridis", "gray"
 
 ANGLE = -0.88 + np.pi/2
@@ -235,13 +233,10 @@ Program for indexing electron diffraction images.
 
 """ 
     
-    epilog = 'Updated: {}'.format(__version__)
-    
     parser = argparse.ArgumentParser(#usage=usage,
                                     description=description,
-                                    epilog=epilog, 
-                                    formatter_class=argparse.RawDescriptionHelpFormatter,
-                                    version=__version__)
+                                    formatter_class=argparse.RawDescriptionHelpFormatter
+                                    )
     
     parser.add_argument("args", 
                         type=str, metavar="FILE", nargs="?",

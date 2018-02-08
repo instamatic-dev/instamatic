@@ -92,6 +92,8 @@ class MachineLearningFrame(LabelFrame):
         with open(fn, 'r') as f:
             reader = csv.reader(f)
             for row in reader:
+                if not row:
+                    continue
                 fn, frame, number, quality, size, stage_x, stage_y = row
                 self.tv.insert('', 'end', text=fn, values=(frame, number, quality, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
