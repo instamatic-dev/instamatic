@@ -146,7 +146,7 @@ A convenient way to experiment with the options available is to run `instamatic.
 
 ## Requirements
 
-- Python2.7
+- Python3.6
  - comtypes
  - lmfit
  - matplotlib
@@ -157,9 +157,10 @@ A convenient way to experiment with the options available is to run `instamatic.
  - scikit-image
  - tqdm
  - pyyaml
- - futures
  - h5py
  - IPython
+
+    pip install -r requirements.txt
 
 ## Installation
 

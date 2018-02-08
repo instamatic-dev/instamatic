@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-from past.builtins import execfile
 from setuptools import setup, find_packages
 import os
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
-execfile('instamatic/version.py')  # grab __version__, __author__, etc.
+exec(open('instamatic_stem/version.py').read())  # grab __version__, __author__, etc.
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -28,7 +27,7 @@ setup(
     url=__url__,
 
     classifiers=[
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
@@ -58,7 +57,6 @@ setup(
                       'scikit-image', 
                       'tqdm', 
                       'pyyaml', 
-                      'futures', 
                       'h5py', 
                       'IPython'],
 
