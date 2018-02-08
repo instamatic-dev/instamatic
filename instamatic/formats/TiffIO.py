@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 #/*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
@@ -28,9 +26,6 @@ from __future__ import division
 # THE SOFTWARE.
 #
 #############################################################################*/
-from builtins import range
-from builtins import str
-from builtins import bytes
 __author__ = "V.A. Sole - ESRF Data Analysis"
 __contact__ = "sole@esrf.fr"
 __license__ = "MIT"

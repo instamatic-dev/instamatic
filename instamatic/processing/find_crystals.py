@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 from scipy.cluster.vq import kmeans2
 from scipy._lib._util import _asarray_validated
 from scipy import ndimage

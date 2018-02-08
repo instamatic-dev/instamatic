@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from .sed_frame import *
 from .cred_frame import *
 from .io_frame import *

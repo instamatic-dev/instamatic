@@ -1,5 +1,3 @@
-from future import standard_library
-standard_library.install_aliases()
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt

@@ -1,14 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-from past.builtins import execfile
 from tkinter import *
 from tkinter.ttk import *
 
 import os, sys
 import traceback
-import numpy as np
 import json
 from instamatic.formats import *
 

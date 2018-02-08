@@ -1,5 +1,3 @@
-from __future__ import print_function
-from builtins import str
 import numpy as np
 
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py

@@ -1,12 +1,10 @@
-from __future__ import division
-from builtins import range
-from scipy import ndimage
 from instamatic.formats import read_tiff, write_tiff
 import sys, os
 import numpy as np
 import glob
 import time
 from skimage import exposure
+from scipy import ndimage
 
 
 def autoscale(img, maxdim=512):

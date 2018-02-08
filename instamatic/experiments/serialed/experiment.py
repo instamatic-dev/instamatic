@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import division
-from builtins import zip
-from builtins import input
 import os, sys
 import numpy as np
 import json

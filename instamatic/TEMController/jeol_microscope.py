@@ -1,4 +1,3 @@
-from __future__ import print_function
 from instamatic import config
 
 import atexit

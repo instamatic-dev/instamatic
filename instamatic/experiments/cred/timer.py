@@ -1,4 +1,3 @@
-from __future__ import print_function
 from ctypes import *
 from ctypes.wintypes import UINT
 from ctypes.wintypes import DWORD

@@ -1,10 +1,6 @@
-from __future__ import print_function
 import os
 import datetime
-import logging
 import numpy as np
-import glob
-import time
 from instamatic import config
 from instamatic.formats import write_hdf5, read_hdf5, read_tiff
 import tqdm

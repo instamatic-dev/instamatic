@@ -6,10 +6,7 @@ http://www.mathworks.com/matlabcentral/fileexchange/18401-efficient-subpixel-ima
 Adapted from:
 https://github.com/scikit-image/scikit-image/blob/master/skimage/feature/register_translation.py
 """
-from __future__ import print_function
-from __future__ import division
 
-from builtins import range
 import numpy as np
 
 def cross_correlate(src_image, target_image, upsample_factor=1, verbose=True):

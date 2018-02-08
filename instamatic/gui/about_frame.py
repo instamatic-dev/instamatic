@@ -1,5 +1,3 @@
-from future import standard_library
-standard_library.install_aliases()
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import Label as tkLabel
