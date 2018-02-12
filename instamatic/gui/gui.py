@@ -277,10 +277,8 @@ def main():
     from os.path import dirname as up
     from instamatic import config
     
-    logging_dir = up(up(up(up(__file__))))
-
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = os.path.join(logging_dir, "logs", "instamatic_{}.log".format(date))
+    logfile = config.logs_drc / f"instamatic_{date}.log"
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=logfile, 

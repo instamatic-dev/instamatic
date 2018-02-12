@@ -48,7 +48,7 @@ class IOFrame(LabelFrame):
         self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
         self.OpenDatadirButton.grid(row=1, column=0, sticky="EW")
 
-        self.OpenConfigdirButton = Button(frame, text="Open config directory", command=self.open_config_directory)
+        self.OpenConfigdirButton = Button(frame, text="Open settings directory", command=self.open_config_directory)
         self.OpenConfigdirButton.grid(row=1, column=1, sticky="EW")
 
         self.DeleteButton = Button(frame, text="Delete last experiment", command=self.delete_last)
@@ -133,7 +133,7 @@ class IOFrame(LabelFrame):
         os.startfile(drc)
 
     def open_config_directory(self):
-        drc = config.config_dir
+        drc = config.base_drc
         os.startfile(drc)
 
 

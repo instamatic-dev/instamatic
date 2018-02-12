@@ -3,7 +3,7 @@ from tkinter.ttk import *
 import tkinter.filedialog
 import os, sys
 import glob
-from instamatic.config import config_dir
+from instamatic.config import scripts_drc
 
 
 class DebugFrame(LabelFrame):
@@ -57,15 +57,15 @@ class DebugFrame(LabelFrame):
     def init_vars(self):
         self.script_file = StringVar()
         self.scripts = {}
-        self.scripts_dir = os.path.join(config_dir, "scripts")
+        self.scripts_drc = scripts_drc  # pathlib.Path object
 
     def scripts_combobox_update(self, event=None):
-        for fn in glob.glob(os.path.join(self.scripts_dir, "*.py")):
-            self.scripts[os.path.basename(fn)] = fn
+        for fn in self.scripts_drc.rglob("*.py"):
+            self.scripts[fn.name] = fn
         self.e_script_file['values'] = list(self.scripts.keys())
 
     def scripts_combobox_add(self, fn):
-        self.scripts[os.path.basename(fn)] = fn
+        self.scripts[fn.name] = fn
         self.e_script_file['values'] = list(self.scripts.keys())
 
     def set_trigger(self, trigger=None, q=None):
