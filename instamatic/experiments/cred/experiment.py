@@ -6,8 +6,11 @@ import time
 from . import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
-from .timer import wait
 from pathlib import Path
+
+from instamatic.utils import high_precision_timers
+high_precision_timers.enable()
+
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -133,7 +136,7 @@ class Experiment(object):
                     # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
 
                 diff = next_interval - time.clock() # seconds
-                wait(int(diff * 1000))              # milliseconds
+                time.sleep(diff)
 
             else:
                 img, h = self.ctrl.getImage(self.expt, header_keys=None)

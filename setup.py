@@ -45,7 +45,8 @@ setup(
               "instamatic.formats",
               "instamatic.gui",
               "instamatic.processing",
-              "instamatic.TEMController"],
+              "instamatic.TEMController",
+              "instamatic.utils"],
 
     install_requires=['comtypes', 
                       'lmfit', 
