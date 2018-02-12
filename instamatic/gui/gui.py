@@ -201,7 +201,7 @@ class DataCollectionController(object):
         elif task == "run_script":
             ctrl = self.ctrl
             script = kwargs.pop("script")
-            execfile(script)
+            exec(open(script).read())
 
     def toggle_difffocus(self, **kwargs):
         toggle = kwargs["toggle"]

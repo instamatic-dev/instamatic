@@ -9,6 +9,7 @@ import datetime
 from instamatic.formats import write_tiff
 from .camera import Camera
 import os, sys
+from instamatic.gui.spinbox import Spinbox
 
 
 class ImageGrabber(object):
@@ -122,7 +123,7 @@ class VideoStream(threading.Thread):
         self.root.mainloop()
 
     def header(self, master):
-        ewidth = 10
+        ewidth = 8
         lwidth = 12
 
         frame = Frame(master)

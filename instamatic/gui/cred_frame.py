@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 import threading
+from .spinbox import Spinbox
 
 
 class ExperimentalcRED(LabelFrame):
@@ -9,11 +10,13 @@ class ExperimentalcRED(LabelFrame):
         LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction")
         self.parent = parent
 
+        sbwidth = 10
+
         self.init_vars()
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
-        self.exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, from_=0.0, to=100.0, increment=0.01)
+        self.exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
@@ -25,15 +28,15 @@ class ExperimentalcRED(LabelFrame):
         self.c_toggle_defocus.grid(row=6, column=2, sticky="W")
 
         Label(frame, text="Image interval:").grid(row=5, column=0, sticky="W")
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1, state=DISABLED)
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, width=sbwidth, from_=1, to=9999, increment=1, state=DISABLED)
         self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
 
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
+        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
 
         Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
-        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
+        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
         self.lb_coll0 = Label(frame, text="")
