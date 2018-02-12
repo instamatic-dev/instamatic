@@ -9,7 +9,7 @@ import datetime
 from instamatic.formats import write_tiff
 from .camera import Camera
 import os, sys
-from instamatic.gui.spinbox import Spinbox
+from instamatic.utils.spinbox import Spinbox
 
 
 class ImageGrabber(object):

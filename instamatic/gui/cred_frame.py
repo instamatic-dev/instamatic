@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 import threading
-from .spinbox import Spinbox
+from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalcRED(LabelFrame):

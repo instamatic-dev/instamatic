@@ -4,7 +4,7 @@ import tkinter.filedialog
 import os, sys
 import datetime
 from instamatic import config
-from .spinbox import Spinbox
+from instamatic.utils.spinbox import Spinbox
 
 
 class IOFrame(LabelFrame):
