@@ -7,6 +7,7 @@ from . import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from .timer import wait
+from pathlib import Path
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -31,7 +32,7 @@ class Experiment(object):
         ):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
-        self.path = path
+        self.path = Path(path)
         self.expt = exposure_time
         self.unblank_beam = unblank_beam
         self.logger = log
@@ -56,28 +57,28 @@ class Experiment(object):
 
     def report_status(self):
         self.diff_binsize = self.ctrl.cam.default_binsize
-        self.diff_exposure = self.expt
         self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.ctrl.spotsize
 
-        print("\nOutput directory: {}".format(self.path))
-        print("Diffraction : binsize = {}".format(self.diff_binsize))
-        print("              exposure = {}".format(self.diff_exposure))
-        print("              brightness = {}".format(self.diff_brightness))
-        print("              spotsize = {}".format(self.diff_spotsize))        
+        print(f"\nOutput directory: {self.path}")
+        print(f"Diffraction : binsize = {self.diff_binsize}")
+        print(f"              exposure = {self.expt}")
+        print(f"              brightness = {self.diff_brightness}")
+        print(f"              spotsize = {self.diff_spotsize}")
 
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
-        
-        self.tiff_path = os.path.join(self.path, "tiff") if self.write_tiff else None
-        self.smv_path = os.path.join(self.path, "SMV") if (self.write_xds or self.write_dials) else None
-        self.mrc_path = os.path.join(self.path, "RED") if self.write_red else None
+
+        self.tiff_path = self.path / "tiff" if self.write_tiff else None
+        self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
+        self.mrc_path  = self.path / "RED"  if self.write_red else None
               
-        self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        self.logger.info("Data saving path: {}".format(self.path))
-        self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        self.logger.info("Data collection spot size: {}".format(spotsize))
+        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.logger.info(f"Data recording started at: {self.now}")
+        self.logger.info(f"Data saving path: {self.path}")
+        self.logger.info(f"Data collection exposure time: {self.expt} s")
+        self.logger.info(f"Data collection spot size: {spotsize}")
         
         # TODO: Mostly above is setup, split off into own function
 
@@ -166,31 +167,32 @@ class Experiment(object):
         osc_angle = abs(self.end_angle - self.start_angle) / nframes
         total_time = t1 - t0
         acquisition_time = total_time / nframes
-        print("\nRotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.2f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle))
+        total_angle = abs(self.end_angle-self.start_angle)
+        print(f"\nRotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
 
-        self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f} in {} frames (step: {:.4f})".format(abs(self.end_angle-self.start_angle), self.start_angle, self.end_angle, nframes, osc_angle))
+        self.logger.info(f"Data collection camera length: {camera_length} mm")
+        self.logger.info(f"Rotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
         
-        with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
-            f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {:.2f} degrees\n".format(self.start_angle))
-            f.write("Ending angle: {:.2f} degrees\n".format(self.end_angle))
-            f.write("Rotation range: {:.2f} degrees\n".format(self.end_angle-self.start_angle))
-            f.write("Exposure Time: {:.3f} s\n".format(self.expt))
-            f.write("Acquisition time: {:.3f} s\n".format(acquisition_time))
-            f.write("Total time: {:.3f} s\n".format(total_time))
-            f.write("Spot Size: {}\n".format(spotsize))
-            f.write("Camera length: {} mm\n".format(camera_length))
-            f.write("Oscillation angle: {:.4f} degrees\n".format(osc_angle))
-            f.write("Number of frames: {}\n".format(len(buffer)))
+        with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Data Collection Time: {self.now}", file=f)
+            print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
+            print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
+            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
+            print(f"Exposure Time: {self.expt:.3f} s", file=f)
+            print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
+            print(f"Total time: {total_time:.3f} s", file=f)
+            print(f"Spot Size: {spotsize}", file=f)
+            print(f"Camera length: {camera_length} mm", file=f)
+            print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
+            print(f"Number of frames: {len(buffer)}", file=f)
 
             if self.image_interval_enabled:
-                f.write("Image interval: every {} frames an image with defocus {} (t={} s).\n".format(image_interval, diff_focus_defocused, expt_image))
-                f.write("Number of images: {}\n".format(len(image_buffer)))
+                print(f"Image interval: every {image_interval} frames an image with defocus {diff_focus_defocused} (t={expt_image} s).", file=f)
+                print(f"Number of images: {len(image_buffer)}", file=f)
 
         if nframes <= 3:
-            self.logger.info("Not enough frames collected. Data will not be written (nframes={}).".format(nframes))
-            print("Data collection done. Not enough frames collected (nframes={}).".format(nframes))
+            self.logger.info(f"Not enough frames collected. Data will not be written (nframes={nframes}).")
+            print(f"Data collection done. Not enough frames collected (nframes={nframes}).")
             return
 
         rotation_axis = config.microscope.camera_rotation_vs_stage_xy
@@ -222,11 +224,11 @@ class Experiment(object):
             img_conv.write_xds_inp(self.smv_path)
 
         if image_buffer:
-            drc = os.path.join(self.path, "tiff_image")
-            os.makedirs(drc)
+            drc = self.path / "tiff_image"
+            drc.mkdir(exist_ok=True)
             while len(image_buffer) != 0:
                 i, img, h = image_buffer.pop(0)
-                fn = os.path.join(drc, "{:05d}.tiff".format(i))
+                fn = drc / f"{i:05d}.tiff"
                 write_tiff(fn, img, header=h)
 
         print("Data Collection and Conversion Done.")

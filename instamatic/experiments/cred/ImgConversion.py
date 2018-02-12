@@ -10,6 +10,7 @@ from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic import config
 from instamatic.tools import find_beam_center
+from pathlib import Path
 
 import collections
 
@@ -105,14 +106,10 @@ class ImgConversion(object):
     
         return newImage
 
-    def makedirs(self, path):
-        if not os.path.exists(path):
-            os.makedirs(path)
-
     def tiff_writer(self, path):
         print ("Writing TIFF files......")
 
-        os.makedirs(path)
+        path.mkdir(exist_ok=True)
 
         for i in self.data.keys():
             self.write_tiff(path, i)
@@ -122,8 +119,8 @@ class ImgConversion(object):
     def smv_writer(self, path):
         print ("Writing SMV files......")
 
-        path = os.path.join(path, self.smv_subdrc)
-        self.makedirs(path)
+        path = path / self.smv_subdrc
+        path.mkdir(exist_ok=True)
     
         for i in self.data.keys():
             self.write_smv(path, i)
@@ -133,7 +130,7 @@ class ImgConversion(object):
     def mrc_writer(self, path):
         print ("Writing MRC files......")
 
-        self.makedirs(path)
+        path.mkdir(exist_ok=True)
 
         for i in self.data.keys():
             self.write_mrc(path, i)
@@ -146,16 +143,16 @@ class ImgConversion(object):
         write_mrc  = mrc_path  is not None
 
         if write_smv:
-            smv_path = os.path.join(smv_path, self.smv_subdrc)
-            self.makedirs(smv_path)
+            smv_path = smv_path / self.smv_subdrc
+            smv_path.mkdir(exist_ok=True, parents=True)
             logger.debug("SMV files saved in folder: {}".format(smv_path))
 
         if write_tiff:
-            self.makedirs(tiff_path)
+            tiff_path.mkdir(exist_ok=True, parents=True)
             logger.debug("Tiff files saved in folder: {}".format(tiff_path))
 
         if write_mrc:
-            self.makedirs(mrc_path)
+            mrc_path.mkdir(exist_ok=True, parents=True)
             logger.debug("MRC files saved in folder: {}".format(mrc_path))
 
         import concurrent.futures
@@ -178,7 +175,7 @@ class ImgConversion(object):
         total = set(range(min(observed), max(observed) + 1))
         missing = observed ^ total
 
-        path = os.path.join(smv_path, self.smv_subdrc)
+        path = smv_path / self.smv_subdrc
 
         i = min(observed)
         empty = np.zeros_like(self.data[i])
@@ -202,7 +199,7 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
-        fn = os.path.join(path, "{:05d}.tiff".format(i))
+        fn = path / f"{i:05d}.tiff"
         write_tiff(fn, img, header=h)
         return fn
 
@@ -243,7 +240,7 @@ class ImgConversion(object):
         header['BEAM_CENTER_Y'] = "{:.4f}".format(self.beam_center[0])
         header['DENZO_X_BEAM'] = "{:.4f}".format((self.beam_center[0]*self.physical_pixelsize))
         header['DENZO_Y_BEAM'] = "{:.4f}".format((self.beam_center[1]*self.physical_pixelsize))
-        fn = os.path.join(path, "{:05d}.img".format(i))
+        fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
 
@@ -251,7 +248,7 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
-        fn = os.path.join(path, "{:05d}.mrc".format(i))
+        fn = path / f"{i:05d}.mrc"
 
         img = self.fixStretchCorrection(img, self.beam_center)
         # flip up/down because RED reads images from the bottom left corner
@@ -273,9 +270,8 @@ class ImgConversion(object):
 
 
     def write_ed3d(self, path):
-        self.makedirs(path)
-
-        ed3d = open(os.path.join(path, "1.ed3d"), 'w')
+        path.mkdir(exist_ok=True)
+        ed3d = open(path / "1.ed3d", 'w')
 
         rotation_axis = np.degrees(self.rotation_axis)
 
@@ -311,7 +307,7 @@ class ImgConversion(object):
         from .XDS_template import XDS_template
         from math import cos, pi
 
-        self.makedirs(path)
+        path.mkdir(exist_ok=True)
 
         nframes = self.nframes
         rotation_axis = self.rotation_axis # radians
@@ -352,7 +348,7 @@ class ImgConversion(object):
             rot_z=0.0
             )
        
-        with open(os.path.join(path, 'XDS.INP'),'w') as f:
+        with open(path / 'XDS.INP','w') as f:
             f.write(s)
         
         logger.info("XDS INP file created.")
