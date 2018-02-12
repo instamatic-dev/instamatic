@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from instamatic.formats import *
 import os, sys, glob
 import numpy as np
+from pathlib import Path
 
 from scipy import ndimage
 
@@ -55,7 +56,7 @@ def lst2colormap(lst):
 
 def run(filepat="images/image_*.tiff", results=None, stitch=False):
      # use relpath to normalizes path
-    fns = [os.path.relpath(fn) for fn in  glob.glob(filepat)]
+    fns = [Path(fn).absolute() for fn in  glob.glob(filepat)]
 
     if len(fns) == 0:
         sys.exit()
@@ -135,8 +136,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             crystal_coords = np.array(h["exp_crystal_coords"])
 
             if results:
-                root, ext = os.path.splitext(fn)
-                crystal_fns = [fn.replace("images", "data").replace(ext, "_{:04d}{}".format(i, ext)) for i in range(len(crystal_coords))]
+                crystal_fns = [fn.parents[1] / "data" / f"{fn.stem}_{i:04d}{fn.suffix}" for i in range(len(crystal_coords))]
                 df.ix[crystal_fns]
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
@@ -169,9 +169,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                 ind = 0
 
         if axes == ax2:
-            fn = ax2.get_title()
-            root, ext = os.path.splitext(fn)
-            fn_diff = fn.replace("images", "data").replace(ext, "_{:04d}{}".format(ind, ext))
+            fn = Path(ax2.get_title())
+            fn_diff = fn.parents[1] / "data" / f"{fn.stem}_{ind:04d}{fn.suffix}"
 
             img, h = read_image(fn_diff)
 

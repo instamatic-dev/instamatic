@@ -14,6 +14,7 @@ from instamatic import neural_network
 import time
 import logging
 from tqdm import tqdm
+from pathlib import Path
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
@@ -154,22 +155,19 @@ class Experiment(object):
         if not expdir:
             n = 1
             while True:
-                drc = "{}{}".format(name, n)
-                if os.path.exists(drc):
+                expdir = Path(f"{name}_{n}")
+                if expdir.exists():
                     n += 1
                 else:
                     break
-            self.curdir = os.path.abspath(os.path.curdir)
-            expdir = os.path.join(drc)
         
         self.expdir = expdir
-        self.calibdir = os.path.join(self.expdir, "calib")
-        self.imagedir = os.path.join(self.expdir, "images")
-        self.datadir = os.path.join(self.expdir, "data")
+        self.calibdir = self.expdir / "calib"
+        self.imagedir = self.expdir / "images"
+        self.datadir = self.expdir / "data"
 
         for drc in self.expdir, self.calibdir, self.imagedir, self.datadir:
-            if not os.path.exists(drc):
-                os.makedirs(drc)
+            drc.mkdir(exist_ok=True, parents=True)
 
         return self.expdir
 
@@ -269,7 +267,7 @@ class Experiment(object):
 
         self.log.info("params", kwargs)
 
-        json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"), indent=2)
+        json.dump(kwargs, open(self.expdir / "params_out.json", "w"), indent=2)
 
     def initialize_microscope(self):
         """Intialize microscope"""
@@ -378,7 +376,7 @@ class Experiment(object):
                 else:
                     time.sleep(delay)
                     # self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
-                    t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
+                    t.set_description(f"Stage(x={x:7.0f}, y={y:7.0f})")
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
                     dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}".format(**dct)
@@ -465,7 +463,7 @@ class Experiment(object):
 
         for i, d_pos in enumerate(self.loop_positions()):
    
-            outfile = os.path.join(self.imagedir, "image_{:04d}".format(i))
+            outfile = self.imagedir / f"image_{i:04d}"
             
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -500,7 +498,7 @@ class Experiment(object):
             self.log.info("%d crystals found in %s", ncrystals, outfile)
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
-                outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}".format(i, k))
+                outfile = self.datadir / f"image_{i:04d}_{k:04d}"
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
@@ -524,7 +522,7 @@ class Experiment(object):
                         self.log.debug("Rotation angle = %f", rotation_angle)
                         self.ctrl.stageposition.a = rotation_angle
         
-                        outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
+                        outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
                         img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
                                                     

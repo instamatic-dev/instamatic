@@ -4,6 +4,7 @@ import tkinter.filedialog
 import os, sys
 import glob
 from instamatic.config import scripts_drc
+from pathlib import Path
 
 
 class DebugFrame(LabelFrame):
@@ -98,7 +99,7 @@ class DebugFrame(LabelFrame):
         fn = tkinter.filedialog.askopenfilename(parent=self.parent, title="Select Python script")
         if not fn:
             return
-        fn = os.path.realpath(fn)
+        fn = Path(fn).absolute()
         self.scripts_combobox_add(fn)
         self.script_file.set(fn)
         return fn

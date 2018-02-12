@@ -1,9 +1,10 @@
 import numpy as np
-import os
 import pickle
+from pathlib import Path
 
-with open(os.path.join(os.path.dirname(__file__), "weights-py2.p"), "rb") as p_file:
+with open(Path(__file__).parent / "weights-py3.p", "rb") as p_file:
     weights = pickle.load(p_file)
+
 
 def conv_layer(in_layer, weight, offset):
     first_layer = np.ones([(in_layer.shape[0]-2)*(in_layer.shape[1]-2), in_layer.shape[2], 3, 3])

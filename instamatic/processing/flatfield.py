@@ -7,6 +7,7 @@ from instamatic.formats import *
 from instamatic import TEMController
 import glob
 from tqdm import tqdm
+from pathlib import Path
 
 
 def apply_corrections(img, deadpixels=None):
@@ -177,8 +178,8 @@ def main_entry():
         if not os.path.exists(fobj):
             args = glob.glob(fobj)
 
-    if not os.path.isdir(options.drc):
-        os.makedirs(options.drc)
+    drc = Path(options.drc)
+    drc.mkdir(exist_ok=True, parents=True)
 
     for f in args:
         img,h = read_tiff(f)
@@ -186,8 +187,8 @@ def main_entry():
         img = apply_corrections(img, deadpixels=deadpixels)
         img = apply_flatfield_correction(img, flatfield, darkfield=darkfield)
 
-        name = os.path.basename(f)
-        fout = os.path.join(options.drc, name)
+        name = Path(f).name
+        fout = drc / name
         
         print(name, "->", fout)
         write_tiff(fout, img, header=h)

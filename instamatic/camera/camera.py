@@ -8,6 +8,7 @@ from ctypes import POINTER, create_unicode_buffer, byref, addressof
 #     comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 # except WindowsError:
 #     comtypes.CoInitialize()
+from pathlib import Path
 
 import numpy as np
 import os, sys
@@ -42,7 +43,7 @@ def Camera(kind):
     elif kind == "timepix":
         return CameraDLL(kind)
     else:
-        raise ValueError("No such camera: {}".format(kind))
+        raise ValueError(f"No such camera: {kind}")
 
 
 class CameraDLL(object):
@@ -60,18 +61,18 @@ class CameraDLL(object):
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
-        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
-        self._curdir = curdir = os.path.abspath(os.curdir)
+        self._cameradir = cameradir = Path(__file__).parent
+        self._curdir = curdir = Path.cwd()
 
         if kind == "simulateDLL":
-            libpath = os.path.join(cameradir, DLLPATH_SIMU)
+            libpath = cameradir / DLLPATH_SIMU
         elif kind == "orius":
-            libpath = os.path.join(cameradir, DLLPATH_ORIUS)
+            libpath = cameradir / DLLPATH_ORIUS
         elif kind == "timepix":
-            libpath = os.path.join(cameradir, DLLPATH_TIMEPIX)
+            libpath = cameradir / DLLPATH_TIMEPIX
             os.chdir(cameradir)
         else:
-            raise ValueError("No such camera: {}".format(kind))
+            raise ValueError(f"No such camera: {kind}")
 
         self.name = kind
 
@@ -79,7 +80,7 @@ class CameraDLL(object):
             lib = ctypes.cdll.LoadLibrary(libpath)
         except WindowsError as e:
             print(e)
-            raise RuntimeError("Cannot load DLL: {}".format(libpath))
+            raise RuntimeError(f"Cannot load DLL: {libpath}")
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
@@ -116,7 +117,7 @@ class CameraDLL(object):
 
         self.load_defaults()
 
-        msg = "Camera {} initialized".format(self.getName())
+        msg = f"Camera {self.getName()} initialized"
         logger.info(msg)
 
         # print "Dimensions {}x{}".format(*self.getDimensions())
@@ -227,8 +228,8 @@ class CameraSimu(object):
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
-        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
-        self._curdir = curdir = os.path.abspath(os.curdir)
+        self._cameradir = cameradir = Path(__file__).parent
+        self._curdir = curdir = Path.cwd()
 
         self.name = kind
 
@@ -236,7 +237,7 @@ class CameraSimu(object):
 
         self.load_defaults()
 
-        msg = "Camera {} initialized".format(self.getName())
+        msg = f"Camera {self.getName()} initialized"
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -297,11 +298,11 @@ class CameraSimu(object):
     def establishConnection(self):
         res = 1
         if res != 1:
-            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
+            raise RuntimeError(f"Could not establish camera connection to {self.name}")
 
     def releaseConnection(self):
         name = self.getName()
-        msg = "Connection to camera {} released".format(name) 
+        msg = f"Connection to camera {name} released" 
         logger.info(msg)
 
 

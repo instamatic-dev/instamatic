@@ -3,6 +3,7 @@ from instamatic.formats import *
 from instamatic import neural_network
 import csv
 import os, sys
+from pathlib import Path
 
 import tqdm
 
@@ -42,7 +43,7 @@ def main(file_pattern):
         x = int(cx + dx)
         y = int(cy + dy)
         
-        lst.append((os.path.abspath(fn), frame, number, prediction, size, x, y))
+        lst.append(Path(fn).absolute(), frame, number, prediction, size, x, y))
 
     with open('learning.csv', 'w', newline="") as csvfile:
         # writer = csv.DictWriter(csvfile, fieldnames=["filename", "frame", "number", "quality", "size", "xpos", "ypos"])

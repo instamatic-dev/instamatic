@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .mpl_frame import ShowMatplotlibFig
 
-import os
+from pathlib import Path
 
 
 def treeview_sort_column(tv, col, reverse):
@@ -71,7 +71,7 @@ class MachineLearningFrame(LabelFrame):
 
     def init_vars(self):
         self.fns = {}
-        self.var_directory = StringVar(value=os.path.realpath("."))
+        self.var_directory = StringVar(value=Path.cwd())
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -81,7 +81,7 @@ class MachineLearningFrame(LabelFrame):
         fn = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select crystal data")
         if not fn:
             return
-        fn = os.path.realpath(fn)
+        fn = Path(fn).resolve()
 
         import csv
 
@@ -94,7 +94,7 @@ class MachineLearningFrame(LabelFrame):
                 self.tv.insert('', 'end', text=fn, values=(frame, number, quality, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
-        print("CSV data `{}` loaded".format(fn))
+        print(f"CSV data `{fn}` loaded")
 
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
@@ -119,10 +119,9 @@ class MachineLearningFrame(LabelFrame):
 
         fn = row["text"]
 
-        up = os.path.dirname
-        root = up(up(fn))
-        name = os.path.basename(fn).replace("_{:04d}.".format(number), ".")
-        image_fn = os.path.join(os.path.join(root, "images"), name)
+        root = fn.parents[1]
+        name = fn.stem.replace(f"_{number:04d}.", ".")
+        image_fn = root / "images" / name
 
         data, data_h = read_image(fn)
         img, img_h = read_image(image_fn)

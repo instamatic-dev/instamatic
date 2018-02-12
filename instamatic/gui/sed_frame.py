@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 import tkinter.messagebox
 import os, sys
+from pathlib import Path
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -35,7 +36,7 @@ class ExperimentalSED(LabelFrame):
         LabelFrame.__init__(self, parent, text="Serial electron diffraction")
         self.parent = parent
 
-        self.calib_path = ""
+        self.calib_path = Path("")
 
         self.init_vars()
 
@@ -106,19 +107,19 @@ class ExperimentalSED(LabelFrame):
 
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
-        path = os.path.join(self.calib_path, CALIB_BEAMSHIFT)
+        path = self.calib_path / CALIB_BEAMSHIFT
         c = CalibDirectBeam.from_file(path)
         c.plot()
 
     def show_calib_directbeam1(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
-        path = os.path.join(self.calib_path, CALIB_DIRECTBEAM)
+        path = self.calib_path / CALIB_DIRECTBEAM
         c = CalibDirectBeam.from_file(path)
         c.plot("DiffShift")
 
     def show_calib_directbeam2(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
-        path = os.path.join(self.calib_path, CALIB_DIRECTBEAM)
+        path = self.calib_path / CALIB_DIRECTBEAM
         c = CalibDirectBeam.from_file(path)
         c.plot("BeamShift")
 

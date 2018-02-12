@@ -12,7 +12,7 @@ class IOFrame(LabelFrame):
     def __init__(self, parent, basedrc="C:/instamatic"):
         LabelFrame.__init__(self, parent, text="Input/Output")
         self.parent = parent
-        self.basedrc = basedrc
+        self.basedrc = Path(basedrc)
 
         self.init_vars()
 
@@ -64,11 +64,11 @@ class IOFrame(LabelFrame):
     def init_vars(self):
         basedrc = self.basedrc
         subdrc = "work_{}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
-        drc = os.path.join(basedrc, subdrc)
-        ff_path = os.path.join(basedrc, "flatfield.tiff")
+        drc = basedrc / subdrc
+        ff_path = basedrc / "flatfield.tiff"
 
-        self.var_directory = StringVar(value=os.path.realpath(drc))
-        self.var_flatfield = StringVar(value=os.path.realpath(ff_path))
+        self.var_directory = StringVar(value=drc.absolute())
+        self.var_flatfield = StringVar(value=ff_path.absolute())
         self.var_sample_name = StringVar(value="experiment")
         self.var_experiment_number = IntVar(value=1)
 
@@ -77,13 +77,13 @@ class IOFrame(LabelFrame):
         return drc
 
     def update_experiment_number(self):
-        drc = self.var_directory.get()
+        drc = Path(self.var_directory.get())
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
-        path = os.path.join(drc, "{}_{}".format(name, number))
-        while os.path.exists(path):
+        path = drc / f"{name}_{number}"
+        while path.exists():
             number += 1
-            path = os.path.join(drc, "{}_{}".format(name, number))
+            path = drc / f"{name}_{number}"
         self.var_experiment_number.set(number)
         return number
 
@@ -92,17 +92,17 @@ class IOFrame(LabelFrame):
         return self.get_experiment_directory()
 
     def get_experiment_directory(self):
-        drc = self.var_directory.get()
+        drc = Path(self.var_directory.get())
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
-        path = os.path.join(drc, "{}_{}".format(name, number))
+        path = drc / f"{name}_{number}"
         return path
 
     def browse_directory(self):
         drc = tkinter.filedialog.askdirectory(parent=self.parent, title="Select working directory")
         if not drc:
             return
-        drc = os.path.realpath(drc)
+        drc = Path(drc).absolute()
         self.var_directory.set(drc)
         print(self.get_experiment_directory())
         self.update_experiment_number()       # TODO: set to 1 on experiment update
@@ -112,7 +112,7 @@ class IOFrame(LabelFrame):
         ff = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select flatfield")
         if not ff:
             return
-        ff = os.path.realpath(ff)
+        ff = Path(ff).absolute()
         self.var_flatfield.set(ff)
         return ff
 
@@ -122,11 +122,11 @@ class IOFrame(LabelFrame):
     def delete_last(self):
         drc = self.get_experiment_directory()
         newdrc = drc+"-delete_me-"+datetime.datetime.now().strftime("%H%M%S")
-        if os.path.exists(drc):
-            os.rename(drc, newdrc)
-            print("Marked {} for deletion".format(drc))
+        if drc.exists():
+            drc.rename(newdrc)
+            print(f"Marked {drc} for deletion")
         else:
-            print("{} does not exist".format(drc))
+            print(f"{drc} does not exist")
 
     def open_data_directory(self):
         drc = self.get_working_directory()

@@ -106,9 +106,7 @@ class DataCollectionController(object):
         from instamatic.experiments import cRED
         
         expdir = self.module_io.get_new_experiment_directory()
-
-        if not os.path.exists(expdir):
-            os.makedirs(expdir)
+        expdir.mkdir(exist_ok=True, parents=True)
         
         cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, flatfield=self.module_io.get_flatfield(), log=self.log, **kwargs)
 
@@ -123,11 +121,9 @@ class DataCollectionController(object):
 
         workdir = self.module_io.get_working_directory()
         expdir = self.module_io.get_new_experiment_directory()
+        expdir.mkdir(exist_ok=True, parents=True)
 
-        if not os.path.exists(expdir):
-            os.makedirs(expdir)
-
-        params = os.path.join(workdir, "params.json")
+        params = workdir / "params.json"
         try:
             params = json.load(open(params,"r"))
         except IOError:
@@ -138,7 +134,7 @@ class DataCollectionController(object):
 
         scan_radius = kwargs["scan_radius"]
 
-        self.module_sed.calib_path = os.path.join(expdir, "calib")
+        self.module_sed.calib_path = expdir / "calib"
 
         exp = serialED.Experiment(self.ctrl, params, expdir=expdir, log=self.log, 
             scan_radius=scan_radius, begin_here=True)
@@ -161,9 +157,7 @@ class DataCollectionController(object):
             flatfield = self.module_io.get_flatfield()
 
             expdir = self.module_io.get_new_experiment_directory()
-
-            if not os.path.exists(expdir):
-                os.makedirs(expdir)
+            expdir.mkdir(exist_ok=True, parents=True)
         
             self.red_exp = RED.Experiment(ctrl=self.ctrl, path=expdir, log=self.log,
                                flatfield=flatfield)
@@ -257,10 +251,10 @@ class DataCollectionGUI(VideoStream):
         module_io = self.get_module("io")
 
         drc = module_io.get_experiment_directory()
-        if not os.path.exists(drc):
-            os.makedirs(drc)
+        drc.mkdir(exist_ok=True, parents=True)
+
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
-        outfile = os.path.join(drc, outfile)
+        outfile = drc / outfile
 
         try:
             from instamatic.processing.flatfield import apply_flatfield_correction
@@ -274,7 +268,6 @@ class DataCollectionGUI(VideoStream):
 
 def main():
     from instamatic import TEMController
-    from os.path import dirname as up
     from instamatic import config
     
     date = datetime.datetime.now().strftime("%Y-%m-%d")

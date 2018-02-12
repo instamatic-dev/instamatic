@@ -16,7 +16,7 @@ def get_base_drc():
     if search.exists():
         return search
 
-    return Path(__file__).parents[0]
+    return Path(__file__).parent
 
 
 class ConfigObject(object):
