@@ -173,6 +173,31 @@ class ImgConversion(object):
             for future in futures:
                 ret = future.result()
 
+    def to_dials(self, smv_path):
+        observed = set(self.data.keys())
+        total = set(range(min(observed), max(observed) + 1))
+        missing = observed ^ total
+
+        path = os.path.join(smv_path, self.smv_subdrc)
+
+        i = min(observed)
+        empty = np.zeros_like(self.data[i])
+        h = self.headers[i].copy()
+        h["ImageGetTime"] = time.time()
+
+        # add data to self.data/self.headers so that existing functions can be used
+        # make sure to remove them afterwards, not to interfere with other data writing
+        logger.debug("Writing missing files for DIALS: {}".format(missing))
+
+        for n in missing:
+            self.data[n] = empty
+            self.headers[n] = h
+
+            self.write_smv(path, n)
+
+            del self.data[n]
+            del self.headers[n]
+
     def write_tiff(self, path, i):
         img = self.data[i]
         h = self.headers[i]
@@ -234,6 +259,7 @@ class ImgConversion(object):
 
         dtype = np.int16
         if False:
+            # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
             maxval = np.iinfo(dtype).max
             img = (img / dynamic_range)*maxval

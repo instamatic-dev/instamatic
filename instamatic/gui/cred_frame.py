@@ -46,6 +46,19 @@ class ExperimentalcRED(LabelFrame):
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
+        Label(frame, text="Select output formats:").grid(row=5, columnspan=4, sticky="EW")
+        Checkbutton(frame, text=".tiff", variable=self.var_save_tiff).grid(row=10, column=0, sticky="EW")
+        Checkbutton(frame, text="XDS (.smv)", variable=self.var_save_xds).grid(row=10, column=1, sticky="EW")
+        Checkbutton(frame, text="DIALS (.smv)", variable=self.var_save_dials).grid(row=10, column=2, sticky="EW")
+        Checkbutton(frame, text="REDp (.mrc)", variable=self.var_save_red).grid(row=10, column=3, sticky="EW")
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(2, weight=1)
+        frame.grid_columnconfigure(3, weight=1)
+
+        frame.pack(side="top", fill="x", padx=10, pady=10)
+
+        frame = Frame(self)
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
 
@@ -66,6 +79,11 @@ class ExperimentalcRED(LabelFrame):
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_exposure_time_image = DoubleVar(value=0.01)
+
+        self.var_save_tiff = BooleanVar(value=True)
+        self.var_save_xds = BooleanVar(value=True)
+        self.var_save_dials = BooleanVar(value=True)
+        self.var_save_red = BooleanVar(value=True)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -102,6 +120,10 @@ class ExperimentalcRED(LabelFrame):
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
+                   "write_tiff": self.var_save_tiff.get(),
+                   "write_xds": self.var_save_xds.get(),
+                   "write_dials": self.var_save_dials.get(),
+                   "write_red": self.var_save_red.get(),
                    "stop_event": self.stopEvent }
         return params
 

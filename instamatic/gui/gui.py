@@ -110,25 +110,11 @@ class DataCollectionController(object):
         if not os.path.exists(expdir):
             os.makedirs(expdir)
         
-        exposure_time = kwargs["exposure_time"]
-        unblank_beam = kwargs["unblank_beam"]
-        stop_event = kwargs["stop_event"]
-        enable_image_interval = kwargs["enable_image_interval"]
-        image_interval = kwargs["image_interval"]
-        exposure_time_image = kwargs["exposure_time_image"]
-        diff_defocus = kwargs["diff_defocus"]
-
-        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
-                               log=self.log, stopEvent=stop_event,
-                               flatfield=self.module_io.get_flatfield())
-
-        if enable_image_interval:
-            cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus, exposure_time_image=exposure_time_image)
+        cexp = cRED.Experiment(ctrl=self.ctrl, path=expdir, flatfield=self.module_io.get_flatfield(), log=self.log, **kwargs)
 
         cexp.report_status()
         cexp.start_collection()
         
-        stop_event.clear()
         self.log.info("Finish cRED experiment")
 
     def acquire_data_SED(self, **kwargs):
