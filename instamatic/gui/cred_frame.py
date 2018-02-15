@@ -94,6 +94,11 @@ class ExperimentalcRED(LabelFrame):
 
     def start_collection(self):
         # TODO: make a pop up window with the STOP button?
+        if self.var_toggle_diff_defocus.get():
+            self.var_toggle_diff_defocus.set(False)
+            self.toggle_diff_defocus()
+
+
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
         self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")

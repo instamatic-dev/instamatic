@@ -5,6 +5,7 @@ import os, sys
 import datetime
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
+from pathlib import Path
 
 
 class IOFrame(LabelFrame):
@@ -74,7 +75,7 @@ class IOFrame(LabelFrame):
 
     def get_working_directory(self):
         drc = self.var_directory.get()
-        return drc
+        return Path(drc)
 
     def update_experiment_number(self):
         drc = Path(self.var_directory.get())
@@ -121,7 +122,7 @@ class IOFrame(LabelFrame):
 
     def delete_last(self):
         drc = self.get_experiment_directory()
-        newdrc = drc+"-delete_me-"+datetime.datetime.now().strftime("%H%M%S")
+        newdrc = drc.parent / "delete_me-"+datetime.datetime.now().strftime("%H%M%S")
         if drc.exists():
             drc.rename(newdrc)
             print(f"Marked {drc} for deletion")

@@ -63,7 +63,7 @@ class CalibBeamShift(object):
         """Read calibration from file"""
         import pickle
         try:
-            return pickle.load(open(fn, "r"))
+            return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_beamshift"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))

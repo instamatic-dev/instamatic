@@ -102,7 +102,7 @@ class Experiment(object):
             startangle = self.current_angle + stepsize
 
         tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
-        print("\nStartangle", startangle)
+        print(f"\nStartangle: {startangle:.3f}")
         # print "Angles:", tilt_positions
 
         data, headers = [], []
@@ -113,6 +113,7 @@ class Experiment(object):
             img, h = self.ctrl.getImage(expt)
             write_hdf5(fn, img, header=h)
             ctrl.mode_diffraction()
+            time.sleep(0.5)  # add some delay to account for beam lag
 
         ctrl.cam.block()
         # for i, a in enumerate(tilt_positions):

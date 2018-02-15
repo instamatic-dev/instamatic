@@ -202,13 +202,18 @@ class DataCollectionController(object):
 
         if toggle:
             print("Proper:", self.ctrl.difffocus)
-            self._difffocus_proper = self.ctrl.difffocus.value
+            try:
+                self._difffocus_proper = self.ctrl.difffocus.value
+            except ValueError:
+                self.ctrl.mode_diffraction()
+                self._difffocus_proper = self.ctrl.difffocus.value
+
             value = self._difffocus_proper + kwargs["value"]
+            print(f"Defocusing from {self._difffocus_proper} to {value}")
         else:
             value = self._difffocus_proper
 
         self.ctrl.difffocus.set(value=value)
-        print(self.ctrl.difffocus)
 
 
 class DataCollectionGUI(VideoStream):

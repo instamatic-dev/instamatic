@@ -117,11 +117,11 @@ class MachineLearningFrame(LabelFrame):
             print("No row selected")
             return
 
-        fn = row["text"]
+        fn = Path(row["text"])
 
         root = fn.parents[1]
-        name = fn.stem.replace(f"_{number:04d}.", ".")
-        image_fn = root / "images" / name
+        name = fn.stem.replace(f"_{number:04d}", "")
+        image_fn = root / "images" / f"{name}{fn.suffix}"
 
         data, data_h = read_image(fn)
         img, img_h = read_image(image_fn)

@@ -130,7 +130,7 @@ class CalibDirectBeam(object):
     def from_file(cls, fn=CALIB_DIRECTBEAM):
         import pickle
         try:
-            return pickle.load(open(fn, "r"))
+            return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_directbeam"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))

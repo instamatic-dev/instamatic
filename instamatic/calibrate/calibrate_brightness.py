@@ -50,7 +50,7 @@ class CalibBrightness(object):
     def from_file(cls, fn=CALIB_BRIGHTNESS):
         import pickle
         try:
-            return pickle.load(open(fn, "r"))
+            return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_brightness"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
