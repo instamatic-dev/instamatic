@@ -6,14 +6,6 @@ import sys
 
 from instamatic import config
 
-from IPython.terminal.embed import InteractiveShellEmbed
-InteractiveShellEmbed.confirm_exit = False
-ipshell = InteractiveShellEmbed(banner1='')
-
-__version__ = "2016-09-15"
-__author__ = "Stef Smeets"
-__email__ = "stef.smeets@mmk.su.se"
-
 
 def initialize(camera=None):
     import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
