@@ -31,6 +31,7 @@ DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
 DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
+CONFIG_PYTIMEPIX = "tpx"
 
 
 def Camera(kind):
@@ -42,6 +43,10 @@ def Camera(kind):
         return CameraDLL(kind)
     elif kind == "timepix":
         return CameraDLL(kind)
+    elif kind == "pytimepix":
+        from . import timepix_api
+        config = Path(__file__).parent / "tpx" / "config.txt"
+        return timepix_api.initialize(config)
     else:
         raise ValueError(f"No such camera: {kind}")
 
@@ -77,7 +82,7 @@ class CameraDLL(object):
         self.name = kind
 
         try:
-            lib = ctypes.cdll.LoadLibrary(libpath)
+            lib = ctypes.cdll.LoadLibrary(str(libpath))
         except WindowsError as e:
             print(e)
             raise RuntimeError(f"Cannot load DLL: {libpath}")
