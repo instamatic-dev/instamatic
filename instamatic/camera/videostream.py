@@ -186,19 +186,19 @@ class VideoStream(threading.Thread):
 
         self.var_frametime = DoubleVar()
         self.var_frametime.set(self.frametime)
-        self.var_frametime.trace("w", self.update_frametime)
+        self.var_frametime.trace_add("write", self.update_frametime)
 
         self.var_brightness = DoubleVar(value=self.brightness)
-        self.var_brightness.trace("w", self.update_brightness)
+        self.var_brightness.trace_add("write", self.update_brightness)
         
         self.var_disprang = DoubleVar(value=self.disprang_default)
-        self.var_disprang.trace("w",self.update_disprang)
+        self.var_disprang.trace_add("write",self.update_disprang)
 
         self.var_resize_image = BooleanVar(value=self.resize_image)
-        self.var_resize_image.trace("w",self.update_resize_image)
+        self.var_resize_image.trace_add("write",self.update_resize_image)
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
-        self.var_auto_contrast.trace("w",self.update_auto_contrast)
+        self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
 
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
