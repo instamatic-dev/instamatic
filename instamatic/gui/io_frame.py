@@ -122,7 +122,8 @@ class IOFrame(LabelFrame):
 
     def delete_last(self):
         drc = self.get_experiment_directory()
-        newdrc = drc.parent / "delete_me-"+datetime.datetime.now().strftime("%H%M%S")
+        date = datetime.datetime.now().strftime("%H%M%S")
+        newdrc = drc.parent / f"delete_me-{date}"
         if drc.exists():
             drc.rename(newdrc)
             print(f"Marked {drc} for deletion")
