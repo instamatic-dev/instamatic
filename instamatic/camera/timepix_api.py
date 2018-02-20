@@ -269,10 +269,7 @@ class EMCameraObj(object):
         return out
 
     def acquireData_mmtimer(self, exposure=0.001):
-        milliseconds = int(exposure*1000)  # seconds to milliseconds
-
-        ## workaround, TODO: reset/disable timer here
-        microseconds = milliseconds * 1000
+        microseconds = int(exposure * 1e6)  # seconds to microseconds
         self.enableTimer(True, microseconds)
 
         ## does not work well, workaround is better
@@ -280,7 +277,11 @@ class EMCameraObj(object):
 
         self.openShutter()
         time.sleep(exposure)
-        self.closeShutter()
+
+        while not self.timerExpired():
+            pass
+            
+        # self.closeShutter()
         
         arr = self.readMatrix()
 
