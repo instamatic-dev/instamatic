@@ -18,6 +18,38 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def find_subranges(lst):
+    from operator import itemgetter
+    from itertools import groupby
+
+    for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
+        group = list(map(itemgetter(1), group))
+        yield min(group), max(group)
+
+
+def export_dials_variables(path, *, sequence=(), missing=()):
+    import io
+
+    scanranges = find_subranges(sequence)
+    
+    scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
+    excludeimages = ",".join((str(n) for n in missing))
+    
+    # newline='\n' to have unix line endings
+    with open(path / "dials_variables.sh", "w",  newline='\n') as f:
+        print(f"#!/usr/bin/env bash", file=f)
+        print(f"scan_range='{scanrange}'", file=f)
+        print(f"exclude_images='exclude_images={excludeimages}'", file=f)
+        print("#", file=f)
+        print("# To run:", file=f)
+        print("#     source dials_variables.sh", file=f)
+        print("#", file=f)
+        print("# and:", file=f)
+        print("#     dials.find_spots datablock.json $scan_range", file=f)
+        print("#     dials.integrate $exclude_images refined.pickle refined.json", file=f)
+        print("#", file=f)
+
+
 def get_calibrated_rotation_speed(val):
     """Correct for the overestimation of the oscillation angle if the rotation 
     was stopped before interrupting the data collection. It uses calibrated values for the 
@@ -170,10 +202,12 @@ class ImgConversion(object):
             for future in futures:
                 ret = future.result()
 
-    def to_dials(self, smv_path):
+    def to_dials(self, smv_path, interval=False):
         observed = set(self.data.keys())
         total = set(range(min(observed), max(observed) + 1))
         missing = observed ^ total
+
+        export_dials_variables(smv_path, sequence=observed, missing=missing)
 
         path = smv_path / self.smv_subdrc
 

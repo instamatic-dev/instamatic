@@ -210,17 +210,15 @@ class Experiment(object):
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-        print("Writing files...")
-
+        print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,
                                   mrc_path=self.mrc_path,
                                   smv_path=self.smv_path,
                                   workers=8)
         
+        print("Writing input files...")
         if self.write_dials:
-            print("Writing files for DIALS")
-            img_conv.to_dials(self.smv_path)
-
+            img_conv.to_dials(self.smv_path, interval=self.image_interval_enabled)
         if self.write_red:
             img_conv.write_ed3d(self.mrc_path)
         if self.write_xds or self.write_dials:
