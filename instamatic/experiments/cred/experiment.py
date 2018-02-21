@@ -13,19 +13,57 @@ from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
 from scipy import ndimage
 from instamatic.processing.find_holes import find_holes
+import pickle
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
 
-def Calibrate_Imageshift(ctrl):
+def Calibrate_Imageshift(ctrl, diff_defocus,stepsize):
     from instamatic.calibrate.fit import fit_affine_transformation
     from instamatic.processing.cross_correlate import cross_correlate
 
+    inp = raw_input("""Calibrate imageshift
+-------------------
+ 1. Go to diffraction mode with CL 25 cm.
+ 2. Focus the diffraction spots.
+ 3. Center the beam with PLA.
+    
+ >> Press <ENTER> to start >> \n""")
+    
+    if diff_defocus != 0:
+        diff_focus_proper = ctrl.difffocus.value
+        diff_focus_defocused = diff_defocus 
+        ctrl.difffocus.value = diff_focus_defocused
     x0, y0 = ctrl.imageshift.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.1, comment="Beam in center of image")
+    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
 
     shifts = []
     imgpos = []
+    stepsize = stepsize
+    
+    for i in range(0,5):
+        for j in range(0,5):
+            ctrl.imageshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
+            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
+
+            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
+            imgpos.append(imgshift)
+            shifts.append(shift)
+
+    ctrl.imageshift.set(x = x0, y = y0)
+    
+    r, t = fit_affine_transformation(shifts, imgpos)
+    if diff_defocus != 0:
+        ctrl.difffocus.value = diff_focus_proper
+    print "ImageShift calibration done."
+    print r
+
+    return r
+
+def Calibrate_Diffshift(ctrl, diff_defocus, stepsize):
+    from instamatic.calibrate.fit import fit_affine_transformation
+    from instamatic.processing.cross_correlate import cross_correlate
 
     inp = raw_input("""Calibrate imageshift
 -------------------
@@ -35,21 +73,81 @@ def Calibrate_Imageshift(ctrl):
     
  >> Press <ENTER> to start >> \n""")
 
+    if diff_defocus != 0:
+        diff_focus_proper = ctrl.difffocus.value
+        diff_focus_defocused = diff_defocus 
+        ctrl.difffocus.value = diff_focus_defocused
+
+    x0, y0 = ctrl.diffshift.get()
+    
+    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
+
+    shifts = []
+    imgpos = []
+    stepsize = stepsize
+    
     for i in range(0,5):
         for j in range(0,5):
-            ctrl.imageshift.set(x= x0 + (i-2)*2500, y= y0 + (j-2)*2500)
-            img, h = ctrl.getImage(exposure = 0.1, comment = "imageshifted image")
+            ctrl.diffshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
+            img, h = ctrl.getImage(exposure = 0.01, comment = "diffshifted defocused image")
 
             shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array((x0 + (i-2)*2500, y0 + (j-2)*2500))
-            imgpos.append(imgshift)
+            dif_shift = np.array(((i-2)*stepsize, (j-2)*stepsize))
+            imgpos.append(dif_shift)
             shifts.append(shift)
 
-    ctrl.imageshift.set(x = x0, y = y0)
-
+    ctrl.diffshift.set(x = x0, y = y0)
+    
     r, t = fit_affine_transformation(shifts, imgpos)
-
+    if diff_defocus != 0:
+        ctrl.difffocus.value = diff_focus_proper
     print "ImageShift calibration done."
+    print r
+
+    return r
+
+def Calibrate_beamshift_diff(ctrl, diff_defocus, stepsize):
+    from instamatic.calibrate.fit import fit_affine_transformation
+    from instamatic.processing.cross_correlate import cross_correlate
+
+    inp = raw_input("""Calibrate imageshift
+-------------------
+ 1. Go to diffraction mode with CL 25 cm.
+ 2. Focus the diffraction spots.
+ 3. Center the beam with PLA.
+    
+ >> Press <ENTER> to start >> \n""")
+
+    if diff_defocus != 0:
+        diff_focus_proper = ctrl.difffocus.value
+        diff_focus_defocused = diff_defocus 
+        ctrl.difffocus.value = diff_focus_defocused
+
+    x0, y0 = ctrl.beamshift.get()
+    
+    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
+
+    shifts = []
+    imgpos = []
+    stepsize = stepsize
+    
+    for i in range(0,5):
+        for j in range(0,5):
+            ctrl.beamshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
+            img, h = ctrl.getImage(exposure = 0.01, comment = "diffshifted defocused image")
+
+            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+            beam_shift = np.array(((i-2)*stepsize, (j-2)*stepsize))
+            imgpos.append(beam_shift)
+            shifts.append(shift)
+
+    ctrl.beamshift.set(x = x0, y = y0)
+    
+    r, t = fit_affine_transformation(shifts, imgpos)
+    if diff_defocus != 0:
+        ctrl.difffocus.value = diff_focus_proper
+    print "beamshift to diffraction calibration done."
+    print r
 
     return r
 
@@ -136,9 +234,67 @@ class Experiment(object):
         buffer = []
         image_buffer = []    
             
-        if self.mode == "auto":
-            print "Auto tracking-back mode activated. Please ensure that you put the particle in the middle of the aperture."
-            transform_imgshift = Calibrate_Imageshift(self.ctrl)
+        if self.mode == "auto":  
+            print "Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective."
+            
+            try:
+                with open('ISCalib.pkl') as f:
+                    transform_imgshift = pickle.load(f)
+                with open('ISCalib_foc.pkl') as ff:
+                    transform_imgshift_foc = pickle.load(ff)
+            except IOError:
+                print "No Imageshift calibration found. Choose the disired defocus value."
+                inp = raw_input("Press ENTER when ready.")
+                
+                """diff_focus_proper = self.ctrl.difffocus.value
+                diff_focus_defocused = self.diff_defocus 
+                self.ctrl.difffocus.value = diff_focus_defocused"""
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 2000)
+                    """self.ctrl.difffocus.value = diff_focus_proper"""
+                    with open('ISCalib.pkl', 'w') as f:
+                        pickle.dump(transform_imgshift, f)
+                    satisfied = raw_input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
+                    
+                inp = raw_input("Calibrate imageshift for focused DP. Press ENTER when ready.")
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_imgshift_foc = Calibrate_Imageshift(self.ctrl, 0, stepsize = 1500)
+                    """self.ctrl.difffocus.value = diff_focus_proper"""
+                    with open('ISCalib_foc.pkl', 'w') as ff:
+                        pickle.dump(transform_imgshift_foc, ff)
+                    satisfied = raw_input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
+                
+                self.logger.debug("Transform_imgshift: {}".format(transform_imgshift))
+                self.logger.debug("Transform_imgshift_foc: {}".format(transform_imgshift_foc))
+                
+            try:
+                with open('DSCalib.pkl') as f1:
+                    transform_difshift = pickle.load(f1)
+                with open('DSCalib_foc.pkl') as ff1:
+                    transform_difshift_foc = pickle.load(ff1)
+            except IOError:
+                print "No Diffraction Shift (PLA) calibration found. Redo PLA calibration..."
+                inp = raw_input("Choose desired defocus. Press Enter when ready.")
+                
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_difshift = Calibrate_Diffshift(self.ctrl, self.diff_defocus, stepsize = 300)
+                    with open('DSCalib.pkl','w') as f1:
+                        pickle.dump(transform_difshift,f1)
+                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
+                   
+                inp = raw_input("PLA calibration (focused) not found. Press ENTER when ready") 
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_difshift_foc = Calibrate_Diffshift(self.ctrl, 0, stepsize = 300)
+                    with open('DSCalib_foc.pkl','w') as ff1:
+                        pickle.dump(transform_difshift_foc,ff1)
+                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
+            
+            self.logger.debug("Transform_difshift: {}".format(transform_difshift))
+            self.logger.debug("Transform_difshift: {}".format(transform_difshift_foc))
             ## find the center of the particle and circle a 50*50 area for reference for correlate2d
             try:
                 self.calib_beamshift = CalibBeamShift.from_file()
@@ -148,10 +304,11 @@ class Experiment(object):
                 while calib_file == "x":
                     ## Here maybe better to calibrate beam shift in diffraction defocus mode, choose defocus value of the defocus you wish to use.
                     print "Find a clear area, toggle the beam to the desired defocus value."
-                    calibrate_beamshift(ctrl = self.ctrl)
+                    self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
                     print "Beam shift calibration done."
                     calib_file = raw_input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
-            
+            self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
+
             diff_focus_proper = self.ctrl.difffocus.value
             diff_focus_defocused = self.diff_defocus 
             self.ctrl.difffocus.value = diff_focus_defocused
@@ -160,54 +317,29 @@ class Experiment(object):
 
             bs_x0, bs_y0 = self.ctrl.beamshift.get()
             is_x0, is_y0 = self.ctrl.imageshift.get()
+            ds_x0, ds_y0 = self.ctrl.diffshift.get()
             print "Beamshift: {}, {}".format(bs_x0, bs_y0)
             print "Imageshift: {}, {}".format(is_x0, is_y0)
-            ## need to find accurately the center of the particle, which is quite difficult with the defocused images with SA aperture.
-            ## remember to using focused beam instead of using SA aperture
-
-            """aperture_position = find_holes(img0.astype(float), area = 500, plot = False)
-
-            if len(aperture_position) == 1:
-                for i, prop in enumerate(aperture_position):
-                    cy, cx = prop.weighted_centroid
-                    y1,x1,y2,x2 = [x for x in prop.bbox]
                 
-                crystal_pos = [cy, cx]
-                d_SA = y2-y1
-                window_size = int(d_SA/1.414)
-                if window_size % 2 == 1:
-                    window_size = window_size + 1
-                
-                a1 = int(crystal_pos[0]-window_size/2)
-                b1 = int(crystal_pos[0]+window_size/2)
-                a2 = int(crystal_pos[1]-window_size/2)
-                b2 = int(crystal_pos[1]+window_size/2)
-                img0_cropped = img0[a1:b1,a2:b2]
-                self.logger.debug("Cropped image size: {}".format(img0_cropped.shape))
-                cc = (0,0)
-                
-                appos0 = crystal_pos
-                
+            crystal_pos, r = fast_finder(img0) #fast_finder crystal position (y,x)
+            crystal_pos = crystal_pos[::-1]
+            if r[0] <= r[1]:
+                window_size = r[0]*2
             else:
-                print "Please find another nicely SEPARATED crystal for autotracking."
-                return None"""
+                window_size = r[1]*2
                 
-            crystal_pos, r = fast_finder(img0) #fast_finder crysta position (y,x)
+            window_size = int(window_size/1.414)
+            if window_size % 2 == 1:
+                window_size = window_size + 1
+            
+            appos0 = crystal_pos
             self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
             
-            if r[0] != r[1]:
-                print "Your beam may not be a perfect circle..."
-            window_size = r[0]*2
-            
-            a1 = int(crystal_pos[1]-window_size/2)
-            b1 = int(crystal_pos[1]+window_size/2)
-            a2 = int(crystal_pos[0]-window_size/2)
-            b2 = int(crystal_pos[0]+window_size/2)
-            img_cropped = img[a1:b1,a2:b2]
-
-        ## Instead of beam shift, try image shift. Calibrate imageshift first.
-        #if self.mode == "auto":
-        #    print "Auto tracking-back mode activated. Please ensure that you put the particle in the middle of the aperture"
+            a1 = int(crystal_pos[0]-window_size/2)
+            b1 = int(crystal_pos[0]+window_size/2)
+            a2 = int(crystal_pos[1]-window_size/2)
+            b2 = int(crystal_pos[1]+window_size/2)
+            img0_cropped = img0[a1:b1,a2:b2]
             
             
         if self.camtype == "simulate":
@@ -240,78 +372,25 @@ class Experiment(object):
                     acquisition_time = (t_start - t0) / (i-1)
     
                     self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(self.expt / 10.0, header_keys=None)
+                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
                     self.ctrl.difffocus.value = diff_focus_proper
     
                     image_buffer.append((i, img, h))
                     print "{} saved to image_buffer".format(i)
 
-                    """if i < 15:
-                        aperture_position = find_holes(img.astype(float), area = 500, plot = False, verbose = False)
-
-                        if len(aperture_position) == 1:
-                            for j, prop in enumerate(aperture_position):
-                                cy, cx = prop.weighted_centroid
-                                y1,x1,y2,x2 = [x for x in prop.bbox]
-
-                                crystal_pos = [cy, cx]
-                                #d_SA = y2-y1
-                                #window_size = d_SA/1.414
-                                
-                                a1 = int(crystal_pos[0]-window_size/2)
-                                b1 = int(crystal_pos[0]+window_size/2)
-                                a2 = int(crystal_pos[1]-window_size/2)
-                                b2 = int(crystal_pos[1]+window_size/2)
-                                img_cropped = img[a1:b1,a2:b2]
-                                self.logger.debug("crystal_pos: {} by find_hole.".format(crystal_pos))
-                        else:
-                            print "At least two apertures found!! Exitting auto mode..."
-                            break
-                    ## Here we can use imageshift suggested by S. Smeets
-                    ## Presumably the position of the beam (aperture) does not move; and then we can crop the image at the same position with same cropping size.
-                    #img_cropped = img[a1:b1,a2:b2]
-                    else:
-                        crystal_pos = crystal_pos + cc
-                        self.logger.debug("crystal_pos: {} by add cc only.".format(crystal_pos))
-                        a1 = int(crystal_pos[0]-window_size/2)
-                        b1 = int(crystal_pos[0]+window_size/2)
-                        a2 = int(crystal_pos[1]-window_size/2)
-                        b2 = int(crystal_pos[1]+window_size/2)
-                        img_cropped = img[a1:b1,a2:b2]"""
-
-                    """aperture_position = find_holes(img.astype(float), area = 500, plot = False, verbose = False)
-
-                    if len(aperture_position) == 1:
-                        for j, prop in enumerate(aperture_position):
-                            cy, cx = prop.weighted_centroid
-                            y1,x1,y2,x2 = [x for x in prop.bbox]
-
-                            crystal_pos = [cy, cx]
-                            #d_SA = y2-y1
-                            #window_size = d_SA/1.414
-                            
-                            a1 = int(crystal_pos[0]-window_size/2)
-                            b1 = int(crystal_pos[0]+window_size/2)
-                            a2 = int(crystal_pos[1]-window_size/2)
-                            b2 = int(crystal_pos[1]+window_size/2)
-                            img_cropped = img[a1:b1,a2:b2]
-                            self.logger.debug("crystal_pos: {} by find_hole.".format(crystal_pos))
-                    else:
-                        print "At least two apertures found!! Exitting auto mode..."
-                        break"""
-
                     crystal_pos, r = fast_finder(img)
-
+                    crystal_pos = crystal_pos[::-1]
+                    
                     self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
-
-                    a1 = int(crystal_pos[1]-window_size/2)
-                    b1 = int(crystal_pos[1]+window_size/2)
-                    a2 = int(crystal_pos[0]-window_size/2)
-                    b2 = int(crystal_pos[0]+window_size/2)
+                    print crystal_pos
+                    a1 = int(crystal_pos[0]-window_size/2)
+                    b1 = int(crystal_pos[0]+window_size/2)
+                    a2 = int(crystal_pos[1]-window_size/2)
+                    b2 = int(crystal_pos[1]+window_size/2)
                     img_cropped = img[a1:b1,a2:b2]
 
                     cc,err,diffphase = register_translation(img0_cropped,img_cropped)
-
+                    print cc
                     self.logger.debug("Cross correlation result: {}".format(cc))
                     
                     delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
@@ -320,12 +399,38 @@ class Experiment(object):
                     bs_x0 = bs_x0 + delta_beamshiftcoord[0]
                     bs_y0 = bs_y0 + delta_beamshiftcoord[1]
                     
-                    apmv = np.subtract(crystal_pos,appos0)
-                    delta_imageshiftcoord = np.matmul(transform_imgshift, apmv)
-                    self.ctrl.imageshift.set(x = is_x0 + delta_imageshiftcoord[0], y = is_y0 + delta_imageshiftcoord[1])
-                    is_x0 = is_x0 + delta_imageshiftcoord[0]
-                    is_y0 = is_y0 + delta_imageshiftcoord[1]
-                    appos0 = crystal_pos
+                                        
+                    ##Solve linear equations so that defocused image shift equals 0, as well as focused DP shift equals 0:
+                    ##MIS(DEF) deltaIS + MPLA(DEF) deltaPLA = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
+                    ##MIS deltaIS + MPLA deltaPLA = 0 (the focused DP should stay at the same position)
+                    
+                    a = np.concatenate((transform_imgshift,transform_difshift), axis = 1)
+                    b = np.concatenate((transform_imgshift_foc, transform_difshift_foc), axis = 1)
+                    A = np.concatenate((a,b), axis = 0)
+                    
+                    #apmv, err, diffphase= register_translation(img0, img)
+                    crystal_pos_dif = crystal_pos - appos0
+                    apmv = -crystal_pos_dif
+
+                    print "aperture movement: {}".format(apmv)
+
+                    ##Not sure here if I should reverse the x and y coordinates in apmv. I guess I should.
+                    #delta_imageshiftcoord = np.matmul(transform_imgshift, apmv)
+                    x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
+                    delta_imageshiftcoord = (x[0], x[1])
+                    delta_PLA = (x[2],x[3])
+                    print "delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA)
+                    self.logger.debug("delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA))
+                    
+                    self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
+                    self.ctrl.diffshift.set(x = ds_x0 + int(delta_PLA[0]), y = ds_y0 + int(delta_PLA[1]))
+                    ## the two steps can take ~60 ms per step
+                    
+                    is_x0 = is_x0 + int(delta_imageshiftcoord[0])
+                    is_y0 = is_y0 + int(delta_imageshiftcoord[1])
+                    ds_x0 = ds_x0 + int(delta_PLA[0])
+                    ds_y0 = ds_y0 + int(delta_PLA[1])
+                    #appos0 = crystal_pos
     
                     next_interval = t_start + acquisition_time
                     # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
