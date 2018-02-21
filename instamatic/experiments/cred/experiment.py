@@ -24,7 +24,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus,stepsize):
 
     inp = raw_input("""Calibrate imageshift
 -------------------
- 1. Go to diffraction mode with CL 25 cm.
+ 1. Go to diffraction mode.
  2. Focus the diffraction spots.
  3. Center the beam with PLA.
     
@@ -67,7 +67,7 @@ def Calibrate_Imageshift2(ctrl, diff_defocus,stepsize):
 
     inp = raw_input("""Calibrate imageshift2
 -------------------
- 1. Go to diffraction mode with CL 25 cm.
+ 1. Go to diffraction mode.
  2. Focus the diffraction spots.
  3. Center the beam with PLA.
     
@@ -110,7 +110,7 @@ def Calibrate_Diffshift(ctrl, diff_defocus, stepsize):
 
     inp = raw_input("""Calibrate imageshift
 -------------------
- 1. Go to diffraction mode with CL 25 cm.
+ 1. Go to diffraction mode.
  2. Focus the diffraction spots.
  3. Center the beam with PLA.
     
@@ -293,6 +293,34 @@ class Experiment(object):
             
             self.logger.debug("Transform_difshift: {}".format(transform_difshift))
             self.logger.debug("Transform_difshift: {}".format(transform_difshift_foc))
+            
+            try:
+                with open('IS2Calib.pkl') as f2:
+                    transform_imgshift2 = pickle.load(f2)
+                with open('IS2Calib_foc.pkl') as ff2:
+                    transform_imgshift2_foc = pickle.load(ff2)
+            except IOError:
+                print "No IS2 calibration found. Redo IS2 calibration..."
+                inp = raw_input("Choose desired defocus. Press Enter when ready.")
+                
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_imgshift2 = Calibrate_Imageshift2(self.ctrl, self.diff_defocus, stepsize = 300)
+                    with open('IS2Calib.pkl','w') as f2:
+                        pickle.dump(transform_imgshift2,f2)
+                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
+                   
+                inp = raw_input("IS2 calibration (focused) not found. Press ENTER when ready") 
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_imgshift2_foc = Calibrate_Imageshift2(self.ctrl, 0, stepsize = 300)
+                    with open('IS2Calib_foc.pkl','w') as ff2:
+                        pickle.dump(transform_imgshift2_foc,ff2)
+                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
+            
+            self.logger.debug("Transform_imgshift2: {}".format(transform_imgshift2))
+            self.logger.debug("Transform_imgshift2_foc: {}".format(transform_imgshift2_foc))
+            
             ## find the center of the particle and circle a 50*50 area for reference for correlate2d
             try:
                 self.calib_beamshift = CalibBeamShift.from_file()
@@ -316,9 +344,12 @@ class Experiment(object):
             bs_x0, bs_y0 = self.ctrl.beamshift.get()
             is_x0, is_y0 = self.ctrl.imageshift.get()
             ds_x0, ds_y0 = self.ctrl.diffshift.get()
+            is2_x0, is2_y0 = self.ctrl.imageshift2.get()
+            
             print "Beamshift: {}, {}".format(bs_x0, bs_y0)
             print "Imageshift: {}, {}".format(is_x0, is_y0)
-                
+            print "Imageshift2: {}, {}".format(is2_x0, is2_y0)
+            
             crystal_pos, r = fast_finder(img0) #fast_finder crystal position (y,x)
             crystal_pos = crystal_pos[::-1]
             if r[0] <= r[1]:
@@ -406,6 +437,10 @@ class Experiment(object):
                     b = np.concatenate((transform_imgshift_foc, transform_difshift_foc), axis = 1)
                     A = np.concatenate((a,b), axis = 0)
                     
+                    """"a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
+                    b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
+                    A = np.concatenate((a,b), axis = 0)"""
+                    
                     #apmv, err, diffphase= register_translation(img0, img)
                     crystal_pos_dif = crystal_pos - appos0
                     apmv = -crystal_pos_dif
@@ -419,15 +454,21 @@ class Experiment(object):
                     delta_PLA = (x[2],x[3])
                     print "delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA)
                     self.logger.debug("delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA))
+                    """delta_imageshift2coord = (x[2],x[3])
+                    print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
+                    self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))"""
                     
                     self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
                     self.ctrl.diffshift.set(x = ds_x0 + int(delta_PLA[0]), y = ds_y0 + int(delta_PLA[1]))
+                    """self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))"""
                     ## the two steps can take ~60 ms per step
                     
                     is_x0 = is_x0 + int(delta_imageshiftcoord[0])
                     is_y0 = is_y0 + int(delta_imageshiftcoord[1])
                     ds_x0 = ds_x0 + int(delta_PLA[0])
                     ds_y0 = ds_y0 + int(delta_PLA[1])
+                    """is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
+                    is2_y0 = is2_y0 + int(delta_imageshift2coord[1])"""
                     #appos0 = crystal_pos
     
                     next_interval = t_start + acquisition_time
