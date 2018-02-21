@@ -433,13 +433,13 @@ class Experiment(object):
                     ##MIS(DEF) deltaIS + MPLA(DEF) deltaPLA = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
                     ##MIS deltaIS + MPLA deltaPLA = 0 (the focused DP should stay at the same position)
                     
-                    a = np.concatenate((transform_imgshift,transform_difshift), axis = 1)
+                    """a = np.concatenate((transform_imgshift,transform_difshift), axis = 1)
                     b = np.concatenate((transform_imgshift_foc, transform_difshift_foc), axis = 1)
-                    A = np.concatenate((a,b), axis = 0)
-                    
-                    """"a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
-                    b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
                     A = np.concatenate((a,b), axis = 0)"""
+                    
+                    a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
+                    b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
+                    A = np.concatenate((a,b), axis = 0)
                     
                     #apmv, err, diffphase= register_translation(img0, img)
                     crystal_pos_dif = crystal_pos - appos0
@@ -451,24 +451,24 @@ class Experiment(object):
                     #delta_imageshiftcoord = np.matmul(transform_imgshift, apmv)
                     x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
                     delta_imageshiftcoord = (x[0], x[1])
-                    delta_PLA = (x[2],x[3])
+                    """delta_PLA = (x[2],x[3])
                     print "delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA)
-                    self.logger.debug("delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA))
-                    """delta_imageshift2coord = (x[2],x[3])
+                    self.logger.debug("delta imageshiftcoord: {}, delta PLA: {}".format(delta_imageshiftcoord, delta_PLA))"""
+                    delta_imageshift2coord = (x[2],x[3])
                     print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
-                    self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))"""
+                    self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
                     
                     self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
-                    self.ctrl.diffshift.set(x = ds_x0 + int(delta_PLA[0]), y = ds_y0 + int(delta_PLA[1]))
-                    """self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))"""
+                    """self.ctrl.diffshift.set(x = ds_x0 + int(delta_PLA[0]), y = ds_y0 + int(delta_PLA[1]))"""
+                    self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))
                     ## the two steps can take ~60 ms per step
                     
                     is_x0 = is_x0 + int(delta_imageshiftcoord[0])
                     is_y0 = is_y0 + int(delta_imageshiftcoord[1])
-                    ds_x0 = ds_x0 + int(delta_PLA[0])
-                    ds_y0 = ds_y0 + int(delta_PLA[1])
-                    """is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
-                    is2_y0 = is2_y0 + int(delta_imageshift2coord[1])"""
+                    """ds_x0 = ds_x0 + int(delta_PLA[0])
+                    ds_y0 = ds_y0 + int(delta_PLA[1])"""
+                    is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
+                    is2_y0 = is2_y0 + int(delta_imageshift2coord[1])
                     #appos0 = crystal_pos
     
                     next_interval = t_start + acquisition_time
