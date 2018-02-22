@@ -3,11 +3,27 @@ from tkinter.ttk import *
 import tkinter.messagebox
 import os, sys
 from pathlib import Path
+import json
 
 import matplotlib
 matplotlib.use('TkAgg')
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
+
+
+PARAMS = { 
+ "flatfield": "C:/instamatic/flatfield.tiff",
+ "diff_binsize": 1,
+ "diff_brightness": 39422,
+ "diff_exposure": 0.1,
+ "diff_spotsize": 4,
+ "image_binsize": 1,
+ "image_exposure": 0.5,
+ "image_spotsize": 4,
+ "image_threshold": 10,
+ "crystal_spread": 0.6
+}
+
 
 message1 = """
  1. Go to diffraction mode and select desired camera length (CAM L)
@@ -131,6 +147,41 @@ class ExperimentalSED(LabelFrame):
                    "diff_brightness": self.var_diff_brightness.get(),
                    "scan_radius": self.var_scan_radius.get() }
         return params
+
+
+def acquire_data_SED(controller, **kwargs):
+    controller.log.info("Start serialED experiment")
+    from instamatic.experiments import serialED
+
+    workdir = controller.module_io.get_working_directory()
+    expdir = controller.module_io.get_new_experiment_directory()
+    expdir.mkdir(exist_ok=True, parents=True)
+
+    params = workdir / "params.json"
+    try:
+        params = json.load(open(params,"r"))
+    except IOError:
+        params = PARAMS
+    
+    params.update(kwargs)
+    params["flatfield"] = controller.module_io.get_flatfield()
+
+    scan_radius = kwargs["scan_radius"]
+
+    controller.stream.get_module("sed").calib_path = expdir / "calib"
+
+    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log, 
+        scan_radius=scan_radius, begin_here=True)
+    exp.report_status()
+    exp.run()
+
+    controller.log.info("Finish serialED experiment")
+
+
+from .base_module import BaseModule
+module = BaseModule("sed", "serialED", True, ExperimentalSED, commands={
+    "sed": acquire_data_SED
+    })
 
 
 if __name__ == '__main__':

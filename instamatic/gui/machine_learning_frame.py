@@ -148,6 +148,10 @@ class MachineLearningFrame(LabelFrame):
         ShowMatplotlibFig(self, fig, title=fn)
 
 
+from .base_module import BaseModule
+module = BaseModule("learning", "learning", True, MachineLearningFrame, commands={})
+
+
 if __name__ == '__main__':
     root = Tk()
     MachineLearningFrame(root).pack(side="top", fill="both", expand=True)

@@ -112,6 +112,34 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
 
+def debug(controller, **kwargs):
+    task = kwargs.pop("task")
+    if task == "open_ipython":
+        ctrl = controller.ctrl
+        from IPython import embed
+        embed(banner1="\nAssuming direct control.\n")
+    elif task == "report_status":
+        print(controller.ctrl)
+    elif task == "close_down":
+        controller.ctrl.stageposition.neutral()
+        controller.ctrl.mode = "mag1"
+        controller.ctrl.brightness.max()
+        controller.ctrl.magnification.value = 500000
+        controller.ctrl.spotsize = 1
+
+        print("All done!")
+    elif task == "run_script":
+        ctrl = controller.ctrl
+        script = kwargs.pop("script")
+        exec(open(script).read())
+
+
+from .base_module import BaseModule
+module = BaseModule("debug", "debug", True, DebugFrame, commands={
+    "debug": debug
+    })
+
+
 if __name__ == '__main__':
     root = Tk()
     DebugFrame(root).pack(side="top", fill="both", expand=True)

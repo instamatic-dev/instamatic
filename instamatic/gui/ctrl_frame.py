@@ -99,6 +99,19 @@ class ExperimentalCtrl(LabelFrame):
         self.triggerEvent.set()
 
 
+def microscope_control(controller, **kwargs):
+    task = kwargs.pop("task")
+
+    f = getattr(controller.ctrl, task)
+    f.set(**kwargs)
+
+
+from .base_module import BaseModule
+module = BaseModule("ctrl", "ctrl", True, ExperimentalCtrl, commands={
+    "ctrl": microscope_control
+    })
+
+
 if __name__ == '__main__':
     root = Tk()
     ExperimentalCtrl(root).pack(side="top", fill="both", expand=True)

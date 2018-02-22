@@ -156,6 +156,47 @@ class ExperimentalcRED(LabelFrame):
         self.triggerEvent.set()
 
 
+def toggle_difffocus(controller, **kwargs):
+    toggle = kwargs["toggle"]
+
+    if toggle:
+        print("Proper:", controller.ctrl.difffocus)
+        try:
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+        except ValueError:
+            controller.ctrl.mode_diffraction()
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+
+        value = controller._difffocus_proper + kwargs["value"]
+        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+    else:
+        value = controller._difffocus_proper
+
+    controller.ctrl.difffocus.set(value=value)
+
+
+def acquire_data_cRED(controller, **kwargs):
+    controller.log.info("Start cRED experiment")
+    from instamatic.experiments import cRED
+    
+    expdir = controller.module_io.get_new_experiment_directory()
+    expdir.mkdir(exist_ok=True, parents=True)
+    
+    cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+
+    cexp.report_status()
+    cexp.start_collection()
+    
+    controller.log.info("Finish cRED experiment")
+
+
+from .base_module import BaseModule
+module = BaseModule("cred", "cRED", True, ExperimentalcRED, commands={
+    "cred": acquire_data_cRED,
+    "toggle_difffocus": toggle_difffocus
+    })
+
+
 if __name__ == '__main__':
     root = Tk()
     ExperimentalcRED(root).pack(side="top", fill="both", expand=True)

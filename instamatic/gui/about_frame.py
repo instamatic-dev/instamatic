@@ -123,6 +123,10 @@ class About(LabelFrame):
         webbrowser.open_new(r"http://www.github.com/stefsmeets/instamatic")
 
 
+from .base_module import BaseModule
+module = BaseModule("about", "about", True, About, commands={})
+
+
 if __name__ == '__main__':
     root = Tk()
     About(root).pack(side="top", fill="both", expand=True)

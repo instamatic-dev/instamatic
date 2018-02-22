@@ -139,6 +139,10 @@ class IOFrame(LabelFrame):
         os.startfile(drc)
 
 
+from .base_module import BaseModule
+module = BaseModule("io", "i/o", False, IOFrame, {})
+
+
 if __name__ == '__main__':
     root = Tk()
     IOFrame(root).pack(side="top", fill="both", expand=True)
