@@ -124,20 +124,32 @@ class ExperimentalSED(LabelFrame):
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
         path = self.calib_path / CALIB_BEAMSHIFT
-        c = CalibDirectBeam.from_file(path)
-        c.plot()
+        try:
+            c = CalibDirectBeam.from_file(path)
+        except IOError as e:
+            print(e)
+        else:
+            c.plot()
 
     def show_calib_directbeam1(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
         path = self.calib_path / CALIB_DIRECTBEAM
-        c = CalibDirectBeam.from_file(path)
-        c.plot("DiffShift")
+        try:
+            c = CalibDirectBeam.from_file(path)
+        except IOError as e:
+            print(e)
+        else:
+            c.plot("DiffShift")
 
     def show_calib_directbeam2(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
         path = self.calib_path / CALIB_DIRECTBEAM
-        c = CalibDirectBeam.from_file(path)
-        c.plot("BeamShift")
+        try:
+            c = CalibDirectBeam.from_file(path)
+        except IOError as e:
+            print(e)
+        else:
+            c.plot("BeamShift")
 
     def get_params(self):
         params = { "image_exposure": self.var_image_exposure.get(),

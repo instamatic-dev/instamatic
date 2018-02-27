@@ -123,6 +123,14 @@ class MachineLearningFrame(LabelFrame):
         name = fn.stem.replace(f"_{number:04d}", "")
         image_fn = root / "images" / f"{name}{fn.suffix}"
 
+        if not fn.exists():
+            print(f"No such file: {fn}")
+            return
+
+        if not image_fn.exists():
+            print(f"No such file: {image_fn}")
+            return
+
         data, data_h = read_image(fn)
         img, img_h = read_image(image_fn)
 
