@@ -160,7 +160,7 @@ def main():
     # Work-around for race condition (errors) that occurs when 
     # DataCollectionController tries to access them
 
-    tem_ctrl = TEMController.initialize(camera=DataCollectionGUI)
+    tem_ctrl = TEMController.initialize(camera=DataCollectionGUI, modules=MODULES)
     
     while not tem_ctrl.cam._modules_have_loaded:
         time.sleep(0.1)

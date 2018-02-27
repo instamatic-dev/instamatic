@@ -7,7 +7,11 @@ import sys
 from instamatic import config
 
 
-def initialize(camera=None):
+def initialize(camera=None, **kwargs):
+    """
+    camera: callable
+        Pass custom camera initializer (callable) + kwargs
+    """
     import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
     isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
 
@@ -30,7 +34,9 @@ def initialize(camera=None):
 
     if camera:
         # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
-        cam = camera(cam=camera_id)
+        if not callable(camera):
+            raise RuntimeError(f"Camera {camera} is not callable")
+        cam = camera(cam=camera_id, **kwargs)
     elif isInteractive:
         cam = Camera(kind=camera_id)
     elif not isInteractive:
