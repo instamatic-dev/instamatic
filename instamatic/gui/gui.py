@@ -52,7 +52,7 @@ class DataCollectionController(object):
             self.triggerEvent.clear()
 
             if self.exitEvent.is_set():
-                self.ctrl.close()  # TODO: make part of atexit?
+                self.close()
                 sys.exit()
 
             job, kwargs = self.q.get()
@@ -71,23 +71,31 @@ class DataCollectionController(object):
                 self.log.debug("Error caught -> {} while running '{}' with {}".format(repr(e), job, kwargs))
                 self.log.exception(e)
 
+    def close(self):
+        for item in (self.ctrl, self.stream, self.beam_ctrl):
+            try:
+                item.close()
+            except AttributeError:
+                pass
+
 
 class DataCollectionGUI(VideoStream):
     """docstring for DataCollectionGUI"""
-    def __init__(self, *args, **kwargs):
-        super(DataCollectionGUI, self).__init__(*args, **kwargs)
-        self.modules = {}
+    def __init__(self, modules=(), cam=None):
+        super(DataCollectionGUI, self).__init__(cam=cam)
+        self._modules = modules
         self._modules_have_loaded = False
+        self.modules = {}
 
     def load_modules(self, master):
         frame = Frame(master)
         frame.pack(side="right", fill="both", expand="yes")
 
-        make_notebook = any(module.tabbed for module in MODULES)
+        make_notebook = any(module.tabbed for module in self._modules)
         if make_notebook:
             self.nb = Notebook(frame, padding=10)
 
-        for module in MODULES:
+        for module in self._modules:
             if module.tabbed:
                 page = Frame(self.nb)
                 module_frame = module.tk_frame(page)
@@ -146,7 +154,7 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
     log.info("Instamatic.gui started")
-    
+
     from instamatic import TEMController
 
     # Work-around for race condition (errors) that occurs when 
