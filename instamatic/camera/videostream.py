@@ -104,6 +104,7 @@ class VideoStream(threading.Thread):
         self.root = Tk()
         
         self.init_vars()
+        self.load_modules(self.root)
         self.buttonbox(self.root)
         self.header(self.root)
         self.makepanel(self.root)
@@ -178,6 +179,9 @@ class VideoStream(threading.Thread):
         btn = Button(master, text="Save image",
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
+
+    def load_modules(self, master):
+        pass
 
     def init_vars(self):
         self.var_fps = DoubleVar()

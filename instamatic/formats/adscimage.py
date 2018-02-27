@@ -38,7 +38,7 @@ def write_adsc(fname, data, header={}):
 
     # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
     dtype = np.uint16
-    data = np.round(data, 0).astype(dtype)
+    data = np.round(data, 0).astype(dtype, copy=False)  # copy=False ensures that no copy is made if dtype is already satisfied
     data = data.astype(dtype)
     if swap_needed(header):
         data.byteswap(True)

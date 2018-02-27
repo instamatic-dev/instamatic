@@ -3,7 +3,6 @@ from tkinter.ttk import *
 
 import os, sys
 import traceback
-import json
 from instamatic.formats import *
 
 import time
@@ -80,7 +79,7 @@ class DataCollectionGUI(VideoStream):
         self.modules = {}
         self._modules_have_loaded = False
 
-    def buttonbox(self, master):
+    def load_modules(self, master):
         frame = Frame(master)
         frame.pack(side="right", fill="both", expand="yes")
 
@@ -103,10 +102,6 @@ class DataCollectionGUI(VideoStream):
 
         if make_notebook:
             self.nb.pack(fill="both", expand="yes")
-
-        btn = Button(master, text="Save image",
-            command=self.saveImage)
-        btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
         self._modules_have_loaded = True
 
@@ -133,9 +128,14 @@ class DataCollectionGUI(VideoStream):
 
 
 def main():
-    from instamatic import TEMController
-    from instamatic import config
+    from instamatic.utils import high_precision_timers
+    high_precision_timers.enable()  # sleep timers with 1 ms resolution
     
+    # enable faster switching between threads
+    sys.setswitchinterval(0.001)  # seconds
+
+    from instamatic import config
+
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_{date}.log"
 
@@ -146,6 +146,8 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
     log.info("Instamatic.gui started")
+    
+    from instamatic import TEMController
 
     # Work-around for race condition (errors) that occurs when 
     # DataCollectionController tries to access them
