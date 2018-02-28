@@ -142,6 +142,9 @@ def main():
     # enable faster switching between threads
     sys.setswitchinterval(0.001)  # seconds
 
+    from instamatic import version
+    version.register_thank_you_message()
+
     from instamatic import config
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")

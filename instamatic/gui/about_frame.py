@@ -107,7 +107,7 @@ class About(LabelFrame):
         Label(frame, text="").grid(row=22, column=0, sticky="W")
 
         Label(frame, text="If you found this software useful, please cite:").grid(row=30, column=0, sticky="W", columnspan=2, padx=10)
-        txt = Message(frame, text="Stef Smeets, Bin Wang, Magdalena Cichocka, Jonas Angstrom, & Wei Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389".format(version.__version__), width=320, justify=LEFT)
+        txt = Message(frame, text=version.__citation__, width=320, justify=LEFT)
         txt.grid(row=31, column=1, sticky="W")
 
         Label(frame, text="").grid(row=31, column=0, sticky="W", padx=10)
