@@ -39,7 +39,6 @@ def write_adsc(fname, data, header={}):
     # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
     dtype = np.uint16
     data = np.round(data, 0).astype(dtype, copy=False)  # copy=False ensures that no copy is made if dtype is already satisfied
-    data = data.astype(dtype)
     if swap_needed(header):
         data.byteswap(True)
 
@@ -54,9 +53,12 @@ def readheader(infile):
     line = infile.readline()
     bytesread = len(line)
     while b'}' not in line:
-        if b'=' in line:
-            (key, val) = str(line).split('=')
-            header[key.strip()] = val.strip(';\n\r')
+        string = line.decode().strip()
+        if '=' in string:
+            (key, val) = string.split('=')
+            val = val.strip(';')
+            key = key.strip()
+            header[key] = val
         line = infile.readline()
         bytesread = bytesread + len(line)
     return header
