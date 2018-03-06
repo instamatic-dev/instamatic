@@ -9,22 +9,13 @@ from instamatic.formats import read_tiff, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic import config
-from instamatic.tools import find_beam_center
+from instamatic.tools import find_beam_center, find_subranges
 from pathlib import Path
 
 import collections
 
 import logging
 logger = logging.getLogger(__name__)
-
-
-def find_subranges(lst):
-    from operator import itemgetter
-    from itertools import groupby
-
-    for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
-        group = list(map(itemgetter(1), group))
-        yield min(group), max(group)
 
 
 def export_dials_variables(path, *, sequence=(), missing=()):
@@ -96,6 +87,10 @@ class ImgConversion(object):
             else:
                 self.data[i] = img
 
+        self.observed_range = set(self.data.keys())
+        self.complete_range = set(range(min(self.observed_range), max(self.observed_range) + 1))
+        self.missing_range = self.observed_range ^ self.complete_range
+
         self.data_shape = img.shape
         try:
             self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
@@ -110,23 +105,33 @@ class ImgConversion(object):
         self.stretch_azimuth = config.microscope.stretch_azimuth
         self.stretch_amplitude = config.microscope.stretch_amplitude
 
-        self.beam_center = self.get_average_beam_center()
+        self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.rotation_axis = rotation_axis
         self.dmax, self.dmin = resolution_range
-        self.nframes = max(self.data.keys())
         
         self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
-        logger.debug("Primary beam at: {}".format(self.beam_center))
+        logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
-    def get_average_beam_center(self):
-        # take every 10th frame for beam center determination to speed up the calculation
-        return np.mean([find_beam_center(img, sigma=10) for img in list(self.data.values())[1::10]], axis=0)
+    def get_beam_centers(self):
+        centers = []
+        for i, h in self.headers.items():
+            center = find_beam_center(self.data[i], sigma=10)
+            h["beam_center"] = center
+            centers.append(center)
+
+        beam_centers = np.array(centers)
+
+        # avg_center = np.mean(centers, axis=0)
+        avg_center = np.median(beam_centers, axis=0)
+        std_center = np.std(beam_centers, axis=0)
+
+        return avg_center, std_center
 
     def fixStretchCorrection(self, image, directXY):
         center = np.copy(directXY)
@@ -143,7 +148,7 @@ class ImgConversion(object):
 
         path.mkdir(exist_ok=True)
 
-        for i in self.data.keys():
+        for i in self.observed_range:
             self.write_tiff(path, i)
 
         logger.debug("Tiff files saved in folder: {}".format(path))
@@ -154,7 +159,7 @@ class ImgConversion(object):
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
     
-        for i in self.data.keys():
+        for i in self.observed_range:
             self.write_smv(path, i)
                
         logger.debug("SMV files saved in folder: {}".format(path))
@@ -164,7 +169,7 @@ class ImgConversion(object):
 
         path.mkdir(exist_ok=True)
 
-        for i in self.data.keys():
+        for i in self.observed_range:
             self.write_mrc(path, i)
 
         logger.debug("MRC files created in folder: {}".format(path))
@@ -190,7 +195,7 @@ class ImgConversion(object):
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
-            for i in self.data.keys():
+            for i in self.observed_range:
                 
                 if write_tiff:
                     futures.append(executor.submit(self.write_tiff, tiff_path, i))
@@ -203,24 +208,23 @@ class ImgConversion(object):
                 ret = future.result()
 
     def to_dials(self, smv_path, interval=False):
-        observed = set(self.data.keys())
-        total = set(range(min(observed), max(observed) + 1))
-        missing = observed ^ total
+        observed_range = self.observed_range
+        self.missing_range = self.missing_range
 
-        export_dials_variables(smv_path, sequence=observed, missing=missing)
+        export_dials_variables(smv_path, sequence=observed_range, missing=self.missing_range)
 
         path = smv_path / self.smv_subdrc
 
-        i = min(observed)
+        i = min(observed_range)
         empty = np.zeros_like(self.data[i])
         h = self.headers[i].copy()
         h["ImageGetTime"] = time.time()
 
         # add data to self.data/self.headers so that existing functions can be used
         # make sure to remove them afterwards, not to interfere with other data writing
-        logger.debug("Writing missing files for DIALS: {}".format(missing))
+        logger.debug("Writing missing files for DIALS: {}".format(self.missing_range))
 
-        for n in missing:
+        for n in self.missing_range:
             self.data[n] = empty
             self.headers[n] = h
 
@@ -241,11 +245,17 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
-        img = self.fixStretchCorrection(img, self.beam_center)
+        beam_center = h["beam_center"]
+
+        img = self.fixStretchCorrection(img, beam_center)
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
         phi = self.start_angle + self.osc_angle * (i-1)
+
+        # TODO: Dials reads the beam_center from the first image and uses that for the whole range
+        # For now, use the average beam center and consider it stationary, remove this line later
+        beam_center = self.mean_beam_center
         
         header = collections.OrderedDict()
         header['HEADER_BYTES'] = 512
@@ -270,10 +280,10 @@ class ImgConversion(object):
         header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
         header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = "{:.4f}".format(self.beam_center[1])
-        header['BEAM_CENTER_Y'] = "{:.4f}".format(self.beam_center[0])
-        header['DENZO_X_BEAM'] = "{:.4f}".format((self.beam_center[0]*self.physical_pixelsize))
-        header['DENZO_Y_BEAM'] = "{:.4f}".format((self.beam_center[1]*self.physical_pixelsize))
+        header['BEAM_CENTER_X'] = "{:.4f}".format(beam_center[1])
+        header['BEAM_CENTER_Y'] = "{:.4f}".format(beam_center[0])
+        header['DENZO_X_BEAM'] = "{:.4f}".format((beam_center[0]*self.physical_pixelsize))
+        header['DENZO_Y_BEAM'] = "{:.4f}".format((beam_center[1]*self.physical_pixelsize))
         fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
@@ -282,9 +292,11 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
+        beam_center = h["beam_center"]
+
         fn = path / f"{i:05d}.mrc"
 
-        img = self.fixStretchCorrection(img, self.beam_center)
+        img = self.fixStretchCorrection(img, beam_center)
         # flip up/down because RED reads images from the bottom left corner
         # for RED these need to be as integers
 
@@ -325,7 +337,7 @@ class ImgConversion(object):
         ed3d.write("\n")
         ed3d.write("FILELIST\n")
     
-        for i in self.data.keys():
+        for i in self.observed_range:
 
             img = self.data[i]
             h = self.headers[i]
@@ -343,7 +355,7 @@ class ImgConversion(object):
 
         path.mkdir(exist_ok=True)
 
-        nframes = self.nframes
+        nframes = max(self.complete_range)
         rotation_axis = self.rotation_axis # radians
 
         if self.start_angle > self.end_angle:
@@ -351,8 +363,8 @@ class ImgConversion(object):
 
         shape_x, shape_y = self.data_shape
 
-        if nframes != len(self.data.keys()):
-            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, i) for i in range(1, nframes+1) if i not in self.data.keys()])
+        if self.missing_range:
+            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
         else:
             exclude = "!EXCLUDE_DATA_RANGE="
 
@@ -367,8 +379,8 @@ class ImgConversion(object):
             dmin=self.dmin,
             dmax=self.dmax,
             # reverse XY coordinates for XDS
-            origin_x=self.beam_center[1],
-            origin_y=self.beam_center[0],
+            origin_x=self.mean_beam_center[1],
+            origin_y=self.mean_beam_center[0],
             NX=shape_y,
             NY=shape_x,
             sign="+",
@@ -387,4 +399,12 @@ class ImgConversion(object):
         
         logger.info("XDS INP file created.")
 
+    def write_beam_centers(self, drc):
+        centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
+        for i, h in self.headers.items():
+            centers[i-1] = h["beam_center"]
+        for i in self.missing_range:
+            centers[i-1] = [np.NaN, np.NaN]
+
+        np.savetxt(drc / "beam_centers.npy", centers, fmt="%10.4f")
 

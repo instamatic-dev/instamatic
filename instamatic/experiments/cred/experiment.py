@@ -220,6 +220,8 @@ class Experiment(object):
         if self.write_xds or self.write_dials:
             img_conv.write_xds_inp(self.smv_path)
 
+        img_conv.write_beam_centers(self.path)
+
         if image_buffer:
             drc = self.path / "tiff_image"
             drc.mkdir(exist_ok=True)

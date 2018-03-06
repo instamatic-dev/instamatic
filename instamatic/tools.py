@@ -7,6 +7,15 @@ from skimage import exposure
 from scipy import ndimage, interpolate
 
 
+def find_subranges(lst):
+    from operator import itemgetter
+    from itertools import groupby
+
+    for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
+        group = list(map(itemgetter(1), group))
+        yield min(group), max(group)
+
+
 def autoscale(img, maxdim=512):
     if maxdim:
         scale = float(maxdim) / max(img.shape)
