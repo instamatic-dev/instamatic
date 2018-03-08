@@ -20,10 +20,6 @@ import time
 
 from instamatic import config
 
-__version__ = "2016-11-11"
-__author__ = "Stef Smeets"
-__email__ = "stef.smeets@mmk.su.se"
-
 __all__ = ["Camera"]
 
 DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
@@ -318,13 +314,9 @@ def main_entry():
 
     description = """Program to acquire image data from gatan ORIUS ccd camera"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # parser.add_argument("args",
     #                     type=str, metavar="FILE",

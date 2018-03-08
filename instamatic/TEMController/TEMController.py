@@ -724,13 +724,9 @@ def main_entry():
     import argparse
     description = """Python program to control Jeol TEM"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # parser.add_argument("args",
     #                     type=str, metavar="FILE",
@@ -748,10 +744,13 @@ def main_entry():
     options = parser.parse_args()
     ctrl = initialize()
 
-    ipshell()
+    from IPython import embed
+    embed(banner1="\nAssuming direct control.\n")
     ctrl.close()
 
 
 if __name__ == '__main__':
+    from IPython import embed
     ctrl = initialize()
-    ipshell()
+    
+    embed(banner1="\nAssuming direct control.\n")
