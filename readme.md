@@ -129,19 +129,19 @@ Usage:
     instamatic.viewer image.tiff
 
 ## API
-
-    from instamatic.TEMController import initialize
-    ctrl = initialize(cam="timepix")
-    
+```python
+from instamatic.TEMController import initialize
+ctrl = initialize(cam="timepix")
+```   
 The `ctrl` object allows full control over the electron microscope. For example, to read out the position of the sample stage:
-    
-    xy = ctrl.stageposition.xy
-    print xy
-
+```python
+xy = ctrl.stageposition.xy
+print xy
+```
 To move to a different position:
-    
-    ctrl.stageposition.xy = 10000, 20000
-
+```python
+ctrl.stageposition.xy = 10000, 20000
+```
 A convenient way to experiment with the options available is to run `instamatic.controller`. This will initialize a `ctrl` object that can be played with interactively.
 
 ### Lenses
@@ -153,23 +153,23 @@ A convenient way to experiment with the options available is to run `instamatic.
 Lenses have one value, that can be accessed through the `.value` property.
 
 All lens objects have the same API and behave in the same way, i.e.:
+```python
+ctrl.brightness.value = 1234
+value = ctrl.brightness.value
 
-    ctrl.brightness.value = 1234
-    value = ctrl.brightness.value
-    
-    ctrl.brightness.set(value=1234)
-    value = ctrl.brightness.get()
-
+ctrl.brightness.set(value=1234)
+value = ctrl.brightness.get()
+```
 The Magnification lens has some extra features to increase/decrease the magnification:
-
-   ctrl.magnification.increase()
-   ctrl.magnification.decrease()
-
+```python
+ctrl.magnification.increase()
+ctrl.magnification.decrease()
+```
 as well as the index of magnification:
-
-    index = ctrl.magnification.index
-    ctrl.magnfication.index = 0
-
+```python
+index = ctrl.magnification.index
+ctrl.magnfication.index = 0
+```
 ### Deflectors
 
  * GunShift: `ctrl.gunshift`
@@ -183,55 +183,55 @@ as well as the index of magnification:
 Deflectors have two values (x and y), that can be accessed through the `.x` and `.y` properties
 
 All deflectors have the same API and behave in the same way, i.e.:
+```python
+ctrl.beamshift.x = 1234
+ctrl.beamshift.y = 4321
+ctrl.beamshift.xy = 1234, 4321
 
-    ctrl.beamshift.x = 1234
-    ctrl.beamshift.y = 4321
-    ctrl.beamshift.xy = 1234, 4321
-    
-    x = ctrl.beamshift.x
-    y = ctrl.beamshift.y
-    xy = ctrl.beamshift.xy
-    
-    ctrl.beamshift.get(x=1234, y=4321)
-    x, y = ctrl.beamshift.get()
+x = ctrl.beamshift.x
+y = ctrl.beamshift.y
+xy = ctrl.beamshift.xy
 
+ctrl.beamshift.get(x=1234, y=4321)
+x, y = ctrl.beamshift.get()
+```
 Additionally, the values of the lenses can be set to the neutral values:
-
-    ctrl.beamshift.neutral()
-
+```python
+ctrl.beamshift.neutral()
+```
 ### Stage Position
 
 The stageposition controls the translation of the samplestage (in nm):
-
-    x = ctrl.stageposition.x
-    y = ctrl.stageposition.y
-    x, y = ctrl.stageposition.xy
-    ctrl.stageposition.xy = 0, 0
-
+```python
+x = ctrl.stageposition.x
+y = ctrl.stageposition.y
+x, y = ctrl.stageposition.xy
+ctrl.stageposition.xy = 0, 0
+```
 the height of the sample stage (in nm):
-
-    z = ctrl.stageposition.z
-    ctrl.stageposition.z = 10
-
+```python
+z = ctrl.stageposition.z
+ctrl.stageposition.z = 10
+```
 or rotation of the sample stage (in degrees), where `a` is the primary rotation axis, and `b` the secondary rotation axis:
+```python
+a = ctrl.stageposition.a
+ctrl.stageposition.a = 25
 
-    a = ctrl.stageposition.a
-    ctrl.stageposition.a = 25
-
-    b = ctrl.stageposition.b
-    ctrl.stageposition.b = -10
-
+b = ctrl.stageposition.b
+ctrl.stageposition.b = -10
+```
 All stage parameters can be retrieved and applied using the get/set methods:
-
-    x, y, z, a, b = ctrl.stageposition.get()
-    ctrl.stageposition.set(x=0, y=0)
-    ctrl.stageposition.set(a=25)
-    ctrl.stageposition.set(x=0, y=0, z=0, a=0, b=0)
-
+```python
+x, y, z, a, b = ctrl.stageposition.get()
+ctrl.stageposition.set(x=0, y=0)
+ctrl.stageposition.set(a=25)
+ctrl.stageposition.set(x=0, y=0, z=0, a=0, b=0)
+```
 The stage position can be neutralized (all values reset to 0) using:
-
-    ctrl.stageposition.neutral()
-
+```python
+ctrl.stageposition.neutral()
+```
 ### Camera
 
 TODO
@@ -239,47 +239,47 @@ TODO
 ### Other functions
 
 To blank the beam:
-
-    ctrl.beamblank = True
-
+```python
+ctrl.beamblank = True
+```
 To unblank the beam:
-
-    ctrl.beamblank = False
-
+```python
+ctrl.beamblank = False
+```
 To get the state of the beam blanker:
-
-    ctrl.beamblank()
-
+```python
+ctrl.beamblank()
+```
 To switch modes:
-
-    current_mode = ctrl.mode
-    ctrl.mode = "diff"  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
-    ctrl.mode_lowmag()
-    ctrl.mode_mag1()
-    ctrl.mode_samag()
-    ctrl.mode_diff()
-
+```python
+current_mode = ctrl.mode
+ctrl.mode = "diff"  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
+ctrl.mode_lowmag()
+ctrl.mode_mag1()
+ctrl.mode_samag()
+ctrl.mode_diff()
+```
 To change spotsize:
-
-    spot = ctrl.spotsize
-    ctrl.spotsize = 4  # 1, 2, 3, 4, 5
-
+```python
+spot = ctrl.spotsize
+ctrl.spotsize = 4  # 1, 2, 3, 4, 5
+```
 To retrieve all lens/deflector values in a dictionary:
-
-   dct = ctrl.to_dict()
-
+```python
+dct = ctrl.to_dict()
+```
 and to restore them:
-
-   ctrl.from_dict(dct)
-
+```python
+ctrl.from_dict(dct)
+```
 To store the current settings:
-
-    ctrl.store(name="stash")
-
+```python
+ctrl.store(name="stash")
+```
 and to recall them:
-
-    ctrl.restore(name="stash")
-
+```python
+ctrl.restore(name="stash")
+```
 ## Requirements
 
  - Python3.6
