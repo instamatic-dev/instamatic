@@ -28,9 +28,9 @@ def initialize_in_AppData():
 def get_base_drc():
     """Figure out where configuration files for instamatic are stored"""
     try:
-        search = Path(os.environ["instamaticx"])  # if installed in portable way
+        search = Path(os.environ["instamatic"])  # if installed in portable way
     except KeyError:
-        search = Path(os.environ["AppData"]) / "instamaticx"
+        search = Path(os.environ["AppData"]) / "instamatic"
 
     if search.exists():
         return search
