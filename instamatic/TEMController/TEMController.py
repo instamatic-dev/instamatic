@@ -47,21 +47,75 @@ def initialize(camera=None, **kwargs):
     ctrl = TEMController(tem, cam)
     return ctrl
 
-
-class DiffFocus(object):
-    """docstring for DiffFocus"""
+class Deflector(object):
+    """docstring for Deflector"""
     def __init__(self, tem):
-        super(DiffFocus, self).__init__()
-        self._getter = tem.getDiffFocus
-        self._setter = tem.setDiffFocus
+        super().__init__()
         self._tem = tem
+        self.key = "def"
 
+    def __repr__(self):
+        x, y = self.get()
+        return f"{self.name}(x={x}, y={y})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+    @property
+    def xy(self):
+        return self.get()
+
+    @xy.setter
+    def xy(self, values):
+        x, y = values
+        self.set(x=x, y=y)
+
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
+
+class Lens(object):
+    """docstring for Lens"""
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self.key = "lens"
+        
     def __repr__(self):
         try:
             value = self.value
         except ValueError:
             value="n/a"
-        return "DiffFocus(value={})".format(value)
+        return f"{self.name}(value={value})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def set(self, value):
         self._setter(value)
@@ -78,31 +132,20 @@ class DiffFocus(object):
         self.set(value)
 
 
-class Brightness(object):
+class DiffFocus(Lens):
+    """docstring for DiffFocus"""
+    def __init__(self, tem):
+        super().__init__(tem=tem)
+        self._getter = self._tem.getDiffFocus
+        self._setter = self._tem.setDiffFocus     
+
+
+class Brightness(Lens):
     """docstring for Brightness"""
     def __init__(self, tem):
-        super(Brightness, self).__init__()
-        self._getter = tem.getBrightness
-        self._setter = tem.setBrightness
-        self._tem = tem
-
-    def __repr__(self):
-        value = self.value
-        return "Brightness(value={})".format(value)
-
-    def set(self, value):
-        self._setter(value)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def value(self):
-        return self.get()
-
-    @value.setter
-    def value(self, value):
-        self.set(value)
+        super().__init__(tem=tem)
+        self._getter = self._tem.getBrightness
+        self._setter = self._tem.setBrightness
 
     def max(self):
         self.set(self._tem.MAX)
@@ -111,33 +154,19 @@ class Brightness(object):
         self.set(self._tem.MIN)
 
 
-class Magnification(object):
+class Magnification(Lens):
     """docstring for Magnification"""
     def __init__(self, tem):
-        super(Magnification, self).__init__()
-        self._getter = tem.getMagnification
-        self._setter = tem.setMagnification
-        self._indexgetter = tem.getMagnificationIndex
-        self._indexsetter = tem.setMagnificationIndex
+        super().__init__(tem=tem)
+        self._getter = self._tem.getMagnification
+        self._setter = self._tem.setMagnification
+        self._indexgetter = self._tem.getMagnificationIndex
+        self._indexsetter = self._tem.setMagnificationIndex
 
     def __repr__(self):
         value = self.value
         index = self.index
         return "Magnification(value={}, index={})".format(value, index)
-
-    def set(self, value):
-        self._setter(value)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def value(self):
-        return self.get()
-
-    @value.setter
-    def value(self, value):
-        self.set(value)
 
     @property
     def index(self):
@@ -160,263 +189,85 @@ class Magnification(object):
             print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
 
-class GunShift(object):
+class GunShift(Deflector):
     """docstring for GunShift"""
     def __init__(self, tem):
-        super(GunShift, self).__init__()
-        self._setter = tem.setGunShift
-        self._getter = tem.getGunShift
-        self._tem = tem
-        self.name = "GUN1"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "GunShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setGunShift
+        self._getter = self._tem.getGunShift
+        self.key = "GUN1"
 
 
-class GunTilt(object):
+class GunTilt(Deflector):
     """docstring for GunTilt"""
     def __init__(self, tem):
-        super(GunTilt, self).__init__()
-        self._setter = tem.setGunTilt
-        self._getter = tem.getGunTilt
+        super().__init__(tem=tem)
+        self._setter = self._tem.setGunTilt
+        self._getter = self._tem.getGunTilt
         self._tem = tem
-        self.name = "GUN2"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "GunTilt(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)    
+        self.key = "GUN2"
 
 
-class BeamShift(object):
+class BeamShift(Deflector):
     """docstring for BeamShift"""
     def __init__(self, tem):
-        super(BeamShift, self).__init__()
-        self._setter = tem.setBeamShift
-        self._getter = tem.getBeamShift
-        self._tem = tem
-        self.name = "CLA1"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "BeamShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setBeamShift
+        self._getter = self._tem.getBeamShift
+        self.key = "CLA1"
 
 
-class BeamTilt(object):
+class BeamTilt(Deflector):
     """docstring for BeamTilt"""
     def __init__(self, tem):
-        super(BeamTilt, self).__init__()
-        self._setter = tem.setBeamTilt
-        self._getter = tem.getBeamTilt
-        self._tem = tem
-        self.name = "CLA2"
+        super().__init__(tem=tem)
+        self._setter = self._tem.setBeamTilt
+        self._getter = self._tem.getBeamTilt
+        self.key = "CLA2"
         
-    def __repr__(self):
-        x, y = self.get()
-        return "BeamTilt(x={}, y={})".format(x, y)
 
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-
-
-class DiffShift(object):
+class DiffShift(Deflector):
     """docstring for DiffShift"""
     def __init__(self, tem):
-        super(DiffShift, self).__init__()
-        self._setter = tem.setDiffShift
-        self._getter = tem.getDiffShift
-        self._tem = tem
-        self.name = "PLA"
+        super().__init__(tem=tem)
+        self._setter = self._tem.setDiffShift
+        self._getter = self._tem.getDiffShift
+        self.key = "PLA"
         
-    def __repr__(self):
-        x, y = self.get()
-        return "DiffShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-
-
-class ImageShift(object):
+ 
+class ImageShift1(Deflector):
     """docstring for ImageShift"""
     def __init__(self, tem):
-        super(ImageShift, self).__init__()
-        self._setter = tem.setImageShift
-        self._getter = tem.getImageShift
-        self._tem = tem
-        self.name = "IS1"
-        
-    def __repr__(self):
-        x, y = self.get()
-        return "ImageShift(x={}, y={})".format(x, y)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setImageShift1
+        self._getter = self._tem.getImageShift1
+        self.key = "IS1"
 
-    def set(self, x, y):
-        self._setter(x, y)
 
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-
+class ImageShift2(Deflector):
+    """docstring for ImageShift"""
+    def __init__(self, tem):
+        super().__init__(tem=tem)
+        self._setter = self._tem.setImageShift2
+        self._getter = self._tem.getImageShift2
+        self.key = "IS1"
+   
 
 class StagePosition(object):
     """docstring for StagePosition"""
     def __init__(self, tem):
-        super(StagePosition, self).__init__()
-        self._setter = tem.setStagePosition
-        self._getter = tem.getStagePosition
+        super().__init__()
         self._tem = tem
+        self._setter = self._tem.setStagePosition
+        self._getter = self._tem.getStagePosition
         
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return "StagePosition(x={:.1f}, y={:.1f}, z={:.1f}, a={:.1f}, b={:.1f})".format(x,y,z,a,b)
+        return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def set(self, x=None, y=None, z=None, a=None, b=None):
         self._setter(x, y, z, a, b)
@@ -500,7 +351,8 @@ class TEMController(object):
         self.guntilt = GunTilt(tem)
         self.beamshift = BeamShift(tem)
         self.beamtilt = BeamTilt(tem)
-        self.imageshift = ImageShift(tem)
+        self.imageshift1 = ImageShift1(tem)
+        self.imageshift2 = ImageShift2(tem)
         self.diffshift = DiffShift(tem)
         self.stageposition = StagePosition(tem)
         self.magnification = Magnification(tem)
@@ -557,7 +409,8 @@ class TEMController(object):
                           str(self.guntilt),
                           str(self.beamshift),
                           str(self.beamtilt),
-                          str(self.imageshift),
+                          str(self.imageshift1),
+                          str(self.imageshift2),
                           str(self.diffshift),
                           str(self.stageposition),
                           str(self.magnification),
@@ -583,7 +436,8 @@ class TEMController(object):
             'GunTilt': self.guntilt.get,
             'BeamShift': self.beamshift.get,
             'BeamTilt': self.beamtilt.get,
-            'ImageShift': self.imageshift.get,
+            'ImageShift1': self.imageshift1.get,
+            'ImageShift2': self.imageshift2.get,
             'DiffShift': self.diffshift.get,
             # 'StagePosition': self.stageposition.get,
             'Magnification': self.magnification.get,
@@ -614,7 +468,8 @@ class TEMController(object):
             'GunTilt': self.guntilt.set,
             'BeamShift': self.beamshift.set,
             'BeamTilt': self.beamtilt.set,
-            'ImageShift': self.imageshift.set,
+            'ImageShift1': self.imageshift1.set,
+            'ImageShift2': self.imageshift2.set,
             'DiffShift': self.diffshift.set,
             'StagePosition': self.stageposition.set,
             'Magnification': self.magnification.set,

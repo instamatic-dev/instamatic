@@ -206,11 +206,11 @@ class JeolMicroscope(object):
     def setBeamTilt(self, x, y):
         self.def3.SetCLA2(x, y)
 
-    def getImageShift(self):
+    def getImageShift1(self):
         x, y, result = self.def3.GetIS1()
         return x,y 
 
-    def setImageShift(self, x, y):
+    def setImageShift1(self, x, y):
         self.def3.SetIS1(x, y)
 
     def getImageShift2(self):
