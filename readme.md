@@ -146,7 +146,7 @@ A convenient way to experiment with the options available is to run `instamatic.
 
 ## Requirements
 
-- Python3.6
+ - Python3.6
  - comtypes
  - lmfit
  - matplotlib
@@ -160,15 +160,22 @@ A convenient way to experiment with the options available is to run `instamatic.
  - h5py
  - IPython
 
+Requirements can be installed via:
+
     pip install -r requirements.txt
 
 ## Installation
 
 The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases. Extract the archive, and open a terminal by double-clicking `Cmder.exe`.
 
-Alternatively, the latest development version can always be installed via:
+Download the latest release from https://github.com/stefsmeets/instamatic/releases/latest
+
+    pip install -r requirements.txt
+    python setup.py install
+
+Alternatively, the latest development version can always be obtained via:
     
-    pip install https://github.com/stefsmeets/instamatic/archive/master.zip
+    https://github.com/stefsmeets/instamatic/archive/master.zip
 
 ## Citing instamatic
 
