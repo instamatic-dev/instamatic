@@ -392,43 +392,164 @@ class JeolMicroscope(object):
         else:
             raise ValueError("No such screen position:", value, "(must be 'up'/'down')")
 
+    def getCondensorLens1(self):
+        # No setter, adjusted via spotsize/NBD/LOWMAG
+        value, result = self.lens3.GetCL1()
+        return value
+
+    def getCondensorLens2(self):
+        # No setter, adjusted via spotsize/NBD/LOWMAG
+        value, result = self.lens3.GetCL2()
+        return value
+
+    def getCondensorMiniLens(self):
+        # no setter
+        value, result = self.lens3.GetCM()
+        return value
+
+    def getObjectiveLenseCoarse(self):
+        # coarse objective focus
+        value, result = self.lens3.GetOLc()
+        return value
+
+    def getObjectiveLenseFine(self):
+        # fine objective focus
+        value, result = self.lens3.GetOLf()
+        return value
+    
+    def getObjectiveMiniLens(self):
+        # no setter
+        value, result = self.lens3.GetOM()
+        return value
+
     def getAll(self):
         print("## lens3")
-        print("CL1", self.lens3.GetCL1())
-        print("CL2", self.lens3.GetCL2())
-        print("CL3", self.lens3.GetCL3())
-        print("CM", self.lens3.GetCM())
-        print("FLc", self.lens3.GetFLc())
-        print("FLcomp1", self.lens3.GetFLcomp1())
-        print("FLcomp2", self.lens3.GetFLcomp2())
-        print("FLf", self.lens3.GetFLf())
-        print("IL1", self.lens3.GetIL1())
-        print("IL2", self.lens3.GetIL2())
-        print("IL3", self.lens3.GetIL3())
-        print("IL4", self.lens3.GetIL4())
-        print("OLc", self.lens3.GetOLc())
-        print("OLf", self.lens3.GetOLf())
-        print("OM", self.lens3.GetOM())
-        print("OM2", self.lens3.GetOM2())
-        print("OM2Flag", self.lens3.GetOM2Flag())
-        print("PL1", self.lens3.GetPL1())
-        print("PL2", self.lens3.GetPL2())
-        print("PL3", self.lens3.GetPL3())
+        print("CL1", self.lens3.GetCL1()) # condensor lens
+        print("CL2", self.lens3.GetCL2()) # condensor lens
+        print("CL3", self.lens3.GetCL3()) # brightness
+        print("CM", self.lens3.GetCM())   # condensor mini lens
+        print("FLc", self.lens3.GetFLc()) # ?? -> self.lens3.SetFLc()
+        print("FLf", self.lens3.GetFLf()) # ?? -> self.lens3.SetFLf()
+        print("FLcomp1", self.lens3.GetFLcomp1()) # ??, no setter 
+        print("FLcomp2", self.lens3.GetFLcomp2()) # ??, no setter
+        print("IL1", self.lens3.GetIL1()) # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        print("IL2", self.lens3.GetIL2()) # intermediate lens, no setter
+        print("IL3", self.lens3.GetIL3()) # intermediate lens, no setter
+        print("IL4", self.lens3.GetIL4()) # intermediate lens, no setter
+        print("OLc", self.lens3.GetOLc()) # objective focus coarse, SetOLc
+        print("OLf", self.lens3.GetOLf()) # objective focus fine, SetOLf
+        print("OM", self.lens3.GetOM())   # Objective mini lens
+        print("OM2", self.lens3.GetOM2()) # Objective mini lens
+        print("OM2Flag", self.lens3.GetOM2Flag()) # Objective mini lens 2 flag ??
+        print("PL1", self.lens3.GetPL1()) # projector lens, SetPLFocus
+        print("PL2", self.lens3.GetPL2()) # n/a
+        print("PL3", self.lens3.GetPL3()) # n/a
         print()
         print("## def3")
-        print("CLA1", self.def3.GetCLA1())
-        print("CLA2", self.def3.GetCLA2())
-        print("CLs", self.def3.GetCLs())
+        print("CLA1", self.def3.GetCLA1()) # beam shift
+        print("CLA2", self.def3.GetCLA2()) # beam tilt
+        print("CLs", self.def3.GetCLs())   # condensor lens stigmator
         print("FLA1", self.def3.GetFLA1())
         print("FLA2", self.def3.GetFLA2())
         print("FLs1", self.def3.GetFLs1())
         print("FLs2", self.def3.GetFLs2())
-        print("GUNA1", self.def3.GetGUNA1())
-        print("GUNA2", self.def3.GetGUNA2())
-        print("ILs", self.def3.GetILs())
-        print("IS1", self.def3.GetIS1())
-        print("IS2", self.def3.GetIS2())
-        print("OLs", self.def3.GetOLs())
-        print("PLA", self.def3.GetPLA())
+        print("GUNA1", self.def3.GetGUNA1()) # gunshift
+        print("GUNA2", self.def3.GetGUNA2()) # guntilt
+        print("ILs", self.def3.GetILs())     # intermediate lens stigmator
+        print("IS1", self.def3.GetIS1())     # image shift 1
+        print("IS2", self.def3.GetIS2())     # image shift 2
+        print("OLs", self.def3.GetOLs())     # objective lens stigmator
+        print("PLA", self.def3.GetPLA())     # projector lens alignment
 
+# lens3
+#  'GetCL1',
+#  'GetCL2',
+#  'GetCL3',
+#  'GetCM',
+#  'GetFLc',
+#  'GetFLcomp1',
+#  'GetFLcomp2',
+#  'GetFLf',
+#  'GetIDsOfNames',
+#  'GetIL1',
+#  'GetIL2',
+#  'GetIL3',
+#  'GetIL4',
+#  'GetOLc',
+#  'GetOLf',
+#  'GetOM',
+#  'GetOM2',
+#  'GetOM2Flag',
+#  'GetPL1',
+#  'GetPL2',
+#  'GetPL3',
+#  'GetTypeInfo',
+#  'GetTypeInfoCount',
+#  'Invoke',
+#  'QueryInterface',
+#  'Release',
+#  'SetCL3',
+#  'SetDiffFocus',
+#  'SetFLc',
+#  'SetFLf',
+#  'SetILFocus',
+#  'SetNtrl',
+#  'SetOLc',
+#  'SetOLf',
+#  'SetOM',
+#  'SetPLFocus',
 
+# def3
+#  'GetAngBal',
+#  'GetBeamBlank',
+#  'GetCLA1',
+#  'GetCLA2',
+#  'GetCLs',
+#  'GetDetAlign',
+#  'GetFLA1',
+#  'GetFLA2',
+#  'GetFLs1',
+#  'GetFLs2',
+#  'GetGunA1',
+#  'GetGunA2',
+#  'GetIDsOfNames',
+#  'GetILs',
+#  'GetIS1',
+#  'GetIS2',
+#  'GetOLs',
+#  'GetPLA',
+#  'GetScan1',
+#  'GetScan2',
+#  'GetShifBal',
+#  'GetSpotA',
+#  'GetStemIS',
+#  'GetTiltBal',
+#  'GetTypeInfo',
+#  'GetTypeInfoCount',
+#  'Invoke',
+#  'QueryInterface',
+#  'Release',
+#  'SetAngBal',
+#  'SetBeamBlank',
+#  'SetCLA1',
+#  'SetCLA2',
+#  'SetCLs',
+#  'SetDetAlign',
+#  'SetFLA1',
+#  'SetFLA2',
+#  'SetFLs1',
+#  'SetFLs2',
+#  'SetGunA1',
+#  'SetGunA2',
+#  'SetILs',
+#  'SetIS1',
+#  'SetIS2',
+#  'SetNtrl',
+#  'SetOLs',
+#  'SetPLA',
+#  'SetScan1',
+#  'SetScan2',
+#  'SetShifBal',
+#  'SetSpotA',
+#  'SetStemIS',
+#  'SetTiltBal',
