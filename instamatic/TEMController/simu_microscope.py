@@ -94,6 +94,15 @@ class SimuMicroscope(object):
 
         self.spotsize = 1
 
+        self.screenposition_value = 'up'
+
+        self.condensorlens1_value = random.randint(MIN, MAX)
+        self.condensorlens2_value = random.randint(MIN, MAX)
+        self.condensorminilens_value = random.randint(MIN, MAX)
+        self.objectivelensecoarse_value = random.randint(MIN, MAX)
+        self.objectivelensefine_value = random.randint(MIN, MAX)
+        self.objectiveminilens_value = random.randint(MIN, MAX)
+
     def load_specifications(self):
         config.load_microscope(self.name)
 
@@ -287,7 +296,30 @@ class SimuMicroscope(object):
         """0-based indexing for GetSpotSize, add 1 for consistency"""
         return self.spotsize
 
+    def getScreenPosition(self):
+        return self.screenposition_value
+
+    def setScreenPosition(self, value):
+        """value = 'up' or 'down'"""
+        self.screenposition_value = value
+
     def setSpotSize(self, value):
         self.spotsize = value
 
+    def getCondensorLens1(self):
+        return self.condensorlens1_value
 
+    def getCondensorLens2(self):
+        return self.condensorlens2_value
+
+    def getCondensorMiniLens(self):
+        return self.condensorminilens_value
+
+    def getObjectiveLenseCoarse(self):
+        return self.objectivelensecoarse_value
+
+    def getObjectiveLenseFine(self):
+        return self.objectivelensefine_value
+    
+    def getObjectiveMiniLens(self):
+        return self.objectiveminilens_value
