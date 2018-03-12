@@ -406,5 +406,5 @@ class ImgConversion(object):
         for i in self.missing_range:
             centers[i-1] = [np.NaN, np.NaN]
 
-        np.savetxt(drc / "beam_centers.npy", centers, fmt="%10.4f")
+        np.savetxt(drc / "beam_centers.txt", centers, fmt="%10.4f")
 

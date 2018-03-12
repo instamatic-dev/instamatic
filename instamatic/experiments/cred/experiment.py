@@ -39,8 +39,6 @@ class Experiment(object):
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
-        self.image_interval_enabled = enable_image_interval
-        self.image_interval = image_interval
         self.diff_defocus = diff_defocus
         self.expt_image = exposure_time_image
 
@@ -49,10 +47,14 @@ class Experiment(object):
         self.write_dials = write_dials
         self.write_red = write_red
 
+        self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
+            self.image_interval = image_interval
             msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.expt_image} s)."
             print(msg)
             self.logger.info(msg)
+        else:
+            self.image_interval = 99999
 
     def report_status(self):
         self.diff_binsize = self.ctrl.cam.default_binsize
@@ -90,10 +92,10 @@ class Experiment(object):
         if self.camtype == "simulate":
             self.start_angle = a
         else:
+            print("Waiting for rotation to start...", end=' ')
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 a = self.ctrl.stageposition.a
-                if abs(a - a0) > ACTIVATION_THRESHOLD:
-                    break
+
             print("Data Recording started.")
             self.start_angle = a
 

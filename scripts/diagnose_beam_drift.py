@@ -41,6 +41,9 @@ def get_drifts_per_scan_range(xy)    :
         r = np.arange(*sbr)
         sub_xy = xy[r]
     
+        if len(sub_xy) == 0:
+            continue
+    
         o = sub_xy[0]
     
         drift = np.linalg.norm(sub_xy - o, axis=1)
