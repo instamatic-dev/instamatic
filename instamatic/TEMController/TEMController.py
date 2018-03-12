@@ -96,7 +96,7 @@ class Deflector(object):
         self.set(x=x, y=y)
 
     def neutral(self):
-        self._tem.setNeutral(self.name)
+        self._tem.setNeutral(self.key)
 
 
 class Lens(object):
