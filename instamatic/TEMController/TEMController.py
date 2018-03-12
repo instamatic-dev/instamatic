@@ -333,6 +333,9 @@ class StagePosition(object):
     def neutral(self):
         self.set(x=0, y=0, z=0, a=0, b=0)
 
+    def is_moving(self):
+        return self._tem.isStageMoving()
+
 
 class TEMController(object):
     """docstring for TEMController

@@ -152,6 +152,9 @@ class Experiment(object):
             self.end_angle = self.ctrl.stageposition.a
             camera_length = int(self.ctrl.magnification.get())
 
+        is_moving = bool(self.ctrl.stageposition.is_moving())
+        self.logger.info(f"Experiment finished, stage is moving: {is_moving}")
+
         if self.unblank_beam:
             print("Blanking beam")
             self.ctrl.beamblank = True
@@ -167,7 +170,7 @@ class Experiment(object):
         total_time = t1 - t0
         acquisition_time = total_time / nframes
         total_angle = abs(self.end_angle-self.start_angle)
-        print(f"\nRotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
+        print(f"\nRotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.4f})")
 
         self.logger.info(f"Data collection camera length: {camera_length} mm")
         self.logger.info(f"Rotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
