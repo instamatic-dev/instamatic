@@ -92,7 +92,7 @@ class About(LabelFrame):
         Label(frame, text="Contributors:").grid(row=2, column=0, sticky="W", padx=10)
         Label(frame, text="Bin Wang [cRED implementation]").grid(row=3, column=1, sticky="W")
         Label(frame, text="Magdalena O. Cichocka [Testing + feedback]").grid(row=2, column=1, sticky="W")
-        Label(frame, text="Jonas Angstrom [Neural network implementation]").grid(row=4, column=1, sticky="W")
+        Label(frame, text="Jonas Ångström [Neural network implementation]").grid(row=4, column=1, sticky="W")
         Label(frame, text="Wei Wan [Orius/Timepix C-interface]").grid(row=5, column=1, sticky="W")
         Label(frame, text="").grid(row=5, column=0, sticky="W")
 

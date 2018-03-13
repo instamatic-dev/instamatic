@@ -17,7 +17,7 @@ __author_email__ = "stef.smeets@mmk.su.se"
 __description__ = "Python program to collect serial and rotation electron diffraction data"
 __license__ = "GPLv3"
 __url__ = "http://github.com/stefsmeets/instamatic"
-__citation__ = "S. Smeets, B. Wang, M.O. Cichocka, J. Angstrom, & W. Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389"
+__citation__ = "S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, & W. Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389"
 
 def register_thank_you_message():
     import atexit
