@@ -15,6 +15,9 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
+from .mrc import read_image as read_mrc
+from .mrc import write_image as write_mrc
+
 
 def read_image(fname):
     """Guess filetype by extension"""
@@ -23,6 +26,10 @@ def read_image(fname):
         img, h = read_tiff(fname)
     elif ext in (".h5", ".hdf5"):
         img, h = read_hdf5(fname)
+    elif ext in (".img", ".smv"):
+        img, h = read_adsc(fname)
+    elif ext in (".mrc"):
+        img, h = read_mrc(fname)
     else:
         raise IOError(f"Cannot open file {fname}, unknown extension: {ext}")
     return img, h 
