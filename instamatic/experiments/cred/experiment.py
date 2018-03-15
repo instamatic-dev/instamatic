@@ -199,7 +199,7 @@ class Experiment(object):
             print(f"Data collection done. Not enough frames collected (nframes={nframes}).")
             return
 
-        rotation_axis = config.microscope.camera_rotation_vs_stage_xy
+        rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=camera_length,

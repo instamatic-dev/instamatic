@@ -249,7 +249,7 @@ class Experiment(object):
         # self.sample_rotation_angles = (-5, 5)
         self.sample_rotation_angles = ()
     
-        self.camera_rotation_angle = config.microscope.camera_rotation_vs_stage_xy
+        self.camera_rotation_angle = config.camera.camera_rotation_vs_stage_xy
 
         box_x, box_y = self.image_dimensions
 
