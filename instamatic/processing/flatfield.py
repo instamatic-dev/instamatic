@@ -72,35 +72,35 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
     print("exposure:", exposure)
 
+    ctrl.cam.block()
+
+    buffer = []
+
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
-        if n == 0:
-            f = img
-        else:
-            f += img
+        buffer.append(img)
     
-    f = f/frames
+    f = np.mean(buffer, axis=0)
     deadpixels = get_deadpixels(f)
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
 
     ctrl.beamblank = True
 
+    buffer = []
+
     print("\nCollecting darkfield images")
     for n in tqdm(range(frames)):
         outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
-
-        if n == 0:
-            d = img
-        else:
-            d += img
+        buffer.append(img)
     
-    d = d/frames
+    d = np.mean(buffer, axis=0)
     d = remove_deadpixels(d, deadpixels=deadpixels)
 
+    ctrl.cam.unblock()
     ctrl.beamblank = False
 
     date = time.strftime("%Y-%m-%d")
