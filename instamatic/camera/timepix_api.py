@@ -77,7 +77,7 @@ class EMCameraObj(object):
     def connect(self, hwId):
         hwId = c_int(hwId)
         ret = self.lib.EMCameraObj_Connect(self.obj, hwId)
-        if ret or SIMULATE:
+        if ret:
             self.is_connected = True
             print("Camera connected (hwId={})".format(hwId.value))
         else:
@@ -239,43 +239,13 @@ class EMCameraObj(object):
         busy = c_bool(busy)
         self.lib.EMCameraObj_isBusy(self.obj, byref(busy))
 
-
     def acquireData(self, exposure=0.001):
-        microseconds = int(exposure * 1e6)  # seconds to microseconds
-
-        self.enableTimer(True, microseconds)  # 468 microseconds
-        self.openShutter()
-
-        # print "timerExpired:", self.timerExpired()
-        
-        if SIMULATE:
-            time.sleep(exposure)
-        else:
-            while not self.timerExpired():
-                pass
-
-        # print "timerExpired:", self.timerExpired()
-        # self.closeShutter()
-
-        self.arr = arr = self.readMatrix()
-
-        out = arrangeData(arr)
-        correctCross(out, factor=self.correction_ratio)
-
-        # TODO: enable this to make sure images look like in DM/SoPhy
-        # but turn off rot90 in VideoStream, and adjust flatfield
-        # out = np.rot90(out, k=3)
-
-        return out
-
-    def acquireData_mmtimer(self, exposure=0.001):
         microseconds = int(exposure * 1e6)  # seconds to microseconds
         self.enableTimer(True, microseconds)
 
-        ## does not work well, workaround is better
-        # self.enableTimer(False, 0)
-
         self.openShutter()
+
+        # sleep here to avoid burning cycles
         time.sleep(exposure)
 
         while not self.timerExpired():
@@ -294,27 +264,8 @@ class EMCameraObj(object):
 
         return out
 
-    def acquire_cpp(self, t=0.1):
-        t = c_double(t)
-        print(t.value)
-
-        success = self.lib.EMCameraObj_acquire(self.obj, t)
-        if not success:
-            raise IOError("Image acquisition failed")
-
-        arr = self.readMatrix()
-
-        out = arrangeData(arr)
-        correctCross(out, factor=self.correction_ratio)
-
-        # TODO: enable this to make sure images look like in DM/SoPhy
-        # but turn off rot90 in VideoStream, and adjust flatfield
-        # out = np.rot90(out, k=3)
-
-        return out
-
     def getImage(self, t, fastmode=False):
-        return self.acquireData_mmtimer(exposure=t)
+        return self.acquireData(exposure=t)
 
     def getName(self):
         return "PyTimepix"
@@ -343,6 +294,7 @@ def initialize(config):
     from pathlib import Path
 
     base = Path(config).parent
+    
     # read config.txt
     with open(config, "r") as f:
         for line in f:
@@ -361,13 +313,9 @@ def initialize(config):
     
     cam.init()
 
-    print("---")
-    cam.readHwDacs(hwDacs)  # works
-    print("---")
-    cam.readPixelsCfg(pixelsCfg)  # TODO: test if it works
-    print("---")
-    cam.readRealDacs(realDacs)  # works
-    print("---")
+    cam.readHwDacs(hwDacs)
+    cam.readPixelsCfg(pixelsCfg)
+    cam.readRealDacs(realDacs)
 
     cam.load_defaults()
 
@@ -383,10 +331,7 @@ if __name__ == '__main__':
             ./startcooling
     """
 
-    if SIMULATE:
-        base = Path("C:\\Users\\stef\\python\\instamatic\\instamatic\\camera\\tpx").resolve()
-    else:
-        base = Path("..\\instamatic\\camera\\tpx").resolve()
+    base = Path("..\\instamatic\\camera\\tpx").resolve()
 
     print(base)
     print()
@@ -406,26 +351,7 @@ if __name__ == '__main__':
             cam.acquireData(t)
         dt = time.clock() - t0
         print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
-            
-        arr = cam.acquireData_mmtimer(t)
-        print("[ py software timer] -> shape: {}".format(arr.shape))
-        t0 = time.clock()
-        for x in range(n):
-            cam.acquireData_mmtimer(t)
-        dt = time.clock() - t0
-        print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
-
-        arr = cam.acquire_cpp(t)
-        print("[cpp hardware timer] -> shape: {}".format(arr.shape))
-        t0 = time.clock()
-        for x in range(n):
-            cam.acquireData_mmtimer(t)
-        dt = time.clock() - t0
-        print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
     
-        # plt.imshow(arr)
-        # plt.show()
-
     embed(banner1='')
     
     isDisconnected = cam.disconnect()
