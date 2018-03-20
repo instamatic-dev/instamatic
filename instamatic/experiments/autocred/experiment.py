@@ -14,12 +14,14 @@ from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
 from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2
 from instamatic.calibrate.center_z import center_z_height
 from instamatic.processing.fast_finder import fast_finder
-from scipy import ndimage
-from instamatic.processing.find_holes import find_holes
 import pickle
+import threading
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
+
+def start_rotation_operation(ctrl, end_angle):
+    ctrl.stageposition.set(a = end_angle)
     
 class Experiment(object):
     def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
@@ -69,6 +71,12 @@ class Experiment(object):
         print "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
         self.mode = "auto"
         
+    def enable_fullacred(self, interval, defocus):
+        self.diff_defocus = defocus
+        self.image_interval = interval
+        print "Full auto cRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
+        self.mode = "auto_full"
+        
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
@@ -91,8 +99,11 @@ class Experiment(object):
         buffer = []
         image_buffer = []
             
-        if self.mode == "auto":  
+        if self.mode == "auto" or self.mode == "auto_full":
             print "Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective."
+            
+            if self.mode == "auto_full":
+                ready = raw_input("Please make sure that you are in the super user mode and the rotation speed is set! Press ENTER to continue.")
             
             try:
                 with open('ISCalib.pkl') as f:
@@ -202,6 +213,19 @@ class Experiment(object):
             b2 = int(crystal_pos[1]+window_size/2)
             img0_cropped = img0[a1:b1,a2:b2]
             
+        
+        if self.mode == "auto_full":
+            a_i = self.ctrl.stagepositioni.a
+            if a_i < 0:
+                rotation_end = a_i + 60
+            else:
+                rotation_end = a_i - 60
+            ## Just a trial that we aim to rotate +60 degrees here. Of course it can be optimized.
+            
+            thrd = threading.Thread(target = start_rotation_operation, name = "rotationThread", args= (self.ctrl, rotation_end))
+            thrd.daemon = True
+            thrd.start()
+        
         if self.camtype == "simulate":
             self.startangle = a
         else:
@@ -218,133 +242,134 @@ class Experiment(object):
 
         i = 1
 
-        print self.mode
-
         self.ctrl.cam.block()
 
         t0 = time.clock()
 
         while not self.stopEvent.is_set():
-            
-            if self.mode == "auto":
-                if i % self.image_interval == 0: ## aim to make this more dynamically adapted...
-                    t_start = time.clock()
-                    acquisition_time = (t_start - t0) / (i-1)
+            try:
+                if self.mode == "auto" or self.mode == "auto_full":
+                    if i % self.image_interval == 0: ## aim to make this more dynamically adapted...
+                        t_start = time.clock()
+                        acquisition_time = (t_start - t0) / (i-1)
+        
+                        self.ctrl.difffocus.value = diff_focus_defocused
+                        img, h = self.ctrl.getImage(0.01, header_keys=None)
+                        self.ctrl.difffocus.value = diff_focus_proper
+        
+                        image_buffer.append((i, img, h))
+                        print "{} saved to image_buffer".format(i)
     
-                    self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(0.01, header_keys=None)
-                    self.ctrl.difffocus.value = diff_focus_proper
+                        crystal_pos, r = fast_finder(img)
+                        crystal_pos = crystal_pos[::-1]
+                        
+                        self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
+                        print crystal_pos
+                        a1 = int(crystal_pos[0]-window_size/2)
+                        b1 = int(crystal_pos[0]+window_size/2)
+                        a2 = int(crystal_pos[1]-window_size/2)
+                        b2 = int(crystal_pos[1]+window_size/2)
+                        img_cropped = img[a1:b1,a2:b2]
     
-                    image_buffer.append((i, img, h))
-                    print "{} saved to image_buffer".format(i)
-
-                    crystal_pos, r = fast_finder(img)
-                    crystal_pos = crystal_pos[::-1]
-                    
-                    self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
-                    print crystal_pos
-                    a1 = int(crystal_pos[0]-window_size/2)
-                    b1 = int(crystal_pos[0]+window_size/2)
-                    a2 = int(crystal_pos[1]-window_size/2)
-                    b2 = int(crystal_pos[1]+window_size/2)
-                    img_cropped = img[a1:b1,a2:b2]
-
-                    cc,err,diffphase = register_translation(img0_cropped,img_cropped)
-                    print cc
-                    self.logger.debug("Cross correlation result: {}".format(cc))
-                    
-                    delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
-                    self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-                    self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                    bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                    bs_y0 = bs_y0 + delta_beamshiftcoord[1]
-                    
-                                        
-                    ##Solve linear equations so that defocused image shift equals 0, as well as focused DP shift equals 0:
-                    ##MIS1(DEF) deltaIS1 + MIS2(DEF) deltaIS2 = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
-                    ##MIS1 deltaIS1 + MIS2 deltaIS2 = 0 (the focused DP should stay at the same position)
-                    
-                    a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
-                    b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
-                    A = np.concatenate((a,b), axis = 0)
-
-                    crystal_pos_dif = crystal_pos - appos0
-                    apmv = -crystal_pos_dif
-
-                    print "aperture movement: {}".format(apmv)
-
-                    x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
-                    delta_imageshiftcoord = (x[0], x[1])
-
-                    delta_imageshift2coord = (x[2],x[3])
-                    print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
-                    self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
-                    
-                    self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
-                    self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))
-                    ## the two steps can take ~60 ms per step
-                    
-                    is_x0 = is_x0 + int(delta_imageshiftcoord[0])
-                    is_y0 = is_y0 + int(delta_imageshiftcoord[1])
-                    is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
-                    is2_y0 = is2_y0 + int(delta_imageshift2coord[1])
-                    #appos0 = crystal_pos
+                        cc,err,diffphase = register_translation(img0_cropped,img_cropped)
+                        print cc
+                        self.logger.debug("Cross correlation result: {}".format(cc))
+                        
+                        delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
+                        self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
+                        self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
+                        bs_x0 = bs_x0 + delta_beamshiftcoord[0]
+                        bs_y0 = bs_y0 + delta_beamshiftcoord[1]
+                        
+                                            
+                        ##Solve linear equations so that defocused image shift equals 0, as well as focused DP shift equals 0:
+                        ##MIS1(DEF) deltaIS1 + MIS2(DEF) deltaIS2 = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
+                        ##MIS1 deltaIS1 + MIS2 deltaIS2 = 0 (the focused DP should stay at the same position)
+                        
+                        a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
+                        b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
+                        A = np.concatenate((a,b), axis = 0)
     
-                    next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+                        crystal_pos_dif = crystal_pos - appos0
+                        apmv = -crystal_pos_dif
     
-                    t = time.clock()
+                        print "aperture movement: {}".format(apmv)
     
-                    while time.clock() > next_interval:
-                        next_interval += acquisition_time
-                        i += 1
-                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+                        x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
+                        delta_imageshiftcoord = (x[0], x[1])
     
-                    #while time.time() < next_interval:
-                        #time.sleep(0.001)
-                    diff = next_interval - time.clock()
-                    time.sleep(diff)
-    
+                        delta_imageshift2coord = (x[2],x[3])
+                        print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
+                        self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
+                        
+                        self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
+                        self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))
+                        ## the two steps can take ~60 ms per step
+                        
+                        is_x0 = is_x0 + int(delta_imageshiftcoord[0])
+                        is_y0 = is_y0 + int(delta_imageshiftcoord[1])
+                        is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
+                        is2_y0 = is2_y0 + int(delta_imageshift2coord[1])
+                        #appos0 = crystal_pos
+        
+                        next_interval = t_start + acquisition_time
+                        # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+        
+                        t = time.clock()
+        
+                        while time.clock() > next_interval:
+                            next_interval += acquisition_time
+                            i += 1
+                            # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+        
+                        #while time.time() < next_interval:
+                            #time.sleep(0.001)
+                        diff = next_interval - time.clock()
+                        time.sleep(diff)
+        
+                    else:
+                        img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                        # print i, "Image!"
+                        buffer.append((i, img, h))
+                        print "{} saved to buffer".format(i)
+        
+                    i += 1
+                
                 else:
-                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                    # print i, "Image!"
-                    buffer.append((i, img, h))
-                    print "{} saved to buffer".format(i)
-    
-                i += 1
-            
-            else:
-                if i % self.image_interval == 0:
-                    t_start = time.clock()
-                    acquisition_time = (t_start - t0) / (i-1)
-    
-                    self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
-                    self.ctrl.difffocus.value = diff_focus_proper
-    
-                    image_buffer.append((i, img, h))
-    
-                    next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-    
-                    t = time.clock()
-    
-                    while time.clock() > next_interval:
-                        next_interval += acquisition_time
-                        i += 1
-                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
-    
-                    #while time.time() < next_interval:
-                        #time.sleep(0.001)
-                    diff = next_interval - time.clock()
-                    time.sleep(diff)
-    
-                else:
-                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                    # print i, "Image!"
-                    buffer.append((i, img, h))
-    
-                i += 1
+                    if i % self.image_interval == 0:
+                        t_start = time.clock()
+                        acquisition_time = (t_start - t0) / (i-1)
+        
+                        self.ctrl.difffocus.value = diff_focus_defocused
+                        img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
+                        self.ctrl.difffocus.value = diff_focus_proper
+        
+                        image_buffer.append((i, img, h))
+        
+                        next_interval = t_start + acquisition_time
+                        # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+        
+                        t = time.clock()
+        
+                        while time.clock() > next_interval:
+                            next_interval += acquisition_time
+                            i += 1
+                            # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+        
+                        #while time.time() < next_interval:
+                            #time.sleep(0.001)
+                        diff = next_interval - time.clock()
+                        time.sleep(diff)
+        
+                    else:
+                        img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                        # print i, "Image!"
+                        buffer.append((i, img, h))
+        
+                    i += 1
+                
+            except:
+                self.stopEvent.set()
 
         t1 = time.clock()
 

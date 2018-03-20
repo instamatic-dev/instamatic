@@ -32,7 +32,11 @@ class ExperimentalautocRED(LabelFrame):
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
-        Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack).grid(row=7, column=2, sticky="W")
+        self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
+        self.acred_status.grid(row=7, column=2, sticky="W")
+        
+        self.fullacred_status = Checkbutton(frame, text = "Enable Full AutocRED Feature", variable = self.var_enable_fullacred, command=self.fullacred)
+        self.fullacred_status.grid(row=8, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -64,6 +68,7 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_image_interval = BooleanVar(value=True)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_enable_autotrack = BooleanVar(value=True)
+        self.var_enable_fullacred = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -109,10 +114,14 @@ class ExperimentalautocRED(LabelFrame):
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
+            self.acred_status.config(state=NORMAL)
+            self.fullacred_status.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
+            self.acred_status.config(state=DISABLED)
+            self.fullacred_status.config(state=DISABLED)
             
     def autotrack(self):
         enable = self.var_enable_autotrack.get()
@@ -120,12 +129,15 @@ class ExperimentalautocRED(LabelFrame):
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
-        else:
-            self.e_image_interval.config(state=DISABLED)
-            self.e_diff_defocus.config(state=DISABLED)
-            self.c_toggle_defocus.config(state=DISABLED)
     ##Focused beam, CC, Calibration for beam shift        
         
+    def fullacred(self):
+        enable = self.var_enable_fullacred.get()
+        if enable:
+            self.e_image_interval.config(state=NORMAL)
+            self.e_diff_defocus.config(state=NORMAL)
+            self.c_toggle_defocus.config(state=NORMAL)
+            self.acred_status.config(state=NORMAL)
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
