@@ -11,187 +11,15 @@ from instamatic.formats import write_tiff
 from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
+from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2
+from instamatic.calibrate.center_z import center_z_height
+from instamatic.processing.fast_finder import fast_finder
 from scipy import ndimage
 from instamatic.processing.find_holes import find_holes
 import pickle
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
-
-def Calibrate_Imageshift(ctrl, diff_defocus,stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
-
-    inp = raw_input("""Calibrate imageshift
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-    
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-    x0, y0 = ctrl.imageshift.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.imageshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(imgshift)
-            shifts.append(shift)
-
-    ctrl.imageshift.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift calibration done."
-    print r
-
-    return r
-
-def Calibrate_Imageshift2(ctrl, diff_defocus,stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
-
-    inp = raw_input("""Calibrate imageshift2
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-    
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-    x0, y0 = ctrl.imageshift2.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.imageshift2.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(imgshift)
-            shifts.append(shift)
-
-    ctrl.imageshift2.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift2 calibration done."
-    print r
-
-    return r
-
-def Calibrate_Diffshift(ctrl, diff_defocus, stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
-
-    inp = raw_input("""Calibrate imageshift
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-
-    x0, y0 = ctrl.diffshift.get()
-    
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.diffshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "diffshifted defocused image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            dif_shift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(dif_shift)
-            shifts.append(shift)
-
-    ctrl.diffshift.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift calibration done."
-    print r
-
-    return r
-
-"""fast_finder is contribution from Dr Jonas Angstrom"""
-def fast_finder(image, treshold=1):
-    X = np.mean(image, axis=0)
-    Y = np.mean(image, axis=1)
-    im_mean = np.mean(X)
-    rads = np.zeros(2)
-    center = np.zeros(2)
-    for n, XY in enumerate([X,Y]):
-        over = np.where(XY>(im_mean*treshold))[0]
-        rads[n] = (over[-1] - over[0])/2
-        center[n] = over[0] + rads[n]
-    return center, rads
-
-def center_z_height(ctrl):
-    """http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf"""
-    print "Finding eucentric height..."
-    z0 = ctrl.stageposition.z
-    x0 = ctrl.stageposition.x
-    z = []
-    d = []
-    
-    for i in range(0,5):
-        z1 = ctrl.stageposition.z
-        z.append(z1)
-        x = ctrl.stageposition.x
-        img0 = ctrl.getImage(exposure = 0.01, comment = "z height finding")
-        ctrl.stageposition.set(x = x + 2)
-        img1 = ctrl.getImage(exposure = 0.01, comment = "z height finding")
-        shift = cross_correlate(img0, img1, upsample_factor=10, verbose=False)
-        d.append(np.linalg.norm(shift))
-        print "Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift))
-        ctrl.stageposition.set(z1 + 1)
-        time.sleep(1)
-        
-    p = np.polyfit(z, d, 1)
-    z_center = -p[1]/p[0]
-    satisfied = raw_input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
-    if satisfied == "x":
-        ctrl.stageposition.set(x = x0, z = z0)
-        print "Did not find proper eucentric height..."
-    else:
-        ctrl.stageposition.set(x = x0, z = z_center)
-        print "Eucentric height set. Find the crystal again and start data collection!"
     
 class Experiment(object):
     def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
@@ -272,13 +100,12 @@ class Experiment(object):
                 with open('ISCalib_foc.pkl') as ff:
                     transform_imgshift_foc = pickle.load(ff)
             except IOError:
-                print "No Imageshift calibration found. Choose the disired defocus value."
+                print "No Imageshift calibration found. Choose the desired defocus value."
                 inp = raw_input("Press ENTER when ready.")
                 
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 2000)
-                    """self.ctrl.difffocus.value = diff_focus_proper"""
                     with open('ISCalib.pkl', 'w') as f:
                         pickle.dump(transform_imgshift, f)
                     satisfied = raw_input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
@@ -287,7 +114,6 @@ class Experiment(object):
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift_foc = Calibrate_Imageshift(self.ctrl, 0, stepsize = 1500)
-                    """self.ctrl.difffocus.value = diff_focus_proper"""
                     with open('ISCalib_foc.pkl', 'w') as ff:
                         pickle.dump(transform_imgshift_foc, ff)
                     satisfied = raw_input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
@@ -295,33 +121,6 @@ class Experiment(object):
                 self.logger.debug("Transform_imgshift: {}".format(transform_imgshift))
                 self.logger.debug("Transform_imgshift_foc: {}".format(transform_imgshift_foc))
                 
-            try:
-                with open('DSCalib.pkl') as f1:
-                    transform_difshift = pickle.load(f1)
-                with open('DSCalib_foc.pkl') as ff1:
-                    transform_difshift_foc = pickle.load(ff1)
-            except IOError:
-                print "No Diffraction Shift (PLA) calibration found. Redo PLA calibration..."
-                inp = raw_input("Choose desired defocus. Press Enter when ready.")
-                
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_difshift = Calibrate_Diffshift(self.ctrl, self.diff_defocus, stepsize = 300)
-                    with open('DSCalib.pkl','w') as f1:
-                        pickle.dump(transform_difshift,f1)
-                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
-                   
-                inp = raw_input("PLA calibration (focused) not found. Press ENTER when ready") 
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_difshift_foc = Calibrate_Diffshift(self.ctrl, 0, stepsize = 300)
-                    with open('DSCalib_foc.pkl','w') as ff1:
-                        pickle.dump(transform_difshift_foc,ff1)
-                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
-            
-            self.logger.debug("Transform_difshift: {}".format(transform_difshift))
-            self.logger.debug("Transform_difshift: {}".format(transform_difshift_foc))
-            
             try:
                 with open('IS2Calib.pkl') as f2:
                     transform_imgshift2 = pickle.load(f2)
@@ -363,7 +162,7 @@ class Experiment(object):
                     calib_file = raw_input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
             self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
             
-            set_zheight = raw_input("Do you want to try automatic z-height adjustment? y for yes or n for no")
+            set_zheight = raw_input("Do you want to try automatic z-height adjustment? y for yes or n for no.\n")
             if set_zheight == "y":
                 center_z_height(self.ctrl)
                 ready = raw_input("Press Enter to start data collection.")

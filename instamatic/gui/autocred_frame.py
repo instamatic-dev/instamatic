@@ -21,15 +21,15 @@ class ExperimentalautocRED(LabelFrame):
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky="ew", pady=10)
 
         Checkbutton(frame, text="Enable image interval", variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky="W")
-        self.c_toggle_defocus = Checkbutton(frame, text="Toggle defocus", variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
+        self.c_toggle_defocus = Checkbutton(frame, text="Toggle defocus", variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
         self.c_toggle_defocus.grid(row=6, column=2, sticky="W")
 
         Label(frame, text="Image interval:").grid(row=5, column=0, sticky="W")
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1, state=DISABLED)
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1)
         self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
 
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
+        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack).grid(row=7, column=2, sticky="W")
