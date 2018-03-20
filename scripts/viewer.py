@@ -21,7 +21,7 @@ def main():
        shape: {}
        range: {}-{}
        dtype: {}
-""".format(fn, old_div(img.nbytes, 1024), img.shape, img.min(), img.max(), img.dtype))
+""".format(fn, img.nbytes/1024, img.shape, img.min(), img.max(), img.dtype))
 
     max_len = max([len(s) for s in h.keys()])
 
