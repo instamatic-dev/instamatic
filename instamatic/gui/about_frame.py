@@ -1,7 +1,7 @@
-from Tkinter import *
-from ttk import *
-from Tkinter import Label as tkLabel
-from tkFont import Font, nametofont
+from tkinter import *
+from tkinter.ttk import *
+from tkinter import Label as tkLabel
+from tkinter.font import Font, nametofont
 from instamatic import version
 
 
@@ -89,9 +89,11 @@ class About(LabelFrame):
         Label(frame, text="").grid(row=0, column=0, sticky="W")
         Label(frame, text="Author:").grid(row=1, column=0, sticky="W", padx=10)
         Label(frame, text="Stef Smeets (stef.smeets@mmk.su.se)").grid(row=1, column=1, sticky="W")
-        Label(frame, text="Contributors:\n").grid(row=2, column=0, sticky="W", padx=10)
-        Label(frame, text="Magdalena O. Cichocka (magdalena.cichocka@mmk.su.se)\n[Testing + ideas]").grid(row=2, column=1, sticky="W")
-        Label(frame, text="Bin Wang (bin.wang@mmk.su.se)\n[cRED implementation]").grid(row=3, column=1, sticky="W")
+        Label(frame, text="Contributors:").grid(row=2, column=0, sticky="W", padx=10)
+        Label(frame, text="Bin Wang [cRED implementation]").grid(row=3, column=1, sticky="W")
+        Label(frame, text="Magdalena O. Cichocka [Testing + feedback]").grid(row=2, column=1, sticky="W")
+        Label(frame, text="Jonas Angstrom [Neural network implementation]").grid(row=4, column=1, sticky="W")
+        Label(frame, text="Wei Wan [Orius/Timepix C-interface]").grid(row=5, column=1, sticky="W")
         Label(frame, text="").grid(row=5, column=0, sticky="W")
 
         Label(frame, text="Source code:").grid(row=10, column=0, sticky="W", padx=10)
@@ -105,7 +107,7 @@ class About(LabelFrame):
         Label(frame, text="").grid(row=22, column=0, sticky="W")
 
         Label(frame, text="If you found this software useful, please cite:").grid(row=30, column=0, sticky="W", columnspan=2, padx=10)
-        txt = Message(frame, text="Stef Smeets. (2017) Instamatic (Version {}) [Software]. Available from http://github.com/stefsmeets/instamatic".format(version.__version__), width=320, justify=LEFT)
+        txt = Message(frame, text=version.__citation__, width=320, justify=LEFT)
         txt.grid(row=31, column=1, sticky="W")
 
         Label(frame, text="").grid(row=31, column=0, sticky="W", padx=10)
@@ -119,6 +121,10 @@ class About(LabelFrame):
     def link_manual(self, event=None):
         import webbrowser
         webbrowser.open_new(r"http://www.github.com/stefsmeets/instamatic")
+
+
+from .base_module import BaseModule
+module = BaseModule("about", "about", True, About, commands={})
 
 
 if __name__ == '__main__':

@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from instamatic.tools import *
 from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
-from fit import fit_affine_transformation
-from filenames import *
+from .fit import fit_affine_transformation
+from .filenames import *
 
 import pickle
 
@@ -184,7 +184,7 @@ class CalibStage(object):
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     def to_file(self, fn=CALIB_STAGE_LOWMAG):
-        pickle.dump(self, open(fn, "w"))
+        pickle.dump(self, open(fn, "wb"))
 
     def plot(self):
         if not self.has_data:
@@ -228,9 +228,6 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
-    # Ensure that backlash is eliminated
-    ctrl.stageposition.reset_xy()
-
     outfile = "calib_start" if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
@@ -245,17 +242,17 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     stagepos = []
     shifts = []
     
-    n = (gridsize - 1) / 2 # number of points = n*(n+1)
+    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
-        print
-        print "Position {}/{}: x: {:.0f}, y: {:.0f}".format(i+1, tot, x_cent+dx, y_cent+dy)
+        print()
+        print("Position {}/{}: x: {:.0f}, y: {:.0f}".format(i+1, tot, x_cent+dx, y_cent+dy))
         
         ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
-        print ctrl.stageposition
+        print(ctrl.stageposition)
         
         outfile = "calib_{:04d}".format(i) if save_images else None
 
@@ -272,7 +269,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         
         i += 1
     
-    print " >> Reset to center"
+    print(" >> Reset to center")
     ctrl.stageposition.set(x=x_cent, y=y_cent)
     ctrl.stageposition.reset_xy()
 
@@ -282,9 +279,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     m = gridsize**2 // 2 
     if gridsize % 2 and stagepos[m].max() > 50:
-        print " >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m)
-        print "    Difference:", stagepos[m]
-        print
+        print(" >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m))
+        print("    Difference:", stagepos[m])
+        print()
     
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
@@ -316,9 +313,9 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
     x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
-    print "Center:", center_fn
-    print "Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent)
-    print
+    print("Center:", center_fn)
+    print("Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent))
+    print()
 
     binsize = h_cent["ImageBinSize"]
 
@@ -337,9 +334,9 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         img = imgscale(img, scale)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
-        print "Image:", fn
-        print "Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs)
-        print
+        print("Image:", fn)
+        print("Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs))
+        print()
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         
@@ -358,7 +355,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
 def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not raw_input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
+        if confirm and not input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
             return
         else:
             calib = calibrate_stage_lowmag_live(ctrl, save_images=True)
@@ -373,7 +370,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
 def main_entry():
 
     if "help" in sys.argv:
-        print """
+        print("""
 Program to calibrate lowmag (100x) of microscope
 
 Usage: 
@@ -383,7 +380,7 @@ prepare
 
     instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
-"""
+""")
         exit()
     elif len(sys.argv) == 1:
         ctrl = initialize()

@@ -25,18 +25,20 @@ def write_adsc(fname, data, header={}):
     """
     out = b'{\n'
     for key in header:
-        out += b"%s=%s;\n" % (key, header[key])
-    if header.has_key("HEADER_BYTES"):
+        out += "{:}={:};\n".format(key, header[key]).encode()
+    if "HEADER_BYTES" in header:
         pad = int(header["HEADER_BYTES"]) - len(out) - 2
     else:
 #         hsize = ((len(out) + 23) // 512 + 1) * 512
         hsize = (len(out) + 533) & ~(512 - 1)
-        out += b"HEADER_BYTES=%d;\n" % (hsize)
+        out += "HEADER_BYTES={:d};\n".format(hsize).encode()
         pad = hsize - len(out) - 2
     out +=  b"}" + (pad+1) * b'\x00' 
     assert len(out) % 512 == 0 , "Header is not multiple of 512"
 
-    data = data.astype(np.uint16)
+    # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
+    dtype = np.uint16
+    data = np.round(data, 0).astype(dtype, copy=False)  # copy=False ensures that no copy is made if dtype is already satisfied
     if swap_needed(header):
         data.byteswap(True)
 
@@ -51,9 +53,12 @@ def readheader(infile):
     line = infile.readline()
     bytesread = len(line)
     while b'}' not in line:
-        if b'=' in line:
-            (key, val) = str(line).split('=')
-            header[key.strip()] = val.strip(';\n\r')
+        string = line.decode().strip()
+        if '=' in string:
+            (key, val) = string.split('=')
+            val = val.strip(';')
+            key = key.strip()
+            header[key] = val
         line = infile.readline()
         bytesread = bytesread + len(line)
     return header
@@ -102,13 +107,13 @@ if __name__ == '__main__':
     header['SIZE2'] = 512
     
     write_adsc(fn, img, header=header)
-    print "writing:", img.shape
-    print "header:", header
-    print
+    print("writing:", img.shape)
+    print("header:", header)
+    print()
 
     arr,h = read_adsc(fn)
-    print "reading", arr.shape
-    print "header", h
+    print("reading", arr.shape)
+    print("header", h)
     
-    print
-    print "allclose:", np.allclose(img, arr)
+    print()
+    print("allclose:", np.allclose(img, arr))

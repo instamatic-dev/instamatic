@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from instamatic.tools import *
 from instamatic.TEMController import initialize
-from filenames import *
+from .filenames import *
 
 from instamatic.processing.find_holes import find_holes
 
@@ -35,9 +35,9 @@ class CalibBrightness(object):
     @classmethod
     def from_data(cls, brightness, pixeldiameter, header=None):
         slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
-        print
-        print "r_value: {:.4f}".format(r_value)
-        print "p_value: {:.4f}".format(p_value)
+        print()
+        print("r_value: {:.4f}".format(r_value))
+        print("p_value: {:.4f}".format(p_value))
 
         c = cls(slope=slope, intercept=intercept)
         c.data_brightness = brightness
@@ -50,13 +50,13 @@ class CalibBrightness(object):
     def from_file(cls, fn=CALIB_BRIGHTNESS):
         import pickle
         try:
-            return pickle.load(open(fn, "r"))
+            return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_brightness"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     def to_file(self, fn=CALIB_BRIGHTNESS):
-        pickle.dump(self, open(fn, "w"))
+        pickle.dump(self, open(fn, "wb"))
 
     def plot(self):
         if not self.has_data:
@@ -117,12 +117,12 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
         holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
         
         if len(holes) == 0:
-            print " >> No holes found, continuing..."
+            print(" >> No holes found, continuing...")
             continue
 
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print "Brightness: {:.f}, equivalent diameter: {:.1f}".format(brightness, size)
+        print("Brightness: {:.f}, equivalent diameter: {:.1f}".format(brightness, size))
         values.append((brightness, size))
 
     values = np.array(values)
@@ -149,8 +149,8 @@ def calibrate_brightness_from_image_fn(fns):
     values = []
 
     for fn in fns:
-        print
-        print "Image:", fn
+        print()
+        print("Image:", fn)
         img, h = load_img(fn)
         brightness = float(h["Brightness"])
         binsize = float(h["ImageBinSize"])
@@ -161,7 +161,7 @@ def calibrate_brightness_from_image_fn(fns):
         
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print "Brightness: {:.0f}, equivalent diameter: {:.1f}px".format(brightness, size)
+        print("Brightness: {:.0f}, equivalent diameter: {:.1f}px".format(brightness, size))
         values.append((brightness, size))
 
     values = np.array(values)
@@ -173,7 +173,7 @@ def calibrate_brightness_from_image_fn(fns):
 
 def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     if not fns:
-        if confirm and not raw_input("\n >> Go too 2500x mag (type 'go' to start): """) == "go":
+        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): """) == "go":
             return
         else:
             calib = calibrate_brightness_live(ctrl, save_images=True)
@@ -187,7 +187,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
 
 def main_entry():
     if "help" in sys.argv:
-        print """
+        print("""
 Program to calibrate brightness of microscope
 
 Usage: 
@@ -197,7 +197,7 @@ prepare
 
     instamatic.calibrate_brightness IMAGE (IMAGE ...)
        To perform calibration using pre-collected images
-"""
+""")
         exit()
     elif len(sys.argv) == 1:
         ctrl = initialize()

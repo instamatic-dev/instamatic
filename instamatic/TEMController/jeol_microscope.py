@@ -32,26 +32,6 @@ ZERO = 32768
 MAX = 65535
 MIN = 0
 
-## Control the Screen:
-# screen = ctrl.tem.tem3.CreateScreen2()
-# UP = 0
-# DOWN = 2
-# screen.SelectAngle(UP)     # screen up
-# screen.SelectAngle(DOWN)   # screen down
-# screen.GetAngle()
-
-## faster stage readout
-# g = ctrl.tem.tem3.CreateGonio2()
-# g.GetPosition() -> get stage position, 78 ms
-# ctrl.tem.stage3.GetPos() -> 277 ms
-
-# g.GetPosition() -> drop in replacement for stage3.GetPos
-# g.SetPosition(x, y) # XY ONLY
-# g.SetTiltXAngle(a) # set xtilt
-# g.GetStatus() # -> isStageMoving
-
-# g.SetRotationAngle() # -> b?
-
 ## get the direction of movement
 # ctrl.tem.stage3.GetDirection()
 # >>> (0, 1, 0, 0, 1, 0)
@@ -80,15 +60,21 @@ class JeolMicroscope(object):
         # initialize each interface from the TEM3 object
         # self.apt3 = self.tem3.CreateApt3()
         # self.camera3 = self.tem3.CreateCamera3()
-        self.def3 = self.tem3.CreateDef3()
         # self.detector3 = self.tem3.CreateDetector3()
-        self.eos3 = self.tem3.CreateEOS3()
         # self.feg3 = self.tem3.CreateFEG3()
         # self.filter3 = self.tem3.CreateFilter3()
+        # self.mds3 = self.tem3.CreateMDS3()
+        self.screen2 = self.tem3.CreateScreen2()
+        self.def3 = self.tem3.CreateDef3()
+        self.eos3 = self.tem3.CreateEOS3()
         self.ht3 = self.tem3.CreateHT3()
         self.lens3 = self.tem3.CreateLens3()
-        # self.mds3 = self.tem3.CreateMDS3()
         self.stage3 = self.tem3.CreateStage3()
+
+        ## faster stage readout using gonio2
+        # self.gonio2.GetPosition() -> get stage position, 78 ms
+        # self.stage3.GetPos() -> 277 ms
+        self.gonio2 = self.tem3.CreateGonio2()
 
         # wait for interface to activate
         t = 0
@@ -98,7 +84,8 @@ class JeolMicroscope(object):
                 break
             time.sleep(1)
             t += 1
-            print "Waiting for microscope, t = {}s".format(t)
+            if t > 3:
+                print("Waiting for microscope, t = {}s".format(t))
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
@@ -120,7 +107,7 @@ class JeolMicroscope(object):
         self.MAX = MAX
         self.MIN = MIN
 
-        self.VERIFY_STAGE_POSITION = True
+        self.VERIFY_STAGE_POSITION = False
 
     def __del__(self):
         comtypes.CoUninitialize()
@@ -219,11 +206,11 @@ class JeolMicroscope(object):
     def setBeamTilt(self, x, y):
         self.def3.SetCLA2(x, y)
 
-    def getImageShift(self):
+    def getImageShift1(self):
         x, y, result = self.def3.GetIS1()
         return x,y 
 
-    def setImageShift(self, x, y):
+    def setImageShift1(self, x, y):
         self.def3.SetIS1(x, y)
 
     def getImageShift2(self):
@@ -238,11 +225,11 @@ class JeolMicroscope(object):
         x, y, z in nanometer
         a and b in degrees
         """
-        x, y, z, a, b, result = self.stage3.GetPos()
+        x, y, z, a, b, result = self.gonio2.GetPosition()
         return x, y, z, a, b
 
     def isStageMoving(self):
-        x, y, z, a, b, result = self.stage3.GetStatus()
+        x, y, z, a, b, result = self.gonio2.GetStatus()
         return x or y or z or a or b 
 
     def waitForStage(self, delay=0):
@@ -250,161 +237,66 @@ class JeolMicroscope(object):
             if delay > 0:
                 time.sleep(delay)
 
-    def setStageX(self, value):
+    def setStageX(self, value, wait=True):
         self.stage3.SetX(value)
-        self.waitForStage()
+        if wait:
+            self.waitForStage()
 
-    def setStageY(self, value):
+    def setStageY(self, value, wait=True):
+        # self.gonio2.SetRotationAngle(value)  ## not tested, is this an alternative call?
         self.stage3.SetY(value)
-        self.waitForStage()
+        if wait:
+            self.waitForStage()
 
-    def setStageZ(self, value):
+    def setStageZ(self, value, wait=True):
         self.stage3.SetZ(value)
-        self.waitForStage()
+        if wait:
+            self.waitForStage()
 
-    def setStageA(self, value):
+    def setStageA(self, value, wait=True):
+        # self.gonio2.SetTiltXAngle(value)  ## alternative call
         self.stage3.SetTiltXAngle(value)
-        self.waitForStage()
+        if wait:
+            self.waitForStage()
 
-    def setStageB(self, value):
+    def setStageB(self, value, wait=True):
         self.stage3.SetTiltYAngle(value)
-        self.waitForStage()
+        if wait:
+            self.waitForStage()
 
-    def setStageXY(self, x=None, y=None):
-        if x is not None:
-            self.stage3.SetX(x)
-        if y is not None:
-            self.stage3.SetY(y)
-        self.waitForStage()
+    def setStageXY(self, x, y, wait=True):
+        self.gonio2.SetPosition(x, y)  ## combined call is faster than to separate calls
+        if wait:
+            self.waitForStage()
 
-    def _setStagePosition_backlash(self, x=None, y=None, z=None, a=None, b=None):
-        """Backlash errors can be minimized by always approaching the target from the same direction"""
-        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
-
-        xy_limit = 10000
-        angle_limit = 1.0
-        height_limit = 1000
-
-        do_backlash = False
-
-        if x is not None:
-            shift_x = x - current_x
-            if shift_x < 0 and abs(shift_x) > xy_limit:
-                do_backlash = True
-                logger.info("Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x))
-                x = x - xy_limit
-        
-        if y is not None:
-            shift_y = y - current_y
-            if shift_y < 0 and abs(shift_y) > xy_limit:
-                do_backlash = True
-                logger.info("Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y))
-                y = y - xy_limit
-
-        if z is not None:
-            shift_z = z - current_z
-            if shift_z < 0 and abs(shift_z) > height_limit:
-                do_backlash = True
-                logger.info("Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z))
-                z = z - height_limit
-        
-        if a is not None:
-            shift_a = a - current_a
-            if shift_a < 0 and abs(shift_a) > angle_limit:
-                do_backlash = True
-                logger.info("Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a))
-                a = a - angle_limit
-        
-        if b is not None:
-            shift_b = b - current_b
-            if shift_b < 0 and abs(shift_b) > angle_limit:
-                do_backlash = True
-                logger.info("Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b))
-                b = b - angle_limit
-
-        if do_backlash:
-            self.setStagePosition(x, y, z, a, b, backlash=False)
-
-    def forceStageBacklashCorrection(self, x=False, y=False, z=False, a=False, b=False):
-        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
-
-        xy_limit = 10000
-        angle_limit = 1.0
-        height_limit = 1000
-
-        if x:
-            x = current_x - xy_limit
-            logger.info("Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x))
-        else:
-            current_x, x = None, None
-
-        if y:
-            y = current_y - xy_limit
-            logger.info("Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y))
-        else:
-            current_y, y = None, None
-
-        if z:
-            z = current_z - height_limit
-            logger.info("Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z))
-        else:
-            current_z, z = None, None
-
-        if a:
-            a = current_a - angle_limit
-            logger.info("Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a))
-        else:
-            current_a, a = None, None
-
-        if b:
-            b = current_b - angle_limit
-            logger.info("Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b))
-        else:
-            current_b, b = None, None
-
-        self.setStagePosition(x, y, z, a, b, backlash=False)
-        n = 2 # number of stages
-        for i in range(n):
-            j = i + 1
-            if x:
-                x = ((n-j)*x + j*current_x) / n
-            if y:
-                y = ((n-j)*y + j*current_y) / n
-            if z:
-                z = ((n-j)*z + j*current_z) / n
-            if a:
-                a = ((n-j)*a + j*current_a) / n
-            if b:
-                b = ((n-j)*b + j*current_b) / n
-
-            logger.info("Force backlash, stage {}".format(j))
-            self.setStagePosition(x, y, z, a, b, backlash=False)
-
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
-        if backlash:
-            self._setStagePosition_backlash(x, y, z, a, b)
-
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
         if z is not None:
             self.setStageZ(z)
         if a is not None:
             self.setStageA(a)
         if b is not None:
             self.setStageB(b)
-        if (x is not None) or (y is not None):
+
+        if (x is not None) and (y is not None):
             self.setStageXY(x=x, y=y)
+        else:
+            if x is not None:
+                self.setStageX(x)     
+            if y is not None:
+                self.setStageY(y)
 
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()
             if x is not None and abs(nx - x) > 150:
-                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(x, nx, backlash))
+                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx))
             if y is not None and abs(ny - y) > 150:
-                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}, backlash: {}".format(y, ny, backlash))
+                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny))
             if z is not None and abs(nz - z) > 500:
-                logger.warning("stage.z -> requested: {}, got: {}, backlash: {}".format(z, nz, backlash))
+                logger.warning("stage.z -> requested: {}, got: {}".format(z, nz))
             if a is not None and abs(na - a) > 0.057:
-                logger.warning("stage.a -> requested: {}, got: {}, backlash: {}".format(a, na, backlash))
+                logger.warning("stage.a -> requested: {}, got: {}".format(a, na))
             if b is not None and abs(nb - b) > 0.057:
-                logger.warning("stage.b -> requested: {}, got: {}, backlash: {}".format(b, nb, backlash))
+                logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
@@ -480,43 +372,184 @@ class JeolMicroscope(object):
     def setSpotSize(self, value):
         self.eos3.selectSpotSize(value - 1)
 
+    def getScreenPosition(self):
+        value = self.screen2.GetAngle()[0]
+        UP, DOWN = 2, 0
+        if value == UP:
+            return 'up'
+        elif value == DOWN:
+            return 'down'
+        else:
+            return value
+
+    def setScreenPosition(self, value):
+        """value = 'up' or 'down'"""
+        UP, DOWN = 2, 0
+        if value == 'up':
+            self.screen2.SelectAngle(UP)
+        elif value == 'down':
+            self.screen2.SelectAngle(DOWN)
+        else:
+            raise ValueError("No such screen position:", value, "(must be 'up'/'down')")
+
+    def getCondensorLens1(self):
+        # No setter, adjusted via spotsize/NBD/LOWMAG
+        value, result = self.lens3.GetCL1()
+        return value
+
+    def getCondensorLens2(self):
+        # No setter, adjusted via spotsize/NBD/LOWMAG
+        value, result = self.lens3.GetCL2()
+        return value
+
+    def getCondensorMiniLens(self):
+        # no setter
+        value, result = self.lens3.GetCM()
+        return value
+
+    def getObjectiveLenseCoarse(self):
+        # coarse objective focus
+        value, result = self.lens3.GetOLc()
+        return value
+
+    def getObjectiveLenseFine(self):
+        # fine objective focus
+        value, result = self.lens3.GetOLf()
+        return value
+    
+    def getObjectiveMiniLens(self):
+        # no setter
+        value, result = self.lens3.GetOM()
+        return value
+
     def getAll(self):
-        print "## lens3"
-        print "CL1", self.lens3.GetCL1()
-        print "CL2", self.lens3.GetCL2()
-        print "CL3", self.lens3.GetCL3()
-        print "CM", self.lens3.GetCM()
-        print "FLc", self.lens3.GetFLc()
-        print "FLcomp1", self.lens3.GetFLcomp1()
-        print "FLcomp2", self.lens3.GetFLcomp2()
-        print "FLf", self.lens3.GetFLf()
-        print "IL1", self.lens3.GetIL1()
-        print "IL2", self.lens3.GetIL2()
-        print "IL3", self.lens3.GetIL3()
-        print "IL4", self.lens3.GetIL4()
-        print "OLc", self.lens3.GetOLc()
-        print "OLf", self.lens3.GetOLf()
-        print "OM", self.lens3.GetOM()
-        print "OM2", self.lens3.GetOM2()
-        print "OM2Flag", self.lens3.GetOM2Flag()
-        print "PL1", self.lens3.GetPL1()
-        print "PL2", self.lens3.GetPL2()
-        print "PL3", self.lens3.GetPL3()
-        print
-        print "## def3"
-        print "CLA1", self.def3.GetCLA1()
-        print "CLA2", self.def3.GetCLA2()
-        print "CLs", self.def3.GetCLs()
-        print "FLA1", self.def3.GetFLA1()
-        print "FLA2", self.def3.GetFLA2()
-        print "FLs1", self.def3.GetFLs1()
-        print "FLs2", self.def3.GetFLs2()
-        print "GUNA1", self.def3.GetGUNA1()
-        print "GUNA2", self.def3.GetGUNA2()
-        print "ILs", self.def3.GetILs()
-        print "IS1", self.def3.GetIS1()
-        print "IS2", self.def3.GetIS2()
-        print "OLs", self.def3.GetOLs()
-        print "PLA", self.def3.GetPLA()
+        print("## lens3")
+        print("CL1", self.lens3.GetCL1()) # condensor lens
+        print("CL2", self.lens3.GetCL2()) # condensor lens
+        print("CL3", self.lens3.GetCL3()) # brightness
+        print("CM", self.lens3.GetCM())   # condensor mini lens
+        print("FLc", self.lens3.GetFLc()) # ?? -> self.lens3.SetFLc()
+        print("FLf", self.lens3.GetFLf()) # ?? -> self.lens3.SetFLf()
+        print("FLcomp1", self.lens3.GetFLcomp1()) # ??, no setter 
+        print("FLcomp2", self.lens3.GetFLcomp2()) # ??, no setter
+        print("IL1", self.lens3.GetIL1()) # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        print("IL2", self.lens3.GetIL2()) # intermediate lens, no setter
+        print("IL3", self.lens3.GetIL3()) # intermediate lens, no setter
+        print("IL4", self.lens3.GetIL4()) # intermediate lens, no setter
+        print("OLc", self.lens3.GetOLc()) # objective focus coarse, SetOLc
+        print("OLf", self.lens3.GetOLf()) # objective focus fine, SetOLf
+        print("OM", self.lens3.GetOM())   # Objective mini lens
+        print("OM2", self.lens3.GetOM2()) # Objective mini lens
+        print("OM2Flag", self.lens3.GetOM2Flag()) # Objective mini lens 2 flag ??
+        print("PL1", self.lens3.GetPL1()) # projector lens, SetPLFocus
+        print("PL2", self.lens3.GetPL2()) # n/a
+        print("PL3", self.lens3.GetPL3()) # n/a
+        print()
+        print("## def3")
+        print("CLA1", self.def3.GetCLA1()) # beam shift
+        print("CLA2", self.def3.GetCLA2()) # beam tilt
+        print("CLs", self.def3.GetCLs())   # condensor lens stigmator
+        print("FLA1", self.def3.GetFLA1())
+        print("FLA2", self.def3.GetFLA2())
+        print("FLs1", self.def3.GetFLs1())
+        print("FLs2", self.def3.GetFLs2())
+        print("GUNA1", self.def3.GetGUNA1()) # gunshift
+        print("GUNA2", self.def3.GetGUNA2()) # guntilt
+        print("ILs", self.def3.GetILs())     # intermediate lens stigmator
+        print("IS1", self.def3.GetIS1())     # image shift 1
+        print("IS2", self.def3.GetIS2())     # image shift 2
+        print("OLs", self.def3.GetOLs())     # objective lens stigmator
+        print("PLA", self.def3.GetPLA())     # projector lens alignment
 
+# lens3
+#  'GetCL1',
+#  'GetCL2',
+#  'GetCL3',
+#  'GetCM',
+#  'GetFLc',
+#  'GetFLcomp1',
+#  'GetFLcomp2',
+#  'GetFLf',
+#  'GetIDsOfNames',
+#  'GetIL1',
+#  'GetIL2',
+#  'GetIL3',
+#  'GetIL4',
+#  'GetOLc',
+#  'GetOLf',
+#  'GetOM',
+#  'GetOM2',
+#  'GetOM2Flag',
+#  'GetPL1',
+#  'GetPL2',
+#  'GetPL3',
+#  'GetTypeInfo',
+#  'GetTypeInfoCount',
+#  'Invoke',
+#  'QueryInterface',
+#  'Release',
+#  'SetCL3',
+#  'SetDiffFocus',
+#  'SetFLc',
+#  'SetFLf',
+#  'SetILFocus',
+#  'SetNtrl',
+#  'SetOLc',
+#  'SetOLf',
+#  'SetOM',
+#  'SetPLFocus',
 
+# def3
+#  'GetAngBal',
+#  'GetBeamBlank',
+#  'GetCLA1',
+#  'GetCLA2',
+#  'GetCLs',
+#  'GetDetAlign',
+#  'GetFLA1',
+#  'GetFLA2',
+#  'GetFLs1',
+#  'GetFLs2',
+#  'GetGunA1',
+#  'GetGunA2',
+#  'GetIDsOfNames',
+#  'GetILs',
+#  'GetIS1',
+#  'GetIS2',
+#  'GetOLs',
+#  'GetPLA',
+#  'GetScan1',
+#  'GetScan2',
+#  'GetShifBal',
+#  'GetSpotA',
+#  'GetStemIS',
+#  'GetTiltBal',
+#  'GetTypeInfo',
+#  'GetTypeInfoCount',
+#  'Invoke',
+#  'QueryInterface',
+#  'Release',
+#  'SetAngBal',
+#  'SetBeamBlank',
+#  'SetCLA1',
+#  'SetCLA2',
+#  'SetCLs',
+#  'SetDetAlign',
+#  'SetFLA1',
+#  'SetFLA2',
+#  'SetFLs1',
+#  'SetFLs2',
+#  'SetGunA1',
+#  'SetGunA2',
+#  'SetILs',
+#  'SetIS1',
+#  'SetIS2',
+#  'SetNtrl',
+#  'SetOLs',
+#  'SetPLA',
+#  'SetScan1',
+#  'SetScan2',
+#  'SetShifBal',
+#  'SetSpotA',
+#  'SetStemIS',
+#  'SetTiltBal',

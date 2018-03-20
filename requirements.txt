@@ -1,0 +1,13 @@
+comtypes
+lmfit
+matplotlib
+numpy
+pandas
+Pillow
+scipy
+scikit-image
+tqdm
+pyyaml
+h5py
+# optional
+IPython # instamatic.controller

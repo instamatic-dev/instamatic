@@ -1,6 +1,7 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 import threading
+from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalcRED(LabelFrame):
@@ -9,11 +10,13 @@ class ExperimentalcRED(LabelFrame):
         LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction")
         self.parent = parent
 
+        sbwidth = 10
+
         self.init_vars()
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
-        self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
+        self.exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
@@ -25,14 +28,18 @@ class ExperimentalcRED(LabelFrame):
         self.c_toggle_defocus.grid(row=6, column=2, sticky="W")
 
         Label(frame, text="Image interval:").grid(row=5, column=0, sticky="W")
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1, state=DISABLED)
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, width=sbwidth, from_=1, to=9999, increment=1, state=DISABLED)
         self.e_image_interval.grid(row=5, column=1, sticky="W", padx=10)
 
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100, state=DISABLED)
+        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack).grid(row=7, column=2, sticky="W")
+
+        Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
+        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
+        self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -42,6 +49,19 @@ class ExperimentalcRED(LabelFrame):
         self.lb_coll2.grid(row=12, column=0, columnspan=3, sticky="EW")
         frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
+
+        frame = Frame(self)
+        Label(frame, text="Select output formats:").grid(row=5, columnspan=4, sticky="EW")
+        Checkbutton(frame, text=".tiff", variable=self.var_save_tiff).grid(row=10, column=0, sticky="EW")
+        Checkbutton(frame, text="XDS (.smv)", variable=self.var_save_xds).grid(row=10, column=1, sticky="EW")
+        Checkbutton(frame, text="DIALS (.smv)", variable=self.var_save_dials).grid(row=10, column=2, sticky="EW")
+        Checkbutton(frame, text="REDp (.mrc)", variable=self.var_save_red).grid(row=10, column=3, sticky="EW")
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_columnconfigure(2, weight=1)
+        frame.grid_columnconfigure(3, weight=1)
+
+        frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
@@ -63,7 +83,12 @@ class ExperimentalcRED(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
-        self.var_enable_autotrack = BooleanVar(value=False)
+        self.var_exposure_time_image = DoubleVar(value=0.01)
+
+        self.var_save_tiff = BooleanVar(value=True)
+        self.var_save_xds = BooleanVar(value=True)
+        self.var_save_dials = BooleanVar(value=True)
+        self.var_save_red = BooleanVar(value=True)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -71,6 +96,11 @@ class ExperimentalcRED(LabelFrame):
 
     def start_collection(self):
         # TODO: make a pop up window with the STOP button?
+        if self.var_toggle_diff_defocus.get():
+            self.var_toggle_diff_defocus.set(False)
+            self.toggle_diff_defocus()
+
+
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
         self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
@@ -95,11 +125,16 @@ class ExperimentalcRED(LabelFrame):
 
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
+                   "exposure_time_image": self.var_exposure_time_image.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "enable_autotrack": self.var_enable_autotrack.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
+                   "write_tiff": self.var_save_tiff.get(),
+                   "write_xds": self.var_save_xds.get(),
+                   "write_dials": self.var_save_dials.get(),
+                   "write_red": self.var_save_red.get(),
                    "stop_event": self.stopEvent }
         return params
 
@@ -107,10 +142,12 @@ class ExperimentalcRED(LabelFrame):
         enable = self.var_enable_image_interval.get()
         if enable:
             self.e_image_interval.config(state=NORMAL)
+            self.e_image_exposure.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
+            self.e_image_exposure.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
             
@@ -133,6 +170,47 @@ class ExperimentalcRED(LabelFrame):
 
         self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
+
+
+def toggle_difffocus(controller, **kwargs):
+    toggle = kwargs["toggle"]
+
+    if toggle:
+        print("Proper:", controller.ctrl.difffocus)
+        try:
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+        except ValueError:
+            controller.ctrl.mode_diffraction()
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+
+        value = controller._difffocus_proper + kwargs["value"]
+        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+    else:
+        value = controller._difffocus_proper
+
+    controller.ctrl.difffocus.set(value=value)
+
+
+def acquire_data_cRED(controller, **kwargs):
+    controller.log.info("Start cRED experiment")
+    from instamatic.experiments import cRED
+    
+    expdir = controller.module_io.get_new_experiment_directory()
+    expdir.mkdir(exist_ok=True, parents=True)
+    
+    cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+
+    cexp.report_status()
+    cexp.start_collection()
+    
+    controller.log.info("Finish cRED experiment")
+
+
+from .base_module import BaseModule
+module = BaseModule("cred", "cRED", True, ExperimentalcRED, commands={
+    "cred": acquire_data_cRED,
+    "toggle_difffocus": toggle_difffocus
+    })
 
 
 if __name__ == '__main__':

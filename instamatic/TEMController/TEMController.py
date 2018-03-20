@@ -6,16 +6,12 @@ import sys
 
 from instamatic import config
 
-from IPython.terminal.embed import InteractiveShellEmbed
-InteractiveShellEmbed.confirm_exit = False
-ipshell = InteractiveShellEmbed(banner1='')
 
-__version__ = "2016-09-15"
-__author__ = "Stef Smeets"
-__email__ = "stef.smeets@mmk.su.se"
-
-
-def initialize(camera=None):
+def initialize(camera=None, **kwargs):
+    """
+    camera: callable
+        Pass custom camera initializer (callable) + kwargs
+    """
     import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
     isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
 
@@ -24,21 +20,23 @@ def initialize(camera=None):
 
     microscope_id = config.cfg.microscope
     camera_id = config.cfg.camera
-    print "Microscope:", microscope_id
-    print "Camera    :", camera_id
+    print("Microscope:", microscope_id)
+    print("Camera    :", camera_id)
 
     if microscope_id == "jeol":
-        from jeol_microscope import JeolMicroscope
+        from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
     elif microscope_id == "simulate":
-        from simu_microscope import SimuMicroscope
+        from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()
     else:
         raise ValueError("No such microscope: `{}`".format(microscope_id))
 
     if camera:
         # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
-        cam = camera(cam=camera_id)
+        if not callable(camera):
+            raise RuntimeError(f"Camera {camera} is not callable")
+        cam = camera(cam=camera_id, **kwargs)
     elif isInteractive:
         cam = Camera(kind=camera_id)
     elif not isInteractive:
@@ -49,21 +47,75 @@ def initialize(camera=None):
     ctrl = TEMController(tem, cam)
     return ctrl
 
-
-class DiffFocus(object):
-    """docstring for DiffFocus"""
+class Deflector(object):
+    """docstring for Deflector"""
     def __init__(self, tem):
-        super(DiffFocus, self).__init__()
-        self._getter = tem.getDiffFocus
-        self._setter = tem.setDiffFocus
+        super().__init__()
         self._tem = tem
+        self.key = "def"
 
+    def __repr__(self):
+        x, y = self.get()
+        return f"{self.name}(x={x}, y={y})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+    def set(self, x, y):
+        self._setter(x, y)
+
+    def get(self):
+        return self._getter()
+
+    @property
+    def x(self):
+        x, y = self.get()
+        return x
+
+    @x.setter
+    def x(self, value):
+        self.set(value, self.y)
+
+    @property
+    def y(self):
+        x, y = self.get()
+        return y
+
+    @y.setter
+    def y(self, value):
+        self.set(self.x, value)
+
+    @property
+    def xy(self):
+        return self.get()
+
+    @xy.setter
+    def xy(self, values):
+        x, y = values
+        self.set(x=x, y=y)
+
+    def neutral(self):
+        self._tem.setNeutral(self.name)
+
+
+class Lens(object):
+    """docstring for Lens"""
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self.key = "lens"
+        
     def __repr__(self):
         try:
             value = self.value
         except ValueError:
             value="n/a"
-        return "DiffFocus(value={})".format(value)
+        return f"{self.name}(value={value})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def set(self, value):
         self._setter(value)
@@ -80,31 +132,20 @@ class DiffFocus(object):
         self.set(value)
 
 
-class Brightness(object):
+class DiffFocus(Lens):
+    """docstring for DiffFocus"""
+    def __init__(self, tem):
+        super().__init__(tem=tem)
+        self._getter = self._tem.getDiffFocus
+        self._setter = self._tem.setDiffFocus     
+
+
+class Brightness(Lens):
     """docstring for Brightness"""
     def __init__(self, tem):
-        super(Brightness, self).__init__()
-        self._getter = tem.getBrightness
-        self._setter = tem.setBrightness
-        self._tem = tem
-
-    def __repr__(self):
-        value = self.value
-        return "Brightness(value={})".format(value)
-
-    def set(self, value):
-        self._setter(value)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def value(self):
-        return self.get()
-
-    @value.setter
-    def value(self, value):
-        self.set(value)
+        super().__init__(tem=tem)
+        self._getter = self._tem.getBrightness
+        self._setter = self._tem.setBrightness
 
     def max(self):
         self.set(self._tem.MAX)
@@ -113,33 +154,19 @@ class Brightness(object):
         self.set(self._tem.MIN)
 
 
-class Magnification(object):
+class Magnification(Lens):
     """docstring for Magnification"""
     def __init__(self, tem):
-        super(Magnification, self).__init__()
-        self._getter = tem.getMagnification
-        self._setter = tem.setMagnification
-        self._indexgetter = tem.getMagnificationIndex
-        self._indexsetter = tem.setMagnificationIndex
+        super().__init__(tem=tem)
+        self._getter = self._tem.getMagnification
+        self._setter = self._tem.setMagnification
+        self._indexgetter = self._tem.getMagnificationIndex
+        self._indexsetter = self._tem.setMagnificationIndex
 
     def __repr__(self):
         value = self.value
         index = self.index
         return "Magnification(value={}, index={})".format(value, index)
-
-    def set(self, value):
-        self._setter(value)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def value(self):
-        return self.get()
-
-    @value.setter
-    def value(self, value):
-        self.set(value)
 
     @property
     def index(self):
@@ -153,233 +180,70 @@ class Magnification(object):
         try:
             self.index += 1
         except ValueError:
-            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
     def decrease(self):
         try:
             self.index -= 1
         except ValueError:
-            print "Error: Cannot go to higher magnification (current={}).".format(self.value)
+            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
 
-class GunShift(object):
+class GunShift(Deflector):
     """docstring for GunShift"""
     def __init__(self, tem):
-        super(GunShift, self).__init__()
-        self._setter = tem.setGunShift
-        self._getter = tem.getGunShift
-        self._tem = tem
-        self.name = "GUN1"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "GunShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setGunShift
+        self._getter = self._tem.getGunShift
+        self.key = "GUN1"
 
 
-class GunTilt(object):
+class GunTilt(Deflector):
     """docstring for GunTilt"""
     def __init__(self, tem):
-        super(GunTilt, self).__init__()
-        self._setter = tem.setGunTilt
-        self._getter = tem.getGunTilt
+        super().__init__(tem=tem)
+        self._setter = self._tem.setGunTilt
+        self._getter = self._tem.getGunTilt
         self._tem = tem
-        self.name = "GUN2"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "GunTilt(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)    
+        self.key = "GUN2"
 
 
-class BeamShift(object):
+class BeamShift(Deflector):
     """docstring for BeamShift"""
     def __init__(self, tem):
-        super(BeamShift, self).__init__()
-        self._setter = tem.setBeamShift
-        self._getter = tem.getBeamShift
-        self._tem = tem
-        self.name = "CLA1"
-
-    def __repr__(self):
-        x, y = self.get()
-        return "BeamShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setBeamShift
+        self._getter = self._tem.getBeamShift
+        self.key = "CLA1"
 
 
-class BeamTilt(object):
+class BeamTilt(Deflector):
     """docstring for BeamTilt"""
     def __init__(self, tem):
-        super(BeamTilt, self).__init__()
-        self._setter = tem.setBeamTilt
-        self._getter = tem.getBeamTilt
-        self._tem = tem
-        self.name = "CLA2"
+        super().__init__(tem=tem)
+        self._setter = self._tem.setBeamTilt
+        self._getter = self._tem.getBeamTilt
+        self.key = "CLA2"
         
-    def __repr__(self):
-        x, y = self.get()
-        return "BeamTilt(x={}, y={})".format(x, y)
 
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-
-
-class DiffShift(object):
+class DiffShift(Deflector):
     """docstring for DiffShift"""
     def __init__(self, tem):
-        super(DiffShift, self).__init__()
-        self._setter = tem.setDiffShift
-        self._getter = tem.getDiffShift
-        self._tem = tem
-        self.name = "PLA"
+        super().__init__(tem=tem)
+        self._setter = self._tem.setDiffShift
+        self._getter = self._tem.getDiffShift
+        self.key = "PLA"
         
-    def __repr__(self):
-        x, y = self.get()
-        return "DiffShift(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-
-
-class ImageShift(object):
+ 
+class ImageShift1(Deflector):
     """docstring for ImageShift"""
     def __init__(self, tem):
-        super(ImageShift, self).__init__()
-        self._setter = tem.setImageShift
-        self._getter = tem.getImageShift
-        self._tem = tem
-        self.name = "IS1"
-        
-    def __repr__(self):
-        x, y = self.get()
-        return "ImageShift(x={}, y={})".format(x, y)
+        super().__init__(tem=tem)
+        self._setter = self._tem.setImageShift1
+        self._getter = self._tem.getImageShift1
+        self.key = "IS1"
 
+<<<<<<< HEAD
     def set(self, x, y):
         self._setter(x, y)
 
@@ -446,20 +310,33 @@ class ImageShift2(object):
 
     def neutral(self):
         self._tem.setNeutral(self.name)
+=======
+>>>>>>> 3192a876cdb6d93d4cc47a89d4b9e82ac8864a3d
 
+class ImageShift2(Deflector):
+    """docstring for ImageShift"""
+    def __init__(self, tem):
+        super().__init__(tem=tem)
+        self._setter = self._tem.setImageShift2
+        self._getter = self._tem.getImageShift2
+        self.key = "IS1"
+   
 
 class StagePosition(object):
     """docstring for StagePosition"""
     def __init__(self, tem):
-        super(StagePosition, self).__init__()
-        self._setter = tem.setStagePosition
-        self._getter = tem.getStagePosition
-        self._reset = tem.forceStageBacklashCorrection
+        super().__init__()
         self._tem = tem
+        self._setter = self._tem.setStagePosition
+        self._getter = self._tem.getStagePosition
         
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return "StagePosition(x={:.1f}, y={:.1f}, z={:.1f}, a={:.1f}, b={:.1f})".format(x,y,z,a,b)
+        return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def set(self, x=None, y=None, z=None, a=None, b=None):
         self._setter(x, y, z, a, b)
@@ -522,48 +399,11 @@ class StagePosition(object):
     def b(self, value):
         self.set(b=value)
 
-    def reset_xy(self):
-        self._reset(x=True, y=True)
-
     def neutral(self):
         self.set(x=0, y=0, z=0, a=0, b=0)
 
-    def rotate_to(self, target, start=None, speed=1.0, delay=0.05, wait_for_stage=False):
-        """
-        Control rotation of the microscope
-
-        target: float
-            final angle in degrees
-        start: float
-            starting angle in degrees (optional)
-        speed: float
-            overall rate of rotation in degrees / second
-        delay: float
-            delay in seconds between updates sent to the microscope (accurate to 10 - 13 milliseconds)
-        """
-
-        if start is None:
-            start = self.a
-        else:
-            self.a = start
-        speed = abs(speed)
-
-        # m equals -1 for positive direction, 1 for negative direction
-        m = cmp(start, target)
-        
-        angle = start
-        
-        t0 = time.time()
-        while cmp(angle, target) == m:
-            t1 = time.time()
-            angle = start - m * (t1 - t0) * speed
-            self._tem.stage3.SetTiltXAngle(angle)
-            time.sleep(delay)
-            while wait_for_stage and self._tem.stage3.GetStatus()[3]:  # is stage moving?
-                pass
-            print round(t1-t0,2), round(angle,2)
-
-        print "speed:", round((target-start) / (t1-t0),2)
+    def is_moving(self):
+        return self._tem.isStageMoving()
 
 
 class TEMController(object):
@@ -583,7 +423,11 @@ class TEMController(object):
         self.guntilt = GunTilt(tem)
         self.beamshift = BeamShift(tem)
         self.beamtilt = BeamTilt(tem)
+<<<<<<< HEAD
         self.imageshift = ImageShift(tem)
+=======
+        self.imageshift1 = ImageShift1(tem)
+>>>>>>> 3192a876cdb6d93d4cc47a89d4b9e82ac8864a3d
         self.imageshift2 = ImageShift2(tem)
         self.diffshift = DiffShift(tem)
         self.stageposition = StagePosition(tem)
@@ -594,8 +438,8 @@ class TEMController(object):
         self.autoblank = False
         self._saved_settings = {}
         self.store()
-        print
-        print self
+        print()
+        print(self)
 
     @property
     def spotsize(self):
@@ -776,7 +620,7 @@ class TEMController(object):
         h["ImageCameraDimensions"] = self.cam.dimensions
 
         if verbose:
-            print "Image acquired - shape: {}, size: {} kB".format(arr.shape, arr.nbytes / 1024)
+            print("Image acquired - shape: {}, size: {:.0f} kB".format(arr.shape, arr.nbytes / 1024))
 
         if out:
             write_tiff(out, arr, header=h)
@@ -799,7 +643,7 @@ class TEMController(object):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)
-        print "Microscope alignment restored from '{}'".format(name)
+        print("Microscope alignment restored from '{}'".format(name))
 
     def close(self):
         try:
@@ -811,13 +655,9 @@ def main_entry():
     import argparse
     description = """Python program to control Jeol TEM"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # parser.add_argument("args",
     #                     type=str, metavar="FILE",
@@ -835,10 +675,13 @@ def main_entry():
     options = parser.parse_args()
     ctrl = initialize()
 
-    ipshell()
+    from IPython import embed
+    embed(banner1="\nAssuming direct control.\n")
     ctrl.close()
 
 
 if __name__ == '__main__':
+    from IPython import embed
     ctrl = initialize()
-    ipshell()
+    
+    embed(banner1="\nAssuming direct control.\n")

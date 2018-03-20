@@ -10,3 +10,14 @@ dist
 .pydevproject
 .project
 instamatic.log
+*.zip
+*.txt
+*.pptx
+TODO
+files
+images
+EMCamera
+/scripts
+*.bpc
+*.dacs
+*.bak

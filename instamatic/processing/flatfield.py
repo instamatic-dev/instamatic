@@ -7,8 +7,8 @@ from instamatic.formats import *
 from instamatic import TEMController
 import glob
 from tqdm import tqdm
+from pathlib import Path
 
-__version__ = "2017-01-31"
 
 def apply_corrections(img, deadpixels=None):
     if deadpixels is None:
@@ -43,7 +43,7 @@ def get_center_pixel_correction(img):
     avg2 = edge/28.0
     k = avg2/avg1
     
-    print "timepix central pixel correction factor:", k
+    print("timepix central pixel correction factor:", k)
     return k
 
 
@@ -52,13 +52,12 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     Apply flatfield correction to image
 
     https://en.wikipedia.org/wiki/Flat-field_correction"""
-    
     if darkfield is None:
         ret = img * np.mean(flatfield) / flatfield
     else:
         gain = np.mean(flatfield - darkfield) / (flatfield - darkfield)
         ret = (img - darkfield) * gain
-    return ret.astype(int)
+    return ret
 
 
 def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
@@ -66,9 +65,14 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
     
     # ctrl.brightness.max()
-    raw_input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
+    input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
     
-    print "\nCollecting flatfield images"
+    img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
+
+    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
+    print("exposure:", exposure)
+
+    print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
@@ -84,7 +88,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
 
     ctrl.beamblank = True
 
-    print "\nCollecting darkfield images"
+    print("\nCollecting darkfield images")
     for n in tqdm(range(frames)):
         outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
@@ -102,27 +106,23 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     date = time.strftime("%Y-%m-%d")
     ff = "flatfield_tpx_{}.tiff".format(date)
     fd = "darkfield_tpx_{}.tiff".format(date)
-    print "\n >> Writing {} and {}...".format(ff, fd)
+    print("\n >> Writing {} and {}...".format(ff, fd))
     write_tiff(ff, f, header={"deadpixels": deadpixels})
     write_tiff(fd, d, header={"deadpixels": deadpixels})
 
     fp = "deadpixels_tpx_{}.npy".format(date)
     np.save(fp, deadpixels)
 
-    print "\n >> DONE << "
+    print("\n >> DONE << ")
 
 
 def main_entry():
     import argparse
     description = """Program to collect and apply flatfield/darkfield corrections"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument("args",
                         type=str, nargs="*", metavar="image.tiff",
@@ -165,7 +165,7 @@ def main_entry():
         flatfield,h = read_tiff(options.flatfield)
         deadpixels = h["deadpixels"]
     else:
-        print "No flatfield file specified"
+        print("No flatfield file specified")
         exit()
 
     if options.darkfield:
@@ -178,8 +178,8 @@ def main_entry():
         if not os.path.exists(fobj):
             args = glob.glob(fobj)
 
-    if not os.path.isdir(options.drc):
-        os.makedirs(options.drc)
+    drc = Path(options.drc)
+    drc.mkdir(exist_ok=True, parents=True)
 
     for f in args:
         img,h = read_tiff(f)
@@ -187,12 +187,11 @@ def main_entry():
         img = apply_corrections(img, deadpixels=deadpixels)
         img = apply_flatfield_correction(img, flatfield, darkfield=darkfield)
 
-        name = os.path.basename(f)
-        fout = os.path.join(options.drc, name)
+        name = Path(f).name
+        fout = drc / name
         
-        print name, "->", fout
+        print(name, "->", fout)
         write_tiff(fout, img, header=h)
-
 
 
 if __name__ == '__main__':

@@ -217,8 +217,12 @@ class Experiment(object):
         if self.mode == "auto_full":
             a_i = self.ctrl.stagepositioni.a
             if a_i < 0:
+                self.ctrl.stageposition.set(a = a_i + 0.2)
+                self.ctrl.stageposition.set(a = a_i + 0.2)
                 rotation_end = a_i + 60
             else:
+                self.ctrl.stageposition.set(a = a_i - 0.2)
+                self.ctrl.stageposition.set(a = a_i - 0.2)
                 rotation_end = a_i - 60
             ## Just a trial that we aim to rotate +60 degrees here. Of course it can be optimized.
             

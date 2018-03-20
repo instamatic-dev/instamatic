@@ -1,29 +1,30 @@
-from TiffIO import TiffIO
+from .TiffIO import TiffIO
 import time
 import os
 import yaml
 import numpy as np
-import h5py
+from pathlib import Path
 
-from csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
-from adscimage import write_adsc, read_adsc
+from .csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
+from .adscimage import write_adsc, read_adsc
 
-try:
+import warnings
+with warnings.catch_warnings():
+    # TODO: remove me later
+    # Catch annoying futurewarning on import
+    warnings.simplefilter("ignore")
     import h5py
-except ImportError:
-    pass
 
 
 def read_image(fname):
     """Guess filetype by extension"""
-    root, ext = os.path.splitext(fname)
-    ext = ext.lower()
+    ext = Path(fname).suffix.lower()
     if ext in (".tif", ".tiff"):
         img, h = read_tiff(fname)
     elif ext in (".h5", ".hdf5"):
         img, h = read_hdf5(fname)
     else:
-        raise IOError("Cannot open file {}, unknown extension: {}".format(fname, ext))
+        raise IOError(f"Cannot open file {fname}, unknown extension: {ext}")
     return img, h 
 
 
@@ -38,14 +39,13 @@ def write_tiff(fname, data, header=None):
         dictionary containing the metadata that should be saved
         key/value pairs are stored as yaml in the TIFF ImageDescription tag
     """
-    root, ext = os.path.splitext(fname)
     if isinstance(header, dict):
         header = yaml.dump(header)
     if not header:
-        header = ""
+        header = "No description"
 
-    if ext == "":
-        fname = root + ".tiff"
+    fname = Path(fname).with_suffix(".tiff")
+
     tiffIO = TiffIO(fname, mode="w")
     tiffIO.writeImage(data, info=header, software="instamatic", date=time.ctime())
 
@@ -69,7 +69,7 @@ def read_tiff(fname):
         try:
             d = yaml.load(header.get("imageDescription"))
         except (Exception, ValueError) as e:
-            print "Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription"))
+            print("Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription")))
         else:
             if isinstance(d, dict):
                 header.update(d)
@@ -89,10 +89,7 @@ def write_hdf5(fname, data, header=None):
         dictionary containing the metadata that should be saved
         key/value pairs are stored as attributes on the data
         """
-    root, ext = os.path.splitext(fname)
-
-    if ext == "":
-        fname = root + ".h5"
+    fname = Path(fname).with_suffix(".h5")
 
     f = h5py.File(fname, "w")
     h5data = f.create_dataset("data", data=data)

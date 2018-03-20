@@ -9,10 +9,12 @@ from instamatic.processing.find_crystals import find_crystals, find_crystals_tim
 from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic import config
+from instamatic import neural_network
 
 import time
 import logging
 from tqdm import tqdm
+from pathlib import Path
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
@@ -99,8 +101,8 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         num = len(x_offsets)
         textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {:.2f}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
         
-        print
-        print textstr
+        print()
+        print(textstr)
         
         cx, cy = (box_x/2.0, box_y/2.0)
         if angle:
@@ -153,22 +155,19 @@ class Experiment(object):
         if not expdir:
             n = 1
             while True:
-                drc = "{}{}".format(name, n)
-                if os.path.exists(drc):
+                expdir = Path(f"{name}_{n}")
+                if expdir.exists():
                     n += 1
                 else:
                     break
-            self.curdir = os.path.abspath(os.path.curdir)
-            expdir = os.path.join(drc)
         
         self.expdir = expdir
-        self.calibdir = os.path.join(self.expdir, "calib")
-        self.imagedir = os.path.join(self.expdir, "images")
-        self.datadir = os.path.join(self.expdir, "data")
+        self.calibdir = self.expdir / "calib"
+        self.imagedir = self.expdir / "images"
+        self.datadir = self.expdir / "data"
 
         for drc in self.expdir, self.calibdir, self.imagedir, self.datadir:
-            if not os.path.exists(drc):
-                os.makedirs(drc)
+            drc.mkdir(exist_ok=True, parents=True)
 
         return self.expdir
 
@@ -179,14 +178,14 @@ class Experiment(object):
         self.ctrl.brightness.max()
 
         if (not self.begin_here) or (not self.scan_radius):
-            print "\nSelect area to scan"
-            print "-------------------"
+            print("\nSelect area to scan")
+            print("-------------------")
         if not self.begin_here:
-            raw_input(" >> Move the stage to where you want to start and press <ENTER> to continue")
+            input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stageposition.get()
         self.scan_centers = np.array([[x,y]])            
         if not self.scan_radius:
-            self.scan_radius = float(raw_input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
+            self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
 
         self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
@@ -268,7 +267,7 @@ class Experiment(object):
 
         self.log.info("params", kwargs)
 
-        json.dump(kwargs, open(os.path.join(self.expdir, "params_out.json"), "w"), indent=2)
+        json.dump(kwargs, open(self.expdir / "params_out.json", "w"), indent=2)
 
     def initialize_microscope(self):
         """Intialize microscope"""
@@ -280,7 +279,7 @@ class Experiment(object):
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
-        raw_input("\nPress <ENTER> to get neutral diffraction shift")
+        input("\nPress <ENTER> to get neutral diffraction shift")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         self.log.info("DiffShift(x=%d, y=%d)", *self.neutral_diffshift)
     
@@ -318,17 +317,17 @@ class Experiment(object):
     def report_status(self):
         """Report experiment status"""
 
-        print
-        print "Output directory:\n{}".format(self.expdir)
-        print
-        print "Imaging     : binsize = {}".format(self.image_binsize)
-        print "              exposure = {}".format(self.image_exposure)
-        print "              magnification = {}".format(self.magnification)
-        print "              spotsize = {}".format(self.image_spotsize)
-        print "Diffraction : binsize = {}".format(self.diff_binsize)
-        print "              exposure = {}".format(self.diff_exposure)
-        print "              brightness = {}".format(self.diff_brightness)
-        print "              spotsize = {}".format(self.diff_spotsize)
+        print()
+        print("Output directory:\n{}".format(self.expdir))
+        print()
+        print("Imaging     : binsize = {}".format(self.image_binsize))
+        print("              exposure = {}".format(self.image_exposure))
+        print("              magnification = {}".format(self.magnification))
+        print("              spotsize = {}".format(self.image_spotsize))
+        print("Diffraction : binsize = {}".format(self.diff_binsize))
+        print("              exposure = {}".format(self.diff_exposure))
+        print("              brightness = {}".format(self.diff_brightness))
+        print("              spotsize = {}".format(self.diff_spotsize))
 
     def loop_centers(self):
         """Loop over scan centers defined
@@ -343,9 +342,9 @@ class Experiment(object):
             try:
                 self.ctrl.stageposition.set(x=x, y=y)
             except ValueError as e:
-                print e
-                print " >> Moving to next center..."
-                print
+                print(e)
+                print(" >> Moving to next center...")
+                print()
                 continue
             else:
                 self.log.info("Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)", i, ncenters, x, y)
@@ -370,17 +369,17 @@ class Experiment(object):
                 try:
                     self.ctrl.stageposition.set(x=x, y=y)
                 except ValueError as e:
-                    print e
-                    print " >> Moving to next position..."
-                    print
+                    print(e)
+                    print(" >> Moving to next position...")
+                    print()
                     continue
                 else:
                     time.sleep(delay)
                     # self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
-                    t.set_description("Stage(x={:7.0f}, y={:7.0f})".format(x, y))
+                    t.set_description(f"Stage(x={x:7.0f}, y={y:7.0f})")
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
-                    dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}\n".format(**dct)
+                    dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}".format(**dct)
                     yield dct
 
 
@@ -417,7 +416,11 @@ class Experiment(object):
             t.set_description("BeamShift(x={:5.0f}, y={:5.0f})".format(*beamshift))
             time.sleep(delay)
 
-            dct = {"exp_pattern_number": k, "exp_diffshift_offset": diffshift_offset, "exp_beamshift_offset": beamshift_offset, "exp_beamshift": beamshift, "exp_diffshift": diffshift}
+            dct = {"exp_pattern_number": k, 
+                   "exp_diffshift_offset": diffshift_offset, 
+                   "exp_beamshift_offset": beamshift_offset, 
+                   "exp_beamshift": beamshift, 
+                   "exp_diffshift": diffshift}
 
             yield dct
 
@@ -456,11 +459,11 @@ class Experiment(object):
         self.log.info("d_image", d_image)
         self.log.info("d_tiff", d_diff)
 
-        raw_input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
+        input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
 
         for i, d_pos in enumerate(self.loop_positions()):
    
-            outfile = os.path.join(self.imagedir, "image_{:04d}".format(i))
+            outfile = self.imagedir / f"image_{i:04d}"
             
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -479,11 +482,12 @@ class Experiment(object):
 
             img, h = self.apply_corrections(img, h)
 
-            crystal_coords = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
-            
+            crystal_positions = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
+            crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
+
             for d in (d_image, d_pos):
                 h.update(d)
-            h["exp_crystal_coords"] = crystal_coords.tolist()
+            h["exp_crystal_coords"] = crystal_coords
 
             write_hdf5(outfile, img, header=h)
 
@@ -494,13 +498,22 @@ class Experiment(object):
             self.log.info("%d crystals found in %s", ncrystals, outfile)
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
-                outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}".format(i, k))
+                outfile = self.datadir / f"image_{i:04d}_{k:04d}"
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
 
                 for d in (d_diff, d_pos, d_cryst):
                     h.update(d)
+
+                h["crystal_is_isolated"]   = crystal_positions[k].isolated
+                h["crystal_clusters"]      = crystal_positions[k].n_clusters
+                h["total_area_micrometer"] = crystal_positions[k].area_micrometer
+                h["total_area_pixel"]      = crystal_positions[k].area_pixel
+
+                # img_processed = neural_network.preprocess(img.astype(np.float))
+                # quality = neural_network.predict(img_processed)
+                # h["crystal_quality"] = quality
 
                 write_hdf5(outfile, img, header=h)
              
@@ -509,7 +522,7 @@ class Experiment(object):
                         self.log.debug("Rotation angle = %f", rotation_angle)
                         self.ctrl.stageposition.a = rotation_angle
         
-                        outfile = os.path.join(self.datadir, "image_{:04d}_{:04d}_{}".format(i, k, rotation_angle))
+                        outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
                         img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
                                                     
@@ -522,7 +535,7 @@ class Experiment(object):
     
             self.image_mode()
 
-        print "\n\nData collection finished."
+        print("\n\nData collection finished.")
 
 
 def main_gui():

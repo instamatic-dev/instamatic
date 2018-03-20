@@ -1,10 +1,19 @@
-from scipy import ndimage
 from instamatic.formats import read_tiff, write_tiff
 import sys, os
 import numpy as np
 import glob
 import time
 from skimage import exposure
+from scipy import ndimage, interpolate
+
+
+def find_subranges(lst):
+    from operator import itemgetter
+    from itertools import groupby
+
+    for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
+        group = list(map(itemgetter(1), group))
+        yield min(group), max(group)
 
 
 def autoscale(img, maxdim=512):
@@ -34,11 +43,33 @@ def enhance_contrast(img):
     return exposure.equalize_hist(img)
 
 
-def find_beam_center(img, sigma=30):
-    "Find position of the central beam using gaussian filter"
-    blurred = ndimage.gaussian_filter(img, sigma)
-    center = np.unravel_index(blurred.argmax(), blurred.shape)
-    return np.array(center)
+def find_peak_max(arr, sigma, m=50, w=10, kind=3):
+    y1 = ndimage.filters.gaussian_filter1d(arr, sigma)
+    c1 = np.argmax(y1)  # initial guess for beam center
+
+    win_len = 2*w+1
+    
+    try:
+        r1 = np.linspace(c1-w, c1+w, win_len)
+        f  = interpolate.interp1d(r1, y1[c1-w: c1+w+1], kind=kind)
+        r2 = np.linspace(c1-w, c1+w, win_len*m)  # extrapolate for subpixel accuracy
+        y2 = f(r2)
+        c2 = np.argmax(y2) / m  # find beam center with `m` precision
+    except ValueError as e:  # if c1 is too close to the edges, return initial guess
+        return c1
+
+    return c2 + c1 - w
+
+
+def find_beam_center(img, sigma=30, m=100, kind=3):
+    xx = np.sum(img, axis=1)
+    yy = np.sum(img, axis=0)
+    
+    cx = find_peak_max(xx, sigma, m=m, kind=kind) 
+    cy = find_peak_max(yy, sigma, m=m, kind=kind) 
+
+    center = np.array([cx, cy])
+    return center
 
 
 def get_files(file_pat):

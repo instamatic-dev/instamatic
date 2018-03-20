@@ -1,0 +1,15 @@
+* Stef Smeets <stef.smeets@mmk.su.se>
+  Main developer
+
+* Bin Wang <bin.wang@mmk.su.se>
+  cRED integration
+
+* Magdalena O. Cichocka <magdalena.cichocka@mmk.su.se>
+  Testing, feedback, bug finding
+  Suggestions for improvements (image interval in cRED)
+
+* Jonas Angstrom <jonas.angstrom@mmk.su.se>
+  Neural network implementation
+
+* Wei Wan
+  DLLs for timepix/orius camera interface

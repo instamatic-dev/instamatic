@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-from os import path
+import os
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
-execfile('xcore/version.py')  # grab __version__
+exec(open('instamatic/version.py').read())  # grab __version__, __author__, etc.
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -16,29 +16,50 @@ except IOError:
     long_description = read('README.md')
 
 setup(
-    name="instamatic",
+    name=__title__,
     version=__version__,
-    description="Python program to collect serial and rotation electron diffraction data",
+    description=__description__,
     long_description=long_description,
 
-    author="Stef Smeets",
-    author_email="stef.smeets@mmk.su.se",
-    license="GPL",
-    url="https://github.com/stefsmeets/instamatic",
+    author=__author__,
+    author_email=__author_email__,
+    license=__license__,
+    url=__url__,
 
     classifiers=[
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Operating System :: Microsoft :: Windows',
+        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
+        'Topic :: Scientific/Engineering :: Chemistry',
+        'Topic :: Software Development :: Libraries'
     ],
 
     packages=["instamatic", 
               "instamatic.calibrate",
               "instamatic.camera",
-              "instamatic.processing",
+              "instamatic.config",
+              "instamatic.experiments",
               "instamatic.formats",
               "instamatic.gui",
-              "instamatic.experiments"],
+              "instamatic.processing",
+              "instamatic.TEMController",
+              "instamatic.utils"],
 
-    install_requires=["numpy", "comtypes", "scipy", "scikit-image", "pyyaml", "lmfit", "h5py", "tqdm"],
+    install_requires=['comtypes', 
+                      'lmfit', 
+                      'matplotlib', 
+                      'numpy', 
+                      'pandas', 
+                      'Pillow', 
+                      'scipy', 
+                      'scikit-image', 
+                      'tqdm', 
+                      'pyyaml', 
+                      'h5py', 
+                      'IPython'],
 
     package_data={
         "": ["LICENCE",  "readme.md", "setup.py"],
@@ -61,6 +82,8 @@ setup(
             # processing
             'instamatic.flatfield                     = instamatic.processing.flatfield:main_entry',
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main_entry',
+            'instamatic.find_crystals                 = instamatic.processing.find_crystals:main_entry',
+            'instamatic.learn                         = scripts.learn:main_entry',
             # explore
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',

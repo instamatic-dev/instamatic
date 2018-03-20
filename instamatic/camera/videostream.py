@@ -1,5 +1,5 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 from PIL import Image, ImageEnhance
 from PIL import ImageTk
 import threading
@@ -7,8 +7,9 @@ import numpy as np
 import time
 import datetime
 from instamatic.formats import write_tiff
-from camera import Camera
+from .camera import Camera
 import os, sys
+from instamatic.utils.spinbox import Spinbox
 
 
 class ImageGrabber(object):
@@ -85,9 +86,11 @@ class VideoStream(threading.Thread):
         self.disprang = self.disprang_default = self.defaults.dynamic_range
         # Maximum number from image readout
 
+        self.auto_contrast = True
+
         self.resize_image = False
 
-        self.last = time.time()
+        self.last = time.clock()
         self.nframes = 1
         self.update_frequency = 0.25
         self.last_interval = self.frametime
@@ -101,6 +104,7 @@ class VideoStream(threading.Thread):
         self.root = Tk()
         
         self.init_vars()
+        self.load_modules(self.root)
         self.buttonbox(self.root)
         self.header(self.root)
         self.makepanel(self.root)
@@ -120,7 +124,7 @@ class VideoStream(threading.Thread):
         self.root.mainloop()
 
     def header(self, master):
-        ewidth = 10
+        ewidth = 8
         lwidth = 12
 
         frame = Frame(master)
@@ -128,6 +132,8 @@ class VideoStream(threading.Thread):
         self.cb_resize = Checkbutton(frame, text="Increase size", variable=self.var_resize_image)
         self.cb_resize.grid(row=1, column=4)
 
+        self.cb_contrast = Checkbutton(frame, text="Auto contrast", variable=self.var_auto_contrast)
+        self.cb_contrast.grid(row=1, column=5)
 
         self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
@@ -174,6 +180,9 @@ class VideoStream(threading.Thread):
             command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
+    def load_modules(self, master):
+        pass
+
     def init_vars(self):
         self.var_fps = DoubleVar()
         self.var_interval = DoubleVar()
@@ -181,21 +190,31 @@ class VideoStream(threading.Thread):
 
         self.var_frametime = DoubleVar()
         self.var_frametime.set(self.frametime)
-        self.var_frametime.trace("w", self.update_frametime)
+        self.var_frametime.trace_add("write", self.update_frametime)
 
         self.var_brightness = DoubleVar(value=self.brightness)
-        self.var_brightness.trace("w", self.update_brightness)
+        self.var_brightness.trace_add("write", self.update_brightness)
         
         self.var_disprang = DoubleVar(value=self.disprang_default)
-        self.var_disprang.trace("w",self.update_disprang)
+        self.var_disprang.trace_add("write",self.update_disprang)
 
         self.var_resize_image = BooleanVar(value=self.resize_image)
-        self.var_resize_image.trace("w",self.update_resize_image)
+        self.var_resize_image.trace_add("write",self.update_resize_image)
+
+        self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
+        self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
 
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
         try:
             self.resize_image = self.var_resize_image.get()
+        except:
+            pass
+
+    def update_auto_contrast(self, name, index, mode):
+        # print name, index, mode
+        try:
+            self.auto_contrast = self.var_auto_contrast.get()
         except:
             pass
 
@@ -225,7 +244,7 @@ class VideoStream(threading.Thread):
     def saveImage(self):
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
         write_tiff(outfile, self.frame)
-        print " >> Wrote file:", outfile
+        print(" >> Wrote file:", outfile)
 
     def close(self):
         for func in self._atexit_funcs:
@@ -262,9 +281,14 @@ class VideoStream(threading.Thread):
 
         frame = np.rot90(frame, k=3)
 
-        if self.disprang != self.disprang_default:
+        # the display range in ImageTk is from 0 to 256
+        if self.auto_contrast:
+            frame = frame * (256.0 / (1 + np.percentile(frame[::4,::4], 99.5)))  # use 128x128 array for faster calculation
+                                                                                 
+            image = Image.fromarray(frame)
+        elif self.disprang != self.disprang_default:
             image = np.clip(frame, 0, self.disprang)
-            image = (self.disprang_default/self.disprang)*image
+            image = (256.0 / self.disprang)*image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
@@ -288,7 +312,7 @@ class VideoStream(threading.Thread):
         self.root.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
-        self.current = time.time()
+        self.current = time.clock()
         delta = self.current - self.last
 
         if delta > self.update_frequency:
@@ -375,7 +399,7 @@ class VideoStream(threading.Thread):
 
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="simulate")
+    stream = VideoStream(cam="timepix")
     from IPython import embed
     embed()
     stream.close()

@@ -1,18 +1,41 @@
-import os
+import os, sys
 import yaml
+from pathlib import Path
+import shutil
 
 import logging
 logger = logging.getLogger(__name__)
 
-config_dir = os.path.join(os.environ["AppData"], "instamatic")
 
-if not os.path.exists(config_dir):
-    logger.info("Created config directory:", config_dir)
-    os.makedirs(config_dir)
+def initialize_in_AppData():
+    src = Path(__file__).parent
+    dst = Path(os.environ["AppData"]) / "instamatic"
+    dst.mkdir(exist_ok=True, parents=True)
 
-search_drcs = (config_dir, os.path.dirname(__file__)) 
-# print "config dir: ", config_dir
-# print "search dirs:", search_drcs
+    print(f"No config directory found, creating new one in {dst}")
+
+    for sub_drc in ("microscope", "calibration", "camera"):
+        shutil.copytree(src / sub_drc, dst / sub_drc)
+
+    shutil.copy(src / "global.yaml", dst / "global.yaml")
+
+    print("Configuration directory has been initialized.")
+    print("Directory: {dst}")
+    print("Please review and restart the program.")
+    sys.exit()
+
+
+def get_base_drc():
+    """Figure out where configuration files for instamatic are stored"""
+    try:
+        search = Path(os.environ["instamatic"])  # if installed in portable way
+    except KeyError:
+        search = Path(os.environ["AppData"]) / "instamatic"
+
+    if search.exists():
+        return search
+
+    return Path(__file__).parents[1]
 
 
 class ConfigObject(object):
@@ -24,19 +47,28 @@ class ConfigObject(object):
         for key, value in d.items():
             setattr(self, key, value)
 
-
-def get_config(name, drc=""):
-    fn = os.path.join(drc, "{}.yaml".format(name))
-    for drc in search_drcs:
-        config = os.path.join(drc, fn)
-        if os.path.exists(config):
-            break
-    return ConfigObject(yaml.load(open(config, "r")))
+    @classmethod
+    def from_file(cls, path):
+        return cls(yaml.load(open(path, "r")))
 
 
-cfg = get_config("global")
+base_drc = get_base_drc()
+config_drc = base_drc / "config"
 
-microscope = get_config(cfg.microscope, "microscope")
-calibration = get_config(cfg.calibration, "calibration")
-camera = get_config(cfg.camera, "camera")
+if not config_drc.exists():
+    initialize_in_AppData()
 
+assert config_drc.exists(), f"Configuration directory `{config_drc}` does not exist."
+print(f"Config directory: {config_drc}")
+
+cfg = ConfigObject.from_file(base_drc / "config" / "global.yaml")
+
+microscope = ConfigObject.from_file(base_drc / "config" / "microscope" / f"{cfg.microscope}.yaml")
+calibration = ConfigObject.from_file(base_drc / "config" / "calibration" / f"{cfg.calibration}.yaml")
+camera = ConfigObject.from_file(base_drc / "config" / "camera" / f"{cfg.camera}.yaml")
+
+scripts_drc = base_drc / "scripts"
+logs_drc = base_drc / "logs"
+
+scripts_drc.mkdir(exist_ok=True)
+logs_drc.mkdir(exist_ok=True)

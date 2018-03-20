@@ -12,8 +12,12 @@ from skimage import segmentation
 from skimage import measure
 
 from instamatic.tools import autoscale
-
 from instamatic.config import calibration
+from collections import namedtuple
+
+
+CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel', ])
+
 
 def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
@@ -55,11 +59,14 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     Constant subtracted from weighted mean of neighborhood to calculate
         the local threshold value
     """
+    # workaround, because segmentation.random_walker no longer accepts floats from 0-255.0
+    offset = offset / 255.0
+
     # normalize
-    img = img * (255.0/img.max())
+    img = img * (1.0/img.max())
     
     # adaptive thresholding, because contrast is not equal over image
-    arr = filters.threshold_adaptive(img, r, method="mean", offset=offset)
+    arr = img > filters.threshold_local(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
 
@@ -142,7 +149,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     
     iters = 20
     
-    centroids = []
+    crystals = []
     for prop in props:
         area = prop.area*px*py
         bbox = np.array(prop.bbox)
@@ -155,7 +162,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
             continue
 
         # number of centroids for kmeans clustering
-        nclust = area // spread
+        nclust = int(area // spread) + 1
             
         if nclust > 1:
             # use skmeans clustering to segment large blobs
@@ -163,43 +170,43 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
             
             # kmeans needs normalized data (w), store std to calculate coordinates after
             w, std = whiten(coordinates)
+
+            # nclust must be an integer for some reason
             cluster_centroids, closest_centroids = kmeans2(w, nclust, iter=iters, minit='points')
 
             # convert to image coordinates
-            xy = cluster_centroids*std + origin[0:2]
-            centroids.extend(xy)
+            xy = (cluster_centroids*std + origin[0:2]) / scale
+            crystals.extend([CrystalPosition(x, y, False, nclust, area, prop.area) for x, y in xy])
         else:
-            centroids.append(prop.centroid)
-    
-    centroids = np.array(centroids)
+            x, y = prop.centroid
+            crystals.append(CrystalPosition(x/scale, y/scale, True, nclust, area, prop.area))
     
     if plot:
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
-        if len(centroids) > 0:
-            x,y = centroids.T
+        if len(crystals) > 0:
+            x,y = np.array([(crystal.x*scale, crystal.y*scale) for crystal in crystals]).T
             plt.scatter(y,x, color="red")
         ax = plt.axes()
         ax.set_axis_off()
         plt.show()
 
-    return centroids / scale
+    return crystals
 
 
-def find_crystals_entry():
+def main_entry():
     from instamatic.formats import read_image
+    import warnings
+    warnings.simplefilter('ignore')
 
     for fn in sys.argv[1:]:
         img, h = read_image(fn)
         
-        centroids = find_crystals(img, h["Magnification"], spread=2.50, plot=True)
+        crystals = find_crystals_timepix(img, h["exp_magnification"], plot=True)
     
-        x,y = centroids.T
-        plt.title(fn)
-        plt.imshow(img)
-        plt.scatter(y,x, color="red")
-        plt.show()
+        for crystal in crystals:
+            print(crystal)
 
 
 if __name__ == '__main__':
-    find_crystals_entry()
+    main_entry()

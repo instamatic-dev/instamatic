@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 from instamatic.formats import *
 import os, sys, glob
 import numpy as np
+from pathlib import Path
 
 from scipy import ndimage
 
 import argparse
 import tqdm
 
-__version__ = "2017-03-12"
+from instamatic import neural_network
 
 CMAP = "gray" # "viridis", "gray"
 
@@ -55,7 +56,10 @@ def lst2colormap(lst):
 
 def run(filepat="images/image_*.tiff", results=None, stitch=False):
      # use relpath to normalizes path
-    fns = map(os.path.relpath, glob.glob(filepat))
+    fns = [Path(fn).absolute() for fn in  glob.glob(filepat)]
+
+    if len(fns) == 0:
+        sys.exit()
 
     if stitch:
         coord_color = "none"
@@ -75,8 +79,6 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
     coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
 
-    if len(fns) == 0:
-        sys.exit()
 
     fn = fns[0]
     img, h = read_image(fn)
@@ -103,14 +105,14 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax1.set_ylabel("Stage Y")
 
     ax2 = plt.subplot(132, title="{}\nx={}, y={}".format(fn, 0, 0))
-    im2 = ax2.imshow(img, cmap=CMAP)
+    im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
     plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
     highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
-    im3 = ax3.imshow(np.zeros_like(img), vmax=500, cmap=CMAP)
+    im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
     
-    class plt_diff:
+    class plt_diff(object):
         center, = ax3.plot([], [], "o", color="red", lw=0)
         data = None
 
@@ -126,15 +128,15 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             img, h = read_image(fn)
             # img = np.rot90(img, k=3)
             im2.set_data(img)
+            im2.set_clim(vmax=np.percentile(img, 99.5))
 
             stage_x, stage_y = h.get("exp_stage_position", (0, 0))
-            print "x={:.0f} y={:.0f}".format(stage_x, stage_y)
+            ax2.set_xlabel("x={:.0f} y={:.0f}".format(stage_x, stage_y))
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
 
             if results:
-                root, ext = os.path.splitext(fn)
-                crystal_fns = [fn.replace("images", "data").replace(ext, "_{:04d}{}".format(i, ext)) for i in range(len(crystal_coords))]
+                crystal_fns = [fn.parents[1] / "data" / f"{fn.stem}_{i:04d}{fn.suffix}" for i in range(len(crystal_coords))]
                 df.ix[crystal_fns]
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
@@ -167,12 +169,17 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                 ind = 0
 
         if axes == ax2:
-            fn = ax2.get_title()
-            root, ext = os.path.splitext(fn)
-            fn_diff = fn.replace("images", "data").replace(ext, "_{:04d}{}".format(ind, ext))
+            fn = Path(ax2.get_title())
+            fn_diff = fn.parents[1] / "data" / f"{fn.stem}_{ind:04d}{fn.suffix}"
 
             img, h = read_image(fn_diff)
+
+            img_processed = neural_network.preprocess(img.astype(np.float))
+            quality = neural_network.predict(img_processed)
+            ax3.set_xlabel("Crystal quality: {:.2%}".format(quality))
+
             im3.set_data(img)
+            im3.set_clim(vmax=np.percentile(img, 99.5))
             ax3.set_title(fn_diff)
 
             highlight2.set_xdata(plt_crystals.get_xdata()[ind])
@@ -189,8 +196,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                     plt_diff.center.set_xdata([])
                     plt_diff.center.set_ydata([])
                 else:
-                    print
-                    print r
+                    print()
+                    print(r)
                     proj = indexer.get_projection(r)
                     pks = proj[:,3:5]
 
@@ -220,13 +227,10 @@ Program for indexing electron diffraction images.
 
 """ 
     
-    epilog = 'Updated: {}'.format(__version__)
-    
     parser = argparse.ArgumentParser(#usage=usage,
                                     description=description,
-                                    epilog=epilog, 
-                                    formatter_class=argparse.RawDescriptionHelpFormatter,
-                                    version=__version__)
+                                    formatter_class=argparse.RawDescriptionHelpFormatter
+                                    )
     
     parser.add_argument("args", 
                         type=str, metavar="FILE", nargs="?",

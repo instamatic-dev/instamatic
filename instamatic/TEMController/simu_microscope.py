@@ -94,6 +94,15 @@ class SimuMicroscope(object):
 
         self.spotsize = 1
 
+        self.screenposition_value = 'up'
+
+        self.condensorlens1_value = random.randint(MIN, MAX)
+        self.condensorlens2_value = random.randint(MIN, MAX)
+        self.condensorminilens_value = random.randint(MIN, MAX)
+        self.objectivelensecoarse_value = random.randint(MIN, MAX)
+        self.objectivelensefine_value = random.randint(MIN, MAX)
+        self.objectiveminilens_value = random.randint(MIN, MAX)
+
     def load_specifications(self):
         config.load_microscope(self.name)
 
@@ -173,8 +182,15 @@ class SimuMicroscope(object):
         self.BeamTilt_x = x
         self.BeamTilt_y = y
 
-    def getImageShift(self):
-        return self.ImageShift_x, self.ImageShift_y
+    def getImageShift1(self):
+        return self.ImageShift1_x, self.ImageShift1_y
+
+    def setImageShift1(self, x, y):
+        self.ImageShift1_x = x
+        self.ImageShift1_y = y
+
+    def getImageShift2(self):
+        return self.ImageShift2_x, self.ImageShift2_y
 
     def setImageShift(self, x, y):
         self.ImageShift_x = x
@@ -211,114 +227,8 @@ class SimuMicroscope(object):
 
     def setStageB(self, value):
         self.StagePosition_b = value
-        
-    def _setStagePosition_backlash(self, x=None, y=None, z=None, a=None, b=None):
-        """Backlash errors can be minimized by always approaching the target from the same direction"""
-        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
 
-        xy_limit = 10000
-        angle_limit = 1.0
-        height_limit = 1000
-
-        do_backlash = False
-
-        if x is not None:
-            shift_x = x - current_x
-            if shift_x < 0 and abs(shift_x) > xy_limit:
-                do_backlash = True
-                print " >> Correct backlash in x, approach: {:.1f} -> {:.1f}".format(x-xy_limit, x)
-                x = x - xy_limit
-        
-        if y is not None:
-            shift_y = y - current_y
-            if shift_y < 0 and abs(shift_y) > xy_limit:
-                do_backlash = True
-                print " >> Correct backlash in y, approach: {:.1f} -> {:.1f}".format(y-xy_limit, y)
-                y = y - xy_limit
-
-        if z is not None:
-            shift_z = z - current_z
-            if shift_z < 0 and abs(shift_z) > height_limit:
-                do_backlash = True
-                print " >> Correct backlash in z, approach: {:.1f} -> {:.1f}".format(z-height_limit, z)
-                z = z - height_limit
-        
-        if a is not None:
-            shift_a = a - current_a
-            if shift_a < 0 and abs(shift_a) > angle_limit:
-                do_backlash = True
-                print " >> Correct backlash in a, approach: {:.2f} -> {:.2f}".format(a-angle_limit, a)
-                a = a - angle_limit
-        
-        if b is not None:
-            shift_b = b - current_b
-            if shift_b < 0 and abs(shift_b) > angle_limit:
-                do_backlash = True
-                print " >> Correct backlash in b, approach: {:.2f} -> {:.2f}".format(b-angle_limit, b)
-                b = b - angle_limit
-
-        if do_backlash:
-            self.setStagePosition(x, y, z, a, b, backlash=False)
-
-    def forceStageBacklashCorrection(self, x=False, y=False, z=False, a=False, b=False):
-        current_x, current_y, current_z, current_a, current_b = self.getStagePosition()
-
-        xy_limit = 10000
-        angle_limit = 1.0
-        height_limit = 1000
-
-        if x:
-            x = current_x - xy_limit
-            print " >> Correct backlash in x, approach: {:.1f} -> {:.1f} (force)".format(x, current_x)
-        else:
-            current_x, x = None, None
-
-        if y:
-            y = current_y - xy_limit
-            print " >> Correct backlash in y, approach: {:.1f} -> {:.1f} (force)".format(y, current_y)
-        else:
-            current_y, y = None, None
-
-        if z:
-            z = current_z - height_limit
-            print " >> Correct backlash in z, approach: {:.1f} -> {:.1f} (force)".format(z, current_z)
-        else:
-            current_z, z = None, None
-
-        if a:
-            a = current_a - angle_limit
-            print " >> Correct backlash in a, approach: {:.2f} -> {:.2f} (force)".format(a, current_a)
-        else:
-            current_a, a = None, None
-
-        if b:
-            b = current_b - angle_limit
-            print " >> Correct backlash in b, approach: {:.2f} -> {:.2f} (force)".format(b, current_b)
-        else:
-            current_b, b = None, None
-
-        self.setStagePosition(x, y, z, a, b, backlash=False)
-        n = 2 # number of stages
-        for i in range(n):
-            j = i + 1
-            if x:
-                x = ((n-j)*x + j*current_x) / n
-            if y:
-                y = ((n-j)*y + j*current_y) / n
-            if z:
-                z = ((n-j)*z + j*current_z) / n
-            if a:
-                a = ((n-j)*a + j*current_a) / n
-            if b:
-                b = ((n-j)*b + j*current_b) / n
-
-            print " >> Force backlash, stage {}".format(j)
-            self.setStagePosition(x, y, z, a, b, backlash=False)
-
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, backlash=False):
-        if backlash:
-            self._setStagePosition_backlash(x, y, z, a, b)
-
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
         if z is not None:
             self.setStageZ(z)
         if a is not None:
@@ -359,7 +269,7 @@ class SimuMicroscope(object):
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
-        print "Connection to microscope released"
+        print("Connection to microscope released")
 
     def isBeamBlanked(self, value):
         return self.beamblank
@@ -393,7 +303,30 @@ class SimuMicroscope(object):
         """0-based indexing for GetSpotSize, add 1 for consistency"""
         return self.spotsize
 
+    def getScreenPosition(self):
+        return self.screenposition_value
+
+    def setScreenPosition(self, value):
+        """value = 'up' or 'down'"""
+        self.screenposition_value = value
+
     def setSpotSize(self, value):
         self.spotsize = value
 
+    def getCondensorLens1(self):
+        return self.condensorlens1_value
 
+    def getCondensorLens2(self):
+        return self.condensorlens2_value
+
+    def getCondensorMiniLens(self):
+        return self.condensorminilens_value
+
+    def getObjectiveLenseCoarse(self):
+        return self.objectivelensecoarse_value
+
+    def getObjectiveLenseFine(self):
+        return self.objectivelensefine_value
+    
+    def getObjectiveMiniLens(self):
+        return self.objectiveminilens_value

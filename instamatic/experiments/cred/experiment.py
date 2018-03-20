@@ -1,19 +1,12 @@
 import os
 import datetime
-import logging
-from Tkinter import *
+from tkinter import *
 import numpy as np
-import glob
 import time
-import ImgConversion
+from . import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
-from skimage.feature import register_translation
-from instamatic.calibrate import CalibBeamShift
-from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
-from scipy import ndimage
-from instamatic.processing.find_holes import find_holes
-import pickle
+from pathlib import Path
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -194,228 +187,101 @@ def center_z_height(ctrl):
         print "Eucentric height set. Find the crystal again and start data collection!"
     
 class Experiment(object):
-    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
+    def __init__(self, ctrl, 
+        path=None, 
+        log=None, 
+        flatfield=None,
+        exposure_time=0.5,
+        unblank_beam=False,
+        enable_image_interval=False,
+        image_interval=99999,
+        diff_defocus=0,
+        exposure_time_image=0.01,
+        write_tiff=True,
+        write_xds=True,
+        write_dials=True,
+        write_red=True,
+        stop_event=None,
+        ):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
-        self.path = path
-        self.expt = expt
+        self.path = Path(path)
+        self.expt = exposure_time
         self.unblank_beam = unblank_beam
         self.logger = log
         self.camtype = ctrl.cam.name
-        self.stopEvent = stopEvent
+        self.stopEvent = stop_event
         self.flatfield = flatfield
 
-        self.diff_defocus = 0
-        self.image_interval = 99999
-        
-        self.mode = "initial"
+        self.diff_defocus = diff_defocus
+        self.expt_image = exposure_time_image
+
+        self.write_tiff = write_tiff
+        self.write_xds = write_xds
+        self.write_dials = write_dials
+        self.write_red = write_red
+
+        self.image_interval_enabled = enable_image_interval
+        if enable_image_interval:
+            self.image_interval = image_interval
+            msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.expt_image} s)."
+            print(msg)
+            self.logger.info(msg)
+        else:
+            self.image_interval = 99999
 
     def report_status(self):
-        self.image_binsize = self.ctrl.cam.default_binsize
-        self.magnification = self.ctrl.magnification.value
-        self.image_spotsize = self.ctrl.spotsize
-        
-        self.diff_binsize = self.image_binsize
-        self.diff_exposure = self.expt
+        self.diff_binsize = self.ctrl.cam.default_binsize
         self.diff_brightness = self.ctrl.brightness.value
-        self.diff_spotsize = self.image_spotsize
-        print "Output directory:\n{}".format(self.path)
-        print "Imaging     : binsize = {}".format(self.image_binsize)
-        print "              exposure = {}".format(self.expt)
-        print "              magnification = {}".format(self.magnification)
-        print "              spotsize = {}".format(self.image_spotsize)
-        print "Diffraction : binsize = {}".format(self.diff_binsize)
-        print "              exposure = {}".format(self.diff_exposure)
-        print "              brightness = {}".format(self.diff_brightness)
-        print "              spotsize = {}".format(self.diff_spotsize)        
-    
-    def enable_image_interval(self, interval, defocus):
-        self.diff_defocus = defocus
-        self.image_interval = interval
-        print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-        self.mode = "manual"
-        
-    def enable_autotrack(self, interval, defocus):
-        self.diff_defocus = defocus
-        self.image_interval = interval
-        print "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-        self.mode = "auto"
-        
+        self.diff_spotsize = self.ctrl.spotsize
+
+        print(f"\nOutput directory: {self.path}")
+        print(f"Diffraction : binsize = {self.diff_binsize}")
+        print(f"              exposure = {self.expt}")
+        print(f"              brightness = {self.diff_brightness}")
+        print(f"              spotsize = {self.diff_spotsize}")
+
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
-        
-        self.pathtiff = os.path.join(self.path,"tiff")
-        self.pathsmv = os.path.join(self.path,"SMV")
-        self.pathred = os.path.join(self.path,"RED")
-        
-        for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
-            if not os.path.exists(path):
-                os.makedirs(path)
-        
-        self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        self.logger.info("Data saving path: {}".format(self.path))
-        self.logger.info("Data collection exposure time: {} s".format(self.expt))
-        self.logger.info("Data collection spot size: {}".format(spotsize))
+
+        self.tiff_path = self.path / "tiff" if self.write_tiff else None
+        self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
+        self.mrc_path  = self.path / "RED"  if self.write_red else None
+              
+        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.logger.info(f"Data recording started at: {self.now}")
+        self.logger.info(f"Data saving path: {self.path}")
+        self.logger.info(f"Data collection exposure time: {self.expt} s")
+        self.logger.info(f"Data collection spot size: {spotsize}")
         
         # TODO: Mostly above is setup, split off into own function
 
-        buffer = []
-        image_buffer = []
-            
-        if self.mode == "auto":  
-            print "Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective."
-            
-            try:
-                with open('ISCalib.pkl') as f:
-                    transform_imgshift = pickle.load(f)
-                with open('ISCalib_foc.pkl') as ff:
-                    transform_imgshift_foc = pickle.load(ff)
-            except IOError:
-                print "No Imageshift calibration found. Choose the disired defocus value."
-                inp = raw_input("Press ENTER when ready.")
-                
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 2000)
-                    """self.ctrl.difffocus.value = diff_focus_proper"""
-                    with open('ISCalib.pkl', 'w') as f:
-                        pickle.dump(transform_imgshift, f)
-                    satisfied = raw_input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
-                    
-                inp = raw_input("Calibrate imageshift for focused DP. Press ENTER when ready.")
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_imgshift_foc = Calibrate_Imageshift(self.ctrl, 0, stepsize = 1500)
-                    """self.ctrl.difffocus.value = diff_focus_proper"""
-                    with open('ISCalib_foc.pkl', 'w') as ff:
-                        pickle.dump(transform_imgshift_foc, ff)
-                    satisfied = raw_input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
-                
-                self.logger.debug("Transform_imgshift: {}".format(transform_imgshift))
-                self.logger.debug("Transform_imgshift_foc: {}".format(transform_imgshift_foc))
-                
-            try:
-                with open('DSCalib.pkl') as f1:
-                    transform_difshift = pickle.load(f1)
-                with open('DSCalib_foc.pkl') as ff1:
-                    transform_difshift_foc = pickle.load(ff1)
-            except IOError:
-                print "No Diffraction Shift (PLA) calibration found. Redo PLA calibration..."
-                inp = raw_input("Choose desired defocus. Press Enter when ready.")
-                
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_difshift = Calibrate_Diffshift(self.ctrl, self.diff_defocus, stepsize = 300)
-                    with open('DSCalib.pkl','w') as f1:
-                        pickle.dump(transform_difshift,f1)
-                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
-                   
-                inp = raw_input("PLA calibration (focused) not found. Press ENTER when ready") 
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_difshift_foc = Calibrate_Diffshift(self.ctrl, 0, stepsize = 300)
-                    with open('DSCalib_foc.pkl','w') as ff1:
-                        pickle.dump(transform_difshift_foc,ff1)
-                    satisfied = raw_input("PLA calibration done. Press Enter to continue. Press x to redo calibration.") 
-            
-            self.logger.debug("Transform_difshift: {}".format(transform_difshift))
-            self.logger.debug("Transform_difshift: {}".format(transform_difshift_foc))
-            
-            try:
-                with open('IS2Calib.pkl') as f2:
-                    transform_imgshift2 = pickle.load(f2)
-                with open('IS2Calib_foc.pkl') as ff2:
-                    transform_imgshift2_foc = pickle.load(ff2)
-            except IOError:
-                print "No IS2 calibration found. Redo IS2 calibration..."
-                inp = raw_input("Choose desired defocus. Press Enter when ready.")
-                
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_imgshift2 = Calibrate_Imageshift2(self.ctrl, self.diff_defocus, stepsize = 300)
-                    with open('IS2Calib.pkl','w') as f2:
-                        pickle.dump(transform_imgshift2,f2)
-                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
-                   
-                inp = raw_input("IS2 calibration (focused) not found. Press ENTER when ready") 
-                satisfied = "x"
-                while satisfied == "x":
-                    transform_imgshift2_foc = Calibrate_Imageshift2(self.ctrl, 0, stepsize = 300)
-                    with open('IS2Calib_foc.pkl','w') as ff2:
-                        pickle.dump(transform_imgshift2_foc,ff2)
-                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
-            
-            self.logger.debug("Transform_imgshift2: {}".format(transform_imgshift2))
-            self.logger.debug("Transform_imgshift2_foc: {}".format(transform_imgshift2_foc))
-            
-            ## find the center of the particle and circle a 50*50 area for reference for correlate2d
-            try:
-                self.calib_beamshift = CalibBeamShift.from_file()
-            except IOError:
-                print "No calibration result found. Running instamatic.calibrate_beamshift first...\n"
-                calib_file = "x"
-                while calib_file == "x":
-                    ## Here maybe better to calibrate beam shift in diffraction defocus mode, choose defocus value of the defocus you wish to use.
-                    print "Find a clear area, toggle the beam to the desired defocus value."
-                    self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
-                    print "Beam shift calibration done."
-                    calib_file = raw_input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
-            self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
-            
-            set_zheight = raw_input("Do you want to try automatic z-height adjustment? y for yes or n for no")
-            if set_zheight == "y":
-                center_z_height(self.ctrl)
-                ready = raw_input("Press Enter to start data collection.")
 
-            diff_focus_proper = self.ctrl.difffocus.value
-            diff_focus_defocused = self.diff_defocus 
-            self.ctrl.difffocus.value = diff_focus_defocused
-            img0, h = self.ctrl.getImage(0.01, header_keys=None)
-            self.ctrl.difffocus.value = diff_focus_proper
 
-            bs_x0, bs_y0 = self.ctrl.beamshift.get()
-            is_x0, is_y0 = self.ctrl.imageshift.get()
-            ds_x0, ds_y0 = self.ctrl.diffshift.get()
-            is2_x0, is2_y0 = self.ctrl.imageshift2.get()
-            
-            print "Beamshift: {}, {}".format(bs_x0, bs_y0)
-            print "Imageshift: {}, {}".format(is_x0, is_y0)
-            print "Imageshift2: {}, {}".format(is2_x0, is2_y0)
-            
-            crystal_pos, r = fast_finder(img0) #fast_finder crystal position (y,x)
-            crystal_pos = crystal_pos[::-1]
-            if r[0] <= r[1]:
-                window_size = r[0]*2
-            else:
-                window_size = r[1]*2
-                
-            window_size = int(window_size/1.414)
-            if window_size % 2 == 1:
-                window_size = window_size + 1
-            
-            appos0 = crystal_pos
-            self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
-            
-            a1 = int(crystal_pos[0]-window_size/2)
-            b1 = int(crystal_pos[0]+window_size/2)
-            a2 = int(crystal_pos[1]-window_size/2)
-            b2 = int(crystal_pos[1]+window_size/2)
-            img0_cropped = img0[a1:b1,a2:b2]
-            
+        if self.ctrl.mode != 'diff':
+            self.ctrl.mode = 'diff'
+
         if self.camtype == "simulate":
-            self.startangle = a
+            self.start_angle = a
         else:
+            print("Waiting for rotation to start...", end=' ')
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 a = self.ctrl.stageposition.a
-                if abs(a - a0) > ACTIVATION_THRESHOLD:
-                    break
-            print "Data Recording started."
-            self.startangle = a
+
+            print("Data Recording started.")
+            self.start_angle = a
 
         if self.unblank_beam:
-            print "Unblanking beam"
+            print("Unblanking beam")
             self.ctrl.beamblank = False
+
+        
+        diff_focus_proper = self.ctrl.difffocus.value
+        diff_focus_defocused = self.diff_defocus + diff_focus_proper
+        image_interval = self.image_interval
+        expt_image = self.expt_image
+
 
         i = 1
 
@@ -426,94 +292,29 @@ class Experiment(object):
         t0 = time.clock()
 
         while not self.stopEvent.is_set():
-            
-            if self.mode == "auto":
-                if i % self.image_interval == 0: ## aim to make this more dynamically adapted...
-                    t_start = time.clock()
-                    acquisition_time = (t_start - t0) / (i-1)
-    
-                    self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(0.01, header_keys=None)
-                    self.ctrl.difffocus.value = diff_focus_proper
-    
-                    image_buffer.append((i, img, h))
-                    print "{} saved to image_buffer".format(i)
 
-                    crystal_pos, r = fast_finder(img)
-                    crystal_pos = crystal_pos[::-1]
-                    
-                    self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
-                    print crystal_pos
-                    a1 = int(crystal_pos[0]-window_size/2)
-                    b1 = int(crystal_pos[0]+window_size/2)
-                    a2 = int(crystal_pos[1]-window_size/2)
-                    b2 = int(crystal_pos[1]+window_size/2)
-                    img_cropped = img[a1:b1,a2:b2]
+            if i % self.image_interval == 0:
+                t_start = time.clock()
+                acquisition_time = (t_start - t0) / (i-1)
 
-                    cc,err,diffphase = register_translation(img0_cropped,img_cropped)
-                    print cc
-                    self.logger.debug("Cross correlation result: {}".format(cc))
-                    
-                    delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
-                    self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-                    self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                    bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                    bs_y0 = bs_y0 + delta_beamshiftcoord[1]
-                    
-                                        
-                    ##Solve linear equations so that defocused image shift equals 0, as well as focused DP shift equals 0:
-                    ##MIS1(DEF) deltaIS1 + MIS2(DEF) deltaIS2 = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
-                    ##MIS1 deltaIS1 + MIS2 deltaIS2 = 0 (the focused DP should stay at the same position)
-                    
-                    a = np.concatenate((transform_imgshift,transform_imgshift2), axis = 1)
-                    b = np.concatenate((transform_imgshift_foc, transform_imgshift2_foc), axis = 1)
-                    A = np.concatenate((a,b), axis = 0)
+                self.ctrl.difffocus.value = diff_focus_defocused
+                img, h = self.ctrl.getImage(expt_image, header_keys=None)
+                self.ctrl.difffocus.value = diff_focus_proper
 
-                    crystal_pos_dif = crystal_pos - appos0
-                    apmv = -crystal_pos_dif
+                image_buffer.append((i, img, h))
 
-                    print "aperture movement: {}".format(apmv)
+                next_interval = t_start + acquisition_time
+                # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
 
-                    x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
-                    delta_imageshiftcoord = (x[0], x[1])
+                while time.clock() > next_interval:
+                    next_interval += acquisition_time
+                    i += 1
+                    # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
 
-                    delta_imageshift2coord = (x[2],x[3])
-                    print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
-                    self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
-                    
-                    self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
-                    self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))
-                    ## the two steps can take ~60 ms per step
-                    
-                    is_x0 = is_x0 + int(delta_imageshiftcoord[0])
-                    is_y0 = is_y0 + int(delta_imageshiftcoord[1])
-                    is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
-                    is2_y0 = is2_y0 + int(delta_imageshift2coord[1])
-                    #appos0 = crystal_pos
-    
-                    next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-    
-                    t = time.clock()
-    
-                    while time.clock() > next_interval:
-                        next_interval += acquisition_time
-                        i += 1
-                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
-    
-                    #while time.time() < next_interval:
-                        #time.sleep(0.001)
-                    diff = next_interval - time.clock()
-                    time.sleep(diff)
-    
-                else:
-                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                    # print i, "Image!"
-                    buffer.append((i, img, h))
-                    print "{} saved to buffer".format(i)
-    
-                i += 1
-            
+                diff = next_interval - time.clock() # seconds
+                time.sleep(diff)
+
+
             else:
                 if i % self.image_interval == 0:
                     t_start = time.clock()
@@ -552,63 +353,92 @@ class Experiment(object):
         self.ctrl.cam.unblock()
 
         if self.camtype == "simulate":
-            self.endangle = self.startangle + np.random.random()*50
+            self.end_angle = self.start_angle + np.random.random()*50
             camera_length = 300
         else:
-            self.endangle = self.ctrl.stageposition.a
+            self.end_angle = self.ctrl.stageposition.a
             camera_length = int(self.ctrl.magnification.get())
 
+        is_moving = bool(self.ctrl.stageposition.is_moving())
+        self.logger.info(f"Experiment finished, stage is moving: {is_moving}")
+
         if self.unblank_beam:
-            print "Blanking beam"
+            print("Blanking beam")
             self.ctrl.beamblank = True
+
+        # in case something went wrong starting data collection, return gracefully
+        if i == 1:
+            return
 
         # TODO: all the rest here is io+logistics, split off in to own function
 
-        print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
-        nframes = i + 1 # len(buffer) can lie in case of frame skipping
-        osangle = abs(self.endangle - self.startangle) / nframes
-        acquisition_time = (t1 - t0) / nframes
+        nframes = i-1 # len(buffer) can lie in case of frame skipping
+        osc_angle = abs(self.end_angle - self.start_angle) / nframes
+        total_time = t1 - t0
+        acquisition_time = total_time / nframes
+        total_angle = abs(self.end_angle-self.start_angle)
+        print(f"\nRotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.4f})")
 
-        self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
-        self.logger.info("Oscillation angle: {}".format(osangle))
-        self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
+        self.logger.info(f"Data collection camera length: {camera_length} mm")
+        self.logger.info(f"Rotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
         
-        with open(os.path.join(self.path, "cRED_log.txt"), "w") as f:
-            f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {}\n".format(self.startangle))
-            f.write("Ending angle: {}\n".format(self.endangle))
-            f.write("Exposure Time: {} s\n".format(self.expt))
-            f.write("Spot Size: {}\n".format(spotsize))
-            f.write("Camera length: {} mm\n".format(camera_length))
-            f.write("Oscillation angle: {} degrees\n".format(osangle))
-            f.write("Number of frames: {}\n".format(len(buffer)))
+        with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Data Collection Time: {self.now}", file=f)
+            print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
+            print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
+            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
+            print(f"Exposure Time: {self.expt:.3f} s", file=f)
+            print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
+            print(f"Total time: {total_time:.3f} s", file=f)
+            print(f"Spot Size: {spotsize}", file=f)
+            print(f"Camera length: {camera_length} mm", file=f)
+            print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
+            print(f"Number of frames: {len(buffer)}", file=f)
 
-        rotation_angle = config.microscope.camera_rotation_vs_stage_xy
+            if self.image_interval_enabled:
+                print(f"Image interval: every {image_interval} frames an image with defocus {diff_focus_defocused} (t={expt_image} s).", file=f)
+                print(f"Number of images: {len(image_buffer)}", file=f)
+
+        if nframes <= 3:
+            self.logger.info(f"Not enough frames collected. Data will not be written (nframes={nframes}).")
+            print(f"Data collection done. Not enough frames collected (nframes={nframes}).")
+            return
+
+        rotation_axis = config.microscope.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=camera_length,
-                 osangle=osangle,
-                 startangle=self.startangle,
-                 endangle=self.endangle,
-                 rotation_angle=rotation_angle,
+                 osc_angle=osc_angle,
+                 start_angle=self.start_angle,
+                 end_angle=self.end_angle,
+                 rotation_axis=rotation_axis,
                  acquisition_time=acquisition_time,
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-        img_conv.writeTiff(self.pathtiff)
-        img_conv.writeIMG(self.pathsmv)
-        img_conv.ED3DCreator(self.pathred)
-        img_conv.MRCCreator(self.pathred)
-        img_conv.XDSINPCreator(self.pathsmv)
-        self.logger.info("XDS INP file created.")
+        print("Writing data files...")
+        img_conv.threadpoolwriter(tiff_path=self.tiff_path,
+                                  mrc_path=self.mrc_path,
+                                  smv_path=self.smv_path,
+                                  workers=8)
+        
+        print("Writing input files...")
+        if self.write_dials:
+            img_conv.to_dials(self.smv_path, interval=self.image_interval_enabled)
+        if self.write_red:
+            img_conv.write_ed3d(self.mrc_path)
+        if self.write_xds or self.write_dials:
+            img_conv.write_xds_inp(self.smv_path)
+
+        img_conv.write_beam_centers(self.path)
 
         if image_buffer:
-            drc = os.path.join(self.path,"tiff_image")
-            os.makedirs(drc)
+            drc = self.path / "tiff_image"
+            drc.mkdir(exist_ok=True)
             while len(image_buffer) != 0:
                 i, img, h = image_buffer.pop(0)
-                fn = os.path.join(drc, "{:05d}.tiff".format(i))
+                fn = drc / f"{i:05d}.tiff"
                 write_tiff(fn, img, header=h)
 
-        print "Data Collection and Conversion Done."
+        print("Data Collection and Conversion Done.")
+        self.stopEvent.clear()

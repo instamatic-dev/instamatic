@@ -2,7 +2,7 @@
 'calib_directbeam':
   'BeamShift': {'gridsize': 5, 'stepsize': 300}
   'DiffShift': {'gridsize': 5, 'stepsize': 300}
-'correction_ratio': 2.15
+'correction_ratio': 3.0
 'default_binsize': 1
 'default_exposure': 0.02
 'dimensions': [516, 516]

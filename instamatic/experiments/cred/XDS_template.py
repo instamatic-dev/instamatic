@@ -14,7 +14,7 @@ MAXIMUM_NUMBER_OF_PROCESSORS=4
 
 ! ********** Data images **********
 
-NAME_TEMPLATE_OF_DATA_FRAMES= 0????.img   SMV
+NAME_TEMPLATE_OF_DATA_FRAMES= {data_drc}/0????.img   SMV
 DATA_RANGE=           {data_begin:d} {data_end:d}
 SPOT_RANGE=           {data_begin:d} {data_end:d}
 BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
@@ -77,10 +77,10 @@ DIRECTION_OF_DETECTOR_X-AXIS= 1 0 0
 DIRECTION_OF_DETECTOR_Y-AXIS= 0 1 0
 
 ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}           !Detector origin (pixels). Often close to the image center, i.e. ORGX=NX/2; ORGY=NY/2
-DETECTOR_DISTANCE= {sign}{detdist:.2f}            !Can be negative. Positive because the detector normal points away from the crystal.
+DETECTOR_DISTANCE= {sign}{detector_distance:.2f}            !Can be negative. Positive because the detector normal points away from the crystal.
 
-OSCILLATION_RANGE= {osangle:.4f}
-!OSCILLATION_RANGE {calib_osangle:.4f}               !Calibrated value if above one is too far off
+OSCILLATION_RANGE= {osc_angle:.4f}
+!OSCILLATION_RANGE {calib_osc_angle:.4f}               !Calibrated value if above one is too far off
 
 ROTATION_AXIS= {rot_x:.4f} {rot_y:.4f} {rot_z:.4f}
 

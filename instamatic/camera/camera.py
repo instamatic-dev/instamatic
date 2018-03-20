@@ -8,6 +8,7 @@ from ctypes import POINTER, create_unicode_buffer, byref, addressof
 #     comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
 # except WindowsError:
 #     comtypes.CoInitialize()
+from pathlib import Path
 
 import numpy as np
 import os, sys
@@ -19,10 +20,6 @@ import time
 
 from instamatic import config
 
-__version__ = "2016-11-11"
-__author__ = "Stef Smeets"
-__email__ = "stef.smeets@mmk.su.se"
-
 __all__ = ["Camera"]
 
 DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
@@ -30,6 +27,7 @@ DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
 DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
+CONFIG_PYTIMEPIX = "tpx"
 
 
 def Camera(kind):
@@ -41,8 +39,12 @@ def Camera(kind):
         return CameraDLL(kind)
     elif kind == "timepix":
         return CameraDLL(kind)
+    elif kind == "pytimepix":
+        from . import timepix_api
+        config = Path(__file__).parent / "tpx" / "config.txt"
+        return timepix_api.initialize(config)
     else:
-        raise ValueError("No such camera: {}".format(kind))
+        raise ValueError(f"No such camera: {kind}")
 
 
 class CameraDLL(object):
@@ -60,26 +62,26 @@ class CameraDLL(object):
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
-        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
-        self._curdir = curdir = os.path.abspath(os.curdir)
+        self._cameradir = cameradir = Path(__file__).parent
+        self._curdir = curdir = Path.cwd()
 
         if kind == "simulateDLL":
-            libpath = os.path.join(cameradir, DLLPATH_SIMU)
+            libpath = cameradir / DLLPATH_SIMU
         elif kind == "orius":
-            libpath = os.path.join(cameradir, DLLPATH_ORIUS)
+            libpath = cameradir / DLLPATH_ORIUS
         elif kind == "timepix":
-            libpath = os.path.join(cameradir, DLLPATH_TIMEPIX)
+            libpath = cameradir / DLLPATH_TIMEPIX
             os.chdir(cameradir)
         else:
-            raise ValueError("No such camera: {}".format(kind))
+            raise ValueError(f"No such camera: {kind}")
 
         self.name = kind
 
         try:
-            lib = ctypes.cdll.LoadLibrary(libpath)
+            lib = ctypes.cdll.LoadLibrary(str(libpath))
         except WindowsError as e:
             print(e)
-            raise RuntimeError("Cannot load DLL: {}".format(libpath))
+            raise RuntimeError(f"Cannot load DLL: {libpath}")
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
@@ -116,7 +118,7 @@ class CameraDLL(object):
 
         self.load_defaults()
 
-        msg = "Camera {} initialized".format(self.getName())
+        msg = f"Camera {self.getName()} initialized"
         logger.info(msg)
 
         # print "Dimensions {}x{}".format(*self.getDimensions())
@@ -227,8 +229,8 @@ class CameraSimu(object):
 
         # os.environ['PATH'] = cameradir + ';' + os.environ['PATH']
 
-        self._cameradir = cameradir = os.path.join(os.path.dirname(__file__))
-        self._curdir = curdir = os.path.abspath(os.curdir)
+        self._cameradir = cameradir = Path(__file__).parent
+        self._curdir = curdir = Path.cwd()
 
         self.name = kind
 
@@ -236,7 +238,7 @@ class CameraSimu(object):
 
         self.load_defaults()
 
-        msg = "Camera {} initialized".format(self.getName())
+        msg = f"Camera {self.getName()} initialized"
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -297,11 +299,11 @@ class CameraSimu(object):
     def establishConnection(self):
         res = 1
         if res != 1:
-            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
+            raise RuntimeError(f"Could not establish camera connection to {self.name}")
 
     def releaseConnection(self):
         name = self.getName()
-        msg = "Connection to camera {} released".format(name) 
+        msg = f"Connection to camera {name} released" 
         logger.info(msg)
 
 
@@ -312,13 +314,9 @@ def main_entry():
 
     description = """Program to acquire image data from gatan ORIUS ccd camera"""
 
-    epilog = 'Updated: {}'.format(__version__)
-
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        version=__version__)
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # parser.add_argument("args",
     #                     type=str, metavar="FILE",
@@ -384,7 +382,7 @@ def main_entry():
         print("    exit        -> exit the program")
     while take_series:
         outfile = "image_{:04d}".format(i)
-        inp = raw_input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
+        inp = input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
         if inp == "exit":
             break
         elif inp.startswith("set"):
@@ -443,5 +441,5 @@ if __name__ == '__main__':
     # main_entry()
     cam = Camera(kind="timepix")
     arr = cam.getImage(t=0.1)
-    print arr
-    print arr.shape
+    print(arr)
+    print(arr.shape)

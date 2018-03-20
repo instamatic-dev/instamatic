@@ -1,5 +1,5 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 
 
 class ExperimentalRED(LabelFrame):
@@ -81,6 +81,38 @@ class ExperimentalRED(LabelFrame):
                    "stepsize": self.var_stepsize.get(),
                    "task": task }
         return params
+
+
+def acquire_data_RED(controller, **kwargs):
+    controller.log.info("Start RED experiment")
+    from instamatic.experiments import RED
+
+    task = kwargs["task"]
+
+    exposure_time = kwargs["exposure_time"]
+    tilt_range = kwargs["tilt_range"]
+    stepsize = kwargs["stepsize"]
+
+    if task == "start":
+        flatfield = controller.module_io.get_flatfield()
+
+        expdir = controller.module_io.get_new_experiment_directory()
+        expdir.mkdir(exist_ok=True, parents=True)
+    
+        controller.red_exp = RED.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
+                           flatfield=flatfield)
+        controller.red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    elif task == "continue":
+        controller.red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    elif task == "stop":
+        controller.red_exp.finalize()
+        del controller.red_exp
+
+
+from .base_module import BaseModule
+module = BaseModule("red", "RED", True, ExperimentalRED, commands={
+    "red": acquire_data_RED
+    })
 
 
 if __name__ == '__main__':
