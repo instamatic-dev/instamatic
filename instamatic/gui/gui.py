@@ -47,12 +47,14 @@ class DataCollectionController(object):
         self.module_sed = self.stream.get_module("sed")
         self.module_cred = self.stream.get_module("cred")
         self.module_red = self.stream.get_module("red")
+        self.module_autocred = self.stream.get_module("autocred")
         self.module_ctrl = self.stream.get_module("ctrl")
         self.module_debug = self.stream.get_module("debug")
 
         self.module_sed.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_cred.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_red.set_trigger(trigger=self.triggerEvent, q=self.q)
+        self.module_autocred.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_ctrl.set_trigger(trigger=self.triggerEvent, q=self.q)
         self.module_debug.set_trigger(trigger=self.triggerEvent, q=self.q)
 
@@ -75,6 +77,9 @@ class DataCollectionController(object):
             try:
                 if job == "cred":
                     self.acquire_data_cRED(**kwargs)
+                    
+                if job == "autocred":
+                    self.acquire_data_autocRED(**kwargs)
     
                 elif job == "sed":
                     self.acquire_data_SED(**kwargs)
@@ -121,11 +126,8 @@ class DataCollectionController(object):
                                log=self.log, stopEvent=stop_event,
                                flatfield=self.module_io.get_flatfield())
 
-        if enable_autotrack:
-                cexp.enable_autotrack(interval=image_interval, defocus=diff_defocus)
-        else:
-            if enable_image_interval:
-                cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus)
+        if enable_image_interval:
+            cexp.enable_image_interval(interval=image_interval, defocus=diff_defocus)
             
                 
         cexp.report_status()
@@ -133,7 +135,35 @@ class DataCollectionController(object):
         
         stop_event.clear()
         self.log.info("Finish cRED experiment")
+    
+    def acquire_data_autocRED(self, **kwargs):
+        self.log.info("Starting automatic cRED experiment")
+        from instamatic.experiments import autocred
+        
+        if not os.path.exists(expdir):
+            os.makedirs(expdir)
+        
+        exposure_time = kwargs["exposure_time"]
+        unblank_beam = kwargs["unblank_beam"]
+        stop_event = kwargs["stop_event"]
+        enable_image_interval = kwargs["enable_image_interval"]
+        enable_autotrack = kwargs["enable_autotrack"]
+        image_interval = kwargs["image_interval"]
+        diff_defocus = self.ctrl.difffocus.value + kwargs["diff_defocus"]
 
+        cexp = autocRED.Experiment(ctrl=self.ctrl, path=expdir, expt=exposure_time, unblank_beam=unblank_beam, 
+                               log=self.log, stopEvent=stop_event,
+                               flatfield=self.module_io.get_flatfield())
+        
+        cexp.enable_autotrack(interval=image_interval, defocus=diff_defocus)
+        
+        cexp.report_status()
+        cexp.start_collection()
+        
+        stop_event.clear()
+        self.log.info("Finish autocRED experiment")
+        
+        
     def acquire_data_SED(self, **kwargs):
         self.log.info("Start serialED experiment")
         from instamatic.experiments import serialED
