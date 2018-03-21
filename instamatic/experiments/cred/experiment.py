@@ -145,6 +145,8 @@ class Experiment(object):
 
         t1 = time.clock()
 
+        self.stopEvent.clear()
+
         self.ctrl.cam.unblock()
 
         if self.camtype == "simulate":
@@ -163,7 +165,7 @@ class Experiment(object):
 
         # in case something went wrong starting data collection, return gracefully
         if i == 1:
-            return
+            return False
 
         # TODO: all the rest here is io+logistics, split off in to own function
 
@@ -197,7 +199,7 @@ class Experiment(object):
         if nframes <= 3:
             self.logger.info(f"Not enough frames collected. Data will not be written (nframes={nframes}).")
             print(f"Data collection done. Not enough frames collected (nframes={nframes}).")
-            return
+            return False
 
         rotation_axis = config.microscope.camera_rotation_vs_stage_xy
 
@@ -236,4 +238,4 @@ class Experiment(object):
                 write_tiff(fn, img, header=h)
 
         print("Data Collection and Conversion Done.")
-        self.stopEvent.clear()
+        return True
