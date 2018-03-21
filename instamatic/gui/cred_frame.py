@@ -35,7 +35,6 @@ class ExperimentalcRED(LabelFrame):
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
-        Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack).grid(row=7, column=2, sticky="W")
 
         Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
@@ -128,7 +127,6 @@ class ExperimentalcRED(LabelFrame):
                    "exposure_time_image": self.var_exposure_time_image.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
-                   "enable_autotrack": self.var_enable_autotrack.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
                    "write_tiff": self.var_save_tiff.get(),
@@ -149,19 +147,7 @@ class ExperimentalcRED(LabelFrame):
             self.e_image_interval.config(state=DISABLED)
             self.e_image_exposure.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
-            self.c_toggle_defocus.config(state=DISABLED)
-            
-    def autotrack(self):
-        enable = self.var_enable_autotrack.get()
-        if enable:
-            self.e_image_interval.config(state=NORMAL)
-            self.e_diff_defocus.config(state=NORMAL)
-            self.c_toggle_defocus.config(state=NORMAL)
-        else:
-            self.e_image_interval.config(state=DISABLED)
-            self.e_diff_defocus.config(state=DISABLED)
-            self.c_toggle_defocus.config(state=DISABLED)
-    ##Focused beam, CC, Calibration for beam shift        
+            self.c_toggle_defocus.config(state=DISABLED)     
         
 
     def toggle_diff_defocus(self):
@@ -199,7 +185,7 @@ def acquire_data_cRED(controller, **kwargs):
     expdir.mkdir(exist_ok=True, parents=True)
     
     cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
-
+    
     cexp.report_status()
     cexp.start_collection()
     

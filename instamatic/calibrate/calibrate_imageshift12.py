@@ -42,8 +42,8 @@ def Calibrate_Imageshift(ctrl, diff_defocus,stepsize):
     r, t = fit_affine_transformation(shifts, imgpos)
     if diff_defocus != 0:
         ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift calibration done."
-    print r
+    print("ImageShift calibration done.")
+    print(r)
 
     return r
 
@@ -84,8 +84,8 @@ def Calibrate_Imageshift2(ctrl, diff_defocus,stepsize):
     r, t = fit_affine_transformation(shifts, imgpos)
     if diff_defocus != 0:
         ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift2 calibration done."
-    print r
+    print("ImageShift2 calibration done.")
+    print(r)
 
     return r
 

@@ -11,181 +11,7 @@ from pathlib import Path
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
 
-def Calibrate_Imageshift(ctrl, diff_defocus,stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
 
-    inp = raw_input("""Calibrate imageshift
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-    
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-    x0, y0 = ctrl.imageshift.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.imageshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(imgshift)
-            shifts.append(shift)
-
-    ctrl.imageshift.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift calibration done."
-    print r
-
-    return r
-
-def Calibrate_Imageshift2(ctrl, diff_defocus,stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
-
-    inp = raw_input("""Calibrate imageshift2
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-    
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-    x0, y0 = ctrl.imageshift2.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.imageshift2.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(imgshift)
-            shifts.append(shift)
-
-    ctrl.imageshift2.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift2 calibration done."
-    print r
-
-    return r
-
-def Calibrate_Diffshift(ctrl, diff_defocus, stepsize):
-    from instamatic.calibrate.fit import fit_affine_transformation
-    from instamatic.processing.cross_correlate import cross_correlate
-
-    inp = raw_input("""Calibrate imageshift
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""")
-
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-
-    x0, y0 = ctrl.diffshift.get()
-    
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
-
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0,5):
-        for j in range(0,5):
-            ctrl.diffshift.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "diffshifted defocused image")
-
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            dif_shift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(dif_shift)
-            shifts.append(shift)
-
-    ctrl.diffshift.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    print "ImageShift calibration done."
-    print r
-
-    return r
-
-"""fast_finder is contribution from Dr Jonas Angstrom"""
-def fast_finder(image, treshold=1):
-    X = np.mean(image, axis=0)
-    Y = np.mean(image, axis=1)
-    im_mean = np.mean(X)
-    rads = np.zeros(2)
-    center = np.zeros(2)
-    for n, XY in enumerate([X,Y]):
-        over = np.where(XY>(im_mean*treshold))[0]
-        rads[n] = (over[-1] - over[0])/2
-        center[n] = over[0] + rads[n]
-    return center, rads
-
-def center_z_height(ctrl):
-    """http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf"""
-    print "Finding eucentric height..."
-    z0 = ctrl.stageposition.z
-    x0 = ctrl.stageposition.x
-    z = []
-    d = []
-    
-    for i in range(0,5):
-        z1 = ctrl.stageposition.z
-        z.append(z1)
-        x = ctrl.stageposition.x
-        img0 = ctrl.getImage(exposure = 0.01, comment = "z height finding")
-        ctrl.stageposition.set(x = x + 2)
-        img1 = ctrl.getImage(exposure = 0.01, comment = "z height finding")
-        shift = cross_correlate(img0, img1, upsample_factor=10, verbose=False)
-        d.append(np.linalg.norm(shift))
-        print "Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift))
-        ctrl.stageposition.set(z1 + 1)
-        time.sleep(1)
-        
-    p = np.polyfit(z, d, 1)
-    z_center = -p[1]/p[0]
-    satisfied = raw_input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
-    if satisfied == "x":
-        ctrl.stageposition.set(x = x0, z = z0)
-        print "Did not find proper eucentric height..."
-    else:
-        ctrl.stageposition.set(x = x0, z = z_center)
-        print "Eucentric height set. Find the crystal again and start data collection!"
-    
 class Experiment(object):
     def __init__(self, ctrl, 
         path=None, 
@@ -257,7 +83,8 @@ class Experiment(object):
         
         # TODO: Mostly above is setup, split off into own function
 
-
+        buffer = []
+        image_buffer = []
 
         if self.ctrl.mode != 'diff':
             self.ctrl.mode = 'diff'
@@ -275,24 +102,19 @@ class Experiment(object):
         if self.unblank_beam:
             print("Unblanking beam")
             self.ctrl.beamblank = False
-
         
         diff_focus_proper = self.ctrl.difffocus.value
         diff_focus_defocused = self.diff_defocus + diff_focus_proper
         image_interval = self.image_interval
         expt_image = self.expt_image
 
-
         i = 1
-
-        print self.mode
 
         self.ctrl.cam.block()
 
         t0 = time.clock()
 
         while not self.stopEvent.is_set():
-
             if i % self.image_interval == 0:
                 t_start = time.clock()
                 acquisition_time = (t_start - t0) / (i-1)
@@ -314,39 +136,12 @@ class Experiment(object):
                 diff = next_interval - time.clock() # seconds
                 time.sleep(diff)
 
-
             else:
-                if i % self.image_interval == 0:
-                    t_start = time.clock()
-                    acquisition_time = (t_start - t0) / (i-1)
-    
-                    self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(self.expt / 5.0, header_keys=None)
-                    self.ctrl.difffocus.value = diff_focus_proper
-    
-                    image_buffer.append((i, img, h))
-    
-                    next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-    
-                    t = time.clock()
-    
-                    while time.clock() > next_interval:
-                        next_interval += acquisition_time
-                        i += 1
-                        # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
-    
-                    #while time.time() < next_interval:
-                        #time.sleep(0.001)
-                    diff = next_interval - time.clock()
-                    time.sleep(diff)
-    
-                else:
-                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                    # print i, "Image!"
-                    buffer.append((i, img, h))
-    
-                i += 1
+                img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                # print i, "Image!"
+                buffer.append((i, img, h))
+
+            i += 1
 
         t1 = time.clock()
 

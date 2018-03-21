@@ -243,76 +243,6 @@ class ImageShift1(Deflector):
         self._getter = self._tem.getImageShift1
         self.key = "IS1"
 
-<<<<<<< HEAD
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-        
-class ImageShift2(object):
-    """docstring for ImageShift2"""
-    def __init__(self, tem):
-        super(ImageShift2, self).__init__()
-        self._setter = tem.setImageShift2
-        self._getter = tem.getImageShift2
-        self._tem = tem
-        self.name = "IS2"
-        
-    def __repr__(self):
-        x, y = self.get()
-        return "ImageShift2(x={}, y={})".format(x, y)
-
-    def set(self, x, y):
-        self._setter(x, y)
-
-    def get(self):
-        return self._getter()
-
-    @property
-    def x(self):
-        x, y = self.get()
-        return x
-
-    @x.setter
-    def x(self, value):
-        self.set(value, self.y)
-
-    @property
-    def y(self):
-        x, y = self.get()
-        return y
-
-    @y.setter
-    def y(self, value):
-        self.set(self.x, value)
-
-    def neutral(self):
-        self._tem.setNeutral(self.name)
-=======
->>>>>>> 3192a876cdb6d93d4cc47a89d4b9e82ac8864a3d
-
 class ImageShift2(Deflector):
     """docstring for ImageShift"""
     def __init__(self, tem):
@@ -423,11 +353,7 @@ class TEMController(object):
         self.guntilt = GunTilt(tem)
         self.beamshift = BeamShift(tem)
         self.beamtilt = BeamTilt(tem)
-<<<<<<< HEAD
-        self.imageshift = ImageShift(tem)
-=======
         self.imageshift1 = ImageShift1(tem)
->>>>>>> 3192a876cdb6d93d4cc47a89d4b9e82ac8864a3d
         self.imageshift2 = ImageShift2(tem)
         self.diffshift = DiffShift(tem)
         self.stageposition = StagePosition(tem)
@@ -485,7 +411,7 @@ class TEMController(object):
                           str(self.guntilt),
                           str(self.beamshift),
                           str(self.beamtilt),
-                          str(self.imageshift),
+                          str(self.imageshift1),
                           str(self.imageshift2),
                           str(self.diffshift),
                           str(self.stageposition),
@@ -512,7 +438,7 @@ class TEMController(object):
             'GunTilt': self.guntilt.get,
             'BeamShift': self.beamshift.get,
             'BeamTilt': self.beamtilt.get,
-            'ImageShift': self.imageshift.get,
+            'ImageShift1': self.imageshift1.get,
             'ImageShift2': self.imageshift2.get,
             'DiffShift': self.diffshift.get,
             # 'StagePosition': self.stageposition.get,
@@ -544,7 +470,7 @@ class TEMController(object):
             'GunTilt': self.guntilt.set,
             'BeamShift': self.beamshift.set,
             'BeamTilt': self.beamtilt.set,
-            'ImageShift': self.imageshift.set,
+            'ImageShift1': self.imageshift1.set,
             'ImageShift2': self.imageshift2.set,
             'DiffShift': self.diffshift.set,
             'StagePosition': self.stageposition.set,

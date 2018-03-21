@@ -1,7 +1,7 @@
-from Tkinter import *
-from ttk import *
+from tkinter import *
+from tkinter.ttk import *
 import threading
-
+import os
 
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
@@ -31,6 +31,10 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+        
+        Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
+        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=10, from_=0.0, to=100.0, increment=0.01)
+        self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
         
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
@@ -67,6 +71,8 @@ class ExperimentalautocRED(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=True)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
+        self.var_exposure_time_image = DoubleVar(value=0.01)
+        
         self.var_enable_autotrack = BooleanVar(value=True)
         self.var_enable_fullacred = BooleanVar(value=False)
 
@@ -84,7 +90,7 @@ class ExperimentalautocRED(LabelFrame):
         self.parent.bind_all("<space>", self.stop_collection)
 
         params = self.get_params()
-        self.q.put(("cred", params))
+        self.q.put(("autocred", params))
 
         self.triggerEvent.set()
 
@@ -100,9 +106,11 @@ class ExperimentalautocRED(LabelFrame):
 
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
+                   "exposure_time_image": self.var_exposure_time_image.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "enable_autotrack": self.var_enable_autotrack.get(),
+                   "enable_fullacred": self.var_enable_fullacred.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
                    "stop_event": self.stopEvent }
@@ -143,9 +151,59 @@ class ExperimentalautocRED(LabelFrame):
         toggle = self.var_toggle_diff_defocus.get()
         difffocus = self.var_diff_defocus.get()
 
-        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
+        self.q.put(("toggle_difffocus2", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
+        
+def toggle_difffocus(controller, **kwargs):
+    toggle = kwargs["toggle"]
 
+    if toggle:
+        print("Proper:", controller.ctrl.difffocus)
+        try:
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+        except ValueError:
+            controller.ctrl.mode_diffraction()
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+
+        value = controller._difffocus_proper + kwargs["value"]
+        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+    else:
+        value = controller._difffocus_proper
+
+    controller.ctrl.difffocus.set(value=value)
+    
+def acquire_data_autocRED(controller, **kwargs):
+    controller.log.info("Starting automatic cRED experiment")
+    from instamatic.experiments.autocred.experiment import Experiment
+    
+    expdir = controller.module_io.get_new_experiment_directory()
+    if not os.path.exists(expdir):
+        os.makedirs(expdir)
+    
+    exposure_time = kwargs["exposure_time"]
+    exposure_time_image = kwargs["exposure_time_image"]
+    unblank_beam = kwargs["unblank_beam"]
+    stop_event = kwargs["stop_event"]
+    enable_image_interval = kwargs["enable_image_interval"]
+    enable_autotrack = kwargs["enable_autotrack"]
+    enable_fullacred = kwargs["enable_fullacred"]
+    image_interval = kwargs["image_interval"]
+    diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
+
+    cexp = Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+    
+    cexp.report_status()
+    cexp.start_collection()
+    
+    stop_event.clear()
+    controller.log.info("Finish autocRED experiment")
+    
+
+from .base_module import BaseModule
+module = BaseModule("autocred", "autocRED", True, ExperimentalautocRED, commands={
+    "autocred": acquire_data_autocRED,
+    "toggle_difffocus2": toggle_difffocus
+    })
 
 if __name__ == '__main__':
     root = Tk()

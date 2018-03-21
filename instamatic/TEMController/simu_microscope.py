@@ -45,8 +45,8 @@ class SimuMicroscope(object):
         self.BeamTilt_x = random.randint(MIN, MAX)
         self.BeamTilt_y = random.randint(MIN, MAX)
 
-        self.ImageShift_x = random.randint(MIN, MAX)
-        self.ImageShift_y = random.randint(MIN, MAX)
+        self.ImageShift1_x = random.randint(MIN, MAX)
+        self.ImageShift1_y = random.randint(MIN, MAX)
         
         self.ImageShift2_x = random.randint(MIN, MAX)
         self.ImageShift2_y = random.randint(MIN, MAX)
@@ -192,9 +192,9 @@ class SimuMicroscope(object):
     def getImageShift2(self):
         return self.ImageShift2_x, self.ImageShift2_y
 
-    def setImageShift(self, x, y):
-        self.ImageShift_x = x
-        self.ImageShift_y = y
+    def setImageShift1(self, x, y):
+        self.ImageShift1_x = x
+        self.ImageShift1_y = y
         
     def getImageShift2(self):
         return self.ImageShift2_x, self.ImageShift2_y

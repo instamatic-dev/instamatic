@@ -1,11 +1,11 @@
 import os
 import datetime
 import logging
-from Tkinter import *
+from tkinter import *
 import numpy as np
 import glob
 import time
-import ImgConversion
+from . import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from skimage.feature import register_translation
@@ -24,21 +24,45 @@ def start_rotation_operation(ctrl, end_angle):
     ctrl.stageposition.set(a = end_angle)
     
 class Experiment(object):
-    def __init__(self, ctrl, expt, stopEvent, unblank_beam=False, path=None, log=None, flatfield=None):
+    def __init__(self, ctrl, exposure_time, exposure_time_image, stop_event, enable_image_interval, enable_autotrack, enable_fullacred, unblank_beam=False, path=None, log=None, flatfield=None, image_interval = 99999, diff_defocus = 0):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
-        self.expt = expt
+        self.expt = exposure_time
         self.unblank_beam = unblank_beam
         self.logger = log
         self.camtype = ctrl.cam.name
-        self.stopEvent = stopEvent
+        self.stopEvent = stop_event
         self.flatfield = flatfield
 
-        self.diff_defocus = 0
-        self.image_interval = 99999
+        self.diff_defocus = diff_defocus
+        self.image_interval = image_interval
+        self.exposure_time_image = exposure_time_image
         
         self.mode = "initial"
+        
+        self.image_interval_enabled = enable_image_interval
+        if enable_image_interval:
+            self.image_interval = image_interval
+            msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_time_image} s)."
+            print(msg)
+            self.logger.info(msg)
+        else:
+            self.image_interval = 99999
+            
+        self.enable_autotrack = enable_autotrack
+        if enable_autotrack:
+            self.diff_defocus = diff_defocus
+            self.image_interval = image_interval
+            print("Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            self.mode = "auto"
+        
+        self.enable_fullacred = enable_fullacred
+        if enable_fullacred:
+            self.diff_defocus = diff_defocus
+            self.image_interval = image_interval
+            print("Full autocRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            self.mode = "auto_full"
 
     def report_status(self):
         self.image_binsize = self.ctrl.cam.default_binsize
@@ -49,33 +73,15 @@ class Experiment(object):
         self.diff_exposure = self.expt
         self.diff_brightness = self.ctrl.brightness.value
         self.diff_spotsize = self.image_spotsize
-        print "Output directory:\n{}".format(self.path)
-        print "Imaging     : binsize = {}".format(self.image_binsize)
-        print "              exposure = {}".format(self.expt)
-        print "              magnification = {}".format(self.magnification)
-        print "              spotsize = {}".format(self.image_spotsize)
-        print "Diffraction : binsize = {}".format(self.diff_binsize)
-        print "              exposure = {}".format(self.diff_exposure)
-        print "              brightness = {}".format(self.diff_brightness)
-        print "              spotsize = {}".format(self.diff_spotsize)        
-    
-    def enable_image_interval(self, interval, defocus):
-        self.diff_defocus = defocus
-        self.image_interval = interval
-        print "Image interval enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-        self.mode = "manual"
-        
-    def enable_autotrack(self, interval, defocus):
-        self.diff_defocus = defocus
-        self.image_interval = interval
-        print "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-        self.mode = "auto"
-        
-    def enable_fullacred(self, interval, defocus):
-        self.diff_defocus = defocus
-        self.image_interval = interval
-        print "Full auto cRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(interval, defocus)
-        self.mode = "auto_full"
+        print("Output directory:\n{}".format(self.path))
+        print("Imaging     : binsize = {}".format(self.image_binsize))
+        print("              exposure = {}".format(self.expt))
+        print("              magnification = {}".format(self.magnification))
+        print("              spotsize = {}".format(self.image_spotsize))
+        print("Diffraction : binsize = {}".format(self.diff_binsize))
+        print("              exposure = {}".format(self.diff_exposure))
+        print("              brightness = {}".format(self.diff_brightness))
+        print("              spotsize = {}".format(self.diff_spotsize))
         
     def start_collection(self):
         a = a0 = self.ctrl.stageposition.a
@@ -100,10 +106,10 @@ class Experiment(object):
         image_buffer = []
             
         if self.mode == "auto" or self.mode == "auto_full":
-            print "Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective."
+            print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
             
             if self.mode == "auto_full":
-                ready = raw_input("Please make sure that you are in the super user mode and the rotation speed is set! Press ENTER to continue.")
+                ready = input("Please make sure that you are in the super user mode and the rotation speed is set! Press ENTER to continue.")
             
             try:
                 with open('ISCalib.pkl') as f:
@@ -111,23 +117,23 @@ class Experiment(object):
                 with open('ISCalib_foc.pkl') as ff:
                     transform_imgshift_foc = pickle.load(ff)
             except IOError:
-                print "No Imageshift calibration found. Choose the desired defocus value."
-                inp = raw_input("Press ENTER when ready.")
+                print("No Imageshift calibration found. Choose the desired defocus value.")
+                inp = input("Press ENTER when ready.")
                 
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 2000)
                     with open('ISCalib.pkl', 'w') as f:
                         pickle.dump(transform_imgshift, f)
-                    satisfied = raw_input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
+                    satisfied = input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
                     
-                inp = raw_input("Calibrate imageshift for focused DP. Press ENTER when ready.")
+                inp = input("Calibrate imageshift for focused DP. Press ENTER when ready.")
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift_foc = Calibrate_Imageshift(self.ctrl, 0, stepsize = 1500)
                     with open('ISCalib_foc.pkl', 'w') as ff:
                         pickle.dump(transform_imgshift_foc, ff)
-                    satisfied = raw_input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
+                    satisfied = input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
                 
                 self.logger.debug("Transform_imgshift: {}".format(transform_imgshift))
                 self.logger.debug("Transform_imgshift_foc: {}".format(transform_imgshift_foc))
@@ -138,23 +144,23 @@ class Experiment(object):
                 with open('IS2Calib_foc.pkl') as ff2:
                     transform_imgshift2_foc = pickle.load(ff2)
             except IOError:
-                print "No IS2 calibration found. Redo IS2 calibration..."
-                inp = raw_input("Choose desired defocus. Press Enter when ready.")
+                print("No IS2 calibration found. Redo IS2 calibration...")
+                inp = input("Choose desired defocus. Press Enter when ready.")
                 
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift2 = Calibrate_Imageshift2(self.ctrl, self.diff_defocus, stepsize = 300)
                     with open('IS2Calib.pkl','w') as f2:
                         pickle.dump(transform_imgshift2,f2)
-                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
+                    satisfied = input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
                    
-                inp = raw_input("IS2 calibration (focused) not found. Press ENTER when ready") 
+                inp = input("IS2 calibration (focused) not found. Press ENTER when ready") 
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift2_foc = Calibrate_Imageshift2(self.ctrl, 0, stepsize = 300)
                     with open('IS2Calib_foc.pkl','w') as ff2:
                         pickle.dump(transform_imgshift2_foc,ff2)
-                    satisfied = raw_input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
+                    satisfied = input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
             
             self.logger.debug("Transform_imgshift2: {}".format(transform_imgshift2))
             self.logger.debug("Transform_imgshift2_foc: {}".format(transform_imgshift2_foc))
@@ -163,25 +169,25 @@ class Experiment(object):
             try:
                 self.calib_beamshift = CalibBeamShift.from_file()
             except IOError:
-                print "No calibration result found. Running instamatic.calibrate_beamshift first...\n"
+                print("No calibration result found. Running instamatic.calibrate_beamshift first...\n")
                 calib_file = "x"
                 while calib_file == "x":
                     ## Here maybe better to calibrate beam shift in diffraction defocus mode, choose defocus value of the defocus you wish to use.
-                    print "Find a clear area, toggle the beam to the desired defocus value."
+                    print("Find a clear area, toggle the beam to the desired defocus value.")
                     self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
-                    print "Beam shift calibration done."
-                    calib_file = raw_input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
+                    print("Beam shift calibration done.")
+                    calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
             self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
             
-            set_zheight = raw_input("Do you want to try automatic z-height adjustment? y for yes or n for no.\n")
+            set_zheight = input("Do you want to try automatic z-height adjustment? y for yes or n for no.\n")
             if set_zheight == "y":
                 center_z_height(self.ctrl)
-                ready = raw_input("Press Enter to start data collection.")
+                ready = input("Press Enter to start data collection.")
 
             diff_focus_proper = self.ctrl.difffocus.value
             diff_focus_defocused = self.diff_defocus 
             self.ctrl.difffocus.value = diff_focus_defocused
-            img0, h = self.ctrl.getImage(0.01, header_keys=None)
+            img0, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
             self.ctrl.difffocus.value = diff_focus_proper
 
             bs_x0, bs_y0 = self.ctrl.beamshift.get()
@@ -189,9 +195,9 @@ class Experiment(object):
             ds_x0, ds_y0 = self.ctrl.diffshift.get()
             is2_x0, is2_y0 = self.ctrl.imageshift2.get()
             
-            print "Beamshift: {}, {}".format(bs_x0, bs_y0)
-            print "Imageshift: {}, {}".format(is_x0, is_y0)
-            print "Imageshift2: {}, {}".format(is2_x0, is2_y0)
+            print("Beamshift: {}, {}".format(bs_x0, bs_y0))
+            print("Imageshift: {}, {}".format(is_x0, is_y0))
+            print("Imageshift2: {}, {}".format(is2_x0, is2_y0))
             
             crystal_pos, r = fast_finder(img0) #fast_finder crystal position (y,x)
             crystal_pos = crystal_pos[::-1]
@@ -237,11 +243,11 @@ class Experiment(object):
                 a = self.ctrl.stageposition.a
                 if abs(a - a0) > ACTIVATION_THRESHOLD:
                     break
-            print "Data Recording started."
+            print("Data Recording started.")
             self.startangle = a
 
         if self.unblank_beam:
-            print "Unblanking beam"
+            print("Unblanking beam")
             self.ctrl.beamblank = False
 
         i = 1
@@ -258,17 +264,17 @@ class Experiment(object):
                         acquisition_time = (t_start - t0) / (i-1)
         
                         self.ctrl.difffocus.value = diff_focus_defocused
-                        img, h = self.ctrl.getImage(0.01, header_keys=None)
+                        img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
                         self.ctrl.difffocus.value = diff_focus_proper
         
                         image_buffer.append((i, img, h))
-                        print "{} saved to image_buffer".format(i)
+                        print("{} saved to image_buffer".format(i))
     
                         crystal_pos, r = fast_finder(img)
                         crystal_pos = crystal_pos[::-1]
                         
                         self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
-                        print crystal_pos
+                        print(crystal_pos)
                         a1 = int(crystal_pos[0]-window_size/2)
                         b1 = int(crystal_pos[0]+window_size/2)
                         a2 = int(crystal_pos[1]-window_size/2)
@@ -276,7 +282,7 @@ class Experiment(object):
                         img_cropped = img[a1:b1,a2:b2]
     
                         cc,err,diffphase = register_translation(img0_cropped,img_cropped)
-                        print cc
+                        print(cc)
                         self.logger.debug("Cross correlation result: {}".format(cc))
                         
                         delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
@@ -297,13 +303,13 @@ class Experiment(object):
                         crystal_pos_dif = crystal_pos - appos0
                         apmv = -crystal_pos_dif
     
-                        print "aperture movement: {}".format(apmv)
+                        print("aperture movement: {}".format(apmv))
     
                         x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
                         delta_imageshiftcoord = (x[0], x[1])
     
                         delta_imageshift2coord = (x[2],x[3])
-                        print "delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord)
+                        print("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
                         self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
                         
                         self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
@@ -335,7 +341,7 @@ class Experiment(object):
                         img, h = self.ctrl.getImage(self.expt, header_keys=None)
                         # print i, "Image!"
                         buffer.append((i, img, h))
-                        print "{} saved to buffer".format(i)
+                        print("{} saved to buffer".format(i))
         
                     i += 1
                 
@@ -387,12 +393,12 @@ class Experiment(object):
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
-            print "Blanking beam"
+            print("Blanking beam")
             self.ctrl.beamblank = True
 
         # TODO: all the rest here is io+logistics, split off in to own function
 
-        print "Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle)
+        print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
         nframes = i + 1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
@@ -439,4 +445,4 @@ class Experiment(object):
                 fn = os.path.join(drc, "{:05d}.tiff".format(i))
                 write_tiff(fn, img, header=h)
 
-        print "Data Collection and Conversion Done."
+        print("Data Collection and Conversion Done.")
