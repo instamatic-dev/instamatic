@@ -185,9 +185,16 @@ def acquire_data_cRED(controller, **kwargs):
     cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
 
     cexp.report_status()
-    cexp.start_collection()
+    success = cexp.start_collection()
+
+    if not success:
+        return
     
     controller.log.info("Finish cRED experiment")
+
+    if hasattr(controller, "index_server"):
+        controller.q.put(("autoindex", {"task": "run", "path": cexp.smv_path} ))
+        controller.triggerEvent.set()
 
 
 from .base_module import BaseModule
