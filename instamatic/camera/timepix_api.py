@@ -57,9 +57,6 @@ class EMCameraObj(object):
         self.lib.EMCameraObj_Connect.restype = c_bool
         self.lib.EMCameraObj_Disconnect.restype = c_bool
         self.lib.EMCameraObj_timerExpired.restype = c_bool
-        
-        self.lib.EMCameraObj_acquire.argtypes = [c_double]
-        self.lib.EMCameraObj_acquire.restype = c_int
 
         self.obj = self.lib.EMCameraObj_new()
         atexit.register(self.disconnect)
