@@ -174,7 +174,7 @@ def toggle_difffocus(controller, **kwargs):
     
 def acquire_data_autocRED(controller, **kwargs):
     controller.log.info("Starting automatic cRED experiment")
-    from instamatic.experiments.autocred.experiment import Experiment
+    from instamatic.experiments import autocRED
     
     expdir = controller.module_io.get_new_experiment_directory()
     if not os.path.exists(expdir):
@@ -190,7 +190,7 @@ def acquire_data_autocRED(controller, **kwargs):
     image_interval = kwargs["image_interval"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
 
-    cexp = Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+    cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
     
     cexp.report_status()
     cexp.start_collection()

@@ -3,7 +3,7 @@ import time
 
 def d():
     while True:
-        print "threading running"
+        print("threading running")
         time.sleep(1)    
 
 t = threading.Thread(target=d, name = "daemon")
@@ -14,7 +14,7 @@ stopEvent = threading.Event()
 i = 0
 
 while not stopEvent.is_set():
-    print "main running..."
+    print("main running...")
     i = i+1
     time.sleep(1)
     if i == 10:
