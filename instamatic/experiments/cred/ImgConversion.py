@@ -37,6 +37,18 @@ def export_dials_variables(path, *, sequence=(), missing=()):
         print("#     dials.integrate $exclude_images refined.pickle refined.json", file=f)
         print("#", file=f)
 
+    with open(path / "dials_variables.bat", "w", newline='\n') as f:
+        print("@echo off", file=f)
+        print("", file=f)
+        print(f"set scan_range={scanrange}", file=f)
+        print(f"set exclude_images=exclude_images={excludeimages}", file=f)
+        print("", file=f)
+        print(":: To run:", file=f)
+        print("::     call dials_variables.bat", file=f)
+        print("::", file=f)
+        print("::     dials.find_spots datablock.json %%scan_range%%", file=f)
+        print("::     dials.integrate %%exclude_images%% refined.pickle refined.json", file=f)
+
 
 def get_calibrated_rotation_speed(val):
     """Correct for the overestimation of the oscillation angle if the rotation 
