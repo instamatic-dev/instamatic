@@ -72,6 +72,7 @@ class Experiment(object):
 
     def log_end_status(self):
         print_and_log(f"\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
+        print_and_log(f"Stage moved from {self.start_xy} to {self.end_xy}, drift: {self.start_xy - self.end_xy}", logger=self.logger)
 
         self.logger.info(f"Data collection camera length: {self.camera_length} mm")
 
@@ -99,12 +100,13 @@ class Experiment(object):
         self.mrc_path  = self.path / "RED"  if self.write_red else None
 
     def start_rotation(self):
-        a = self.ctrl.stageposition.a
+        stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
+        self.start_xy = np.array([stage_x, stage_y])
 
         if self.unblank_beam:
             print("Unblanking beam")
             self.ctrl.beamblank = False        
-            
+
         if self.mode == "simulate":
             start_angle = a
             print("Data Recording started.")
@@ -190,9 +192,12 @@ class Experiment(object):
         self.ctrl.cam.unblock()
 
         if self.mode == "simulate":
+            self.end_xy = self.start_xy + int(np.random.random()*50)
             self.end_angle = self.start_angle + np.random.random()*50
             self.camera_length = 300
         else:
+            stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
+            self.end_xy = np.array([stage_x, stage_y])
             self.end_angle = self.ctrl.stageposition.a
             self.camera_length = int(self.ctrl.magnification.get())
 
@@ -220,7 +225,7 @@ class Experiment(object):
         self.log_end_status()
 
         if self.nframes <= 3:
-            print_and_log(f"Not enough frames collected. Data will not be written (nframes={self.nframes}", logger=self.logger)
+            print_and_log(f"Not enough frames collected. Data will not be written (nframes={self.nframes})", logger=self.logger)
             return False
 
         self.write_data(buffer)
