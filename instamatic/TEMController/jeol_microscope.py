@@ -269,21 +269,24 @@ class JeolMicroscope(object):
         if wait:
             self.waitForStage()
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
+    def stopStage(self):
+        self.stage3.Stop()
+
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True):
         if z is not None:
-            self.setStageZ(z)
+            self.setStageZ(z, wait=wait)
         if a is not None:
-            self.setStageA(a)
+            self.setStageA(a, wait=wait)
         if b is not None:
-            self.setStageB(b)
+            self.setStageB(b, wait=wait)
 
         if (x is not None) and (y is not None):
-            self.setStageXY(x=x, y=y)
+            self.setStageXY(x=x, y=y, wait=wait)
         else:
             if x is not None:
-                self.setStageX(x)     
+                self.setStageX(x, wait=wait)     
             if y is not None:
-                self.setStageY(y)
+                self.setStageY(y, wait=wait)
 
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()

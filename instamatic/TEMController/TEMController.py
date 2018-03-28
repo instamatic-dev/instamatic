@@ -269,8 +269,9 @@ class StagePosition(object):
     def name(self):
         return self.__class__.__name__
 
-    def set(self, x=None, y=None, z=None, a=None, b=None):
-        self._setter(x, y, z, a, b)
+    def set(self, x=None, y=None, z=None, a=None, b=None, wait=True):
+        """wait: bool, block until stage movement is complete"""
+        self._setter(x, y, z, a, b, wait=wait)
 
     def get(self):
         return self._getter()
@@ -335,6 +336,10 @@ class StagePosition(object):
 
     def is_moving(self):
         return self._tem.isStageMoving()
+
+    def stop(self):
+        """This will stop the stage movement if `wait=False` is passed to StagePosition.set"""
+        self._tem.stopStage()
 
 
 class TEMController(object):

@@ -89,28 +89,31 @@ class Experiment(object):
         if self.ctrl.mode != 'diff':
             self.ctrl.mode = 'diff'
 
-        if self.camtype == "simulate":
-            self.start_angle = a
-        else:
-            print("Waiting for rotation to start...", end=' ')
-            while abs(a - a0) < ACTIVATION_THRESHOLD:
-                a = self.ctrl.stageposition.a
-
-            print("Data Recording started.")
-            self.start_angle = a
-
-        if self.unblank_beam:
-            print("Unblanking beam")
-            self.ctrl.beamblank = False
-        
         diff_focus_proper = self.ctrl.difffocus.value
         diff_focus_defocused = self.diff_defocus + diff_focus_proper
         image_interval = self.image_interval
         expt_image = self.expt_image
 
-        i = 1
+        if self.unblank_beam:
+            print("Unblanking beam")
+            self.ctrl.beamblank = False
 
         self.ctrl.cam.block()
+
+        if self.camtype == "simulate":
+            self.start_angle = a
+        else:
+
+            self.start_angle = self.ctrl.stageposition.a
+            self.ctrl.tem.stage3.SetTiltXAngle(60)
+
+            # print("Waiting for rotation to start...", end=' ')
+            # while abs(a - a0) < ACTIVATION_THRESHOLD:
+                # a = self.ctrl.stageposition.a
+            # print("Data Recording started.")
+
+        i = 1
+
 
         t0 = time.clock()
 
@@ -144,6 +147,8 @@ class Experiment(object):
             i += 1
 
         t1 = time.clock()
+
+        self.ctrl.stageposition.stop()
 
         self.stopEvent.clear()
 
