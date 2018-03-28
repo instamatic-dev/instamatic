@@ -34,9 +34,12 @@ def initialize(camera=None, **kwargs):
 
     if camera:
         # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
-        if not callable(camera):
+        if camera == 'disable':
+            cam = None
+        elif not callable(camera):
             raise RuntimeError(f"Camera {camera} is not callable")
-        cam = camera(cam=camera_id, **kwargs)
+        else:
+            cam = camera(cam=camera_id, **kwargs)
     elif isInteractive:
         cam = Camera(kind=camera_id)
     elif not isInteractive:
@@ -259,6 +262,8 @@ class StagePosition(object):
         self._tem = tem
         self._setter = self._tem.setStagePosition
         self._getter = self._tem.getStagePosition
+        self._setter_nw = self._tem.setStagePosition_nw
+        self._stop_stagemv = self._tem.stopStageMV
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -270,6 +275,12 @@ class StagePosition(object):
 
     def set(self, x=None, y=None, z=None, a=None, b=None):
         self._setter(x, y, z, a, b)
+        
+    def set_no_waiting(self, x=None, y=None, z=None, a=None, b=None, wait=False):
+        self._setter_nw(x, y, z, a, b, wait)
+        
+    def stop_stagemovement(self):
+        self._stop_stagemv()
 
     def get(self):
         return self._getter()

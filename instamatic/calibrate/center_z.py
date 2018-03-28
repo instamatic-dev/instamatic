@@ -51,7 +51,7 @@ def center_z_height(ctrl):
     print(z_f)
     p = np.polyfit(z, d, 1)
     z_center = -p[1]/p[0]
-    satisfied = raw_input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
+    satisfied = input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
     if satisfied == "x":
         ctrl.stageposition.set(a = a0, z = z0)
         print("Did not find proper eucentric height...")

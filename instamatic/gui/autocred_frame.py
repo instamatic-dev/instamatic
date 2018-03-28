@@ -124,12 +124,14 @@ class ExperimentalautocRED(LabelFrame):
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
             self.fullacred_status.config(state=NORMAL)
+            self.e_image_exposure.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)
             self.acred_status.config(state=DISABLED)
             self.fullacred_status.config(state=DISABLED)
+            self.e_image_exposure.config(state=DISABLED)
             
     def autotrack(self):
         enable = self.var_enable_autotrack.get()
@@ -154,7 +156,7 @@ class ExperimentalautocRED(LabelFrame):
         self.q.put(("toggle_difffocus2", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
         
-def toggle_difffocus(controller, **kwargs):
+def toggle_difffocus2(controller, **kwargs):
     toggle = kwargs["toggle"]
 
     if toggle:
@@ -202,7 +204,7 @@ def acquire_data_autocRED(controller, **kwargs):
 from .base_module import BaseModule
 module = BaseModule("autocred", "autocRED", True, ExperimentalautocRED, commands={
     "autocred": acquire_data_autocRED,
-    "toggle_difffocus2": toggle_difffocus
+    "toggle_difffocus2": toggle_difffocus2
     })
 
 if __name__ == '__main__':

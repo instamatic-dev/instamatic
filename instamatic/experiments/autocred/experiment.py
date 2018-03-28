@@ -11,16 +11,27 @@ from instamatic.formats import write_tiff
 from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
-from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2
+from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_BS_DP
 from instamatic.calibrate.center_z import center_z_height
 from instamatic.processing.fast_finder import fast_finder
 import pickle
 import threading
+from pathlib import Path
+import socket
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
 
 def start_rotation_operation(ctrl, end_angle):
+    import comtypes
+    try:
+        comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+    except WindowsError:
+        comtypes.CoInitialize()
+        
+    #import pythoncom
+    #pythoncom.CoInitialize()
+    
     ctrl.stageposition.set(a = end_angle)
     
 class Experiment(object):
@@ -87,9 +98,9 @@ class Experiment(object):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
         
-        self.pathtiff = os.path.join(self.path,"tiff")
-        self.pathsmv = os.path.join(self.path,"SMV")
-        self.pathred = os.path.join(self.path,"RED")
+        self.pathtiff = Path(self.path) / "tiff"
+        self.pathsmv = Path(self.path) / "SMV"
+        self.pathred = Path(self.path) / "RED"
         
         for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
             if not os.path.exists(path):
@@ -104,17 +115,26 @@ class Experiment(object):
 
         buffer = []
         image_buffer = []
+        
+        clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        clientsocket.connect(('localhost',8090))
             
         if self.mode == "auto" or self.mode == "auto_full":
+
+            set_zheight = input("Do you want to try automatic z-height adjustment? y for yes or n for no.\n")
+            if set_zheight == "y":
+                center_z_height(self.ctrl)
+                ready = input("Press Enter to start data collection.")
+
             print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
             
             if self.mode == "auto_full":
                 ready = input("Please make sure that you are in the super user mode and the rotation speed is set! Press ENTER to continue.")
             
             try:
-                with open('ISCalib.pkl') as f:
+                with open('ISCalib.pkl','rb') as f:
                     transform_imgshift = pickle.load(f)
-                with open('ISCalib_foc.pkl') as ff:
+                with open('ISCalib_foc.pkl','rb') as ff:
                     transform_imgshift_foc = pickle.load(ff)
             except IOError:
                 print("No Imageshift calibration found. Choose the desired defocus value.")
@@ -122,8 +142,8 @@ class Experiment(object):
                 
                 satisfied = "x"
                 while satisfied == "x":
-                    transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 2000)
-                    with open('ISCalib.pkl', 'w') as f:
+                    transform_imgshift = Calibrate_Imageshift(self.ctrl, self.diff_defocus, stepsize = 3000)
+                    with open('ISCalib.pkl', 'wb') as f:
                         pickle.dump(transform_imgshift, f)
                     satisfied = input("Imageshift calibration done. Press Enter to continue. Press x to redo calibration.")
                     
@@ -131,7 +151,7 @@ class Experiment(object):
                 satisfied = "x"
                 while satisfied == "x":
                     transform_imgshift_foc = Calibrate_Imageshift(self.ctrl, 0, stepsize = 1500)
-                    with open('ISCalib_foc.pkl', 'w') as ff:
+                    with open('ISCalib_foc.pkl', 'wb') as ff:
                         pickle.dump(transform_imgshift_foc, ff)
                     satisfied = input("Imageshift calibration (focused) done. Press Enter to continue. Press x to redo calibration.")
                 
@@ -139,9 +159,9 @@ class Experiment(object):
                 self.logger.debug("Transform_imgshift_foc: {}".format(transform_imgshift_foc))
                 
             try:
-                with open('IS2Calib.pkl') as f2:
+                with open('IS2Calib.pkl','rb') as f2:
                     transform_imgshift2 = pickle.load(f2)
-                with open('IS2Calib_foc.pkl') as ff2:
+                with open('IS2Calib_foc.pkl','rb') as ff2:
                     transform_imgshift2_foc = pickle.load(ff2)
             except IOError:
                 print("No IS2 calibration found. Redo IS2 calibration...")
@@ -149,23 +169,49 @@ class Experiment(object):
                 
                 satisfied = "x"
                 while satisfied == "x":
-                    transform_imgshift2 = Calibrate_Imageshift2(self.ctrl, self.diff_defocus, stepsize = 300)
-                    with open('IS2Calib.pkl','w') as f2:
+                    transform_imgshift2 = Calibrate_Imageshift2(self.ctrl, self.diff_defocus, stepsize = 2000)
+                    with open('IS2Calib.pkl','wb') as f2:
                         pickle.dump(transform_imgshift2,f2)
                     satisfied = input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
-                   
+                
                 inp = input("IS2 calibration (focused) not found. Press ENTER when ready") 
                 satisfied = "x"
                 while satisfied == "x":
-                    transform_imgshift2_foc = Calibrate_Imageshift2(self.ctrl, 0, stepsize = 300)
-                    with open('IS2Calib_foc.pkl','w') as ff2:
+                    transform_imgshift2_foc = Calibrate_Imageshift2(self.ctrl, 0, stepsize = 2000)
+                    with open('IS2Calib_foc.pkl','wb') as ff2:
                         pickle.dump(transform_imgshift2_foc,ff2)
-                    satisfied = input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.") 
+                    satisfied = input("IS2 calibration done. Press Enter to continue. Press x to redo calibration.")
             
             self.logger.debug("Transform_imgshift2: {}".format(transform_imgshift2))
             self.logger.debug("Transform_imgshift2_foc: {}".format(transform_imgshift2_foc))
+
+            """try:
+                with open('BSDPCalib.pkl','rb') as f2:
+                    transform_bsdp = pickle.load(f2)
+                with open('BSDPCalib_foc.pkl','rb') as ff2:
+                    transform_bsdp_foc = pickle.load(ff2)
+            except IOError:
+                print("No beamshift vs diffraction calibration found. Redo BSDP calibration...")
+                inp = input("Choose desired defocus. Press Enter when ready.")
+                
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_bsdp = Calibrate_BS_DP(self.ctrl, self.diff_defocus, stepsize = 200)
+                    with open('BSDPCalib.pkl','wb') as f2:
+                        pickle.dump(transform_bsdp,f2)
+                    satisfied = input("BSDP calibration done. Press Enter to continue. Press x to redo calibration.") 
+                   
+                inp = input("BSDP calibration (focused) not found. Press ENTER when ready") 
+                satisfied = "x"
+                while satisfied == "x":
+                    transform_bsdp_foc = Calibrate_BS_DP(self.ctrl, 0, stepsize = 200)
+                    with open('BSDPCalib_foc.pkl','wb') as ff2:
+                        pickle.dump(transform_bsdp_foc,ff2)
+                    satisfied = input("BSDP calibration done. Press Enter to continue. Press x to redo calibration.") 
             
-            ## find the center of the particle and circle a 50*50 area for reference for correlate2d
+            self.logger.debug("Transform_bsdp: {}".format(transform_bsdp))
+            self.logger.debug("Transform_bsdp_foc: {}".format(transform_bsdp_foc))"""
+
             try:
                 self.calib_beamshift = CalibBeamShift.from_file()
             except IOError:
@@ -178,20 +224,21 @@ class Experiment(object):
                     print("Beam shift calibration done.")
                     calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
             self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
-            
-            set_zheight = input("Do you want to try automatic z-height adjustment? y for yes or n for no.\n")
-            if set_zheight == "y":
-                center_z_height(self.ctrl)
-                ready = input("Press Enter to start data collection.")
 
             diff_focus_proper = self.ctrl.difffocus.value
-            diff_focus_defocused = self.diff_defocus 
+            diff_focus_defocused = diff_focus_proper + self.diff_defocus 
             self.ctrl.difffocus.value = diff_focus_defocused
             img0, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
             self.ctrl.difffocus.value = diff_focus_proper
-
+            
+            ##the transformation matrices from calibration are actually matrix*shift = lens change. So should be the inverse matrices here.
+            transform_imgshift = np.linalg.inv(transform_imgshift)
+            transform_imgshift2 = np.linalg.inv(transform_imgshift2)
+            transform_imgshift_foc = np.linalg.inv(transform_imgshift_foc)
+            transform_imgshift2_foc = np.linalg.inv(transform_imgshift2_foc)
+            
             bs_x0, bs_y0 = self.ctrl.beamshift.get()
-            is_x0, is_y0 = self.ctrl.imageshift.get()
+            is_x0, is_y0 = self.ctrl.imageshift1.get()
             ds_x0, ds_y0 = self.ctrl.diffshift.get()
             is2_x0, is2_y0 = self.ctrl.imageshift2.get()
             
@@ -211,6 +258,7 @@ class Experiment(object):
                 window_size = window_size + 1
             
             appos0 = crystal_pos
+            print("appos0:{}".format(appos0))
             self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
             
             a1 = int(crystal_pos[0]-window_size/2)
@@ -221,20 +269,25 @@ class Experiment(object):
             
         
         if self.mode == "auto_full":
-            a_i = self.ctrl.stagepositioni.a
+            """a_i = self.ctrl.stageposition.a
             if a_i < 0:
                 self.ctrl.stageposition.set(a = a_i + 0.2)
                 self.ctrl.stageposition.set(a = a_i + 0.2)
-                rotation_end = a_i + 60
+                rotation_end = a_i + 40
             else:
                 self.ctrl.stageposition.set(a = a_i - 0.2)
                 self.ctrl.stageposition.set(a = a_i - 0.2)
-                rotation_end = a_i - 60
+                rotation_end = a_i - 40
             ## Just a trial that we aim to rotate +60 degrees here. Of course it can be optimized.
             
             thrd = threading.Thread(target = start_rotation_operation, name = "rotationThread", args= (self.ctrl, rotation_end))
             thrd.daemon = True
-            thrd.start()
+            thrd.start()"""
+            
+            ## alternatively
+            a_i = self.ctrl.stageposition.a
+            self.ctrl.stageposition.set_no_waiting(a = a_i + 40)
+            
         
         if self.camtype == "simulate":
             self.startangle = a
@@ -286,12 +339,24 @@ class Experiment(object):
                         self.logger.debug("Cross correlation result: {}".format(cc))
                         
                         delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
+                        print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                         self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                         self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
                         bs_x0 = bs_x0 + delta_beamshiftcoord[0]
                         bs_y0 = bs_y0 + delta_beamshiftcoord[1]
                         
-                                            
+                        """Retake a defocused image to check the impact of beam shift on defocused DP"""
+                        self.ctrl.difffocus.value = diff_focus_defocused
+                        img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
+                        self.ctrl.difffocus.value = diff_focus_proper
+                        
+                        crystal_pos, r = fast_finder(img)
+                        crystal_pos = crystal_pos[::-1]
+                        print("crystalpos:{}".format(crystal_pos))
+                        
+                        """bsdp_dfmv = np.matmul(transform_bsdp, delta_beamshiftcoord)
+                        bsdp_fmv = np.matmul(transform_bsdp_foc, delta_beamshiftcoord)"""
+                        
                         ##Solve linear equations so that defocused image shift equals 0, as well as focused DP shift equals 0:
                         ##MIS1(DEF) deltaIS1 + MIS2(DEF) deltaIS2 = apmv (the defocused image movement should be apmv so that defocused image comes back to center)
                         ##MIS1 deltaIS1 + MIS2 deltaIS2 = 0 (the focused DP should stay at the same position)
@@ -301,26 +366,36 @@ class Experiment(object):
                         A = np.concatenate((a,b), axis = 0)
     
                         crystal_pos_dif = crystal_pos - appos0
+                        print(crystal_pos_dif)
                         apmv = -crystal_pos_dif
     
                         print("aperture movement: {}".format(apmv))
-    
+                        
                         x = np.linalg.solve(A,(apmv[0],apmv[1],0,0))
                         delta_imageshiftcoord = (x[0], x[1])
-    
                         delta_imageshift2coord = (x[2],x[3])
+                        
+                        # delta_imageshiftcoord = x[0:2].astype(int)
+                        # delta_imageshift2coord = x[2:4].astype(int)
+                        #x = np.linalg.solve(transform_imgshift,(apmv[0],apmv[1]))
+                        #delta_imageshiftcoord = (x[0], x[1])
+                        #delta_imageshift2coord = (0,0)
+
+                        #delta_imageshiftcoord = np.matmul(transform_imgshift,apmv)
+                        #delta_imageshift2coord = np.matmul(transform_imgshift2, (0,0))
+
                         print("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
                         self.logger.debug("delta imageshiftcoord: {}, delta imageshift2coord: {}".format(delta_imageshiftcoord, delta_imageshift2coord))
                         
-                        self.ctrl.imageshift.set(x = is_x0 + int(delta_imageshiftcoord[0]), y = is_y0 + int(delta_imageshiftcoord[1]))
-                        self.ctrl.imageshift2.set(x = is2_x0 + int(delta_imageshift2coord[0]), y = is2_y0 + int(delta_imageshift2coord[1]))
+                        self.ctrl.imageshift1.set(x = is_x0 - int(delta_imageshiftcoord[0]), y = is_y0 - int(delta_imageshiftcoord[1]))
+                        self.ctrl.imageshift2.set(x = is2_x0 - int(delta_imageshift2coord[0]), y = is2_y0 - int(delta_imageshift2coord[1]))
                         ## the two steps can take ~60 ms per step
                         
-                        is_x0 = is_x0 + int(delta_imageshiftcoord[0])
-                        is_y0 = is_y0 + int(delta_imageshiftcoord[1])
-                        is2_x0 = is2_x0 + int(delta_imageshift2coord[0])
-                        is2_y0 = is2_y0 + int(delta_imageshift2coord[1])
-                        #appos0 = crystal_pos
+                        is_x0 = is_x0 - int(delta_imageshiftcoord[0])
+                        is_y0 = is_y0 - int(delta_imageshiftcoord[1])
+                        is2_x0 = is2_x0 - int(delta_imageshift2coord[0])
+                        is2_y0 = is2_y0 - int(delta_imageshift2coord[1])
+                        appos0 = crystal_pos
         
                         next_interval = t_start + acquisition_time
                         # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
@@ -377,14 +452,23 @@ class Experiment(object):
                         buffer.append((i, img, h))
         
                     i += 1
+                    
+                clientsocket.send("s".encode())
+                buf = clientsocket.recv(1024)
+                receiving = pickle.loads(buf)
+                if abs(receiving['position'][3]) > 60:
+                    self.stopEvent.set()
                 
-            except:
+            except Exception as e:
+                print (e)
                 self.stopEvent.set()
 
         t1 = time.clock()
 
         self.ctrl.cam.unblock()
-
+        if self.mode == "auto_full":
+            self.ctrl.stageposition.stop_stagemovement()
+            
         if self.camtype == "simulate":
             self.endangle = self.startangle + np.random.random()*50
             camera_length = 300
@@ -399,6 +483,7 @@ class Experiment(object):
         # TODO: all the rest here is io+logistics, split off in to own function
 
         print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
+        #self.ctrl.stageposition.set_no_waiting(a = a_i)
         nframes = i + 1 # len(buffer) can lie in case of frame skipping
         osangle = abs(self.endangle - self.startangle) / nframes
         acquisition_time = (t1 - t0) / nframes
@@ -422,19 +507,19 @@ class Experiment(object):
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=camera_length,
-                 osangle=osangle,
-                 startangle=self.startangle,
-                 endangle=self.endangle,
-                 rotation_angle=rotation_angle,
+                 osc_angle=osangle,
+                 start_angle=self.startangle,
+                 end_angle=self.endangle,
+                 rotation_axis=rotation_angle,
                  acquisition_time=acquisition_time,
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
-        img_conv.writeTiff(self.pathtiff)
-        img_conv.writeIMG(self.pathsmv)
-        img_conv.ED3DCreator(self.pathred)
-        img_conv.MRCCreator(self.pathred)
-        img_conv.XDSINPCreator(self.pathsmv)
+        img_conv.tiff_writer(self.pathtiff)
+        img_conv.smv_writer(self.pathsmv)
+        img_conv.write_ed3d(self.pathred)
+        img_conv.mrc_writer(self.pathred)
+        img_conv.write_xds_inp(self.pathsmv)
         self.logger.info("XDS INP file created.")
 
         if image_buffer:

@@ -56,7 +56,7 @@ class JeolMicroscope(object):
         # get the JEOL COM library and create the TEM3 object
         temext = comtypes.client.GetModule(('{CE70FCE4-26D9-4BAB-9626-EC88DB7F6A0A}', 3, 0))
         self.tem3 = comtypes.client.CreateObject(temext.TEM3, comtypes.CLSCTX_ALL)
-        
+
         # initialize each interface from the TEM3 object
         # self.apt3 = self.tem3.CreateApt3()
         # self.camera3 = self.tem3.CreateCamera3()
@@ -298,6 +298,39 @@ class JeolMicroscope(object):
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
 
+    def setStagePosition_nw(self, x=None, y=None, z=None, a=None, b=None, wait=False):
+        if z is not None:
+            self.setStageZ(z, wait)
+        if a is not None:
+            self.setStageA(a, wait)
+        if b is not None:
+            self.setStageB(b, wait)
+
+        if (x is not None) and (y is not None):
+            self.setStageXY(x=x, y=y, wait=wait)
+        else:
+            if x is not None:
+                self.setStageX(x, wait)
+            if y is not None:
+                self.setStageY(y, wait)
+
+        if self.VERIFY_STAGE_POSITION:
+            nx, ny, nz, na, nb = self.getStagePosition()
+            if x is not None and abs(nx - x) > 150:
+                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx))
+            if y is not None and abs(ny - y) > 150:
+                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny))
+            if z is not None and abs(nz - z) > 500:
+                logger.warning("stage.z -> requested: {}, got: {}".format(z, nz))
+            if a is not None and abs(na - a) > 0.057:
+                logger.warning("stage.a -> requested: {}, got: {}".format(a, na))
+            if b is not None and abs(nb - b) > 0.057:
+                logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
+                
+    def stopStageMV(self):
+        self.stage3.Stop()
+        print("Goniometer stopped moving.")
+                 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""
         mode, name, result = self.eos3.GetFunctionMode()
