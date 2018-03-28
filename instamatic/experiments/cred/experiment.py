@@ -12,13 +12,21 @@ from pathlib import Path
 ACTIVATION_THRESHOLD = 0.2
 
 
+def print_and_log(msg, logger=None):
+    print(msg)
+    if logger:
+        logger.info(msg)
+
+
 class Experiment(object):
+    """mode: str, 'simulate', 'footless', None (default)"""
     def __init__(self, ctrl, 
         path=None, 
         log=None, 
         flatfield=None,
         exposure_time=0.5,
         unblank_beam=False,
+        mode=None,
         enable_image_interval=False,
         image_interval=99999,
         diff_defocus=0,
@@ -35,7 +43,9 @@ class Experiment(object):
         self.expt = exposure_time
         self.unblank_beam = unblank_beam
         self.logger = log
-        self.camtype = ctrl.cam.name
+        self.mode = mode
+        if ctrl.cam.name == "simulate":
+            self.mode = "simulate"
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
@@ -50,39 +60,78 @@ class Experiment(object):
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
             self.image_interval = image_interval
-            msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.expt_image} s)."
-            print(msg)
-            self.logger.info(msg)
+            print_and_log(f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.expt_image} s).", logger=self.logger)
         else:
             self.image_interval = 99999
 
-    def report_status(self):
-        self.diff_binsize = self.ctrl.cam.default_binsize
-        self.diff_brightness = self.ctrl.brightness.value
-        self.diff_spotsize = self.ctrl.spotsize
+    def log_start_status(self):
+        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.logger.info(f"Data recording started at: {self.now}")
+        self.logger.info(f"Data collection exposure time: {self.expt} s")
+        self.logger.info(f"Data saving path: {self.path}")
 
+    def log_end_status(self):
+        print_and_log(f"\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
+
+        self.logger.info(f"Data collection camera length: {self.camera_length} mm")
+
+        with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Data Collection Time: {self.now}", file=f)
+            print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
+            print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
+            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
+            print(f"Exposure Time: {self.expt:.3f} s", file=f)
+            print(f"Acquisition time: {self.acquisition_time:.3f} s", file=f)
+            print(f"Total time: {self.total_time:.3f} s", file=f)
+            print(f"Spot Size: {self.spotsize}", file=f)
+            print(f"Camera length: {self.camera_length} mm", file=f)
+            print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
+            print(f"Number of frames: {self.nframes_diff}", file=f)
+
+            if self.image_interval_enabled:
+                print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.expt_image} s).", file=f)
+                print(f"Number of images: {self.nframes_buffer}", file=f)
+
+    def setup_paths(self):
         print(f"\nOutput directory: {self.path}")
-        print(f"Diffraction : binsize = {self.diff_binsize}")
-        print(f"              exposure = {self.expt}")
-        print(f"              brightness = {self.diff_brightness}")
-        print(f"              spotsize = {self.diff_spotsize}")
-
-    def start_collection(self):
-        a = a0 = self.ctrl.stageposition.a
-        spotsize = self.ctrl.spotsize
-
         self.tiff_path = self.path / "tiff" if self.write_tiff else None
         self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
         self.mrc_path  = self.path / "RED"  if self.write_red else None
-              
-        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.logger.info(f"Data recording started at: {self.now}")
-        self.logger.info(f"Data saving path: {self.path}")
-        self.logger.info(f"Data collection exposure time: {self.expt} s")
-        self.logger.info(f"Data collection spot size: {spotsize}")
-        
-        # TODO: Mostly above is setup, split off into own function
 
+    def start_rotation(self):
+        a = self.ctrl.stageposition.a
+
+        if self.unblank_beam:
+            print("Unblanking beam")
+            self.ctrl.beamblank = False        
+            
+        if self.mode == "simulate":
+            start_angle = a
+            print("Data Recording started.")
+        
+        elif self.mode == "footless":
+            target = 60.0
+            target = target if (a < 0) else -target
+
+            start_angle = self.ctrl.stageposition.a
+            self.ctrl.stageposition.set(a=target, wait=False)
+        
+        else:
+            print("Waiting for rotation to start...", end=' ')
+            a0 = a
+            while abs(a - a0) < ACTIVATION_THRESHOLD:
+                a = self.ctrl.stageposition.a
+
+            print("Data Recording started.")
+            start_angle = a
+
+
+        return start_angle
+
+    def start_collection(self):
+        self.setup_paths()
+        self.log_start_status()
+        
         buffer = []
         image_buffer = []
 
@@ -94,26 +143,11 @@ class Experiment(object):
         image_interval = self.image_interval
         expt_image = self.expt_image
 
-        if self.unblank_beam:
-            print("Unblanking beam")
-            self.ctrl.beamblank = False
-
         self.ctrl.cam.block()
 
-        if self.camtype == "simulate":
-            self.start_angle = a
-        else:
-
-            self.start_angle = self.ctrl.stageposition.a
-            self.ctrl.tem.stage3.SetTiltXAngle(60)
-
-            # print("Waiting for rotation to start...", end=' ')
-            # while abs(a - a0) < ACTIVATION_THRESHOLD:
-                # a = self.ctrl.stageposition.a
-            # print("Data Recording started.")
+        self.start_angle = self.start_rotation()
 
         i = 1
-
 
         t0 = time.clock()
 
@@ -148,18 +182,19 @@ class Experiment(object):
 
         t1 = time.clock()
 
-        self.ctrl.stageposition.stop()
+        if self.mode == "footless":
+            self.ctrl.stageposition.stop()
 
         self.stopEvent.clear()
 
         self.ctrl.cam.unblock()
 
-        if self.camtype == "simulate":
+        if self.mode == "simulate":
             self.end_angle = self.start_angle + np.random.random()*50
-            camera_length = 300
+            self.camera_length = 300
         else:
             self.end_angle = self.ctrl.stageposition.a
-            camera_length = int(self.ctrl.magnification.get())
+            self.camera_length = int(self.ctrl.magnification.get())
 
         is_moving = bool(self.ctrl.stageposition.is_moving())
         self.logger.info(f"Experiment finished, stage is moving: {is_moving}")
@@ -172,49 +207,38 @@ class Experiment(object):
         if i == 1:
             return False
 
-        # TODO: all the rest here is io+logistics, split off in to own function
+        self.spotsize = self.ctrl.spotsize
+        self.nframes = i-1 # len(buffer) can lie in case of frame skipping
+        self.osc_angle = abs(self.end_angle - self.start_angle) / self.nframes
+        self.total_time = t1 - t0
+        self.acquisition_time = self.total_time / self.nframes
+        self.total_angle = abs(self.end_angle - self.start_angle)
 
-        nframes = i-1 # len(buffer) can lie in case of frame skipping
-        osc_angle = abs(self.end_angle - self.start_angle) / nframes
-        total_time = t1 - t0
-        acquisition_time = total_time / nframes
-        total_angle = abs(self.end_angle-self.start_angle)
-        print(f"\nRotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.4f})")
+        self.nframes_diff = len(buffer)
+        self.nframes_image = len(image_buffer)
 
-        self.logger.info(f"Data collection camera length: {camera_length} mm")
-        self.logger.info(f"Rotated {total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {nframes} frames (step: {osc_angle:.2f})")
-        
-        with open(self.path / "cRED_log.txt", "w") as f:
-            print(f"Data Collection Time: {self.now}", file=f)
-            print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
-            print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
-            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
-            print(f"Exposure Time: {self.expt:.3f} s", file=f)
-            print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
-            print(f"Total time: {total_time:.3f} s", file=f)
-            print(f"Spot Size: {spotsize}", file=f)
-            print(f"Camera length: {camera_length} mm", file=f)
-            print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
-            print(f"Number of frames: {len(buffer)}", file=f)
+        self.log_end_status()
 
-            if self.image_interval_enabled:
-                print(f"Image interval: every {image_interval} frames an image with defocus {diff_focus_defocused} (t={expt_image} s).", file=f)
-                print(f"Number of images: {len(image_buffer)}", file=f)
-
-        if nframes <= 3:
-            self.logger.info(f"Not enough frames collected. Data will not be written (nframes={nframes}).")
-            print(f"Data collection done. Not enough frames collected (nframes={nframes}).")
+        if self.nframes <= 3:
+            print_and_log(f"Not enough frames collected. Data will not be written (nframes={self.nframes}", logger=self.logger)
             return False
 
+        self.write_data(buffer)
+        self.write_image_data(image_buffer)
+
+        print("Data Collection and Conversion Done.")
+        return True
+
+    def write_data(self, buffer):
         rotation_axis = config.microscope.camera_rotation_vs_stage_xy
 
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
-                 camera_length=camera_length,
-                 osc_angle=osc_angle,
+                 camera_length=self.camera_length,
+                 osc_angle=self.osc_angle,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
                  rotation_axis=rotation_axis,
-                 acquisition_time=acquisition_time,
+                 acquisition_time=self.acquisition_time,
                  resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
@@ -234,13 +258,13 @@ class Experiment(object):
 
         img_conv.write_beam_centers(self.path)
 
-        if image_buffer:
+    def write_image_data(self, buffer):
+        if buffer:
             drc = self.path / "tiff_image"
             drc.mkdir(exist_ok=True)
-            while len(image_buffer) != 0:
-                i, img, h = image_buffer.pop(0)
+            while len(buffer) != 0:
+                i, img, h = buffer.pop(0)
                 fn = drc / f"{i:05d}.tiff"
                 write_tiff(fn, img, header=h)
 
-        print("Data Collection and Conversion Done.")
-        return True
+
