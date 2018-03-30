@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter.ttk import *
 import threading
 import os
+import pickle
+import socket
 
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
@@ -58,11 +60,17 @@ class ExperimentalautocRED(LabelFrame):
         self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
         
+        self.acquireTEMStatusButton = Button(frame, text = "Acquire TEM Params", command = self.acquire_Status)
+        self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
+        
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
         self.stopEvent = threading.Event()
+
+        self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clientsocket.connect(('localhost',8090))
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
@@ -156,6 +164,15 @@ class ExperimentalautocRED(LabelFrame):
         self.q.put(("toggle_difffocus2", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
         
+    def acquire_Status(self):
+        print("Acquiring status from the TEMWatcher server...")
+        self.clientsocket.send("s".encode())
+        print("Signal sent")
+        buf = self.clientsocket.recv(1024)
+        print("Signal received")
+        receiving = pickle.loads(buf)
+        print(receiving)
+            
 def toggle_difffocus2(controller, **kwargs):
     toggle = kwargs["toggle"]
 

@@ -118,6 +118,8 @@ class Experiment(object):
         
         clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientsocket.connect(('localhost',8090))
+        
+        print("cREDEXP_Client connected.")
             
         if self.mode == "auto" or self.mode == "auto_full":
 
@@ -456,7 +458,8 @@ class Experiment(object):
                 clientsocket.send("s".encode())
                 buf = clientsocket.recv(1024)
                 receiving = pickle.loads(buf)
-                if abs(receiving['position'][3]) > 60:
+                print(receiving)
+                if abs(receiving[3]) > 60:
                     self.stopEvent.set()
                 
             except Exception as e:
