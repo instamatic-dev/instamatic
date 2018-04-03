@@ -11,13 +11,14 @@ VERSION = (0, 6, 0)
 
 __version__ = "{}.{}.{}".format(*VERSION)
 __title__ = "instamatic"
-__long_title__ = "{} v{}".format(__title__, __version__)
+__long_title__ = f"{__title__} v{__version__}"
 __author__ = "Stef Smeets"
 __author_email__ = "stef.smeets@mmk.su.se"
 __description__ = "Python program to collect serial and rotation electron diffraction data"
 __license__ = "GPLv3"
 __url__ = "http://github.com/stefsmeets/instamatic"
-__citation__ = "S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, & W. Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389"
+__doi__ = "https://doi.org/10.5281/zenodo.1090388"
+__citation__ = f"S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, & W. Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. {__doi__}"
 
 def register_thank_you_message():
     import atexit

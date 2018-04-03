@@ -7,6 +7,6 @@ default_exposure: 0.1
 dimensions: [2048, 2048]
 name: orius
 possible_binsizes: [1, 2, 4]
-camera_rotation_vs_stage_xy: 0.899
+camera_rotation_vs_stage_xy: 0.925
 stretch_amplitude: 0
 stretch_azimuth: 0
