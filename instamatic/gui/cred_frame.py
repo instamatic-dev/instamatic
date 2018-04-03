@@ -3,6 +3,8 @@ from tkinter.ttk import *
 import threading
 from instamatic.utils.spinbox import Spinbox
 
+ENABLE_FOOTFREE_OPTION = True
+
 
 class ExperimentalcRED(LabelFrame):
     """docstring for ExperimentalSED"""
@@ -39,13 +41,15 @@ class ExperimentalcRED(LabelFrame):
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
-        Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky="ew", pady=10)
 
-        Label(frame, text="Max rotation:").grid(row=9, column=0, sticky="W")
-        self.e_max_rotation = Spinbox(frame, textvariable=self.var_max_rotation, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
-        self.e_max_rotation.grid(row=9, column=1, sticky="W", padx=10)
+        if ENABLE_FOOTFREE_OPTION:
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky="ew", pady=10)
+            
+            Label(frame, text="Rotate to:").grid(row=9, column=0, sticky="W")
+            self.e_max_rotation = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
+            self.e_max_rotation.grid(row=9, column=1, sticky="W", padx=10)
         
-        Checkbutton(frame, text="Footfree mode", variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky="W")
+            Checkbutton(frame, text="Footfree mode", variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -91,7 +95,7 @@ class ExperimentalcRED(LabelFrame):
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_exposure_time_image = DoubleVar(value=0.01)
 
-        self.var_max_rotation = DoubleVar(value=65.0)
+        self.var_footfree_rotate_to = DoubleVar(value=65.0)
         self.var_toggle_footfree = BooleanVar(value=False)
         self.mode = "regular"
 
@@ -144,6 +148,7 @@ class ExperimentalcRED(LabelFrame):
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
                    "mode": self.mode,
+                   "footfree_rotate_to": self.var_footfree_rotate_to.get(),
                    "write_tiff": self.var_save_tiff.get(),
                    "write_xds": self.var_save_xds.get(),
                    "write_dials": self.var_save_dials.get(),

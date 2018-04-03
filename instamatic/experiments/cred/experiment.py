@@ -27,7 +27,7 @@ class Experiment(object):
         exposure_time=0.5,
         unblank_beam=False,
         mode=None,
-        footfree_target=60.0,
+        footfree_rotate_to=60.0,
         enable_image_interval=False,
         image_interval=99999,
         diff_defocus=0,
@@ -50,7 +50,7 @@ class Experiment(object):
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
-        self.footfree_target = footfree_target
+        self.footfree_rotate_to = footfree_rotate_to
 
         self.diff_defocus = diff_defocus
         self.expt_image = exposure_time_image
@@ -94,7 +94,7 @@ class Experiment(object):
 
             if self.image_interval_enabled:
                 print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.expt_image} s).", file=f)
-                print(f"Number of images: {self.nframes_buffer}", file=f)
+                print(f"Number of images: {self.nframes_image}", file=f)
 
     def setup_paths(self):
         print(f"\nOutput directory: {self.path}")
@@ -115,11 +115,10 @@ class Experiment(object):
             print("Data Recording started.")
         
         elif self.mode == "footfree":
-            target = self.footfree_target
-            target = target if (a < 0) else -target
+            rotate_to = self.footfree_rotate_to
 
             start_angle = self.ctrl.stageposition.a
-            self.ctrl.stageposition.set(a=target, wait=False)
+            self.ctrl.stageposition.set(a=rotate_to, wait=False)
         
         else:
             print("Waiting for rotation to start...", end=' ')
@@ -143,8 +142,8 @@ class Experiment(object):
         if self.ctrl.mode != 'diff':
             self.ctrl.mode = 'diff'
 
-        diff_focus_proper = self.ctrl.difffocus.value
-        diff_focus_defocused = self.diff_defocus + diff_focus_proper
+        self.diff_focus_proper = self.ctrl.difffocus.value
+        self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         image_interval = self.image_interval
         expt_image = self.expt_image
 
@@ -161,9 +160,9 @@ class Experiment(object):
                 t_start = time.clock()
                 acquisition_time = (t_start - t0) / (i-1)
 
-                self.ctrl.difffocus.value = diff_focus_defocused
+                self.ctrl.difffocus.value = self.diff_focus_defocused
                 img, h = self.ctrl.getImage(expt_image, header_keys=None)
-                self.ctrl.difffocus.value = diff_focus_proper
+                self.ctrl.difffocus.value = self.diff_focus_proper
 
                 image_buffer.append((i, img, h))
 
