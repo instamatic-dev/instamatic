@@ -19,7 +19,7 @@ def print_and_log(msg, logger=None):
 
 
 class Experiment(object):
-    """mode: str, 'simulate', 'footless', None (default)"""
+    """mode: str, 'simulate', 'footfree', None (default)"""
     def __init__(self, ctrl, 
         path=None, 
         log=None, 
@@ -27,6 +27,7 @@ class Experiment(object):
         exposure_time=0.5,
         unblank_beam=False,
         mode=None,
+        footfree_target=60.0,
         enable_image_interval=False,
         image_interval=99999,
         diff_defocus=0,
@@ -48,6 +49,8 @@ class Experiment(object):
             self.mode = "simulate"
         self.stopEvent = stop_event
         self.flatfield = flatfield
+
+        self.footfree_target = footfree_target
 
         self.diff_defocus = diff_defocus
         self.expt_image = exposure_time_image
@@ -111,8 +114,8 @@ class Experiment(object):
             start_angle = a
             print("Data Recording started.")
         
-        elif self.mode == "footless":
-            target = 60.0
+        elif self.mode == "footfree":
+            target = self.footfree_target
             target = target if (a < 0) else -target
 
             start_angle = self.ctrl.stageposition.a
@@ -184,7 +187,7 @@ class Experiment(object):
 
         t1 = time.clock()
 
-        if self.mode == "footless":
+        if self.mode == "footfree":
             self.ctrl.stageposition.stop()
 
         self.stopEvent.clear()
