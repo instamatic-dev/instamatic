@@ -68,9 +68,14 @@ class ExperimentalautocRED(LabelFrame):
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
         self.stopEvent = threading.Event()
-
-        self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.clientsocket.connect(('localhost',8090))
+        
+        try:
+            self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.clientsocket.connect(('localhost',8090))
+        except ConnectionRefusedError:
+            ## In principle should try to open another cmder, and run instamatic.watcher
+            print("No server detected. Run instamatic.watcher first.")
+            pass
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
@@ -210,8 +215,6 @@ def acquire_data_autocRED(controller, **kwargs):
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
 
     cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
-    
-    cexp.report_status()
     cexp.start_collection()
     
     stop_event.clear()

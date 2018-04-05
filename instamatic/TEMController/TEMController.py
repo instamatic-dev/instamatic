@@ -26,6 +26,9 @@ def initialize(camera=None, **kwargs):
     if microscope_id == "jeol":
         from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
+    elif microscope_id == "fei_simu":
+        from .FEI_microscope_Simu import FEIMicroscope_Simu
+        tem = FEIMicroscope_Simu()
     elif microscope_id == "simulate":
         from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()

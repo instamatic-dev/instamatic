@@ -6,32 +6,36 @@ import socket
 import pickle
 import logging
 import datetime
+import comtypes
+from instamatic import config
+
 
 def getTEMStatus(ctrl):
-    #print("Background ctrl object is reading TEM...")
+    print("Background ctrl object is reading TEM...")
     TEMStatus = ctrl.to_dict()
-    #TEMStatus = {'position': ctrl.stageposition.get(),
-    #             'magnification': ctrl.magnification.get()}
     return TEMStatus
-    #rand = np.random.random((1,3))
-    #return rand
     
 def getgonioStatus(ctrl):
-    #print("Background ctrl object is reading gonio...")
+    print("Background ctrl object is reading gonio...")
     gonioStatus = ctrl.stageposition.get()
-    
     return gonioStatus
 
+
 class TemReader(threading.Thread):
-    def __init__(self, ctrl, log):
+    def __init__(self, log):
         super().__init__()
-        self.ctrl = ctrl
+
         self.log = log
         ## log file can be used to get the statistics of the TEM states.
-        self.TEMStatus = getTEMStatus(self.ctrl)
-        self.gonioStatus = getgonioStatus(self.ctrl)
     
     def run(self):
+        try:
+            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+        except WindowsError:
+            comtypes.CoInitialize()
+
+        self.ctrl = TEMController.initialize(camera = 'disable')
+
         while True:
             self.TEMStatus = getTEMStatus(self.ctrl)
             self.gonioStatus = getgonioStatus(self.ctrl)
@@ -40,7 +44,6 @@ class TemReader(threading.Thread):
             time.sleep(1)
         
 def accept_connection(connection, tem_reader):
-    
     while 1:
         buf = connection.recv(1024)
         if len(buf) > 0:
@@ -54,9 +57,6 @@ def accept_connection(connection, tem_reader):
     connection.close()
     
 def main():
-    ctrl = TEMController.initialize(camera = 'disable')
-    
-    from instamatic import config
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_TEMWatcher_{date}.log"
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
@@ -66,7 +66,7 @@ def main():
     log = logging.getLogger(__name__)
     log.info("Instamatic watcher running in background. started")
     
-    tem_reader = TemReader(ctrl, log)
+    tem_reader = TemReader(log)
     tem_reader.start()
     
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -76,7 +76,7 @@ def main():
     while 1:
         connection, address = serversocket.accept()
         print(address)
-        threading.Thread(target=accept_connection, args=(connection,tem_reader, )).start()
+        threading.Thread(target=accept_connection, args=(connection, tem_reader, )).start()
     
     serversocket.close()
     
