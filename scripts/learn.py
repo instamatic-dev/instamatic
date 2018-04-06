@@ -14,9 +14,8 @@ def main(file_pattern):
     for fn in tqdm.tqdm(fns):
         img, h = read_hdf5(fn)
         
-        is_isolated = h["crystal_is_isolated"]
+        is_isolated = h.get("crystal_is_isolated", True)  # default to true if this information is not present
         if not is_isolated:
-            # print fn, "not isolated"
             continue
     
         frame = int(fn[-12:-8])
@@ -29,7 +28,11 @@ def main(file_pattern):
             # print fn, "prediction too low", prediction
             continue
 
-        size = h["total_area_micrometer"] / h["crystal_clusters"] # micrometer^2
+        try:
+            size = h["total_area_micrometer"] / h["crystal_clusters"] # micrometer^2
+        except KeyError:
+            # old data formats don't have this information
+            size = 0.0
     
         try:
             dx, dy = h["exp_hole_offset"]
