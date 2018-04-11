@@ -317,4 +317,4 @@ Alternatively, the latest development version can always be obtained via:
 
 If you found this software useful, please consider citing the software:
 
-Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2017, December 5). Instamatic (Version 0.4). Zenodo. http://doi.org/10.5281/zenodo.1090389
+Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1090388
