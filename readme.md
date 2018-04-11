@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/85934744.svg)](https://zenodo.org/badge/latestdoi/85934744)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1217026.svg)](https://doi.org/10.5281/zenodo.1217026)
 
 # Instamatic
 
@@ -317,4 +317,4 @@ Alternatively, the latest development version can always be obtained via:
 
 If you found this software useful, please consider citing the software:
 
-Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1090388
+Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026

@@ -97,12 +97,12 @@ class About(LabelFrame):
         Label(frame, text="").grid(row=5, column=0, sticky="W")
 
         Label(frame, text="Source code:").grid(row=10, column=0, sticky="W", padx=10)
-        link = Link_Button(frame, text="http://github.com/stefsmeets/instamatic", action=self.link_github)
+        link = Link_Button(frame, text=version.__url__, action=self.link_github)
         link.grid(row=10, column=1, sticky="W")
         Label(frame, text="").grid(row=12, column=0, sticky="W")
 
         Label(frame, text="Manual:").grid(row=20, column=0, sticky="W", padx=10)
-        link = Link_Button(frame, text="http://github.com/stefsmeets/instamatic", action=self.link_github)
+        link = Link_Button(frame, text=version.__url__, action=self.link_github)
         link.grid(row=20, column=1, sticky="W")
         Label(frame, text="").grid(row=22, column=0, sticky="W")
 
@@ -116,11 +116,11 @@ class About(LabelFrame):
 
     def link_github(self, event=None):
         import webbrowser
-        webbrowser.open_new(r"http://www.github.com/stefsmeets/instamatic")
+        webbrowser.open_new(version.__url__)
 
     def link_manual(self, event=None):
         import webbrowser
-        webbrowser.open_new(r"http://www.github.com/stefsmeets/instamatic")
+        webbrowser.open_new(version.__url__)
 
 
 from .base_module import BaseModule
