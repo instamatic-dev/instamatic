@@ -5,6 +5,7 @@ import os, sys
 import glob
 from instamatic.config import scripts_drc
 from pathlib import Path
+from collections import namedtuple
 
 
 class DebugFrame(LabelFrame):
@@ -35,6 +36,26 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
+        Label(frame, text="Indexing server for DIALS").grid(row=1, column=0, sticky="W")
+
+        Label(frame, text="Port").grid(row=2, column=0, sticky="W")
+
+        self.e_port = Entry(frame, textvariable=self.var_server_port)
+        self.e_port.grid(row=2, column=1, sticky="EW")
+
+        self.BrowseButton = Button(frame, text="Register", command=self.register_server)
+        self.BrowseButton.grid(row=2, column=2, sticky="EW")
+        
+        self.RunButton = Button(frame, text="Kill", command=self.kill_server)
+        self.RunButton.grid(row=2, column=3, sticky="EW")
+        
+        Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky="ew", pady=10)
+
+        frame.columnconfigure(1, weight=1)
+        frame.pack(side="top", fill="x", padx=10, pady=10)
+
+        frame = Frame(self)
+
         self.resetTriggers = Button(frame, text="Report status", command=self.report_status)
         self.resetTriggers.grid(row=0, column=0, sticky="EW")
 
@@ -59,6 +80,23 @@ class DebugFrame(LabelFrame):
         self.script_file = StringVar()
         self.scripts = {}
         self.scripts_drc = scripts_drc  # pathlib.Path object
+
+        self.var_register_server = BooleanVar(value=False)
+        self.var_server_port = IntVar(value=8089)
+        self.var_server_host = StringVar(value='localhost')
+
+    def kill_server(self):
+        self.q.put(("autoindex", { "task": "kill" } ))
+        self.triggerEvent.set()
+
+    def register_server(self):
+        port = self.var_server_port.get()
+        host = self.var_server_host.get()
+        
+        print(f"Register server: {host}:{port}")
+
+        self.q.put(("autoindex", { "task": "register", "port": port, "host": host } ))
+        self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
         for fn in self.scripts_drc.rglob("*.py"):
@@ -134,9 +172,41 @@ def debug(controller, **kwargs):
         exec(open(script).read())
 
 
+def autoindex(controller, **kwargs):
+    import socket
+
+    task = kwargs.get("task")
+    if task == "register":
+        Server = namedtuple("Server", ("host port bufsize"))
+
+        host = kwargs.get("host")
+        port = kwargs.get("port")
+
+        controller.index_server = Server(host, port, 1024)
+        return
+
+    elif task == "run":
+        payload = bytes(kwargs.get("path"))
+
+    elif task == "kill":
+        payload = b"kill"
+    
+    server = controller.index_server
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print("Sending job to server...", end=" ")
+        s.connect((server.host, server.port))
+        s.send(payload)
+        data = s.recv(server.bufsize).decode()
+        print(data)
+
+    if task == "kill":
+        del controller.index_server
+
+
 from .base_module import BaseModule
 module = BaseModule("debug", "debug", True, DebugFrame, commands={
-    "debug": debug
+    "debug": debug,
+    "autoindex": autoindex
     })
 
 

@@ -104,9 +104,9 @@ class MachineLearningFrame(LabelFrame):
             print("No row selected")
             return
 
-        self.q.put(("ctrl", { "task": "stageposition", 
-                        "x": float(stage_x),
-                        "y": float(stage_y) } ))
+        self.q.put(("ctrl", { "task": "stageposition.set", 
+                              "x": float(stage_x),
+                              "y": float(stage_y) } ))
         self.triggerEvent.set()
 
     def show_image(self):
