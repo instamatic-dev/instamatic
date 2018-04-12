@@ -1,0 +1,3 @@
+2018-04-12 12:10:32,959 | gui:159 | INFO | Instamatic.gui started
+2018-04-12 12:10:32,971 | camera:242 | INFO | Camera simulate initialized
+2018-04-12 12:10:57,866 | camera:307 | INFO | Connection to camera simulate released

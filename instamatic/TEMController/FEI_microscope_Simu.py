@@ -1,4 +1,5 @@
 import comtypes.client
+import atexit
 import time
 import random
 
@@ -25,7 +26,7 @@ NTRLMAPPING = {
 
 FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
 
-# constants for Jeol Hex value
+# constants for FEI Hex value, (copied from JEOL now;) needs to be confirmed
 ZERO = 32768
 MAX = 65535
 MIN = 0
@@ -40,8 +41,12 @@ class FEIMicroscope_Simu(object):
         except WindowsError:
             comtypes.CoInitialize()
             
+        print("BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU")
+        ## tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
         self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
+        ## tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
+        ## tom interfaces the Instrument, Projection objects
         self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
         
         self.stage = self.tem.Stage
@@ -59,11 +64,11 @@ class FEIMicroscope_Simu(object):
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
         logger.info("Microscope connection established")
-        
+        atexit.register(self.releaseConnection)
+
         self.name = name
         self.FUNCTION_MODES = FUNCTION_MODES
 
-        # self.FunctionMode_value = random.randint(0, 2)
         self.FunctionMode_value = 0
 
         self.DiffractionFocus_value = random.randint(MIN, MAX)
@@ -261,7 +266,7 @@ class FEIMicroscope_Simu(object):
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
-        """???"""
+        """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}"""
         if isinstance(value, str):
             try:
                 value = FUNCTION_MODES.index(value)
@@ -288,6 +293,8 @@ class FEIMicroscope_Simu(object):
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
+        comtypes.CoUninitialize()
+        logger.info("Connection to microscope released")
         print("Connection to microscope released")
 
     def isBeamBlanked(self, value):
@@ -327,6 +334,7 @@ class FEIMicroscope_Simu(object):
         self.tom.Illumination.SpotsizeIndex = value
 
     def getScreenPosition(self):
+        ## TO BE CHECKED: does FEI tem have a screenposition object??
         return self.screenposition_value
 
     def setScreenPosition(self, value):
@@ -363,12 +371,13 @@ class FEIMicroscope_Simu(object):
         self.setMagnification(value)
     
     def getBrightness(self):
+        ## returned value is the DIAMETER of the illuminated area
         return self.tom.Illumination.IlluminatedAreaDiameter
 
     def setBrightness(self, value):
         self.tom.Illumination.IlluminatedAreaDiameter = value
         
     def getFunctionMode(self):
-        """mag1, mag2, lowmag, samag, diff"""
+        """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
         mode = self.FunctionMode_value
         return FUNCTION_MODES[mode]
