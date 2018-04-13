@@ -21,3 +21,5 @@ EMCamera
 *.bpc
 *.dacs
 *.bak
+*.log
+*.prefs
