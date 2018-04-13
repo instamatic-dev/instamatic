@@ -3,7 +3,7 @@ import datetime
 from tkinter import *
 import numpy as np
 import time
-from . import ImgConversion
+from instamatic.processing import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from pathlib import Path
@@ -238,4 +238,4 @@ class Experiment(object):
                 write_tiff(fn, img, header=h)
 
         print("Data Collection and Conversion Done.")
-        return True
+        self.stopEvent.clear()

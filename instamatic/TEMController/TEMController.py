@@ -9,8 +9,10 @@ from instamatic import config
 
 def initialize(camera=None, **kwargs):
     """
-    camera: callable
+    camera: callable or str
         Pass custom camera initializer (callable) + kwargs
+        Pass None to use default camera (read from config)
+        Pass 'disable' to disable camera interface
     """
     import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
     isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
@@ -26,6 +28,9 @@ def initialize(camera=None, **kwargs):
     if microscope_id == "jeol":
         from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
+    elif microscope_id == "fei_simu":
+        from .fei_simu_microscope import FEISimuMicroscope
+        tem = FEISimuMicroscope()
     elif microscope_id == "simulate":
         from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()
@@ -34,9 +39,12 @@ def initialize(camera=None, **kwargs):
 
     if camera:
         # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
-        if not callable(camera):
+        if camera == 'disable':
+            cam = None
+        elif not callable(camera):
             raise RuntimeError(f"Camera {camera} is not callable")
-        cam = camera(cam=camera_id, **kwargs)
+        else:
+            cam = camera(cam=camera_id, **kwargs)
     elif isInteractive:
         cam = Camera(kind=camera_id)
     elif not isInteractive:
@@ -243,7 +251,6 @@ class ImageShift1(Deflector):
         self._getter = self._tem.getImageShift1
         self.key = "IS1"
 
-
 class ImageShift2(Deflector):
     """docstring for ImageShift"""
     def __init__(self, tem):
@@ -260,6 +267,8 @@ class StagePosition(object):
         self._tem = tem
         self._setter = self._tem.setStagePosition
         self._getter = self._tem.getStagePosition
+        self._setter_nw = self._tem.setStagePosition_nw
+        self._stop_stagemv = self._tem.stopStageMV
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -271,6 +280,12 @@ class StagePosition(object):
 
     def set(self, x=None, y=None, z=None, a=None, b=None):
         self._setter(x, y, z, a, b)
+        
+    def set_no_waiting(self, x=None, y=None, z=None, a=None, b=None, wait=False):
+        self._setter_nw(x, y, z, a, b, wait)
+        
+    def stop_stagemovement(self):
+        self._stop_stagemv()
 
     def get(self):
         return self._getter()

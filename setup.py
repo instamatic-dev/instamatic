@@ -8,7 +8,7 @@ import os
 exec(open('instamatic/version.py').read())  # grab __version__, __author__, etc.
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return open(os.path.join(os.path.dirname(__file__), fname), encoding = 'utf-8').read()
 
 try:
     long_description = read('README.rst')
@@ -87,6 +87,8 @@ setup(
             # explore
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',
+            # server
+            'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
         ]
     }
 )

@@ -1,5 +1,12 @@
-from instamatic import config
+import comtypes.client
+import atexit
+import time
+import random
 
+import logging
+logger = logging.getLogger(__name__)
+
+from instamatic import config
 NTRLMAPPING = {
    "GUN1" : 0,
    "GUN2" : 1,
@@ -17,47 +24,51 @@ NTRLMAPPING = {
    "ILS" : 13
 }
 
-FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
+FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
 
-# constants for Jeol Hex value
+# constants for FEI Hex value, (copied from JEOL now;) needs to be confirmed
 ZERO = 32768
 MAX = 65535
 MIN = 0
 
-
-class SimuMicroscope(object):
-    """docstring for microscope"""
-    def __init__(self, name="simulate"):
-        super(SimuMicroscope, self).__init__()
-        import random
+class FEISimuMicroscope(object):
+    """docstring for FEI microscope"""
+    def __init__(self, name = "fei_simu"):
+        super(FEISimuMicroscope, self).__init__()
         
-        self.Brightness_value = random.randint(MIN, MAX)
-
-        self.GunShift_x = random.randint(MIN, MAX)
-        self.GunShift_y = random.randint(MIN, MAX)
-
-        self.GunTilt_x = random.randint(MIN, MAX)
-        self.GunTilt_y = random.randint(MIN, MAX)
-
-        self.BeamShift_x = random.randint(MIN, MAX)
-        self.BeamShift_y = random.randint(MIN, MAX)
-
-        self.BeamTilt_x = random.randint(MIN, MAX)
-        self.BeamTilt_y = random.randint(MIN, MAX)
-
-        self.ImageShift1_x = random.randint(MIN, MAX)
-        self.ImageShift1_y = random.randint(MIN, MAX)
+        try:
+            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+        except WindowsError:
+            comtypes.CoInitialize()
+            
+        print("BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU")
+        ## tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
+        self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
+        ## tecnai does similar things as tem; the difference is not clear for now
+        self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
+        ## tom interfaces the Instrument, Projection objects
+        self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
         
-        self.ImageShift2_x = random.randint(MIN, MAX)
-        self.ImageShift2_y = random.randint(MIN, MAX)
+        self.stage = self.tem.Stage
+        self.proj = self.tom.Projection
+        t = 0
+        while True:
+            ht = self.tem.GUN.HTValue
+            if ht > 0:
+                break
+            time.sleep(1)
+            t += 1
+            if t > 3:
+                print("Waiting for microscope, t = {}s".format(t))
+            if t > 30:
+                raise RuntimeError("Cannot establish microscope connection (timeout).")
 
-        self.StagePosition_x = random.randint(-100000, 100000)
-        self.StagePosition_y = random.randint(-100000, 100000)
-        self.StagePosition_z = random.randint(-10000,  10000)
-        self.StagePosition_a = random.randint(-40, 40)
-        self.StagePosition_b = random.randint(-40, 40)
+        logger.info("Microscope connection established")
+        atexit.register(self.releaseConnection)
 
-        # self.FunctionMode_value = random.randint(0, 2)
+        self.name = name
+        self.FUNCTION_MODES = FUNCTION_MODES
+
         self.FunctionMode_value = 0
 
         self.DiffractionFocus_value = random.randint(MIN, MAX)
@@ -70,7 +81,6 @@ class SimuMicroscope(object):
         self.MAGNIFICATION_MODES = config.microscope.specifications["MAGNIFICATION_MODES"]
         self.CAMERALENGTHS       = config.microscope.specifications["CAMERALENGTHS"]
 
-        self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
 
         self.ZERO = ZERO
@@ -102,109 +112,79 @@ class SimuMicroscope(object):
         self.objectivelensecoarse_value = random.randint(MIN, MAX)
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
-
-    def load_specifications(self):
-        config.load_microscope(self.name)
-
-        self.MAGNIFICATIONS      = config.CFG.microscope.specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = config.CFG.microscope.specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = config.CFG.microscope.specifications["CAMERALENGTHS"]
-
-    def getBrightness(self):
-        return self.Brightness_value
-
-    def setBrightness(self, value):
-        self.Brightness_value = value
-
-    def getMagnification(self):
-        if self.getFunctionMode() == "diff":
-            return self.Magnification_value_diff
-        else:
-            return self.Magnification_value
-
-    def setMagnification(self, value):
-        if value not in self.MAGNIFICATIONS:
-            value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
         
-        # get best mode for magnification
-        for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
-            v = self.MAGNIFICATION_MODES[k]
-            if v <= value:
-                new_mode = k
-
-        current_mode = self.getFunctionMode()
-        if current_mode != new_mode:
-            self.setFunctionMode(new_mode)
-
-        # calculate index
-        ## i = 0-24 for lowmag
-        ## i = 0-29 for mag1
-        selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
-                
-        if self.getFunctionMode() == "diff":
-            self.Magnification_value_diff = value
-        else:
-            self.Magnification_value = value
-
-    def getMagnificationIndex(self):
-        value = self.getMagnification()
-        return self.MAGNIFICATIONS.index(value)
-
-    def setMagnificationIndex(self, index):
-        value = self.MAGNIFICATIONS[index]
-        self.setMagnification(value)
-
+    def getHTValue(self):
+        return self.tem.GUN.HTValue
+    
+    def setHTValue(self, htvalue):
+        self.tem.GUN.HTValue = htvalue
+        
+    def getMagnification(self):
+        return self.proj.Magnification
+    
+    def setMagnification(self, value):
+        ## Apparently they categorize magnification values into 1,2,3,...
+        try:
+            self.proj.MagnificationIndex = value
+        except ValueError:
+            pass
+        
+        
+    def getStagePosition(self):
+        return self.stage.Position.X, self.stage.Position.Y, self.stage.Position.Z, self.stage.Position.A, self.stage.Position.B
+    
     def getGunShift(self):
-        return self.GunShift_x, self.GunShift_y
-
+        x = self.tem.GUN.Shift.X
+        y = self.tem.GUN.Shift.Y
+        return x, y 
+    
     def setGunShift(self, x, y):
-        self.GunShift_x = x
-        self.GunShift_y = y
+        ## Does not really work in this case
+        self.tem.GUN.Shift.X = x
+        self.tem.GUN.Shift.Y = y
     
     def getGunTilt(self):
-        return self.GunTilt_x, self.GunTilt_y 
+        x = self.tem.GUN.Tilt.X
+        y = self.tem.GUN.Tilt.Y
+        return x, y
     
     def setGunTilt(self, x, y):
-        self.GunTilt_x = x
-        self.GunTilt_y = y
-
+        self.tem.GUN.Tilt.X = x
+        self.tem.GUN.Tilt.Y = y
+        
     def getBeamShift(self):
-        return self.BeamShift_x, self.BeamShift_y
-
+        x = self.tom.Illumination.BeamShiftPhysical.X
+        y = self.tom.Illumination.BeamShiftPhysical.Y
+        return x, y
+    
     def setBeamShift(self, x, y):
-        self.BeamShift_x = x
-        self.BeamShift_y = y
-
+        self.tom.Illumination.BeamShiftPhysical.X = x
+        self.tom.Illumination.BeamShiftPhysical.Y = y
+        
     def getBeamTilt(self):
-        return self.BeamTilt_x, self.BeamTilt_y
+        ## Not sure if beamalignmenttilt.x is the right thing to use
+        x = self.tom.Illumination.BeamAlignmentTilt.X
+        y = self.tom.Illumination.BeamAlignmentTilt.Y
+        return x, y
     
     def setBeamTilt(self, x, y):
-        self.BeamTilt_x = x
-        self.BeamTilt_y = y
+        ## Not sure if beamalignmenttilt.x is the right thing to use
+        self.tom.Illumination.BeamAlignmentTilt.X = x
+        self.tom.Illumination.BeamAlignmentTilt.Y = y
 
     def getImageShift1(self):
-        return self.ImageShift1_x, self.ImageShift1_y
+        return self.tom.Projection.ImageBeamShift.X, self.tom.Projection.ImageBeamShift.Y
 
     def setImageShift1(self, x, y):
-        self.ImageShift1_x = x
-        self.ImageShift1_y = y
+        self.tom.Projection.ImageBeamShift.X = x
+        self.tom.Projection.ImageBeamShift.Y = y
 
+    ## FEI Does NOT have image shift 2?
     def getImageShift2(self):
-        return self.ImageShift2_x, self.ImageShift2_y
-
-    def setImageShift1(self, x, y):
-        self.ImageShift1_x = x
-        self.ImageShift1_y = y
-        
-    def getImageShift2(self):
-        return self.ImageShift2_x, self.ImageShift2_y
+        return 0, 0
 
     def setImageShift2(self, x, y):
-        self.ImageShift2_x = x
-        self.ImageShift2_y = y
-
-    def getStagePosition(self):
-        return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
+        return 0
 
     def isStageMoving(self):
         return False
@@ -214,42 +194,42 @@ class SimuMicroscope(object):
             time.sleep(delay)
 
     def setStageX(self, value):
-        self.StagePosition_x = value
+        self.stage.Position.X = value
 
     def setStageY(self, value):
-        self.StagePosition_y = value
+        self.stage.Position.Y = value
 
     def setStageZ(self, value):
-        self.StagePosition_z = value
+        self.stage.Position.Z = value
 
     def setStageA(self, value):
-        self.StagePosition_a = value
+        self.stage.Position.A = value
 
     def setStageB(self, value):
-        self.StagePosition_b = value
+        self.stage.Position.B = value
         
     def setStageX_nw(self, value, wait = True):
-        self.StagePosition_x = value
+        self.stage.Position.X = value
         if not wait:
             print("Not waiting for stage movement to be done.")
 
     def setStageY_nw(self, value, wait = True):
-        self.StagePosition_y = value
+        self.stage.Position.Y = value
         if not wait:
             print("Not waiting for stage movement to be done.")
 
     def setStageZ_nw(self, value, wait = True):
-        self.StagePosition_z = value
+        self.stage.Position.Z = value
         if not wait:
             print("Not waiting for stage movement to be done.")
 
     def setStageA_nw(self, value, wait = True):
-        self.StagePosition_a = value
+        self.stage.Position.A = value
         if not wait:
             print("Not waiting for stage movement to be done.")
 
     def setStageB_nw(self, value, wait = True):
-        self.StagePosition_b = value
+        self.stage.Position.B = value
         if not wait:
             print("Not waiting for stage movement to be done.")
 
@@ -281,12 +261,12 @@ class SimuMicroscope(object):
         print("Goniometer stopped moving.")
 
     def getFunctionMode(self):
-        """mag1, mag2, lowmag, samag, diff"""
-        mode = self.FunctionMode_value
+        """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}"""
+        mode = self.tom.Projection.Submode
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
-        """mag1, mag2, lowmag, samag, diff"""
+        """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}"""
         if isinstance(value, str):
             try:
                 value = FUNCTION_MODES.index(value)
@@ -295,12 +275,16 @@ class SimuMicroscope(object):
         self.FunctionMode_value = value
 
     def getDiffFocus(self):
-        return self.DiffractionFocus_value
+        return self.tom.Projection.Defocus
 
     def setDiffFocus(self, value):
         """IC1"""
-        self.DiffractionFocus_value = value
+        self.tom.Projection.Defocus = value
 
+    def resetDiffFocus(self):
+        ## Will raise Attribute Error
+        self.tom.Projection.ResetDefocus()
+        
     def getDiffShift(self):
         return self.DiffractionShift_x, self.DiffractionShift_y
 
@@ -309,6 +293,8 @@ class SimuMicroscope(object):
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
+        comtypes.CoUninitialize()
+        logger.info("Connection to microscope released")
         print("Connection to microscope released")
 
     def isBeamBlanked(self, value):
@@ -319,39 +305,41 @@ class SimuMicroscope(object):
         self.beamblank = mode
 
     def getCondensorLensStigmator(self):
-        return self.condensorlensstigmator_x, self.condensorlensstigmator_y
+        return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
 
     def setCondensorLensStigmator(self, x, y):
-        self.condensorlensstigmator_x = x
-        self.condensorlensstigmator_y = y
+        self.tom.Illumination.CondenserStigmator.X = x
+        self.tom.Illumination.CondenserStigmator.Y = y
         
     def getIntermediateLensStigmator(self):
-        return self.intermediatelensstigmator_x, self.intermediatelensstigmator_y
+        """diffraction stigmator"""
+        return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x, y):
-        self.intermediatelensstigmator_x = x
-        self.intermediatelensstigmator_y = y
+        self.tom.Illumination.DiffractionStigmator.X = x
+        self.tom.Illumination.DiffractionStigmator.Y = y
 
     def getObjectiveLensStigmator(self):
-        return self.objectivelensstigmator_x, self.objectivelensstigmatir_y
+        return self.tom.Illumination.ObjectiveStigmator.X, self.tom.Illumination.ObjectiveStigmator.Y
 
     def setObjectiveLensStigmator(self, x, y):
-        self.objectivelensstigmator_x = x
-        self.objectivelensstigmator_y = y
+        self.tom.Illumination.ObjectiveStigmator.X = x
+        self.tom.Illumination.ObjectiveStigmator.Y = y
 
     def getSpotSize(self):
         """0-based indexing for GetSpotSize, add 1 for consistency"""
-        return self.spotsize
+        return self.tom.Illumination.SpotsizeIndex
+    
+    def setSpotSize(self, value):
+        self.tom.Illumination.SpotsizeIndex = value
 
     def getScreenPosition(self):
+        ## TO BE CHECKED: does FEI tem have a screenposition object??
         return self.screenposition_value
 
     def setScreenPosition(self, value):
         """value = 'up' or 'down'"""
         self.screenposition_value = value
-
-    def setSpotSize(self, value):
-        self.spotsize = value
 
     def getCondensorLens1(self):
         return self.condensorlens1_value
@@ -370,3 +358,26 @@ class SimuMicroscope(object):
     
     def getObjectiveMiniLens(self):
         return self.objectiveminilens_value
+    
+    def getMagnificationIndex(self):
+        try:
+            value = self.getMagnification()
+            return self.MAGNIFICATIONS.index(value)
+        except ValueError:
+            pass
+
+    def setMagnificationIndex(self, index):
+        value = self.MAGNIFICATIONS[index]
+        self.setMagnification(value)
+    
+    def getBrightness(self):
+        ## returned value is the DIAMETER of the illuminated area
+        return self.tom.Illumination.IlluminatedAreaDiameter
+
+    def setBrightness(self, value):
+        self.tom.Illumination.IlluminatedAreaDiameter = value
+        
+    def getFunctionMode(self):
+        """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
+        mode = self.FunctionMode_value
+        return FUNCTION_MODES[mode]
