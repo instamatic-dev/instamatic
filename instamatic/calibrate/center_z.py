@@ -1,26 +1,33 @@
 import numpy as np
 import time
 
-def reject_outlier(data):
+def reject_outlier(data, m=2):
+    """Reject outliers if they are outside of m standard deviations from
+    the mean value"""
     m = 2
     u = np.mean(data)
     s = np.std(data)
     filtered = [e for e in data if (u - m*s < e < u + m*s)]
     return filtered
 
+
 def center_z_height(ctrl):
-    """http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf"""
+    """Automated routine to find the z-height
+
+    Koster, A. J., et al. "Automated microscopy for electron tomography." 
+    Ultramicroscopy 46.1-4 (1992): 207-227.
+    http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
+    """
     from instamatic.processing.cross_correlate import cross_correlate
 
     print("Finding eucentric height...")
     if ctrl.mode == 'diff':
         ctrl.mode = 'samag'
 
-    z0 = ctrl.stageposition.z
+    z2 = z0 = ctrl.stageposition.z
     a0 = ctrl.stageposition.a
     z = []
     d = []
-    z2 = z0
     ctrl.stageposition.z = z0 - 2000
     ctrl.stageposition.z = z0 - 1000
     ctrl.stageposition.z = z0

@@ -9,8 +9,10 @@ from instamatic import config
 
 def initialize(camera=None, **kwargs):
     """
-    camera: callable
+    camera: callable or str
         Pass custom camera initializer (callable) + kwargs
+        Pass None to use default camera (read from config)
+        Pass 'disable' to disable camera interface
     """
     import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
     isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
@@ -27,8 +29,8 @@ def initialize(camera=None, **kwargs):
         from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
     elif microscope_id == "fei_simu":
-        from .FEI_microscope_Simu import FEIMicroscope_Simu
-        tem = FEIMicroscope_Simu()
+        from .fei_simu_microscope import FEISimuMicroscope
+        tem = FEISimuMicroscope()
     elif microscope_id == "simulate":
         from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()

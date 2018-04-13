@@ -1,9 +1,7 @@
 import os
 import datetime
 import logging
-from tkinter import *
 import numpy as np
-import glob
 import time
 from . import ImgConversion
 from instamatic import config
@@ -13,14 +11,14 @@ from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
 from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2
 from instamatic.calibrate.center_z import center_z_height
-from instamatic.processing.fast_finder import fast_finder
+from instamatic.tools import find_defocused_image_center
 import pickle
-import threading
 from pathlib import Path
 import socket
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
+
 
 def load_IS_Calibrations(imageshift, ctrl, diff_defocus = 0):
     if imageshift == 'IS1':
@@ -40,17 +38,30 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus = 0):
         satisfied = "x"
         while satisfied == "x":
             if imageshift == 'IS1':
-                transform_imgshift = Calibrate_Imageshift(self.ctrl, diff_defocus, stepsize = 3000)
+                transform_imgshift = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = 3000)
             elif imageshift == 'IS2':
-                transform_imgshift = Calibrate_Imageshift2(self.ctrl, diff_defocus, stepsize = 2000)
+                transform_imgshift = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = 2000)
             with open(file, 'wb') as f:
                 pickle.dump(transform_imgshift, f)
-            satisfied = input("{}, defocus = {} calibration done. Press Enter to continue. Press x to redo calibration.".format(imageshift, diff_defocus))
+            satisfied = input(f"{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.")
             
     return transform_imgshift
-        
+
+
 class Experiment(object):
-    def __init__(self, ctrl, exposure_time, exposure_time_image, stop_event, enable_image_interval, enable_autotrack, enable_fullacred, unblank_beam=False, path=None, log=None, flatfield=None, image_interval = 99999, diff_defocus = 0):
+    def __init__(self, ctrl, 
+                       exposure_time, 
+                       exposure_time_image, 
+                       stop_event, 
+                       enable_image_interval, 
+                       enable_autotrack, 
+                       enable_fullacred, 
+                       unblank_beam=False, 
+                       path=None, 
+                       log=None, 
+                       flatfield=None, 
+                       image_interval=99999, 
+                       diff_defocus=0):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
@@ -176,7 +187,7 @@ class Experiment(object):
             print("Imageshift1: {}, {}".format(is_x0, is_y0))
             print("Imageshift2: {}, {}".format(is2_x0, is2_y0))
             
-            crystal_pos, r = fast_finder(img0) #fast_finder crystal position (y,x)
+            crystal_pos, r = find_defocused_image_center(img0) #find_defocused_image_center crystal position (y,x)
             crystal_pos = crystal_pos[::-1]
             if r[0] <= r[1]:
                 window_size = r[0]*2
@@ -189,7 +200,7 @@ class Experiment(object):
             
             appos0 = crystal_pos
             print("appos0:{}".format(appos0))
-            self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
+            self.logger.debug("crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
             
             a1 = int(crystal_pos[0]-window_size/2)
             b1 = int(crystal_pos[0]+window_size/2)
@@ -237,10 +248,10 @@ class Experiment(object):
                         image_buffer.append((i, img, h))
                         print("{} saved to image_buffer".format(i))
     
-                        crystal_pos, r = fast_finder(img)
+                        crystal_pos, r = find_defocused_image_center(img)
                         crystal_pos = crystal_pos[::-1]
                         
-                        self.logger.debug("crystal_pos: {} by fast_finder.".format(crystal_pos))
+                        self.logger.debug("crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
                         print(crystal_pos)
                         a1 = int(crystal_pos[0]-window_size/2)
                         b1 = int(crystal_pos[0]+window_size/2)
@@ -264,7 +275,7 @@ class Experiment(object):
                         img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
                         self.ctrl.difffocus.value = diff_focus_proper
                         
-                        crystal_pos, r = fast_finder(img)
+                        crystal_pos, r = find_defocused_image_center(img)
                         crystal_pos = crystal_pos[::-1]
                         print("crystalpos:{}".format(crystal_pos))
                         

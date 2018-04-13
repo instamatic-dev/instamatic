@@ -4,7 +4,7 @@ import time
 import random
 
 import logging
-logger = logging.getLogger(__name__);
+logger = logging.getLogger(__name__)
 
 from instamatic import config
 NTRLMAPPING = {
@@ -31,10 +31,10 @@ ZERO = 32768
 MAX = 65535
 MIN = 0
 
-class FEIMicroscope_Simu(object):
+class FEISimuMicroscope(object):
     """docstring for FEI microscope"""
     def __init__(self, name = "fei_simu"):
-        super(FEIMicroscope_Simu, self).__init__()
+        super(FEISimuMicroscope, self).__init__()
         
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)

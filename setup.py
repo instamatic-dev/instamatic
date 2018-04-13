@@ -87,7 +87,8 @@ setup(
             # explore
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',
-            'instamatic.watcher                       = instamatic.processing.TEMbkgWatcher:main',
+            # server
+            'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
         ]
     }
 )

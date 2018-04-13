@@ -201,9 +201,8 @@ def acquire_data_autocRED(controller, **kwargs):
     from instamatic.experiments import autocRED
     
     expdir = controller.module_io.get_new_experiment_directory()
-    if not os.path.exists(expdir):
-        os.makedirs(expdir)
-    
+    expdir.mkdir(exist_ok=True, parents=True)
+
     exposure_time = kwargs["exposure_time"]
     exposure_time_image = kwargs["exposure_time_image"]
     unblank_beam = kwargs["unblank_beam"]
