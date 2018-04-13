@@ -182,6 +182,10 @@ class CameraDLL(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
+        # work-around to amke sure everything looks the same
+        if self.name == "timepix":
+            arr = np.rot90(arr, k=3)
+
         if fastmode:
             return arr
         else:

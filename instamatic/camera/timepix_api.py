@@ -255,9 +255,7 @@ class EMCameraObj(object):
         out = arrangeData(arr)
         correctCross(out, factor=self.correction_ratio)
 
-        # TODO: enable this to make sure images look like in DM/SoPhy
-        # but turn off rot90 in VideoStream, and adjust flatfield
-        # out = np.rot90(out, k=3)
+        out = np.rot90(out, k=3)
 
         return out
 

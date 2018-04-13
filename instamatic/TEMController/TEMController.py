@@ -267,8 +267,6 @@ class StagePosition(object):
         self._tem = tem
         self._setter = self._tem.setStagePosition
         self._getter = self._tem.getStagePosition
-        self._setter_nw = self._tem.setStagePosition_nw
-        self._stop_stagemv = self._tem.stopStageMV
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -278,14 +276,9 @@ class StagePosition(object):
     def name(self):
         return self.__class__.__name__
 
-    def set(self, x=None, y=None, z=None, a=None, b=None):
-        self._setter(x, y, z, a, b)
-        
-    def set_no_waiting(self, x=None, y=None, z=None, a=None, b=None, wait=False):
-        self._setter_nw(x, y, z, a, b, wait)
-        
-    def stop_stagemovement(self):
-        self._stop_stagemv()
+    def set(self, x=None, y=None, z=None, a=None, b=None, wait=True):
+        """wait: bool, block until stage movement is complete"""
+        self._setter(x, y, z, a, b, wait=wait)
 
     def get(self):
         return self._getter()
@@ -350,6 +343,10 @@ class StagePosition(object):
 
     def is_moving(self):
         return self._tem.isStageMoving()
+
+    def stop(self):
+        """This will stop the stage movement if `wait=False` is passed to StagePosition.set"""
+        self._tem.stopStage()
 
 
 class TEMController(object):

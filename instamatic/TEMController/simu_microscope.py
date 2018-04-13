@@ -213,72 +213,55 @@ class SimuMicroscope(object):
         while self.isStageMoving():
             time.sleep(delay)
 
-    def setStageX(self, value):
+    def setStageX(self, value, wait=True):
         self.StagePosition_x = value
+        if True:
+            self.waitForStage()
 
-    def setStageY(self, value):
+    def setStageY(self, value, wait=True):
         self.StagePosition_y = value
+        if True:
+            self.waitForStage()
 
-    def setStageZ(self, value):
+    def setStageZ(self, value, wait=True):
         self.StagePosition_z = value
+        if True:
+            self.waitForStage()
 
-    def setStageA(self, value):
+    def setStageA(self, value, wait=True):
         self.StagePosition_a = value
+        if True:
+            self.waitForStage()
 
-    def setStageB(self, value):
+    def setStageB(self, value, wait=True):
         self.StagePosition_b = value
-        
-    def setStageX_nw(self, value, wait = True):
-        self.StagePosition_x = value
-        if not wait:
-            print("Not waiting for stage movement to be done.")
+        if True:
+            self.waitForStage()
 
-    def setStageY_nw(self, value, wait = True):
-        self.StagePosition_y = value
-        if not wait:
-            print("Not waiting for stage movement to be done.")
+    def setStageXY(self, x, y, wait=True):
+        self.StagePosition_x = x
+        self.StagePosition_y = y
+        if wait:
+            self.waitForStage()
 
-    def setStageZ_nw(self, value, wait = True):
-        self.StagePosition_z = value
-        if not wait:
-            print("Not waiting for stage movement to be done.")
+    def stopStage(self):
+        pass
 
-    def setStageA_nw(self, value, wait = True):
-        self.StagePosition_a = value
-        if not wait:
-            print("Not waiting for stage movement to be done.")
-
-    def setStageB_nw(self, value, wait = True):
-        self.StagePosition_b = value
-        if not wait:
-            print("Not waiting for stage movement to be done.")
-
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True):
         if z is not None:
-            self.setStageZ(z)
+            self.setStageZ(z, wait=wait)
         if a is not None:
-            self.setStageA(a)
+            self.setStageA(a, wait=wait)
         if b is not None:
-            self.setStageB(b)
-        if x is not None:
-            self.setStageX(x)
-        if y is not None:
-            self.setStageY(y)
-            
-    def setStagePosition_nw(self, x=None, y=None, z=None, a=None, b=None, wait=False):
-        if z is not None:
-            self.setStageZ_nw(z, wait)
-        if a is not None:
-            self.setStageA_nw(a, wait)
-        if b is not None:
-            self.setStageB_nw(b, wait)
-        if x is not None:
-            self.setStageX_nw(x, wait)
-        if y is not None:
-            self.setStageY_nw(y, wait)
-            
-    def stopStageMV(self):
-        print("Goniometer stopped moving.")
+            self.setStageB(b, wait=wait)
+
+        if (x is not None) and (y is not None):
+            self.setStageXY(x=x, y=y, wait=wait)
+        else:
+            if x is not None:
+                self.setStageX(x, wait=wait)     
+            if y is not None:
+                self.setStageY(y, wait=wait)
 
     def getFunctionMode(self):
         """mag1, mag2, lowmag, samag, diff"""

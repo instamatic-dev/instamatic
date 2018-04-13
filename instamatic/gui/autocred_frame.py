@@ -68,14 +68,6 @@ class ExperimentalautocRED(LabelFrame):
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
         self.stopEvent = threading.Event()
-        
-        try:
-            self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.clientsocket.connect(('localhost',8090))
-        except ConnectionRefusedError:
-            ## In principle should try to open another cmder, and run instamatic.watcher
-            print("No server detected. Run instamatic.watcher first.")
-            pass
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
@@ -94,7 +86,6 @@ class ExperimentalautocRED(LabelFrame):
         self.q = q
 
     def start_collection(self):
-        # TODO: make a pop up window with the STOP button?
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
         self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
@@ -152,7 +143,7 @@ class ExperimentalautocRED(LabelFrame):
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
-    ##Focused beam, CC, Calibration for beam shift        
+        # Focused beam, CC, Calibration for beam shift        
         
     def fullacred(self):
         enable = self.var_enable_fullacred.get()
@@ -166,36 +157,26 @@ class ExperimentalautocRED(LabelFrame):
         toggle = self.var_toggle_diff_defocus.get()
         difffocus = self.var_diff_defocus.get()
 
-        self.q.put(("toggle_difffocus2", {"value": difffocus, "toggle": toggle} ))
+        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
         
     def acquire_Status(self):
-        print("Acquiring status from the TEMWatcher server...")
-        self.clientsocket.send("s".encode())
-        print("Signal sent")
-        buf = self.clientsocket.recv(1024)
-        print("Signal received")
-        receiving = pickle.loads(buf)
-        print(receiving)
-            
-def toggle_difffocus2(controller, **kwargs):
-    toggle = kwargs["toggle"]
-
-    if toggle:
-        print("Proper:", controller.ctrl.difffocus)
         try:
-            controller._difffocus_proper = controller.ctrl.difffocus.value
-        except ValueError:
-            controller.ctrl.mode_diffraction()
-            controller._difffocus_proper = controller.ctrl.difffocus.value
+            host, port = 'localhost', 8090
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsocket:
+                clientsocket.connect((host, port))
+                print("Acquiring status from the TEMWatcher server...")
+                clientsocket.send("s".encode())
+                print("Signal sent")
+                buf = clientsocket.recv(1024)
+                print("Signal received")
+                receiving = pickle.loads(buf)
+                print(receiving)
+        except ConnectionRefusedError:
+            # In principle should try to open another cmder, and run instamatic.watcher
+            print("No server detected. Run instamatic.watcher first.")
 
-        value = controller._difffocus_proper + kwargs["value"]
-        print(f"Defocusing from {controller._difffocus_proper} to {value}")
-    else:
-        value = controller._difffocus_proper
-
-    controller.ctrl.difffocus.set(value=value)
-    
+     
 def acquire_data_autocRED(controller, **kwargs):
     controller.log.info("Starting automatic cRED experiment")
     from instamatic.experiments import autocRED

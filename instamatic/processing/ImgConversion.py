@@ -8,6 +8,8 @@ from instamatic.processing.stretch_correction import apply_stretch_correction
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from pathlib import Path
+from math import cos, pi
+
 
 import collections
 
@@ -15,24 +17,46 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def export_dials_variables(path, *, sequence=(), missing=()):
+def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
+    if invert:
+        rotation_axis += np.pi
+
+    rot_x = cos(rotation_axis)
+    rot_y = cos(rotation_axis+np.pi/2)
+    rot_z = 0
+
+    if setting == 'dials':
+        return rot_x, -rot_y, rot_z
+    elif setting == 'xds':
+        return rot_x, rot_y, rot_z
+    else:
+        raise ValueError("Must be one of {'dials', 'xds'}")
+
+
+def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
     import io
 
     scanranges = find_subranges(sequence)
     
     scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
     excludeimages = ",".join((str(n) for n in missing))
+
+    if rotation_xyz:
+        rot_x, rot_y, rot_z = rotation_xyz
     
     # newline='\n' to have unix line endings
     with open(path / "dials_variables.sh", "w",  newline='\n') as f:
         print(f"#!/usr/bin/env bash", file=f)
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
+        if rotation_xyz:
+            print(f"rotation_axis='geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}'", file=f)
         print("#", file=f)
         print("# To run:", file=f)
         print("#     source dials_variables.sh", file=f)
         print("#", file=f)
         print("# and:", file=f)
+        print("#     dials.import directory=data $rotation_axis", file=f)
         print("#     dials.find_spots datablock.json $scan_range", file=f)
         print("#     dials.integrate $exclude_images refined.pickle refined.json", file=f)
         print("#", file=f)
@@ -42,10 +66,13 @@ def export_dials_variables(path, *, sequence=(), missing=()):
         print("", file=f)
         print(f"set scan_range={scanrange}", file=f)
         print(f"set exclude_images=exclude_images={excludeimages}", file=f)
+        if rotation_xyz:
+            print(f"set rotation_axis=geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}", file=f)
         print("", file=f)
         print(":: To run:", file=f)
         print("::     call dials_variables.bat", file=f)
         print("::", file=f)
+        print("::     dials.import directory=data %%rotation_axis%%", file=f)
         print("::     dials.find_spots datablock.json %%scan_range%%", file=f)
         print("::     dials.integrate %%exclude_images%% refined.pickle refined.json", file=f)
 
@@ -218,7 +245,10 @@ class ImgConversion(object):
         observed_range = self.observed_range
         self.missing_range = self.missing_range
 
-        export_dials_variables(smv_path, sequence=observed_range, missing=self.missing_range)
+        invert_rotation_axis = self.start_angle > self.end_angle
+        rotation_xyz = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis, setting='dials')
+
+        export_dials_variables(smv_path, sequence=observed_range, missing=self.missing_range, rotation_xyz=rotation_xyz)
 
         path = smv_path / self.smv_subdrc
 
@@ -356,15 +386,13 @@ class ImgConversion(object):
         
     def write_xds_inp(self, path):
         from .XDS_template import XDS_template
-        from math import cos, pi
 
         path.mkdir(exist_ok=True)
 
         nframes = max(self.complete_range)
-        rotation_axis = self.rotation_axis # radians
 
-        if self.start_angle > self.end_angle:
-            rotation_axis += np.pi
+        invert_rotation_axis = self.start_angle > self.end_angle
+        rot_x, rot_y, rot_z = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis)
 
         shape_x, shape_y = self.data_shape
 
@@ -394,9 +422,9 @@ class ImgConversion(object):
             QY=self.physical_pixelsize,
             osc_angle=self.osc_angle,
             calib_osc_angle=self.rotation_speed * self.acquisition_time,
-            rot_x=cos(rotation_axis),
-            rot_y=cos(rotation_axis+np.pi/2),
-            rot_z=0.0
+            rot_x=rot_x,
+            rot_y=rot_y,
+            rot_z=rot_z
             )
        
         with open(path / 'XDS.INP','w') as f:

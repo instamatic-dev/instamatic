@@ -168,7 +168,7 @@ class Experiment(object):
 
             write_mrc(fp_mrc, new_img)
 
-        rotation_angle = config.microscope.camera_rotation_vs_stage_xy
+        rotation_angle = config.camera.camera_rotation_vs_stage_xy
         pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length]
 
         write_ED3D(path, fns, rotation_angle=rotation_angle,

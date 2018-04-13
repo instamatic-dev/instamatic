@@ -3,6 +3,8 @@ from tkinter.ttk import *
 import threading
 from instamatic.utils.spinbox import Spinbox
 
+ENABLE_FOOTFREE_OPTION = False
+
 
 class ExperimentalcRED(LabelFrame):
     """docstring for ExperimentalSED"""
@@ -16,8 +18,8 @@ class ExperimentalcRED(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
-        self.exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
-        self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
+        exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
+        exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
         
@@ -40,6 +42,16 @@ class ExperimentalcRED(LabelFrame):
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
+
+        if ENABLE_FOOTFREE_OPTION:
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky="ew", pady=10)
+            
+            Label(frame, text="Rotate to:").grid(row=9, column=0, sticky="W")
+            self.e_max_rotation = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
+            self.e_max_rotation.grid(row=9, column=1, sticky="W", padx=10)
+        
+            Checkbutton(frame, text="Footfree mode", variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky="W")
+
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
         self.lb_coll2 = Label(frame, text="")
@@ -50,11 +62,11 @@ class ExperimentalcRED(LabelFrame):
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
-        Label(frame, text="Select output formats:").grid(row=5, columnspan=4, sticky="EW")
-        Checkbutton(frame, text=".tiff", variable=self.var_save_tiff).grid(row=10, column=0, sticky="EW")
-        Checkbutton(frame, text="XDS (.smv)", variable=self.var_save_xds).grid(row=10, column=1, sticky="EW")
-        Checkbutton(frame, text="DIALS (.smv)", variable=self.var_save_dials).grid(row=10, column=2, sticky="EW")
-        Checkbutton(frame, text="REDp (.mrc)", variable=self.var_save_red).grid(row=10, column=3, sticky="EW")
+        Label(frame, text="Select output formats:").grid(row=5, columnspan=2, sticky="EW")
+        Checkbutton(frame, text=".tiff", variable=self.var_save_tiff).grid(row=5, column=2, sticky="EW")
+        Checkbutton(frame, text="XDS (.smv)", variable=self.var_save_xds).grid(row=5, column=3, sticky="EW")
+        Checkbutton(frame, text="DIALS (.smv)", variable=self.var_save_dials).grid(row=6, column=2, sticky="EW")
+        Checkbutton(frame, text="REDp (.mrc)", variable=self.var_save_red).grid(row=6, column=3, sticky="EW")
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(1, weight=1)
         frame.grid_columnconfigure(2, weight=1)
@@ -84,6 +96,10 @@ class ExperimentalcRED(LabelFrame):
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_exposure_time_image = DoubleVar(value=0.01)
 
+        self.var_footfree_rotate_to = DoubleVar(value=65.0)
+        self.var_toggle_footfree = BooleanVar(value=False)
+        self.mode = "regular"
+
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_xds = BooleanVar(value=True)
         self.var_save_dials = BooleanVar(value=True)
@@ -99,11 +115,14 @@ class ExperimentalcRED(LabelFrame):
             self.var_toggle_diff_defocus.set(False)
             self.toggle_diff_defocus()
 
-
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
-        self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        if self.mode == "footfree":
+            self.lb_coll1.config(text="Data collection has started.")
+            self.lb_coll2.config(text="Click STOP COLLECTION to end the experiment.")
+        else:
+            self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
+            self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
         self.parent.bind_all("<space>", self.stop_collection)
 
@@ -129,6 +148,8 @@ class ExperimentalcRED(LabelFrame):
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
+                   "mode": self.mode,
+                   "footfree_rotate_to": self.var_footfree_rotate_to.get(),
                    "write_tiff": self.var_save_tiff.get(),
                    "write_xds": self.var_save_xds.get(),
                    "write_dials": self.var_save_dials.get(),
@@ -150,6 +171,15 @@ class ExperimentalcRED(LabelFrame):
             self.c_toggle_defocus.config(state=DISABLED)     
         
 
+    def toggle_footfree(self):
+        enable = self.var_toggle_footfree.get()
+        if enable:
+            self.mode = "footfree"
+            self.e_max_rotation.config(state=NORMAL)
+        else:
+            self.mode == "regular"
+            self.e_max_rotation.config(state=DISABLED)
+
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
         difffocus = self.var_diff_defocus.get()
@@ -162,7 +192,6 @@ def toggle_difffocus(controller, **kwargs):
     toggle = kwargs["toggle"]
 
     if toggle:
-        print("Proper:", controller.ctrl.difffocus)
         try:
             controller._difffocus_proper = controller.ctrl.difffocus.value
         except ValueError:
@@ -185,8 +214,7 @@ def acquire_data_cRED(controller, **kwargs):
     expdir.mkdir(exist_ok=True, parents=True)
     
     cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
-    
-    cexp.report_status()
+
     success = cexp.start_collection()
 
     if not success:
