@@ -72,9 +72,9 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
         print(":: To run:", file=f)
         print("::     call dials_variables.bat", file=f)
         print("::", file=f)
-        print("::     dials.import directory=data %%rotation_axis%%", file=f)
-        print("::     dials.find_spots datablock.json %%scan_range%%", file=f)
-        print("::     dials.integrate %%exclude_images%% refined.pickle refined.json", file=f)
+        print("::     dials.import directory=data %rotation_axis%", file=f)
+        print("::     dials.find_spots datablock.json %scan_range%", file=f)
+        print("::     dials.integrate %exclude_images% refined.pickle refined.json", file=f)
 
 
 def get_calibrated_rotation_speed(val):
