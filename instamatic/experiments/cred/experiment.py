@@ -146,9 +146,8 @@ class Experiment(object):
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         expt_image = self.expt_image
 
-        self.ctrl.cam.block()
-
         self.start_angle = self.start_rotation()
+        self.ctrl.cam.block()
 
         i = 1
 
