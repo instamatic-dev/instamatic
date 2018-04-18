@@ -36,22 +36,38 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
-        Label(frame, text="Indexing server for DIALS").grid(row=1, column=0, sticky="W")
+        Label(frame, text="Indexing server for DIALS").grid(row=2, column=0, sticky="W")
 
-        Label(frame, text="Port").grid(row=2, column=0, sticky="W")
+        Label(frame, text="Port").grid(row=2, column=1, sticky="W", padx=5)
 
-        self.e_port = Entry(frame, textvariable=self.var_server_port)
-        self.e_port.grid(row=2, column=1, sticky="EW")
+        self.e_port = Entry(frame, textvariable=self.var_server_port, width=10)
+        self.e_port.grid(row=2, column=2, sticky="EW")
 
         self.BrowseButton = Button(frame, text="Register", command=self.register_server)
-        self.BrowseButton.grid(row=2, column=2, sticky="EW")
+        self.BrowseButton.grid(row=2, column=3, sticky="EW")
         
         self.RunButton = Button(frame, text="Kill", command=self.kill_server)
-        self.RunButton.grid(row=2, column=3, sticky="EW")
+        self.RunButton.grid(row=2, column=4, sticky="EW")
         
-        Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky="ew", pady=10)
+        frame.columnconfigure(0, weight=1)
+        frame.pack(side="top", fill="x", padx=10, pady=10)
 
-        frame.columnconfigure(1, weight=1)
+        frame = Frame(self)
+
+        Label(frame, text="Collect flatfield").grid(row=2, column=0, sticky="W")
+
+        Label(frame, text="Frames").grid(row=2, column=1, sticky="W", padx=5)
+
+        self.e_ff_frames = Entry(frame, textvariable=self.var_ff_frames, width=10)
+        self.e_ff_frames.grid(row=2, column=2, sticky="EW")
+
+        self.ff_darkfield = Checkbutton(frame, text="Darkfield", variable=self.var_ff_darkfield)
+        self.ff_darkfield.grid(row=2, column=3, sticky="EW", padx=5)
+        
+        self.RunFlatfield = Button(frame, text="Run", command=self.run_flatfield_collection)
+        self.RunFlatfield.grid(row=2, column=4, sticky="EW")
+        
+        frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
@@ -84,6 +100,9 @@ class DebugFrame(LabelFrame):
         self.var_register_server = BooleanVar(value=False)
         self.var_server_port = IntVar(value=8089)
         self.var_server_host = StringVar(value='localhost')
+
+        self.var_ff_frames = IntVar(value=100)
+        self.var_ff_darkfield = BooleanVar(value=False)
 
     def kill_server(self):
         self.q.put(("autoindex", { "task": "kill" } ))
@@ -149,6 +168,10 @@ class DebugFrame(LabelFrame):
         self.q.put(("debug", { "task": "run_script", "script": script } ))
         self.triggerEvent.set()
 
+    def run_flatfield_collection(self):
+        self.q.put(("flatfield", { "task": "collect", "frames": self.var_ff_frames.get(), "collect_darkfield": self.var_ff_darkfield.get() } ))
+        self.triggerEvent.set()
+
 
 def debug(controller, **kwargs):
     task = kwargs.pop("task")
@@ -203,10 +226,21 @@ def autoindex(controller, **kwargs):
         del controller.index_server
 
 
+def collect_flatfield(controller, **kwargs):
+    from instamatic.processing import flatfield
+
+    workdir = controller.module_io.get_working_directory()
+    drc = workdir / "flatfield"
+    drc.mkdir(exist_ok=True, parents=True)
+
+    flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
+
+
 from .base_module import BaseModule
-module = BaseModule("debug", "debug", True, DebugFrame, commands={
+module = BaseModule("debug", "expert", True, DebugFrame, commands={
     "debug": debug,
-    "autoindex": autoindex
+    "autoindex": autoindex,
+    "flatfield": collect_flatfield
     })
 
 
