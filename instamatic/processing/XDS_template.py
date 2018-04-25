@@ -35,9 +35,9 @@ STARTING_FRAME= 1
 !MAX_CELL_AXIS_ERROR=         !0.03 is default
 !MAX_CELL_ANGLE_ERROR=        !2.0  is default
 
-!TEST_RESOLUTION_RANGE=       !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
-!MIN_RFL_Rmeas=               !50 is default - used in the CORRECT step for identification of possible space groups.
-!MAX_FAC_Rmeas=               !2.0 is default - used in the CORRECT step for identification of possible space groups.
+TEST_RESOLUTION_RANGE=10. 1.0 !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
+!MIN_RFL_Rmeas=50             !50 is default - used in the CORRECT step for identification of possible space groups.
+!MAX_FAC_Rmeas=2.0            !2.0 is default - used in the CORRECT step for identification of possible space groups.
 
 ! ********** Detector hardware **********
 
@@ -57,7 +57,7 @@ UNTRUSTED_RECTANGLE= 0 517 255 262
 !VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=  !6000 30000 is default, for excluding shaded parts of the detector.
 !MINIMUM_ZETA=                             !0.05 is default
  
-INCLUDE_RESOLUTION_RANGE= {dmax:.2f} {dmin:.2f}
+INCLUDE_RESOLUTION_RANGE= 20 0.8
 
 !Ice Ring exclusion, important for data collected using cryo holders
 !EXCLUDE_RESOLUTION_RANGE= 3.93 3.87       !ice-ring at 3.897 Angstrom

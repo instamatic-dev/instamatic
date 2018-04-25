@@ -100,7 +100,6 @@ class ImgConversion(object):
                  end_angle,                  # degrees, end angle of the rotation
                  rotation_axis,              # radians, specifies the position of the rotation axis
                  acquisition_time,           # seconds, acquisition time (exposure time + overhead)
-                 resolution_range=(20, 0.8), # reciprocal angstrong (dmax, dmin)
                  flatfield='flatfield.tiff'  
                  ):
         flatfield, h = read_tiff(flatfield)
@@ -145,10 +144,11 @@ class ImgConversion(object):
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.rotation_axis = rotation_axis
-        self.dmax, self.dmin = resolution_range
         
         self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
+
+        self.do_stretch_correction = True
 
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
@@ -167,8 +167,8 @@ class ImgConversion(object):
 
         return avg_center, std_center
 
-    def fixStretchCorrection(self, image, directXY):
-        center = np.copy(directXY)
+    def apply_stretch_correction(self, image, center):
+        center = np.copy(center)
         
         azimuth   = self.stretch_azimuth
         amplitude = self.stretch_amplitude
@@ -284,7 +284,8 @@ class ImgConversion(object):
 
         beam_center = h["beam_center"]
 
-        img = self.fixStretchCorrection(img, beam_center)
+        if self.do_stretch_correction:
+            img = self.apply_stretch_correction(img, beam_center)
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
@@ -333,7 +334,8 @@ class ImgConversion(object):
 
         fn = path / f"{i:05d}.mrc"
 
-        img = self.fixStretchCorrection(img, beam_center)
+        if self.do_stretch_correction:
+            img = self.apply_stretch_correction(img, beam_center)
         # flip up/down because RED reads images from the bottom left corner
         # for RED these need to be as integers
 
@@ -373,12 +375,9 @@ class ImgConversion(object):
         ed3d.write("FILELIST\n")
     
         for i in self.observed_range:
-
-            img = self.data[i]
-            h = self.headers[i]
-
             fn = "{:05d}.mrc".format(i)
-            ed3d.write("FILE {fn}    {ang}    0    {ang}\n".format(fn=fn, ang=self.start_angle+sign*self.osc_angle*i))
+            angle = self.start_angle+sign*self.osc_angle*i
+            ed3d.write(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}\n")
         
         ed3d.write("ENDFILELIST")
         ed3d.close()
@@ -409,8 +408,6 @@ class ImgConversion(object):
             exclude=exclude,
             starting_angle=self.start_angle,
             wavelength=self.wavelength,
-            dmin=self.dmin,
-            dmax=self.dmax,
             # reverse XY coordinates for XDS
             origin_x=self.mean_beam_center[1],
             origin_y=self.mean_beam_center[0],
