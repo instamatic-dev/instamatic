@@ -509,6 +509,10 @@ class TEMController(object):
 
         # print self
 
+    def getRawImage(self, exposure=0.5, binsize=1):
+        """Simplified function equivalent to `getImage` that only returns the raw data array"""
+        return self.cam.getImage(t=exposure, binsize=binsize)
+
     def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False, header_keys="all"):
         """Retrieve image as numpy array from camera
 
