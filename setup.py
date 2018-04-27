@@ -89,6 +89,7 @@ setup(
             'instamatic.viewer                        = scripts.viewer:main',
             # server
             'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
+            'instamatic.temserver                     = instamatic.server.tem_server:main',
         ]
     }
 )
