@@ -25,7 +25,12 @@ def initialize(camera=None, **kwargs):
     print("Microscope:", microscope_id)
     print("Camera    :", camera_id)
 
-    if microscope_id == "jeol":
+    use_server = config.cfg.use_server
+
+    if use_server:
+        from .server_microscope import ServerMicroscope
+        tem = ServerMicroscope(microscope_id)
+    elif microscope_id == "jeol":
         from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
     elif microscope_id == "fei_simu":
@@ -508,6 +513,10 @@ class TEMController(object):
                 func(v)
 
         # print self
+
+    def getRawImage(self, exposure=0.5, binsize=1):
+        """Simplified function equivalent to `getImage` that only returns the raw data array"""
+        return self.cam.getImage(t=exposure, binsize=binsize)
 
     def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False, header_keys="all"):
         """Retrieve image as numpy array from camera

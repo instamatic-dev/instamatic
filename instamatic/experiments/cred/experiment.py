@@ -74,7 +74,7 @@ class Experiment(object):
         self.logger.info(f"Data saving path: {self.path}")
 
     def log_end_status(self):
-        print_and_log(f"\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
+        print_and_log(f"Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
         print_and_log(f"Stage moved from {self.start_xy} to {self.end_xy}, drift: {self.start_xy - self.end_xy}", logger=self.logger)
 
         self.logger.info(f"Data collection camera length: {self.camera_length} mm")
@@ -89,6 +89,7 @@ class Experiment(object):
             print(f"Total time: {self.total_time:.3f} s", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
             print(f"Camera length: {self.camera_length} mm", file=f)
+            print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes_diff}", file=f)
 
@@ -105,10 +106,6 @@ class Experiment(object):
     def start_rotation(self):
         stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
         self.start_xy = np.array([stage_x, stage_y])
-
-        if self.unblank_beam:
-            print("Unblanking beam")
-            self.ctrl.beamblank = False        
 
         if self.mode == "simulate":
             start_angle = a
@@ -129,6 +126,9 @@ class Experiment(object):
             print("Data Recording started.")
             start_angle = a
 
+        if self.unblank_beam:
+            print("Unblanking beam")
+            self.ctrl.beamblank = False        
 
         return start_angle
 
@@ -146,9 +146,8 @@ class Experiment(object):
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         expt_image = self.expt_image
 
-        self.ctrl.cam.block()
-
         self.start_angle = self.start_rotation()
+        self.ctrl.cam.block()
 
         i = 1
 
@@ -219,6 +218,7 @@ class Experiment(object):
         self.total_time = t1 - t0
         self.acquisition_time = self.total_time / self.nframes
         self.total_angle = abs(self.end_angle - self.start_angle)
+        self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
         self.nframes_diff = len(buffer)
         self.nframes_image = len(image_buffer)
@@ -236,16 +236,13 @@ class Experiment(object):
         return True
 
     def write_data(self, buffer):
-        rotation_axis = config.camera.camera_rotation_vs_stage_xy
-
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=self.camera_length,
                  osc_angle=self.osc_angle,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
-                 rotation_axis=rotation_axis,
+                 rotation_axis=self.rotation_axis,
                  acquisition_time=self.acquisition_time,
-                 resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
         print("Writing data files...")

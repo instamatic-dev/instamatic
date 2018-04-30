@@ -60,12 +60,17 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     return ret
 
 
-def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
+def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc=".", **kwargs):
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
+    confirm = kwargs.get("confirm", True)
+    date = time.strftime("%Y-%m-%d")
+
+    drc = Path(drc).absolute()
     
     # ctrl.brightness.max()
-    input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
+    if confirm:
+        input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
@@ -78,7 +83,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
 
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
-        outfile = "flatfield_{:04d}.tiff".format(n) if save_images else None
+        outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
         buffer.append(img)
     
@@ -86,34 +91,34 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, **kwargs):
     deadpixels = get_deadpixels(f)
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
-
-    ctrl.beamblank = True
-
-    buffer = []
-
-    print("\nCollecting darkfield images")
-    for n in tqdm(range(frames)):
-        outfile = "darkfield_{:04d}.tiff".format(n) if save_images else None
-        img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
-        buffer.append(img)
-    
-    d = np.mean(buffer, axis=0)
-    d = remove_deadpixels(d, deadpixels=deadpixels)
-
-    ctrl.cam.unblock()
-    ctrl.beamblank = False
-
-    date = time.strftime("%Y-%m-%d")
-    ff = "flatfield_tpx_{}.tiff".format(date)
-    fd = "darkfield_tpx_{}.tiff".format(date)
-    print("\n >> Writing {} and {}...".format(ff, fd))
+    ff = drc / f"flatfield_{ctrl.cam.name}_{date}.tiff"
     write_tiff(ff, f, header={"deadpixels": deadpixels})
-    write_tiff(fd, d, header={"deadpixels": deadpixels})
 
-    fp = "deadpixels_tpx_{}.npy".format(date)
+    fp = drc / f"deadpixels_tpx_{date}.npy"
     np.save(fp, deadpixels)
 
-    print("\n >> DONE << ")
+    if collect_darkfield:
+        ctrl.beamblank = True
+    
+        buffer = []
+    
+        print("\nCollecting darkfield images")
+        for n in tqdm(range(frames)):
+            outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
+            img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
+            buffer.append(img)
+        
+        d = np.mean(buffer, axis=0)
+        d = remove_deadpixels(d, deadpixels=deadpixels)
+    
+        ctrl.beamblank = False
+    
+        fd = drc / f"darkfield_{ctrl.cam.name}_{date}.tiff"
+        write_tiff(fd, d, header={"deadpixels": deadpixels})
+
+    ctrl.cam.unblock()
+
+    print(f"\nFlatfield collection finished ({drc}).")
 
 
 def main_entry():

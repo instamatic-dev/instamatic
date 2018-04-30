@@ -257,9 +257,7 @@ def acquire_data_autocRED(controller, **kwargs):
 
 from .base_module import BaseModule
 module = BaseModule("autocred", "autocRED", True, ExperimentalautocRED, commands={
-    "autocred": acquire_data_autocRED,
-    "toggle_difffocus": toggle_difffocus
-    })
+    "autocred": acquire_data_autocRED})
 
 if __name__ == '__main__':
     root = Tk()
