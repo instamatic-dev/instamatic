@@ -29,8 +29,8 @@ def initialize(camera=None, **kwargs):
         from .jeol_microscope import JeolMicroscope
         tem = JeolMicroscope()
     elif microscope_id == "fei_simu":
-        from .fei_simu_microscope import FEISimuMicroscope
-        tem = FEISimuMicroscope()
+        from .fei_simu_microscope import ThreadedFEISimuMicroscope
+        tem = ThreadedFEISimuMicroscope()
     elif microscope_id == "simulate":
         from .simu_microscope import SimuMicroscope
         tem = SimuMicroscope()

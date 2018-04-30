@@ -2,6 +2,7 @@ import comtypes.client
 import atexit
 import time
 import random
+import threading
 
 import logging
 logger = logging.getLogger(__name__)
@@ -30,6 +31,23 @@ FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
 ZERO = 32768
 MAX = 65535
 MIN = 0
+
+class _ThreadedFEISimuMicroscope(threading.Thread):
+    """docstring for ThreadedSimuMicrosope"""
+    def __init__(self):
+        super().__init__()
+        self.tem = None
+
+    def run(self):
+        self.tem = FEISimuMicroscope()
+
+
+def ThreadedFEISimuMicroscope():
+    threaded_tem = _ThreadedFEISimuMicroscope()
+    threaded_tem.start()
+    from IPython import embed
+    embed()
+    return threaded_tem.tem
 
 class FEISimuMicroscope(object):
     """docstring for FEI microscope"""

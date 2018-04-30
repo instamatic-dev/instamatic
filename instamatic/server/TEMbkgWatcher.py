@@ -9,18 +9,16 @@ import datetime
 import comtypes
 from instamatic import config
 
-
 def getTEMStatus(ctrl):
-    print("Background ctrl object is reading TEM...")
+    print(datetime.datetime.now(), "Background ctrl object is reading TEM...")
     TEMStatus = ctrl.to_dict()
     return TEMStatus
     
 def getgonioStatus(ctrl):
-    print("Background ctrl object is reading gonio...")
+    print(datetime.datetime.now(), "Background ctrl object is reading gonio...")
     gonioStatus = ctrl.stageposition.get()
     return gonioStatus
-
-
+    
 class TemReader(threading.Thread):
     def __init__(self, log):
         super().__init__()
@@ -29,11 +27,6 @@ class TemReader(threading.Thread):
         ## log file can be used to get the statistics of the TEM states.
     
     def run(self):
-        try:
-            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-        except WindowsError:
-            comtypes.CoInitialize()
-
         self.ctrl = TEMController.initialize(camera = 'disable')
 
         while True:
@@ -41,6 +34,7 @@ class TemReader(threading.Thread):
             self.gonioStatus = getgonioStatus(self.ctrl)
             date = datetime.datetime.now().strftime("%Y-%m-%d")
             self.log.info("{} TEMStatus: {}; gonioStatus: {}".format(date, self.TEMStatus, self.gonioStatus))
+            print("Magnification: {}".format(self.ctrl.magnification.get()))
             time.sleep(1)
         
 def accept_connection(connection, tem_reader):
@@ -64,7 +58,7 @@ def main():
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
-    log.info("Instamatic watcher running in background. started")
+    log.info("Instamatic watcher running in background. started: {}".format(datetime.datetime.now()))
     
     tem_reader = TemReader(log)
     tem_reader.start()

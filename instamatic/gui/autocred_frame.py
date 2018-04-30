@@ -4,6 +4,9 @@ import threading
 import os
 import pickle
 import socket
+from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.calibrate import CalibBeamShift
+from pathlib import Path
 
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
@@ -12,6 +15,8 @@ class ExperimentalautocRED(LabelFrame):
         self.parent = parent
 
         self.init_vars()
+        
+        self.calib_path = Path("")
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
@@ -43,6 +48,9 @@ class ExperimentalautocRED(LabelFrame):
         
         self.fullacred_status = Checkbutton(frame, text = "Enable Full AutocRED Feature", variable = self.var_enable_fullacred, command=self.fullacred)
         self.fullacred_status.grid(row=8, column=2, sticky="W")
+        
+        self.fullacred_crystalFinder_status = Checkbutton(frame, text = "Enable Full AutocRED + crystal finder Feature", variable = self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
+        self.fullacred_crystalFinder_status.grid(row=9, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
@@ -54,6 +62,7 @@ class ExperimentalautocRED(LabelFrame):
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
+        
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
 
@@ -62,6 +71,9 @@ class ExperimentalautocRED(LabelFrame):
         
         self.acquireTEMStatusButton = Button(frame, text = "Acquire TEM Params", command = self.acquire_Status)
         self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
+        
+        self.ShowCalibBeamshift = Button(frame, text="Show calib_beamshift", command=self.show_calib_beamshift, state=NORMAL)
+        self.ShowCalibBeamshift.grid(row=2, column=1, sticky="EW")
         
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -80,6 +92,7 @@ class ExperimentalautocRED(LabelFrame):
         
         self.var_enable_autotrack = BooleanVar(value=True)
         self.var_enable_fullacred = BooleanVar(value=False)
+        self.var_enable_fullacred_crystalFinder = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -115,6 +128,7 @@ class ExperimentalautocRED(LabelFrame):
                    "enable_image_interval": self.var_enable_image_interval.get(),
                    "enable_autotrack": self.var_enable_autotrack.get(),
                    "enable_fullacred": self.var_enable_fullacred.get(),
+                   "enable_fullacred_crystalfinder": self.var_enable_fullacred_crystalFinder.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
                    "stop_event": self.stopEvent }
@@ -128,6 +142,7 @@ class ExperimentalautocRED(LabelFrame):
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
             self.fullacred_status.config(state=NORMAL)
+            self.fullacred_crystalFinder_status.config(state=NORMAL)
             self.e_image_exposure.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
@@ -135,6 +150,7 @@ class ExperimentalautocRED(LabelFrame):
             self.c_toggle_defocus.config(state=DISABLED)
             self.acred_status.config(state=DISABLED)
             self.fullacred_status.config(state=DISABLED)
+            self.fullacred_crystalFinder_status.config(state=DISABLED)
             self.e_image_exposure.config(state=DISABLED)
             
     def autotrack(self):
@@ -152,6 +168,14 @@ class ExperimentalautocRED(LabelFrame):
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
+            
+    def fullacred_crystalFinder(self):
+        enable = self.var_enable_fullacred.get()
+        if enable:
+            self.e_image_interval.config(state=NORMAL)
+            self.e_diff_defocus.config(state=NORMAL)
+            self.c_toggle_defocus.config(state=NORMAL)
+            self.acred_status.config(state=NORMAL)
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
@@ -161,7 +185,7 @@ class ExperimentalautocRED(LabelFrame):
         self.triggerEvent.set()
         
     def acquire_Status(self):
-        try:
+        """try:
             host, port = 'localhost', 8090
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsocket:
                 clientsocket.connect((host, port))
@@ -174,9 +198,37 @@ class ExperimentalautocRED(LabelFrame):
                 print(receiving)
         except ConnectionRefusedError:
             # In principle should try to open another cmder, and run instamatic.watcher
-            print("No server detected. Run instamatic.watcher first.")
+            print("No server detected. Run instamatic.watcher first.")"""
+        pass
+    
+    def show_calib_beamshift(self):
+        # TODO: use mpl_frame.ShowMatplotlibFig
+        path = self.calib_path / CALIB_BEAMSHIFT
+        print(path)
+        try:
+            c = CalibBeamShift.from_file(path)
+        except IOError as e:
+            print(e)
+        else:
+            c.plot()
 
-     
+def toggle_difffocus(controller, **kwargs):
+    toggle = kwargs["toggle"]
+
+    if toggle:
+        try:
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+        except ValueError:
+            controller.ctrl.mode_diffraction()
+            controller._difffocus_proper = controller.ctrl.difffocus.value
+
+        value = controller._difffocus_proper + kwargs["value"]
+        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+    else:
+        value = controller._difffocus_proper
+
+    controller.ctrl.difffocus.set(value=value)
+        
 def acquire_data_autocRED(controller, **kwargs):
     controller.log.info("Starting automatic cRED experiment")
     from instamatic.experiments import autocRED
@@ -191,9 +243,11 @@ def acquire_data_autocRED(controller, **kwargs):
     enable_image_interval = kwargs["enable_image_interval"]
     enable_autotrack = kwargs["enable_autotrack"]
     enable_fullacred = kwargs["enable_fullacred"]
+    enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
     image_interval = kwargs["image_interval"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
-
+    controller.stream.get_module("sed").calib_path = expdir / "calib"
+    
     cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
     cexp.start_collection()
     
@@ -204,7 +258,7 @@ def acquire_data_autocRED(controller, **kwargs):
 from .base_module import BaseModule
 module = BaseModule("autocred", "autocRED", True, ExperimentalautocRED, commands={
     "autocred": acquire_data_autocRED,
-    "toggle_difffocus2": toggle_difffocus2
+    "toggle_difffocus": toggle_difffocus
     })
 
 if __name__ == '__main__':
