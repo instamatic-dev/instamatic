@@ -17,10 +17,12 @@ from pathlib import Path
 import socket
 from tqdm import tqdm
 from instamatic.calibrate.filenames import CALIB_IS1_DEFOC, CALIB_IS1_FOC, CALIB_IS2_DEFOC, CALIB_IS2_FOC, CALIB_BEAMSHIFT_DP
+from instamatic.TEMController.server_microscope import TraceVariable
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.3
 rotation_range = 100
+PORT = 8088
 
 def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger):
     if imageshift == 'IS1' and diff_defocus != 0:
@@ -164,6 +166,9 @@ class Experiment(object):
         a = a0 = self.ctrl.stageposition.a
         spotsize = self.ctrl.spotsize
         
+        tracer = TraceVariable(self.ctrl.imageshift1.get, interval=2.0, name="IS1", verbose=False)
+        tracer.start()
+        
         if self.mode == 1:
             self.logger.info("AutocRED experiment starting...")
         elif self.mode == 2:
@@ -174,16 +179,6 @@ class Experiment(object):
         self.logger.info("Data saving path: {}".format(path))
         self.logger.info("Data collection exposure time: {} s".format(self.expt))
         self.logger.info("Data collection spot size: {}".format(spotsize))
-        
-        try:
-            clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            clientsocket.connect(('localhost',8090))
-            connected = 1
-            print("cREDEXP_Client connected.")
-        except:
-            connected = 0
-            print("Unable to connect to instamatic.watcher. Ignored.")
-            pass
         # TODO: Mostly above is setup, split off into own function
 
         buffer = []
@@ -364,12 +359,9 @@ class Experiment(object):
     
                 i += 1
                 
-                if self.mode > 1 and connected == 1:
-                    clientsocket.send("s".encode())
-                    buf = clientsocket.recv(1024)
-                    receiving = pickle.loads(buf)
-                    #print(receiving)
-                    if abs(receiving[3]) > 60:
+                if self.mode > 1:
+                    recv = self.ctrl.stageposition.get()
+                    if abs(recv[3]) > 60:
                         self.stopEvent.set()
                 
             except Exception as e:
@@ -381,7 +373,7 @@ class Experiment(object):
         self.ctrl.cam.unblock()
         if self.mode > 1:
             self.ctrl.stageposition.stop()
-            
+        
         if self.camtype == "simulate":
             self.endangle = self.startangle + np.random.random()*50
             camera_length = 300
@@ -395,6 +387,8 @@ class Experiment(object):
             
         self.ctrl.imageshift1.set(x = is1_init[0], y = is1_init[1])
         self.ctrl.imageshift2.set(x = is2_init[0], y = is2_init[1])
+
+        stage_positions = tracer.stop()
 
         # TODO: all the rest here is io+logistics, split off in to own function
 
@@ -418,6 +412,9 @@ class Experiment(object):
             f.write("Camera length: {} mm\n".format(camera_length))
             f.write("Oscillation angle: {} degrees\n".format(osangle))
             f.write("Number of frames: {}\n".format(len(buffer)))
+            
+        with open(os.path.join(path, "IS1_Log.txt"), "w") as ff:
+            ff.write("{}".format(stage_positions))
 
         rotation_angle = config.microscope.camera_rotation_vs_stage_xy
 
@@ -428,7 +425,6 @@ class Experiment(object):
                  end_angle=self.endangle,
                  rotation_axis=rotation_angle,
                  acquisition_time=acquisition_time,
-                 resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
         img_conv.tiff_writer(pathtiff)
@@ -448,7 +444,7 @@ class Experiment(object):
 
         print("Data Collection and Conversion Done.")
 
-    def loop_crystals(self, calib_beamshift, crystal_coords, diff_foc, mag1foc_brightness, delay=0):
+    def loop_crystals(self, calib_beamshift, crystal_coords, diff_foc, img_brightness, transform_imgshift_foc, transform_beamshift_d, delay=0):
         """Loop over crystal coordinates (pixels)
         Switch to diffraction mode, and shift the beam to be on the crystal
 
@@ -456,12 +452,14 @@ class Experiment(object):
             dct: dict, contains information on beam/diffshift
 
         """
+        transform_beamshift_d_ = np.linalg.inv(transform_beamshift_d)
         self.neutral_beamshift = self.ctrl.beamshift.get()
-        self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
+        self.neutral_imgshift1 = np.array(self.ctrl.imageshift1.get())
+        self.neutral_imgshift2 = np.array(self.ctrl.imageshift2.get())
 
         ncrystals = len(crystal_coords)
         
-        self.ctrl.brightness.value = mag1foc_brightness
+        self.ctrl.brightness.value = img_brightness
 
         if ncrystals == 0:
             raise StopIteration("No crystals found.")
@@ -470,48 +468,35 @@ class Experiment(object):
 
         for k, beamshift in enumerate(t):
             # self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
-            offset = np.subtract((516, 516), crystal_coords[k])
+            offset = np.subtract((258, 258), crystal_coords[k])
             delta_beamshiftcoord = np.matmul(calib_beamshift.transform, offset)
+            print("Delta beamshiftcoord: {}".format(delta_beamshiftcoord))
             beamshift = self.neutral_beamshift + delta_beamshiftcoord
             self.ctrl.beamshift.set(x = beamshift[0], y = beamshift[1])
         
             # compensate beamshift
-            
-            pixelshift = calib_directbeam.beamshift2pixelshift(offset)
-        
-            diffshift_offset = calib_directbeam.pixelshift2diffshift(pixelshift)
-            diffshift = self.neutral_diffshift - diffshift_offset
-        
-            self.ctrl.diffshift.set(*diffshift.astype(int))
+
+            dpmv = delta_beamshiftcoord @ transform_beamshift_d_
+            is1mv = -dpmv @ transform_imgshift_foc
+            new_is1 = self.neutral_imgshift1 + is1mv
+            self.ctrl.imageshift1.set(x = int(new_is1[0]), y = int(new_is1[1]))
 
             t.set_description("BeamShift({})".format(beamshift))
             time.sleep(delay)
 
             dct = {"exp_pattern_number": k, 
-                   "exp_diffshift_offset": diffshift_offset, 
+                   "exp_diffshift_offset": 0, 
                    "exp_beamshift_offset": offset, 
                    "exp_beamshift": beamshift, 
-                   "exp_diffshift": diffshift}
+                   "exp_diffshift": 0}
 
             yield dct
-
-    def diffraction_mode(self, delay=0.2):
-        """Switch to diffraction mode, focus the beam, and set the correct focus
-        """
-        # self.log.debug("Switching to diffraction mode")
-        time.sleep(delay)
-
-        self.ctrl.brightness.set(self.diff_brightness)
-        self.ctrl.mode_diffraction()
-        diff_focus_proper = self.ctrl.difffocus.value
-        diff_focus_defocused = diff_focus_proper + self.diff_defocus 
-        self.ctrl.difffocus.value = diff_focus_defocused # difffocus must be set AFTER switching to diffraction mode
     
     def start_collection(self):
-        """from instamatic.server import TEMbkgWatcher
-        import threading
-        serverthread = threading.Thread(target = TEMbkgWatcher.main)
-        serverthread.start()"""
+        
+        """Q1: is beamshift calibration dependent on the brightness of the beam
+        Q2: why is defocused image and diffraction not centered for the full autocRED
+        Q3: is the server working properly"""
         
         if config.cfg.microscope == "jeol":
             self.ctrl.imageshift1.neutral()
@@ -533,13 +518,11 @@ class Experiment(object):
             calib_file = "x"
             while calib_file == "x":
                 print("Find a clear area, toggle the beam to the desired defocus value.")
-                mag1foc_brightness = self.ctrl.brightness.value
                 self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
+                mag1foc_brightness = self.ctrl.brightness.value
                 print("Beam shift calibration done.")
                 calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
         self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
-        
-        input("Choose a desired defocus value for diffraction. Press ENTER to continue.")
         
         transform_imgshift, c = load_IS_Calibrations(imageshift = 'IS1', ctrl = self.ctrl, diff_defocus = self.diff_defocus, logger = self.logger)
         transform_imgshift2, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = self.diff_defocus, logger = self.logger)
@@ -561,19 +544,25 @@ class Experiment(object):
             
             self.logger.info("AutocRED with automatic crystal screening started.")
             
-            self.ctrl.mode = "SAMAG"
+            bs = self.ctrl.beamshift.get()
+            self.ctrl.mode = "samag"
             input("Please partially converge the beam in SAMAG to the size you want for cRED data collection. Press Enter when converged")
             
             img_brightness = self.ctrl.brightness.get()
-            
+
             self.ctrl.mode = "diff"
             input("Go to diff mode, focus the diffraction pattern. Press Enter when focused")
 
             diff_foc = self.ctrl.difffocus.value
-            self.ctrl.brightness.MAX()
 
-            input("Find a good area for data collection: Press Enter whe ready.")
+            self.ctrl.mode = "mag1"
+            input("Focus beam in mag1. Press Enter whe ready.")
 
+            mag1foc_brightness = self.ctrl.brightness.value
+
+            input("Find a good area for investigation. ENTER>>>")
+
+            self.ctrl.beamshift.set(x = bs[0], y = bs[1])
             self.magnification = self.ctrl.magnification.value
 
             img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
@@ -591,7 +580,7 @@ class Experiment(object):
             
             self.logger.info("{} {} crystals found.".format(datetime.datetime.now(), n_crystals))
             
-            for k, d_cryst in enumerate(self.loop_crystals(self.calib_beamshift, crystal_coords, diff_foc, mag1foc_brightness)):
+            for k, d_cryst in enumerate(self.loop_crystals(self.calib_beamshift, crystal_coords, diff_foc, img_brightness, transform_imgshift_foc, transform_beamshift_d)):
                 print("Beamshift coordinates: {}".format(self.ctrl.beamshift.get()))
                 
                 outfile = self.path / f"crystal_{k:04d}"
@@ -600,8 +589,8 @@ class Experiment(object):
                 #img, h = Experiment.apply_corrections(img, h)
             
                 if crystal_positions[k].isolated:
-                    if self.ctrl.mode != "SAMAG":
-                        self.ctrl.mode = "SAMAG"
+                    if self.ctrl.mode != "samag":
+                        self.ctrl.mode = "samag"
                         self.ctrl.brightness.value = img_brightness
                     
                     pathtiff = outfile / "tiff"
@@ -627,3 +616,6 @@ class Experiment(object):
                     os.makedirs(path)
             self.auto_cred_collection(self.path, self.pathtiff, self.pathsmv, self.pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, self.calib_beamshift)
         
+        else:
+            print("Choose cRED tab for data collection with manual/blind tracking.")
+            return 0

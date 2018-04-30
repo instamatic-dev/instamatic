@@ -32,23 +32,6 @@ ZERO = 32768
 MAX = 65535
 MIN = 0
 
-class _ThreadedFEISimuMicroscope(threading.Thread):
-    """docstring for ThreadedSimuMicrosope"""
-    def __init__(self):
-        super().__init__()
-        self.tem = None
-
-    def run(self):
-        self.tem = FEISimuMicroscope()
-
-
-def ThreadedFEISimuMicroscope():
-    threaded_tem = _ThreadedFEISimuMicroscope()
-    threaded_tem.start()
-    from IPython import embed
-    embed()
-    return threaded_tem.tem
-
 class FEISimuMicroscope(object):
     """docstring for FEI microscope"""
     def __init__(self, name = "fei_simu"):

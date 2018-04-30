@@ -350,7 +350,10 @@ class JeolMicroscope(object):
 
     def getDiffFocus(self):
         if not self.getFunctionMode() == "diff":
-            raise ValueError("Must be in 'diff' mode to get DiffFocus")
+            return 0
+            # raise ValueError("Must be in 'diff' mode to get DiffFocus")
+            #print("Must be in 'diff' mode to get DiffFocus")
+            #return 0
         value, result = self.lens3.GetIL1()
         return value
 

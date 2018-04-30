@@ -89,7 +89,7 @@ class ServerMicroscope(object):
         if data:
             data = pickle.loads(data)
 
-        if isinstance(data, str) and data.startswith("error"):
+        if isinstance(data, str) and data.startswith("Error"):
             raise CommunicationError(data)
        
         # t1 = time.clock()

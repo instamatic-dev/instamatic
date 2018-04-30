@@ -45,9 +45,10 @@ class TemServer(threading.Thread):
 
         self.log = log
         self.q = q
-        self.tem = init_tem()
     
     def run(self):
+        self.tem = init_tem()
+        
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             
@@ -58,7 +59,12 @@ class TemServer(threading.Thread):
             args = cmd.get("args", ())
             kwargs = cmd.get("kwargs", {})
 
-            ret = self.evaluate(func_name, args, kwargs)
+            try:
+                ret = self.evaluate(func_name, args, kwargs)
+            except Exception as e:
+                ret = f"Error: {e}"
+                print(now, ret)
+
             box.append(ret)
             condition.notify()
             print(f"{now} | Call {func_name}: {ret}")
