@@ -7,13 +7,14 @@ import logging
 import datetime
 from instamatic import config
 
+# import sys
+# sys.setswitchinterval(0.001)  # seconds
+
 condition = threading.Condition()
 box = []
 
 HOST = 'localhost'
 PORT = 8088
-
-primitiveTypes = (str, bytes, int, float, tuple, list, dict, set, bool, type(None))
 
 
 def init_tem(name=None):
@@ -47,41 +48,21 @@ class TemServer(threading.Thread):
         tem = self.tem
 
         while True:
-            now = datetime.datetime.now().strftime("%H:%M:%S")
+            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             
             cmd = self.q.get()
             condition.acquire()
 
-            print(now, "Received:", cmd)
+            func_name = cmd["func_name"]
+            args = cmd["args"]
+            kwargs = cmd["kwargs"]
 
-            try:
-                ret = eval(cmd)
-                assert isinstance(ret, primitiveTypes), "Not a primitive type" 
-                # print(ret)
-            except AttributeError as e:
-                print(now, e)
-                self.log.exception(e)
-                ret = str(e)
-            except TypeError as e:
-                print(now, e)
-                self.log.exception(e)
-                ret = str(e)
-            except NameError as e:
-                print(now, e)
-                self.log.exception(e)
-                ret = str(e)
-            except SyntaxError as e:
-                print(now, e)
-                self.log.exception(e)
-                ret = str(e)
-            except AssertionError as e:
-                print(now, e)
-                self.log.exception(e)
-                ret = str(e)
+            f = getattr(tem, func_name)
+            ret = f(*args, **kwargs)
 
             box.append(ret)
             condition.notify()
-            print(now, "Retrieved:", ret)
+            print(f"{now} | Call {func_name}: {ret}")
             condition.release()
 
 
@@ -92,7 +73,8 @@ def handle(conn, q):
             if not data:
                 break
 
-            data = data.decode()
+            data = pickle.loads(data)
+
             if data == "exit":
                 break
 
