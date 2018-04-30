@@ -5,10 +5,14 @@ import atexit
 from functools import partial
 import subprocess as sp
 from itertools import chain
+from instamatic import config
 
 
-HOST = 'localhost'
-PORT = 8088
+# HOST = 'localhost'
+# PORT = 8088
+
+HOST = config.cfg.host
+PORT = config.cfg.port
 
 
 class CommunicationError(Exception):
@@ -22,13 +26,16 @@ def kill_server(p):
 
 def start_server_in_subprocess():
    cmd = "instamatic.temserver.exe"
-   p = sp.Popen(cmd)
-   print(f"Starting TEM server server ({HOST}:{PORT} on pid={p.pid})")
+   p = sp.Popen(cmd, stdout=sp.DEVNULL)
+   print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
    atexit.register(kill_server, p)
 
 
 class ServerMicroscope(object):
-    """docstring for microscope"""
+    """
+    Simulates a Microscope object and synchronizes calls over a socket server.
+    For documentation, see the actual python interface to the microscope API.
+    """
     def __init__(self, name):
         super().__init__()
         
@@ -69,6 +76,7 @@ class ServerMicroscope(object):
         return self._eval_dct(dct)
 
     def _eval_dct(self, dct):
+        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
         # t0 = time.clock()
 
         self.s.send(pickle.dumps(dct))

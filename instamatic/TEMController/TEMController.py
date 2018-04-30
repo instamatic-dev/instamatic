@@ -7,7 +7,7 @@ import sys
 from instamatic import config
 
 
-def initialize(camera=None, temserver=True, **kwargs):
+def initialize(camera=None, **kwargs):
     """
     camera: callable or str
         Pass custom camera initializer (callable) + kwargs
@@ -25,7 +25,9 @@ def initialize(camera=None, temserver=True, **kwargs):
     print("Microscope:", microscope_id)
     print("Camera    :", camera_id)
 
-    if temserver:
+    use_server = config.cfg.use_server
+
+    if use_server:
         from .server_microscope import ServerMicroscope
         tem = ServerMicroscope(microscope_id)
     elif microscope_id == "jeol":

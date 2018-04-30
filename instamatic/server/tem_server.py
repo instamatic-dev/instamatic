@@ -13,8 +13,11 @@ from instamatic import config
 condition = threading.Condition()
 box = []
 
-HOST = 'localhost'
-PORT = 8088
+# HOST = 'localhost'
+# PORT = 8088
+
+HOST = config.cfg.host
+PORT = config.cfg.port
 
 
 def init_tem(name=None):
@@ -110,6 +113,7 @@ def main():
     s.listen(5)
 
     log.info(f"Server listening on {HOST}:{PORT}")
+    print(f"Server listening on {HOST}:{PORT}")
 
     with s:
         while True:
