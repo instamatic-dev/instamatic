@@ -2,27 +2,48 @@ from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.processing.cross_correlate import cross_correlate
 import numpy as np
 
+from matplotlib import pyplot as plt
+
 import logging
 logger = logging.getLogger(__name__)
 
+def plot_calib(imgpos, shifts, r):
+    r_i = np.linalg.inv(r)
+    imgpos_ = np.dot(imgpos, r_i)
+    shifts = np.array(shifts)
+    imgpos_ = np.array(imgpos_)
+    
+    p = plt.scatter(*shifts.T, marker = ">", label = "Observed pixel shifts")
+    plt.scatter(*imgpos_.T, marker = "<", label = "Positions in pixel coords")
+    plt.legend()
+    plt.title("calibration map")
+    
+    return p
+    ## Needs some more exploration to make calibration plottable when done.
+    #plt.show()
+    
+def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
-def Calibrate_Imageshift(ctrl, diff_defocus, stepsize):
-
-    inp = input("""Calibrate ImageShift
+    inp = input("""Calibrate {}
 -------------------
  1. Go to diffraction mode.
  2. Focus the diffraction spots.
  3. Center the beam with PLA.
- 4. Fill in the desired defocus value.
     
- >> Press <ENTER> to start >> \n""")
+ >> Press <ENTER> to start >> \n""".format(key))
+    
+    d = {"IS1": ctrl.imageshift1,
+         "IS2": ctrl.imageshift2,
+         "BS": ctrl.beamshift}
     
     if diff_defocus != 0:
         diff_focus_proper = ctrl.difffocus.value
         diff_focus_defocused = diff_focus_proper + diff_defocus 
         ctrl.difffocus.value = diff_focus_defocused
     
-    x0, y0 = ctrl.imageshift1.get()
+    deflector = d[key]
+    
+    x0, y0 = deflector.get()
     img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
 
     shifts = []
@@ -31,7 +52,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize):
     
     for i in range(0, 5):
         for j in range(0, 5):
-            ctrl.imageshift1.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
+            deflector.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
             img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
 
             shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
@@ -39,59 +60,33 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize):
             imgpos.append(imgshift)
             shifts.append(shift)
 
-    ctrl.imageshift1.set(x = x0, y = y0)
+    deflector.set(x = x0, y = y0)
     
     r, t = fit_affine_transformation(shifts, imgpos)
-    
+
+    result = fit_affine_transformation(shifts, imgpos, as_params=True)
+
     if diff_defocus != 0:
         ctrl.difffocus.value = diff_focus_proper
     
     print("ImageShift calibration done.")
-    print(r)
-
-    return r
-
-def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize):
-
-    inp = input("""Calibrate ImageShift2
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
- 4. Fill in the desired defocus value.
     
- >> Press <ENTER> to start >> \n""")
+    print("Transformation matrix: ", r)
+    logger.debug("Transformation matrix: {}".format(r))
+    logger.debug("Parameters: angle: {}".format(result["angle"]))
+    logger.debug("sx: {}".format(result["sx"]))
+    logger.debug("sy: {}".format(result["sy"])) 
+    logger.debug("tx: {}".format(result["tx"]))
+    logger.debug("ty: {}".format(result["ty"])) 
+    logger.debug("k1: {}".format(result["k1"]))
+    logger.debug("k2: {}".format(result["k2"]))
     
-    if diff_defocus != 0:
-        diff_focus_proper = ctrl.difffocus.value
-        diff_focus_defocused = diff_focus_proper + diff_defocus 
-        ctrl.difffocus.value = diff_focus_defocused
-    
-    x0, y0 = ctrl.imageshift2.get()
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
+    c = plot_calib(imgpos, shifts, r)
 
-    shifts = []
-    imgpos = []
-    stepsize = stepsize
-    
-    for i in range(0, 5):
-        for j in range(0, 5):
-            ctrl.imageshift2.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
-            img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
+    return r, c
 
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
-            imgpos.append(imgshift)
-            shifts.append(shift)
+def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize, logger):
+    return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = diff_defocus, stepsize = stepsize, logger = logger, key="IS2")
 
-    ctrl.imageshift2.set(x = x0, y = y0)
-    
-    r, t = fit_affine_transformation(shifts, imgpos)
-    
-    if diff_defocus != 0:
-        ctrl.difffocus.value = diff_focus_proper
-    
-    print("ImageShift2 calibration done.")
-    print(r)
-
-    return r
+def Calibrate_Beamshift_D(ctrl, stepsize, logger):
+    return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = 0, stepsize = stepsize, logger = logger, key="BS")
