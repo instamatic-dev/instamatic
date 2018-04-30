@@ -241,9 +241,8 @@ class Experiment(object):
                  osc_angle=self.osc_angle,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
-                 rotation_axis=rotation_axis,
+                 rotation_axis=self.rotation_axis,
                  acquisition_time=self.acquisition_time,
-                 resolution_range=(20, 0.8),
                  flatfield=self.flatfield)
         
         print("Writing data files...")
