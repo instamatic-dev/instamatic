@@ -48,8 +48,6 @@ class TemServer(threading.Thread):
         self.tem = init_tem()
     
     def run(self):
-        tem = self.tem
-
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             
@@ -57,16 +55,21 @@ class TemServer(threading.Thread):
             condition.acquire()
 
             func_name = cmd["func_name"]
-            args = cmd["args"]
-            kwargs = cmd["kwargs"]
+            args = cmd.get("args", ())
+            kwargs = cmd.get("kwargs", {})
 
-            f = getattr(tem, func_name)
-            ret = f(*args, **kwargs)
-
+            ret = self.evaluate(func_name, args, kwargs)
             box.append(ret)
             condition.notify()
             print(f"{now} | Call {func_name}: {ret}")
+
             condition.release()
+
+    def evaluate(self, func_name, args, kwargs):
+        # print(func_name, args, kwargs)
+        f = getattr(self.tem, func_name)
+        ret = f(*args, **kwargs)
+        return ret
 
 
 def handle(conn, q):

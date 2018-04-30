@@ -7,6 +7,11 @@ import subprocess as sp
 from itertools import chain
 from instamatic import config
 
+from collections import defaultdict
+
+import datetime
+import threading
+
 
 # HOST = 'localhost'
 # PORT = 8088
@@ -40,7 +45,7 @@ class ServerMicroscope(object):
         super().__init__()
         
         self.name = name
-        
+
         try:
             self.connect()
         except ConnectionRefusedError:
@@ -92,3 +97,39 @@ class ServerMicroscope(object):
         # print(data)
 
         return data
+
+
+class TraceVariable(object):
+    """docstring for Tracer"""
+    def __init__(self, func, interval=1.0, name="variable", verbose=False):
+        super().__init__()
+        self.name = name
+        self.func = func
+        self.interval = interval
+        self.verbose = verbose
+
+        self._traced = []
+
+    def start(self):
+        print(f"Trace started: {self.name}")
+        self.update()
+
+    def stop(self):
+        self._timer.cancel()
+
+        print(f"Trace canceled: {self.name}")
+
+        return self._traced
+
+    def update(self):
+        ret = self.func()
+        
+        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+    
+        if self.verbose:
+            print(f"{now} | Trace {self.name}: {ret}")
+    
+        self._traced.append((now, ret))
+        
+        self._timer = threading.Timer(self.interval, self.update)
+        self._timer.start()
