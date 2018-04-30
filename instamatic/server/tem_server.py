@@ -45,9 +45,10 @@ class TemServer(threading.Thread):
 
         self.log = log
         self.q = q
-        self.tem = init_tem()
     
     def run(self):
+        self.tem = init_tem()
+
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             

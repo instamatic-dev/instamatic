@@ -1,3 +1,6 @@
 microscope: simulate
 camera: simulate
 calibration: simulate
+use_server: False
+host: localhost
+port: 8088
