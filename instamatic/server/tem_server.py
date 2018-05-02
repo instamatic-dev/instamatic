@@ -59,10 +59,18 @@ class TemServer(threading.Thread):
             args = cmd.get("args", ())
             kwargs = cmd.get("kwargs", {})
 
-            ret = self.evaluate(func_name, args, kwargs)
-            box.append(ret)
+            try:
+                ret = self.evaluate(func_name, args, kwargs)
+                status = 200
+            except Exception as e:
+                # traceback.print_exc()
+                # self.log.exception(e)
+                ret = e
+                status = 500
+
+            box.append((status, ret))
             condition.notify()
-            print(f"{now} | Call {func_name}: {ret}")
+            print(f"{now} | {status} {func_name}: {ret}")
 
             condition.release()
 
@@ -93,8 +101,8 @@ def handle(conn, q):
             condition.acquire()            
             q.put(data)
             condition.wait()
-            ret = box.pop()
-            conn.send(pickle.dumps(ret))
+            response = box.pop()
+            conn.send(pickle.dumps(response))
             condition.release()
 
 
