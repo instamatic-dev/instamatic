@@ -18,10 +18,7 @@ import threading
 
 HOST = config.cfg.host
 PORT = config.cfg.port
-
-
-class CommunicationError(Exception):
-    pass
+BUFSIZE = 1024
 
 
 def kill_server(p):
@@ -45,6 +42,7 @@ class ServerMicroscope(object):
         super().__init__()
         
         self.name = name
+        self._bufsize = BUFSIZE
 
         try:
             self.connect()
@@ -85,18 +83,18 @@ class ServerMicroscope(object):
         # t0 = time.clock()
 
         self.s.send(pickle.dumps(dct))
-        data = self.s.recv(1024)
-        if data:
-            data = pickle.loads(data)
+        response = self.s.recv(self._bufsize)
+        if response:
+            status, data = pickle.loads(response)
 
-        if isinstance(data, str) and data.startswith("error"):
-            raise CommunicationError(data)
-       
-        # t1 = time.clock()
-        # print(f"{1000*(t1-t0):.2f} ms")
-        # print(data)
+        if status == 200:
+            return data
 
-        return data
+        elif status == 500:
+            raise data
+
+        else:
+            raise ConnectionError(f"Unknown status code: {status}")
 
 
 class TraceVariable(object):
