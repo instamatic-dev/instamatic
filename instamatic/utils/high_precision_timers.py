@@ -23,10 +23,10 @@ def enable(milliseconds=1):
 
     winmm.timeBeginPeriod(milliseconds)
 
-    print("Change time period to {} ms".format(milliseconds))
+    # print("Change time period to {} ms".format(milliseconds))
 
     def reset_time_period():
-        print("Reset time period from {} ms".format(milliseconds))
+        # print("Reset time period from {} ms".format(milliseconds))
         winmm.timeEndPeriod(milliseconds)
 
     atexit.register(reset_time_period)

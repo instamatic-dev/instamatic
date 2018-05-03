@@ -54,26 +54,24 @@ class TemServer(threading.Thread):
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             
             cmd = self.q.get()
-            condition.acquire()
 
-            func_name = cmd["func_name"]
-            args = cmd.get("args", ())
-            kwargs = cmd.get("kwargs", {})
-
-            try:
-                ret = self.evaluate(func_name, args, kwargs)
-                status = 200
-            except Exception as e:
-                # traceback.print_exc()
-                # self.log.exception(e)
-                ret = e
-                status = 500
-
-            box.append((status, ret))
-            condition.notify()
-            print(f"{now} | {status} {func_name}: {ret}")
-
-            condition.release()
+            with condition:
+                func_name = cmd["func_name"]
+                args = cmd.get("args", ())
+                kwargs = cmd.get("kwargs", {})
+    
+                try:
+                    ret = self.evaluate(func_name, args, kwargs)
+                    status = 200
+                except Exception as e:
+                    # traceback.print_exc()
+                    # self.log.exception(e)
+                    ret = e
+                    status = 500
+    
+                box.append((status, ret))
+                condition.notify()
+                print(f"{now} | {status} {func_name}: {ret}")
 
     def evaluate(self, func_name, args, kwargs):
         # print(func_name, args, kwargs)
@@ -99,12 +97,11 @@ def handle(conn, q):
                 # s.shutdown() ?
                 break
     
-            condition.acquire()            
-            q.put(data)
-            condition.wait()
-            response = box.pop()
-            conn.send(pickle.dumps(response))
-            condition.release()
+            with condition:
+                q.put(data)
+                condition.wait()
+                response = box.pop()
+                conn.send(pickle.dumps(response))
 
 
 def main():

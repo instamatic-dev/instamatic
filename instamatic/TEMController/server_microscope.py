@@ -66,7 +66,7 @@ class ServerMicroscope(object):
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to server ({HOST}:{PORT})")
+        print(f"Connected to TEM server ({HOST}:{PORT})")
 
     def __getattr__(self, func_name):
         return partial(self._func, func_name)
