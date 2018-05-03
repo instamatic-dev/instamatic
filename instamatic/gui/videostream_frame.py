@@ -6,10 +6,12 @@ from PIL import Image, ImageEnhance
 from PIL import ImageTk
 import numpy as np
 import threading
+import datetime
+from instamatic.formats import write_tiff
 
 
-class App(Frame):
-    """docstring for App"""
+class VideoStreamFrame(Frame):
+    """docstring for VideoStreamFrame"""
     def __init__(self, parent, stream):
         super().__init__()
 
@@ -42,19 +44,14 @@ class App(Frame):
         self.parent = parent
 
         self.init_vars()
-        self.load_modules(self.parent)
         self.buttonbox(self.parent)
         self.header(self.parent)
         self.makepanel(self.parent)
     
-        self.parent.wm_title("Instamatic stream")
+        self.parent.wm_title("Video stream")
         self.parent.wm_protocol("WM_DELETE_WINDOW", self.close)
     
         self.parent.bind('<Escape>', self.close)
-    
-        self.parent.bind('<<StreamAcquire>>', self.on_frame)
-        self.parent.bind('<<StreamEnd>>', self.close)
-        self.parent.bind('<<StreamFrame>>', self.on_frame)
     
         self.start_stream()
 
@@ -78,9 +75,6 @@ class App(Frame):
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
         self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
-
-    def load_modules(self, master):
-        pass
 
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
@@ -180,13 +174,15 @@ class App(Frame):
             pass
 
     def saveImage(self):
-        pass
+        outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
+        write_tiff(outfile, self.frame)
+        print(" >> Wrote file:", outfile)
 
     def close(self):
         self.stream.stop()
+        self.parent.quit()
         # for func in self._atexit_funcs:
             # func()
-        self.parent.quit()
 
     def start_stream(self):
         self.stream.update_frametime(self.frametime)
@@ -250,6 +246,13 @@ class App(Frame):
             self.nframes += 1
 
 
+def start_gui(stream):
+    root = Tk()
+    vsframe = VideoStreamFrame(root, stream=stream)
+    vsframe.pack(side="top", fill="both", expand=True)
+    root.mainloop()
+
+
 def ipy_embed(*args, **kwargs):
     """Embed an ipython terminal"""
     import IPython
@@ -261,12 +264,15 @@ if __name__ == '__main__':
     from instamatic.camera import VideoStream
 
     stream = VideoStream(cam=config.cfg.camera)
+    
+    if False:
+        threading.Thread(target=ipy_embed).start()
+        start_gui()
+    else:
+        t = threading.Thread(target=start_gui, args=(stream,))
+        t.start()
 
-    root = Tk()
-    app = App(root, stream=stream)
-    app.pack(side="top", fill="both", expand=True)
+        import IPython
+        IPython.embed()
 
-    threading.Thread(target=ipy_embed).start()
-
-    root.mainloop()
 

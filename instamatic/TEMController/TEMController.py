@@ -2,63 +2,33 @@
 
 import time
 from instamatic.formats import write_tiff
-import sys
 
 from instamatic import config
+from instamatic.camera import Camera
+from .microscope import Microscope
+
+default_cam = config.cfg.camera
+default_tem = config.cfg.microscope
+use_server  = config.cfg.use_server
 
 
-def initialize(camera=None, **kwargs):
-    """
-    camera: callable or str
-        Pass custom camera initializer (callable) + kwargs
-        Pass None to use default camera (read from config)
-        Pass 'disable' to disable camera interface
-    """
-    import __main__ as main                        # disable stream if in interactive session -> crashes Tkinter
-    isInteractive = not hasattr(main, '__file__')  # https://stackoverflow.com/a/2356420
+def initialize(tem_name=default_tem, cam_name=default_cam, stream=True):
+    print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")
+    print(f"Camera    : {cam_name}{' (stream)' if stream else ''}")
 
-    from instamatic.camera import Camera
-    from instamatic.camera.videostream import VideoStream
-
-    microscope_id = config.cfg.microscope
-    camera_id = config.cfg.camera
-    print("Microscope:", microscope_id)
-    print("Camera    :", camera_id)
-
-    use_server = config.cfg.use_server
-
-    if use_server:
-        from .server_microscope import ServerMicroscope
-        tem = ServerMicroscope(microscope_id)
-    elif microscope_id == "jeol":
-        from .jeol_microscope import JeolMicroscope
-        tem = JeolMicroscope()
-    elif microscope_id == "fei_simu":
-        from .fei_simu_microscope import FEISimuMicroscope
-        tem = FEISimuMicroscope()
-    elif microscope_id == "simulate":
-        from .simu_microscope import SimuMicroscope
-        tem = SimuMicroscope()
+    tem = Microscope(tem_name, use_server=use_server)
+    
+    if cam_name:
+        cam = Camera(cam_name, as_stream=stream)
     else:
-        raise ValueError("No such microscope: `{}`".format(microscope_id))
+        cam = None
 
-    if camera:
-        # TODO: make sure that all use the same interface, i.e. `cam` or `kind`
-        if camera == 'disable':
-            cam = None
-        elif not callable(camera):
-            raise RuntimeError(f"Camera {camera} is not callable")
-        else:
-            cam = camera(cam=camera_id, **kwargs)
-    elif isInteractive:
-        cam = Camera(kind=camera_id)
-    elif not isInteractive:
-        cam = VideoStream(cam=camera_id)
-    else:
-        raise ValueError("No such microscope: `{}`".format(camera_id))
+    from .TEMController import TEMController
 
-    ctrl = TEMController(tem, cam)
+    ctrl = TEMController(tem=tem, cam=cam)
+
     return ctrl
+
 
 class Deflector(object):
     """docstring for Deflector"""
@@ -598,6 +568,14 @@ class TEMController(object):
             self.cam.close()
         except AttributeError:
             pass
+
+    def show_stream(self):
+        """If the camera has been opened as a stream, start a live view in a tkinter window"""
+        try:
+           self.cam.start_gui()
+        except AttributeError:
+            print("Cannot open live view. The camera interface must be initialized as a stream object.")
+
 
 def main_entry():
     import argparse

@@ -30,21 +30,27 @@ DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 CONFIG_PYTIMEPIX = "tpx"
 
 
-def Camera(kind):
+def Camera(kind, as_stream=False):
     if kind == "simulate":
-        return CameraSimu(kind)
+        cam = CameraSimu(kind)
     elif kind == "simulateDLL":
-        return CameraDLL(kind)
+        cam = CameraDLL(kind)
     elif kind == "orius":
-        return CameraDLL(kind)
+        cam = CameraDLL(kind)
     elif kind == "timepix":
-        return CameraDLL(kind)
+        cam = CameraDLL(kind)
     elif kind == "pytimepix":
         from . import timepix_api
-        config = Path(__file__).parent / "tpx" / "config.txt"
-        return timepix_api.initialize(config)
+        tpx_config = Path(__file__).parent / "tpx" / "config.txt"
+        cam = timepix_api.initialize(tpx_config)
     else:
         raise ValueError(f"No such camera: {kind}")
+
+    if as_stream:
+        from .videostream import VideoStream
+        return VideoStream(cam)
+    else:
+        return cam
 
 
 class CameraDLL(object):
