@@ -54,7 +54,7 @@ class ImageGrabber(object):
                 self.callback(frame)
 
     def start_loop(self):
-        self.thread = threading.Thread(target=self.run, args=())
+        self.thread = threading.Thread(target=self.run, args=(), daemon=True)
         self.thread.start()
 
     def stop(self):
@@ -66,7 +66,10 @@ class VideoStream(threading.Thread):
     def __init__(self, cam="simulate"):
         threading.Thread.__init__(self)
 
-        self.cam = Camera(kind=cam)
+        if isinstance(cam, str):
+            self.cam = Camera(kind=cam)
+        else:
+            self.cam = cam
 
         self.lock = threading.Lock()
 
@@ -173,6 +176,11 @@ class VideoStream(threading.Thread):
 
         if not callback:
             return buffer
+
+    def start_gui(self):
+        from instamatic.gui import videostream_frame
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=True)
+        t.start()
 
 
 if __name__ == '__main__':
