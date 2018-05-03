@@ -381,9 +381,9 @@ class TEMController(object):
 
         self.autoblank = False
         self._saved_settings = {}
-        self.store()
         print()
         print(self)
+        self.store()
 
     @property
     def spotsize(self):

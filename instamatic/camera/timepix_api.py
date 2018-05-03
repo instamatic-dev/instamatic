@@ -16,6 +16,10 @@ high_precision_timers.enable()
 SIMULATE = False
 
 
+class LockingError(RuntimeError):
+    pass
+
+
 def arrangeData(raw, out=None):
     """10000 loops, best of 3: 81.3 s per loop"""
     s  = 256*256
@@ -46,6 +50,10 @@ def correctCross(raw, factor=2.15):
 class EMCameraObj(object):
     def __init__(self):
         libdrc = Path(__file__).parent
+
+        self.lockfile = libdrc / "timepix_lockfile"
+        self.acquire_lock()
+        
         libpath = libdrc / "EMCameraObj.dll"
         curdir = Path.cwd()
 
@@ -63,6 +71,20 @@ class EMCameraObj(object):
         self.is_connected = None
 
         self.correction_ratio = 3.0
+
+    def acquire_lock(self):
+        try:
+            os.rename(self.lockfile, self.lockfile)
+            # WinError 32 if file is open by the same/another process
+        except PermissionError:
+            raise LockingError(f"Cannot establish lock to {self.lockfile} because it is used by another process")
+        else:
+            self._lock = open(self.lockfile)
+
+        atexit.register(self.release_lock)
+
+    def release_lock(self):
+        self._lock.close()
 
     def init(self):
         self.lib.EMCameraObj_Init(self.obj)
