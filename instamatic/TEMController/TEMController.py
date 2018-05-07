@@ -7,12 +7,23 @@ from instamatic import config
 from instamatic.camera import Camera
 from .microscope import Microscope
 
+from typing import Tuple
+import numpy as np
+
+
 default_cam = config.cfg.camera
 default_tem = config.cfg.microscope
 use_server  = config.cfg.use_server
 
 
-def initialize(tem_name=default_tem, cam_name=default_cam, stream=True):
+def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: bool=True) -> "TEMController":
+    """Initialize TEMController object giving access to the TEM and Camera interfaces
+
+    tem_name: Name of the TEM to use
+    cam_name: Name of the camera to use, can be set to 'None' to skip camera initialization
+    stream: Open the camera as a stream (this enables `TEMController.show_stream()`)
+    """
+
     print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")
     print(f"Camera    : {cam_name}{' (stream)' if stream else ''}")
 
@@ -23,18 +34,19 @@ def initialize(tem_name=default_tem, cam_name=default_cam, stream=True):
     else:
         cam = None
 
-    from .TEMController import TEMController
-
     ctrl = TEMController(tem=tem, cam=cam)
 
     return ctrl
 
 
 class Deflector(object):
-    """docstring for Deflector"""
+    """Generic microscope deflector object defined by X/Y values
+    Must be subclassed to set the self._getter, self._setter functions"""
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
+        self._getter = None
+        self._setter = None
         self.key = "def"
 
     def __repr__(self):
@@ -42,39 +54,39 @@ class Deflector(object):
         return f"{self.name}(x={x}, y={y})"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__class__.__name__
 
-    def set(self, x, y):
+    def set(self, x: int, y: int):
         self._setter(x, y)
 
-    def get(self):
+    def get(self) -> Tuple[int, int]:
         return self._getter()
 
     @property
-    def x(self):
+    def x(self) -> int:
         x, y = self.get()
         return x
 
     @x.setter
-    def x(self, value):
+    def x(self, value: int):
         self.set(value, self.y)
 
     @property
-    def y(self):
+    def y(self) -> int:
         x, y = self.get()
         return y
 
     @y.setter
-    def y(self, value):
+    def y(self, value: int):
         self.set(self.x, value)
 
     @property
-    def xy(self):
+    def xy(self) -> Tuple[int, int]:
         return self.get()
 
     @xy.setter
-    def xy(self, values):
+    def xy(self, values: Tuple[int, int]):
         x, y = values
         self.set(x=x, y=y)
 
@@ -83,10 +95,13 @@ class Deflector(object):
 
 
 class Lens(object):
-    """docstring for Lens"""
+    """Generic microscope lens object defined by one value
+    Must be subclassed to set the self._getter, self._setter functions"""
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
+        self._getter = None
+        self._setter = None
         self.key = "lens"
         
     def __repr__(self):
@@ -97,26 +112,26 @@ class Lens(object):
         return f"{self.name}(value={value})"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__class__.__name__
 
-    def set(self, value):
+    def set(self, value: int):
         self._setter(value)
 
-    def get(self):
+    def get(self) -> int:
         return self._getter()
 
     @property
-    def value(self):
+    def value(self) -> int:
         return self.get()
 
     @value.setter
-    def value(self, value):
+    def value(self, value: int):
         self.set(value)
 
 
 class DiffFocus(Lens):
-    """docstring for DiffFocus"""
+    """DiffFocus control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getDiffFocus
@@ -124,7 +139,7 @@ class DiffFocus(Lens):
 
 
 class Brightness(Lens):
-    """docstring for Brightness"""
+    """Brightness control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getBrightness
@@ -138,7 +153,8 @@ class Brightness(Lens):
 
 
 class Magnification(Lens):
-    """docstring for Magnification"""
+    """Magnification control. The magnification can be set directly, or
+    by passing the corresponding index"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getMagnification
@@ -152,20 +168,20 @@ class Magnification(Lens):
         return "Magnification(value={}, index={})".format(value, index)
 
     @property
-    def index(self):
+    def index(self) -> int:
         return self._indexgetter()
 
     @index.setter
-    def index(self, index):
+    def index(self, index: int):
         self._indexsetter(index)
 
-    def increase(self):
+    def increase(self) -> None:
         try:
             self.index += 1
         except ValueError:
             print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
-    def decrease(self):
+    def decrease(self) -> None:
         try:
             self.index -= 1
         except ValueError:
@@ -173,7 +189,7 @@ class Magnification(Lens):
 
 
 class GunShift(Deflector):
-    """docstring for GunShift"""
+    """GunShift control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setGunShift
@@ -182,7 +198,7 @@ class GunShift(Deflector):
 
 
 class GunTilt(Deflector):
-    """docstring for GunTilt"""
+    """GunTilt control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setGunTilt
@@ -192,7 +208,7 @@ class GunTilt(Deflector):
 
 
 class BeamShift(Deflector):
-    """docstring for BeamShift"""
+    """BeamShift control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamShift
@@ -201,7 +217,7 @@ class BeamShift(Deflector):
 
 
 class BeamTilt(Deflector):
-    """docstring for BeamTilt"""
+    """BeamTilt control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamTilt
@@ -210,7 +226,7 @@ class BeamTilt(Deflector):
         
 
 class DiffShift(Deflector):
-    """docstring for DiffShift"""
+    """DiffShift control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setDiffShift
@@ -219,7 +235,7 @@ class DiffShift(Deflector):
         
  
 class ImageShift1(Deflector):
-    """docstring for ImageShift"""
+    """ImageShift control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift1
@@ -227,7 +243,7 @@ class ImageShift1(Deflector):
         self.key = "IS1"
 
 class ImageShift2(Deflector):
-    """docstring for ImageShift"""
+    """ImageShift control"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift2
@@ -236,7 +252,7 @@ class ImageShift2(Deflector):
    
 
 class StagePosition(object):
-    """docstring for StagePosition"""
+    """StagePosition control"""
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
@@ -248,87 +264,89 @@ class StagePosition(object):
         return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__class__.__name__
 
-    def set(self, x=None, y=None, z=None, a=None, b=None, wait=True):
+    def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
         """wait: bool, block until stage movement is complete"""
         self._setter(x, y, z, a, b, wait=wait)
 
-    def get(self):
+    def get(self) -> Tuple[int, int, int, int, int]:
         return self._getter()
 
     @property
-    def x(self):
+    def x(self) -> int:
         x, y, z, a, b = self.get()
         return x
 
     @x.setter
-    def x(self, value):
+    def x(self, value: int):
         self.set(x=value)
 
     @property
-    def y(self):
+    def y(self) -> int:
         x, y, z, a, b = self.get()
         return y
 
     @property
-    def xy(self):
+    def xy(self) -> Tuple[int, int]:
         x, y, z, a, b = self.get()
         return x, y
 
     @xy.setter
-    def xy(self, values):
+    def xy(self, values: Tuple[int, int]):
         x, y = values
         self.set(x=x, y=y)
 
     @y.setter
-    def y(self, value):
+    def y(self, value: int):
         self.set(y=value)
 
     @property
-    def z(self):
+    def z(self) -> int:
         x, y, z, a, b = self.get()
         return z
 
     @z.setter
-    def z(self, value):
+    def z(self, value: int):
         self.set(z=value)
 
     @property
-    def a(self):
+    def a(self) -> int:
         x, y, z, a, b = self.get()
         return a
 
     @a.setter
-    def a(self, value):
+    def a(self, value: int):
         self.set(a=value)
 
     @property
-    def b(self):
+    def b(self) -> int:
         x, y, z, a, b = self.get()
         return b
 
     @b.setter
-    def b(self, value):
+    def b(self, value: int):
         self.set(b=value)
 
-    def neutral(self):
+    def neutral(self) -> None:
+        """Reset the position of the stage to the 0-position"""
         self.set(x=0, y=0, z=0, a=0, b=0)
 
-    def is_moving(self):
+    def is_moving(self) -> bool:
+        """Return 'True' if the stage is moving"""
         return self._tem.isStageMoving()
 
-    def stop(self):
-        """This will stop the stage movement if `wait=False` is passed to StagePosition.set"""
+    def stop(self) -> None:
+        """This will halt the stage preemptively if `wait=False` is passed to StagePosition.set"""
         self._tem.stopStage()
 
 
 class TEMController(object):
-    """docstring for TEMController
+    """TEMController object that enables access to all defined microscope controls
 
-    descriptors:
-    https://docs.python.org/2/howto/descriptor.html
+    tem: Microscope control object (e.g. instamatic/TEMController/simu_microscope.SimuMicroscope)
+    cam: Camera control object (see instamatic.camera) [optional]
     """
 
     def __init__(self, tem, cam=None):
@@ -356,11 +374,11 @@ class TEMController(object):
         self.store()
 
     @property
-    def spotsize(self):
+    def spotsize(self) -> int:
         return self.tem.getSpotSize()
 
     @spotsize.setter
-    def spotsize(self, value):
+    def spotsize(self, value: int):
         self.tem.setSpotSize(value)
 
     def mode_lowmag(self):
@@ -377,11 +395,11 @@ class TEMController(object):
 
     @property
     def mode(self):
-        """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
+        """Returns one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
         return self.tem.getFunctionMode()
 
     @mode.setter
-    def mode(self, value):
+    def mode(self, value: str):
         """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
         self.tem.setFunctionMode(value)
 
@@ -390,7 +408,7 @@ class TEMController(object):
         return self.tem.isBeamBlanked()
 
     @beamblank.setter
-    def beamblank(self, on):
+    def beamblank(self, on: bool):
         self.tem.setBeamBlank(on)
 
     def __repr__(self):
@@ -409,7 +427,7 @@ class TEMController(object):
                           "SpotSize({})".format(self.spotsize),
                           "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
 
-    def to_dict(self, *keys):
+    def to_dict(self, *keys) -> dict:
         """
         Store microscope parameters to dict
 
@@ -449,7 +467,7 @@ class TEMController(object):
 
         return dct
 
-    def from_dict(self, dct):
+    def from_dict(self, dct: dict):
         """Restore microscope parameters from dict"""
 
         funcs = {
@@ -484,11 +502,11 @@ class TEMController(object):
 
         # print self
 
-    def getRawImage(self, exposure=0.5, binsize=1):
+    def getRawImage(self, exposure: float=0.5, binsize: int=1) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the raw data array"""
         return self.cam.getImage(t=exposure, binsize=binsize)
 
-    def getImage(self, exposure=0.5, binsize=1, comment="", out=None, plot=False, verbose=False, header_keys="all"):
+    def getImage(self, exposure: float=0.5, binsize: int=1, comment: str="", out: str=None, plot: bool=False, verbose: bool=False, header_keys: Tuple[str]="all") -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera
 
         Parameters:
@@ -550,14 +568,14 @@ class TEMController(object):
 
         return arr, h
 
-    def store(self, name="stash"):
+    def store(self, name: str="stash"):
         """Stores current settings to dictionary.
         Multiple settings can be stored under different names."""
         d = self.to_dict()
         d.pop("StagePosition", None)
         self._saved_settings[name] = d
 
-    def restore(self, name="stash"):
+    def restore(self, name: str="stash"):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)

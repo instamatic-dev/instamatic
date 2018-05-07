@@ -1,7 +1,16 @@
 from instamatic import config
 
 
-def Microscope(kind, use_server=False):
+def Microscope(kind: str, use_server: bool=False):
+    """Generic class to load microscope interface class
+
+    kind: str
+        Specify which microscope to use, must be one of `jeol`, `fei_simu`, `simulate`
+    use_server: bool
+        Connect to microscope server running on the host/port defined in the config file
+
+    returns: TEM interface class
+    """
     if use_server:
         from .server_microscope import ServerMicroscope
         tem = ServerMicroscope(kind)
