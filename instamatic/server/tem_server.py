@@ -6,6 +6,7 @@ import pickle
 import logging
 import datetime
 from instamatic import config
+from instamatic.TEMController import Microscope
 
 # import sys
 # sys.setswitchinterval(0.001)  # seconds
@@ -21,25 +22,6 @@ PORT = config.cfg.port
 BUFSIZE = 1024
 
 
-def init_tem(name=None):
-    if not name:
-        name = config.cfg.microscope
-
-    if name == "jeol":
-        from instamatic.TEMController.jeol_microscope import JeolMicroscope
-        tem = JeolMicroscope()
-    elif name == "fei_simu":
-        from instamatic.TEMController.fei_simu_microscope import FEISimuMicroscope
-        tem = FEISimuMicroscope()
-    elif name == "simulate":
-        from instamatic.TEMController.simu_microscope import SimuMicroscope
-        tem = SimuMicroscope()
-    else:
-        raise ValueError("No such microscope: `{}`".format(name))
-
-    return tem
-
-
 class TemServer(threading.Thread):
     def __init__(self, log=None, q=None):
         super().__init__()
@@ -48,7 +30,7 @@ class TemServer(threading.Thread):
         self.q = q
     
     def run(self):
-        self.tem = init_tem()
+        self.tem = Microscope(use_server=False)
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")

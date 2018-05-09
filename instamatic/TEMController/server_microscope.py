@@ -103,20 +103,14 @@ class ServerMicroscope(object):
             return data
 
         elif status == 500:
-            raise ServerError(repr(data))
+            raise data
 
         else:
             raise ConnectionError(f"Unknown status code: {status}")
 
     def _init_dict(self):
-        if self.name == "jeol":
-            from .jeol_microscope import JeolMicroscope as tem
-        elif self.name == "fei_simu":
-            from .fei_simu_microscope import FEISimuMicroscope as tem
-        elif self.name == "simulate":
-            from .simu_microscope import SimuMicroscope as tem
-        else:
-            raise NameError(f"No such microscope: {self.name}")
+        from instamatic.TEMController.microscope import get_tem
+        tem = get_tem()
 
         self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
 
