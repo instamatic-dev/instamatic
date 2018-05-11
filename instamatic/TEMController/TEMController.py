@@ -588,10 +588,7 @@ class TEMController(object):
         print("Microscope alignment restored from '{}'".format(name))
 
     def close(self):
-        try:
-            self.cam.close()
-        except AttributeError:
-            pass
+        self.cam.close()
 
     def show_stream(self):
         """If the camera has been opened as a stream, start a live view in a tkinter window"""
@@ -635,3 +632,5 @@ if __name__ == '__main__':
     ctrl = initialize()
     
     embed(banner1="\nAssuming direct control.\n")
+
+    ctrl.close()

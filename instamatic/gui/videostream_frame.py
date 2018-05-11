@@ -179,7 +179,7 @@ class VideoStreamFrame(Frame):
         print(" >> Wrote file:", outfile)
 
     def close(self):
-        self.stream.stop()
+        self.stream.close()
         self.parent.quit()
         # for func in self._atexit_funcs:
             # func()

@@ -59,6 +59,7 @@ class ImageGrabber(object):
 
     def stop(self):
         self.stopEvent.set()
+        self.thread.join()
 
 
 class VideoStream(threading.Thread):
@@ -103,7 +104,7 @@ class VideoStream(threading.Thread):
 
     def setup_grabber(self):
         grabber = ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
-        atexit.register(grabber.stopEvent.set)
+        atexit.register(grabber.stop)
         return grabber
 
     def getImage(self, t=None, binsize=1):
@@ -132,7 +133,7 @@ class VideoStream(threading.Thread):
         self.frametime = frametime
         self.grabber.frametime = frametime
 
-    def stop(self):
+    def close(self):
         self.grabber.stop()
 
     def block(self):
