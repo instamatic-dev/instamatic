@@ -321,17 +321,30 @@ class JeolMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.eos3.SelectFunctionMode(value)
 
-    def getDiffFocus(self) -> int:
-        if not self.getFunctionMode() == "diff":
+    def getDiffFocus(self, confirm_mode: bool=True) -> int:
+        if confirm_mode and (not self.getFunctionMode() == "diff"):
             raise ValueError("Must be in 'diff' mode to get DiffFocus")
         value, result = self.lens3.GetIL1()
         return value
 
-    def setDiffFocus(self, value: int):
+    def setDiffFocus(self, value: int, confirm_mode: bool=True):
         """IL1"""
-        if not self.getFunctionMode() == "diff":
-            raise ValueError("Must be in 'diff' mode to get DiffFocus")
+        if confirm_mode and (not self.getFunctionMode() == "diff"):
+            raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.lens3.setDiffFocus(value)
+
+    def setIntermediateLens1(self, value: int):
+        """IL1"""
+        mode = self.getFunctionMode()
+        if mode == 'diff':
+            self.setDiffFocus(value, confirm_mode=False)
+        else:
+            self.lens3.setILFocus(value)
+
+    def getIntermediateLens1(self):
+        """IL1"""
+        value, result = self.lens3.GetIL1()
+        return value
 
     def getDiffShift(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetPLA()

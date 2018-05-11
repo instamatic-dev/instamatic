@@ -158,9 +158,9 @@ class Experiment(object):
                 t_start = time.clock()
                 acquisition_time = (t_start - t0) / (i-1)
 
-                self.ctrl.difffocus.value = self.diff_focus_defocused
+                self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
                 img, h = self.ctrl.getImage(expt_image, header_keys=None)
-                self.ctrl.difffocus.value = self.diff_focus_proper
+                self.ctrl.difffocus.set(self.diff_focus_proper, confirm_mode=False)
 
                 image_buffer.append((i, img, h))
 

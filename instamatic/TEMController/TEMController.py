@@ -135,7 +135,13 @@ class DiffFocus(Lens):
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getDiffFocus
-        self._setter = self._tem.setDiffFocus     
+        self._setter = self._tem.setDiffFocus
+
+    def set(self, value: int, confirm_mode: bool=True):
+        """confirm_mode: verify that TEM is set to the correct mode ('diff').
+            IL1 maps to different values in image and diffraction mode. 
+            Turning it off results in a 2x speed-up in the call, but it will silently fail if the TEM is in the wrong mode."""
+        self._setter(value, confirm_mode=confirm_mode)
 
 
 class Brightness(Lens):
