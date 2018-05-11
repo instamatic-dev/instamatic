@@ -75,7 +75,8 @@ class Experiment(object):
 
     def log_end_status(self):
         print_and_log(f"Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
-        print_and_log(f"Stage moved from {self.start_xy} to {self.end_xy}, drift: {self.start_xy - self.end_xy}", logger=self.logger)
+        fmt = lambda arr: f"[{arr[0]:.0f} {arr[1]:.0f}]"
+        print_and_log(f"Stage moved from {fmt(self.start_xy)} to {fmt(self.end_xy)}, drift: {fmt(self.start_xy - self.end_xy)}", logger=self.logger)
 
         self.logger.info(f"Data collection camera length: {self.camera_length} mm")
 

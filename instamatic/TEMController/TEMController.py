@@ -152,10 +152,10 @@ class Brightness(Lens):
         self._setter = self._tem.setBrightness
 
     def max(self):
-        self.set(self._tem.MAX)
+        self.set(65535)
 
     def min(self):
-        self.set(self._tem.MIN)
+        self.set(0)
 
 
 class Magnification(Lens):
