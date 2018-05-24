@@ -83,7 +83,7 @@ class DataCollectionController(threading.Thread):
 
 class ModuleFrame(Frame):
     """docstring for DataCollectionGUI"""
-    def __init__(self, parent, modules=(), stream=None):
+    def __init__(self, parent, modules=()):
         super().__init__()
         # super(DataCollectionGUI, self).__init__(cam=cam)
         self._modules = modules
@@ -144,12 +144,12 @@ class ModuleFrame(Frame):
 
 class MainFrame(object):
     """docstring for MainFrame"""
-    def __init__(self, root, stream):
+    def __init__(self, root, stream, modules=()):
         super(MainFrame, self).__init__()
 
         self.root = root
 
-        self.app = ModuleFrame(root, modules=MODULES, stream=None)
+        self.app = ModuleFrame(root, modules=modules)
         self.app.pack(side="top", fill="both", expand=True)
 
         from .videostream_frame import VideoStreamFrame
@@ -200,7 +200,7 @@ def main():
     
     root = Tk()
 
-    gui = MainFrame(root, stream=ctrl.cam)
+    gui = MainFrame(root, stream=ctrl.cam, modules=MODULES)
 
     # while not gui.app._modules_have_loaded:
         # time.sleep(0.1)
