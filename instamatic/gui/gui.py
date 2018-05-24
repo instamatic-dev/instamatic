@@ -123,24 +123,6 @@ class ModuleFrame(Frame):
     def get_module(self, module):
         return self.modules[module]
 
-    def saveImage(self):
-        module_io = self.get_module("io")
-
-        drc = module_io.get_experiment_directory()
-        drc.mkdir(exist_ok=True, parents=True)
-
-        outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
-        outfile = drc / outfile
-
-        try:
-            from instamatic.processing.flatfield import apply_flatfield_correction
-            flatfield, h = read_tiff(module_io.get_flatfield())
-            frame = apply_flatfield_correction(self.frame, flatfield)
-        except:
-            frame = self.frame
-        write_tiff(outfile, frame)
-        print(" >> Wrote file:", outfile)
-
 
 class MainFrame(object):
     """docstring for MainFrame"""
@@ -154,7 +136,7 @@ class MainFrame(object):
 
         from .videostream_frame import VideoStreamFrame
 
-        self.stream_frame = VideoStreamFrame(root, stream=stream)
+        self.stream_frame = VideoStreamFrame(root, stream=stream, app=self.app)
         self.stream_frame.pack(side="top", fill="both", expand=True)
 
         from instamatic import version

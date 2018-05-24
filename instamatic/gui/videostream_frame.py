@@ -12,10 +12,11 @@ from instamatic.formats import write_tiff
 
 class VideoStreamFrame(Frame):
     """docstring for VideoStreamFrame"""
-    def __init__(self, parent, stream):
+    def __init__(self, parent, stream, app=None):
         super().__init__()
 
         self.stream = stream
+        self.app = app
 
         self.panel = None
 
@@ -175,7 +176,23 @@ class VideoStreamFrame(Frame):
 
     def saveImage(self):
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
-        write_tiff(outfile, self.frame)
+ 
+        if self.app:
+            module_io = self.app.get_module("io")
+
+            drc = module_io.get_experiment_directory()
+            drc.mkdir(exist_ok=True, parents=True)
+
+            outfile = drc / outfile
+
+            try:
+                from instamatic.processing.flatfield import apply_flatfield_correction
+                flatfield, h = read_tiff(module_io.get_flatfield())
+                frame = apply_flatfield_correction(self.frame, flatfield)
+            except:
+                frame = self.frame
+
+        write_tiff(outfile, frame)
         print(" >> Wrote file:", outfile)
 
     def close(self):
