@@ -62,6 +62,7 @@ class SimuMicroscope(object):
         self.FunctionMode_value = 0
 
         self.DiffractionFocus_value = random.randint(MIN, MAX)
+        self.IntermediateLens1_value = random.randint(MIN, MAX)
 
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
@@ -264,16 +265,24 @@ class SimuMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.FunctionMode_value = value
 
-    def getDiffFocus(self) -> int:
+    def getDiffFocus(self, confirm_mode: bool=True) -> int:
         if not self.getFunctionMode() == "diff":
             raise ValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
-    def setDiffFocus(self, value: int):
+    def setDiffFocus(self, value: int, confirm_mode: bool=True):
         """IL1"""
         if not self.getFunctionMode() == "diff":
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.DiffractionFocus_value = value
+
+    def setIntermediateLens1(self, value: int):
+        """IL1"""
+        self.IntermediateLens1_value = value
+
+    def getIntermediateLens1(self):
+        """IL1"""
+        return self.IntermediateLens1_value
 
     def getDiffShift(self) -> Tuple[int, int]:
         return self.DiffractionShift_x, self.DiffractionShift_y

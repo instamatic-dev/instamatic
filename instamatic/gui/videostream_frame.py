@@ -190,7 +190,7 @@ class VideoStreamFrame(Frame):
 
     def on_frame(self, event=None):
         self.stream.lock.acquire(True)
-        frame = self.stream.frame
+        self.frame = frame = self.stream.frame
         self.stream.lock.release()
 
         # the display range in ImageTk is from 0 to 256
