@@ -90,6 +90,7 @@ setup(
             # server
             'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
             'instamatic.temserver                     = instamatic.server.tem_server:main',
+            'instamatic.dialsserver                   = instamatic.server.dials_server:main',
         ]
     }
 )

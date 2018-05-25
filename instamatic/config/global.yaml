@@ -1,6 +1,11 @@
 microscope: simulate
 camera: simulate
 calibration: simulate
-use_server: False
-host: localhost
-port: 8088
+
+use_tem_server: True
+tem_server_host: 'localhost'
+tem_server_port: 8088
+
+dials_server_host: 'localhost'
+dials_server_port: 8089
+dials_script: 'E:/cctbx/dials_script.bat'

@@ -13,7 +13,7 @@ import numpy as np
 
 default_cam = config.cfg.camera
 default_tem = config.cfg.microscope
-use_server  = config.cfg.use_server
+use_server  = config.cfg.use_tem_server
 
 
 def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: bool=True) -> "TEMController":

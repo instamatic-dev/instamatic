@@ -30,6 +30,8 @@ class DataCollectionController(threading.Thread):
         self.app = app
         self.daemon = True
 
+        self.use_dials_server = False
+
         self.log = log
 
         self.q = queue.LifoQueue(maxsize=1)

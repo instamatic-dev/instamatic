@@ -17,8 +17,8 @@ box = []
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.host
-PORT = config.cfg.port
+HOST = config.cfg.tem_server_host
+PORT = config.cfg.tem_server_port
 BUFSIZE = 1024
 
 
