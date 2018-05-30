@@ -133,6 +133,19 @@ class Experiment(object):
 
         return start_angle
 
+    def relax_beam(self, n_cycles=5):
+        print(f"Relaxing beam ({n_cycles} cycles)", end='')
+
+        for i in range(n_cycles):
+            self.ctrl.difffocus.set(self.diff_focus_defocused)
+            time.sleep(0.5)
+            print(f".", end='')
+            self.ctrl.difffocus.set(self.diff_focus_proper)
+            time.sleep(0.5)
+            print(f".", end='')
+
+        print("Done.")
+
     def start_collection(self):
         self.setup_paths()
         self.log_start_status()
@@ -146,6 +159,9 @@ class Experiment(object):
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         expt_image = self.expt_image
+
+        if self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment:
+            self.relax_beam()
 
         self.start_angle = self.start_rotation()
         self.ctrl.cam.block()
