@@ -122,6 +122,9 @@ class Experiment(object):
             print("Waiting for rotation to start...", end=' ')
             a0 = a
             while abs(a - a0) < ACTIVATION_THRESHOLD:
+                if self.stopEvent.is_set():
+                    break
+                
                 a = self.ctrl.stageposition.a
 
             print("Data Recording started.")
@@ -227,6 +230,7 @@ class Experiment(object):
 
         # in case something went wrong starting data collection, return gracefully
         if i == 1:
+            print_and_log(f"Data collection interrupted", logger=self.logger)
             return False
 
         self.spotsize = self.ctrl.spotsize
