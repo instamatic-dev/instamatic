@@ -59,6 +59,7 @@ class Experiment(object):
         self.write_xds = write_xds
         self.write_dials = write_dials
         self.write_red = write_red
+        self.write_pets = write_tiff  # TODO
 
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
@@ -279,6 +280,8 @@ class Experiment(object):
             img_conv.write_ed3d(self.mrc_path)
         if self.write_xds or self.write_dials:
             img_conv.write_xds_inp(self.smv_path)
+        if self.write_pets:
+            img_conv.write_pets_inp(self.path)
 
         img_conv.write_beam_centers(self.path)
 
