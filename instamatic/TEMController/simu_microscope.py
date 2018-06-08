@@ -279,7 +279,8 @@ class SimuMicroscope(object):
 
     def getDiffFocus(self):
         if not self.getFunctionMode() == "diff":
-            raise ValueError("Must be in 'diff' mode to get DiffFocus")
+            pass
+            #raise ValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
     def setDiffFocus(self, value):

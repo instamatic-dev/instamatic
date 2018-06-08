@@ -135,8 +135,8 @@ class ImgConversion(object):
         self.physical_pixelsize = config.camera.physical_pixelsize # mm
         self.wavelength = config.microscope.wavelength # angstrom
         # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
-        self.stretch_azimuth = config.microscope.stretch_azimuth
-        self.stretch_amplitude = config.microscope.stretch_amplitude
+        self.stretch_azimuth = config.camera.stretch_azimuth
+        self.stretch_amplitude = config.camera.stretch_amplitude
 
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)

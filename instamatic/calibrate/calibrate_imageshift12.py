@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import logging
 logger = logging.getLogger(__name__)
 
-def plot_calib(imgpos, shifts, r):
+"""def plot_calib(imgpos, shifts, r):
     r_i = np.linalg.inv(r)
     imgpos_ = np.dot(imgpos, r_i)
     shifts = np.array(shifts)
@@ -17,10 +17,9 @@ def plot_calib(imgpos, shifts, r):
     plt.scatter(*imgpos_.T, marker = "<", label = "Positions in pixel coords")
     plt.legend()
     plt.title("calibration map")
-    
-    return p
     ## Needs some more exploration to make calibration plottable when done.
     #plt.show()
+    return p"""
     
 def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
@@ -81,8 +80,13 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
     logger.debug("k1: {}".format(result["k1"]))
     logger.debug("k2: {}".format(result["k2"]))
     
-    c = plot_calib(imgpos, shifts, r)
-
+    r_i = np.linalg.inv(r)
+    imgpos_ = np.dot(imgpos, r_i)
+    shifts = np.array(shifts)
+    imgpos_ = np.array(imgpos_)
+    
+    c = [imgpos_, shifts]
+    
     return r, c
 
 def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize, logger):

@@ -9,7 +9,7 @@ from .microscope import Microscope
 
 default_cam = config.cfg.camera
 default_tem = config.cfg.microscope
-use_server  = config.cfg.use_server
+use_server  = config.cfg.use_tem_server
 
 def initialize(tem_name=default_tem, cam_name=default_cam, stream=True):
     print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")

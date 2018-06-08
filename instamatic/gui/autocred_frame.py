@@ -4,9 +4,10 @@ import threading
 import os
 import pickle
 import socket
-from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.calibrate.filenames import *
 from instamatic.calibrate import CalibBeamShift
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
@@ -69,11 +70,14 @@ class ExperimentalautocRED(LabelFrame):
         self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
         
-        self.acquireTEMStatusButton = Button(frame, text = "Acquire TEM Params", command = self.acquire_Status)
+        self.acquireTEMStatusButton = Button(frame, text = "Show calib_is", command = self.show_calib_is, state=NORMAL)
         self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
         
         self.ShowCalibBeamshift = Button(frame, text="Show calib_beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=2, column=1, sticky="EW")
+
+        self.ShowCalibBeamshift = Button(frame, text="Set Stop", command=self.stop_collection_acred, state=NORMAL)
+        self.ShowCalibBeamshift.grid(row=3, column=0, sticky="EW")
         
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -120,6 +124,9 @@ class ExperimentalautocRED(LabelFrame):
         self.CollectionButton.config(state=NORMAL)
         self.lb_coll1.config(text="")
         self.lb_coll2.config(text="")
+
+    def stop_collection_acred(self, event = None):
+        self.stopEvent.set()
 
     def get_params(self):
         params = { "exposure_time": self.var_exposure_time.get(),
@@ -183,23 +190,6 @@ class ExperimentalautocRED(LabelFrame):
 
         self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
-        
-    def acquire_Status(self):
-        """try:
-            host, port = 'localhost', 8090
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as clientsocket:
-                clientsocket.connect((host, port))
-                print("Acquiring status from the TEMWatcher server...")
-                clientsocket.send("s".encode())
-                print("Signal sent")
-                buf = clientsocket.recv(1024)
-                print("Signal received")
-                receiving = pickle.loads(buf)
-                print(receiving)
-        except ConnectionRefusedError:
-            # In principle should try to open another cmder, and run instamatic.watcher
-            print("No server detected. Run instamatic.watcher first.")"""
-        pass
     
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
@@ -211,6 +201,32 @@ class ExperimentalautocRED(LabelFrame):
             print(e)
         else:
             c.plot()
+            
+    def show_calib_is(self):
+        idx = input("""Indicate which calibration you want to plot:
+        1. IS1 defocused
+        2. IS1 focused
+        3. IS2 defocused
+        4. IS2 focused
+        5. Beamshift for DP
+        Only input a number and press ENTER>>""")
+        idx = int(idx)
+        
+        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP)])
+        
+        path = self.calib_path / FLIST[idx]
+        print(path)
+        try:
+            with open(path,'rb') as f:
+                t, c = pickle.load(f)
+        except IOError as e:
+            print(e)
+        else:
+            plt.scatter(*c[1].T, marker = ">", label = "Observed pixel shifts")
+            plt.scatter(*c[0].T, marker = "<", label = "Positions in pixel coords")
+            plt.legend()
+            plt.title("calibration map")
+            plt.show()
 
 def toggle_difffocus(controller, **kwargs):
     toggle = kwargs["toggle"]
@@ -246,7 +262,7 @@ def acquire_data_autocRED(controller, **kwargs):
     enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
     image_interval = kwargs["image_interval"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
-    controller.stream.get_module("sed").calib_path = expdir / "calib"
+    #controller.stream.get_module("sed").calib_path = expdir / "calib"
     
     cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
     cexp.start_collection()
