@@ -177,6 +177,16 @@ class Experiment(object):
             return 1
         else:
             return 0
+        
+    def img_scale_calculator(self, img):
+        return sum(sum(img))
+    
+    def check_img_outsidebeam_byscale(self, img1_scale, img2_scale):
+        """img1 is the original image for reference, img2 is the new image."""
+        if img2_scale/img1_scale < 0.5 or img2_scale/img1_scale > 2:
+            return 1
+        else:
+            return 0
 
     def eliminate_backlash_in_tiltx(self):
         a_i = self.ctrl.stageposition.a
@@ -312,10 +322,6 @@ class Experiment(object):
                     self.ctrl.difffocus.value = diff_focus_proper
     
                     image_buffer.append((i, img, h))
-                    #print("{} saved to image_buffer".format(i))
-                    if self.check_rotation_went_too_far(img, img0):
-                        self.stopEvent.set()
-                        break
                     
                     crystal_pos, img_cropped, _ = self.image_cropper(img = img, window_size = window_size)
                     self.logger.debug("crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
@@ -394,9 +400,14 @@ class Experiment(object):
     
                 else:
                     img, h = self.ctrl.getImage(self.expt, header_keys=None)
-                    # print i, "Image!"
                     buffer.append((i, img, h))
-                    #print("{} saved to buffer".format(i))
+                    if i == 1:
+                        img1_scale = self.img_scale_calculator(img)
+                    else:
+                        img2_scale = self.img_scale_calculator(img)
+                        if self.check_img_outsidebeam_byscale(img1_scale, img2_scale):
+                            print("Crystal outside beam. Collection stopped...")
+                            self.stopEvent.set()
     
                 i += 1
                 
@@ -486,112 +497,6 @@ class Experiment(object):
                 write_tiff(fn, img, header=h)
 
         print("Data Collection and Conversion Done.")
-
-    def loop_crystals_(self, calib_beamshift, crystal_coords, img_brightness, transform_beamshift_d, transform_imgshift_foc, bspos, delay=0):
-        """Loop over crystal coordinates (pixels)
-        Switch to diffraction mode, and shift the beam to be on the crystal
-
-        Return
-            dct: dict, contains information on beam/diffshift
-
-        """
-        pbp = (258,258)
-
-        transform_beamshift_d_ = np.linalg.inv(transform_beamshift_d)
-        #transform_imgshift_foc_ = np.linalg.inv(transform_imgshift_foc)
-
-        self.neutral_beamshift = bspos
-        #self.ctrl.beamshift.set(x = self.neutral_beamshift[0], y = self.neutral_beamshift[1])
-        self.neutral_imageshift1 = np.array(self.ctrl.imageshift1.get())
-
-        ncrystals = len(crystal_coords)
-        
-        self.ctrl.brightness.value = img_brightness
-
-        if ncrystals == 0:
-            raise StopIteration("No crystals found.")
-
-        t = tqdm(crystal_coords, desc="                           ")
-
-        for k, beamshift in enumerate(t):
-            # self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
-            self.ctrl.mode = 'mag1'
-            offset = np.subtract(pbp, crystal_coords[k])
-            
-            delta_beamshiftcoord = np.matmul(calib_beamshift.transform, offset)
-            print("Delta beamshiftcoord: {}".format(delta_beamshiftcoord))
-            beamshift = self.neutral_beamshift + delta_beamshiftcoord
-            self.ctrl.beamshift.set(x = beamshift[0], y = beamshift[1])
-            #input("Check if beam spots the particle. Press ENTER to continue >>>")
-            # compensate beamshift
-            """DP still not centered."""
-            dpmv = delta_beamshiftcoord @ transform_beamshift_d_
-            ismv = dpmv @ transform_imgshift_foc
-            to_is1 = self.neutral_imageshift1 - ismv
-
-            self.ctrl.imageshift1.set(x = int(to_is1[0]), y = int(to_is1[1]))
-            
-            t.set_description("BeamShift({})".format(beamshift))
-            time.sleep(delay)
-
-            dct = {"exp_pattern_number": k, 
-                   "exp_diffshift_offset": 0, 
-                   "exp_beamshift_offset": offset, 
-                   "exp_beamshift": beamshift, 
-                   "exp_diffshift": 0}
-
-            yield dct
-            
-    def diffraction_mode(self, delay=0.2):
-        """Switch to diffraction mode, focus the beam, and set the correct focus
-        """
-        # self.log.debug("Switching to diffraction mode")
-        time.sleep(delay)
-
-        self.ctrl.brightness.set(self.diff_brightness)
-        self.ctrl.mode_diffraction()
-        self.ctrl.difffocus.value = self.diff_difffocus # difffocus must be set AFTER switching to diffraction mode
-          
-    def loop_crystals(self, crystal_coords, delay=0):
-        """Loop over crystal coordinates (pixels)
-        Switch to diffraction mode, and shift the beam to be on the crystal
-
-        Return
-            dct: dict, contains information on beam/diffshift
-
-        """
-        ncrystals = len(crystal_coords)
-        if ncrystals == 0:
-            raise StopIteration("No crystals found.")
-
-        self.diffraction_mode()
-        beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift(crystal_coords)
-
-        t = tqdm(beamshift_coords, desc="                           ")
-
-        for k, beamshift in enumerate(t):
-            # self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
-            self.ctrl.beamshift.set(*beamshift)
-
-            # compensate beamshift
-            beamshift_offset = beamshift - self.neutral_beamshift
-            pixelshift = self.calib_directbeam.beamshift2pixelshift(beamshift_offset)
-        
-            diffshift_offset = self.calib_directbeam.pixelshift2diffshift(pixelshift)
-            diffshift = self.neutral_diffshift - diffshift_offset
-        
-            self.ctrl.diffshift.set(*diffshift.astype(int))
-
-            t.set_description("BeamShift(x={:5.0f}, y={:5.0f})".format(*beamshift))
-            time.sleep(delay)
-
-            dct = {"exp_pattern_number": k, 
-                   "exp_diffshift_offset": diffshift_offset, 
-                   "exp_beamshift_offset": beamshift_offset, 
-                   "exp_beamshift": beamshift, 
-                   "exp_diffshift": diffshift}
-
-            yield dct
             
     def write_BrightnessStates(self):
         print("Go to your desired magnification and camera length. Now recording lens states...")
