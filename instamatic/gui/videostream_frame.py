@@ -280,7 +280,7 @@ if __name__ == '__main__':
     from instamatic import config
     from instamatic.camera import VideoStream
 
-    stream = VideoStream(cam=config.cfg.camera)
+    stream = VideoStream(cam=config.camera.name)
     
     if False:
         threading.Thread(target=ipy_embed).start()

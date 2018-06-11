@@ -23,7 +23,7 @@ from instamatic import config
 __all__ = ["Camera"]
 
 DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
-DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
+DLLPATH_GATAN   = "CCDCOM2_gatan.dll"
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
 DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
@@ -35,7 +35,7 @@ def Camera(kind, as_stream=False):
         cam = CameraSimu(kind)
     elif kind == "simulateDLL":
         cam = CameraDLL(kind)
-    elif kind == "orius":
+    elif kind == "gatan":
         cam = CameraDLL(kind)
     elif kind == "timepix":
         cam = CameraDLL(kind)
@@ -56,11 +56,11 @@ def Camera(kind, as_stream=False):
 class CameraDLL(object):
     """docstring for Camera"""
 
-    def __init__(self, kind="orius"):
+    def __init__(self, kind="gatan"):
         """Initialize camera module
 
         kind:
-            'orius'
+            'gatan'
             'timepix'
             'simulateDLL'
         """
@@ -73,8 +73,8 @@ class CameraDLL(object):
 
         if kind == "simulateDLL":
             libpath = cameradir / DLLPATH_SIMU
-        elif kind == "orius":
-            libpath = cameradir / DLLPATH_ORIUS
+        elif kind == "gatan":
+            libpath = cameradir / DLLPATH_GATAN
         elif kind == "timepix":
             libpath = cameradir / DLLPATH_TIMEPIX
             os.chdir(cameradir)
@@ -322,7 +322,7 @@ def main_entry():
     from instamatic.formats import write_tiff
     # usage = """acquire"""
 
-    description = """Program to acquire image data from gatan ORIUS ccd camera"""
+    description = """Program to acquire image data from gatan gatan ccd camera"""
 
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,

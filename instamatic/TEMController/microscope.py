@@ -1,6 +1,6 @@
 from instamatic import config
 
-default_tem = config.cfg.microscope
+default_tem = config.microscope.name
 
 
 def get_tem(kind: str=default_tem):

@@ -1,7 +1,7 @@
 from instamatic import config
 from instamatic.TEMController.server_microscope import ServerMicroscope
 
-microscope_id = config.cfg.microscope
+microscope_id = config.microscope.name
 
 
 if __name__ == '__main__':

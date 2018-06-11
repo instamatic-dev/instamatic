@@ -11,8 +11,8 @@ from typing import Tuple
 import numpy as np
 
 
-default_cam = config.cfg.camera
-default_tem = config.cfg.microscope
+default_cam = config.camera.name
+default_tem = config.microscope.name
 use_server  = config.cfg.use_tem_server
 
 
