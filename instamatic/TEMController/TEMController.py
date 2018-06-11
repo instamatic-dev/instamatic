@@ -25,7 +25,7 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
     """
 
     print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")
-    print(f"Camera    : {cam_name}{' (stream)' if stream else ''}")
+    print(f"Camera    : {cam_name}{' (stream)' if (cam_name and stream) else ''}")
 
     tem = Microscope(tem_name, use_server=use_server)
     
@@ -538,7 +538,7 @@ class TEMController(object):
         """
 
         if not self.cam:
-            raise AttributeError("{} object has no attribute 'cam'".format(repr(self.__class__.__name__)))
+            raise AttributeError("{} object has no attribute 'cam' (Camera has not been initialized)".format(repr(self.__class__.__name__)))
 
         if not header_keys:
             h = {}
@@ -588,7 +588,10 @@ class TEMController(object):
         print("Microscope alignment restored from '{}'".format(name))
 
     def close(self):
-        self.cam.close()
+        try:
+            self.cam.close()
+        except AttributeError:
+            pass
 
     def show_stream(self):
         """If the camera has been opened as a stream, start a live view in a tkinter window"""
