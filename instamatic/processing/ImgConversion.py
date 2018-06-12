@@ -274,6 +274,9 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
+        # PETS reads only 16bit unsignt integer TIFF
+        img = np.round(img, 0).astype(np.uint16)
+
         fn = path / f"{i:05d}.tiff"
         write_tiff(fn, img, header=h)
         return fn
@@ -354,7 +357,6 @@ class ImgConversion(object):
 
     def write_ed3d(self, path):
         path.mkdir(exist_ok=True)
-        ed3d = open(path / "1.ed3d", 'w')
 
         rotation_axis = np.degrees(self.rotation_axis)
 
@@ -363,24 +365,25 @@ class ImgConversion(object):
         else:
             sign = 1
 
-        ed3d.write("WAVELENGTH    {}\n".format(self.wavelength))
-        ed3d.write("ROTATIONAXIS    {}\n".format(rotation_axis))
-        ed3d.write("CCDPIXELSIZE    {}\n".format(self.pixelsize))
-        ed3d.write("GONIOTILTSTEP    {}\n".format(self.osc_angle))
-        ed3d.write("BEAMTILTSTEP    0\n")
-        ed3d.write("BEAMTILTRANGE    0.000\n")
-        ed3d.write("STRETCHINGMP    0.0\n")
-        ed3d.write("STRETCHINGAZIMUTH    0.0\n")
-        ed3d.write("\n")
-        ed3d.write("FILELIST\n")
-    
-        for i in self.observed_range:
-            fn = "{:05d}.mrc".format(i)
-            angle = self.start_angle+sign*self.osc_angle*i
-            ed3d.write(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}\n")
+        with open(path / "1.ed3d", 'w') as f:
+            print(f"WAVELENGTH    {self.wavelength}", file=f)
+            print(f"ROTATIONAXIS    {rotation_axis:5f}", file=f)
+            print(f"CCDPIXELSIZE    {self.pixelsize:5f}", file=f)
+            print(f"GONIOTILTSTEP    {self.osc_angle:5f}", file=f)
+            print(f"BEAMTILTSTEP    0", file=f)
+            print(f"BEAMTILTRANGE    0.000", file=f)
+            print(f"STRETCHINGMP    0.0", file=f)
+            print(f"STRETCHINGAZIMUTH    0.0", file=f)
+            print(f"", file=f)
+            print(f"FILELIST", file=f)
         
-        ed3d.write("ENDFILELIST")
-        ed3d.close()
+            for i in self.observed_range:
+                fn = "{:05d}.mrc".format(i)
+                angle = self.start_angle+sign*self.osc_angle*i
+                print(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}", file=f)
+            
+            print(f"ENDFILELIST", file=f)
+
         logger.debug("Ed3d file created in path: {}".format(path))
         
     def write_xds_inp(self, path):
@@ -425,7 +428,7 @@ class ImgConversion(object):
             )
        
         with open(path / 'XDS.INP','w') as f:
-            f.write(s)
+            print(s, file=f)
         
         logger.info("XDS INP file created.")
 
@@ -454,7 +457,7 @@ class ImgConversion(object):
             print(f"lambda {self.wavelength}", file=f)
             print(f"Aperpixel {self.pixelsize}", file=f)
             print(f"phi 0.0", file=f)
-            print(f"omega {np.degrees(self.rotation_axis)}", file=f)
+            print(f"omega {np.degrees(self.rotation_axis + np.pi*2)}", file=f)
             print(f"bin 1", file=f)
             print(f"reflectionsize 20", file=f)
             print(f"noiseparameters 3.5 38", file=f)
