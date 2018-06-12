@@ -46,11 +46,11 @@ class ImageGrabber(object):
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
                 
-                frame = self.cam.getImage(t=self.exposure, fastmode=True)
+                frame = self.cam.getImage(t=self.exposure)
                 self.callback(frame, acquire=True)
 
             elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.getImage(t=self.frametime, fastmode=True)
+                frame = self.cam.getImage(t=self.frametime)
                 self.callback(frame)
 
     def start_loop(self):

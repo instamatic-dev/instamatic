@@ -281,7 +281,7 @@ class EMCameraObj(object):
 
         return out
 
-    def getImage(self, t, fastmode=False):
+    def getImage(self, t):
         return self.acquireData(exposure=t)
 
     def getName(self):
