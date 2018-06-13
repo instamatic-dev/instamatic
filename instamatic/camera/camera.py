@@ -135,17 +135,17 @@ class CameraDLL(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None,**kwargs):
+    def getImage(self, exposure=None, binsize=None,**kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
         showindm: show image in digital micrograph
         xmin, xmax, ymin, ymax: retrieve image with smaller size from a subset of pixels
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
@@ -162,7 +162,7 @@ class CameraDLL(object):
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
         pnImgHeight = c_int(0)
-        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, t, showindm, byref(
+        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, exposure, showindm, byref(
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
@@ -248,19 +248,19 @@ class CameraSimu(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None, **kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
-        time.sleep(t)
+        time.sleep(exposure)
 
         arr = np.random.randint(256, size=self.dimensions)
 
@@ -425,6 +425,6 @@ def main_entry():
 if __name__ == '__main__':
     # main_entry()
     cam = Camera(kind="timepix")
-    arr = cam.getImage(t=0.1)
+    arr = cam.getImage(exposure=0.1)
     print(arr)
     print(arr.shape)

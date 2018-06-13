@@ -281,8 +281,8 @@ class EMCameraObj(object):
 
         return out
 
-    def getImage(self, t):
-        return self.acquireData(exposure=t)
+    def getImage(self, exposure):
+        return self.acquireData(exposure=exposure)
 
     def getName(self):
         return "PyTimepix"
