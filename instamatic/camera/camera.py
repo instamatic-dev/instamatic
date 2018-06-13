@@ -26,7 +26,6 @@ DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
 DLLPATH_GATAN   = "CCDCOM2_gatan.dll"
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
-DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 CONFIG_PYTIMEPIX = "tpx"
 
 
@@ -36,8 +35,6 @@ def Camera(kind, as_stream=False):
     elif kind == "simulateDLL":
         cam = CameraDLL(kind)
     elif kind == "gatan":
-        cam = CameraDLL(kind)
-    elif kind == "timepix":
         cam = CameraDLL(kind)
     elif kind == "pytimepix":
         from . import timepix_api
@@ -61,7 +58,6 @@ class CameraDLL(object):
 
         kind:
             'gatan'
-            'timepix'
             'simulateDLL'
         """
         super(CameraDLL, self).__init__()
@@ -75,9 +71,6 @@ class CameraDLL(object):
             libpath = cameradir / DLLPATH_SIMU
         elif kind == "gatan":
             libpath = cameradir / DLLPATH_GATAN
-        elif kind == "timepix":
-            libpath = cameradir / DLLPATH_TIMEPIX
-            os.chdir(cameradir)
         else:
             raise ValueError(f"No such camera: {kind}")
 
@@ -114,13 +107,7 @@ class CameraDLL(object):
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
-        if kind == "timepix":
-            self.establishConnection() # TODO: redirect to logger somehow...
-            self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
-            self._setCorrectionRatio.restype = c_bool
-            os.chdir(curdir)
-        else:
-            self.establishConnection()
+        self.establishConnection()
 
         self.load_defaults()
 
@@ -148,18 +135,17 @@ class CameraDLL(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
+    def getImage(self, exposure=None, binsize=None,**kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
         showindm: show image in digital micrograph
         xmin, xmax, ymin, ymax: retrieve image with smaller size from a subset of pixels
-        fastmode: Shaves off approximately 1ms by avoiding conversion to int
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
@@ -176,7 +162,7 @@ class CameraDLL(object):
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
         pnImgHeight = c_int(0)
-        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, t, showindm, byref(
+        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, exposure, showindm, byref(
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
@@ -188,14 +174,7 @@ class CameraDLL(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
-        # work-around to amke sure everything looks the same
-        if self.name == "timepix":
-            arr = np.rot90(arr, k=3)
-
-        if fastmode:
-            return arr
-        else:
-            return arr.astype(int)
+        return arr
 
     def getCameraCount(self):
         return self._cameraCount()
@@ -269,27 +248,23 @@ class CameraSimu(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
-        fastmode: Shaves off approximately 1ms by avoiding conversion to int
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
-        time.sleep(t)
+        time.sleep(exposure)
 
-        arr = np.random.random(self.dimensions)*256
+        arr = np.random.randint(256, size=self.dimensions)
 
-        if fastmode:
-            return arr
-        else:
-            return arr.astype(int)
+        return arr
 
     def getCameraCount(self):
         return 1
@@ -450,6 +425,6 @@ def main_entry():
 if __name__ == '__main__':
     # main_entry()
     cam = Camera(kind="timepix")
-    arr = cam.getImage(t=0.1)
+    arr = cam.getImage(exposure=0.1)
     print(arr)
     print(arr.shape)

@@ -468,7 +468,7 @@ class Experiment(object):
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
     
-            img, h = self.ctrl.getImage(binsize=self.image_binsize, exposure=self.image_exposure, header_keys=header_keys)
+            img, h = self.ctrl.getImage(exposure=self.image_exposure, binsize=self.image_binsize, header_keys=header_keys)
     
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -523,7 +523,7 @@ class Experiment(object):
                         self.ctrl.stageposition.a = rotation_angle
         
                         outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
-                        img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
+                        img, h = self.ctrl.getImage(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
                                                     
                         for d in (d_diff, d_pos, d_cryst):

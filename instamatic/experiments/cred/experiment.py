@@ -41,7 +41,7 @@ class Experiment(object):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
-        self.expt = exposure_time
+        self.exposure = exposure_time
         self.unblank_beam = unblank_beam
         self.logger = log
         self.mode = mode
@@ -53,7 +53,7 @@ class Experiment(object):
         self.footfree_rotate_to = footfree_rotate_to
 
         self.diff_defocus = diff_defocus
-        self.expt_image = exposure_time_image
+        self.exposure_image = exposure_time_image
 
         self.write_tiff = write_tiff
         self.write_xds = write_xds
@@ -64,14 +64,14 @@ class Experiment(object):
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
             self.image_interval = image_interval
-            print_and_log(f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.expt_image} s).", logger=self.logger)
+            print_and_log(f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_image} s).", logger=self.logger)
         else:
             self.image_interval = 99999
 
     def log_start_status(self):
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info(f"Data recording started at: {self.now}")
-        self.logger.info(f"Data collection exposure time: {self.expt} s")
+        self.logger.info(f"Data collection exposure time: {self.exposure} s")
         self.logger.info(f"Data saving path: {self.path}")
 
     def log_end_status(self):
@@ -86,7 +86,7 @@ class Experiment(object):
             print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
             print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
-            print(f"Exposure Time: {self.expt:.3f} s", file=f)
+            print(f"Exposure Time: {self.exposure:.3f} s", file=f)
             print(f"Acquisition time: {self.acquisition_time:.3f} s", file=f)
             print(f"Total time: {self.total_time:.3f} s", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
@@ -96,7 +96,7 @@ class Experiment(object):
             print(f"Number of frames: {self.nframes_diff}", file=f)
 
             if self.image_interval_enabled:
-                print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.expt_image} s).", file=f)
+                print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.exposure_image} s).", file=f)
                 print(f"Number of images: {self.nframes_image}", file=f)
 
     def setup_paths(self):
@@ -162,7 +162,7 @@ class Experiment(object):
 
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
-        expt_image = self.expt_image
+        exposure_image = self.exposure_image
 
         if self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment:
             self.relax_beam()
@@ -180,7 +180,7 @@ class Experiment(object):
                 acquisition_time = (t_start - t0) / (i-1)
 
                 self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
-                img, h = self.ctrl.getImage(expt_image, header_keys=None)
+                img, h = self.ctrl.getImage(exposure_image, header_keys=None)
                 self.ctrl.difffocus.set(self.diff_focus_proper, confirm_mode=False)
 
                 image_buffer.append((i, img, h))
@@ -197,7 +197,7 @@ class Experiment(object):
                 time.sleep(diff)
 
             else:
-                img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                img, h = self.ctrl.getImage(self.exposure, header_keys=None)
                 # print i, "Image!"
                 buffer.append((i, img, h))
 

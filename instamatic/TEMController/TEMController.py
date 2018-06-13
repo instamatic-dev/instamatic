@@ -510,7 +510,7 @@ class TEMController(object):
 
     def getRawImage(self, exposure: float=0.5, binsize: int=1) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the raw data array"""
-        return self.cam.getImage(t=exposure, binsize=binsize)
+        return self.cam.getImage(exposure=exposure, binsize=binsize)
 
     def getImage(self, exposure: float=0.5, binsize: int=1, comment: str="", out: str=None, plot: bool=False, verbose: bool=False, header_keys: Tuple[str]="all") -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera
@@ -548,7 +548,7 @@ class TEMController(object):
         if self.autoblank and self.beamblank:
             self.beamblank = False
 
-        arr = self.cam.getImage(t=exposure, binsize=binsize)
+        arr = self.cam.getImage(exposure=exposure, binsize=binsize)
         
         if self.autoblank:
             self.beamblank = True
