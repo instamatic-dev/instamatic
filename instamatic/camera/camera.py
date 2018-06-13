@@ -34,9 +34,9 @@ def Camera(kind, as_stream=False):
         cam = CameraSimu(kind)
     elif kind == "simulateDLL":
         cam = CameraDLL(kind)
-    elif kind == "gatan":
+    elif kind in ("orius", "gatan"):
         cam = CameraDLL(kind)
-    elif kind == "pytimepix":
+    elif kind in ("timepix", "pytimepix"):
         from . import timepix_api
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"
         cam = timepix_api.initialize(tpx_config)
