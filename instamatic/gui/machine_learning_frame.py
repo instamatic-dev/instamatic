@@ -30,7 +30,7 @@ class MachineLearningFrame(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        columns = ('frame', 'number', 'quality', 'size', 'x', 'y')
+        columns = ('frame', 'number', 'prediction', 'size', 'x', 'y')
         self.tv = tv = Treeview(frame, columns=columns, show='headings')
 
         # for loop does not work here for some reason...
@@ -38,8 +38,8 @@ class MachineLearningFrame(LabelFrame):
         tv.column('frame', anchor='center', width=15)
         tv.heading('number', text='Number', command=lambda: treeview_sort_column(tv, 'number', False))
         tv.column('number', anchor='center', width=15)
-        tv.heading('quality', text='Quality', command=lambda: treeview_sort_column(tv, 'quality', False))
-        tv.column('quality', anchor='center', width=15)
+        tv.heading('prediction', text='Prediction', command=lambda: treeview_sort_column(tv, 'prediction', False))
+        tv.column('prediction', anchor='center', width=15)
         tv.heading('size', text='Size', command=lambda: treeview_sort_column(tv, 'size', False))
         tv.column('size', anchor='center', width=15)
         tv.heading('x', text='X', command=lambda: treeview_sort_column(tv, 'x', False))
@@ -90,8 +90,8 @@ class MachineLearningFrame(LabelFrame):
             for row in reader:
                 if not row:
                     continue
-                fn, frame, number, quality, size, stage_x, stage_y = row
-                self.tv.insert('', 'end', text=fn, values=(frame, number, quality, size, stage_x, stage_y))
+                fn_patt, frame, number, prediction, size, stage_x, stage_y = row
+                self.tv.insert('', 'end', text=fn_patt, values=(frame, number, prediction, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
         print(f"CSV data `{fn}` loaded")
@@ -99,7 +99,7 @@ class MachineLearningFrame(LabelFrame):
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
         try:
-            frame, number, quality, size, stage_x, stage_y = row["values"]
+            frame, number, prediction, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
             print("No row selected")
             return
@@ -112,7 +112,7 @@ class MachineLearningFrame(LabelFrame):
     def show_image(self):
         row = self.tv.item(self.tv.focus())
         try:
-            frame, number, quality, size, stage_x, stage_y = row["values"]
+            frame, number, prediction, size, stage_x, stage_y = row["values"]
         except ValueError:  # no row selected
             print("No row selected")
             return
@@ -120,7 +120,7 @@ class MachineLearningFrame(LabelFrame):
         fn = Path(row["text"])
 
         root = fn.parents[1]
-        name = fn.stem.replace(f"_{number:04d}", "")
+        name = fn.stem.rsplit("_", 1)[0]  # strip crystal number
         image_fn = root / "images" / f"{name}{fn.suffix}"
 
         if not fn.exists():
@@ -138,7 +138,7 @@ class MachineLearningFrame(LabelFrame):
 
         fig = plt.figure()
         ax1 = plt.subplot(121, title="Image\nframe={} | number={}\nsize={} | x,y=({}, {})".format(frame, number, size, stage_x, stage_y), aspect="equal")
-        ax2 = plt.subplot(122, title="Diffraction pattern\nquality={}".format(quality, aspect="equal"))
+        ax2 = plt.subplot(122, title="Diffraction pattern\nprediction={}".format(prediction, aspect="equal"))
         
         # img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates

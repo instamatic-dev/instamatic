@@ -132,8 +132,8 @@ if __name__ == '__main__':
 
     ax1.set_title("Frame number vs. Position of direct beam")
 
-    ax1.plot([start, end], [median_x, median_x], c="C0", ls=":", label=f"Median(X)={median_x:.2f}")
-    ax2.plot([start, end], [median_y, median_y], c="C1", ls=":", label=f"Median(Y)={median_y:.2f}")
+    ax1.plot([start, end], [median_x, median_x], c="C0", ls=":", label=f"Median(X)={median_x:.2f}, Std(X)={std_x:.2f}")
+    ax2.plot([start, end], [median_y, median_y], c="C1", ls=":", label=f"Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}")
 
     # plt.title("Frame number vs. Position of direct beam")
     ax2.set_xlabel("Frame number")
