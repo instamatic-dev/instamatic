@@ -219,7 +219,7 @@ class Experiment(object):
         else:
             stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
             self.end_xy = np.array([stage_x, stage_y])
-            self.end_angle = self.ctrl.stageposition.a
+            self.end_angle = a
             self.camera_length = int(self.ctrl.magnification.get())
 
         is_moving = bool(self.ctrl.stageposition.is_moving())

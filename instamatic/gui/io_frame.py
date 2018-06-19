@@ -132,7 +132,10 @@ class IOFrame(LabelFrame):
 
     def open_data_directory(self):
         drc = self.get_working_directory()
-        os.startfile(drc)
+        try:
+            os.startfile(drc)
+        except FileNotFoundError:
+            os.startfile(drc.parent)
 
     def open_config_directory(self):
         drc = config.base_drc
