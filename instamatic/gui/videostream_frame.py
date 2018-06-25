@@ -7,7 +7,8 @@ from PIL import ImageTk
 import numpy as np
 import threading
 import datetime
-from instamatic.formats import write_tiff
+from instamatic.formats import write_tiff, read_tiff
+from instamatic.processing.flatfield import apply_flatfield_correction
 
 
 class VideoStreamFrame(Frame):
@@ -186,13 +187,13 @@ class VideoStreamFrame(Frame):
             outfile = drc / outfile
 
             try:
-                from instamatic.processing.flatfield import apply_flatfield_correction
                 flatfield, h = read_tiff(module_io.get_flatfield())
                 frame = apply_flatfield_correction(self.frame, flatfield)
             except:
                 frame = self.frame
+                h = {}
 
-        write_tiff(outfile, frame)
+        write_tiff(outfile, frame, header=h)
         print(" >> Wrote file:", outfile)
 
     def close(self):
