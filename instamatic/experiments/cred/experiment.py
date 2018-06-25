@@ -68,6 +68,11 @@ class Experiment(object):
         else:
             self.image_interval = 99999
 
+        self.relax_beam_before_experiment = self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment
+
+        self.track_stage_position = config.cfg.cred_track_stage_position
+        self.stage_positions = []
+
     def log_start_status(self):
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info(f"Data recording started at: {self.now}")
@@ -75,11 +80,18 @@ class Experiment(object):
         self.logger.info(f"Data saving path: {self.path}")
 
     def log_end_status(self):
+        start_xy = np.array(self.start_position[0:2])
+        end_xy = np.array(self.end_position[0:2])
+
         print_and_log(f"Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
         fmt = lambda arr: f"[{arr[0]:.0f} {arr[1]:.0f}]"
-        print_and_log(f"Stage moved from {fmt(self.start_xy)} to {fmt(self.end_xy)}, drift: {fmt(self.start_xy - self.end_xy)}", logger=self.logger)
-
+        print_and_log(f"Stage moved from {fmt(start_xy)} to {fmt(end_xy)}, drift: {fmt(start_xy - end_xy)}", logger=self.logger)
+        self.logger.info(f"Start stage position: {self.start_position}")
+        self.logger.info(f"End stage position: {self.end_position}")
         self.logger.info(f"Data collection camera length: {self.camera_length} mm")
+        self.logger.info(f"Data collection spot size: {self.spotsize}")
+
+        self.logger.info(self.stage_positions)
 
         with open(self.path / "cRED_log.txt", "w") as f:
             print(f"Data Collection Time: {self.now}", file=f)
@@ -94,6 +106,8 @@ class Experiment(object):
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes_diff}", file=f)
+            print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}".format(*self.start_position), file=f)
+            print("Stage end:   X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}".format(*self.end_position), file=f)
 
             if self.image_interval_enabled:
                 print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.exposure_image} s).", file=f)
@@ -106,8 +120,9 @@ class Experiment(object):
         self.mrc_path  = self.path / "RED"  if self.write_red else None
 
     def start_rotation(self):
-        stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
-        self.start_xy = np.array([stage_x, stage_y])
+        self.start_position = self.ctrl.stageposition.get()
+        self.stage_positions.append((0, self.start_position))
+        a = self.start_position[3]
 
         if self.mode == "simulate":
             start_angle = a
@@ -164,7 +179,7 @@ class Experiment(object):
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         exposure_image = self.exposure_image
 
-        if self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment:
+        if self.relax_beam_before_experiment:
             self.relax_beam()
 
         self.start_angle = self.start_rotation()
@@ -194,6 +209,10 @@ class Experiment(object):
                     # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
 
                 diff = next_interval - time.clock() # seconds
+
+                if self.track_stage_position and diff > 0.1:
+                    self.stage_positions.append((i, self.ctrl.stageposition.get()))
+
                 time.sleep(diff)
 
             else:
@@ -213,14 +232,16 @@ class Experiment(object):
         self.ctrl.cam.unblock()
 
         if self.mode == "simulate":
-            self.end_xy = self.start_xy + int(np.random.random()*50)
-            self.end_angle = self.start_angle + np.random.random()*50
-            self.camera_length = 300
-        else:
-            stage_x, stage_y, _, a, _ = self.ctrl.stageposition.get()
-            self.end_xy = np.array([stage_x, stage_y])
-            self.end_angle = a
-            self.camera_length = int(self.ctrl.magnification.get())
+            # simulate somewhat realistic end numbers
+            self.ctrl.stageposition.x += np.random.randint(-5000, 5000)
+            self.ctrl.stageposition.y += np.random.randint(-5000, 5000)
+            self.ctrl.stageposition.a += np.random.randint(-100, 100)
+            self.ctrl.magnification.set(300)
+
+        self.end_position = self.ctrl.stageposition.get()
+        self.end_angle = self.end_position[3]
+        self.camera_length = int(self.ctrl.magnification.get())
+        self.stage_positions.append((99999, self.end_position))
 
         is_moving = bool(self.ctrl.stageposition.is_moving())
         self.logger.info(f"Experiment finished, stage is moving: {is_moving}")

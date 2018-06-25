@@ -11,3 +11,4 @@ dials_server_port: 8089
 dials_script: 'E:/cctbx/dials_script.bat'
 
 cred_relax_beam_before_experiment: false
+cred_track_stage_positions: false
