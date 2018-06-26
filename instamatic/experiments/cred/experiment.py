@@ -70,7 +70,7 @@ class Experiment(object):
 
         self.relax_beam_before_experiment = self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment
 
-        self.track_stage_position = config.cfg.cred_track_stage_position
+        self.track_stage_position = config.cfg.cred_track_stage_positions
         self.stage_positions = []
 
     def log_start_status(self):
