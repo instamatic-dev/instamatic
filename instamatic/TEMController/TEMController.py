@@ -308,6 +308,33 @@ class StagePosition(object):
     def y(self, value: int):
         self.set(y=value)
 
+    def move_in_projection(self, delta_x: int, delta_y: int):
+        r"""y and z are always perpendicular to the sample stage. Any movement in the projection
+        should be broken down into the components z' and y' to achieve eucentric movement.
+
+        y = y' * cos(a)
+        z = y' * sin(a)
+
+        z'|  / z
+          | /
+          |/_____ y'
+           \ a
+            \
+             \ y
+        """
+        x, y, z, a, b = self.get()
+        x = x + delta_x
+        y = y + delta_y * np.cos(a)
+        z = z + delta_y * np.sin(a)  # check signs
+        self.set(x=x, y=y)
+
+    def move_along_optical_axis(self, delta_z: int):
+        """See `StagePosition.move_in_projection`"""
+        x, y, z, a, b = self.get()
+        y = y + delta_z * np.cos(a)
+        z = z + delta_z * np.sin(a)  # check signs
+        self.set(y=y, z=z) 
+
     @property
     def z(self) -> int:
         x, y, z, a, b = self.get()
