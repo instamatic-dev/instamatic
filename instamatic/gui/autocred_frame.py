@@ -44,6 +44,10 @@ class ExperimentalautocRED(LabelFrame):
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=10, from_=0.0, to=100.0, increment=0.01)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
         
+        Label(frame, text="Scan Area (um):").grid(row=8, column=0, sticky="W")
+        self.scan_area = Entry(frame, textvariable=self.var_scan_area)
+        self.scan_area.grid(row=8, column=1, sticky="W", padx=10)
+        
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
         
@@ -84,6 +88,7 @@ class ExperimentalautocRED(LabelFrame):
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
 
         self.stopEvent = threading.Event()
+        self.stopEvent_experiment = threading.Event()
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
@@ -97,6 +102,7 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_autotrack = BooleanVar(value=True)
         self.var_enable_fullacred = BooleanVar(value=False)
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=False)
+        self.var_scan_area = IntVar(value=0)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -116,7 +122,7 @@ class ExperimentalautocRED(LabelFrame):
         self.triggerEvent.set()
 
     def stop_collection(self, event=None):
-        self.stopEvent.set()
+        self.stopEvent_experiment.set()
 
         self.parent.unbind_all("<space>")
 
@@ -138,7 +144,9 @@ class ExperimentalautocRED(LabelFrame):
                    "enable_fullacred_crystalfinder": self.var_enable_fullacred_crystalFinder.get(),
                    "image_interval": self.var_image_interval.get(),
                    "diff_defocus": self.var_diff_defocus.get(),
-                   "stop_event": self.stopEvent }
+                   "scan_area": self.var_scan_area.get(),
+                   "stop_event": self.stopEvent,
+                   "stop_event_experiment": self.stopEvent_experiment }
         return params
 
     def toggle_interval_buttons(self):
@@ -256,11 +264,13 @@ def acquire_data_autocRED(controller, **kwargs):
     exposure_time_image = kwargs["exposure_time_image"]
     unblank_beam = kwargs["unblank_beam"]
     stop_event = kwargs["stop_event"]
+    stop_event_experiment = kwargs["stop_event_experiment"]
     enable_image_interval = kwargs["enable_image_interval"]
     enable_autotrack = kwargs["enable_autotrack"]
     enable_fullacred = kwargs["enable_fullacred"]
     enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
     image_interval = kwargs["image_interval"]
+    scan_area=kwargs["scan_area"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
     #controller.stream.get_module("sed").calib_path = expdir / "calib"
     
@@ -268,6 +278,7 @@ def acquire_data_autocRED(controller, **kwargs):
     cexp.start_collection()
     
     stop_event.clear()
+    stop_event_experiment.clear()
     controller.log.info("Finish autocRED experiment")
     
 
