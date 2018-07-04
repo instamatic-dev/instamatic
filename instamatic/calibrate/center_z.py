@@ -21,10 +21,14 @@ def center_z_height(ctrl):
     from instamatic.processing.cross_correlate import cross_correlate
 
     print("Finding eucentric height...")
-    if ctrl.mode == 'diff':
-        ctrl.mode = 'samag'
+    if ctrl.mode != 'mag1':
+        ctrl.mode = 'mag1'
 
-    z2 = z0 = ctrl.stageposition.z
+    ctrl.brightness.value = 65535
+    ctrl.magnification.value = 2500
+
+    z0 = ctrl.stageposition.z
+    ctrl.stageposition.set(a = -5)
     a0 = ctrl.stageposition.a
     z = []
     d = []
@@ -34,11 +38,10 @@ def center_z_height(ctrl):
     
     for i in range(0,10):
         z1 = ctrl.stageposition.z
-        print(z1 - z2)
+        ctrl.stageposition.set(a = a0)
         img0, h = ctrl.getImage(exposure = 0.01, comment = "z height finding")
         z.append(z0 + i * 1000)
-        a = ctrl.stageposition.a
-        ctrl.stageposition.set(a = a + 1)
+        ctrl.stageposition.set(a = a0 + 10)
         img1, h = ctrl.getImage(exposure = 0.01, comment = "z height finding")
         shift = cross_correlate(img0, img1, upsample_factor=10, verbose=False)
         d1 = np.linalg.norm(shift) 
@@ -46,16 +49,13 @@ def center_z_height(ctrl):
             d1 = -d1
         d.append(d1)
         print("Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift)))
-        z2 = ctrl.stageposition.z
         ctrl.stageposition.set(z = z1 + 1000)
         time.sleep(1)
         
     d_f = reject_outlier(d)
-    print(d_f)
     z_f = []
     for e in d_f:
         z_f.append(z[d.index(e)])
-    print(z_f)
     p = np.polyfit(z, d, 1)
     z_center = -p[1]/p[0]
     satisfied = input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
@@ -70,5 +70,3 @@ def center_z_height(ctrl):
             ctrl.stageposition.set(a = a0, z = z_center+2000)
             ctrl.stageposition.set(a = a0, z = z_center)
         print("Eucentric height set. Find the crystal again and start data collection!")
-
-    ctrl.mode = 'diff'

@@ -57,12 +57,15 @@ class ExperimentalautocRED(LabelFrame):
         self.fullacred_crystalFinder_status = Checkbutton(frame, text = "Enable Full AutocRED + crystal finder Feature", variable = self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
         self.fullacred_crystalFinder_status.grid(row=9, column=2, sticky="W")
 
+        self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight, command = self.zheight)
+        self.zheight.grid(row=10, column=2, sticky="W")
+
         self.lb_coll0 = Label(frame, text="")
         self.lb_coll1 = Label(frame, text="")
         self.lb_coll2 = Label(frame, text="")
-        self.lb_coll0.grid(row=10, column=0, columnspan=3, sticky="EW")
-        self.lb_coll1.grid(row=11, column=0, columnspan=3, sticky="EW")
-        self.lb_coll2.grid(row=12, column=0, columnspan=3, sticky="EW")
+        self.lb_coll0.grid(row=11, column=0, columnspan=3, sticky="EW")
+        self.lb_coll1.grid(row=12, column=0, columnspan=3, sticky="EW")
+        self.lb_coll2.grid(row=13, column=0, columnspan=3, sticky="EW")
         frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
@@ -74,14 +77,14 @@ class ExperimentalautocRED(LabelFrame):
         self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
         
-        self.acquireTEMStatusButton = Button(frame, text = "Show calib_is", command = self.show_calib_is, state=NORMAL)
-        self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
-        
+        self.ShowCalibBeamshift = Button(frame, text="Stop Rotation", command=self.stop_collection_acred, state=NORMAL)
+        self.ShowCalibBeamshift.grid(row=3, column=0, sticky="EW")
+
         self.ShowCalibBeamshift = Button(frame, text="Show calib_beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=2, column=1, sticky="EW")
 
-        self.ShowCalibBeamshift = Button(frame, text="Set Stop", command=self.stop_collection_acred, state=NORMAL)
-        self.ShowCalibBeamshift.grid(row=3, column=0, sticky="EW")
+        self.acquireTEMStatusButton = Button(frame, text = "Show calib_is", command = self.show_calib_is, state=NORMAL)
+        self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
         
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -103,6 +106,7 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_fullacred = BooleanVar(value=False)
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=False)
         self.var_scan_area = IntVar(value=0)
+        self.var_zheight = BooleanVar(value = False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -146,7 +150,8 @@ class ExperimentalautocRED(LabelFrame):
                    "diff_defocus": self.var_diff_defocus.get(),
                    "scan_area": self.var_scan_area.get(),
                    "stop_event": self.stopEvent,
-                   "stop_event_experiment": self.stopEvent_experiment }
+                   "stop_event_experiment": self.stopEvent_experiment,
+                   "zheight": self.var_zheight }
         return params
 
     def toggle_interval_buttons(self):
@@ -191,6 +196,9 @@ class ExperimentalautocRED(LabelFrame):
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
+
+    def zheight(self):
+        enable = self.var_zheight.get()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
@@ -271,7 +279,9 @@ def acquire_data_autocRED(controller, **kwargs):
     enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
     image_interval = kwargs["image_interval"]
     scan_area=kwargs["scan_area"]
+    auto_zheight=kwargs["zheight"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
+
     #controller.stream.get_module("sed").calib_path = expdir / "calib"
     
     cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
