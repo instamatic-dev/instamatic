@@ -45,6 +45,8 @@ setup(
               "instamatic.formats",
               "instamatic.gui",
               "instamatic.processing",
+              "instamatic.neural_network",
+              "instamatic.server",
               "instamatic.TEMController",
               "instamatic.utils"],
 
