@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 #!/usr/bin/env python
 
 import sys, os
@@ -187,7 +189,8 @@ def main_entry():
             args = glob.glob(fobj)
 
     drc = Path(options.drc)
-    drc.mkdir(exist_ok=True, parents=True)
+    if not drc.exists():
+        drc.mkdir(parents=True)
 
     for f in args:
         img,h = read_tiff(f)

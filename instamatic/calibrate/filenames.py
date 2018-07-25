@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 CALIB_STAGE_LOWMAG = "calib_stage_lowmag.pickle"
 CALIB_BEAMSHIFT = "calib_beamshift.pickle"
 CALIB_BRIGHTNESS = "calib_brightness.pickle"

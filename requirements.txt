@@ -9,5 +9,7 @@ scikit-image
 tqdm
 pyyaml
 h5py
+future-fstrings
+pathlib
 # optional
 IPython # instamatic.controller

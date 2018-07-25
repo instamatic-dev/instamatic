@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from instamatic import TEMController
 import threading
 import queue
@@ -90,7 +92,7 @@ def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_TEMServer_{date}.log"
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+                        filename=str(logfile), 
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)

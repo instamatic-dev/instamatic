@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import os, sys
 import yaml
 from pathlib import Path
@@ -10,7 +12,8 @@ logger = logging.getLogger(__name__)
 def initialize_in_AppData():
     src = Path(__file__).parent
     dst = Path(os.environ["AppData"]) / "instamatic"
-    dst.mkdir(exist_ok=True, parents=True)
+    if not dst.exists():
+        dst.mkdir(parents=True)
 
     print(f"No config directory found, creating new one in {dst}")
 
@@ -58,7 +61,7 @@ class ConfigObject(object):
 
     @classmethod
     def from_file(cls, path):
-        return cls(yaml.load(open(path, "r")))
+        return cls(yaml.load(open(str(path), "r")))
 
 
 base_drc = get_base_drc()
@@ -79,5 +82,7 @@ camera = ConfigObject.from_file(base_drc / "config" / "camera" / f"{cfg.camera}.
 scripts_drc = base_drc / "scripts"
 logs_drc = base_drc / "logs"
 
-scripts_drc.mkdir(exist_ok=True)
-logs_drc.mkdir(exist_ok=True)
+if not scripts_drc.exists():
+    scripts_drc.mkdir()
+if not logs_drc.exists():
+    logs_drc.mkdir()

@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 #/*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit
@@ -123,8 +125,7 @@ class TiffIO(object):
             fd = filename
             self._access = None
         else:
-            # the b is needed for windows and python 3
-            fd = open(filename, mode)
+            fd = open(str(filename), mode)
             self._access = mode
 
         self._initInternalVariables(fd)

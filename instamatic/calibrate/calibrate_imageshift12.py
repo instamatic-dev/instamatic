@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.processing.cross_correlate import cross_correlate
 import numpy as np

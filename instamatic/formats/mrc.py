@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 ## https://github.com/ezralanglois/arachnid/blob/master/arachnid/core/image/formats/mrc.py
 ## Licenced under GPL
 
@@ -611,6 +613,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
     inplace : bool
               Write new image to stack without removing the stack
     '''
+    filename = str(filename)
     
     if header is None and hasattr(img, 'header'): header=img.header
     try: img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])

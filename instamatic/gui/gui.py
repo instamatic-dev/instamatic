@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 
@@ -172,7 +174,7 @@ def main():
     logfile = config.logs_drc / f"instamatic_{date}.log"
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+                        filename=str(logfile), 
                         level=logging.DEBUG)
 
     logging.captureWarnings(True)

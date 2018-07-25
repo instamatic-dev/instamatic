@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 # -*- coding: utf-8 -*- """
 """
 Port of Manuel Guizar's code from:

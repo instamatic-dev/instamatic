@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import numpy as np
 
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py
@@ -23,6 +25,8 @@ def write_adsc(fname, data, header={}):
     """
     Write adsc format
     """
+    fname = str(fname)
+
     out = b'{\n'
     for key in header:
         out += "{:}={:};\n".format(key, header[key]).encode()

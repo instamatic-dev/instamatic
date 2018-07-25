@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 import threading
@@ -240,7 +242,8 @@ def acquire_data_cRED(controller, **kwargs):
     from instamatic.experiments import cRED
     
     expdir = controller.module_io.get_new_experiment_directory()
-    expdir.mkdir(exist_ok=True, parents=True)
+    if not expdir.exists():
+        expdir.mkdir(parents=True)
     
     cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
 

@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from instamatic import config
 from typing import Tuple
 

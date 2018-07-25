@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 

@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import threading
 import time
 from queue import Queue

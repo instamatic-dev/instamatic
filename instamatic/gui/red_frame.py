@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 
@@ -97,7 +99,8 @@ def acquire_data_RED(controller, **kwargs):
         flatfield = controller.module_io.get_flatfield()
 
         expdir = controller.module_io.get_new_experiment_directory()
-        expdir.mkdir(exist_ok=True, parents=True)
+        if not expdir.exists():
+            expdir.mkdir(parents=True)
     
         controller.red_exp = RED.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
                            flatfield=flatfield)

@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import numpy as np
 import lmfit
 from instamatic.tools import *

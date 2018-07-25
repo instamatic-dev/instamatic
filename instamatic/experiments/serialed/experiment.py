@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import os, sys
 import numpy as np
 import json
@@ -167,7 +169,8 @@ class Experiment(object):
         self.datadir = self.expdir / "data"
 
         for drc in self.expdir, self.calibdir, self.imagedir, self.datadir:
-            drc.mkdir(exist_ok=True, parents=True)
+            if not drc.exists():
+                drc.mkdir(parents=True)
 
         return self.expdir
 

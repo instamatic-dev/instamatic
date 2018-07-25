@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import comtypes.client
 import atexit
 import time

@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from .TiffIO import TiffIO
 import time
 import os
@@ -46,6 +48,8 @@ def write_tiff(fname, data, header=None):
         dictionary containing the metadata that should be saved
         key/value pairs are stored as yaml in the TIFF ImageDescription tag
     """
+    fname = str(fname)
+
     if isinstance(header, dict):
         header = yaml.dump(header)
     if not header:
@@ -67,6 +71,7 @@ def read_tiff(fname):
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
+    fname = str(fname)
 
     tiff = TiffIO(fname)
     img = tiff.getImage(0)

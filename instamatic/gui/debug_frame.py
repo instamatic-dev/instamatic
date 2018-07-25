@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
@@ -235,7 +237,8 @@ def collect_flatfield(controller, **kwargs):
 
     workdir = controller.module_io.get_working_directory()
     drc = workdir / "flatfield"
-    drc.mkdir(exist_ok=True, parents=True)
+    if not drc.exists():
+        drc.mkdir(parents=True)
 
     flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
 

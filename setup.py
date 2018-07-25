@@ -1,3 +1,5 @@
+# -*- coding: future_fstrings -*-
+
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages

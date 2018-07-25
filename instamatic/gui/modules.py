@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from . import sed_frame
 from . import cred_frame
 from . import io_frame

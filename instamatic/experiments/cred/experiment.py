@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 import os
 import datetime
 from tkinter import *
@@ -93,7 +95,7 @@ class Experiment(object):
 
         self.logger.info(self.stage_positions)
 
-        with open(self.path / "cRED_log.txt", "w") as f:
+        with open(str(self.path / "cRED_log.txt"), "w") as f:
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
             print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
@@ -309,7 +311,8 @@ class Experiment(object):
     def write_image_data(self, buffer):
         if buffer:
             drc = self.path / "tiff_image"
-            drc.mkdir(exist_ok=True)
+            if not drc.exists():
+                drc.mkdir()
             while len(buffer) != 0:
                 i, img, h = buffer.pop(0)
                 fn = drc / f"{i:05d}.tiff"

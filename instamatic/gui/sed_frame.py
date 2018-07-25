@@ -1,3 +1,5 @@
+# coding: future_fstrings 
+
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.messagebox
@@ -167,7 +169,7 @@ def acquire_data_SED(controller, **kwargs):
 
     workdir = controller.module_io.get_working_directory()
     expdir = controller.module_io.get_new_experiment_directory()
-    expdir.mkdir(exist_ok=True, parents=True)
+    expdir.mkdir(parents=True)
 
     params = workdir / "params.json"
     try:
