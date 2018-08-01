@@ -17,17 +17,17 @@ def initialize_in_AppData():
 
     config_drc = dst / "config"
     for sub_drc in ("microscope", "calibration", "camera"):
-        shutil.copytree(src / sub_drc, config_drc / sub_drc)
+        shutil.copytree(str(src / sub_drc), str(config_drc / sub_drc))
 
-    shutil.copy(src / "global.yaml", config_drc / "global.yaml")
+    shutil.copy(str(src / "global.yaml"), str(config_drc / "global.yaml"))
     
-    os.mkdir(dst / "scripts")
-    os.mkdir(dst / "logs")
+    os.mkdir(str(dst / "scripts"))
+    os.mkdir(str(dst / "logs"))
 
     print("Configuration directory has been initialized.")
     print("Directory: {dst}".format(dst=dst))
     print("Please review and restart the program.")
-    os.startfile(dst)
+    os.startfile(str(dst))
     sys.exit()
 
 
@@ -35,10 +35,8 @@ def get_base_drc():
     """Figure out where configuration files for instamatic are stored"""
     try:
         search = Path(os.environ["instamatic"])  # if installed in portable way
-        print(search)
     except KeyError:
         search = Path(os.environ["AppData"]) / "instamatic"
-        print(search)
 
     if search.exists():
         return search

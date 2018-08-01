@@ -169,7 +169,7 @@ def main():
     from instamatic import config
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_{date}.log"
+    logfile = config.logs_drc / "instamatic_{date}.log".format(date=date)
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=str(logfile), 
