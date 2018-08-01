@@ -34,10 +34,10 @@ def get_base_drc():
     """Figure out where configuration files for instamatic are stored"""
     try:
         search = Path(os.environ["instamatic"])  # if installed in portable way
-        print(search)
+        logger.debug("Search directory:", search)
     except KeyError:
         search = Path(os.environ["AppData"]) / "instamatic"
-        print(search)
+        logger.debug("Search directory:", search)
 
     if search.exists():
         return search
