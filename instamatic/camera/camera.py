@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
@@ -43,7 +41,7 @@ def Camera(kind, as_stream=False):
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"
         cam = timepix_api.initialize(tpx_config)
     else:
-        raise ValueError(f"No such camera: {kind}")
+        raise ValueError("No such camera: {kind}".format(kind=kind))
 
     if as_stream:
         from .videostream import VideoStream
@@ -74,7 +72,7 @@ class CameraDLL(object):
         elif kind == "gatan":
             libpath = cameradir / DLLPATH_GATAN
         else:
-            raise ValueError(f"No such camera: {kind}")
+            raise ValueError("No such camera: {kind}".format(kind=kind))
 
         self.name = kind
 
@@ -82,7 +80,7 @@ class CameraDLL(object):
             lib = ctypes.cdll.LoadLibrary(str(libpath))
         except WindowsError as e:
             print(e)
-            raise RuntimeError(f"Cannot load DLL: {libpath}")
+            raise RuntimeError("Cannot load DLL: {libpath}".format(libpath=libpath))
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
@@ -113,7 +111,7 @@ class CameraDLL(object):
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = "Camera {camera} initialized".format(camera=self.getName())
         logger.info(msg)
 
         # print "Dimensions {}x{}".format(*self.getDimensions())
@@ -229,7 +227,7 @@ class CameraSimu(object):
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = "Camera {camera} initialized".format(camera=self.getName())
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -286,11 +284,11 @@ class CameraSimu(object):
     def establishConnection(self):
         res = 1
         if res != 1:
-            raise RuntimeError(f"Could not establish camera connection to {self.name}")
+            raise RuntimeError("Could not establish camera connection to {name}".format(name=self.name))
 
     def releaseConnection(self):
         name = self.getName()
-        msg = f"Connection to camera {name} released" 
+        msg = "Connection to camera {name} released".format(name=name)
         logger.info(msg)
 
 

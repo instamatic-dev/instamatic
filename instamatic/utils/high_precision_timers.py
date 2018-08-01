@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from ctypes import wintypes
 import ctypes
 import atexit

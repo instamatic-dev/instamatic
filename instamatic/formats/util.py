@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 '''  Defines a set of utility functions
 
 .. Created on Jul 18, 2013

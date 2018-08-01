@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 ## https://github.com/ezralanglois/arachnid/blob/master/arachnid/core/image/formats/mrc.py
 ## Licenced under GPL
 

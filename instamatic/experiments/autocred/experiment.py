@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os
 import datetime
 import logging
@@ -45,7 +43,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus = 0):
                 transform_imgshift = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = 2000)
             with open(file, 'wb') as f:
                 pickle.dump(transform_imgshift, f)
-            satisfied = input(f"{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.")
+            satisfied = input("{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.".format(imageshift=imageshift, diff_defocus=diff_defocus))
             
     return transform_imgshift
 

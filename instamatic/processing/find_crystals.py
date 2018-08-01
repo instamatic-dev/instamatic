@@ -1,4 +1,3 @@
-# coding: future_fstrings 
 
 from scipy.cluster.vq import kmeans2
 from scipy._lib._util import _asarray_validated

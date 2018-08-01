@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 #!/usr/bin/env python
 
 import sys, os
@@ -88,7 +86,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
-        outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
+        outfile = drc / "flatfield_{n:04d}.tiff".format(n=n) if save_images else None
         img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
         buffer.append(img)
     
@@ -96,10 +94,10 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     deadpixels = get_deadpixels(f)
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
-    ff = drc / f"flatfield_{ctrl.cam.name}_{date}.tiff"
+    ff = drc / "flatfield_{}_{}.tiff".format(ctrl.cam.name, date)
     write_tiff(ff, f, header={"deadpixels": deadpixels})
 
-    fp = drc / f"deadpixels_tpx_{date}.npy"
+    fp = drc / "deadpixels_tpx_{date}.npy".format(date=date)
     np.save(fp, deadpixels)
 
     if collect_darkfield:
@@ -109,7 +107,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
         print("\nCollecting darkfield images")
         for n in tqdm(range(frames)):
-            outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
+            outfile = drc / "darkfield_{n:04d}.tiff".format(n=n) if save_images else None
             img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
             buffer.append(img)
         
@@ -118,12 +116,12 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
         ctrl.beamblank = False
     
-        fd = drc / f"darkfield_{ctrl.cam.name}_{date}.tiff"
+        fd = drc / "darkfield_{}_{}.tiff".format(ctrl.cam.name, date)
         write_tiff(fd, d, header={"deadpixels": deadpixels})
 
     ctrl.cam.unblock()
 
-    print(f"\nFlatfield collection finished ({drc}).")
+    print("\nFlatfield collection finished ({drc}).".format(drc=drc))
 
 
 def main_entry():

@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os
 import datetime
 import numpy as np
@@ -92,7 +90,7 @@ class Experiment(object):
             startangle = self.current_angle + stepsize
 
         tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
-        print(f"\nStartangle: {startangle:.3f}")
+        print("\nStartangle: {startangle:.3f}".format(startangle=startangle))
         # print "Angles:", tilt_positions
 
         data, headers = [], []

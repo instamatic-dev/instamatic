@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from instamatic import config
 from instamatic.TEMController.server_microscope import ServerMicroscope
 

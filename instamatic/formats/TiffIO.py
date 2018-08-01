@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 #/*##########################################################################
 #
 # The PyMca X-Ray Fluorescence Toolkit

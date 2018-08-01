@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import socket
 import pickle
 import time
@@ -35,7 +33,7 @@ def kill_server(p):
 def start_server_in_subprocess():
    cmd = "instamatic.temserver.exe"
    p = sp.Popen(cmd, stdout=sp.DEVNULL)
-   print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
+   print("Starting TEM server ({HOST}:{PORT} on pid={pid})".format(HOST=HOST, PORT=PORT, pid=p.pid))
    atexit.register(kill_server, p)
 
 
@@ -74,14 +72,14 @@ class ServerMicroscope(object):
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to TEM server ({HOST}:{PORT})")
+        print("Connected to TEM server ({HOST}:{PORT})".format(HOST=HOST, PORT=PORT))
 
     def __getattr__(self, func_name):
 
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
-            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+            raise AttributeError("`{}` object has no attribute `{}`".format(self.__class__.__name__, func_name)) from e
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
@@ -108,7 +106,7 @@ class ServerMicroscope(object):
             raise data
 
         else:
-            raise ConnectionError(f"Unknown status code: {status}")
+            raise ConnectionError("Unknown status code: {status}".format(status=status))
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
@@ -132,13 +130,13 @@ class TraceVariable(object):
         self._traced = []
 
     def start(self):
-        print(f"Trace started: {self.name}")
+        print("Trace started: {}".format(self.name))
         self.update()
 
     def stop(self):
         self._timer.cancel()
 
-        print(f"Trace canceled: {self.name}")
+        print("Trace canceled: {}".format(self.name))
 
         return self._traced
 
@@ -148,7 +146,7 @@ class TraceVariable(object):
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     
         if self.verbose:
-            print(f"{now} | Trace {self.name}: {ret}")
+            print("{} | Trace {}: {}".format(now, self.name, ret))
     
         self._traced.append((now, ret))
         

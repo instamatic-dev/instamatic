@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os, sys
 import ctypes
 from IPython import embed
@@ -79,7 +77,7 @@ class EMCameraObj(object):
             os.rename(self.lockfile, self.lockfile)
             # WinError 32 if file is open by the same/another process
         except PermissionError:
-            raise LockingError(f"Cannot establish lock to {self.lockfile} because it is used by another process")
+            raise LockingError("Cannot establish lock to {lockfile} because it is used by another process".format(lockfile=self.lockfile))
         else:
             self._lock = open(self.lockfile)
 
@@ -338,7 +336,7 @@ def initialize(config):
 
     cam.load_defaults()
 
-    print(f"Camera {cam.getName()} initialized (resolution: {cam.getDimensions()})")
+    print("Camera {name} initialized (resolution: {dimensions})".format(name=cam.getName(), dimensions=cam.getDimensions()))
 
     return cam
 
@@ -369,7 +367,7 @@ if __name__ == '__main__':
         for x in range(n):
             cam.acquireData(t)
         dt = time.clock() - t0
-        print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
+        print("Total time: {:.1f} s, acquisition time: {:.2f} ms, overhead: {:.2f} ms".format(dt, 1000*(dt/n), 1000*(dt/n - t)))
     
     embed(banner1='')
     

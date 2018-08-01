@@ -1,4 +1,3 @@
-# coding: future_fstrings 
 
 from instamatic import TEMController
 import threading
@@ -55,7 +54,7 @@ class TemServer(threading.Thread):
     
                 box.append((status, ret))
                 condition.notify()
-                print(f"{now} | {status} {func_name}: {ret}")
+                print("{now} | {status} {func_name}: {ret}".format(now=now, status=status, func_name=func_name, ret=ret))
 
     def evaluate(self, func_name, args, kwargs):
         # print(func_name, args, kwargs)
@@ -90,7 +89,7 @@ def handle(conn, q):
 
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_TEMServer_{date}.log"
+    logfile = config.logs_drc / "instamatic_TEMServer_{date}.log".format(date=date)
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=str(logfile), 
                         level=logging.DEBUG)
@@ -106,8 +105,8 @@ def main():
     s.bind((HOST,PORT))
     s.listen(5)
 
-    log.info(f"Server listening on {HOST}:{PORT}")
-    print(f"Server listening on {HOST}:{PORT}")
+    log.info("Server listening on {HOST}:{PORT}".format(HOST=HOST, PORT=PORT))
+    print("Server listening on {HOST}:{PORT}".format(HOST=HOST, PORT=PORT))
 
     with s:
         while True:

@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 #!/usr/bin/env python
 
 import time
@@ -26,8 +24,8 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
     stream: Open the camera as a stream (this enables `TEMController.show_stream()`)
     """
 
-    print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")
-    print(f"Camera    : {cam_name}{' (stream)' if (cam_name and stream) else ''}")
+    print("Microscope: {}{}".format(tem_name, ' (server)' if use_server else ''))
+    print("Camera    : {}{}".format(cam_name, ' (stream)' if (cam_name and stream) else ''))
 
     tem = Microscope(tem_name, use_server=use_server)
     
@@ -53,7 +51,7 @@ class Deflector(object):
 
     def __repr__(self):
         x, y = self.get()
-        return f"{self.name}(x={x}, y={y})"
+        return "{}(x={x}, y={y})".format(self.name, x=x, y=y)
 
     @property
     def name(self) -> str:
@@ -111,7 +109,7 @@ class Lens(object):
             value = self.value
         except ValueError:
             value="n/a"
-        return f"{self.name}(value={value})"
+        return "{}(value={value})".format(self.name, value=value)
 
     @property
     def name(self) -> str:
@@ -269,7 +267,7 @@ class StagePosition(object):
         
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
+        return "{}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})".format(self.name, x=x, y=y, z=z, a=a, b=b)
 
     @property
     def name(self) -> str:

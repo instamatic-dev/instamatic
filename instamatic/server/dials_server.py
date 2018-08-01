@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import time
 import os, sys
 import subprocess as sp
@@ -38,7 +36,6 @@ def run_dials_indexing(path):
     # parse_dials_index_log("dials.index.log")
 
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    print(f"{now} | Dials indexing has finished")
 
 
 def handle(conn):
@@ -51,13 +48,13 @@ def handle(conn):
         if not data:
             break
     
-        print(f"{now} | {data}")
+        print("{now} | {data}".format(now=now, data=datadata))
         if data == "close":
-            print(f"{now} | Closing connection")
+            print("{now} | Closing connection".format(now=now))
             break
 
         elif data == "kill":
-            print(f"{now} | Killing server")
+            print("{now} | Killing server".format(now=now))
             ret = 1
             break
 
@@ -74,7 +71,7 @@ def handle(conn):
 
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_DialsServer_{date}.log"
+    logfile = config.logs_drc / "instamatic_DialsServer_{date}.log".format(date=date)
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=logfile, 
                         level=logging.DEBUG)
@@ -85,10 +82,10 @@ def main():
     s.bind((HOST,PORT))
     s.listen(5)
 
-    log.info(f"Dials server listening on {HOST}:{PORT}")
-    log.info(f"Running command: {EXE}")
-    print(f"Server listening on {HOST}:{PORT}")
-    print(f"Running command: {EXE}")
+    log.info("Dials server listening on {HOST}:{PORT}".format(HOST=HOST, PORT=PORT))
+    log.info("Running command: {EXE}".format(EXE))
+    print("Server listening on {HOST}:{PORT}".format(HOST=HOST, PORT=PORT))
+    print("Running command: {EXE}".format(EXE))
 
     with s:
         while True:

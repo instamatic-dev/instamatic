@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 """General purpose processing goes here"""
 
 from .flatfield import apply_flatfield_correction

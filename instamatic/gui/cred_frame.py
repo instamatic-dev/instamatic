@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from tkinter import *
 from tkinter.ttk import *
 import threading
@@ -201,7 +199,7 @@ class ExperimentalcRED(LabelFrame):
 def relax_beam(controller, **kwargs):
     import time
     n_cycles = 4
-    print(f"Relaxing beam ({n_cycles} cycles)", end='')
+    print("Relaxing beam ({n_cycles} cycles)".format(n_cycles=n_cycles), end='')
 
     controller.ctrl.mode_diffraction()
 
@@ -211,10 +209,10 @@ def relax_beam(controller, **kwargs):
     for i in range(n_cycles):
         controller.ctrl.difffocus.set(diff_focus_defocused)
         time.sleep(0.25)
-        print(f".", end='')
+        print(".", end='')
         controller.ctrl.difffocus.set(diff_focus_proper)
         time.sleep(0.25)
-        print(f".", end='')
+        print(".", end='')
 
     print("Done.")
 
@@ -230,7 +228,7 @@ def toggle_difffocus(controller, **kwargs):
             controller._difffocus_proper = controller.ctrl.difffocus.value
 
         value = controller._difffocus_proper + kwargs["value"]
-        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+        print("Defocusing from {} to {}".format(controller._difffocus_proper, value))
     else:
         value = controller._difffocus_proper
 

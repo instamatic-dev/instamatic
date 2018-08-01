@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from instamatic.formats import read_tiff, write_tiff
 import sys, os
 import numpy as np

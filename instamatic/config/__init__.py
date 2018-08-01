@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os, sys
 import yaml
 from pathlib import Path
@@ -15,7 +13,7 @@ def initialize_in_AppData():
     if not dst.exists():
         dst.mkdir(parents=True)
 
-    print(f"No config directory found, creating new one in {dst}")
+    print("No config directory found, creating new one in {dst}".format(dst=dst))
 
     config_drc = dst / "config"
     for sub_drc in ("microscope", "calibration", "camera"):
@@ -27,7 +25,7 @@ def initialize_in_AppData():
     os.mkdir(dst / "logs")
 
     print("Configuration directory has been initialized.")
-    print(f"Directory: {dst}")
+    print("Directory: {dst}".format(dst=dst))
     print("Please review and restart the program.")
     os.startfile(dst)
     sys.exit()
@@ -70,14 +68,14 @@ config_drc = base_drc / "config"
 # if not config_drc.exists():
 #     initialize_in_AppData()
 
-assert config_drc.exists(), f"Configuration directory `{config_drc}` does not exist."
-print(f"Config directory: {config_drc}")
+assert config_drc.exists(), "Configuration directory `{config_drc}` does not exist.".format(config_drc=config_drc)
+print("Config directory: {config_drc}".format(config_drc=config_drc))
 
 cfg = ConfigObject.from_file(base_drc / "config" / "global.yaml")
 
-microscope = ConfigObject.from_file(base_drc / "config" / "microscope" / f"{cfg.microscope}.yaml")
-calibration = ConfigObject.from_file(base_drc / "config" / "calibration" / f"{cfg.calibration}.yaml")
-camera = ConfigObject.from_file(base_drc / "config" / "camera" / f"{cfg.camera}.yaml")
+microscope = ConfigObject.from_file(base_drc / "config" / "microscope" / "{}.yaml".format(cfg.microscope))
+calibration = ConfigObject.from_file(base_drc / "config" / "calibration" / "{}.yaml".format(cfg.calibration))
+camera = ConfigObject.from_file(base_drc / "config" / "camera" / "{}.yaml".format(cfg.camera))
 
 scripts_drc = base_drc / "scripts"
 logs_drc = base_drc / "logs"

@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from instamatic import config
 
 import atexit

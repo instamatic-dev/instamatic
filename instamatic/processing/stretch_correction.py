@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os,sys
 
 import numpy as np

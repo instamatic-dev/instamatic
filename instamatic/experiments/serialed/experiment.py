@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import os, sys
 import numpy as np
 import json
@@ -157,7 +155,7 @@ class Experiment(object):
         if not expdir:
             n = 1
             while True:
-                expdir = Path(f"{name}_{n}")
+                expdir = Path("{name}_{n}".format(name=name, n=n))
                 if expdir.exists():
                     n += 1
                 else:
@@ -379,7 +377,7 @@ class Experiment(object):
                 else:
                     time.sleep(delay)
                     # self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
-                    t.set_description(f"Stage(x={x:7.0f}, y={y:7.0f})")
+                    t.set_description("Stage(x={x:7.0f}, y={y:7.0f})".format(x=x, y=y))
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}
                     dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}".format(**dct)

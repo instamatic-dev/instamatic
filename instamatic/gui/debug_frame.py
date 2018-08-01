@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
@@ -205,7 +203,7 @@ def autoindex(controller, **kwargs):
         # cmd = "start /wait cmd /c instamatic.dialsserver"
         cmd = "start instamatic.dialsserver"
         controller.dials_server_process = sp.call(cmd, shell=True)
-        print(f"Dials server started on {HOST}:{PORT}")
+        print("Dials server started on {HOST}:{PORT}".format(HOST=HOST, PORT=PORT))
         controller.use_dials_server = True
         print("Dials server registered")
         return

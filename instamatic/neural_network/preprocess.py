@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import numpy as np
 from skimage.transform import resize
 

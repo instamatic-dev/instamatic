@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from .serialed import experiment as serialED
 from .cred import experiment as cRED
 from .red import experiment as RED

@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
@@ -83,10 +81,10 @@ class IOFrame(LabelFrame):
         drc = Path(self.var_directory.get())
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
-        path = drc / f"{name}_{number}"
+        path = drc / "{name}_{number}".format(name=name, number=number)
         while path.exists():
             number += 1
-            path = drc / f"{name}_{number}"
+            path = drc / "{name}_{number}".format(name=name, number=number)
         self.var_experiment_number.set(number)
         return number
 
@@ -98,7 +96,7 @@ class IOFrame(LabelFrame):
         drc = Path(self.var_directory.get())
         name = self.var_sample_name.get()
         number = self.var_experiment_number.get()
-        path = drc / f"{name}_{number}"
+        path = drc / "{name}_{number}".format(name=name, number=number)
         return path
 
     def browse_directory(self):
@@ -125,12 +123,12 @@ class IOFrame(LabelFrame):
     def delete_last(self):
         drc = self.get_experiment_directory()
         date = datetime.datetime.now().strftime("%H%M%S")
-        newdrc = drc.parent / f"delete_me-{date}"
+        newdrc = drc.parent / "delete_me-{date}".format(date=date)
         if drc.exists():
             drc.rename(newdrc)
-            print(f"Marked {drc} for deletion")
+            print("Marked {drc} for deletion".format(drc=drc))
         else:
-            print(f"{drc} does not exist")
+            print("{drc} does not exist".format(drc=drc))
 
     def open_data_directory(self):
         drc = self.get_working_directory()

@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from instamatic import config
 
 default_tem = config.microscope.name
@@ -30,6 +28,7 @@ def Microscope(kind: str=default_tem, use_server: bool=False):
 
     returns: TEM interface class
     """
+
     if use_server:
         from .server_microscope import ServerMicroscope
         tem = ServerMicroscope(kind)

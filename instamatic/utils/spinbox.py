@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from tkinter.ttk import Entry
 
 # https://github.com/alandmoore/cpython/blob/53046dcf91481f3e69ddbc97e5d8d0d921c1d09f/Lib/tkinter/ttk.py

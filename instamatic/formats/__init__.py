@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from .TiffIO import TiffIO
 import time
 import os
@@ -33,7 +31,7 @@ def read_image(fname):
     elif ext in (".mrc"):
         img, h = read_mrc(fname)
     else:
-        raise IOError(f"Cannot open file {fname}, unknown extension: {ext}")
+        raise IOError("Cannot open file {fname}, unknown extension: {ext}".format(fname=fname, ext=ext))
     return img, h 
 
 
@@ -121,7 +119,7 @@ def read_hdf5(fname):
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
     if not os.path.exists(fname):
-        raise FileNotFoundError(f"No such file: '{fname}'")
+        raise FileNotFoundError("No such file: '{fname}'".format(fname=fname))
         
     f = h5py.File(fname)
     return np.array(f["data"]), dict(f["data"].attrs)

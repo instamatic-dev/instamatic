@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 import numpy as np
 
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py

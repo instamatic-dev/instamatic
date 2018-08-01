@@ -1,5 +1,3 @@
-# coding: future_fstrings 
-
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
@@ -96,7 +94,7 @@ class MachineLearningFrame(LabelFrame):
                 self.tv.insert('', 'end', text=fn_patt, values=(frame, number, prediction, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
-        print(f"CSV data `{fn}` loaded")
+        print("CSV data `{fn}` loaded".format(fn=fn))
 
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
@@ -123,14 +121,14 @@ class MachineLearningFrame(LabelFrame):
 
         root = fn.parents[1]
         name = fn.stem.rsplit("_", 1)[0]  # strip crystal number
-        image_fn = root / "images" / f"{name}{fn.suffix}"
+        image_fn = root / "images" / "{}{}".format(name, fn.suffix)
 
         if not fn.exists():
-            print(f"No such file: {fn}")
+            print("No such file: {fn}".format(fn=fn))
             return
 
         if not image_fn.exists():
-            print(f"No such file: {image_fn}")
+            print("No such file: {image_fn}".format(image_fn=image_fn))
             return
 
         data, data_h = read_image(fn)
