@@ -2,16 +2,10 @@ import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
-# import comtypes
-# # initial COM in multithread mode if not initialized otherwise
-# try:
-#     comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-# except WindowsError:
-#     comtypes.CoInitialize()
 from pathlib import Path
 
 import numpy as np
-import os, sys
+import os, sys, platform
 import logging
 logger = logging.getLogger(__name__)
 
@@ -22,8 +16,13 @@ from instamatic import config
 
 __all__ = ["Camera"]
 
-DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
-DLLPATH_GATAN   = "CCDCOM2_gatan.dll"
+if platform.architecture()[0] == '32bit':
+    DLLPATH_SIMU    = "CCDCOM2_x86_simulation.dll"
+    DLLPATH_GATAN   = "CCDCOM2_x86_gatan.dll"
+else:
+    DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
+    DLLPATH_GATAN   = "CCDCOM2_x64_gatan.dll"
+
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
 CONFIG_PYTIMEPIX = "tpx"
