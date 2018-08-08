@@ -9,8 +9,9 @@ from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from pathlib import Path
 from math import cos, pi
-
-
+import math
+from scipy.signal import convolve2d
+from scipy import ndimage
 import collections
 
 import logging
@@ -100,7 +101,8 @@ class ImgConversion(object):
                  end_angle,                  # degrees, end angle of the rotation
                  rotation_axis,              # radians, specifies the position of the rotation axis
                  acquisition_time,           # seconds, acquisition time (exposure time + overhead)
-                 flatfield='flatfield.tiff'  
+                 flatfield='flatfield.tiff', 
+                 centerDP=False 
                  ):
         flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
@@ -149,9 +151,57 @@ class ImgConversion(object):
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
         self.do_stretch_correction = True
+        
+        self.do_centerDP = centerDP
 
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
+    def estimate_noise(self, I):
+        H, W = I.shape
+        
+        M = [[1, -2, 1],
+             [-2, 4, -2],
+             [1, -2, 1]]
+        
+        sigma = np.sum(np.sum(np.absolute(convolve2d(I, M))))
+        sigma = sigma * math.sqrt(0.5 * math.pi) / (6 * (W-2) * (H-2))
+        
+        return sigma
+        
+    def find_beam_center(self, img, sigma=30):
+        """instamatic.tools"""
+        "Find position of the central beam using gaussian filter"
+        blurred = ndimage.gaussian_filter(img, sigma)
+        center = np.unravel_index(blurred.argmax(), blurred.shape)
+        return np.array(center)
+
+    def DP_centering(self, sigma = 30):
+        """In full autocRED, DPs drift because of too much utilization of lenses. Need to center them for XDS and DIALS"""
+        centered_dp = {}
+        
+        img0 = self.data[1]
+        sizex, sizey = img0.shape
+        pbc1 = self.find_beam_center(img0, sigma = sigma)
+        
+        print("Centering DP according to the first image...")
+        for i in self.observed_range:
+            img = self.data[i]
+            noise = self.estimate_noise(img)
+            pbc = self.find_beam_center(img, sigma = sigma)
+            shift = pbc - pbc1
+            shift = (int(shift[0]), int(shift[1]))
+            imgnew = np.zeros((sizex, sizey))
+            for j in range(0, sizex):
+                for k in range(0, sizey):
+                    if j - shift[0] < 0 or k - shift[1] < 0:
+                        imgnew[(j - shift[0]) % sizex, (k - shift[1]) % sizey] = np.random.normal(3*noise, noise)
+                    else:
+                        imgnew[(j - shift[0]) % sizex, (k - shift[1]) % sizey] = img[j, k]
+            centered_dp[i] = imgnew.astype(np.int16)
+            
+        print("Images are now centered according to the first image.")
+        return centered_dp, pbc1
+    
     def get_beam_centers(self):
         centers = []
         for i, h in self.headers.items():
@@ -192,11 +242,17 @@ class ImgConversion(object):
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
-    
+        
+        if self.do_centerDP:
+            self.data_c, self.pbc = self.DP_centering()
+        
         for i in self.observed_range:
-            self.write_smv(path, i)
-               
-        logger.debug("SMV files saved in folder: {}".format(path))
+            if self.do_centerDP:
+                self.write_smv_centered(path, i)
+                logger.debug("SMV files (centered) saved in folder: {}".format(path))
+            else:
+                self.write_smv(path, i)
+                logger.debug("SMV files saved in folder: {}".format(path))
      
     def mrc_writer(self, path):
         print ("Writing MRC files......")
@@ -325,6 +381,54 @@ class ImgConversion(object):
         fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
+    
+    def write_smv_centered(self, path, i):
+        img= self.data_c[i]
+        h = self.headers[i]
+
+        beam_center = h["beam_center"]
+
+        if self.do_stretch_correction:
+            img = self.apply_stretch_correction(img, beam_center)
+        img = np.ushort(img)
+        shape_x, shape_y = img.shape
+        
+        phi = self.start_angle + self.osc_angle * (i-1)
+
+        # TODO: Dials reads the beam_center from the first image and uses that for the whole range
+        # For now, use the average beam center and consider it stationary, remove this line later
+        beam_center = self.pbc
+        
+        header = collections.OrderedDict()
+        header['HEADER_BYTES'] = 512
+        header['DIM'] = 2
+        header['BYTE_ORDER'] = "little_endian"
+        header['TYPE'] = "unsigned_short"
+        header['SIZE1'] = shape_x
+        header['SIZE2'] = shape_y
+        header['PIXEL_SIZE'] = self.physical_pixelsize
+        header['BIN'] = "1x1"
+        header['BIN_TYPE'] = "HW"
+        header['ADC'] = "fast"
+        header['CREV'] = 1
+        header['BEAMLINE'] = "TimePix_SU"   # special ID for DIALS
+        header['DETECTOR_SN'] = 901         # special ID for DIALS
+        header['DATE'] = str(datetime.fromtimestamp(h["ImageGetTime"]))
+        header['TIME'] = str(h["ImageExposureTime"])
+        header['DISTANCE'] = "{:.4f}".format(self.distance)
+        header['TWOTHETA'] = 0.00
+        header['PHI'] = "{:.4f}".format(phi)
+        header['OSC_START'] = "{:.4f}".format(phi)
+        header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
+        header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
+        # reverse XY coordinates for XDS
+        header['BEAM_CENTER_X'] = "{:.4f}".format(beam_center[1])
+        header['BEAM_CENTER_Y'] = "{:.4f}".format(beam_center[0])
+        header['DENZO_X_BEAM'] = "{:.4f}".format((beam_center[0]*self.physical_pixelsize))
+        header['DENZO_Y_BEAM'] = "{:.4f}".format((beam_center[1]*self.physical_pixelsize))
+        fn = path / f"{i:05d}.img"
+        write_adsc(fn, img, header=header)
+        return fn
 
     def write_mrc(self, path, i):
         img = self.data[i]
@@ -399,8 +503,9 @@ class ImgConversion(object):
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
         else:
             exclude = "!EXCLUDE_DATA_RANGE="
-
-        s = XDS_template.format(
+            
+        if self.do_centerDP:
+            s = XDS_template.format(
             date=str(time.ctime()),
             data_drc=self.smv_subdrc,
             data_begin=1,
@@ -409,8 +514,8 @@ class ImgConversion(object):
             starting_angle=self.start_angle,
             wavelength=self.wavelength,
             # reverse XY coordinates for XDS
-            origin_x=self.mean_beam_center[1],
-            origin_y=self.mean_beam_center[0],
+            origin_x=self.pbc[1],
+            origin_y=self.pbc[0],
             NX=shape_y,
             NY=shape_x,
             sign="+",
@@ -423,6 +528,30 @@ class ImgConversion(object):
             rot_y=rot_y,
             rot_z=rot_z
             )
+        else:
+            s = XDS_template.format(
+                date=str(time.ctime()),
+                data_drc=self.smv_subdrc,
+                data_begin=1,
+                data_end=nframes,
+                exclude=exclude,
+                starting_angle=self.start_angle,
+                wavelength=self.wavelength,
+                # reverse XY coordinates for XDS
+                origin_x=self.mean_beam_center[1],
+                origin_y=self.mean_beam_center[0],
+                NX=shape_y,
+                NY=shape_x,
+                sign="+",
+                detector_distance=self.distance,
+                QX=self.physical_pixelsize,
+                QY=self.physical_pixelsize,
+                osc_angle=self.osc_angle,
+                calib_osc_angle=self.rotation_speed * self.acquisition_time,
+                rot_x=rot_x,
+                rot_y=rot_y,
+                rot_z=rot_z
+                )
        
         with open(path / 'XDS.INP','w') as f:
             f.write(s)

@@ -6,34 +6,29 @@ from matplotlib import pyplot as plt
 
 import logging
 logger = logging.getLogger(__name__)
-
-"""def plot_calib(imgpos, shifts, r):
-    r_i = np.linalg.inv(r)
-    imgpos_ = np.dot(imgpos, r_i)
-    shifts = np.array(shifts)
-    imgpos_ = np.array(imgpos_)
-    
-    p = plt.scatter(*shifts.T, marker = ">", label = "Observed pixel shifts")
-    plt.scatter(*imgpos_.T, marker = "<", label = "Positions in pixel coords")
-    plt.legend()
-    plt.title("calibration map")
-    ## Needs some more exploration to make calibration plottable when done.
-    #plt.show()
-    return p"""
     
 def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
-    inp = input("""Calibrate {}
--------------------
- 1. Go to diffraction mode.
- 2. Focus the diffraction spots.
- 3. Center the beam with PLA.
-    
- >> Press <ENTER> to start >> \n""".format(key))
+    if key != 'S':
+        inp = input("""Calibrate {}
+    -------------------
+     1. Go to diffraction mode.
+     2. Focus the diffraction spots.
+     3. Center the beam with PLA.
+        
+     >> Press <ENTER> to start >> \n""".format(key))
+    else:
+        inp = input("""Calibrate stage vs camera
+        ------------------
+        1. Go to mag1.
+        2. Find area with particles.
+        
+        >> Press <ENTER> to start >> \n""")
     
     d = {"IS1": ctrl.imageshift1,
          "IS2": ctrl.imageshift2,
-         "BS": ctrl.beamshift}
+         "BS": ctrl.beamshift,
+         "S": ctrl.stageposition}
     
     if diff_defocus != 0:
         diff_focus_proper = ctrl.difffocus.value
@@ -42,7 +37,14 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
     
     deflector = d[key]
     
-    x0, y0 = deflector.get()
+    if key != "S":
+        x0, y0 = deflector.get()
+        scaling = True
+    else:
+        x0 = deflector.x
+        y0 = deflector.y
+        scaling = False
+        
     img_cent, h_cent = ctrl.getImage(exposure=0.01, comment="Beam in center of image")
 
     shifts = []
@@ -61,9 +63,9 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
     deflector.set(x = x0, y = y0)
     
-    r, t = fit_affine_transformation(shifts, imgpos)
+    r, t = fit_affine_transformation(shifts, imgpos, scaling = scaling)
 
-    result = fit_affine_transformation(shifts, imgpos, as_params=True)
+    result = fit_affine_transformation(shifts, imgpos, scaling = scaling, as_params=True)
 
     if diff_defocus != 0:
         ctrl.difffocus.value = diff_focus_proper
@@ -94,3 +96,9 @@ def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize, logger):
 
 def Calibrate_Beamshift_D(ctrl, stepsize, logger):
     return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = 0, stepsize = stepsize, logger = logger, key="BS")
+
+def Calibrate_Stage(ctrl, stepsize, logger):
+    if ctrl.mode != "mag1":
+        ctrl.mode = "mag1"
+    ctrl.brightness.value = 65535
+    return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = 0, stepsize = stepsize, logger = logger, key="S")

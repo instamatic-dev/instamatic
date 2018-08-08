@@ -57,7 +57,7 @@ class ExperimentalautocRED(LabelFrame):
         self.fullacred_crystalFinder_status = Checkbutton(frame, text = "Enable Full AutocRED + crystal finder Feature", variable = self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
         self.fullacred_crystalFinder_status.grid(row=9, column=2, sticky="W")
 
-        self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight, command = self.zheight)
+        self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight)
         self.zheight.grid(row=10, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
@@ -70,6 +70,9 @@ class ExperimentalautocRED(LabelFrame):
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
+        
+        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
+        self.auto_center_SMV.grid(row=13, column=2, sticky="W")
         
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
@@ -107,7 +110,8 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=False)
         self.var_scan_area = IntVar(value=0)
         self.var_zheight = BooleanVar(value = False)
-
+        self.var_autoc = BooleanVar(value = True)
+        
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -151,7 +155,8 @@ class ExperimentalautocRED(LabelFrame):
                    "scan_area": self.var_scan_area.get(),
                    "stop_event": self.stopEvent,
                    "stop_event_experiment": self.stopEvent_experiment,
-                   "zheight": self.var_zheight }
+                   "zheight": self.var_zheight.get(),
+                   "autocenterDP": self.var_autoc.get() }
         return params
 
     def toggle_interval_buttons(self):
@@ -196,9 +201,6 @@ class ExperimentalautocRED(LabelFrame):
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
-
-    def zheight(self):
-        enable = self.var_zheight.get()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
@@ -280,6 +282,7 @@ def acquire_data_autocRED(controller, **kwargs):
     image_interval = kwargs["image_interval"]
     scan_area=kwargs["scan_area"]
     auto_zheight=kwargs["zheight"]
+    auto_centerDP=kwargs["autocenterDP"]
     diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
 
     #controller.stream.get_module("sed").calib_path = expdir / "calib"
