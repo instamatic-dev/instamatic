@@ -22,10 +22,6 @@ from instamatic.processing.find_crystals import find_crystals_timepix
 from instamatic.formats import write_tiff
 import traceback
 
-"""20180711: Center a targeted particle and will be collected first in an image.
-marked good datasets as good, by changing the folder name.
-added centering defocused DP for a better rotation range in case the defocused image is out of the camera view."""
-
 ACTIVATION_THRESHOLD = 0.2
 rotation_range = 100
 PORT = 8088
