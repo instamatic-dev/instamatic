@@ -14,14 +14,19 @@ def initialize_in_AppData():
 
     print(f"No config directory found, creating new one in {dst}")
 
+    config_drc = dst / "config"
     for sub_drc in ("microscope", "calibration", "camera"):
-        shutil.copytree(src / sub_drc, dst / sub_drc)
+        shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
-    shutil.copy(src / "global.yaml", dst / "global.yaml")
+    shutil.copy(src / "global.yaml", config_drc / "global.yaml")
+    
+    os.mkdir(dst / "scripts")
+    os.mkdir(dst / "logs")
 
     print("Configuration directory has been initialized.")
-    print("Directory: {dst}")
+    print(f"Directory: {dst}")
     print("Please review and restart the program.")
+    os.startfile(dst)
     sys.exit()
 
 
@@ -29,13 +34,17 @@ def get_base_drc():
     """Figure out where configuration files for instamatic are stored"""
     try:
         search = Path(os.environ["instamatic"])  # if installed in portable way
+        logger.debug("Search directory:", search)
     except KeyError:
         search = Path(os.environ["AppData"]) / "instamatic"
+        logger.debug("Search directory:", search)
 
     if search.exists():
         return search
+    else:
+        initialize_in_AppData()
 
-    return Path(__file__).parents[1]
+    # return Path(__file__).parents[1]
 
 
 class ConfigObject(object):
@@ -55,8 +64,8 @@ class ConfigObject(object):
 base_drc = get_base_drc()
 config_drc = base_drc / "config"
 
-if not config_drc.exists():
-    initialize_in_AppData()
+# if not config_drc.exists():
+#     initialize_in_AppData()
 
 assert config_drc.exists(), f"Configuration directory `{config_drc}` does not exist."
 print(f"Config directory: {config_drc}")

@@ -45,6 +45,8 @@ setup(
               "instamatic.formats",
               "instamatic.gui",
               "instamatic.processing",
+              "instamatic.neural_network",
+              "instamatic.server",
               "instamatic.TEMController",
               "instamatic.utils"],
 
@@ -90,6 +92,7 @@ setup(
             # server
             'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
             'instamatic.temserver                     = instamatic.server.tem_server:main',
+            'instamatic.dialsserver                   = instamatic.server.dials_server:main',
         ]
     }
 )

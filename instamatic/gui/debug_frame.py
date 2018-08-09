@@ -3,9 +3,15 @@ from tkinter.ttk import *
 import tkinter.filedialog
 import os, sys
 import glob
-from instamatic.config import scripts_drc
+from instamatic import config
 from pathlib import Path
 from collections import namedtuple
+
+scripts_drc = config.scripts_drc
+
+HOST = config.cfg.dials_server_host
+PORT = config.cfg.dials_server_port
+BUFSIZE = 1024
 
 
 class DebugFrame(LabelFrame):
@@ -38,17 +44,15 @@ class DebugFrame(LabelFrame):
 
         Label(frame, text="Indexing server for DIALS").grid(row=2, column=0, sticky="W")
 
-        Label(frame, text="Port").grid(row=2, column=1, sticky="W", padx=5)
-
-        self.e_port = Entry(frame, textvariable=self.var_server_port, width=10)
-        self.e_port.grid(row=2, column=2, sticky="EW")
-
-        self.BrowseButton = Button(frame, text="Register", command=self.register_server)
-        self.BrowseButton.grid(row=2, column=3, sticky="EW")
+        self.BrowseButton = Button(frame, text="Start", command=self.start_server)
+        self.BrowseButton.grid(row=2, column=2, sticky="EW")
         
+        self.RunButton = Button(frame, text="Register", command=self.register_server)
+        self.RunButton.grid(row=2, column=3, sticky="EW")
+  
         self.RunButton = Button(frame, text="Kill", command=self.kill_server)
         self.RunButton.grid(row=2, column=4, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -97,24 +101,19 @@ class DebugFrame(LabelFrame):
         self.scripts = {}
         self.scripts_drc = scripts_drc  # pathlib.Path object
 
-        self.var_register_server = BooleanVar(value=False)
-        self.var_server_port = IntVar(value=8089)
-        self.var_server_host = StringVar(value='localhost')
-
         self.var_ff_frames = IntVar(value=100)
         self.var_ff_darkfield = BooleanVar(value=False)
 
     def kill_server(self):
-        self.q.put(("autoindex", { "task": "kill" } ))
+        self.q.put(("autoindex", { "task": "kill_server" } ))
+        self.triggerEvent.set()
+
+    def start_server(self):
+        self.q.put(("autoindex", { "task": "start_server" } ))
         self.triggerEvent.set()
 
     def register_server(self):
-        port = self.var_server_port.get()
-        host = self.var_server_host.get()
-        
-        print(f"Register server: {host}:{port}")
-
-        self.q.put(("autoindex", { "task": "register", "port": port, "host": host } ))
+        self.q.put(("autoindex", { "task": "register_server" } ))
         self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
@@ -199,31 +198,36 @@ def autoindex(controller, **kwargs):
     import socket
 
     task = kwargs.get("task")
-    if task == "register":
-        Server = namedtuple("Server", ("host port bufsize"))
+    if task == "start_server":
+        import subprocess as sp
+        # cmd = "start /wait cmd /c instamatic.dialsserver"
+        cmd = "start instamatic.dialsserver"
+        controller.dials_server_process = sp.call(cmd, shell=True)
+        print(f"Dials server started on {HOST}:{PORT}")
+        controller.use_dials_server = True
+        print("Dials server registered")
+        return
 
-        host = kwargs.get("host")
-        port = kwargs.get("port")
-
-        controller.index_server = Server(host, port, 1024)
+    elif task == "register_server":
+        controller.use_dials_server = True
+        print("Dials server registered")
         return
 
     elif task == "run":
         payload = bytes(kwargs.get("path"))
 
-    elif task == "kill":
+    elif task == "kill_server":
         payload = b"kill"
     
-    server = controller.index_server
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print("Sending job to server...", end=" ")
-        s.connect((server.host, server.port))
+        s.connect((HOST, PORT))
         s.send(payload)
-        data = s.recv(server.bufsize).decode()
+        data = s.recv(BUFSIZE).decode()
         print(data)
 
     if task == "kill":
-        del controller.index_server
+        del controller.dials_server_process
 
 
 def collect_flatfield(controller, **kwargs):

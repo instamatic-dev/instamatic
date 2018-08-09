@@ -2,16 +2,10 @@ import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
 
-# import comtypes
-# # initial COM in multithread mode if not initialized otherwise
-# try:
-#     comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-# except WindowsError:
-#     comtypes.CoInitialize()
 from pathlib import Path
 
 import numpy as np
-import os, sys
+import os, sys, platform
 import logging
 logger = logging.getLogger(__name__)
 
@@ -22,11 +16,15 @@ from instamatic import config
 
 __all__ = ["Camera"]
 
-DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
-DLLPATH_ORIUS   = "CCDCOM2_orius.dll"
+if platform.architecture()[0] == '32bit':
+    DLLPATH_SIMU    = "CCDCOM2_x86_simulation.dll"
+    DLLPATH_GATAN   = "CCDCOM2_x86_gatan.dll"
+else:
+    DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
+    DLLPATH_GATAN   = "CCDCOM2_x64_gatan.dll"
+
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
-DLLPATH_TIMEPIX = "CCDCOM2_timepix.dll"
 CONFIG_PYTIMEPIX = "tpx"
 
 
@@ -35,11 +33,9 @@ def Camera(kind, as_stream=False):
         cam = CameraSimu(kind)
     elif kind == "simulateDLL":
         cam = CameraDLL(kind)
-    elif kind == "orius":
-        cam = CameraDLL(kind)
-    elif kind == "timepix":
-        cam = CameraDLL(kind)
-    elif kind == "pytimepix":
+    elif kind in ("orius", "gatan"):
+        cam = CameraDLL("gatan")
+    elif kind in ("timepix", "pytimepix"):
         from . import timepix_api
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"
         cam = timepix_api.initialize(tpx_config)
@@ -56,12 +52,11 @@ def Camera(kind, as_stream=False):
 class CameraDLL(object):
     """docstring for Camera"""
 
-    def __init__(self, kind="orius"):
+    def __init__(self, kind="gatan"):
         """Initialize camera module
 
         kind:
-            'orius'
-            'timepix'
+            'gatan'
             'simulateDLL'
         """
         super(CameraDLL, self).__init__()
@@ -73,11 +68,8 @@ class CameraDLL(object):
 
         if kind == "simulateDLL":
             libpath = cameradir / DLLPATH_SIMU
-        elif kind == "orius":
-            libpath = cameradir / DLLPATH_ORIUS
-        elif kind == "timepix":
-            libpath = cameradir / DLLPATH_TIMEPIX
-            os.chdir(cameradir)
+        elif kind == "gatan":
+            libpath = cameradir / DLLPATH_GATAN
         else:
             raise ValueError(f"No such camera: {kind}")
 
@@ -114,13 +106,7 @@ class CameraDLL(object):
 
         self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
 
-        if kind == "timepix":
-            self.establishConnection() # TODO: redirect to logger somehow...
-            self._setCorrectionRatio = getattr(lib, '?setCorrectionRatio@@YAXN@Z')
-            self._setCorrectionRatio.restype = c_bool
-            os.chdir(curdir)
-        else:
-            self.establishConnection()
+        self.establishConnection()
 
         self.load_defaults()
 
@@ -148,18 +134,17 @@ class CameraDLL(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
+    def getImage(self, exposure=None, binsize=None,**kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
         showindm: show image in digital micrograph
         xmin, xmax, ymin, ymax: retrieve image with smaller size from a subset of pixels
-        fastmode: Shaves off approximately 1ms by avoiding conversion to int
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
@@ -176,7 +161,7 @@ class CameraDLL(object):
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
         pnImgHeight = c_int(0)
-        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, t, showindm, byref(
+        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, exposure, showindm, byref(
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
@@ -188,14 +173,7 @@ class CameraDLL(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
-        # work-around to amke sure everything looks the same
-        if self.name == "timepix":
-            arr = np.rot90(arr, k=3)
-
-        if fastmode:
-            return arr
-        else:
-            return arr.astype(int)
+        return arr
 
     def getCameraCount(self):
         return self._cameraCount()
@@ -269,27 +247,23 @@ class CameraSimu(object):
         else:
             self._setCorrectionRatio(c_double(1/correction_ratio))
 
-    def getImage(self, t=None, binsize=None, fastmode=False, **kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs):
         """Image acquisition routine
 
-        t: exposure time in seconds
+        exposure: exposure time in seconds
         binsize: which binning to use
-        fastmode: Shaves off approximately 1ms by avoiding conversion to int
         """
 
-        if not t:
-            t = self.default_exposure
+        if not exposure:
+            exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
-        time.sleep(t)
+        time.sleep(exposure)
 
-        arr = np.random.random(self.dimensions)*256
+        arr = np.random.randint(256, size=self.dimensions)
 
-        if fastmode:
-            return arr
-        else:
-            return arr.astype(int)
+        return arr
 
     def getCameraCount(self):
         return 1
@@ -322,7 +296,7 @@ def main_entry():
     from instamatic.formats import write_tiff
     # usage = """acquire"""
 
-    description = """Program to acquire image data from gatan ORIUS ccd camera"""
+    description = """Program to acquire image data from gatan gatan ccd camera"""
 
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
@@ -450,6 +424,6 @@ def main_entry():
 if __name__ == '__main__':
     # main_entry()
     cam = Camera(kind="timepix")
-    arr = cam.getImage(t=0.1)
+    arr = cam.getImage(exposure=0.1)
     print(arr)
     print(arr.shape)

@@ -6,6 +6,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from instamatic.tools import find_beam_center, find_subranges
+import tqdm
+
+
+def insert_nan(arr, interval=10):
+    repeat = interval-1
+    new = []
+    for i, row in enumerate(arr):
+        if not (i) % repeat:
+            new.append(np.array([np.NaN, np.NaN]))
+        new.append(row)
+    return np.array(new)
 
 
 def print_subranges(data, n=100, step=50):
@@ -68,19 +79,33 @@ if __name__ == '__main__':
     
     filepat = sys.argv[1]
     
+    try:
+        interval = int(sys.argv[2])
+    except IndexError:
+        interval = None
+    
     if Path(filepat).suffix == ".npy":
         xy = np.load(filepat)
     elif Path(filepat).suffix == ".txt":
         xy = np.loadtxt(filepat)
+    elif Path(filepat).suffix == ".sc":
+        with open(filepat) as f:
+            first = np.array([float(val) for val in f.readline().split()])
+            xy = np.loadtxt(f, usecols=(1,2))
+        xy = xy + first
+
     else:
         fns = glob.glob(filepat)
         print(len(fns))
         
-        imgs = (adscimage.read_adsc(fn)[0] for fn in fns)
+        imgs = (adscimage.read_adsc(fn)[0] for fn in tqdm.tqdm(fns))
         centers = (find_beam_center(img, 10, m=50, kind=3) for img in imgs)
         xy = np.array(list(centers))
         
         np.savetxt(Path(fns[0]).parents[0] / "beam_centers.txt", xy, fmt="%10.4f")
+
+    if interval:
+        xy = insert_nan(xy, interval=10)
 
     i = np.sum(xy, axis=1) == 0
     xy[i] = np.NaN
@@ -99,16 +124,33 @@ if __name__ == '__main__':
         print(f"(std: {drifts.std():.4f} | min: {drifts.min():.4f} | max: {drifts.max():.4f})")
 
     median_x, median_y = np.nanmedian(xy, axis=0)
+    std_x, std_y = np.nanstd(xy, axis=0)
     start = 0
     end = len(xy)
 
-    plt.plot([start, end], [median_x, median_x], c="C0", ls=":", label="Median(X)")
-    plt.plot([start, end], [median_y, median_y], c="C1", ls=":", label="Median(Y)")
+    f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False)
 
-    plt.title("Frame number vs. Position of direct beam")
-    plt.xlabel("Frame number")
-    plt.ylabel("Pixel number")
-    plt.plot(xy[:,0], c="C0", label="X")
-    plt.plot(xy[:,1], c="C1", label="Y")
-    plt.legend()
+    ax1.set_title("Frame number vs. Position of direct beam")
+
+    ax1.plot([start, end], [median_x, median_x], c="C0", ls=":", label=f"Median(X)={median_x:.2f}, Std(X)={std_x:.2f}")
+    ax2.plot([start, end], [median_y, median_y], c="C1", ls=":", label=f"Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}")
+
+    # plt.title("Frame number vs. Position of direct beam")
+    ax2.set_xlabel("Frame number")
+    
+    ax1.set_ylabel("Pixel number")
+    ax2.set_ylabel("Pixel number")
+    
+    ax1.plot(xy[:,0], c="C0")
+    ax2.plot(xy[:,1], c="C1")
+
+    m_x = median_x
+    m_y = median_y
+    d_x = 0.8
+    d_y = 0.8
+    ax1.set_ylim(m_x-d_x, m_x+d_x)
+    ax2.set_ylim(m_y-d_y, m_y+d_y)
+
+    ax1.legend()
+    ax2.legend()
     plt.show()

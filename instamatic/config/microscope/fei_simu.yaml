@@ -1,7 +1,4 @@
 name: fei_simu
-camera_rotation_vs_stage_xy: 0.0
-stretch_azimuth: 0.0
-stretch_amplitude: 0.0
 wavelength: 0.025080
 cameras: [timepix, orius, simulate]
 specifications:

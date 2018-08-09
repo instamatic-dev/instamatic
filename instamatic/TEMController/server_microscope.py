@@ -2,7 +2,7 @@ import socket
 import pickle
 import time
 import atexit
-from functools import partial
+from functools import update_wrapper, wraps
 import subprocess as sp
 from itertools import chain
 from instamatic import config
@@ -19,6 +19,10 @@ import threading
 HOST = config.cfg.tem_server_host
 PORT = config.cfg.tem_server_port
 BUFSIZE = 1024
+
+
+class ServerError(Exception):
+    pass
 
 
 def kill_server(p):
@@ -61,6 +65,8 @@ class ServerMicroscope(object):
                 else:
                     break
 
+        self._init_dict()
+
         atexit.register(self.s.close)
     
     def connect(self):
@@ -69,14 +75,20 @@ class ServerMicroscope(object):
         print(f"Connected to TEM server ({HOST}:{PORT})")
 
     def __getattr__(self, func_name):
-        return partial(self._func, func_name)
 
-    def _func(self, func_name, *args, **kwargs):
-        dct = {"func_name": func_name,
+        try:
+            wrapped = self._dct[func_name]
+        except KeyError as e:
+            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+
+        @wraps(wrapped)
+        def wrapper(*args, **kwargs):
+            dct = {"func_name": func_name,
                "args": args,
                "kwargs": kwargs}
+            return self._eval_dct(dct)
 
-        return self._eval_dct(dct)
+        return wrapper
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
@@ -96,6 +108,15 @@ class ServerMicroscope(object):
 
         else:
             raise ConnectionError(f"Unknown status code: {status}")
+
+    def _init_dict(self):
+        from instamatic.TEMController.microscope import get_tem
+        tem = get_tem()
+
+        self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
+
+    def __dir__(self):
+        return self._dct.keys()
 
 
 class TraceVariable(object):

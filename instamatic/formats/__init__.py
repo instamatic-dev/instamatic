@@ -115,5 +115,8 @@ def read_hdf5(fname):
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
+    if not os.path.exists(fname):
+        raise FileNotFoundError(f"No such file: '{fname}'")
+        
     f = h5py.File(fname)
     return np.array(f["data"]), dict(f["data"].attrs)

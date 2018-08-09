@@ -14,7 +14,7 @@ class TIMECAPS(ctypes.Structure):
 def enable(milliseconds=1):
     global ENABLED
     if ENABLED:
-        print("High precision timers are already enabled")
+        # print("High precision timers are already enabled")
         return
 
     caps = TIMECAPS()

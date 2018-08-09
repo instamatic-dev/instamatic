@@ -6,14 +6,18 @@ from PIL import Image, ImageEnhance
 from PIL import ImageTk
 import numpy as np
 import threading
+import datetime
+from instamatic.formats import write_tiff, read_tiff
+from instamatic.processing.flatfield import apply_flatfield_correction
 
 
 class VideoStreamFrame(Frame):
     """docstring for VideoStreamFrame"""
-    def __init__(self, parent, stream):
+    def __init__(self, parent, stream, app=None):
         super().__init__()
 
         self.stream = stream
+        self.app = app
 
         self.panel = None
 
@@ -42,7 +46,6 @@ class VideoStreamFrame(Frame):
         self.parent = parent
 
         self.init_vars()
-        self.load_modules(self.parent)
         self.buttonbox(self.parent)
         self.header(self.parent)
         self.makepanel(self.parent)
@@ -74,9 +77,6 @@ class VideoStreamFrame(Frame):
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
         self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
-
-    def load_modules(self, master):
-        pass
 
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
@@ -176,10 +176,28 @@ class VideoStreamFrame(Frame):
             pass
 
     def saveImage(self):
-        pass
+        outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
+ 
+        if self.app:
+            module_io = self.app.get_module("io")
+
+            drc = module_io.get_experiment_directory()
+            drc.mkdir(exist_ok=True, parents=True)
+
+            outfile = drc / outfile
+
+            try:
+                flatfield, h = read_tiff(module_io.get_flatfield())
+                frame = apply_flatfield_correction(self.frame, flatfield)
+            except:
+                frame = self.frame
+                h = {}
+
+        write_tiff(outfile, frame, header=h)
+        print(" >> Wrote file:", outfile)
 
     def close(self):
-        self.stream.stop()
+        self.stream.close()
         self.parent.quit()
         # for func in self._atexit_funcs:
             # func()
@@ -190,7 +208,7 @@ class VideoStreamFrame(Frame):
 
     def on_frame(self, event=None):
         self.stream.lock.acquire(True)
-        frame = self.stream.frame
+        self.frame = frame = self.stream.frame
         self.stream.lock.release()
 
         # the display range in ImageTk is from 0 to 256
@@ -263,7 +281,7 @@ if __name__ == '__main__':
     from instamatic import config
     from instamatic.camera import VideoStream
 
-    stream = VideoStream(cam=config.cfg.camera)
+    stream = VideoStream(cam=config.camera.name)
     
     if False:
         threading.Thread(target=ipy_embed).start()

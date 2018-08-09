@@ -37,11 +37,12 @@ class ExperimentalcRED(LabelFrame):
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
-
         Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 
+        self.RelaxButton = Button(frame, text="Relax beam", command=self.relax_beam, state=DISABLED)
+        self.RelaxButton.grid(row=7, column=2, sticky="EW")
 
         if ENABLE_FOOTFREE_OPTION:
             Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky="ew", pady=10)
@@ -164,12 +165,19 @@ class ExperimentalcRED(LabelFrame):
             self.e_image_exposure.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
+            self.RelaxButton.config(state=NORMAL)
         else:
             self.e_image_interval.config(state=DISABLED)
             self.e_image_exposure.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
             self.c_toggle_defocus.config(state=DISABLED)     
-        
+            self.RelaxButton.config(state=DISABLED)     
+    
+    def relax_beam(self):
+        difffocus = self.var_diff_defocus.get()
+
+        self.q.put(("relax_beam", {"value": difffocus} ))
+        self.triggerEvent.set()
 
     def toggle_footfree(self):
         enable = self.var_toggle_footfree.get()
@@ -186,6 +194,27 @@ class ExperimentalcRED(LabelFrame):
 
         self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
+
+
+def relax_beam(controller, **kwargs):
+    import time
+    n_cycles = 4
+    print(f"Relaxing beam ({n_cycles} cycles)", end='')
+
+    controller.ctrl.mode_diffraction()
+
+    diff_focus_proper = controller.ctrl.difffocus.value
+    diff_focus_defocused = diff_focus_proper + kwargs["value"]
+
+    for i in range(n_cycles):
+        controller.ctrl.difffocus.set(diff_focus_defocused)
+        time.sleep(0.25)
+        print(f".", end='')
+        controller.ctrl.difffocus.set(diff_focus_proper)
+        time.sleep(0.25)
+        print(f".", end='')
+
+    print("Done.")
 
 
 def toggle_difffocus(controller, **kwargs):
@@ -222,7 +251,7 @@ def acquire_data_cRED(controller, **kwargs):
     
     controller.log.info("Finish cRED experiment")
 
-    if hasattr(controller, "index_server"):
+    if controller.use_dials_server:
         controller.q.put(("autoindex", {"task": "run", "path": cexp.smv_path} ))
         controller.triggerEvent.set()
 
@@ -230,7 +259,8 @@ def acquire_data_cRED(controller, **kwargs):
 from .base_module import BaseModule
 module = BaseModule("cred", "cRED", True, ExperimentalcRED, commands={
     "cred": acquire_data_cRED,
-    "toggle_difffocus": toggle_difffocus
+    "toggle_difffocus": toggle_difffocus,
+    "relax_beam": relax_beam
     })
 
 

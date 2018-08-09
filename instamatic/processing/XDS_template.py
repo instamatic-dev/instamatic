@@ -54,8 +54,8 @@ AIR=0.0
 UNTRUSTED_RECTANGLE= 255 262 0 517
 UNTRUSTED_RECTANGLE= 0 517 255 262
 
-!VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS=  !6000 30000 is default, for excluding shaded parts of the detector.
-!MINIMUM_ZETA=                             !0.05 is default
+VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS= 10 30000 !Values are defined in `ABS.CBF`, check mask in `BKGPIX.CBF`, used in DEFPIX
+!MINIMUM_ZETA=                                    !0.05 is default
  
 INCLUDE_RESOLUTION_RANGE= 20 0.8
 

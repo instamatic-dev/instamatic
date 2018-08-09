@@ -52,11 +52,14 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     Apply flatfield correction to image
 
     https://en.wikipedia.org/wiki/Flat-field_correction"""
+
     if darkfield is None:
         ret = img * np.mean(flatfield) / flatfield
     else:
         gain = np.mean(flatfield - darkfield) / (flatfield - darkfield)
         ret = (img - darkfield) * gain
+
+    # print(f"flatfield {img.dtype} / {ret.dtype} => {flatfield.dtype}")
     return ret
 
 

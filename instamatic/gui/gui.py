@@ -30,6 +30,8 @@ class DataCollectionController(threading.Thread):
         self.app = app
         self.daemon = True
 
+        self.use_dials_server = False
+
         self.log = log
 
         self.q = queue.LifoQueue(maxsize=1)
@@ -84,7 +86,7 @@ class DataCollectionController(threading.Thread):
 
 class ModuleFrame(Frame):
     """docstring for DataCollectionGUI"""
-    def __init__(self, parent, modules=(), stream=None):
+    def __init__(self, parent, modules=()):
         super().__init__()
         # super(DataCollectionGUI, self).__init__(cam=cam)
         self._modules = modules
@@ -124,38 +126,20 @@ class ModuleFrame(Frame):
     def get_module(self, module):
         return self.modules[module]
 
-    def saveImage(self):
-        module_io = self.get_module("io")
-
-        drc = module_io.get_experiment_directory()
-        drc.mkdir(exist_ok=True, parents=True)
-
-        outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
-        outfile = drc / outfile
-
-        try:
-            from instamatic.processing.flatfield import apply_flatfield_correction
-            flatfield, h = read_tiff(module_io.get_flatfield())
-            frame = apply_flatfield_correction(self.frame, flatfield)
-        except:
-            frame = self.frame
-        write_tiff(outfile, frame)
-        print(" >> Wrote file:", outfile)
-
 
 class MainFrame(object):
     """docstring for MainFrame"""
-    def __init__(self, root, stream):
+    def __init__(self, root, stream, modules=()):
         super(MainFrame, self).__init__()
 
         self.root = root
 
-        self.app = ModuleFrame(root, modules=MODULES, stream=None)
+        self.app = ModuleFrame(root, modules=modules)
         self.app.pack(side="top", fill="both", expand=True)
 
         from .videostream_frame import VideoStreamFrame
 
-        self.stream_frame = VideoStreamFrame(root, stream=stream)
+        self.stream_frame = VideoStreamFrame(root, stream=stream, app=self.app)
         self.stream_frame.pack(side="top", fill="both", expand=True)
 
         from instamatic import version
@@ -171,7 +155,6 @@ class MainFrame(object):
         except AttributeError:
             pass
         sys.exit()
-
 
 def main():
     from instamatic.utils import high_precision_timers
@@ -201,7 +184,7 @@ def main():
     
     root = Tk()
 
-    gui = MainFrame(root, stream=ctrl.cam)
+    gui = MainFrame(root, stream=ctrl.cam, modules=MODULES)
 
     # while not gui.app._modules_have_loaded:
         # time.sleep(0.1)

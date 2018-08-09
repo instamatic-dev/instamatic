@@ -5,6 +5,8 @@ import comtypes.client
 import time
 import os
 
+from typing import Tuple
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ MIN = 0
 
 class JeolMicroscope(object):
     """docstring for microscope"""
-    def __init__(self, name="jeol"):
+    def __init__(self, name: str="jeol"):
         super(JeolMicroscope, self).__init__()
         
         # initial COM in multithread mode if not initialized otherwise
@@ -119,18 +121,18 @@ class JeolMicroscope(object):
                 arg = self.NTRLMAPPING[arg]
             self.def3.setNTRL(arg)
 
-    def getBrightness(self):
+    def getBrightness(self) -> int:
         value, result = self.lens3.GetCL3()
         return value
 
-    def setBrightness(self, value):
+    def setBrightness(self, value: int):
         self.lens3.setCL3(value)
 
-    def getMagnification(self):
+    def getMagnification(self) -> int:
         value, unit_str, label_str, result = self.eos3.GetMagValue()
         return value
 
-    def setMagnification(self, value):
+    def setMagnification(self, value: int):
         current_mode = self.getFunctionMode()
         
         if current_mode == "diff":
@@ -157,7 +159,7 @@ class JeolMicroscope(object):
             # self.eos3.SetMagValue(value)
             self.eos3.SetSelector(selector) 
 
-    def getMagnificationIndex(self):
+    def getMagnificationIndex(self) -> int:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
         try:
@@ -168,7 +170,7 @@ class JeolMicroscope(object):
         except Exception:
             raise ValueError("getMagnificationIndex - invalid magnification: {}".format(value)) 
 
-    def setMagnificationIndex(self, index):
+    def setMagnificationIndex(self, index: int):
         current_mode = self.getFunctionMode()
         
         if current_mode == "diff":
@@ -178,49 +180,49 @@ class JeolMicroscope(object):
 
         self.setMagnification(value)
 
-    def getGunShift(self):
+    def getGunShift(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetGunA1()
         return x, y
 
-    def setGunShift(self, x, y):
+    def setGunShift(self, x: int, y: int):
         self.def3.SetGunA1(x, y)
 
-    def getGunTilt(self):
+    def getGunTilt(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetGunA2()
         return x, y
 
-    def setGunTilt(self, x, y):
+    def setGunTilt(self, x: int, y: int):
         self.def3.SetGunA2(x, y)
 
-    def getBeamShift(self):
+    def getBeamShift(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetCLA1()
         return x, y
 
-    def setBeamShift(self, x, y):
+    def setBeamShift(self, x: int, y: int):
         self.def3.SetCLA1(int(x), int(y))
 
-    def getBeamTilt(self):
+    def getBeamTilt(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetCLA2()
         return x, y
 
-    def setBeamTilt(self, x, y):
+    def setBeamTilt(self, x: int, y: int):
         self.def3.SetCLA2(x, y)
 
-    def getImageShift1(self):
+    def getImageShift1(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetIS1()
-        return x,y 
+        return x, y 
 
-    def setImageShift1(self, x, y):
+    def setImageShift1(self, x: int, y: int):
         self.def3.SetIS1(x, y)
 
-    def getImageShift2(self):
+    def getImageShift2(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetIS2()
-        return x,y 
+        return x, y 
 
-    def setImageShift2(self, x, y):
+    def setImageShift2(self, x: int, y: int):
         self.def3.SetIS2(x, y)
 
-    def getStagePosition(self):
+    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
         """
         x, y, z in nanometer
         a and b in degrees
@@ -232,39 +234,39 @@ class JeolMicroscope(object):
         x, y, z, a, b, result = self.gonio2.GetStatus()
         return x or y or z or a or b 
 
-    def waitForStage(self, delay=0):
+    def waitForStage(self, delay: float=0.0):
         while self.isStageMoving():
             if delay > 0:
                 time.sleep(delay)
 
-    def setStageX(self, value, wait=True):
+    def setStageX(self, value: int, wait: bool=True):
         self.stage3.SetX(value)
         if wait:
             self.waitForStage()
 
-    def setStageY(self, value, wait=True):
+    def setStageY(self, value: int, wait: bool=True):
         # self.gonio2.SetRotationAngle(value)  ## not tested, is this an alternative call?
         self.stage3.SetY(value)
         if wait:
             self.waitForStage()
 
-    def setStageZ(self, value, wait=True):
+    def setStageZ(self, value: int, wait: bool=True):
         self.stage3.SetZ(value)
         if wait:
             self.waitForStage()
 
-    def setStageA(self, value, wait=True):
+    def setStageA(self, value: int, wait: bool=True):
         # self.gonio2.SetTiltXAngle(value)  ## alternative call
         self.stage3.SetTiltXAngle(value)
         if wait:
             self.waitForStage()
 
-    def setStageB(self, value, wait=True):
+    def setStageB(self, value: int, wait: bool=True):
         self.stage3.SetTiltYAngle(value)
         if wait:
             self.waitForStage()
 
-    def setStageXY(self, x, y, wait=True):
+    def setStageXY(self, x: int, y: int, wait: bool=True):
         self.gonio2.SetPosition(x, y)  ## combined call is faster than to separate calls
         if wait:
             self.waitForStage()
@@ -272,7 +274,7 @@ class JeolMicroscope(object):
     def stopStage(self):
         self.stage3.Stop()
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True):
+    def setStagePosition(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:
@@ -301,45 +303,16 @@ class JeolMicroscope(object):
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
 
-    def setStagePosition_nw(self, x=None, y=None, z=None, a=None, b=None, wait=False):
-        if z is not None:
-            self.setStageZ(z, wait)
-        if a is not None:
-            self.setStageA(a, wait)
-        if b is not None:
-            self.setStageB(b, wait)
-
-        if (x is not None) and (y is not None):
-            self.setStageXY(x=x, y=y, wait=wait)
-        else:
-            if x is not None:
-                self.setStageX(x, wait)
-            if y is not None:
-                self.setStageY(y, wait)
-
-        if self.VERIFY_STAGE_POSITION:
-            nx, ny, nz, na, nb = self.getStagePosition()
-            if x is not None and abs(nx - x) > 150:
-                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx))
-            if y is not None and abs(ny - y) > 150:
-                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny))
-            if z is not None and abs(nz - z) > 500:
-                logger.warning("stage.z -> requested: {}, got: {}".format(z, nz))
-            if a is not None and abs(na - a) > 0.057:
-                logger.warning("stage.a -> requested: {}, got: {}".format(a, na))
-            if b is not None and abs(nb - b) > 0.057:
-                logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
-                
     def stopStageMV(self):
         self.stage3.Stop()
         print("Goniometer stopped moving.")
                  
-    def getFunctionMode(self):
+    def getFunctionMode(self) -> str:
         """mag1, mag2, lowmag, samag, diff"""
         mode, name, result = self.eos3.GetFunctionMode()
         return self.FUNCTION_MODES[mode]
 
-    def setFunctionMode(self, value):
+    def setFunctionMode(self, value: int):
         """mag1, mag2, lowmag, samag, diff"""
         if isinstance(value, str):
             try:
@@ -348,34 +321,43 @@ class JeolMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.eos3.SelectFunctionMode(value)
 
-    def getDiffFocus(self):
-        if not self.getFunctionMode() == "diff":
-            pass
-            # raise ValueError("Must be in 'diff' mode to get DiffFocus")
-            #print("Must be in 'diff' mode to get DiffFocus")
-            #return 0
+    def getDiffFocus(self, confirm_mode: bool=True) -> int:
+        if confirm_mode and (not self.getFunctionMode() == "diff"):
+            raise ValueError("Must be in 'diff' mode to get DiffFocus")
         value, result = self.lens3.GetIL1()
         return value
 
-    def setDiffFocus(self, value):
+    def setDiffFocus(self, value: int, confirm_mode: bool=True):
         """IL1"""
-        if not self.getFunctionMode() == "diff":
-            pass
-            #raise ValueError("Must be in 'diff' mode to get DiffFocus")
+        if confirm_mode and (not self.getFunctionMode() == "diff"):
+            raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.lens3.setDiffFocus(value)
 
-    def getDiffShift(self):
+    def setIntermediateLens1(self, value: int):
+        """IL1"""
+        mode = self.getFunctionMode()
+        if mode == 'diff':
+            self.setDiffFocus(value, confirm_mode=False)
+        else:
+            self.lens3.setILFocus(value)
+
+    def getIntermediateLens1(self):
+        """IL1"""
+        value, result = self.lens3.GetIL1()
+        return value
+
+    def getDiffShift(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetPLA()
         return x, y
 
-    def setDiffShift(self, x, y):
+    def setDiffShift(self, x: int, y: int):
         self.def3.SetPLA(x, y)
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
         logger.info("Connection to microscope released")
 
-    def isBeamBlanked(self, value):
+    def isBeamBlanked(self) -> bool:
         value, result = self.def3.GetBeamBlank()
         return bool(value)
 
@@ -383,36 +365,36 @@ class JeolMicroscope(object):
         """True/False or 1/0"""
         self.def3.SetBeamBlank(mode)
 
-    def getCondensorLensStigmator(self):
+    def getCondensorLensStigmator(self) -> Tuple[int, int]:
         x, y, result = self.def3.getCLs()
         return x, y
 
-    def setCondensorLensStigmator(self, x, y):
+    def setCondensorLensStigmator(self, x: int, y: int):
         self.def3.SetCLs(x, y)
         
-    def getIntermediateLensStigmator(self):
+    def getIntermediateLensStigmator(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetILs()
         return x, y
 
-    def setIntermediateLensStigmator(self, x, y):
+    def setIntermediateLensStigmator(self, x: int, y: int):
         self.def3.SetILs(x, y)
 
-    def getObjectiveLensStigmator(self):
+    def getObjectiveLensStigmator(self) -> Tuple[int, int]:
         x, y, result = self.def3.GetOLs()
         return x, y
 
-    def setObjectiveLensStigmator(self, x, y):
+    def setObjectiveLensStigmator(self, x: int, y: int):
         self.def3.SetOLs(x, y)
 
-    def getSpotSize(self):
+    def getSpotSize(self) -> int:
         """0-based indexing for GetSpotSize, add 1 to be consistent with JEOL software"""
         value, result = self.eos3.GetSpotSize()
         return value + 1
 
-    def setSpotSize(self, value):
+    def setSpotSize(self, value: int):
         self.eos3.selectSpotSize(value - 1)
 
-    def getScreenPosition(self):
+    def getScreenPosition(self) -> str:
         value = self.screen2.GetAngle()[0]
         UP, DOWN = 2, 0
         if value == UP:
@@ -422,7 +404,7 @@ class JeolMicroscope(object):
         else:
             return value
 
-    def setScreenPosition(self, value):
+    def setScreenPosition(self, value: str):
         """value = 'up' or 'down'"""
         UP, DOWN = 2, 0
         if value == 'up':
@@ -432,32 +414,32 @@ class JeolMicroscope(object):
         else:
             raise ValueError("No such screen position:", value, "(must be 'up'/'down')")
 
-    def getCondensorLens1(self):
+    def getCondensorLens1(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG
         value, result = self.lens3.GetCL1()
         return value
 
-    def getCondensorLens2(self):
+    def getCondensorLens2(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG
         value, result = self.lens3.GetCL2()
         return value
 
-    def getCondensorMiniLens(self):
+    def getCondensorMiniLens(self) -> int:
         # no setter
         value, result = self.lens3.GetCM()
         return value
 
-    def getObjectiveLenseCoarse(self):
+    def getObjectiveLenseCoarse(self) -> int:
         # coarse objective focus
         value, result = self.lens3.GetOLc()
         return value
 
-    def getObjectiveLenseFine(self):
+    def getObjectiveLenseFine(self) -> int:
         # fine objective focus
         value, result = self.lens3.GetOLf()
         return value
     
-    def getObjectiveMiniLens(self):
+    def getObjectiveMiniLens(self) -> int:
         # no setter
         value, result = self.lens3.GetOM()
         return value

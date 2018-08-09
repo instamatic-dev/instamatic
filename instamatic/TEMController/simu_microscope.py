@@ -1,4 +1,5 @@
 from instamatic import config
+from typing import Tuple
 
 NTRLMAPPING = {
    "GUN1" : 0,
@@ -27,7 +28,7 @@ MIN = 0
 
 class SimuMicroscope(object):
     """docstring for microscope"""
-    def __init__(self, name="simulate"):
+    def __init__(self, name: str="simulate"):
         super(SimuMicroscope, self).__init__()
         import random
         
@@ -61,6 +62,7 @@ class SimuMicroscope(object):
         self.FunctionMode_value = 0
 
         self.DiffractionFocus_value = random.randint(MIN, MAX)
+        self.IntermediateLens1_value = random.randint(MIN, MAX)
 
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
@@ -103,26 +105,19 @@ class SimuMicroscope(object):
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
 
-    def load_specifications(self):
-        config.load_microscope(self.name)
-
-        self.MAGNIFICATIONS      = config.CFG.microscope.specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = config.CFG.microscope.specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = config.CFG.microscope.specifications["CAMERALENGTHS"]
-
-    def getBrightness(self):
+    def getBrightness(self) -> int:
         return self.Brightness_value
 
-    def setBrightness(self, value):
+    def setBrightness(self, value: int):
         self.Brightness_value = value
 
-    def getMagnification(self):
+    def getMagnification(self) -> int:
         if self.getFunctionMode() == "diff":
             return self.Magnification_value_diff
         else:
             return self.Magnification_value
 
-    def setMagnification(self, value):
+    def setMagnification(self, value: int):
         if value not in self.MAGNIFICATIONS:
             value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
         
@@ -146,99 +141,92 @@ class SimuMicroscope(object):
         else:
             self.Magnification_value = value
 
-    def getMagnificationIndex(self):
+    def getMagnificationIndex(self) -> int:
         value = self.getMagnification()
         return self.MAGNIFICATIONS.index(value)
 
-    def setMagnificationIndex(self, index):
+    def setMagnificationIndex(self, index: int):
         value = self.MAGNIFICATIONS[index]
         self.setMagnification(value)
 
-    def getGunShift(self):
+    def getGunShift(self) -> Tuple[int, int]:
         return self.GunShift_x, self.GunShift_y
 
-    def setGunShift(self, x, y):
+    def setGunShift(self, x: int, y: int):
         self.GunShift_x = x
         self.GunShift_y = y
     
-    def getGunTilt(self):
+    def getGunTilt(self) -> Tuple[int, int]:
         return self.GunTilt_x, self.GunTilt_y 
     
-    def setGunTilt(self, x, y):
+    def setGunTilt(self, x: int, y: int):
         self.GunTilt_x = x
         self.GunTilt_y = y
 
-    def getBeamShift(self):
+    def getBeamShift(self) -> Tuple[int, int]:
         return self.BeamShift_x, self.BeamShift_y
 
-    def setBeamShift(self, x, y):
+    def setBeamShift(self, x: int, y: int):
         self.BeamShift_x = x
         self.BeamShift_y = y
 
-    def getBeamTilt(self):
+    def getBeamTilt(self) -> Tuple[int, int]:
         return self.BeamTilt_x, self.BeamTilt_y
     
-    def setBeamTilt(self, x, y):
+    def setBeamTilt(self, x: int, y: int):
         self.BeamTilt_x = x
         self.BeamTilt_y = y
 
-    def getImageShift1(self):
+    def getImageShift1(self) -> Tuple[int, int]:
         return self.ImageShift1_x, self.ImageShift1_y
 
-    def setImageShift1(self, x, y):
+    def setImageShift1(self, x: int, y: int):
         self.ImageShift1_x = x
         self.ImageShift1_y = y
 
     def getImageShift2(self):
         return self.ImageShift2_x, self.ImageShift2_y
 
-    def setImageShift1(self, x, y):
-        self.ImageShift1_x = x
-        self.ImageShift1_y = y
-        
-    def getImageShift2(self):
-        return self.ImageShift2_x, self.ImageShift2_y
-
-    def setImageShift2(self, x, y):
+    def setImageShift2(self, x: int, y: int):
         self.ImageShift2_x = x
         self.ImageShift2_y = y
 
-    def getStagePosition(self):
+    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
         return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
 
-    def isStageMoving(self):
+    def isStageMoving(self) -> bool:
         return False
 
-    def waitForStage(self, delay=0.1):
+    def waitForStage(self, delay: float=0.1):
         while self.isStageMoving():
             time.sleep(delay)
 
-    def setStageX(self, value, wait=True):
+    def setStageX(self, value: int, wait: bool=True):
         self.StagePosition_x = value
         if True:
             self.waitForStage()
 
-    def setStageY(self, value, wait=True):
+    def setStageY(self, value: int, wait: bool=True):
         self.StagePosition_y = value
         if True:
             self.waitForStage()
 
-    def setStageZ(self, value, wait=True):
+    def setStageZ(self, value: int, wait: bool=True):
         self.StagePosition_z = value
         if True:
             self.waitForStage()
 
-    def setStageA(self, value, wait=True):
+    def setStageA(self, value: int, wait: bool=True):
         self.StagePosition_a = value
         if True:
             self.waitForStage()
 
-    def setStageB(self, value, wait=True):
+    def setStageB(self, value: int, wait: bool=True):
         self.StagePosition_b = value
         if True:
             self.waitForStage()
 
-    def setStageXY(self, x, y, wait=True):
+    def setStageXY(self, x: int, y: int, wait: bool=True):
         self.StagePosition_x = x
         self.StagePosition_y = y
         if wait:
@@ -247,7 +235,7 @@ class SimuMicroscope(object):
     def stopStage(self):
         pass
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True):
+    def setStagePosition(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:
@@ -263,12 +251,12 @@ class SimuMicroscope(object):
             if y is not None:
                 self.setStageY(y, wait=wait)
 
-    def getFunctionMode(self):
+    def getFunctionMode(self) -> str:
         """mag1, mag2, lowmag, samag, diff"""
         mode = self.FunctionMode_value
         return FUNCTION_MODES[mode]
 
-    def setFunctionMode(self, value):
+    def setFunctionMode(self, value: int):
         """mag1, mag2, lowmag, samag, diff"""
         if isinstance(value, str):
             try:
@@ -277,85 +265,93 @@ class SimuMicroscope(object):
                 raise ValueError("Unrecognized function mode: {}".format(value))
         self.FunctionMode_value = value
 
-    def getDiffFocus(self):
+    def getDiffFocus(self, confirm_mode: bool=True) -> int:
         if not self.getFunctionMode() == "diff":
             pass
             #raise ValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
-    def setDiffFocus(self, value):
+    def setDiffFocus(self, value: int, confirm_mode: bool=True):
         """IL1"""
         if not self.getFunctionMode() == "diff":
             pass
             #raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.DiffractionFocus_value = value
 
-    def getDiffShift(self):
+    def setIntermediateLens1(self, value: int):
+        """IL1"""
+        self.IntermediateLens1_value = value
+
+    def getIntermediateLens1(self):
+        """IL1"""
+        return self.IntermediateLens1_value
+
+    def getDiffShift(self) -> Tuple[int, int]:
         return self.DiffractionShift_x, self.DiffractionShift_y
 
-    def setDiffShift(self, x, y):
+    def setDiffShift(self, x: int, y: int):
         self.DiffractionShift_x = x
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
         print("Connection to microscope released")
 
-    def isBeamBlanked(self, value):
+    def isBeamBlanked(self) -> bool:
         return self.beamblank
 
-    def setBeamBlank(self, mode):
+    def setBeamBlank(self, mode: bool):
         """True/False or 1/0"""
         self.beamblank = mode
 
-    def getCondensorLensStigmator(self):
+    def getCondensorLensStigmator(self) -> Tuple[int, int]:
         return self.condensorlensstigmator_x, self.condensorlensstigmator_y
 
-    def setCondensorLensStigmator(self, x, y):
+    def setCondensorLensStigmator(self, x: int, y: int):
         self.condensorlensstigmator_x = x
         self.condensorlensstigmator_y = y
         
-    def getIntermediateLensStigmator(self):
+    def getIntermediateLensStigmator(self) -> Tuple[int, int]:
         return self.intermediatelensstigmator_x, self.intermediatelensstigmator_y
 
-    def setIntermediateLensStigmator(self, x, y):
+    def setIntermediateLensStigmator(self, x: int, y: int):
         self.intermediatelensstigmator_x = x
         self.intermediatelensstigmator_y = y
 
-    def getObjectiveLensStigmator(self):
+    def getObjectiveLensStigmator(self) -> Tuple[int, int]:
         return self.objectivelensstigmator_x, self.objectivelensstigmatir_y
 
-    def setObjectiveLensStigmator(self, x, y):
+    def setObjectiveLensStigmator(self, x: int, y: int):
         self.objectivelensstigmator_x = x
         self.objectivelensstigmator_y = y
 
-    def getSpotSize(self):
+    def getSpotSize(self) -> int:
         """0-based indexing for GetSpotSize, add 1 for consistency"""
         return self.spotsize
 
-    def getScreenPosition(self):
+    def getScreenPosition(self) -> str:
         return self.screenposition_value
 
-    def setScreenPosition(self, value):
+    def setScreenPosition(self, value: int):
         """value = 'up' or 'down'"""
         self.screenposition_value = value
 
-    def setSpotSize(self, value):
+    def setSpotSize(self, value: int):
         self.spotsize = value
 
-    def getCondensorLens1(self):
+    def getCondensorLens1(self) -> int:
         return self.condensorlens1_value
 
-    def getCondensorLens2(self):
+    def getCondensorLens2(self) -> int:
         return self.condensorlens2_value
 
-    def getCondensorMiniLens(self):
+    def getCondensorMiniLens(self) -> int:
         return self.condensorminilens_value
 
-    def getObjectiveLenseCoarse(self):
+    def getObjectiveLenseCoarse(self) -> int:
         return self.objectivelensecoarse_value
 
-    def getObjectiveLenseFine(self):
+    def getObjectiveLenseFine(self) -> int:
         return self.objectivelensefine_value
     
-    def getObjectiveMiniLens(self):
+    def getObjectiveMiniLens(self) -> int:
         return self.objectiveminilens_value
