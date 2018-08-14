@@ -19,13 +19,22 @@ from tqdm import tqdm
 from instamatic.calibrate.filenames import CALIB_IS1_DEFOC, CALIB_IS1_FOC, CALIB_IS2_DEFOC, CALIB_IS2_FOC, CALIB_BEAMSHIFT_DP
 from instamatic.TEMController.server_microscope import TraceVariable
 from instamatic.processing.find_crystals import find_crystals_timepix
-from instamatic.formats import write_tiff
 import traceback
+import socket
 
 ACTIVATION_THRESHOLD = 0.2
 rotation_range = 100
-PORT = 8088
-imgvar_threshold = 7000
+imgvar_threshold = 2
+
+s = socket.socket()
+dials_host = 'localhost'
+dials_port = 8089
+try:
+    s.connect((dials_host, dials_port))
+    print("DIALS server connected for autocRED.")
+    s_c = 1
+except:
+    s_c = 0
 
 def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
     if mode == 'diff' or mode == 'mag1':
@@ -146,7 +155,7 @@ class Experiment(object):
     
     def image_cropper(self, img, window_size = 0):
         crystal_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
-        crystal_pos = crystal_pos[::-1]
+        #crystal_pos = crystal_pos[::-1]
         
         if window_size == 0:
         
@@ -311,7 +320,7 @@ class Experiment(object):
         is1_xi, is1_yi = self.ctrl.imageshift1.get()
         
         beam_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
-        beam_pos = beam_pos[::-1]
+        #beam_pos = beam_pos[::-1]
         
         displ = np.subtract((258,258), beam_pos)
         delta_is = np.dot(displ, transform_imgshift_) ##Check if it should be plus or minus here.
@@ -391,7 +400,7 @@ class Experiment(object):
             self.logger.debug("Initial Imageshift2: {}, {}".format(is2_x0, is2_y0))
             
             crystal_pos, img0_cropped, window_size = self.image_cropper(img = img0, window_size = 0)
-            img0var = self.img_var(img0_cropped, crystal_pos)
+            #img0var = self.img_var(img0_cropped, crystal_pos)
             
             appos0 = crystal_pos
             self.logger.debug("Initial crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
@@ -451,6 +460,8 @@ class Experiment(object):
                     #crystal_pos_, img_cropped, _ = self.image_cropper(img = newimg, window_size = window_size)
                     self.logger.debug("crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
                     imgvar = self.img_var(img_cropped, crystal_pos)
+                    print(imgvar)
+                    self.logger.debug("Image variance: {}".format(imgvar))
 
                     if imgvar < imgvar_threshold:
                         print("Collection stopping because crystal out of the beam...")
@@ -471,7 +482,7 @@ class Experiment(object):
                         self.stopEvent.set()
                     
                     crystal_pos, r = find_defocused_image_center(img)
-                    crystal_pos = crystal_pos[::-1]
+                    #crystal_pos = crystal_pos[::-1]
                     
                     crystal_pos_dif = crystal_pos - appos0
                     apmv = -crystal_pos_dif
@@ -594,6 +605,12 @@ class Experiment(object):
         img_conv.mrc_writer(pathred)
         img_conv.write_ed3d(pathred)
         img_conv.write_xds_inp(pathsmv)
+
+        img_conv.to_dials(pathsmv, interval=self.image_interval_enabled)
+
+        if s_c:
+            s.send(bytes(pathsmv))
+            print("SMVs sent to DIALS for processing.")
         
         self.logger.info("XDS INP file created.")
 
@@ -797,7 +814,7 @@ class Experiment(object):
                 self.ctrl.brightness.value = img_brightness
                 k = 0
                 
-                while True:
+                while not self.stopEvent_rasterScan.is_set():
 
                     try:
                         

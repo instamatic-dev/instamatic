@@ -283,7 +283,10 @@ def acquire_data_autocRED(controller, **kwargs):
     scan_area=kwargs["scan_area"]
     auto_zheight=kwargs["zheight"]
     auto_centerDP=kwargs["autocenterDP"]
-    diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
+    try:
+        diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
+    except:
+        pass
 
     #controller.stream.get_module("sed").calib_path = expdir / "calib"
     

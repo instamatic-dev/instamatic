@@ -111,10 +111,12 @@ class ImgConversion(object):
         self.data = {}
 
         self.smv_subdrc = "data"
-
+        
+        self.do_centerDP = centerDP
+            
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)
-
+                
             self.headers[i] = h
 
             if self.flatfield is not None:
@@ -125,6 +127,11 @@ class ImgConversion(object):
         self.observed_range = set(self.data.keys())
         self.complete_range = set(range(min(self.observed_range), max(self.observed_range) + 1))
         self.missing_range = self.observed_range ^ self.complete_range
+
+        if self.do_centerDP:
+            self.data_c, self.pbc = self.DP_centering()
+            for _, h in self.headers.items():
+                h["beam_center"] = self.pbc
 
         self.data_shape = img.shape
         try:
@@ -151,8 +158,6 @@ class ImgConversion(object):
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
         self.do_stretch_correction = True
-        
-        self.do_centerDP = centerDP
 
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
@@ -205,8 +210,12 @@ class ImgConversion(object):
     def get_beam_centers(self):
         centers = []
         for i, h in self.headers.items():
-            center = find_beam_center(self.data[i], sigma=10)
-            h["beam_center"] = center
+            if self.do_centerDP:
+                center = find_beam_center(self.data_c[i], sigma=10)
+            else:
+                center = find_beam_center(self.data[i], sigma=10)
+                h["beam_center"] = center
+                
             centers.append(center)
 
         beam_centers = np.array(centers)
@@ -242,9 +251,6 @@ class ImgConversion(object):
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
-        
-        if self.do_centerDP:
-            self.data_c, self.pbc = self.DP_centering()
         
         for i in self.observed_range:
             if self.do_centerDP:
@@ -318,12 +324,16 @@ class ImgConversion(object):
         logger.debug("Writing missing files for DIALS: {}".format(self.missing_range))
 
         for n in self.missing_range:
-            self.data[n] = empty
             self.headers[n] = h
 
-            self.write_smv(path, n)
-
-            del self.data[n]
+            if self.do_centerDP:
+                self.data_c[n] = empty
+                self.write_smv_centered(path, n)
+                del self.data_c[n]
+            else:
+                self.data[n] = empty
+                self.write_smv(path, n)
+                del self.data[n]
             del self.headers[n]
 
     def write_tiff(self, path, i):
