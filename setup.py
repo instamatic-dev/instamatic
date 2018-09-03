@@ -2,6 +2,12 @@
 
 from setuptools import setup, find_packages
 import os
+import glob
+
+data_files = [("instamatic/config", ["instamatic/config/global.yaml"]),
+              ("instamatic/config/microscope", glob.glob("instamatic/config/microscope/*.yaml")),
+              ("instamatic/config/calibration", glob.glob("instamatic/config/calibration/*.yaml")),
+              ("instamatic/config/camera", glob.glob("instamatic/config/camera/*.yaml"))]
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
@@ -50,6 +56,8 @@ setup(
               "instamatic.server",
               "instamatic.TEMController",
               "instamatic.utils"],
+
+    data_files=data_files,
 
     install_requires=['comtypes', 
                       'lmfit', 
