@@ -13,7 +13,9 @@ import atexit
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
-SIMULATE = False
+# SoPhy > File > Medipix/Timepix control > Save parametrized settings
+# Save updated config for timepix camera
+CONFIG_PYTIMEPIX = "tpx"
 
 
 class LockingError(RuntimeError):
