@@ -304,6 +304,8 @@ class EMCameraObj(object):
         self.xmax, self.ymax = self.dimensions
         self.correction_ratio = self.defaults.correction_ratio
 
+        self.streamable = True
+
         self.name = self.getName()
 
 

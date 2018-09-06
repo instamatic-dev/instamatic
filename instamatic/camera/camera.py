@@ -42,7 +42,7 @@ def Camera(kind, as_stream=False):
     else:
         raise ValueError(f"No such camera: {kind}")
 
-    if as_stream:
+    if cam.streamable and as_stream:
         from .videostream import VideoStream
         return VideoStream(cam)
     else:
@@ -127,12 +127,7 @@ class CameraDLL(object):
         self.dimensions = self.defaults.dimensions
         self.xmax, self.ymax = self.dimensions
 
-        try:
-            correction_ratio = self.defaults.correction_ratio
-        except AttributeError:
-            pass
-        else:
-            self._setCorrectionRatio(c_double(1/correction_ratio))
+        self.streamable = False
 
     def getImage(self, exposure=None, binsize=None,**kwargs):
         """Image acquisition routine
@@ -239,6 +234,8 @@ class CameraSimu(object):
         self.possible_binsizes = self.defaults.possible_binsizes
         self.dimensions = self.defaults.dimensions
         self.xmax, self.ymax = self.dimensions
+
+        self.streamable = True
 
         try:
             correction_ratio = self.defaults.correction_ratio
