@@ -7,7 +7,10 @@ import glob
 data_files = [("instamatic/config", ["instamatic/config/global.yaml"]),
               ("instamatic/config/microscope", glob.glob("instamatic/config/microscope/*.yaml")),
               ("instamatic/config/calibration", glob.glob("instamatic/config/calibration/*.yaml")),
-              ("instamatic/config/camera", glob.glob("instamatic/config/camera/*.yaml"))]
+              ("instamatic/config/camera", glob.glob("instamatic/config/camera/*.yaml")),
+              ("instamatic/camera", glob.glob("instamatic/camera/*.dll")),
+              ("instamatic/camera", ["instamatic/camera/timepix.lockfile"]),
+              ("instamatic/camera/tpx", glob.glob("instamatic/camera/tpx/*"))]
 
 # www.pythonhosted.org/setuptools/setuptools.html
 
