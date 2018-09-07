@@ -20,9 +20,9 @@ def Camera(kind, as_stream=False):
         from .camera_gatan import CameraDLL
         cam = CameraDLL("gatan")
     elif kind in ("timepix", "pytimepix"):
-        from . import timepix_api
+        from . import camera_timepix
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"
-        cam = timepix_api.initialize(tpx_config)
+        cam = camera_timepix.initialize(tpx_config)
     else:
         raise ValueError(f"No such camera: {kind}")
 
