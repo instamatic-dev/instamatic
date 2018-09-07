@@ -24,7 +24,7 @@ class CameraSimu(object):
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = "Camera {} initialized".format(self.getName())
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -76,9 +76,9 @@ class CameraSimu(object):
     def establishConnection(self):
         res = 1
         if res != 1:
-            raise RuntimeError(f"Could not establish camera connection to {self.name}")
+            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
 
     def releaseConnection(self):
         name = self.getName()
-        msg = f"Connection to camera {name} released" 
+        msg = "Connection to camera {} released".format(name)
         logger.info(msg)

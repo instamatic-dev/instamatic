@@ -41,7 +41,7 @@ class CameraDLL(object):
         elif kind == "gatan":
             libpath = cameradir / DLLPATH_GATAN
         else:
-            raise ValueError(f"No such camera: {kind}")
+            raise ValueError("No such camera: {kind}".format(kind=kind))
 
         self.name = kind
 
@@ -49,7 +49,7 @@ class CameraDLL(object):
             lib = ctypes.cdll.LoadLibrary(str(libpath))
         except WindowsError as e:
             print(e)
-            raise RuntimeError(f"Cannot load DLL: {libpath}")
+            raise RuntimeError("Cannot load DLL: {libpath}".format(libpath=libpath))
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
@@ -80,7 +80,7 @@ class CameraDLL(object):
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = "Camera {} initialized".format(self.getName())
         logger.info(msg)
 
         # print "Dimensions {}x{}".format(*self.getDimensions())

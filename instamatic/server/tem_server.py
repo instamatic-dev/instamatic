@@ -34,7 +34,7 @@ class TemServer(threading.Thread):
     
     def run(self):
         self.tem = Microscope(kind=self.kind, use_server=False)
-        print(f"Initialized connection to microscope: {self.tem.name}")
+        print("Initialized connection to microscope: {}".format(self.tem.name))
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
