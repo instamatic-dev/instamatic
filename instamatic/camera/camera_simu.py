@@ -40,8 +40,6 @@ class CameraSimu(object):
 
         self.streamable = True
 
-        self.correction_ratio = self.defaults.correction_ratio
-
     def getImage(self, exposure=None, binsize=None, **kwargs):
         """Image acquisition routine
 
