@@ -3,8 +3,10 @@ from instamatic import config
 default_tem = config.microscope.name
 
 
-def get_tem(kind: str=default_tem):
+def get_tem(kind: str=None):
     """Grab tem class"""
+    if kind == None:
+        kind = default_tem
     
     if kind == "jeol":
         from .jeol_microscope import JeolMicroscope as cls
@@ -18,7 +20,7 @@ def get_tem(kind: str=default_tem):
     return cls
 
 
-def Microscope(kind: str=default_tem, use_server: bool=False):
+def Microscope(kind: str=None, use_server: bool=False):
     """Generic class to load microscope interface class
 
     kind: str
@@ -28,6 +30,8 @@ def Microscope(kind: str=default_tem, use_server: bool=False):
 
     returns: TEM interface class
     """
+    if kind == None:
+        kind = default_tem
 
     if use_server:
         from .server_microscope import ServerMicroscope

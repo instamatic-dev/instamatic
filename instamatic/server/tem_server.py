@@ -24,14 +24,17 @@ BUFSIZE = 1024
 
 
 class TemServer(threading.Thread):
-    def __init__(self, log=None, q=None):
+    def __init__(self, log=None, q=None, kind=None):
         super().__init__()
 
         self.log = log
         self.q = q
+
+        self.kind = kind
     
     def run(self):
-        self.tem = Microscope(use_server=False)
+        self.tem = Microscope(kind=self.kind, use_server=False)
+        print(f"Initialized connection to microscope: {self.tem.name}")
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
@@ -88,6 +91,16 @@ def handle(conn, q):
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--microscope", action="store", dest="microscope",
+                        help="""Override microscope to use""")
+
+    parser.set_defaults(microscope=None)
+    options = parser.parse_args()
+    microscope = options.microscope
+
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / "instamatic_TEMServer_{date}.log".format(date=date)
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
@@ -98,7 +111,7 @@ def main():
 
     q = queue.Queue(maxsize=100)
     
-    tem_reader = TemServer(log=log, q=q)
+    tem_reader = TemServer(kind=microscope, log=log, q=q)
     tem_reader.start()
     
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

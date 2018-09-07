@@ -13,7 +13,9 @@ import atexit
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
-SIMULATE = False
+# SoPhy > File > Medipix/Timepix control > Save parametrized settings
+# Save updated config for timepix camera
+CONFIG_PYTIMEPIX = "tpx"
 
 
 class LockingError(RuntimeError):
@@ -51,7 +53,7 @@ class EMCameraObj(object):
     def __init__(self):
         libdrc = Path(__file__).parent
 
-        self.lockfile = libdrc / "timepix_lockfile"
+        self.lockfile = libdrc / "timepix.lockfile"
         self.acquire_lock()
         
         libpath = libdrc / "EMCameraObj.dll"
@@ -303,6 +305,8 @@ class EMCameraObj(object):
         self.dimensions = self.defaults.dimensions
         self.xmax, self.ymax = self.dimensions
         self.correction_ratio = self.defaults.correction_ratio
+
+        self.streamable = True
 
         self.name = self.getName()
 
