@@ -2,17 +2,8 @@
 
 from setuptools import setup, find_packages
 import os
-import glob
 
-data_files = [("instamatic/config", ["instamatic/config/global.yaml"]),
-              ("instamatic/config/microscope", glob.glob("instamatic/config/microscope/*.yaml")),
-              ("instamatic/config/calibration", glob.glob("instamatic/config/calibration/*.yaml")),
-              ("instamatic/config/camera", glob.glob("instamatic/config/camera/*.yaml")),
-              ("instamatic/camera", glob.glob("instamatic/camera/*.dll")),
-              ("instamatic/camera", ["instamatic/camera/timepix.lockfile"]),
-              ("instamatic/camera/tpx", glob.glob("instamatic/camera/tpx/*"))]
-
-# www.pythonhosted.org/setuptools/setuptools.html
+packages = find_packages(exclude=["scripts"])
 
 exec(open('instamatic/version.py').read())  # grab __version__, __author__, etc.
 
@@ -47,20 +38,7 @@ setup(
         'Topic :: Software Development :: Libraries'
     ],
 
-    packages=["instamatic", 
-              "instamatic.calibrate",
-              "instamatic.camera",
-              "instamatic.config",
-              "instamatic.experiments",
-              "instamatic.formats",
-              "instamatic.gui",
-              "instamatic.processing",
-              "instamatic.neural_network",
-              "instamatic.server",
-              "instamatic.TEMController",
-              "instamatic.utils"],
-
-    data_files=data_files,
+    packages=packages,
 
     install_requires=['comtypes', 
                       'lmfit', 
@@ -75,9 +53,7 @@ setup(
                       'h5py', 
                       'IPython'],
 
-    package_data={
-        "": ["LICENCE",  "readme.md", "setup.py"],
-    },
+    include_package_data=True,
 
     entry_points={
         'console_scripts': [
