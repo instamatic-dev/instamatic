@@ -13,13 +13,51 @@ import atexit
 
 from instamatic import config
 
+SYMBOLS = {}
 
 if platform.architecture()[0] == '32bit':
     DLLPATH_SIMU    = "CCDCOM2_x86_simulation.dll"
     DLLPATH_GATAN   = "CCDCOM2_x86_gatan.dll"
+
+    SYMBOLS["actual"] = {
+        'acquireImageNewFloat' : 'acquireImageNewFloat',
+        'acquireImageNewInt' : 'acquireImageNewInt',
+        'cameraCount' : None,
+        'cameraDimensions' : 'cameraDimensions',
+        'cameraName' : 'cameraName',
+        'CCDCOM2_release' : 'CCDCOM2_release',
+        'initCCDCOM' : 'initCCDCOM',
+        'isCameraInfoAvailable' : 'isCameraInfoAvailable',
+        'releaseCCDCOM' : 'releaseCCDCOM'
+        }
+    SYMBOLS["simu"] = {
+        'acquireImageNewFloat' : '?acquireImageNewFloat@@YAHHHHHHN_NPAPAMPAH2@Z',
+        'acquireImageNewInt' : '?acquireImageNewInt@@YAHHHHHPAH00HN_N@Z',
+        'cameraCount' : '?cameraCount@@YAHXZ',
+        'cameraDimensions' : '?cameraDimensions@@YA_NPAH0@Z',
+        'cameraName' : '?cameraName@@YA_NPA_WH@Z',
+        'CCDCOM2_release' : '?CCDCOM2_release@@YAXPAM@Z',
+        'initCCDCOM' : '?initCCDCOM@@YAHH@Z',
+        'isCameraInfoAvailable' : '?isCameraInfoAvailable@@YA_NXZ',
+        'releaseCCDCOM' : '?releaseCCDCOM@@YAXXZ'
+        }
 else:
     DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
     DLLPATH_GATAN   = "CCDCOM2_x64_gatan.dll"
+
+    SYMBOLS["actual"] = {
+        'acquireImageNewFloat' : '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z',
+        'acquireImageNewInt' : '?acquireImageNewInt@@YAHHHHHPEAH00HN_N@Z',
+        'cameraCount' : '?cameraCount@@YAHXZ',
+        'cameraDimensions' : '?cameraDimensions@@YA_NPEAH0@Z',
+        'cameraName' : '?cameraName@@YA_NPEA_WH@Z',
+        'CCDCOM2_release' : '?CCDCOM2_release@@YAXPEAM@Z',
+        'initCCDCOM' : '?initCCDCOM@@YAHH@Z',
+        'isCameraInfoAvailable' : '?isCameraInfoAvailable@@YA_NXZ',
+        'releaseCCDCOM' : '?releaseCCDCOM@@YAXXZ'
+        }
+
+    SYMBOLS["simu"] = SYMBOLS["actual"]
 
 
 class CameraDLL(object):
@@ -38,8 +76,10 @@ class CameraDLL(object):
 
         if kind == "simulateDLL":
             libpath = cameradir / DLLPATH_SIMU
+            symbols = SYMBOLS["simu"]
         elif kind == "gatan":
             libpath = cameradir / DLLPATH_GATAN
+            symbols = SYMBOLS["actual"]
         else:
             raise ValueError("No such camera: {kind}".format(kind=kind))
 
@@ -52,29 +92,30 @@ class CameraDLL(object):
             raise RuntimeError("Cannot load DLL: {libpath}".format(libpath=libpath))
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
-        self._acquireImageNewFloat = getattr(lib, '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z')
+        self._acquireImageNewFloat = getattr(lib, symbols['acquireImageNewFloat'])
         self._acquireImageNewFloat.argtypes = [c_int, c_int, c_int, c_int, c_int, c_double, c_bool, POINTER(
             POINTER(c_float)), POINTER(c_int), POINTER(c_int)]
-        self._cameraCount = getattr(lib, '?cameraCount@@YAHXZ')
-        self._cameraCount.restype = c_int
 
-        self._cameraDimensions = getattr(lib, '?cameraDimensions@@YA_NPEAH0@Z')
+        # self._cameraCount = getattr(lib, symbols['cameraCount'])
+        # self._cameraCount.restype = c_int
+
+        self._cameraDimensions = getattr(lib, symbols['cameraDimensions'])
         self._cameraDimensions.argtypes = [POINTER(c_long), POINTER(c_long)]
 
-        self._cameraName = getattr(lib, '?cameraName@@YA_NPEA_WH@Z')
+        self._cameraName = getattr(lib, symbols['cameraName'])
         self._cameraName.argtypes = [c_wchar_p, c_int]
         self._cameraName.restype = c_bool
 
-        self._CCDCOM2release = getattr(lib, '?CCDCOM2_release@@YAXPEAM@Z')
+        self._CCDCOM2release = getattr(lib, symbols['CCDCOM2_release'])
         self._CCDCOM2release.argtypes = [POINTER(c_float)]
 
-        self._initCCDCOM = getattr(lib, '?initCCDCOM@@YAHH@Z')
+        self._initCCDCOM = getattr(lib, symbols['initCCDCOM'])
         self._initCCDCOM.restype = c_int
 
-        self._isCameraInfoAvailable = getattr(lib, '?isCameraInfoAvailable@@YA_NXZ')
+        self._isCameraInfoAvailable = getattr(lib, symbols['isCameraInfoAvailable'])
         self._isCameraInfoAvailable.restype = c_bool
 
-        self._releaseCCDCOM = getattr(lib, '?releaseCCDCOM@@YAXXZ')
+        self._releaseCCDCOM = getattr(lib, symbols['releaseCCDCOM'])
 
         self.establishConnection()
 
@@ -83,8 +124,8 @@ class CameraDLL(object):
         msg = "Camera {} initialized".format(self.getName())
         logger.info(msg)
 
-        # print "Dimensions {}x{}".format(*self.getDimensions())
-        # print "Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount())
+        # print("Dimensions {}x{}".format(*self.getDimensions()))
+        # print("Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount()))
 
         atexit.register(self.releaseConnection)
 
@@ -99,7 +140,7 @@ class CameraDLL(object):
 
         self.streamable = False
 
-    def getImage(self, exposure=None, binsize=None,**kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs):
         """Image acquisition routine
 
         exposure: exposure time in seconds
@@ -140,8 +181,8 @@ class CameraDLL(object):
 
         return arr
 
-    def getCameraCount(self):
-        return self._cameraCount()
+    # def getCameraCount(self):
+    #     return self._cameraCount()
 
     def isCameraInfoAvailable(self):
         """Return Boolean"""
