@@ -4,8 +4,8 @@
 
 Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
 
-TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)
-Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)
+TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
+Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
 
 ## Usage
 
