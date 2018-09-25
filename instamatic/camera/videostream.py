@@ -1,11 +1,5 @@
-from tkinter import *
-from tkinter.ttk import *
-from PIL import Image, ImageEnhance
-from PIL import ImageTk
 import threading
-from instamatic.formats import write_tiff
 from .camera import Camera
-from instamatic.utils.spinbox import Spinbox
 import atexit
 
 
@@ -73,8 +67,6 @@ class VideoStream(threading.Thread):
             self.cam = cam
 
         self.lock = threading.Lock()
-
-        self.panel = None
 
         self.default_exposure = self.cam.default_exposure
         self.default_binsize = self.cam.default_binsize

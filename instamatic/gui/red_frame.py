@@ -44,7 +44,7 @@ class ExperimentalRED(LabelFrame):
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
         self.var_tilt_range = DoubleVar(value=10.0)
-        self.var_stepsize = DoubleVar(value=0.2)
+        self.var_stepsize = DoubleVar(value=1.0)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger

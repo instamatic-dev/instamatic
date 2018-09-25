@@ -176,6 +176,7 @@ class VideoStreamFrame(Frame):
             pass
 
     def saveImage(self):
+        """Dump the current frame to a file"""
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
  
         if self.app:
@@ -192,6 +193,9 @@ class VideoStreamFrame(Frame):
             except:
                 frame = self.frame
                 h = {}
+        else:
+            frame = self.frame
+            h = {}
 
         write_tiff(outfile, frame, header=h)
         print(" >> Wrote file:", outfile)

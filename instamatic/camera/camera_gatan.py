@@ -10,6 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import atexit
+import time
 
 from instamatic import config
 
@@ -171,7 +172,7 @@ class CameraDLL(object):
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
-        # print "shape: {} {}".format(xres, yres)
+        print(f"shape: {xres} {yres}, binsize: {binsize}")
         arr = np.ctypeslib.as_array(
             (c_float * xres * yres).from_address(addressof(pdata.contents)))
         # memory is not shared between python and C, so we need to copy array
@@ -179,10 +180,12 @@ class CameraDLL(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
-        return arr
+        if self.name == "simulateDLL":
+            # add some noise to static simulated images
+            arr *= np.random.random((xres, yres)) + 0.5
+            time.sleep(exposure)
 
-    # def getCameraCount(self):
-    #     return self._cameraCount()
+        return arr
 
     def isCameraInfoAvailable(self):
         """Return Boolean"""
