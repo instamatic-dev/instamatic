@@ -26,8 +26,11 @@ def Camera(kind, as_stream=False):
     else:
         raise ValueError(f"No such camera: {kind}")
 
-    if cam.streamable and as_stream:
-        from .videostream import VideoStream
+    if  as_stream:
+        if cam.streamable:
+            from .videostream import VideoStream
+        else:
+            from .fakevideostream import VideoStream
         return VideoStream(cam)
     else:
         return cam

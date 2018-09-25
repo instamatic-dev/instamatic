@@ -265,10 +265,13 @@ class VideoStreamFrame(Frame):
 
 
 def start_gui(stream):
+    """Pass a camera stream object, and open a simple live-view window
+    This is meant to be used in an interactive python shell"""
     root = Tk()
     vsframe = VideoStreamFrame(root, stream=stream)
     vsframe.pack(side="top", fill="both", expand=True)
     root.mainloop()
+    root.destroy()
 
 
 def ipy_embed(*args, **kwargs):
