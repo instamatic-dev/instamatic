@@ -56,7 +56,7 @@ class ConfigObject(object):
             setattr(self, key, value)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}('{self.name}')"
+        return "{}('{}')".format(self.__class__.__name__, self.name)
 
     @classmethod
     def from_file(cls, path):

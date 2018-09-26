@@ -464,7 +464,7 @@ class Experiment(object):
 
         for i, d_pos in enumerate(self.loop_positions()):
    
-            outfile = self.imagedir / f"image_{i:04d}"
+            outfile = self.imagedir / "image_{i:04d}".format(i=i)
             
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -499,7 +499,7 @@ class Experiment(object):
             self.log.info("%d crystals found in %s", ncrystals, outfile)
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
-                outfile = self.datadir / f"image_{i:04d}_{k:04d}"
+                outfile = self.datadir / "image_{i:04d}_{k:04d}".format(i=i, k=k)
                 comment = "Image {} Crystal {}".format(i, k)
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
@@ -523,7 +523,7 @@ class Experiment(object):
                         self.log.debug("Rotation angle = %f", rotation_angle)
                         self.ctrl.stageposition.a = rotation_angle
         
-                        outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
+                        outfile = self.datadir / "image_{i:04d}_{k:04d}_{rotation_angle}".format(i=i, k=k, rotation_angle=rotation_angle)
                         img, h = self.ctrl.getImage(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
                                                     

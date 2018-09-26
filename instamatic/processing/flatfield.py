@@ -55,7 +55,7 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     https://en.wikipedia.org/wiki/Flat-field_correction"""
 
     if flatfield.shape != img.shape:
-        msg = f"Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes."
+        msg = "Flatfield not applied: image {} and flatfield {} do not match shapes.".format(img.shape, flatfield.shape)
         warnings.warn(msg)
         return img
 
