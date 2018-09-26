@@ -23,3 +23,6 @@ EMCamera
 *.bak
 *.log
 *.prefs
+pytimepix
+index_server
+dials
