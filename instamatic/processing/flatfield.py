@@ -83,7 +83,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
-    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
+    exposure = exposure * (ctrl.cam.dynamic_range / 10.0) / img.mean() 
     print("exposure:", exposure)
 
     ctrl.cam.block()

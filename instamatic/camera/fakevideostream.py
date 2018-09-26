@@ -10,7 +10,7 @@ class VideoStream(threading.Thread):
         threading.Thread.__init__(self)
 
         if isinstance(cam, str):
-            self.cam = Camera(kind=cam)
+            self.cam = Camera(name=cam)
         else:
             self.cam = cam
 
@@ -19,7 +19,6 @@ class VideoStream(threading.Thread):
         self.default_exposure = self.cam.default_exposure
         self.default_binsize = self.cam.default_binsize
         self.dimensions = self.cam.dimensions
-        self.defaults = self.cam.defaults
         self.name = self.cam.name
 
         self.frametime = self.default_exposure
@@ -85,7 +84,7 @@ class VideoStream(threading.Thread):
 
     def start_gui(self):
         from instamatic.gui import videostream_frame
-        t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=True)
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=False)
         t.start()
 
 

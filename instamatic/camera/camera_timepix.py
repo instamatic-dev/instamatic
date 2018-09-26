@@ -49,7 +49,7 @@ def correctCross(raw, factor=2.15):
     raw[:,258:261] = raw[:,260:261] / factor
 
 
-class EMCameraObj(object):
+class CameraTPX(object):
     def __init__(self):
         libdrc = Path(__file__).parent
 
@@ -72,7 +72,8 @@ class EMCameraObj(object):
         atexit.register(self.disconnect)
         self.is_connected = None
 
-        self.correction_ratio = 3.0
+        self.name = self.getName()
+        self.load_defaults()
 
     def acquire_lock(self):
         try:
@@ -289,26 +290,16 @@ class EMCameraObj(object):
     def getName(self):
         return "PyTimepix"
 
-    def getCameraCount(self):
-        return 0
-
     def getDimensions(self):
-        return 516, 516
+        return self.dimensions
 
     def load_defaults(self):
-        from instamatic import config
-        self.defaults = config.camera
+        if self.name != config.cfg.camera:
+            config.load_cfg(camera_name=self.name)
 
-        self.default_exposure = self.defaults.default_exposure
-        self.default_binsize = self.defaults.default_binsize
-        self.possible_binsizes = self.defaults.possible_binsizes
-        self.dimensions = self.defaults.dimensions
-        self.xmax, self.ymax = self.dimensions
-        self.correction_ratio = self.defaults.correction_ratio
+        self.__dict__.update(config.camera.d)
 
         self.streamable = True
-
-        self.name = self.getName()
 
 
 def initialize(config):
@@ -329,7 +320,7 @@ def initialize(config):
             if inp[0] == "PIXELBPC":
                 pixelsCfg = base / inp[1]
 
-    cam = EMCameraObj()
+    cam = CameraTPX()
     isConnected = cam.connect(hwId)
     
     cam.init()
@@ -337,8 +328,6 @@ def initialize(config):
     cam.readHwDacs(hwDacs)
     cam.readPixelsCfg(pixelsCfg)
     cam.readRealDacs(realDacs)
-
-    cam.load_defaults()
 
     print(f"Camera {cam.getName()} initialized (resolution: {cam.getDimensions()})")
 

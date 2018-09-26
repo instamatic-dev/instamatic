@@ -110,7 +110,7 @@ class ServerMicroscope(object):
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
-        tem = get_tem()
+        tem = get_tem(self.name)
 
         self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
 

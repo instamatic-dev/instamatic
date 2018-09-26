@@ -25,7 +25,7 @@ class VideoStreamFrame(Frame):
 
         self.frametime = 0.05
         self.brightness = 1.0
-        self.display_range = self.stream.display_range_default = self.stream.defaults.dynamic_range
+        self.display_range = self.display_range_default = self.stream.cam.dynamic_range
         # Maximum number from image readout
 
         self.auto_contrast = True
@@ -36,8 +36,6 @@ class VideoStreamFrame(Frame):
         self.nframes = 1
         self.update_frequency = 0.25
         self.last_interval = self.frametime
-
-        self.display_range_default = self.stream.display_range_default
 
         self._atexit_funcs = []
 

@@ -204,9 +204,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = ctrl.cam.defaults.calib_directbeam.get(key, {}).get("gridsize", 5)    # dat syntax...
+        gridsize = ctrl.cam.calib_directbeam.get(key, {}).get("gridsize", 5)    # dat syntax...
     if not stepsize:
-        stepsize = ctrl.cam.defaults.calib_directbeam.get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
+        stepsize = ctrl.cam.calib_directbeam.get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
 
     attr = getattr(ctrl, key.lower())
 
