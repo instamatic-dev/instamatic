@@ -5,8 +5,8 @@ import os, sys
 from pathlib import Path
 import json
 
-import matplotlib
-matplotlib.use('TkAgg')
+# import matplotlib
+# matplotlib.use('TkAgg')
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
 

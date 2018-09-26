@@ -1,11 +1,5 @@
-from tkinter import *
-from tkinter.ttk import *
-from PIL import Image, ImageEnhance
-from PIL import ImageTk
 import threading
-from instamatic.formats import write_tiff
 from .camera import Camera
-from instamatic.utils.spinbox import Spinbox
 import atexit
 
 
@@ -20,7 +14,6 @@ class ImageGrabber(object):
         self.default_exposure = self.cam.default_exposure
         self.default_binsize = self.cam.default_binsize
         self.dimensions = self.cam.dimensions
-        self.defaults = self.cam.defaults
         self.name = self.cam.name
 
         self.frame = None
@@ -68,18 +61,15 @@ class VideoStream(threading.Thread):
         threading.Thread.__init__(self)
 
         if isinstance(cam, str):
-            self.cam = Camera(kind=cam)
+            self.cam = Camera(name=cam)
         else:
             self.cam = cam
 
         self.lock = threading.Lock()
 
-        self.panel = None
-
         self.default_exposure = self.cam.default_exposure
         self.default_binsize = self.cam.default_binsize
         self.dimensions = self.cam.dimensions
-        self.defaults = self.cam.defaults
         self.name = self.cam.name
 
         self.frametime = self.default_exposure

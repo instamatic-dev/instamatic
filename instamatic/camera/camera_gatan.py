@@ -10,6 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import atexit
+import time
 
 from instamatic import config
 
@@ -63,10 +64,10 @@ else:
 class CameraDLL(object):
     """docstring for Camera"""
 
-    def __init__(self, kind="gatan"):
+    def __init__(self, name="gatan"):
         """Initialize camera module
 
-        kind:
+        name:
             'gatan'
             'simulateDLL'
         """
@@ -74,16 +75,16 @@ class CameraDLL(object):
 
         cameradir = Path(__file__).parent
 
-        if kind == "simulateDLL":
+        if name == "simulateDLL":
             libpath = cameradir / DLLPATH_SIMU
             symbols = SYMBOLS["simu"]
-        elif kind == "gatan":
+        elif name == "gatan":
             libpath = cameradir / DLLPATH_GATAN
             symbols = SYMBOLS["actual"]
         else:
-            raise ValueError("No such camera: {kind}".format(kind=kind))
+            raise ValueError("No such camera: {name}".format(name=name))
 
-        self.name = kind
+        self.name = name
 
         try:
             lib = ctypes.cdll.LoadLibrary(str(libpath))
@@ -130,17 +131,14 @@ class CameraDLL(object):
         atexit.register(self.releaseConnection)
 
     def load_defaults(self):
-        self.defaults = config.camera
+        if self.name != config.cfg.camera:
+            config.load_cfg(camera_name=self.name)
 
-        self.default_exposure = self.defaults.default_exposure
-        self.default_binsize = self.defaults.default_binsize
-        self.possible_binsizes = self.defaults.possible_binsizes
-        self.dimensions = self.defaults.dimensions
-        self.xmax, self.ymax = self.dimensions
+        self.__dict__.update(config.camera.d)
 
         self.streamable = False
 
-    def getImage(self, exposure=None, binsize=None, **kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine
 
         exposure: exposure time in seconds
@@ -154,10 +152,12 @@ class CameraDLL(object):
         if not binsize:
             binsize = self.default_binsize
 
+
+
         xmin = kwargs.get("xmin", 0)
-        xmax = kwargs.get("xmax", self.xmax)
+        xmax = kwargs.get("xmax", self.dimensions[0])
         ymin = kwargs.get("ymin", 0)
-        ymax = kwargs.get("ymax", self.ymax)
+        ymax = kwargs.get("ymax", self.dimensions[1])
         showindm = kwargs.get("showindm", False)
 
         if binsize not in self.possible_binsizes:
@@ -171,7 +171,7 @@ class CameraDLL(object):
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
-        # print "shape: {} {}".format(xres, yres)
+        # print(f"shape: {xres} {yres}, binsize: {binsize}")
         arr = np.ctypeslib.as_array(
             (c_float * xres * yres).from_address(addressof(pdata.contents)))
         # memory is not shared between python and C, so we need to copy array
@@ -179,34 +179,38 @@ class CameraDLL(object):
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
+        if self.name == "simulateDLL":
+            # add some noise to static simulated images
+            arr *= np.random.random((xres, yres)) + 0.5
+            time.sleep(exposure)
+
         return arr
 
-    # def getCameraCount(self):
-    #     return self._cameraCount()
-
-    def isCameraInfoAvailable(self):
-        """Return Boolean"""
+    def isCameraInfoAvailable(self) -> bool:
+        """Return the status of the camera"""
         return self._isCameraInfoAvailable()
 
-    def getDimensions(self):
-        """Return tuple shape: x,y"""
+    def getDimensions(self) -> (int, int):
+        """Return the dimensions reported by the camera"""
         pnWidth = c_int(0)
         pnHeight = c_int(0)
         self._cameraDimensions(byref(pnWidth), byref(pnHeight))
         return pnWidth.value, pnHeight.value
 
-    def getName(self):
-        """Return string"""
+    def getName(self) -> str:
+        """Return the name reported by the camera"""
         buf = create_unicode_buffer(20)
         self._cameraName(buf, 20)
         return buf.value
 
-    def establishConnection(self):
+    def establishConnection(self) -> None:
+        """Establish connection to the camera"""
         res = self._initCCDCOM(20120101)
         if res != 1:
             raise RuntimeError("Could not establish camera connection to {}".format(self.name))
 
-    def releaseConnection(self):
+    def releaseConnection(self) -> None:
+        """Release the connection to the camera"""
         name = self.getName()
         self._releaseCCDCOM()
         msg = "Connection to camera {} released".format(name) 

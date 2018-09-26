@@ -8,6 +8,7 @@ from instamatic import TEMController
 import glob
 from tqdm import tqdm
 from pathlib import Path
+import warnings
 
 
 def apply_corrections(img, deadpixels=None):
@@ -53,6 +54,11 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
     https://en.wikipedia.org/wiki/Flat-field_correction"""
 
+    if flatfield.shape != img.shape:
+        msg = f"Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes."
+        warnings.warn(msg)
+        return img
+
     if darkfield is None:
         ret = img * np.mean(flatfield) / flatfield
     else:
@@ -77,7 +83,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
-    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
+    exposure = exposure * (ctrl.cam.dynamic_range / 10.0) / img.mean() 
     print("exposure:", exposure)
 
     ctrl.cam.block()

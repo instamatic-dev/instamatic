@@ -24,16 +24,17 @@ BUFSIZE = 1024
 
 
 class TemServer(threading.Thread):
-    def __init__(self, log=None, q=None, kind=None):
+    def __init__(self, log=None, q=None, name=None):
         super().__init__()
 
         self.log = log
         self.q = q
 
-        self.kind = kind
+        # self.name is a reserved parameter for threads
+        self._name = name
     
     def run(self):
-        self.tem = Microscope(kind=self.kind, use_server=False)
+        self.tem = Microscope(name=self._name, use_server=False)
         print("Initialized connection to microscope: {}".format(self.tem.name))
 
         while True:
@@ -111,7 +112,7 @@ def main():
 
     q = queue.Queue(maxsize=100)
     
-    tem_reader = TemServer(kind=microscope, log=log, q=q)
+    tem_reader = TemServer(name=microscope, log=log, q=q)
     tem_reader.start()
     
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

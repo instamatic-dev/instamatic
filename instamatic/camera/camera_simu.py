@@ -11,14 +11,13 @@ from instamatic import config
 
 
 class CameraSimu(object):
-    """docstring for Camera"""
+    """docstring for CameraSimu"""
 
-    def __init__(self, kind="simulate"):
-        """Initialize camera module
-        """
+    def __init__(self, name="simulate"):
+        """Initialize camera module """
         super(CameraSimu, self).__init__()
 
-        self.name = kind
+        self.name = name
 
         self.establishConnection()
 
@@ -28,19 +27,16 @@ class CameraSimu(object):
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
-    
-    def load_defaults(self):
-        self.defaults = config.camera
 
-        self.default_exposure = self.defaults.default_exposure
-        self.default_binsize = self.defaults.default_binsize
-        self.possible_binsizes = self.defaults.possible_binsizes
-        self.dimensions = self.defaults.dimensions
-        self.xmax, self.ymax = self.dimensions
+    def load_defaults(self):
+        if self.name != config.cfg.camera:
+            config.load_cfg(camera_name=self.name)
+
+        self.__dict__.update(config.camera.d)
 
         self.streamable = True
 
-    def getImage(self, exposure=None, binsize=None, **kwargs):
+    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine
 
         exposure: exposure time in seconds
@@ -58,27 +54,26 @@ class CameraSimu(object):
 
         return arr
 
-    def getCameraCount(self):
-        return 1
-
-    def isCameraInfoAvailable(self):
-        """Return Boolean"""
+    def isCameraInfoAvailable(self) -> bool:
+        """Check if the camera is available"""
         return True
 
-    def getDimensions(self):
-        """Return tuple shape: x,y"""
+    def getDimensions(self) -> (int, int):
+        """Get the dimensions reported by the camera"""
         return self.dimensions
 
-    def getName(self):
-        """Return string"""
+    def getName(self) -> str:
+        """Get the name reported by the camera"""
         return self.name
 
-    def establishConnection(self):
+    def establishConnection(self) -> None:
+        """Establish connection to the camera"""
         res = 1
         if res != 1:
             raise RuntimeError("Could not establish camera connection to {}".format(self.name))
 
-    def releaseConnection(self):
+    def releaseConnection(self) -> None:
+        """Release the connection to the camera"""
         name = self.getName()
         msg = "Connection to camera {} released".format(name)
         logger.info(msg)

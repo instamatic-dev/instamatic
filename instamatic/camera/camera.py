@@ -1,33 +1,46 @@
 from pathlib import Path
+from instamatic import config
 
-import sys
 import logging
 logger = logging.getLogger(__name__)
 
-from instamatic import config
-
 __all__ = ["Camera"]
 
+default_cam = config.camera.name
 
-def Camera(kind, as_stream=False):
-    if kind == "simulate":
+
+def Camera(name: str=None, as_stream: bool=False):
+    """Initialize the camera identified by the 'name' parameter
+    if `as_stream` is True, it will return a VideoStream object
+    if `as_stream` is False, it will return the raw Camera object
+    """
+    if name == None:
+        name = default_cam
+    elif name != config.cfg.camera:
+        config.load_cfg(camera_name=name)
+        name = config.cfg.camera
+
+    if name == "simulate":
         from .camera_simu import CameraSimu
-        cam = CameraSimu(kind)
-    elif kind == "simulateDLL":
+        cam = CameraSimu(name)
+    elif name == "simulateDLL":
         from .camera_gatan import CameraDLL
-        cam = CameraDLL(kind)
-    elif kind in ("orius", "gatan"):
+        cam = CameraDLL(name)
+    elif name in ("orius", "gatan"):
         from .camera_gatan import CameraDLL
         cam = CameraDLL("gatan")
-    elif kind in ("timepix", "pytimepix"):
+    elif name in ("timepix", "pytimepix"):
         from . import camera_timepix
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"
         cam = camera_timepix.initialize(tpx_config)
     else:
-        raise ValueError("No such camera: {kind}".format(kind=kind))
+        raise ValueError("No such camera: {name}".format(name=name))
 
-    if cam.streamable and as_stream:
-        from .videostream import VideoStream
+    if  as_stream:
+        if cam.streamable:
+            from .videostream import VideoStream
+        else:
+            from .fakevideostream import VideoStream
         return VideoStream(cam)
     else:
         return cam
@@ -165,7 +178,7 @@ def main_entry():
 
 if __name__ == '__main__':
     # main_entry()
-    cam = Camera(kind="timepix")
+    cam = Camera(name="timepix")
     arr = cam.getImage(exposure=0.1)
     print(arr)
     print(arr.shape)
