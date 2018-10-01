@@ -1,6 +1,5 @@
 import os, sys
 import ctypes
-from IPython import embed
 from ctypes import *
 from pathlib import Path
 
@@ -9,6 +8,8 @@ import numpy as np
 import time
 import traceback
 import atexit
+
+from instamatic import config
 
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
@@ -288,7 +289,7 @@ class CameraTPX(object):
         return self.acquireData(exposure=exposure)
 
     def getName(self):
-        return "PyTimepix"
+        return "timepix"
 
     def getDimensions(self):
         return self.dimensions
@@ -335,6 +336,8 @@ def initialize(config):
 
 
 if __name__ == '__main__':
+    from IPython import embed
+
     """To restart the camera in case SoPhy hangs,
         in terminal on linux pc:
             ./stopcooling
