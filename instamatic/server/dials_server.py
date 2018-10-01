@@ -29,11 +29,19 @@ def parse_dials_index_log(fn="dials.index.log"):
 
 def run_dials_indexing(path):
     cmd = [str(EXE), path]
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    fn = config.logs_drc / f"Dials_indexing_{date}.log"
 
-    p = sp.Popen(cmd, cwd=CWD)
+    p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
+    for line in p.stdout:
+        if b'Unit cell:' in line:
+            print(line)
+            with open(fn, "a") as f:
+                f.write("Data Path: {}\n".format(path))
+                f.write("{}\n".format(line.decode('utf-8')))
+                print("Indexing result written to dials indexing log file; path: {}".format(path))
+    
     p.wait()
-
-    # parse_dials_index_log("dials.index.log")
 
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     print(f"{now} | Dials indexing has finished")
