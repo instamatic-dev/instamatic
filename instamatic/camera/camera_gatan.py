@@ -152,8 +152,6 @@ class CameraDLL(object):
         if not binsize:
             binsize = self.default_binsize
 
-
-
         xmin = kwargs.get("xmin", 0)
         xmax = kwargs.get("xmax", self.dimensions[0])
         ymin = kwargs.get("ymin", 0)

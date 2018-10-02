@@ -10,7 +10,7 @@ class VideoStream(threading.Thread):
         threading.Thread.__init__(self)
 
         if isinstance(cam, str):
-            self.cam = Camera(name=cam)
+            self.cam = Camera(name=cam, as_stream=False)
         else:
             self.cam = cam
 
