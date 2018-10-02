@@ -625,7 +625,7 @@ class TEMController(object):
     def show_stream(self):
         """If the camera has been opened as a stream, start a live view in a tkinter window"""
         try:
-           self.cam.start_gui()
+           self.cam.show_stream()
         except AttributeError:
             print("Cannot open live view. The camera interface must be initialized as a stream object.")
 
