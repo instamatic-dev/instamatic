@@ -168,7 +168,7 @@ class VideoStream(threading.Thread):
         if not callback:
             return buffer
 
-    def start_gui(self):
+    def show_stream(self):
         from instamatic.gui import videostream_frame
         t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=True)
         t.start()
