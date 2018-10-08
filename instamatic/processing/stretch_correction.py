@@ -31,10 +31,10 @@ def apply_transform_to_image(img, transform, center=None):
     return img_tf
 
 
-def affine_transform_ellipse_to_circle(azimuth, stretch, inverse=False):
+def affine_transform_ellipse_to_circle(azimuth, amplitude, inverse=False):
     """Usage: 
 
-    e2c = circle_to_ellipse_affine_transform(azimuth, stretch):
+    e2c = circle_to_ellipse_affine_transform(azimuth, amplitude):
     np.dot(arr, e2c) # arr.shape == (n, 2)
        or
     apply_transform_to_image(img, e2c)
@@ -43,8 +43,8 @@ def affine_transform_ellipse_to_circle(azimuth, stretch, inverse=False):
     """
     sin = np.sin(azimuth)
     cos = np.cos(azimuth)
-    sx    = 1 - stretch
-    sy    = 1 + stretch
+    sx    = 1 - amplitude
+    sy    = 1 + amplitude
     
     # apply in this order
     rot1 = np.array((cos, -sin,  sin, cos)).reshape(2,2)
@@ -59,15 +59,15 @@ def affine_transform_ellipse_to_circle(azimuth, stretch, inverse=False):
         return composite
 
 
-def affine_transform_circle_to_ellipse(azimuth, stretch):
+def affine_transform_circle_to_ellipse(azimuth, amplitude):
     """Usage: 
 
-    c2e = circle_to_ellipse_affine_transform(azimuth, stretch):
+    c2e = circle_to_ellipse_affine_transform(azimuth, amplitude):
     np.dot(arr, c2e) # arr.shape == (n, 2)
        or
     apply_transform_to_image(img, c2e)
     """
-    return affine_transform_ellipse_to_circle(azimuth, stretch, inverse=True)
+    return affine_transform_ellipse_to_circle(azimuth, amplitude, inverse=True)
 
 
 def apply_stretch_correction(z, center=None, azimuth=0, amplitude=0):
@@ -92,9 +92,9 @@ def apply_stretch_correction(z, center=None, azimuth=0, amplitude=0):
 
 def make_title(prop):
     azimuth = np.degrees(prop.orientation)
-    stretch = -1 + prop.major_axis_length/prop.minor_axis_length
+    amplitude = -1 + prop.major_axis_length/prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
-    s = "Azimuth: {:.2f}, Stretch: {:.2%}\nmin/max length: {:.1f}, {:.1f}".format(azimuth, stretch, minlen, maxlen)
+    s = "Azimuth: {:.2f}, amplitude: {:.2%}\nmin/max length: {:.1f}, {:.1f}".format(azimuth, amplitude, minlen, maxlen)
     return s
 
 
@@ -142,7 +142,7 @@ def plot_props(edges, props):
         print("centroid = ({:.2f}, {:.2f})".format(*prop.centroid))
         print("eccentricity = {:.2f}".format(prop.eccentricity))
         print("stretch azimuth = {:.2f} degrees".format(np.degrees(prop.orientation)))
-        print("stretch percent = {:.2%}".format(-1 + prop.major_axis_length/prop.minor_axis_length))
+        print("stretch amplitude = {:.2%}".format(-1 + prop.major_axis_length/prop.minor_axis_length))
         print("min/max lengths = ({:.2f}, {:.2f})".format(prop.minor_axis_length, prop.major_axis_length))
         print("avg. diameter = {:.2f}".format(prop.equivalent_diameter))
         print()
@@ -189,7 +189,7 @@ def get_ring_props(edges):
 
 def main_entry(sigma=None):
     if len(sys.argv) != 2:
-        print("Program to find microscope stretch percent/azimuth from a powder pattern")
+        print("Program to find microscope stretch amplitude/azimuth from a powder pattern")
         print()
         print("Usage: python find_stretch_correction.py powder_pattern.tiff")
         exit()
