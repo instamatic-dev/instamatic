@@ -62,7 +62,8 @@ class Experiment(object):
         self.logger = log
         self.camtype = ctrl.cam.name
 
-        flatfield, h = read_tiff(flatfield)
+        if flatfield:
+            flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
         self.offset = 0
@@ -145,15 +146,18 @@ class Experiment(object):
         path = self.path_mrc
         fns = []
 
-        azimuth   = -6.61
-        amplitude =  2.43
+        azimuth   = config.camera.stretch_azimuth
+        amplitude = config.camera.stretch_amplitude
 
         print("\nWriting MRC files")
         for fn in tqdm.tqdm(self.data_files):
             img, h = read_hdf5(fn)
 
             center = find_beam_center(img, sigma=10)
-            img = apply_flatfield_correction(img, self.flatfield)
+
+            if self.flatfield is not None:
+                img = apply_flatfield_correction(img, self.flatfield)
+
             new_img = apply_stretch_correction(img, center=center, azimuth=azimuth, amplitude=amplitude)
 
             basename = os.path.basename(fn)
@@ -178,5 +182,43 @@ class Experiment(object):
                             startangle=self.startangle,
                             endangle=self.current_angle)
 
+        print()
         print("Writing ED3D file")
         print("RED data collection finalized")
+        print()
+
+
+def main():
+    from instamatic import TEMController
+    ctrl = TEMController.initialize()
+
+    import logging
+    log = logging.getLogger(__name__)
+
+    exposure_time = 0.5
+    tilt_range = 10
+    stepsize = 1.0
+
+    i = 1
+    while True:
+        expdir = f"experiment_{i}"
+        if os.path.exists(expdir):
+            i += 1
+        else:
+            break
+
+    print(f"\nData directory: {expdir}")
+    
+    red_exp = Experiment(ctrl=ctrl, path=expdir, log=log, flatfield=None)
+    red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+
+    input("Press << Enter >> to start the experiment... ")
+    
+    while not input(f"\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] ") :
+        red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+
+    red_exp.finalize()
+
+
+if __name__ == '__main__':
+    main()
