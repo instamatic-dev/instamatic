@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 from instamatic.formats import read_tiff, write_tiff, write_mrc, write_adsc
 from instamatic.processing.flatfield import apply_flatfield_correction
-from instamatic.processing.stretch_correction import apply_stretch_correction
+from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from pathlib import Path
@@ -167,15 +167,36 @@ class ImgConversion(object):
 
         return avg_center, std_center
 
-    def apply_stretch_correction(self, image, center):
-        center = np.copy(center)
+    def write_geometric_correction_files(self, path):
+        """Make geometric correction images for XDS"""
+        from instamatic.formats import write_cbf
+
+        center = np.array(self.mean_beam_center)
         
-        azimuth   = self.stretch_azimuth
-        amplitude = self.stretch_amplitude
+        amplitude_pc = self.stretch_amplitude / (2*100)
         
-        newImage = apply_stretch_correction(image, center=center, azimuth=azimuth, amplitude=amplitude)
-    
-        return newImage
+        # To create the correct corrections the azimuth is mirrored
+        azimuth_rad  = np.radians(180 - self.stretch_azimuth)
+
+        shape = self.data_shape
+
+        xi, yi = np.mgrid[0:shape[0], 0:shape[1]]
+        coords = np.stack([xi.flatten(), yi.flatten()], axis=1) - center
+        
+        s = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
+        
+        new = np.dot(coords, s)
+
+        xcorr = (new[:,0].reshape(shape) + center[0]) - xi
+        ycorr = (new[:,1].reshape(shape) + center[1]) - yi
+
+        # reverse XY coordinates for XDS
+        xcorr, ycorr = ycorr, xcorr
+
+        # In XDS, the geometrically corrected coordinates of a pixel at IX,IY 
+        # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
+        write_cbf(path / "XCORR.cbf", np.int32((xcorr * 100)))
+        write_cbf(path / "YCORR.cbf", np.int32((ycorr * 100)))
 
     def tiff_writer(self, path):
         print ("Writing TIFF files......")
@@ -285,10 +306,6 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
-        beam_center = h["beam_center"]
-
-        if self.do_stretch_correction:
-            img = self.apply_stretch_correction(img, beam_center)
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
@@ -296,7 +313,7 @@ class ImgConversion(object):
 
         # TODO: Dials reads the beam_center from the first image and uses that for the whole range
         # For now, use the average beam center and consider it stationary, remove this line later
-        beam_center = self.mean_beam_center
+        mean_beam_center = self.mean_beam_center
         
         header = collections.OrderedDict()
         header['HEADER_BYTES'] = 512
@@ -321,10 +338,10 @@ class ImgConversion(object):
         header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
         header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = "{:.4f}".format(beam_center[1])
-        header['BEAM_CENTER_Y'] = "{:.4f}".format(beam_center[0])
-        header['DENZO_X_BEAM'] = "{:.4f}".format((beam_center[0]*self.physical_pixelsize))
-        header['DENZO_Y_BEAM'] = "{:.4f}".format((beam_center[1]*self.physical_pixelsize))
+        header['BEAM_CENTER_X'] = "{:.4f}".format(mean_beam_center[1])
+        header['BEAM_CENTER_Y'] = "{:.4f}".format(mean_beam_center[0])
+        header['DENZO_X_BEAM'] = "{:.4f}".format((mean_beam_center[0]*self.physical_pixelsize))
+        header['DENZO_Y_BEAM'] = "{:.4f}".format((mean_beam_center[1]*self.physical_pixelsize))
         fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
@@ -333,22 +350,23 @@ class ImgConversion(object):
         img = self.data[i]
         h = self.headers[i]
 
-        beam_center = h["beam_center"]
-
         fn = path / f"{i:05d}.mrc"
 
-        if self.do_stretch_correction:
-            img = self.apply_stretch_correction(img, beam_center)
-        # flip up/down because RED reads images from the bottom left corner
+        # if self.do_stretch_correction:
+            # beam_center = h["beam_center"]
+            # img = self.apply_stretch_correction(img, beam_center)
+        
         # for RED these need to be as integers
-
         dtype = np.int16
         if False:
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
             maxval = np.iinfo(dtype).max
             img = (img / dynamic_range)*maxval
+        
         img = np.round(img, 0).astype(dtype)
+
+        # flip up/down because RED reads images from the bottom left corner
         img = np.flipud(img)
         
         write_mrc(fn, img)
@@ -397,6 +415,8 @@ class ImgConversion(object):
         rot_x, rot_y, rot_z = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis)
 
         shape_x, shape_y = self.data_shape
+
+        self.write_geometric_correction_files(path)
 
         if self.missing_range:
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
