@@ -19,6 +19,9 @@ from .mrc import read_image as read_mrc
 from .mrc import write_image as write_mrc
 
 
+from .xdscbf import write as write_cbf
+
+
 def read_image(fname):
     """Guess filetype by extension"""
     ext = Path(fname).suffix.lower()
@@ -120,3 +123,8 @@ def read_hdf5(fname):
         
     f = h5py.File(fname)
     return np.array(f["data"]), dict(f["data"].attrs)
+
+
+def read_cbf(fname):
+    """CBF reader not implemented"""
+    raise NotImplementedError("CBF reader not implemented.")
