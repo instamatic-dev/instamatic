@@ -102,7 +102,8 @@ class ImgConversion(object):
                  acquisition_time,           # seconds, acquisition time (exposure time + overhead)
                  flatfield='flatfield.tiff'  
                  ):
-        flatfield, h = read_tiff(flatfield)
+        if flatfield is not None:
+            flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
         self.headers = {}
@@ -147,8 +148,6 @@ class ImgConversion(object):
         
         self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
-
-        self.do_stretch_correction = True
 
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
