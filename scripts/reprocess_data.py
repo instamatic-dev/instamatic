@@ -4,16 +4,24 @@ import glob, sys
 from pathlib import Path
 import numpy as np
 
-filepat = sys.argv[1]
+try:
+    filepat = sys.argv[1]
+except IndexError:
+    filepat = "tiff/*.tiff"
 
 fns = glob.glob(filepat)
-print(len(fns))
+n = len(fns)
+if n == 0:
+    print(f"No files found matching `{filepat}`")
+    exit()
+else:
+    print(n)
 
 buffer = []
 
 fn = "cRED_log.txt"
 
-rotation_axis = -2.24
+rotation_axis = -2.24  # add np.pi/2 for old files
 acquisition_time = None
 
 with open(fn, "r") as f:
@@ -43,10 +51,6 @@ print("Ending angle:", end_angle)
 print("Rotation axis:", rotation_axis)
 print("Acquisition time:", acquisition_time)
 
-azimuth, amplitude = 83.37, 2.43
-
-print("Stretch amplitude", amplitude)
-print("Stretch azimuth", azimuth)
 
 def extract_image_number(s):
     p = Path(s)
@@ -64,7 +68,12 @@ img_conv = ImgConversion.ImgConversion(buffer=buffer,
          end_angle=end_angle,
          rotation_axis=rotation_axis,
          acquisition_time=acquisition_time,
-         flatfield="C:/instamatic/flatfield.tiff")
+         flatfield=None)
+
+# azimuth, amplitude = 83.37, 2.43  # add 90 to azimuth for old files
+# img_conv.stretch_azimuth, img_conv.stretch_amplitude = azimuth, amplitude
+print("Stretch amplitude", img_conv.stretch_amplitude)
+print("Stretch azimuth", img_conv.stretch_azimuth)
 
 tiff_path = None
 mrc_path = None
@@ -72,9 +81,6 @@ smv_path = None
 
 # mrc_path = Path("reprocess")
 smv_path = Path("SMV_reprocessed")
-
-img_conv.stretch_azimuth, img_conv.stretch_amplitude = azimuth, amplitude
-img_conv.do_stretch_correction = False
 
 img_conv.threadpoolwriter(tiff_path=tiff_path,
                           mrc_path=mrc_path,
