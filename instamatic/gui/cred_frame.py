@@ -17,7 +17,7 @@ class ExperimentalcRED(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
+        Label(frame, text="Exposure time (s):").grid(row=1, column=0, sticky="W")
         exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         exposure_time.grid(row=1, column=1, sticky="W", padx=10)
         
@@ -37,7 +37,7 @@ class ExperimentalcRED(LabelFrame):
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
         
-        Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
+        Label(frame, text="Image exposure (s):").grid(row=7, column=0, sticky="W")
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
 

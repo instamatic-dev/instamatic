@@ -241,7 +241,7 @@ def collect_flatfield(controller, **kwargs):
 
 
 from .base_module import BaseModule
-module = BaseModule("debug", "expert", True, DebugFrame, commands={
+module = BaseModule("debug", "advanced", True, DebugFrame, commands={
     "debug": debug,
     "autoindex": autoindex,
     "flatfield": collect_flatfield
