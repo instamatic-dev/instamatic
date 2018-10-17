@@ -1,48 +1,9 @@
 import os
-import datetime
+import time, datetime, tqdm
 import numpy as np
 from instamatic import config
-from instamatic.formats import write_hdf5, read_hdf5, read_tiff, write_mrc
-import tqdm
-from instamatic.tools import find_beam_center
-from instamatic.processing.stretch_correction import apply_stretch_correction
-from instamatic.processing.flatfield import apply_flatfield_correction
-import time
-
-
-def write_ED3D(path, fns, **kwargs):
-    rotation_angle = kwargs.get("rotation_angle")
-    wavelength = kwargs.get("wavelength")
-    pixelsize = kwargs.get("pixelsize")
-    osangle = kwargs.get("osangle")
-    startangle = kwargs.get("startangle")
-    endangle = kwargs.get("endangle")
-
-    ed3d = open(os.path.join(path, "1.ed3d"), 'w')
-
-    rotation_angle = np.degrees(rotation_angle)
-
-    if startangle > endangle:
-        sign = -1
-    else:
-        sign = 1
-
-    ed3d.write("WAVELENGTH    {}\n".format(wavelength))
-    ed3d.write("ROTATIONAXIS    {:.2f}\n".format(rotation_angle))
-    ed3d.write("CCDPIXELSIZE    {}\n".format(pixelsize))
-    ed3d.write("GONIOTILTSTEP    {}\n".format(osangle))
-    ed3d.write("BEAMTILTSTEP    0\n")
-    ed3d.write("BEAMTILTRANGE    0.000\n")
-    ed3d.write("STRETCHINGMP    0.0\n")
-    ed3d.write("STRETCHINGAZIMUTH    0.0\n")
-    ed3d.write("\n")
-    ed3d.write("FILELIST\n")
-    
-    for i, fn in enumerate(fns):
-        ed3d.write("FILE {fn}    {ang:.2f}    0    {ang:.2f}\n".format(fn=fn, ang=startangle+sign*osangle*i))
-    
-    ed3d.write("ENDFILELIST")
-    ed3d.close()
+from instamatic.formats import write_tiff
+from instamatic.processing import ImgConversion
 
 
 class Experiment(object):
@@ -51,58 +12,52 @@ class Experiment(object):
         self.ctrl = ctrl
         self.path = path
 
-        self.path_h5 = os.path.join(path, "hdf5")
-        self.path_mrc = os.path.join(path, "mrc")
+        self.mrc_path = path / "mrc"
+        self.tiff_path = path / "tiff"
+        self.tiff_image_path = path / "tiff_image"
 
-        if not os.path.exists(self.path_h5):
-            os.makedirs(self.path_h5)
-        if not os.path.exists(self.path_mrc):
-            os.makedirs(self.path_mrc)
+        self.tiff_path.mkdir(exist_ok=True, parents=True)
+        self.tiff_image_path.mkdir(exist_ok=True, parents=True)
+        self.mrc_path.mkdir(exist_ok=True, parents=True)
 
         self.logger = log
         self.camtype = ctrl.cam.name
 
-        if flatfield:
-            flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
-        self.offset = 0
+        self.offset = 1
         self.current_angle = None
-        self.data_files = []
+        self.buffer = []
         
-    def start_collection(self, expt, tilt_range, stepsize):
-        path = self.path_h5
-
-        if not os.path.exists(path):
-            os.makedirs(path)
-        
-        self.logger.info("Data recording started at: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        self.logger.info("Data saving path: {}".format(path))
-        self.logger.info("Data collection exposure time: {} s".format(expt))
-        self.logger.info("Data collection spot size: {}".format(self.ctrl.spotsize))
-        self.logger.info("Tilt range: {}".format(tilt_range))
-        self.logger.info("Data collection step size: {}".format(stepsize))
+    def start_collection(self, exposure_time, tilt_range, stepsize):
+        self.spotsize = self.ctrl.spotsize
+        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.logger.info("Data recording started at: {self.now}")
+        self.logger.info(f"Exposure time: {exposure_time} s, Tilt range: {tilt_range}, step size: {stepsize}")
 
         ctrl = self.ctrl
 
-        if not self.current_angle:
-            self.startangle = startangle = ctrl.stageposition.a
+        if stepsize < 0:
+            tilt_range = -abs(tilt_range)
         else:
-            startangle = self.current_angle + stepsize
+            tilt_range =  abs(tilt_range)
 
-        tilt_positions = np.arange(startangle, startangle+tilt_range, stepsize)
-        print(f"\nStartangle: {startangle:.3f}")
+        if self.current_angle is None:
+            self.start_angle = start_angle = ctrl.stageposition.a
+        else:
+            start_angle = self.current_angle + stepsize
+
+        tilt_positions = np.arange(start_angle, start_angle+tilt_range, stepsize)
+        print(f"\nStart_angle: {start_angle:.3f}")
         # print "Angles:", tilt_positions
-
-        data, headers = [], []
 
         image_mode = ctrl.mode
         if image_mode != "diff":
-            fn = os.path.join(path, "image_{}.h5".format(self.offset))
-            img, h = self.ctrl.getImage(expt)
-            write_hdf5(fn, img, header=h)
+            fn = self.tiff_image_path / f"image_{self.offset}.tiff"
+            img, h = self.ctrl.getImage(exposure_time / 5)
+            write_tiff(fn, img, header=h)
             ctrl.mode_diffraction()
-            time.sleep(0.5)  # add some delay to account for beam lag
+            time.sleep(1.0)  # add some delay to account for beam lag
 
         ctrl.cam.block()
         # for i, a in enumerate(tilt_positions):
@@ -111,81 +66,73 @@ class Experiment(object):
 
             j = i + self.offset
 
-            img, h = self.ctrl.getImage(expt)
+            img, h = self.ctrl.getImage(exposure_time)
 
-            fn = os.path.join(path, "{:05d}.h5".format(j))
-
-            write_hdf5(fn, img, header=h)
-
-            self.data_files.append(fn)
-            # print fn
+            self.buffer.append((j, img, h))
 
         self.offset += len(tilt_positions)
+        self.nframes = j
 
-        endangle = ctrl.stageposition.a
+        self.end_angle = end_angle = ctrl.stageposition.a
 
         ctrl.cam.unblock()
 
         self.camera_length = camera_length = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
+        self.exposure_time = exposure_time
 
-        with open(os.path.join(self.path, "summary.txt"), "a") as f:
-            print("Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions)), file=f)
-            print("Data collected from {:.2f} degree to {:.2f} degree in {} frames.".format(startangle, endangle, len(tilt_positions)))
+        with open(self.path / "summary.txt", "a") as f:
+            print(f"{self.now}: Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.", file=f)
+            print(f"Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.")
 
-        self.logger.info("Data collection camera length: {} mm".format(camera_length))
-        self.logger.info("Data collected from {:.2f} degree to {:.2f} degree.".format(startangle, endangle))
+        self.logger.info("Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).")
         
         self.current_angle = angle
-        print("Done, current angle = {:.2f} degrees".format(self.current_angle))
+        print(f"Done, current angle = {self.current_angle:.2f} degrees")
 
         if image_mode != "diff":
             ctrl.mode = image_mode
 
     def finalize(self):
-        path = self.path_mrc
-        fns = []
+        self.logger.info(f"Data saving path: {self.path}")
+        self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
+
+        with open(self.path / "summary.txt", "a") as f:
+            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
+            print(f"Exposure Time: {self.exposure_time:.3f} s", file=f)
+            print(f"Spot Size: {self.spotsize}", file=f)
+            print(f"Camera length: {self.camera_length} mm", file=f)
+            print(f"Rotation axis: {self.rotation_axis} radians", file=f)
+            print(f"Stepsize: {self.stepsize:.4f} degrees", file=f)
+            print(f"Number of frames: {self.nframes}", file=f)
 
         azimuth   = config.camera.stretch_azimuth
         amplitude = config.camera.stretch_amplitude
 
-        print("\nWriting MRC files")
-        for fn in tqdm.tqdm(self.data_files):
-            img, h = read_hdf5(fn)
+        img_conv = ImgConversion.ImgConversion(buffer=self.buffer, 
+                 camera_length=self.camera_length,
+                 osc_angle=self.stepsize,
+                 start_angle=self.start_angle,
+                 end_angle=self.end_angle,
+                 rotation_axis=self.rotation_axis,
+                 acquisition_time=self.exposure_time,
+                 flatfield=self.flatfield)
 
-            center = find_beam_center(img, sigma=10)
+        print("Writing data files...")
+        img_conv.threadpoolwriter(tiff_path=self.tiff_path,
+                                  mrc_path=self.mrc_path,
+                                  workers=8)
+        
+        print("Writing input files...")
+        img_conv.write_ed3d(self.mrc_path)
+        img_conv.write_pets_inp(self.path)
 
-            if self.flatfield is not None:
-                img = apply_flatfield_correction(img, self.flatfield)
+        img_conv.write_beam_centers(self.path)
 
-            new_img = apply_stretch_correction(img, center=center, azimuth=azimuth, amplitude=amplitude)
-
-            basename = os.path.basename(fn)
-            root, ext = os.path.splitext(basename)
-            fn_mrc = basename.replace(ext, ".mrc")
-            fns.append(fn_mrc)
-            
-            fp_mrc = os.path.join(path, fn_mrc)
-
-            # flip up/down because RED reads images from the bottom left corner
-            new_img = np.flipud(new_img.astype(np.int16))
-
-            write_mrc(fp_mrc, new_img)
-
-        rotation_angle = config.camera.camera_rotation_vs_stage_xy
-        pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length]
-
-        write_ED3D(path, fns, rotation_angle=rotation_angle,
-                            wavelength=0.0251,
-                            pixelsize=pixelsize,
-                            osangle=self.stepsize,
-                            startangle=self.startangle,
-                            endangle=self.current_angle)
-
+        print("Data Collection and Conversion Done.")
         print()
-        print("Writing ED3D file")
-        print("RED data collection finalized")
-        print()
+
+        return True
 
 
 def main():
@@ -210,12 +157,12 @@ def main():
     print(f"\nData directory: {expdir}")
     
     red_exp = Experiment(ctrl=ctrl, path=expdir, log=log, flatfield=None)
-    red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
 
     input("Press << Enter >> to start the experiment... ")
     
     while not input(f"\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] ") :
-        red_exp.start_collection(expt=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+        red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
 
     red_exp.finalize()
 
