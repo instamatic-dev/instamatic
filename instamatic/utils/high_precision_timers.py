@@ -11,7 +11,12 @@ class TIMECAPS(ctypes.Structure):
                 ('wPeriodMax', wintypes.UINT))
 
 
-def enable(milliseconds=1):
+def enable(milliseconds: int=1) -> None:
+    """Set up the system for increased timer precision, e.g. time.sleep().
+    Will be reset to the default of 10 ms once the parent process is killed.
+    This effect is system-wide.
+
+    https://docs.microsoft.com/en-us/windows/desktop/api/timeapi/"""
     global ENABLED
     if ENABLED:
         # print("High precision timers are already enabled")

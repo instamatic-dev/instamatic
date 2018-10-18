@@ -40,6 +40,7 @@ def run_dials_indexing(path):
 
 
 def handle(conn):
+    """Handle incoming connection."""
     ret = 0
 
     while True:

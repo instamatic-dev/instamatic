@@ -1,16 +1,15 @@
-import os,sys
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from instamatic.formats import *
-
 from skimage.feature import canny
 from skimage.measure import label, regionprops
-from scipy.ndimage import morphology
-from scipy.ndimage import interpolation
+from scipy.ndimage import morphology, interpolation
 import math
+
+from instamatic.formats import read_tiff
 
 
 def apply_transform_to_image(img, transform, center=None):
@@ -31,7 +30,7 @@ def apply_transform_to_image(img, transform, center=None):
     return img_tf
 
 
-def affine_transform_ellipse_to_circle(azimuth, amplitude, inverse=False):
+def affine_transform_ellipse_to_circle(azimuth: float, amplitude: float, inverse=False):
     """Usage: 
 
     e2c = circle_to_ellipse_affine_transform(azimuth, amplitude):
@@ -59,7 +58,7 @@ def affine_transform_ellipse_to_circle(azimuth, amplitude, inverse=False):
         return composite
 
 
-def affine_transform_circle_to_ellipse(azimuth, amplitude):
+def affine_transform_circle_to_ellipse(azimuth: float, amplitude: float):
     """Usage: 
 
     c2e = circle_to_ellipse_affine_transform(azimuth, amplitude):
@@ -70,7 +69,7 @@ def affine_transform_circle_to_ellipse(azimuth, amplitude):
     return affine_transform_ellipse_to_circle(azimuth, amplitude, inverse=True)
 
 
-def apply_stretch_correction(z, center=None, azimuth=0, amplitude=0):
+def apply_stretch_correction(z, center=None, azimuth: float=0, amplitude: float=0):
     """Apply stretch correction to image using calibrated values
 
     center: list of floats
@@ -91,6 +90,7 @@ def apply_stretch_correction(z, center=None, azimuth=0, amplitude=0):
 
 
 def make_title(prop):
+    """Make the title for the plot"""
     azimuth = np.degrees(prop.orientation)
     amplitude = -1 + prop.major_axis_length/prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
@@ -99,6 +99,7 @@ def make_title(prop):
 
 
 def get_sigma_interactive(img, sigma=20):
+    """Interactive function to get the sigma threshold value for the edge detection"""
     edges = canny(img, sigma=sigma, low_threshold=None, high_threshold=None)
     
     fig, ax = plt.subplots()
@@ -137,6 +138,7 @@ def get_sigma_interactive(img, sigma=20):
 
 
 def plot_props(edges, props):
+    """Plot the ring structures"""
     plt.imshow(edges)
     for prop in props:
         print("centroid = ({:.2f}, {:.2f})".format(*prop.centroid))
@@ -165,7 +167,7 @@ def plot_props(edges, props):
 
 
 def get_ring_props(edges):
-
+    """Get the rings with low eccentricity from the edge structures"""
     # label edges
     labeled = label(edges)
     

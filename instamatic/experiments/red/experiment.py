@@ -7,7 +7,18 @@ from instamatic.processing import ImgConversion
 
 
 class Experiment(object):
-    def __init__(self, ctrl, path=None, log=None, flatfield='flatfield.tiff'):
+    """Initialize stepwise rotation electron diffraction experiment.
+
+    ctrl:
+        Instance of instamatic.TEMController.TEMController
+    path:
+        `str` or `pathlib.Path` object giving the path to save data at
+    log:
+        Instance of `logging.Logger`
+    flatfield:
+        Path to flatfield correction image
+    """
+    def __init__(self, ctrl, path: str=None, log=None, flatfield='flatfield.tiff'):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path
@@ -29,7 +40,20 @@ class Experiment(object):
         self.current_angle = None
         self.buffer = []
         
-    def start_collection(self, exposure_time, tilt_range, stepsize):
+    def start_collection(self, exposure_time: float, tilt_range: float, stepsize: float):
+        """Start or continue data collection for `tilt_range` degrees with steps given by `stepsize`,
+        To finalize data collection and write data files, run `self.finalize`.
+
+        The number of images collected is defined by `tilt_range / stepsize`.
+
+        exposure_time:
+            Exposure time for each image in seconds
+        tilt_range:
+            Tilt range starting from the current angle in degrees. Must be positive.
+        stepsize:
+            Step size for the angle in degrees, controls the direction and can be positive or negative
+
+        """
         self.spotsize = self.ctrl.spotsize
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info("Data recording started at: {self.now}")
@@ -94,6 +118,9 @@ class Experiment(object):
             ctrl.mode = image_mode
 
     def finalize(self):
+        """Finalize data collection after `self.start_collection` has been run.
+        Write data in `self.buffer` to path given by `self.path`.
+        """
         self.logger.info(f"Data saving path: {self.path}")
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
@@ -105,9 +132,6 @@ class Experiment(object):
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Stepsize: {self.stepsize:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes}", file=f)
-
-        azimuth   = config.camera.stretch_azimuth
-        amplitude = config.camera.stretch_amplitude
 
         img_conv = ImgConversion.ImgConversion(buffer=self.buffer, 
                  camera_length=self.camera_length,

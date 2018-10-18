@@ -19,23 +19,50 @@ def print_and_log(msg, logger=None):
 
 
 class Experiment(object):
-    """mode: str, 'simulate', 'footfree', None (default)"""
+    """Initialize continuous rotation electron diffraction experiment.
+
+    ctrl:
+        Instance of instamatic.TEMController.TEMController
+    path:
+        `str` or `pathlib.Path` object giving the path to save data at
+    log:
+        Instance of `logging.Logger`
+    flatfield:
+        Path to flatfield correction image
+    unblank_beam:
+        Whether beam should be automatically unblanked before experiment
+    mode:
+        Which mode the experiment is running in, choices: 'simulate', 'footfree', None (default)
+    footfree_rotate_to:
+        In 'footfree' mode, rotate to this angle
+    enable_image_interval:
+        Gives the interval with which to defocs the pattern slightly for tracking purposes,
+        default is set to 99999 so it never occurs.
+    diff_defocus:
+        Image interval only - Defocus value to apply when defocused images are used for tracking
+    exposure_time_image:
+        Image interval only - Exposure time for defocused images
+    write_tiff, write_xds, write_dials, write_red:
+        Specify which data types/input files should be written
+    stop_event:
+        Instance of `threading.Event()` that signals the experiment to be terminated.
+    """
     def __init__(self, ctrl, 
-        path=None, 
+        path: str=None, 
         log=None, 
-        flatfield=None,
-        exposure_time=0.5,
-        unblank_beam=False,
-        mode=None,
-        footfree_rotate_to=60.0,
-        enable_image_interval=False,
-        image_interval=99999,
-        diff_defocus=0,
-        exposure_time_image=0.01,
-        write_tiff=True,
-        write_xds=True,
-        write_dials=True,
-        write_red=True,
+        flatfield: str=None,
+        exposure_time: float=0.5,
+        unblank_beam: bool=False,
+        mode: str=None,
+        footfree_rotate_to: float=60.0,
+        enable_image_interval: bool=False,
+        image_interval: int=99999,
+        diff_defocus: int=0,
+        exposure_time_image: float=0.01,
+        write_tiff: bool=True,
+        write_xds: bool=True,
+        write_dials: bool=True,
+        write_red: bool=True,
         stop_event=None,
         ):
         super(Experiment,self).__init__()
@@ -74,12 +101,14 @@ class Experiment(object):
         self.stage_positions = []
 
     def log_start_status(self):
+        """Log the starting parameters"""
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info(f"Data recording started at: {self.now}")
         self.logger.info(f"Data collection exposure time: {self.exposure} s")
         self.logger.info(f"Data saving path: {self.path}")
 
     def log_end_status(self):
+        """Log the experimental values, write file `cRED_log.txt`"""
         start_xy = np.array(self.start_position[0:2])
         end_xy = np.array(self.end_position[0:2])
 
@@ -114,12 +143,20 @@ class Experiment(object):
                 print(f"Number of images: {self.nframes_image}", file=f)
 
     def setup_paths(self):
+        """Set up the paths for saving the data to"""
         print(f"\nOutput directory: {self.path}")
         self.tiff_path = self.path / "tiff" if self.write_tiff else None
         self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
         self.mrc_path  = self.path / "RED"  if self.write_red else None
 
-    def start_rotation(self):
+    def start_rotation(self) -> float:
+        """Controls the starting of the rotation of the experiment
+        
+        In the default mode, wait for rotation to start (i.e. controlled via the pedals)
+        In `footfree` mode, initialize rotation from current angle to target angle.
+        In `simulate` mode, simulate the start condition.
+
+        Returns the starting value for the rotation."""
         self.start_position = self.ctrl.stageposition.get()
         self.stage_positions.append((0, self.start_position))
         a = self.start_position[3]
@@ -152,7 +189,8 @@ class Experiment(object):
 
         return start_angle
 
-    def relax_beam(self, n_cycles=5):
+    def relax_beam(self, n_cycles: int=5):
+        """Relax the beam prior to the experiment by toggling between the defocused/focused states."""
         print(f"Relaxing beam ({n_cycles} cycles)", end='')
 
         for i in range(n_cycles):
@@ -165,7 +203,10 @@ class Experiment(object):
 
         print("Done.")
 
-    def start_collection(self):
+    def start_collection(self) -> bool:
+        """Main experimental function,
+        returns True if experiment runs normally, False if it is interrupted for whatever reason.
+        """
         self.setup_paths()
         self.log_start_status()
         
@@ -278,7 +319,13 @@ class Experiment(object):
         print("Data Collection and Conversion Done.")
         return True
 
-    def write_data(self, buffer):
+    def write_data(self, buffer: list):
+        """Write diffraction data in the buffer.
+
+        The image buffer is passed as a list of tuples, where each tuple contains the
+        index (int), image data (2D numpy array), metadata/header (dict).
+        
+        The buffer index must start at 1."""
         img_conv = ImgConversion.ImgConversion(buffer=buffer, 
                  camera_length=self.camera_length,
                  osc_angle=self.osc_angle,
@@ -306,7 +353,10 @@ class Experiment(object):
 
         img_conv.write_beam_centers(self.path)
 
-    def write_image_data(self, buffer):
+    def write_image_data(self, buffer: list):
+        """Write image data in the buffer.
+        The image buffer is passed as a list of tuples, where each tuple contains the
+        index (int), image data (2D numpy array), metadata/header (dict)."""
         if buffer:
             drc = self.path / "tiff_image"
             drc.mkdir(exist_ok=True)
