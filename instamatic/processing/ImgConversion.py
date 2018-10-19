@@ -306,6 +306,7 @@ class ImgConversion(object):
 
         i = min(observed_range)
         empty = np.zeros_like(self.data[i])
+        # copy header from first frame
         h = self.headers[i].copy()
         h["ImageGetTime"] = time.time()
 

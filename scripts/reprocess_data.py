@@ -92,4 +92,4 @@ if mrc_path:
 
 if smv_path:
     img_conv.write_xds_inp(smv_path)
-    # img_conv.to_dials(smv_path, interval=image_interval_enabled)
+    # img_conv.to_dials(smv_path)

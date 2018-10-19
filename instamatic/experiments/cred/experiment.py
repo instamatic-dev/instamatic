@@ -347,7 +347,7 @@ class Experiment(object):
         
         print("Writing input files...")
         if self.write_dials:
-            img_conv.to_dials(self.smv_path, interval=self.image_interval_enabled)
+            img_conv.to_dials(self.smv_path)
         if self.write_red:
             img_conv.write_ed3d(self.mrc_path)
         if self.write_xds or self.write_dials:
