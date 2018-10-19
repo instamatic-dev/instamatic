@@ -576,8 +576,12 @@ class TEMController(object):
 
         if self.autoblank and self.beamblank:
             self.beamblank = False
+        
+        h["ImageGetTimeStart"] = time.perf_counter()
 
         arr = self.cam.getImage(exposure=exposure, binsize=binsize)
+        
+        h["ImageGetTimeEnd"] = time.perf_counter()
         
         if self.autoblank:
             self.beamblank = True

@@ -32,7 +32,7 @@ class VideoStreamFrame(Frame):
 
         self.resize_image = False
 
-        self.last = time.clock()
+        self.last = time.perf_counter()
         self.nframes = 1
         self.update_frequency = 0.25
         self.last_interval = self.frametime
@@ -244,7 +244,7 @@ class VideoStreamFrame(Frame):
         self.parent.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
-        self.current = time.clock()
+        self.current = time.perf_counter()
         delta = self.current - self.last
 
         if delta > self.update_frequency:

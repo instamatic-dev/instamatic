@@ -124,6 +124,8 @@ class Experiment(object):
 
         with open(self.path / "cRED_log.txt", "w") as f:
             print(f"Data Collection Time: {self.now}", file=f)
+            print(f"Time Period Start: {self.t_start}", file=f)
+            print(f"Time Period End: {self.t_end}", file=f)
             print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
             print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
@@ -228,11 +230,11 @@ class Experiment(object):
 
         i = 1
 
-        t0 = time.clock()
+        t0 = time.perf_counter()
 
         while not self.stopEvent.is_set():
             if i % self.image_interval == 0:
-                t_start = time.clock()
+                t_start = time.perf_counter()
                 acquisition_time = (t_start - t0) / (i-1)
 
                 self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
@@ -244,12 +246,12 @@ class Experiment(object):
                 next_interval = t_start + acquisition_time
                 # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
 
-                while time.clock() > next_interval:
+                while time.perf_counter() > next_interval:
                     next_interval += acquisition_time
                     i += 1
                     # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
 
-                diff = next_interval - time.clock() # seconds
+                diff = next_interval - time.perf_counter() # seconds
 
                 if self.track_stage_position and diff > 0.1:
                     self.stage_positions.append((i, self.ctrl.stageposition.get()))
@@ -263,7 +265,7 @@ class Experiment(object):
 
             i += 1
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
 
         if self.mode == "footfree":
             self.ctrl.stageposition.stop()
@@ -299,6 +301,8 @@ class Experiment(object):
         self.spotsize = self.ctrl.spotsize
         self.nframes = i-1 # len(buffer) can lie in case of frame skipping
         self.osc_angle = abs(self.end_angle - self.start_angle) / self.nframes
+        self.t_start = t0
+        self.t_end = t1
         self.total_time = t1 - t0
         self.acquisition_time = self.total_time / self.nframes
         self.total_angle = abs(self.end_angle - self.start_angle)

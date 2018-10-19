@@ -269,7 +269,9 @@ class CameraTPX(object):
         self.openShutter()
 
         # sleep here to avoid burning cycles
-        time.sleep(exposure)
+        # only sleep if exposure is longer than Windows timer resolution, i.e. 1 ms
+        if exposure > 0.001:
+            time.sleep(exposure - 0.001)
 
         while not self.timerExpired():
             pass
@@ -359,10 +361,10 @@ if __name__ == '__main__':
 
         arr = cam.acquireData(t)
         print("[ py hardware timer] -> shape: {}".format(arr.shape))
-        t0 = time.clock()
+        t0 = time.perf_counter()
         for x in range(n):
             cam.acquireData(t)
-        dt = time.clock() - t0
+        dt = time.perf_counter() - t0
         print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
     
     embed(banner1='')
