@@ -251,7 +251,7 @@ def acquire_data_cRED(controller, **kwargs):
     
     controller.log.info("Finish cRED experiment")
 
-    if controller.use_dials_server:
+    if controller.use_indexing_server:
         controller.q.put(("autoindex", {"task": "run", "path": cexp.smv_path} ))
         controller.triggerEvent.set()
 

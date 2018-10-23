@@ -9,8 +9,9 @@ from collections import namedtuple
 
 scripts_drc = config.scripts_drc
 
-HOST = config.cfg.dials_server_host
-PORT = config.cfg.dials_server_port
+SERVER_EXE = config.cfg.indexing_server_exe
+HOST = config.cfg.indexing_server_host
+PORT = config.cfg.indexing_server_port
 BUFSIZE = 1024
 
 
@@ -201,16 +202,16 @@ def autoindex(controller, **kwargs):
     if task == "start_server":
         import subprocess as sp
         # cmd = "start /wait cmd /c instamatic.dialsserver"
-        cmd = "start instamatic.dialsserver"
-        controller.dials_server_process = sp.call(cmd, shell=True)
-        print(f"Dials server started on {HOST}:{PORT}")
-        controller.use_dials_server = True
-        print("Dials server registered")
+        cmd = f"start {SERVER_EXE}"
+        controller.indexing_server_process = sp.call(cmd, shell=True)
+        print(f"Indexing server `{SERVER_EXE}` started on {HOST}:{PORT}")
+        controller.use_indexing_server = True
+        print("Indexing server registered")
         return
 
     elif task == "register_server":
-        controller.use_dials_server = True
-        print("Dials server registered")
+        controller.use_indexing_server = True
+        print("Indexing server registered")
         return
 
     elif task == "run":
@@ -227,7 +228,7 @@ def autoindex(controller, **kwargs):
         print(data)
 
     if task == "kill":
-        del controller.dials_server_process
+        del controller.indexing_server_process
 
 
 def collect_flatfield(controller, **kwargs):

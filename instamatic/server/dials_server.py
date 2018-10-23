@@ -1,5 +1,4 @@
-import time
-import os, sys
+import sys
 import subprocess as sp
 from socket import *
 import datetime
@@ -17,8 +16,8 @@ except:
 
 CWD = EXE.parent
 
-HOST = config.cfg.dials_server_host
-PORT = config.cfg.dials_server_port
+HOST = config.cfg.indexing_server_host
+PORT = config.cfg.indexing_server_port
 BUFF = 1024
 
 
@@ -36,7 +35,7 @@ def run_dials_indexing(path):
     # parse_dials_index_log("dials.index.log")
 
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    print(f"{now} | Dials indexing has finished")
+    print(f"{now} | DIALS indexing has finished")
 
 
 def handle(conn):
@@ -73,7 +72,7 @@ def handle(conn):
 
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_DialsServer_{date}.log"
+    logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=logfile, 
                         level=logging.DEBUG)
@@ -84,9 +83,9 @@ def main():
     s.bind((HOST,PORT))
     s.listen(5)
 
-    log.info(f"Dials server listening on {HOST}:{PORT}")
+    log.info(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
     log.info(f"Running command: {EXE}")
-    print(f"Server listening on {HOST}:{PORT}")
+    print(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
     print(f"Running command: {EXE}")
 
     with s:
