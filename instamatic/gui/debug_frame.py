@@ -226,6 +226,8 @@ def autoindex(controller, **kwargs):
         s.send(payload)
         data = s.recv(BUFSIZE).decode()
         print(data)
+        data = s.recv(BUFSIZE).decode()
+        print(data)
 
     if task == "kill":
         del controller.indexing_server_process
