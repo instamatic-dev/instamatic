@@ -4,6 +4,9 @@
 
 Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
 
+TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
+Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
+
 ## Usage
 
 Start the gui by typing `instamatic` in the command line.
@@ -281,6 +284,27 @@ and to recall them:
 ```python
 ctrl.restore(name="stash")
 ```
+
+### Example experiment
+
+An example rotation experiment could look something like this:
+
+```python
+from instamatic.formats import write_tiff
+from instamatic import TEMController
+
+ctrl = TEMController.initialize()
+
+exposure_time = 1.0
+angles = range(-40, 40, 1)
+for i, angle in enumerate(angles):
+    ctrl.stageposition.a = angle
+    img, h = ctrl.getImage(exposure_time)
+    fn = "image_{:04d}.tiff".format(i)
+    print("Angle = {}".format(angle))
+    write_tiff(fn, img, header=h)
+```
+
 ### Config/setup
 
 In IPython:

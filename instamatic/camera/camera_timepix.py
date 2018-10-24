@@ -1,6 +1,5 @@
 import os, sys
 import ctypes
-from IPython import embed
 from ctypes import *
 from pathlib import Path
 
@@ -10,10 +9,14 @@ import time
 import traceback
 import atexit
 
+from instamatic import config
+
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
-SIMULATE = False
+# SoPhy > File > Medipix/Timepix control > Save parametrized settings
+# Save updated config for timepix camera
+CONFIG_PYTIMEPIX = "tpx"
 
 
 class LockingError(RuntimeError):
@@ -47,11 +50,11 @@ def correctCross(raw, factor=2.15):
     raw[:,258:261] = raw[:,260:261] / factor
 
 
-class EMCameraObj(object):
+class CameraTPX(object):
     def __init__(self):
         libdrc = Path(__file__).parent
 
-        self.lockfile = libdrc / "timepix_lockfile"
+        self.lockfile = libdrc / "timepix.lockfile"
         self.acquire_lock()
         
         libpath = libdrc / "EMCameraObj.dll"
@@ -70,7 +73,8 @@ class EMCameraObj(object):
         atexit.register(self.disconnect)
         self.is_connected = None
 
-        self.correction_ratio = 3.0
+        self.name = self.getName()
+        self.load_defaults()
 
     def acquire_lock(self):
         try:
@@ -265,7 +269,9 @@ class EMCameraObj(object):
         self.openShutter()
 
         # sleep here to avoid burning cycles
-        time.sleep(exposure)
+        # only sleep if exposure is longer than Windows timer resolution, i.e. 1 ms
+        if exposure > 0.001:
+            time.sleep(exposure - 0.001)
 
         while not self.timerExpired():
             pass
@@ -285,26 +291,18 @@ class EMCameraObj(object):
         return self.acquireData(exposure=exposure)
 
     def getName(self):
-        return "PyTimepix"
-
-    def getCameraCount(self):
-        return 0
+        return "timepix"
 
     def getDimensions(self):
-        return 516, 516
+        return self.dimensions
 
     def load_defaults(self):
-        from instamatic import config
-        self.defaults = config.camera
+        if self.name != config.cfg.camera:
+            config.load_cfg(camera_name=self.name)
 
-        self.default_exposure = self.defaults.default_exposure
-        self.default_binsize = self.defaults.default_binsize
-        self.possible_binsizes = self.defaults.possible_binsizes
-        self.dimensions = self.defaults.dimensions
-        self.xmax, self.ymax = self.dimensions
-        self.correction_ratio = self.defaults.correction_ratio
+        self.__dict__.update(config.camera.d)
 
-        self.name = self.getName()
+        self.streamable = True
 
 
 def initialize(config):
@@ -325,7 +323,7 @@ def initialize(config):
             if inp[0] == "PIXELBPC":
                 pixelsCfg = base / inp[1]
 
-    cam = EMCameraObj()
+    cam = CameraTPX()
     isConnected = cam.connect(hwId)
     
     cam.init()
@@ -334,14 +332,14 @@ def initialize(config):
     cam.readPixelsCfg(pixelsCfg)
     cam.readRealDacs(realDacs)
 
-    cam.load_defaults()
-
     print(f"Camera {cam.getName()} initialized (resolution: {cam.getDimensions()})")
 
     return cam
 
 
 if __name__ == '__main__':
+    from IPython import embed
+
     """To restart the camera in case SoPhy hangs,
         in terminal on linux pc:
             ./stopcooling
@@ -363,10 +361,10 @@ if __name__ == '__main__':
 
         arr = cam.acquireData(t)
         print("[ py hardware timer] -> shape: {}".format(arr.shape))
-        t0 = time.clock()
+        t0 = time.perf_counter()
         for x in range(n):
             cam.acquireData(t)
-        dt = time.clock() - t0
+        dt = time.perf_counter() - t0
         print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
     
     embed(banner1='')

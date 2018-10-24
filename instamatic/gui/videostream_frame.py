@@ -25,19 +25,17 @@ class VideoStreamFrame(Frame):
 
         self.frametime = 0.05
         self.brightness = 1.0
-        self.display_range = self.stream.display_range_default = self.stream.defaults.dynamic_range
+        self.display_range = self.display_range_default = self.stream.cam.dynamic_range
         # Maximum number from image readout
 
         self.auto_contrast = True
 
         self.resize_image = False
 
-        self.last = time.clock()
+        self.last = time.perf_counter()
         self.nframes = 1
         self.update_frequency = 0.25
         self.last_interval = self.frametime
-
-        self.display_range_default = self.stream.display_range_default
 
         self._atexit_funcs = []
 
@@ -176,6 +174,7 @@ class VideoStreamFrame(Frame):
             pass
 
     def saveImage(self):
+        """Dump the current frame to a file"""
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
  
         if self.app:
@@ -192,6 +191,9 @@ class VideoStreamFrame(Frame):
             except:
                 frame = self.frame
                 h = {}
+        else:
+            frame = self.frame
+            h = {}
 
         write_tiff(outfile, frame, header=h)
         print(" >> Wrote file:", outfile)
@@ -242,7 +244,7 @@ class VideoStreamFrame(Frame):
         self.parent.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
-        self.current = time.clock()
+        self.current = time.perf_counter()
         delta = self.current - self.last
 
         if delta > self.update_frequency:
@@ -265,10 +267,13 @@ class VideoStreamFrame(Frame):
 
 
 def start_gui(stream):
+    """Pass a camera stream object, and open a simple live-view window
+    This is meant to be used in an interactive python shell"""
     root = Tk()
     vsframe = VideoStreamFrame(root, stream=stream)
     vsframe.pack(side="top", fill="both", expand=True)
     root.mainloop()
+    root.destroy()
 
 
 def ipy_embed(*args, **kwargs):

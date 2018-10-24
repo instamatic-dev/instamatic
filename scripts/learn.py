@@ -25,7 +25,7 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
         img, h = read_hdf5(fn)
         coords = h["exp_crystal_coords"]
         
-        if len(coords) <= 1:
+        if len(coords) == 0:
             continue
 
         # apply calibration
@@ -39,8 +39,11 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
         n_isolated = 0
         
         for i, (coord, calibrated_coord) in enumerate(zip(coords, calibrated_coords)):
-            min_dist = closest_distance(calibrated_coord, calibrated_coords)
-            
+            try:
+                min_dist = closest_distance(calibrated_coord, calibrated_coords)
+            except IndexError:
+                min_dist = 9999
+
             x,y = coord
             
             if not (boundary_px[0] < x < shape[0] - boundary_px[0]):
@@ -56,6 +59,7 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
                 objects.append((x, y, "blue"))
             
         if plot and n_isolated:
+            import matplotlib.pyplot as plt
             fig, ax = plt.subplots()
             ax.imshow(img)
             

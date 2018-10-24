@@ -1,4 +1,3 @@
-import sys
 import subprocess as sp
 from socket import *
 import datetime
@@ -8,47 +7,42 @@ import logging
 import threading
 from pathlib import Path
 
-import pickle
-
-
-try:
-    EXE = Path(sys.argv[1])
-except:
-    EXE = Path(config.cfg.dials_script)
-
-CWD = EXE.parent
-
 HOST = config.cfg.indexing_server_host
 PORT = config.cfg.indexing_server_port
 BUFF = 1024
 
-
-def parse_dials_index_log(fn="dials.index.log"):
-    with open(fn, "r") as f:
-        print("Unit cell = ...")
+rlock = threading.RLock()
 
 
-def run_dials_indexing(data):
-    cmd = [str(EXE), str(data["path"])]
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    fn = config.logs_drc / f"Dials_indexing_{date}.log"
+def parse_xds(path):
+    """Parse the XDS output file `CORRECT.LP` and print a summary"""
+    from instamatic.utils.xds_parser import xds_parser
 
-    p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
-    for line in p.stdout:
-        if b'Unit cell:' in line:
-            print(line.decode('utf-8'))
-            with open(fn, "a") as f:
-                f.write("Data Path: {}\n".format(data["path"]))
-                f.write("{}\n".format(line.decode('utf-8')))
-                f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
-                f.write("Number of frames: {}\n".format(data["nframes"]))
-                f.write("Oscillation angle: {} deg\n".format(data["osc"]))
-                print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
+    fn = Path(path) / "CORRECT.LP"
     
+    # rlock prevents messages getting mangled with 
+    # simultaneous print statements from different threads
+    with rlock:
+        if not fn.exists():
+            print(f"FAIL: Cannot find file `{fn.name}`, was the indexing successful??")
+        else:
+            p = xds_parser(fn)
+            print()
+            p.print_cell()
+            print()
+            p.print_info()
+            print()
+
+
+def run_xds_indexing(path):
+    """Call XDS on the given `path`. Uses WSL (Windows 10 only)."""
+    p = sp.Popen("bash -c xds 2>&1 >/dev/null", cwd=path)
     p.wait()
 
+    parse_xds(path)
+
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    print(f"{now} | DIALS indexing has finished")
+    print(f"{now} | XDS indexing has finished")
 
 
 def handle(conn):
@@ -56,9 +50,7 @@ def handle(conn):
     ret = 0
 
     while True:
-        data = conn.recv(BUFF)
-        data = pickle.loads(data)
-
+        data = conn.recv(BUFF).decode()
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
         if not data:
@@ -76,7 +68,7 @@ def handle(conn):
 
         else:
             conn.send(b"OK")
-            run_dials_indexing(data)
+            run_xds_indexing(data)
 
     conn.send(b"Connection closed")
     conn.close()
@@ -93,15 +85,13 @@ def main():
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
-    
+
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST,PORT))
     s.listen(5)
 
-    log.info(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
-    log.info(f"Running command: {EXE}")
-    print(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
-    print(f"Running command: {EXE}")
+    log.info(f"Indexing server (XDS) listening on {HOST}:{PORT}")
+    print(f"Indexing server (XDS) listening on {HOST}:{PORT}")
 
     with s:
         while True:

@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 import os
 
-# www.pythonhosted.org/setuptools/setuptools.html
+packages = find_packages(exclude=["scripts"])
 
 exec(open('instamatic/version.py').read())  # grab __version__, __author__, etc.
 
@@ -37,18 +37,7 @@ setup(
         'Topic :: Software Development :: Libraries'
     ],
 
-    packages=["instamatic", 
-              "instamatic.calibrate",
-              "instamatic.camera",
-              "instamatic.config",
-              "instamatic.experiments",
-              "instamatic.formats",
-              "instamatic.gui",
-              "instamatic.processing",
-              "instamatic.neural_network",
-              "instamatic.server",
-              "instamatic.TEMController",
-              "instamatic.utils"],
+    packages=packages,
 
     install_requires=['comtypes', 
                       'lmfit', 
@@ -63,9 +52,7 @@ setup(
                       'h5py', 
                       'IPython'],
 
-    package_data={
-        "": ["LICENCE",  "readme.md", "setup.py"],
-    },
+    include_package_data=True,
 
     entry_points={
         'console_scripts': [
@@ -93,6 +80,7 @@ setup(
             'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
             'instamatic.temserver                     = instamatic.server.tem_server:main',
             'instamatic.dialsserver                   = instamatic.server.dials_server:main',
+            'instamatic.xdsserver                     = instamatic.server.xds_server:main',
         ]
     }
 )

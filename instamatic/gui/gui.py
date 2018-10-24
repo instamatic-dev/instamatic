@@ -30,7 +30,7 @@ class DataCollectionController(threading.Thread):
         self.app = app
         self.daemon = True
 
-        self.use_dials_server = False
+        self.use_indexing_server = False
 
         self.log = log
 

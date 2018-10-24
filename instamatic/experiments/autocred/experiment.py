@@ -443,7 +443,7 @@ class Experiment(object):
 
         self.ctrl.cam.block()
 
-        t0 = time.clock()
+        t0 = time.perf_counter()
 
         self.stopEvent.clear()
 
@@ -464,7 +464,7 @@ class Experiment(object):
                         self.image_interval = self.nom_ii
 
                 if i % self.image_interval == 0: ## aim to make this more dynamically adapted...
-                    t_start = time.clock()
+                    t_start = time.perf_counter()
                     acquisition_time = (t_start - t0) / (i-1)
                     
                     """Guessing the next particle position by simply apply the same beamshift change as previous"""
@@ -556,14 +556,13 @@ class Experiment(object):
 
                     next_interval = t_start + acquisition_time
                     # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-    
-                    t = time.clock()
-    
-                    while time.clock() > next_interval:
+                    t = time.perf_counter()
+
+                    while time.perf_counter() > next_interval:
                         next_interval += acquisition_time
                         i += 1
 
-                    diff = next_interval - time.clock()
+                    diff = next_interval - time.perf_counter()
                     time.sleep(diff)
     
                 else:
@@ -588,7 +587,7 @@ class Experiment(object):
                 print (e)
                 self.stopEvent.set()
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
 
         self.ctrl.cam.unblock()
         if self.mode > 1:

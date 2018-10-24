@@ -44,7 +44,12 @@ TEST_RESOLUTION_RANGE=10. 1.0 !for calculation of Rmeas when analysing the inten
 NX={NX}     NY={NY}             !Number of pixels
 QX={QX:.4f}  QY={QY:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
-TRUSTED_REGION= 0.0  1.4142   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
+TRUSTED_REGION= 0.0  1.05   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
+
+DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections
+X-GEO_CORR= XCORR.cbf  ! X stretch correction
+Y-GEO_CORR= YCORR.cbf  ! Y stretch correction
+
 SENSOR_THICKNESS=0.30
 AIR=0.0
 
@@ -91,13 +96,13 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 ! ********** Background and peak pixels **********
 
-!NBX=7     NBY=7                      !3 is default
-BACKGROUND_PIXEL= 20                  !6.0 is default
-STRONG_PIXEL= 2.5                     !3.0 is default
-!MAXIMUM_NUMBER_OF_STRONG_PIXELS=     !1500000 is default
-!MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT=  !6 is default
-!SPOT_MAXIMUM-CENTROID=               !2.0 is default
-SIGNAL_PIXEL= 6                       !3.0 is default
+!NBX=7  NBY=7            ! 3 is default, used to estimate the expected variation in a data image, see GAIN.cbf
+!BACKGROUND_PIXEL= 6.0   ! Background pixel belongs to background if variation less than given esds
+!STRONG_PIXEL= 3.0       ! Strong pixel must exceed background by more than number of given esds
+!MAXIMUM_NUMBER_OF_STRONG_PIXELS= 1500000 ! Approximate upper limit for the total number of 'strong' pixels
+!MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT= 6    ! Used to suppress spurious, isolated 'strong' pixels from entering the spot list
+!SPOT_MAXIMUM-CENTROID= 3.0               ! Maximum deviation of spot maximum from spot centroid
+!SIGNAL_PIXEL= 3.0                        ! Signal pixels must exceed background by more than given esds
 
 ! ********** Refinement **********
 

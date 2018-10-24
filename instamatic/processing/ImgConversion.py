@@ -1,10 +1,9 @@
-import os
 import numpy as np
 from datetime import datetime
 import time
 from instamatic.formats import read_tiff, write_tiff, write_mrc, write_adsc
 from instamatic.processing.flatfield import apply_flatfield_correction
-from instamatic.processing.stretch_correction import apply_stretch_correction
+from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from pathlib import Path
@@ -13,12 +12,14 @@ import math
 from scipy.signal import convolve2d
 from scipy import ndimage
 import collections
-
 import logging
 logger = logging.getLogger(__name__)
 
 
 def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
+    """Convert rotation axis angle to XYZ vector compatible with 'xds', or 'dials'
+    Set invert to 'True' for anti-clockwise rotation
+    """
     if invert:
         rotation_axis += np.pi
 
@@ -35,6 +36,12 @@ def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
 
 
 def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
+    """Export variables for DIALS to account for missing frames
+    writes dials_variables.sh (bash) and dials_variables.bat (cmd)
+
+    `sequence` is a tuple of sequence numbers of the data frames
+    `missing `is a tuple of sequence numbers of the missing frames
+    """
     import io
 
     scanranges = find_subranges(sequence)
@@ -90,21 +97,27 @@ def get_calibrated_rotation_speed(val):
 
 
 class ImgConversion(object):
-    
-    'This class is for post cRED data collection image conversion and necessary files generation for REDp and XDS processing, as well as DIALS processing'
+    """This class is for post RED/cRED data collection image conversion.
+    Files can be generated for REDp, DIALS, XDS, and PETS.
 
-    def __init__(self, 
-                 buffer,                     # image buffer, list of (index [int], image data [2D numpy array], header [dict])
-                 camera_length,              # virtual camera length read from the microscope
-                 osc_angle,                  # degrees, oscillation angle of the rotation
-                 start_angle,                # degrees, start angle of the rotation
-                 end_angle,                  # degrees, end angle of the rotation
-                 rotation_axis,              # radians, specifies the position of the rotation axis
-                 acquisition_time,           # seconds, acquisition time (exposure time + overhead)
-                 flatfield='flatfield.tiff', 
+    The image buffer is passed as a list of tuples, where each tuple contains the
+    index (int), image data (2D numpy array), metadata/header (dict).
+    The buffer index must start at 1.
+    """
+
+    def __init__(self,
+                 buffer: list,                   # image buffer, list of (index [int], image data [2D numpy array], header [dict])
+                 camera_length: float,           # virtual camera length read from the microscope
+                 osc_angle: float,               # degrees, oscillation angle of the rotation
+                 start_angle: float,             # degrees, start angle of the rotation
+                 end_angle: float,               # degrees, end angle of the rotation
+                 rotation_axis: float,           # radians, specifies the position of the rotation axis
+                 acquisition_time: float,        # seconds, acquisition time (exposure time + overhead)
+                 flatfield: str='flatfield.tiff', 
                  centerDP=False 
                  ):
-        flatfield, h = read_tiff(flatfield)
+        if flatfield is not None:
+            flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
 
         self.headers = {}
@@ -157,8 +170,6 @@ class ImgConversion(object):
         self.acquisition_time = acquisition_time
         self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
-        self.do_stretch_correction = True
-
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
     def estimate_noise(self, I):
@@ -207,7 +218,10 @@ class ImgConversion(object):
         print("Images are now centered according to the first image.")
         return centered_dp, pbc1
     
-    def get_beam_centers(self):
+    def get_beam_centers(self) -> (float, float):
+        """Obtain beam centers from the diffractoin data
+        Returns a tuple with the median beam center and its standard deviation
+        """
         centers = []
         for i, h in self.headers.items():
             if self.do_centerDP:
@@ -221,21 +235,11 @@ class ImgConversion(object):
         beam_centers = np.array(centers)
 
         # avg_center = np.mean(centers, axis=0)
-        avg_center = np.median(beam_centers, axis=0)
+        median_center = np.median(beam_centers, axis=0)
         std_center = np.std(beam_centers, axis=0)
 
-        return avg_center, std_center
+        return median_center, std_center
 
-    def apply_stretch_correction(self, image, center):
-        center = np.copy(center)
-        
-        azimuth   = self.stretch_azimuth
-        amplitude = self.stretch_amplitude
-        
-        newImage = apply_stretch_correction(image, center=center, azimuth=azimuth, amplitude=amplitude)
-    
-        return newImage
-    
     def write_geometric_correction_files(self, path) -> None:
         """Make geometric correction images for XDS
         Writes files XCORR.cbf and YCORR.cbf to `path`
@@ -244,6 +248,7 @@ class ImgConversion(object):
             DETECTOR= PILATUS     ! fake being a PILATUS detector
             X-GEO_CORR= XCORR.cbf
             Y-GEO_CORR= YCORR.cbf
+
         Reads the stretch amplitude/azimuth from the config file
         """
         from instamatic.formats import write_cbf
@@ -269,13 +274,14 @@ class ImgConversion(object):
 
         # reverse XY coordinates for XDS
         xcorr, ycorr = ycorr, xcorr
-
+        
         # In XDS, the geometrically corrected coordinates of a pixel at IX,IY 
         # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
         write_cbf(path / "XCORR.cbf", np.int32((xcorr * 100)))
         write_cbf(path / "YCORR.cbf", np.int32((ycorr * 100)))
 
-    def tiff_writer(self, path):
+    def tiff_writer(self, path: str) -> None:
+        """Write all data as tiff files to given `path`"""
         print ("Writing TIFF files......")
 
         path.mkdir(exist_ok=True)
@@ -285,7 +291,8 @@ class ImgConversion(object):
 
         logger.debug("Tiff files saved in folder: {}".format(path))
 
-    def smv_writer(self, path):
+    def smv_writer(self, path: str) -> None:
+        """Write all data as SMV files compatible with XDS/DIALS to `path`"""
         print ("Writing SMV files......")
 
         path = path / self.smv_subdrc
@@ -302,7 +309,8 @@ class ImgConversion(object):
         else:
             logger.debug("SMV files saved in folder: {}".format(path))
      
-    def mrc_writer(self, path):
+    def mrc_writer(self, path: str) -> None:
+        """Write all data as mrc files to `path`"""
         print ("Writing MRC files......")
 
         path.mkdir(exist_ok=True)
@@ -312,7 +320,11 @@ class ImgConversion(object):
 
         logger.debug("MRC files created in folder: {}".format(path))
 
-    def threadpoolwriter(self, tiff_path=None, smv_path=None, mrc_path=None, workers=8):
+    def threadpoolwriter(self, tiff_path: str=None, smv_path: str=None, mrc_path: str=None, workers: int=8) -> None:
+        """Efficiently write all data to the specified formats using a threadpool. 
+        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF 
+        files are written to that path.
+        """
         write_tiff = tiff_path is not None
         write_smv  = smv_path  is not None
         write_mrc  = mrc_path  is not None
@@ -345,7 +357,10 @@ class ImgConversion(object):
             for future in futures:
                 ret = future.result()
 
-    def to_dials(self, smv_path, interval=False):
+    def to_dials(self, smv_path: str) -> None:
+        """Convert the buffer to output compatible with DIALS.
+        Files are written to the path given by `smv_path`.
+        """
         observed_range = self.observed_range
         self.missing_range = self.missing_range
 
@@ -358,6 +373,7 @@ class ImgConversion(object):
 
         i = min(observed_range)
         empty = np.zeros_like(self.data[i])
+        # copy header from first frame
         h = self.headers[i].copy()
         h["ImageGetTime"] = time.time()
 
@@ -378,7 +394,9 @@ class ImgConversion(object):
                 del self.data[n]
             del self.headers[n]
 
-    def write_tiff(self, path, i):
+    def write_tiff(self, path: str, i: int) -> str:
+        """Write the image+header with sequence number `i` to the directory `path` in TIFF format.
+        Returns the path to the written image."""
         img = self.data[i]
         h = self.headers[i]
 
@@ -389,14 +407,12 @@ class ImgConversion(object):
         write_tiff(fn, img, header=h)
         return fn
 
-    def write_smv(self, path, i):
+    def write_smv(self, path: str, i: int) -> str:
+        """Write the image+header with sequence number `i` to the directory `path` in SMV format.
+        Returns the path to the written image."""
         img = self.data[i]
         h = self.headers[i]
 
-        beam_center = h["beam_center"]
-
-        if self.do_stretch_correction:
-            img = self.apply_stretch_correction(img, beam_center)
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
@@ -404,7 +420,7 @@ class ImgConversion(object):
 
         # TODO: Dials reads the beam_center from the first image and uses that for the whole range
         # For now, use the average beam center and consider it stationary, remove this line later
-        beam_center = self.mean_beam_center
+        mean_beam_center = self.mean_beam_center
         
         header = collections.OrderedDict()
         header['HEADER_BYTES'] = 512
@@ -429,10 +445,10 @@ class ImgConversion(object):
         header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
         header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = "{:.4f}".format(beam_center[1])
-        header['BEAM_CENTER_Y'] = "{:.4f}".format(beam_center[0])
-        header['DENZO_X_BEAM'] = "{:.4f}".format((beam_center[0]*self.physical_pixelsize))
-        header['DENZO_Y_BEAM'] = "{:.4f}".format((beam_center[1]*self.physical_pixelsize))
+        header['BEAM_CENTER_X'] = "{:.4f}".format(mean_beam_center[1])
+        header['BEAM_CENTER_Y'] = "{:.4f}".format(mean_beam_center[0])
+        header['DENZO_X_BEAM'] = "{:.4f}".format((mean_beam_center[0]*self.physical_pixelsize))
+        header['DENZO_Y_BEAM'] = "{:.4f}".format((mean_beam_center[1]*self.physical_pixelsize))
         fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
@@ -485,33 +501,32 @@ class ImgConversion(object):
         write_adsc(fn, img, header=header)
         return fn
 
-    def write_mrc(self, path, i):
+    def write_mrc(self, path: str, i: int) -> str:
+        """Write the image+header with sequence number `i` to the directory `path` in TIFF format.
+        Returns the path to the written image."""
         img = self.data[i]
-        h = self.headers[i]
-
-        beam_center = h["beam_center"]
 
         fn = path / f"{i:05d}.mrc"
 
-        if self.do_stretch_correction:
-            img = self.apply_stretch_correction(img, beam_center)
-        # flip up/down because RED reads images from the bottom left corner
         # for RED these need to be as integers
-
         dtype = np.int16
         if False:
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
             maxval = np.iinfo(dtype).max
             img = (img / dynamic_range)*maxval
+        
         img = np.round(img, 0).astype(dtype)
+
+        # flip up/down because RED reads images from the bottom left corner
         img = np.flipud(img)
         
         write_mrc(fn, img)
 
         return fn
 
-    def write_ed3d(self, path):
+    def write_ed3d(self, path: str) -> None:
+        """Write .ed3d input file for REDp in directory `path`"""
         path.mkdir(exist_ok=True)
 
         rotation_axis = np.degrees(self.rotation_axis)
@@ -542,7 +557,8 @@ class ImgConversion(object):
 
         logger.debug("Ed3d file created in path: {}".format(path))
         
-    def write_xds_inp(self, path):
+    def write_xds_inp(self, path: str) -> None:
+        """Write XDS.INP input file for XDS in directory `path`"""
         from .XDS_template import XDS_template
 
         path.mkdir(exist_ok=True)
@@ -553,6 +569,8 @@ class ImgConversion(object):
         rot_x, rot_y, rot_z = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis)
 
         shape_x, shape_y = self.data_shape
+
+        self.write_geometric_correction_files(path)
 
         if self.missing_range:
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
@@ -613,7 +631,8 @@ class ImgConversion(object):
         
         logger.info("XDS INP file created.")
 
-    def write_beam_centers(self, drc):
+    def write_beam_centers(self, drc: str) -> None:
+        """Write list of beam centers to file `beam_centers.txt` in `drc`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
         for i, h in self.headers.items():
             centers[i-1] = h["beam_center"]
@@ -622,7 +641,8 @@ class ImgConversion(object):
 
         np.savetxt(drc / "beam_centers.txt", centers, fmt="%10.4f")
 
-    def write_pets_inp(self, path):
+    def write_pets_inp(self, path: str) -> None:
+        """Write PETS input file `pets.pts` in directory `path`"""
         if self.start_angle > self.end_angle:
             sign = -1
         else:

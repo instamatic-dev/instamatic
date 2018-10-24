@@ -8,9 +8,11 @@ from instamatic import TEMController
 import glob
 from tqdm import tqdm
 from pathlib import Path
+import warnings
 
 
 def apply_corrections(img, deadpixels=None):
+    """Apply image corrections"""
     if deadpixels is None:
         deadpixels = get_deadpixels(img)
     img = remove_deadpixels(img, deadpixels)
@@ -19,6 +21,7 @@ def apply_corrections(img, deadpixels=None):
 
 
 def remove_deadpixels(img, deadpixels, d=1):
+    """Remove dead pixels from the images by replacing them with the average of neighbouring pixels"""
     d = 1
     for (i,j) in deadpixels:
         neighbours = img[i-d:i+d+1, j-d:j+d+1].flatten()
@@ -27,15 +30,18 @@ def remove_deadpixels(img, deadpixels, d=1):
 
 
 def get_deadpixels(img):
+    """Get coordinates of dead pixels in the image"""
     return np.argwhere(img == 0)
 
 
 def apply_center_pixel_correction(img, k=1.19870594245):
+    """Correct the intensity of the center pixels"""
     img[255:261,255:261] = img[255:261,255:261] * k
     return img
 
 
 def get_center_pixel_correction(img):
+    """Get the correction factor for the center pixels"""
     center = np.sum(img[255:261,255:261])
     edge = np.sum(img[254:262,254:262]) - center
 
@@ -53,6 +59,11 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
     https://en.wikipedia.org/wiki/Flat-field_correction"""
 
+    if flatfield.shape != img.shape:
+        msg = f"Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes."
+        warnings.warn(msg)
+        return img
+
     if darkfield is None:
         ret = img * np.mean(flatfield) / flatfield
     else:
@@ -64,6 +75,18 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
 
 def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc=".", **kwargs):
+    """Routine to collect flatfield correction files.
+    
+    Spread the beam and focus on an a vacuum area
+    The routine will collect a number of images and average them for the flatfield correction images
+    The optimal exposure time for each image is calculated automatically so that the response is at approximately
+        1/10 the dynamic range
+
+    `frames`: number of frames to average for correction image(s)
+    `save_images`: save the collected images
+    `collect_darkfield`: additionally collect darkfield correction (by blanking the beam)
+    `drc`: output directory
+    """
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
     confirm = kwargs.get("confirm", True)
@@ -77,7 +100,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
-    exposure = exposure * (ctrl.cam.defaults.dynamic_range / 10.0) / img.mean() 
+    exposure = exposure * (ctrl.cam.dynamic_range / 10.0) / img.mean() 
     print("exposure:", exposure)
 
     ctrl.cam.block()

@@ -92,7 +92,7 @@ class ServerMicroscope(object):
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
-        # t0 = time.clock()
+        # t0 = time.perf_counter()
 
         self.s.send(pickle.dumps(dct))
 
@@ -111,7 +111,7 @@ class ServerMicroscope(object):
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
-        tem = get_tem()
+        tem = get_tem(self.name)
 
         self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
 

@@ -1,3 +1,11 @@
 include LICENCE
 include readme.md
 include setup_win.bat
+include instamatic/config/global.yaml
+include instamatic/config/microscope/*.yaml
+include instamatic/config/calibration/*.yaml
+include instamatic/config/camera/*.yaml
+include instamatic/camera/*.dll
+include instamatic/camera/timepix.lockfile
+include instamatic/camera/tpx/*
+include instamatic/neural_network/*.p
