@@ -19,6 +19,9 @@ from .mrc import read_image as read_mrc
 from .mrc import write_image as write_mrc
 
 
+from .xdscbf import write as write_cbf
+
+
 def read_image(fname):
     """Guess filetype by extension"""
     ext = Path(fname).suffix.lower()
@@ -37,7 +40,6 @@ def read_image(fname):
 
 def write_tiff(fname, data, header=None):
     """Simple function to write a tiff file
-
     fname: str,
         path or filename to which the image should be saved
     data: np.ndarray,
@@ -59,10 +61,8 @@ def write_tiff(fname, data, header=None):
 
 def read_tiff(fname):
     """Simple function to read a tiff file
-
     fname: str,
         path or filename to image which should be opened
-
     Returns:
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
@@ -87,7 +87,6 @@ def read_tiff(fname):
 
 def write_hdf5(fname, data, header=None):
     """Simple function to write data to hdf5 format using h5py
-
     fname: str,
         path or filename to which the image should be saved
     data: np.ndarray,
@@ -110,7 +109,6 @@ def read_hdf5(fname):
     
     fname: str,
         path or filename to image which should be opened
-
     Returns:
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
@@ -120,3 +118,8 @@ def read_hdf5(fname):
         
     f = h5py.File(fname)
     return np.array(f["data"]), dict(f["data"].attrs)
+
+
+def read_cbf(fname):
+    """CBF reader not implemented"""
+    raise NotImplementedError("CBF reader not implemented.")

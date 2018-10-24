@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from instamatic.processing.cross_correlate import cross_correlate
 
 def reject_outlier(data, m=2):
     """Reject outliers if they are outside of m standard deviations from
@@ -10,6 +11,15 @@ def reject_outlier(data, m=2):
     filtered = [e for e in data if (u - m*s < e < u + m*s)]
     return filtered
 
+def eliminate_backlash_in_tiltx(ctrl):
+    a_i = ctrl.stageposition.a
+    if a_i < 0:
+        ctrl.stageposition.set(a = a_i + 0.5 , wait = True)
+        return 0
+    else:
+        ctrl.stageposition.set(a = a_i - 0.5 , wait = True)
+        return 1
+
 
 def center_z_height(ctrl):
     """Automated routine to find the z-height
@@ -18,7 +28,7 @@ def center_z_height(ctrl):
     Ultramicroscopy 46.1-4 (1992): 207-227.
     http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
     """
-    from instamatic.processing.cross_correlate import cross_correlate
+
 
     print("Finding eucentric height...")
     if ctrl.mode != 'mag1':
@@ -70,3 +80,52 @@ def center_z_height(ctrl):
             ctrl.stageposition.set(a = a0, z = z_center+2000)
             ctrl.stageposition.set(a = a0, z = z_center)
         print("Eucentric height set. Find the crystal again and start data collection!")
+        
+def center_z_height_HYMethod(ctrl, increment = 2000):
+    """Hongyi's empirical method for centering z height on our JEOL LAB6.
+    Rotate the stage positively. If the particle moves upwards, adjust height to be higher.
+    Vice versa."""
+    
+    print("Finding eucentric height...")
+    if ctrl.mode != 'mag1':
+        ctrl.mode = 'mag1'
+
+    ctrl.brightness.value = 65535
+    ctrl.magnification.value = 2500
+    x0,y0,z0,a0,b0 = ctrl.stageposition.get()
+    img0, h = ctrl.getImage(exposure = 0.01, comment = "z height finding HY")
+    rotation_dir = eliminate_backlash_in_tiltx(ctrl)
+    if rotation_dir == 0:
+        ctrl.stageposition.set(a = a0 + 30, wait = False)
+        endangle = a0 + 30
+    else:
+        ctrl.stageposition.set(a = a0 - 30, wait = False)
+        endangle = a0 - 30
+    
+    while True:
+        if abs(ctrl.stageposition.a - a0) > 2:
+            break
+        
+    while ctrl.stageposition.is_moving():
+        img, h = ctrl.getImage(exposure = 0.01, comment = "z height finding HY")
+        shift = cross_correlate(img0, img, upsample_factor=10, verbose=False)
+        print("shift: {}".format(shift))
+        ctrl.stageposition.stop()
+        if shift[0] > 5:
+            ctrl.stageposition.z = z0 - (rotation_dir - 0.5)*increment
+            print("Z height adjusted: - {}.".format((rotation_dir - 0.5)*increment))
+            img0 = img
+        elif shift[0] < -5:
+            ctrl.stageposition.z = z0 + (rotation_dir - 0.5)*increment
+            print("Z height adjusted: + {}.".format((rotation_dir - 0.5)*increment))
+            img0 = img
+        z0 = ctrl.stageposition.z
+
+        if abs(ctrl.stageposition.a - endangle) < 0.5:
+            break
+        ctrl.stageposition.set(a = endangle, wait = False)
+        time.sleep(1)
+        
+    print("Z height adjustment done and eucentric z height found at: {}".format(z0))
+    x, y, z, a, b = ctrl.stageposition.get()
+    return x, y

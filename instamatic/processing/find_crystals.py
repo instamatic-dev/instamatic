@@ -202,7 +202,7 @@ def main_entry():
     for fn in sys.argv[1:]:
         img, h = read_image(fn)
         
-        crystals = find_crystals_timepix(img, h["exp_magnification"], spread=2, plot=True, offset=9)
+        crystals = find_crystals_timepix(img, h["exp_magnification"], spread=2, plot=True, offset=15)
     
         for crystal in crystals:
             print(crystal)

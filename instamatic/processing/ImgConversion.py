@@ -235,6 +235,45 @@ class ImgConversion(object):
         newImage = apply_stretch_correction(image, center=center, azimuth=azimuth, amplitude=amplitude)
     
         return newImage
+    
+    def write_geometric_correction_files(self, path) -> None:
+        """Make geometric correction images for XDS
+        Writes files XCORR.cbf and YCORR.cbf to `path`
+        
+        To use:
+            DETECTOR= PILATUS     ! fake being a PILATUS detector
+            X-GEO_CORR= XCORR.cbf
+            Y-GEO_CORR= YCORR.cbf
+        Reads the stretch amplitude/azimuth from the config file
+        """
+        from instamatic.formats import write_cbf
+
+        center = np.array(self.mean_beam_center)
+        
+        amplitude_pc = self.stretch_amplitude / (2*100)
+        
+        # To create the correct corrections the azimuth is mirrored
+        azimuth_rad  = np.radians(180 - self.stretch_azimuth)
+
+        shape = self.data_shape
+
+        xi, yi = np.mgrid[0:shape[0], 0:shape[1]]
+        coords = np.stack([xi.flatten(), yi.flatten()], axis=1) - center
+        
+        s = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
+        
+        new = np.dot(coords, s)
+
+        xcorr = (new[:,0].reshape(shape) + center[0]) - xi
+        ycorr = (new[:,1].reshape(shape) + center[1]) - yi
+
+        # reverse XY coordinates for XDS
+        xcorr, ycorr = ycorr, xcorr
+
+        # In XDS, the geometrically corrected coordinates of a pixel at IX,IY 
+        # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
+        write_cbf(path / "XCORR.cbf", np.int32((xcorr * 100)))
+        write_cbf(path / "YCORR.cbf", np.int32((ycorr * 100)))
 
     def tiff_writer(self, path):
         print ("Writing TIFF files......")
@@ -255,10 +294,13 @@ class ImgConversion(object):
         for i in self.observed_range:
             if self.do_centerDP:
                 self.write_smv_centered(path, i)
-                logger.debug("SMV files (centered) saved in folder: {}".format(path))
             else:
                 self.write_smv(path, i)
-                logger.debug("SMV files saved in folder: {}".format(path))
+                
+        if self.do_centerDP:
+            logger.debug("SMV files (centered) saved in folder: {}".format(path))
+        else:
+            logger.debug("SMV files saved in folder: {}".format(path))
      
     def mrc_writer(self, path):
         print ("Writing MRC files......")
