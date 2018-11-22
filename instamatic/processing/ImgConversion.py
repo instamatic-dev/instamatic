@@ -171,7 +171,7 @@ class ImgConversion(object):
             h["beam_center"] = center
             centers.append(center)
 
-        beam_centers = np.array(centers)
+        self._beam_centers = beam_centers = np.array(centers)
 
         # avg_center = np.mean(centers, axis=0)
         median_center = np.median(beam_centers, axis=0)

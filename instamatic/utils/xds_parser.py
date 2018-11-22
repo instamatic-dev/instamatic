@@ -48,6 +48,8 @@ class xds_parser(object):
                 in_block = False
             elif line.startswith(" UNIT CELL PARAMETERS"):
                 cell = list(map(float, line.strip("\n").split()[3:9]))
+            elif line.endswith("as used by INTEGRATE\n"):
+                raw_cell = list(map(float, line.strip("\n").split()[1:7]))
             elif line.startswith(" SPACE GROUP NUMBER"):
                 spgr = int(line.strip("\n").split()[-1])
             elif line.startswith("     a        b          ISa"):
@@ -67,6 +69,7 @@ class xds_parser(object):
                     block.append(line.strip("\n"))
     
         vol = volume(cell)
+        raw_vol = volume(raw_cell)
     
         d["ISa"] = ISa
         d["Boverall"] = Boverall
@@ -106,6 +109,8 @@ class xds_parser(object):
         d["res_range"] = resolution_range
         d["volume"] = vol
         d["cell"] = cell
+        d["raw_cell"] = raw_cell
+        d["raw_volume"] = raw_vol
         d["spgr"] = spgr
         d["fn"] = fn
     
@@ -113,7 +118,7 @@ class xds_parser(object):
 
     def info_header(self):
         s  = "  #   dmax  dmin    ntot   nuniq   compl   i/sig   rmeas CC(1/2)     ISa   B(ov)\n"
-        s += "-------------------------------------------------------------------------\n"
+        s += "--------------------------------------------------------------------------------\n"
         return s
 
     def print_filename(self):
@@ -198,12 +203,13 @@ def cells_to_cellparm(ps):
         for i, p in enumerate(ps):
             fn = p.filename
             cell = p.unit_cell
+            # cell = p.d["raw_cell"]
             ntot = p.d["total"]["ntot"]
             print(f"! {i: 3d} from {fn}", file=f)
             print("UNIT_CELL_CONSTANTS= {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} WEIGHT= {ntot}".format(*cell, ntot=ntot), file=f)
 
 
-def gather_xds_ascii(ps):
+def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
     """Takes a list of `xds_parser` instances and gathers the 
     corresponding `XDS_ASCII.HKL` files into the current directory.
     The data source and numbering scheme is summarized in the file `filelist.txt`.
@@ -211,6 +217,16 @@ def gather_xds_ascii(ps):
     # gather xds_ascii and prepare filelist
     with open("filelist.txt", "w") as f:
         for i, p in enumerate(ps):
+
+            completeness = p.d["total"]["completeness"]
+            cchalf = p.d["total"]["cchalf"]
+
+            if cchalf < min_cchalf:
+                continue
+
+            if completeness < min_completeness:
+                continue
+
             fn = p.filename
             src = fn.with_name("XDS_ASCII.HKL")
             dst = f"{i:02d}_XDS_ASCII.HKL"
@@ -244,7 +260,15 @@ def main():
     fns = parse_fns(fns)
     print(f"Found {len(fns)} files matching CORRECT.LP\n")
     
-    xdsall = [xds_parser(fn) for fn in fns]
+    xdsall = []
+    for fn in fns:
+        try:
+            p = xds_parser(fn)
+        except UnboundLocalError:
+            continue
+        else:
+            if p.d:
+                xdsall.append(p)
     
     for i, p in enumerate(xdsall):
         print(p.cell_info(sequence=i))

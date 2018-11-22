@@ -25,15 +25,20 @@ def parse_xds(path):
     with rlock:
         if not fn.exists():
             print(f"FAIL: Cannot find file `{fn.name}`, was the indexing successful??")
-            msg = "Automatic indexing failed..."
+            msg = f"{path}: Automatic indexing failed..."
         else:
-            p = xds_parser(fn)
-            msg = "\n"
-            msg += p.cell_info()
-            msg += "\n"
-            msg += p.integration_info()
-            msg += "\n"
-            print(msg)
+            try:
+                p = xds_parser(fn)
+            except UnboundLocalError:
+                msg = f"{path}: Automatic indexing completed but no cell reported..."
+                print(f"FAIL: `{fn.name}` found, but could not be parsed...")
+            else:
+                msg = "\n"
+                msg += p.cell_info()
+                msg += "\n"
+                msg += p.integration_info()
+                msg += "\n"
+                print(msg)
 
     return msg
 
