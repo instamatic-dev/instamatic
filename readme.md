@@ -15,9 +15,9 @@ Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through 
 
 ## Reference
 
-If you find this software useful, please consider citing to one of the references above and/or refer to the source code in your publications:
+If you find this software useful, please consider citing one of the references above and/or refer to the source code in your publications:
 
-- Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
+- Stef Smeets, Bin Wang, Magdalena O. Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
 
 ## Usage
 
