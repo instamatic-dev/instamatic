@@ -2,10 +2,22 @@
 
 # Instamatic
 
-Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
+Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL microscope and interfaces to the gatan/timepix cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
+
+Some of the methods implemented in Instamatic are described in: 
+
+- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Crystallogr., doi: 10.1107/S1600576718015145, 2018
+
+- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Crystallogr. 51(5):1262-1273, 2018
 
 TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
 Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
+
+## Reference
+
+If you find this software useful, please consider citing to one of the references above and/or refer to the source code in your publications:
+
+- Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
 
 ## Usage
 
@@ -368,9 +380,3 @@ Download the latest release from https://github.com/stefsmeets/instamatic/releas
 Alternatively, the latest development version can always be obtained via:
     
     https://github.com/stefsmeets/instamatic/archive/master.zip
-
-## Citing instamatic
-
-If you found this software useful, please consider citing the software:
-
-Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
