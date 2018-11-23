@@ -25,6 +25,7 @@ __citation_serialed__ = "S. Smeets, X. Zou, and W. Wan, J. Appl. Cryst. 51(5):12
 
 def register_thank_you_message():
     import atexit
+    import textwrap
 
     def message():
         msg = f"Thank you for using {__long_title__}. If you found this software useful, please consider citing it: {__citation__}"
