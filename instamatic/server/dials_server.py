@@ -32,21 +32,25 @@ def run_dials_indexing(data):
     cmd = [str(EXE), str(data["path"])]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
+    unitcelloutput = []
 
     p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
     for line in p.stdout:
         if b'Unit cell:' in line:
             print(line.decode('utf-8'))
-            with open(fn, "a") as f:
-                f.write("Data Path: {}\n".format(data["path"]))
-                f.write("{}\n".format(line.decode('utf-8')))
-                f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
-                f.write("Number of frames: {}\n".format(data["nframes"]))
-                f.write("Oscillation angle: {} deg\n".format(data["osc"]))
-                print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
+            unitcelloutput = line
+
+    if unitcelloutput:
+        with open(fn, "a") as f:
+            f.write("\nData Path: {}\n".format(data["path"]))
+            f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
+            f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
+            f.write("Number of frames: {}\n".format(data["nframes"]))
+            f.write("Oscillation angle: {} deg\n\n\n\n".format(data["osc"]))
+            print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
     
     p.wait()
-
+    unitcelloutput = []
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     print(f"{now} | DIALS indexing has finished")
 

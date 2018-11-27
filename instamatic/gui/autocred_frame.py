@@ -98,7 +98,7 @@ class ExperimentalautocRED(LabelFrame):
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
-        self.var_unblank_beam = BooleanVar(value=False)
+        self.var_unblank_beam = BooleanVar(value=True)
         self.var_image_interval = IntVar(value=10)
         self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=True)
@@ -106,11 +106,11 @@ class ExperimentalautocRED(LabelFrame):
         self.var_exposure_time_image = DoubleVar(value=0.01)
         
         self.var_enable_autotrack = BooleanVar(value=True)
-        self.var_enable_fullacred = BooleanVar(value=False)
-        self.var_enable_fullacred_crystalFinder = BooleanVar(value=False)
+        self.var_enable_fullacred = BooleanVar(value=True)
+        self.var_enable_fullacred_crystalFinder = BooleanVar(value=True)
         self.var_scan_area = IntVar(value=0)
         self.var_zheight = BooleanVar(value = False)
-        self.var_autoc = BooleanVar(value = True)
+        self.var_autoc = BooleanVar(value = False)
         
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger

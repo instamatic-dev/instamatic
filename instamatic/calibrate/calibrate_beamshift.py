@@ -141,9 +141,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = ctrl.cam.calib_beamshift.get("gridsize", 5)
+        gridsize = ctrl.cam.cam.calib_beamshift.get("gridsize", 5)
     if not stepsize:
-        stepsize = ctrl.cam.calib_beamshift.get("stepsize", 2500)
+        stepsize = ctrl.cam.cam.calib_beamshift.get("stepsize", 2500)
 
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])

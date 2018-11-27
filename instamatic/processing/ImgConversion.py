@@ -6,6 +6,8 @@ from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
+from skimage.feature import register_translation
+from skimage import transform as tf
 from pathlib import Path
 from math import cos, pi
 import math
@@ -191,28 +193,24 @@ class ImgConversion(object):
         center = np.unravel_index(blurred.argmax(), blurred.shape)
         return np.array(center)
 
-    def DP_centering(self, sigma = 30):
+    def DP_centering(self, area = 30):
         """In full autocRED, DPs drift because of too much utilization of lenses. Need to center them for XDS and DIALS"""
         centered_dp = {}
         
         img0 = self.data[1]
-        sizex, sizey = img0.shape
-        pbc1 = self.find_beam_center(img0, sigma = sigma)
+        pbc1 = self.find_beam_center(img0, sigma = 30)
+        selected_area = img0[pbc1[0]-area:pbc1[0]+area,pbc1[1]-area:pbc1[1]+area]
         
         print("Centering DP according to the first image...")
+        
         for i in self.observed_range:
             img = self.data[i]
-            noise = self.estimate_noise(img)
-            pbc = self.find_beam_center(img, sigma = sigma)
-            shift = pbc - pbc1
-            shift = (int(shift[0]), int(shift[1]))
-            imgnew = np.zeros((sizex, sizey))
-            for j in range(0, sizex):
-                for k in range(0, sizey):
-                    if j - shift[0] < 0 or k - shift[1] < 0:
-                        imgnew[(j - shift[0]) % sizex, (k - shift[1]) % sizey] = np.random.normal(3*noise, noise)
-                    else:
-                        imgnew[(j - shift[0]) % sizex, (k - shift[1]) % sizey] = img[j, k]
+            #noise = self.estimate_noise(img)
+            img_sa = img[pbc1[0]-area:pbc1[0]+area,pbc1[1]-area:pbc1[1]+area]
+            shift, error, diffphase = register_translation(selected_area, img_sa, 10)
+            tform = tf.AffineTransform(translation = -shift[::-1])
+            imgnew = tf.warp(img, tform, preserve_range=True)
+            
             centered_dp[i] = imgnew.astype(np.int16)
             
         print("Images are now centered according to the first image.")
@@ -459,8 +457,8 @@ class ImgConversion(object):
 
         beam_center = h["beam_center"]
 
-        if self.do_stretch_correction:
-            img = self.apply_stretch_correction(img, beam_center)
+        #if self.do_stretch_correction:
+            #img = self.apply_stretch_correction(img, beam_center)
         img = np.ushort(img)
         shape_x, shape_y = img.shape
         
