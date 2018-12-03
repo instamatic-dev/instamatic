@@ -124,6 +124,7 @@ class Experiment(object):
         self.logger.info(self.stage_positions)
 
         with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Program: {version.__long_title__}", file=f)
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
             print(f"Time Period End: {self.t_end}", file=f)
@@ -146,9 +147,9 @@ class Experiment(object):
                 print(f"Number of images: {self.nframes_image}", file=f)
 
             print("", file=f)
-            print("References", file=f)
-            print("    -", version.__citation__, file=f)
-            print("    -", version.__citation_cred__, file=f)
+            print("References:", file=f)
+            print(" -", version.__citation__, file=f)
+            print(" -", version.__citation_cred__, file=f)
 
     def setup_paths(self):
         """Set up the paths for saving the data to"""
