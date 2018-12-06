@@ -1,7 +1,9 @@
 // Script to help continuous rotation data collection in DM
 //
 // Usage:        
-// 1. Insert the diffraction camera in view mode
+// 1. Insert the diffraction camera in view mode (use in-situ acquisition)
+// 1a. Set the exposure (i.e. 0.3 s) and press View
+// 1b. Set the diffraction mode for the acquisition (Click 'D')
 // 2. Make sure the exposure time and data acquisition parametes (i.e. binsize, processing) are set
 // 2a. Set the buffer size to the maximum number of frames that are expected to be collected (i.e. 500)
 // 3. Press <Start>, the script will now wait and automatically start data collection once rotation is initiated
@@ -10,25 +12,19 @@
 //
 
 string progname = "insteaDMatic v0.1.0"
-
 number true = 1, false = 0
 
-// Setup default directory
-// Don't ask...
-string user_drc = PathExtractParentDirectory(PathExtractParentDirectory(PathExtractParentDirectory(GetApplicationDirectory(4, 0), 0), 0), 0)
-string documents_drc = PathConcatenate(user_drc, "documents")
-// string default_work_drc = PathConcatenate(PathConcatenate(documents_drc, "instamatic"), "work")
-string default_work_drc = "C:\\instamatic\\work"
-string default_sample_name = "experiment"
-
 // Setup experiment variables
-number default_activation_threshold = 0.2  // change in angle to start rotation
-number default_buffersize = 100            // the maximum number of frames that will be collected, because memory must be reserved in advance
-number write_tiff_files = true             // write data to tiff format
-number show_buffer = false                 // show the buffer during data collection
-number keep_buffer_open = false            // open buffer / keep buffer open after data collection
+number default_activation_threshold = 0.2   // change in angle to start rotation
+number default_buffersize = 100             // the maximum number of frames that will be collected, because memory must be reserved in advance
+number write_tiff_files = true              // write data to tiff format
+number show_buffer = false                  // show the buffer during data collection
+number keep_buffer_open = false             // open buffer / keep buffer open after data collection
+number stop_collection_automatically = true // Check the angle and stop data collection automatically, 
+                                            // only works with the higher exposure times (>0.3s tested)
 
-number verbose = false                     // Increase the verbosity, print some testing variables
+number verbose = false                      // Increase the verbosity, print some testing variables
+
 
 // Initialize other parameters
 number top, left, bottom, right  // image selection (top, left, bottom, right)
@@ -36,8 +32,36 @@ image stream, buffer
 number loop = false
 number EventTimeout = 1.0
 
+
+// Get date formatted as yyyy-mm-dd
+string get_date_string()
+{
+    number year, month, day, hour, minute, second, nanosecond
+    DeconstructUTCDate( GetCurrentTime(), year, month, day, hour, minute, second, nanosecond )
+    string date = year + "-" + format(month, "%02d") + "-" + format(day, "%02d")
+    return date
+}
+
+
+// Helper print function
+void Print(string message)
+{
+    Result(message + "\n")
+}
+
+
+// Setup default directory
+// Don't ask...
+string user_drc = PathExtractParentDirectory(PathExtractParentDirectory(PathExtractParentDirectory(GetApplicationDirectory(4, 0), 0), 0), 0)
+string documents_drc = PathConcatenate(user_drc, "documents")
+// string default_work_drc = PathConcatenate(PathConcatenate(documents_drc, "instamatic"), "work")
+string default_work_drc = "C:\\instamatic\\work_"+get_date_string()
+string default_sample_name = "experiment"
+
+
 // Signal that fires when the live view is updated
 Object DataValueChangedEvent = NewSignal(0)
+
 
 Class ImageListener
 // Listen to updates of the live stream. If the live view updates, set the DataValueChangedSignal
@@ -48,7 +72,7 @@ Class ImageListener
         {
             string event_desc
             ImageGetEventMap().DeconstructEventFlags( e_fl, event_desc )
-            Result(GetTime(1)+": Image message : " + event_desc + " 0x" + Binary(e_fl) + "\n" )
+            Print(GetTime(1)+": Image message : " + event_desc + " 0x" + Binary(e_fl))
         }
         DataValueChangedEvent.SetSignal()
     }
@@ -56,17 +80,6 @@ Class ImageListener
 
 string messagemap = "data_value_changed:DataValueChanged"
 object objListener = Alloc(ImageListener)
-
-// Rename this function if running on the TEM
-number EMGetStageAlpha()
-{   
-    // Throw an error if this is already defined (i.e. on TEM)
-    if ( DoesFunctionExist("EMGetStageAlpha") )
-        Throw("EMGetStageAlpha is already defined!")
-        
-    number angle = ( random() - 0.5 ) * 140
-    return angle
-}
 
 
 Class Dialog_UI : UIFrame
@@ -108,7 +121,7 @@ Class Dialog_UI : UIFrame
         string work_drc
         self.DLGGetValue("work_drc_field", work_drc)
         string cmd = "explorer " + work_drc
-        Result(cmd + "\n")
+        Print(cmd)
         LaunchExternalProcessAsync(cmd)
     }
 
@@ -117,7 +130,7 @@ Class Dialog_UI : UIFrame
         string directory
         if ( !GetDirectoryDialog("Select directory", documents_drc, directory) ) 
             return
-        Result(directory + "\n")
+        Print("Directory:" + directory)
         self.DLGValue("work_drc_field", directory)
     }
 	
@@ -147,17 +160,17 @@ Class Dialog_UI : UIFrame
         string data_drc = PathConcatenate(exp_drc, "tiff")
         CreateDirectory( data_drc )
 
-        result("Experiment directory: " + exp_drc  + "\n")
+        Print("Experiment directory: " + exp_drc)
 
         number nframes
         self.DLGGetValue("buffersize_field", nframes)
-        result("Buffersize: " + nframes  + "\n")
+        Print("Buffersize: " + nframes)
         
         // get front image(), this is the live stream
         try  stream := GetFrontImage()        
         catch
         {
-            Result("Please open and select the live stream of the camera to start\n")
+            Print("Please open and select the live stream of the camera to start")
             self.end_collection()
             return
         }
@@ -190,11 +203,11 @@ Class Dialog_UI : UIFrame
         number start_angle, angle_delta = 0
 
         number angle0 = EMGetStageAlpha()
-        Result("Angle0: " + angle0 + "(threshold: " + angle_activation_threshold + ")\n")
+        Print("Angle0: " + angle0 + "(threshold: " + angle_activation_threshold + ")")
 
         while ( angle_delta < angle_activation_threshold )
         {
-			sleep(0.1)  // sleep to prevent request spam (can cause dm to crash)
+            sleep(0.1)  // sleep to prevent request spam (can cause dm to crash)
             start_angle = EMGetStageAlpha()
             angle_delta = abs(start_angle - angle0)
 			self.SetStatus("Waiting (delta = " + angle_delta + ")")
@@ -204,6 +217,9 @@ Class Dialog_UI : UIFrame
         number t0, t1, delta
         number average
         
+		number prev_angle = start_angle
+		number current_angle
+        
         // Synchronize t_start / start_angle with the first frame
         WaitOnSignal( DataValueChangedEvent, EventTimeout, NULL )
         DataValueChangedEvent.resetSignal()
@@ -211,7 +227,7 @@ Class Dialog_UI : UIFrame
         number t_start = GetHighResTickCount()
 
         start_angle = EMGetStageAlpha()
-        Result("Starting angle: " + start_angle + "\n")
+        Print("Starting angle: " + start_angle)
 
         while ( loop )
         {
@@ -227,25 +243,33 @@ Class Dialog_UI : UIFrame
             
             t1 = GetHighResTickCount()
             delta = CalcHighResSecondsBetween(t0, t1)
-
-            if ( verbose )
-            {
-                average = mean(slice2(buffer, 0, 0, i, 0, xsize, 1, 1, ysize, 1))
-                Result("Frame " + i + " -> delta = " + delta + " -> average " + average + "\n")
-            }
+      
+			// increment frame number
+       		i += 1
+      
 			
-            i += 1
+			if ( stop_collection_automatically )
+			// Check if the stage is still rotating
+				{
+				current_angle = EMGetStageAlpha()
+				// Print(prev_angle + " -> " + current_angle)
+				if ( current_angle - prev_angle == 0 )
+				{
+					loop = False
+					Print("Rotation has ended")
+				}
+				prev_angle = current_angle
+            }
 
             // Stop collection when buffer is full
             if ( i == nframes )
             {
-                Result("Buffer full\n")
+                Print("Buffer full")
                 loop = false
             }
 
 			self.DLGSetProgress( "progress_bar", i/nframes )
             self.SetStatus( "Collecting frame " + i )
-
         }
 
         number t_end = GetHighResTickCount()
@@ -260,31 +284,59 @@ Class Dialog_UI : UIFrame
         
         if ( show_buffer || keep_buffer_open )  showimage(buffer)
 
-        // spot_size = EMGetSpotSize()
- 
+        // get experiment parameters 
         number end_angle = EMGetStageAlpha()
         number camera_length = EMGetCameraLength()
+        number spot_size = EMGetSpotSize()
         number osc_angle = abs(end_angle - start_angle) / nframes
         number acquisition_time = total_time / nframes
         number total_angle = abs(end_angle - start_angle)
         number rotation_axis = 0  // Must be calibrated
         string timestamp = FormatTimeString(GetCurrentTime(), 34)  // 34 -> magic number for dateformat
  
-		// Get pixelsize
+		// Get pixelsize (calibration)
 		number xdim = 0, ydim = 1
-		number pixelsize_x = ImageGetDimensionScale(stream, xdim)
-		number pixelsize_y = ImageGetDimensionScale(stream, ydim)
-		If ( pixelsize_x != pixelsize_y )  Result( "Pixelsize does not match; x="+ pixelsize_x + ";y=" + pixelsize_y + "\n")
-		string units = ImageGetDimensionUnitString(stream, xdim)
- 
-		// Get exposure time
-		TagGroup tg = stream.ImageGetTagGroup()
-		number exposure
-		tg.TagGroupGetTagAsNumber("Acquisition:Parameters:High Level:Exposure (s)", exposure)
- 
+		number image_pixelsize_x = ImageGetDimensionScale(stream, xdim)
+		number image_pixelsize_y = ImageGetDimensionScale(stream, ydim)
+        string units_x = ImageGetDimensionUnitString(stream, xdim)
+		string units_y = ImageGetDimensionUnitString(stream, xdim)
+
+        // get image resolution
+        number image_res_x = right - left
+		number image_res_y = bottom - top
+
+        // get camera and tem name
+        number camid = CameraGetActiveCameraID()
+        string camera_name = CameraGetName(camid)
+        string tem_name = EMGetMicroscopeName()
+        
+        // get camera resolution 
+        number cam_res_x, cam_res_y 
+        CameraGetSize(camid, cam_res_x, cam_res_y)
+
+        // get binning
+        number binsize_x = cam_res_x / image_res_x 
+        number binsize_y = cam_res_y / image_res_y
+
+        // get physical pixelsize
+        number phys_pixelsize_x, phys_pixelsize_y
+        CameraGetPixelSize(camid, phys_pixelsize_x, phys_pixelsize_y)
+        phys_pixelsize_x *= binsize_x  // correct for binning
+        phys_pixelsize_y *= binsize_y
+
+        // Get reported exposure time
+        TagGroup tg = stream.ImageGetTagGroup()
+        number exposure
+        tg.TagGroupGetTagAsNumber("Acquisition:Parameters:High Level:Exposure (s)", exposure)
+
+		// calculate rotation speed
+		number rot_speed = osc_angle / acquisition_time
+
         // Construct log message
         string log_message = ""
         log_message += "Program: " + progname + "\n"
+        log_message += "Microscope: " + tem_name + "\n" 
+        log_message += "Camera: " + camera_name + "\n" 
         log_message += "Data Collection Time: " + timestamp + "\n"
         log_message += "Time Period Start: " + format(t_start, "%f") + "\n"
         log_message += "Time Period End: " + format(t_end, "%f") + "\n"
@@ -294,32 +346,36 @@ Class Dialog_UI : UIFrame
         log_message += "Exposure Time (s): " + exposure + "\n"
         log_message += "Acquisition time: " + acquisition_time + "\n"
         log_message += "Total time: " + total_time + "\n"
-        // log_message += "Spot Size: " + spot_size + "\n"
+        log_message += "Spot Size: " + spot_size + "\n"
         log_message += "Camera length: " + camera_length + "\n"
-        log_message += "Pixelsize (" + units + "): " + pixelsize_x + "\n"
+        log_message += "Image pixelsize x/y (" + units_x + "): " + image_pixelsize_x + " " + image_pixelsize_y + "\n"
+        log_message += "Image resolution x/y (px): " + image_res_x + " " + image_res_y + "\n"
+        log_message += "Image physical pixelsize x/y (um): " + phys_pixelsize_x + " " + phys_pixelsize_y + "\n"
+        log_message += "Camera binning x/y: " + binsize_x + " " + binsize_y + "\n"
         log_message += "Rotation axis: " + rotation_axis + "\n"
         log_message += "Oscillation angle: " + osc_angle + "\n"
+        log_message += "Rotation speed (deg/s): " + rot_speed + "\n"
         log_message += "Number of frames: " + nframes + "\n"
  
         // Print log message to console
-        Result(log_message)
+        Print(log_message)
  
         // Print log message to file
         string fn = PathConcatenate(exp_drc, "cRED_log.txt")
         number f = CreateFileForWriting(fn)
         WriteFile(f, log_message)
         CloseFile(f)
-        Result("Wrote file " + fn + "\n")
+        Print("Wrote file " + fn)
         
         // Write data as tiff files
         if ( write_tiff_files )
         {
             self.SetStatus( "Writing tiff files" )
-            Result("Writing tiff files...\n")
+            Print("Writing tiff files...")
             for (i=0; i<nframes; i++)
             {
                 string out = PathConcatenate(data_drc, "image_" + format(i+1, "%05d"))
-                //Result("Writing " + out + ".tif\n")
+                //Print("Writing " + out + ".tif")
                 image frame := slice2(buffer, 0, 0, i, 0, xsize, 1, 1, ysize, 1)
                 SaveAsTiff(frame, out, 1)
                 self.DLGSetProgress( "progress_bar", (i+1)/nframes )
@@ -327,6 +383,7 @@ Class Dialog_UI : UIFrame
         }
         
         self.SetStatus("Data collection completed")
+        Print("Data collection completed")
     }
 
     object init(object self)
@@ -420,7 +477,7 @@ Class Dialog_UI : UIFrame
         loop = false
         self.super.init( self.CreateDialog_UI() )
         number dialogID = self.ScriptObjectGetID()
-        result("Dialog created with ID:" + dialogID + "\n")
+        Print("Dialog created with ID:" + dialogID)
     }
 
     // default object destructor
@@ -448,7 +505,7 @@ Class Dialog_UI : UIFrame
 void main()
     {
         // Create the dialog
-        Result("\n\n\n\n\n")
+        Print("\n")
         
         object Dialog_UI = Alloc(Dialog_UI).init()
         Dialog_UI.Display("InsteaDMatic")
