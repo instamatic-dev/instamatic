@@ -6,12 +6,14 @@ Instamatic is a Python program that is being developed with the aim to automate 
 
 Some of the methods implemented in Instamatic are described in: 
 
-- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Crystallogr., doi: 10.1107/S1600576718015145, 2018
+- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661, 
 
-- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Crystallogr. 51(5):1262-1273, 2018
+- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
 TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
 Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
+
+A DM script for collecting cRED data on a OneView camera can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/scripts) directory.
 
 ## Reference
 

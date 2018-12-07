@@ -7,7 +7,7 @@
 #                                                       #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-VERSION = (0, 6, 0)
+VERSION = (1, 0, 0)
 
 __version__ = "{}.{}.{}".format(*VERSION)
 __title__ = "instamatic"
@@ -17,8 +17,8 @@ __author_email__ = "stef.smeets@mmk.su.se"
 __description__ = "Python program to collect serial and rotation electron diffraction data"
 __license__ = "GPLv3"
 __url__ = "http://github.com/stefsmeets/instamatic"
-__doi__ = "https://doi.org/10.5281/zenodo.1217026"
-__citation__ = f"Zenodo (2018). Instamatic (Version 0.6), {__doi__}"
+__doi__ = "https://doi.org/10.5281/zenodo.2026774"
+__citation__ = f"Zenodo (2018). Instamatic (Version 1.0), {__doi__}"
 __citation_cred__ = "J. Appl. Cryst. (2018). 51, 1652–1661, https://doi.org/10.1107/S1600576718015145"
 __citation_serialed__ = "J. Appl. Cryst. (2018). 51, 1262–1273, https://doi.org/10.1107/S1600576718009500"
 
