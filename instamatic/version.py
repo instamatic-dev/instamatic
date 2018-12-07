@@ -18,9 +18,9 @@ __description__ = "Python program to collect serial and rotation electron diffra
 __license__ = "GPLv3"
 __url__ = "http://github.com/stefsmeets/instamatic"
 __doi__ = "https://doi.org/10.5281/zenodo.1217026"
-__citation__ = f"S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, & W. Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. {__doi__}"
-__citation_cred__ = "M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, J. Appl. Cryst., doi: 10.1107/S1600576718015145, 2018"
-__citation_serialed__ = "S. Smeets, X. Zou, and W. Wan, J. Appl. Cryst. 51(5):1262-1273, 2018"
+__citation__ = f"Zenodo (2018). Instamatic (Version 0.6), {__doi__}"
+__citation_cred__ = "J. Appl. Cryst. (2018). 51, 1652–1661, https://doi.org/10.1107/S1600576718015145"
+__citation_serialed__ = "J. Appl. Cryst. (2018). 51, 1262–1273, https://doi.org/10.1107/S1600576718009500"
 
 
 def register_thank_you_message():
