@@ -1,26 +1,59 @@
-// Script to help continuous rotation data collection in DM
-//
-// Usage:        
-// 1. Insert the diffraction camera in view mode (use in-situ acquisition)
-// 1a. Set the exposure (i.e. 0.3 s) and press View
-// 1b. Set the diffraction mode for the acquisition (Click 'D')
-// 2. Make sure the exposure time and data acquisition parametes (i.e. binsize, processing) are set
-// 2a. Set the buffer size to the maximum number of frames that are expected to be collected (i.e. 500)
-// 3. Press <Start>, the script will now wait and automatically start data collection once rotation is initiated
-// 4. Press <Stop> when data collection is finished. Data acquisition will halt automatically if the frame buffer is full
-// 5. Data are written to the file cRED_log.txt, use `instamatic.process cRED_log.txt` to write input files for XDS/REDp
-//
+/*
+insteaDMatic v0.1.0: Script to help continuous rotation data collection in DM
+
+Author: Stef Smeets (2018)
+URL: www.github.com/stefsmeets/instamatic
+
+Thanks to Bin Wang and Maria Roslova for helping with the testing, and Thomas Thersleff for discussions about DM and the idea of using the image clone function.
+The script is loosely based on an example by Dave Mitchell (http://www.dmscripting.com/example_running_a_thread_from_within_a_dialog.html)
+
+The script has been tested on a FEI themisZ with OneView camera and a JEOL 2100 with Orius Camera
+
+This script helps with automatic data collection of continuous rotation electron diffraction (CRED) data using DigitalMicrograph
+
+It uses the 'live view' of the camera as a source of data. Every time the frame is updated, DM fires off an event. 
+This scripts waits for this event and then clones the image. These data are equivalent to what can be obtained using the 'Record' function.
+Therefore, the settings of the image collection (exposure, resolution, binsize, etc.) are controlled through the right-side panel in DM, outside the script.
+
+The script allocates the memory for storing the images beforehand (defined by 'buffer size'), and therefore sets the maximum number of frames that can be collected.
+Data collection is interrupted when the buffer is full.
+
+When <Start> is pressed, the script will wait for rotation to start. When rotation passes the `angle activation threshold` (0.2 degrees), data collection is initiated.
+The rotation is controlled through an external script or by using the microscope tilt control.
+
+Press <Stop> to interrupt data collection. It is also possible to interrupt the data collection automatically if the sample stops moving.
+
+The work directory and experiment name define where the data are saved. The experiment number is updated automatically so that data are never overwritten.
+
+Use instamatic/scripts/process_dm.py to convert the data to formats compatible with XDS/PETS/REDp/DIALS 
+( www.github.com/stefsmeets/instamatic )
+
+Usage instructions:
+ 1.  Insert the camera in view mode (for Oneview, use 'In-situ Acquisition')."
+ 1a. Set the exposure (i.e. 0.3 s) and press 'View'."
+ 1b. For Oneview, set the diffraction mode for the acquisition (Click 'D')."
+ 1c. Set the binsize and other processing parameters."
+ 2.  Set the buffer size to the maximum number of frames to be collected (i.e. 1000)"
+ 3.  Press <Start>, the script will now wait and automatically start data collection"
+     once rotation is initiated."
+ 4.  Press <Stop> when data collection is finished."
+ 4a. Data acquisition will halt automatically if the frame buffer is full."
+ 4b. Data acquisition will halt if the stage stops rotating."
+ 5.  Data are stored to the <work_directory>/<sample_directory>_#"
+     use `python instamatic/scripts/process_fei.py cRED_log.txt` to for data conversion."
+
+*/
 
 string progname = "insteaDMatic v0.1.0"
 number true = 1, false = 0
 
 // Setup experiment variables
 number default_activation_threshold = 0.2   // change in angle to start rotation
-number default_buffersize = 100             // the maximum number of frames that will be collected, because memory must be reserved in advance
+number default_buffersize = 1000            // the maximum number of frames that will be collected, because memory must be reserved in advance
 number write_tiff_files = true              // write data to tiff format
 number show_buffer = false                  // show the buffer during data collection
 number keep_buffer_open = false             // open buffer / keep buffer open after data collection
-number stop_collection_automatically = true // Check the angle and stop data collection automatically, 
+number default_auto_stop = true // Check the angle and stop data collection automatically, 
                                             // only works with the higher exposure times (>0.3s tested)
 
 number verbose = false                      // Increase the verbosity, print some testing variables
@@ -82,6 +115,23 @@ string messagemap = "data_value_changed:DataValueChanged"
 object objListener = Alloc(ImageListener)
 
 
+// Enable these lines to test the script on an offline version of DM
+// Use `simulate_stream.s` to generate a dummy live view
+/*
+number EMGetStageAlpha()  Return (random() - 0.5) * 70
+number EMGetCameraLength()  Return 300
+number EMGetSpotSize()  Return 3
+number CameraGetActiveCameraID()  Return 0
+string CameraGetName(number camid)  Return "Camera"
+string EMGetMicroscopeName()  Return "TEM"
+void CameraGetSize(number camid, number cam_res_x, number cam_res_y){
+cam_res_x = 1024; cam_res_y = 1024; }
+void CameraGetPixelSize(number camid, number phys_pixelsize_x, number phys_pixelsize_y){
+phys_pixelsize_x = 0.015; phys_pixelsize_y = 0.015 ; }
+void EMWaitUntilReady()  sleep(5)
+*/
+
+
 Class Dialog_UI : UIFrame
 {
     void DialogEnabled(object self, number toggle)
@@ -139,6 +189,13 @@ Class Dialog_UI : UIFrame
     {
         self.LookUpElement("status").DLGTitle( message )
     }
+       
+    // Stop the data collection when the sample stage stopped moving
+    void stop_when_ready(object self)
+    {
+		EMWaitUntilReady()
+        loop = false
+    }
 
     void ExperimentTask( object self )
     // Main data collection task
@@ -162,6 +219,10 @@ Class Dialog_UI : UIFrame
 
         Print("Experiment directory: " + exp_drc)
 
+		number auto_stop
+		self.DLGGetValue("CheckAutoStop", auto_stop)
+		print("Automatically stop data collection: " + auto_stop)
+
         number nframes
         self.DLGGetValue("buffersize_field", nframes)
         Print("Buffersize: " + nframes)
@@ -170,8 +231,9 @@ Class Dialog_UI : UIFrame
         try  stream := GetFrontImage()        
         catch
         {
-            Print("Please open and select the live stream of the camera to start")
+            Print("Please open and select the live stream of the camera to start.")
             self.end_collection()
+            self.SetStatus("Please open live stream!")
             return
         }
         
@@ -187,7 +249,9 @@ Class Dialog_UI : UIFrame
         // prepare data stack, thrown an error if there is not enough memory
         try  buffer.ImageResize( 3, (right-left), (bottom-top), nframes )           
         catch {
-            OKDialog( "There is not enough memory, please reduce number of frames" )
+            OKDialog( "There is not enough memory, please reduce the buffer size or image size." )
+			self.end_collection()
+			self.SetStatus("Not enough memory!")
             return
         }
 
@@ -203,7 +267,7 @@ Class Dialog_UI : UIFrame
         number start_angle, angle_delta = 0
 
         number angle0 = EMGetStageAlpha()
-        Print("Angle0: " + angle0 + "(threshold: " + angle_activation_threshold + ")")
+        Print("Angle0: " + angle0 + " (threshold: " + angle_activation_threshold + ")")
 
         while ( angle_delta < angle_activation_threshold )
         {
@@ -219,7 +283,13 @@ Class Dialog_UI : UIFrame
         
 		number prev_angle = start_angle
 		number current_angle
-        
+		
+		if ( auto_stop )
+		// Interrupt the loop once the stage is ready
+		{
+		    self.startthread("stop_when_ready")
+		}
+		
         // Synchronize t_start / start_angle with the first frame
         WaitOnSignal( DataValueChangedEvent, EventTimeout, NULL )
         DataValueChangedEvent.resetSignal()
@@ -247,20 +317,6 @@ Class Dialog_UI : UIFrame
 			// increment frame number
        		i += 1
       
-			
-			if ( stop_collection_automatically )
-			// Check if the stage is still rotating
-				{
-				current_angle = EMGetStageAlpha()
-				// Print(prev_angle + " -> " + current_angle)
-				if ( current_angle - prev_angle == 0 )
-				{
-					loop = False
-					Print("Rotation has ended")
-				}
-				prev_angle = current_angle
-            }
-
             // Stop collection when buffer is full
             if ( i == nframes )
             {
@@ -403,7 +459,7 @@ Class Dialog_UI : UIFrame
         // Create a box for the i/o parameters             
     
         TagGroup io_box_items
-        TagGroup io_box = DLGCreateBox("Input/Output", io_box_items).DLGInternalPadding(12, 6).DLGFill("XY")
+        TagGroup io_box = DLGCreateBox("Input/Output", io_box_items).DLGFill("XY")
 
         // Work directory field
 
@@ -422,7 +478,7 @@ Class Dialog_UI : UIFrame
         // Buttons
 
         TagGroup open_button = DLGCreatePushButton("Open work directory", "open_directory_pressed").DLGWidth(button_width)
-        TagGroup browse_button = DLGCreatePushButton("Browse work directory", "browse_directory_pressed").DLGWidth(button_width)
+        TagGroup browse_button = DLGCreatePushButton("Select work directory..", "browse_directory_pressed").DLGWidth(button_width)
         TagGroup button_field = DLGGroupItems(open_button, browse_button).DLGTableLayout(2, 1, 0).DLGAnchor("East")
 
         TagGroup io_group = DLGGroupItems(work_drc_group, sample_name_group, button_field).DLGTableLayout(1, 3, 0)
@@ -432,26 +488,28 @@ Class Dialog_UI : UIFrame
         // Box for the CRED experiment
 
         TagGroup cred_box_items
-        TagGroup cred_box = DLGCreateBox("Continuous Rotation Electron Diffraction", cred_box_items).DLGInternalPadding(12, 6).DLGFill("XY")
+        TagGroup cred_box = DLGCreateBox("Continuous Rotation Electron Diffraction", cred_box_items).DLGFill("XY")
 
         TagGroup angle_activation
-        label = DLGCreateLabel("Angle activation threshold (deg):").DLGWidth(label_width)
+        label = DLGCreateLabel("Angle activation threshold (deg):").DLGWidth(label_width*2)
         angle_activation = DLGCreateRealField(default_activation_threshold).DLGIdentifier("angle_activation_field").DLGWidth(entry_width)
         TagGroup activation_threshold_group = DLGGroupItems(label, angle_activation).DLGTableLayout(2, 1, 0)
 
         TagGroup buffersize_field
-        label = DLGCreateLabel("Buffer size:").DLGWidth(label_width)
+        label = DLGCreateLabel("Buffer size:").DLGWidth(label_width*2)
         buffersize_field = DLGCreateIntegerField(default_buffersize).DLGIdentifier("buffersize_field").DLGWidth(entry_width)
         TagGroup buffersize_group = DLGGroupItems(label, buffersize_field).DLGTableLayout(2, 1, 0)
 
-        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group).DLGTableLayout(1, 3, 0).DLGAnchor("West")
+		TagGroup checkbox = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
+		
+        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, checkbox).DLGTableLayout(1, 3, 0).DLGAnchor("West")
         cred_box_items.DLGAddElement(cred_group)
         Dialog_UI.DLGAddElement(cred_box)
 
         // Experiment control box
 
         TagGroup control_box_items
-        TagGroup control_box = DLGCreateBox("Control", control_box_items).DLGInternalPadding(12, 6).DLGFill("XY")
+        TagGroup control_box = DLGCreateBox("Control", control_box_items).DLGFill("XY")
         TagGroup start_button = DLGCreatePushButton("Start", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
         TagGroup stop_button = DLGCreatePushButton("Stop", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
 		// self.SetElementIsEnabled("stop_button", false)
@@ -465,7 +523,7 @@ Class Dialog_UI : UIFrame
 		TagGroup progress_bar = DLGCreateProgressBar( "progress_bar" ).DLGFill("X")
         Dialog_UI.DLGAddElement(progress_bar)
         
-        taggroup footer = DLGCreateLabel("Usage instructions: Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod...").DLGExternalPadding(0, 2)
+        taggroup footer = DLGCreateLabel("Usage instructions: see the script source!")
         Dialog_UI.DLGAddElement(footer)
         return Dialog_UI
     }
