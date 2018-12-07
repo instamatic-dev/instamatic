@@ -21,7 +21,6 @@ NAME_TEMPLATE_OF_DATA_FRAMES= {data_drc}/0????.img   SMV
 DATA_RANGE=           {data_begin:d} {data_end:d}
 SPOT_RANGE=           {data_begin:d} {data_end:d}
 BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
-{exclude:s}
 
 ! ********** Crystal **********
 
@@ -35,8 +34,8 @@ FRIEDEL'S_LAW=TRUE            !TRUE is default
 STARTING_ANGLE= {starting_angle:0.4f}
 STARTING_FRAME= 1
 
-MAX_CELL_AXIS_ERROR=  0.05      !0.03 is default
-MAX_CELL_ANGLE_ERROR= 3.0       !2.0  is default
+MAX_CELL_AXIS_ERROR=  0.03      !0.03 is default
+MAX_CELL_ANGLE_ERROR= 2.0       !2.0  is default
 
 TEST_RESOLUTION_RANGE=10. 1.0 !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
 !MIN_RFL_Rmeas=50             !50 is default - used in the CORRECT step for identification of possible space groups.
@@ -49,18 +48,10 @@ QX={QX:.4f}  QY={QY:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
 TRUSTED_REGION= 0.0  1.05   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
 
-DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections
-X-GEO_CORR= XCORR.cbf  ! X stretch correction
-Y-GEO_CORR= YCORR.cbf  ! Y stretch correction
-
 SENSOR_THICKNESS=0.30
 AIR=0.0
 
 ! ********** Trusted detector region **********
-
-!Mark cross as untrusted region
-UNTRUSTED_RECTANGLE= 255 262 0 517
-UNTRUSTED_RECTANGLE= 0 517 255 262
 
 VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS= 10 30000 !Values are defined in `ABS.CBF`, check mask in `BKGPIX.CBF`, used in DEFPIX
 !MINIMUM_ZETA=                                    !0.05 is default
@@ -88,7 +79,6 @@ ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}           !Detector origin (pixels)
 DETECTOR_DISTANCE= {sign}{detector_distance:.2f}            !Can be negative. Positive because the detector normal points away from the crystal.
 
 OSCILLATION_RANGE= {osc_angle:.4f}
-!OSCILLATION_RANGE {calib_osc_angle:.4f}               !Calibrated value if above one is too far off
 
 ROTATION_AXIS= {rot_x:.4f} {rot_y:.4f} {rot_z:.4f}
 
