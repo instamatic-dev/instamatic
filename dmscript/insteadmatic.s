@@ -25,7 +25,9 @@ Press `<Stop>` to interrupt data collection. It is also possible to interrupt th
 
 The work directory and experiment name define where the data are saved. The experiment number is updated automatically so that data are never overwritten.
 
-Use instamatic/scripts/process_dm.py to convert the data to formats compatible with XDS/PETS/REDp/DIALS 
+Make sure to set up the rotation axis (defined as the angle between the horizontal and the position of the rotation axis). The variable is defined as `calibrated_rotation_angle` at the top of the script. It can be calculated using PETS.
+
+Use instamatic/scripts/process_dm.py to convert the data to formats compatible with XDS/DIALS/REDp/PETS
 (www.github.com/stefsmeets/instamatic)
 
 ### Usage instructions:
@@ -48,6 +50,10 @@ Use instamatic/scripts/process_dm.py to convert the data to formats compatible w
 
 string progname = "insteaDMatic v0.1.0"
 number true = 1, false = 0
+
+// Setup rotation axis (deg)
+// for themisZ/Oneview: -171.0; for 2100LaB6/Orius: 53.0; otherwise: 0.0
+number calibrated_rotation_axis = -171.0
 
 // Setup experiment variables
 number default_activation_threshold = 0.2   // change in angle to start rotation
@@ -131,6 +137,7 @@ cam_res_x = 1024; cam_res_y = 1024; }
 void CameraGetPixelSize(number camid, number phys_pixelsize_x, number phys_pixelsize_y){
 phys_pixelsize_x = 0.015; phys_pixelsize_y = 0.015 ; }
 void EMWaitUntilReady()  sleep(5)
+number EMGetHighTension()  Return 200000
 */
 
 
@@ -349,7 +356,7 @@ Class Dialog_UI : UIFrame
         number osc_angle = abs(end_angle - start_angle) / nframes
         number acquisition_time = total_time / nframes
         number total_angle = abs(end_angle - start_angle)
-        number rotation_axis = 0  // Must be calibrated
+        number rotation_axis = calibrated_rotation_axis
         string timestamp = FormatTimeString(GetCurrentTime(), 34)  // 34 -> magic number for dateformat
  
 		// Get pixelsize (calibration)
@@ -368,6 +375,9 @@ Class Dialog_UI : UIFrame
         string camera_name = CameraGetName(camid)
         string tem_name = EMGetMicroscopeName()
         
+        // Get the acceleration voltage (kV)
+        number high_tension = EMGetHighTension() / 1000
+
         // get camera resolution 
         number cam_res_x, cam_res_y 
         CameraGetSize(camid, cam_res_x, cam_res_y)
@@ -395,23 +405,24 @@ Class Dialog_UI : UIFrame
         log_message += "Program: " + progname + "\n"
         log_message += "Microscope: " + tem_name + "\n" 
         log_message += "Camera: " + camera_name + "\n" 
+        log_message += "High tension (kV): " + high_tension + "\n"
         log_message += "Data Collection Time: " + timestamp + "\n"
         log_message += "Time Period Start: " + format(t_start, "%f") + "\n"
         log_message += "Time Period End: " + format(t_end, "%f") + "\n"
-        log_message += "Starting angle: " + start_angle + "\n"
-        log_message += "Ending angle: " + end_angle +  "\n"
-        log_message += "Rotation range: " + (end_angle - start_angle) + "\n"
+        log_message += "Starting angle (deg): " + start_angle + "\n"
+        log_message += "Ending angle (deg): " + end_angle +  "\n"
+        log_message += "Rotation range (deg): " + (end_angle - start_angle) + "\n"
         log_message += "Exposure Time (s): " + exposure + "\n"
-        log_message += "Acquisition time: " + acquisition_time + "\n"
-        log_message += "Total time: " + total_time + "\n"
+        log_message += "Acquisition time (s): " + acquisition_time + "\n"
+        log_message += "Total time (s): " + total_time + "\n"
         log_message += "Spot Size: " + spot_size + "\n"
-        log_message += "Camera length: " + camera_length + "\n"
+        log_message += "Camera length (mm): " + camera_length + "\n"
         log_message += "Image pixelsize x/y (" + units_x + "): " + image_pixelsize_x + " " + image_pixelsize_y + "\n"
         log_message += "Image resolution x/y (px): " + image_res_x + " " + image_res_y + "\n"
         log_message += "Image physical pixelsize x/y (um): " + phys_pixelsize_x + " " + phys_pixelsize_y + "\n"
         log_message += "Camera binning x/y: " + binsize_x + " " + binsize_y + "\n"
-        log_message += "Rotation axis: " + rotation_axis + "\n"
-        log_message += "Oscillation angle: " + osc_angle + "\n"
+        log_message += "Rotation axis (deg): " + rotation_axis + "\n"
+        log_message += "Oscillation angle (deg): " + osc_angle + "\n"
         log_message += "Rotation speed (deg/s): " + rot_speed + "\n"
         log_message += "Number of frames: " + nframes + "\n"
  
