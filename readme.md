@@ -13,7 +13,7 @@ Some of the methods implemented in Instamatic are described in:
 TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
 Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
 
-A DM script for collecting cRED data on a OneView camera can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/scripts) directory.
+A DM script for collecting cRED data on a OneView camera can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
 
 ## Reference
 
@@ -372,13 +372,13 @@ Requirements can be installed via:
 
 ## Installation
 
-The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases. Extract the archive, and open a terminal by double-clicking `Cmder.exe`.
-
-Download the latest release from https://github.com/stefsmeets/instamatic/releases/latest
-
-    pip install -r requirements.txt
-    python setup.py install
+The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
 Alternatively, the latest development version can always be obtained via:
     
     https://github.com/stefsmeets/instamatic/archive/master.zip
+
+To install:
+
+    pip install -r requirements.txt
+    python setup.py install
