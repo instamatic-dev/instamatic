@@ -1,8 +1,8 @@
-microscope: simulate
+microscope: fei_themisZ
 camera: simulate
 calibration: simulate
 
-use_tem_server: True
+use_tem_server: False
 tem_server_host: 'localhost'
 tem_server_port: 8088
 

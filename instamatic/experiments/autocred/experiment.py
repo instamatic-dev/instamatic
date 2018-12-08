@@ -23,6 +23,7 @@ import traceback
 import socket
 import datetime
 import shutil
+from scipy import ndimage
 
 ACTIVATION_THRESHOLD = 0.2
 rotation_speed = 0.86
@@ -127,6 +128,7 @@ class Experiment(object):
         self.diff_defocus = diff_defocus
         self.image_interval = image_interval
         self.nom_ii = self.image_interval
+        self.robust_ii = 2
         self.exposure_time_image = exposure_time_image
         
         self.scan_area = scan_area
@@ -324,26 +326,28 @@ class Experiment(object):
                 return True
             else:
                 return False
-
             
-    def center_defocusedDP(self, img, transform_imgshift_):
-        is1_xi, is1_yi = self.ctrl.imageshift1.get()
+    def find_crystal_center(self, img_c, window_size, gauss_window = 4):
+        l = np.min(img_c)
+        h = np.max(img_c)
         
-        beam_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
-        beam_pos = beam_pos[::-1]
-        
-        displ = np.subtract((258,258), beam_pos)
-        delta_is = np.dot(displ, transform_imgshift_) ##Check if it should be plus or minus here.
-        
-        self.ctrl.imageshift1.set(x = is1_xi + int(delta_is[0]), y = is1_yi + int(delta_is[1]))
-        #input("Check if the defocused image is centered!!! If not, check +/- for displ, and swap delta_is x and y.")
-        
-        newimg, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
-        
-        self.ctrl.imageshift1.set(x = is1_xi, y = is1_yi)
-        
-        return newimg
+        sel = (img_c > l + 0.1*(h-l)) & (img_c < h - 0.4*(h-l))
+        blurred = ndimage.filters.gaussian_filter(sel.astype(float), gauss_window)
+        x, y = np.unravel_index(np.argmax(blurred, axis=None), blurred.shape)
+        return (y, x)
     
+    def find_crystal_center_fromhist(self, img, bins = 20, plot = False, gauss_window = 5):
+        h, b = np.histogram(img, bins)
+        sel = (img > b[1]) & (img < b[4])
+        
+        blurred = ndimage.filters.gaussian_filter(sel.astype(float), gauss_window)
+        x, y = np.unravel_index(np.argmax(blurred, axis=None), blurred.shape)
+        if plot:
+            plt.imshow(sel)
+            plt.scatter(y, x)
+            plt.show()
+        return (y, x)
+            
     def tracking_by_particlerecog(self, img, magnification = 2500, spread = 6, offset = 18):
         crystal_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
         crystal_pos = crystal_pos[::-1]
@@ -368,22 +372,43 @@ class Experiment(object):
     
         img_cropped = img[a1:b1,a2:b2]
         
-        crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread = spread, offset = offset)
+        #crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread = spread, offset = offset)
+        #crystalposition = self.find_crystal_center(img_cropped, window_size)
+        crystalposition = self.find_crystal_center_fromhist(img_cropped)
         center = (window_size/2, window_size/2)
         
-        if len(crystalpositions) == 1:
-            crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
-            shift = np.subtract(center, crystalxy)
-        elif len(crystalpositions) > 1:
-            areas = [crystal.area_pixel for crystal in crystalpositions]
-            idx = areas.index(max(areas))
-            crystalxy = (crystalpositions[idx].x, crystalpositions[idx].y)
-            shift = np.subtract(center, crystalxy)
-        else:
-            print("Crystal lost.")
-            shift = np.array((512, 512))
+        #if len(crystalpositions) == 1:
+            #crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
+        shift = np.subtract(center, crystalposition)
+        #elif len(crystalpositions) > 1:
+        #    areas = [crystal.area_pixel for crystal in crystalpositions]
+        #    idx = areas.index(max(areas))
+        #    crystalxy = (crystalpositions[idx].x, crystalpositions[idx].y)
+        #    shift = np.subtract(center, crystalxy)
+        ##else:
+        #    print("Crystal lost.")
+        #    shift = np.array((512, 512))
         
-        return tuple(shift)
+        return tuple(shift[::-1])
+    
+    def setandupdate_bs(self, bs_x0, bs_y0, delta_beamshiftcoord1):
+        self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord1[0], bs_y0 + delta_beamshiftcoord1[1])
+        bs_x0 = bs_x0 + delta_beamshiftcoord1[0]
+        bs_y0 = bs_y0 + delta_beamshiftcoord1[1]
+        return bs_x0, bs_y0
+    
+    def defocus_and_image(self, difffocus, exp_t):
+        diff_focus_proper = self.ctrl.difffocus.value
+        diff_focus_defocused = diff_focus_proper + difffocus
+        self.ctrl.difffocus.value = diff_focus_defocused
+        
+        img0, h = self.ctrl.getImage(exp_t, header_keys=None)
+        self.ctrl.difffocus.value = diff_focus_proper
+        return img0, h
+    
+    def print_and_log(self, logger, msg):
+        print(msg)
+        logger.debug(msg)
 
     def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, calib_beamshift):
         
@@ -446,45 +471,32 @@ class Experiment(object):
             self.logger.debug("Initial Beamshift: {}, {}".format(bs_x0, bs_y0))
             self.logger.debug("Initial Imageshift1: {}, {}".format(is_x0, is_y0))
             self.logger.debug("Initial Imageshift2: {}, {}".format(is2_x0, is2_y0))
-            
+
             diff_focus_proper = self.ctrl.difffocus.value
-            diff_focus_defocused = diff_focus_proper + self.diff_defocus 
-            self.ctrl.difffocus.value = diff_focus_defocused
-            
-            img0, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
-            self.ctrl.difffocus.value = diff_focus_proper
+            diff_focus_defocused = diff_focus_proper + self.diff_defocus
+
+            img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
                 
             if trackmethod == "p":
                 shift = self.tracking_by_particlerecog(img0)
                 delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
-                #print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                 self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-                self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                bs_y0 = bs_y0 + delta_beamshiftcoord[1]
-                #input("Check......")
-            
-                diff_focus_proper = self.ctrl.difffocus.value
-                diff_focus_defocused = diff_focus_proper + self.diff_defocus 
-                self.ctrl.difffocus.value = diff_focus_defocused
                 
-                img0, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
-                self.ctrl.difffocus.value = diff_focus_proper
+                bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
+            
+                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
 
             img0_p = preprocess(img0.astype(np.float))
             scorefromCNN = predict(img0_p)
-            print("Score for the DP: {}".format(scorefromCNN))
-            self.logger.debug("Score for the DP: {}".format(scorefromCNN))
+            self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
 
             crystal_pos, img0_cropped, window_size = self.image_cropper(img = img0, window_size = 0)
             img0var = self.img_var(img0_cropped, crystal_pos)
-            #print("variance of image0: {}".format(img0var))
             appos0 = crystal_pos
             
             self.logger.debug("Tracking method: {}. Initial crystal_pos: {} by find_defocused_image_center.".format(trackmethod, crystal_pos))
 
         if self.unblank_beam:
-            #print("Unblanking beam")
             self.ctrl.beamblank = False
             
         if self.mode > 1:
@@ -530,20 +542,17 @@ class Experiment(object):
         while not self.stopEvent.is_set():
             try:
                 if i < self.nom_ii:
-                    self.image_interval = 3
+                    self.image_interval = self.robust_ii
                     numb_robustTrack += 1
                 else:
                     self.image_interval = self.nom_ii
 
-                    """If variance changed over 20%, do a constant check to ensure crystal is back"""
+                    """If variance changed over 20%, do a robust check to ensure crystal is back"""
 
                     if imgvar/img0var < 0.5 or imgvar/img0var > 2 or imgscale/imgscale0 > 1.15 or imgscale/imgscale0 < 0.85:
-                        #print("About to move out, applying robust tracking by setting img interval to 2!")
-                        self.image_interval = 3
+                        self.image_interval = self.robust_ii
                         numb_robustTrack += 1
-                        #print(numb_robustTrack)
                     else:
-                        #print(imgvar/img0var)
                         self.image_interval = self.nom_ii
                         numb_robustTrack = 0
 
@@ -555,29 +564,23 @@ class Experiment(object):
 
                 if i % self.image_interval == 0: ## aim to make this more dynamically adapted...
                     t_start = time.perf_counter()
-                    #acquisition_time = (t_start - t0) / (i-1)
                     
                     """Guessing the next particle position by simply apply the same beamshift change as previous"""
                     if self.guess_crystmove and i >= self.nom_ii:
-                        self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                        bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                        bs_y0 = bs_y0 + delta_beamshiftcoord[1]
+                        bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
     
                     self.ctrl.difffocus.value = diff_focus_defocused
                     img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
-                    #newimg = self.center_defocusedDP(img, transform_imgshift_)
-                    #newimg = apply_flatfield_correction(newimg, self.flatfield)
-                    #newimg = img
                     self.ctrl.difffocus.value = diff_focus_proper
     
                     image_buffer.append((i, img, h))
 
                     crystal_pos, img_cropped, _ = self.image_cropper(img = img, window_size = window_size)
-                    #crystal_pos_, img_cropped, _ = self.image_cropper(img = newimg, window_size = window_size)
+
                     self.logger.debug("crystal_pos: {} by find_defocused_image_center.".format(crystal_pos))
+                    
                     imgvar = self.img_var(img_cropped, crystal_pos)
-                    #print("variance of image: {}".format(imgvar))
-                    #print(imgvar)
+
                     self.logger.debug("Image variance: {}".format(imgvar))
                     
                     """If variance changed over 50%, then the crystal is outside the beam and stop data collection"""
@@ -588,7 +591,7 @@ class Experiment(object):
                     if imgvar < imgvar_threshold:
                         print("Image variance smaller than blank image.")
                         self.stopEvent.set()
-                        
+                    
                     if trackmethod == "c":
                         
                         cc,err,diffphase = register_translation(img0_cropped,img_cropped)
@@ -598,29 +601,23 @@ class Experiment(object):
                             delta_beamshiftcoord1 = np.matmul(self.calib_beamshift.transform, cc)
                             #print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                             self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord1))
-                            self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord1[0], bs_y0 + delta_beamshiftcoord1[1])
-                            bs_x0 = bs_x0 + delta_beamshiftcoord1[0]
-                            bs_y0 = bs_y0 + delta_beamshiftcoord1[1]
+                            bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord1)
+                            
                             delta_beamshiftcoord = delta_beamshiftcoord1 + delta_beamshiftcoord
                             
                         else:
                             delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
                             #print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                             self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-                            self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                            bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                            bs_y0 = bs_y0 + delta_beamshiftcoord[1]
+                            bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
                             
                     elif trackmethod == "p":
                         
                         shift = self.tracking_by_particlerecog(img)
-                        #print(shift)
                         delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
                         self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                         
-                        self.ctrl.beamshift.set(bs_x0 + delta_beamshiftcoord[0], bs_y0 + delta_beamshiftcoord[1])
-                        bs_x0 = bs_x0 + delta_beamshiftcoord[0]
-                        bs_y0 = bs_y0 + delta_beamshiftcoord[1]
+                        bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
                         
                         if shift[0] == 512:
                             self.stopEvent.set()
@@ -652,10 +649,6 @@ class Experiment(object):
                     is_y0 = is_y0 - int(delta_imageshiftcoord[1])
                     is2_x0 = is2_x0 - int(delta_imageshift2coord[0])
                     is2_y0 = is2_y0 - int(delta_imageshift2coord[1])
-
-                    #self.ctrl.difffocus.value = diff_focus_defocused
-                    #img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
-                    #self.ctrl.difffocus.value = diff_focus_proper
                     
                     if self.check_lens_close_to_limit_warning(lensname="imageshift1", lensvalue=is_x0) or self.check_lens_close_to_limit_warning(lensname="imageshift1", lensvalue=is_y0) or self.check_lens_close_to_limit_warning(lensname="imageshift2", lensvalue=is2_x0) or self.check_lens_close_to_limit_warning(lensname="imageshift2", lensvalue=is2_y0):
                         self.logger.debug("Imageshift close to limit warning: is_x0 = {}, is_y0 = {}, is2_x0 = {}, is2_y0 = {}".format(is_x0, is_y0, is2_x0, is2_y0))
@@ -664,10 +657,9 @@ class Experiment(object):
                     self.logger.debug("Image Interval: {}, Imgvar/Img0var:{}".format(self.image_interval, imgvar/img0var))
 
                     next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-                    #t = time.perf_counter()
 
                     while time.perf_counter() > next_interval:
+                        self.logger.debug("Skipping one image.")
                         next_interval += acquisition_time
                         i += 1
 
@@ -681,15 +673,11 @@ class Experiment(object):
                         imgscale0 = np.sum(img)
                     else:
                         imgscale = np.sum(img)
-                        #if imgscale/imgscale0 < 0.85 or imgscale/imgscale0 > 1.15:
-                            #print("Particle may be moving out!")
                         self.logger.debug("Image scale variation: {}".format(imgscale/imgscale0))
 
                     buffer.append((i, img, h))
                     
                     next_interval = t_start + acquisition_time
-                    # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
-                    #t = time.perf_counter()
 
                     while time.perf_counter() > next_interval:
                         next_interval += acquisition_time
@@ -697,7 +685,6 @@ class Experiment(object):
                         i += 1
 
                     diff = next_interval - time.perf_counter()
-                    #print("Sleeping for {} s.".format(diff))
                     time.sleep(diff)
     
                 i += 1

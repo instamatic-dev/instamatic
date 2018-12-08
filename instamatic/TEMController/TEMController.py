@@ -254,8 +254,18 @@ class ImageShift2(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift2
         self._getter = self._tem.getImageShift2
-        self.key = "IS1"
+        self.key = "IS2"
    
+class HTValue(object):
+    """get HT value"""
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self._getter = self._tem.getHTValue
+        self.key = "HT"
+        
+    def get(self):
+        return self._getter()
 
 class StagePosition(object):
     """StagePosition control"""
@@ -276,7 +286,14 @@ class StagePosition(object):
     def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
         """wait: bool, block until stage movement is complete"""
         self._setter(x, y, z, a, b, wait=wait)
-
+        
+    def setfei(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0):
+        """wait: bool, block until stage movement is complete"""
+        self._setter(x, y, z, a, b, wait=wait, speed = speed)
+        
+    def setspeed(self, speed = 1):
+        self._tem.setStageSpeed(value = 1)
+        
     def get(self) -> Tuple[int, int, int, int, int]:
         return self._getter()
 
@@ -401,6 +418,7 @@ class TEMController(object):
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
+        self.HTValue = HTValue(tem)
 
         self.autoblank = False
         self._saved_settings = {}
