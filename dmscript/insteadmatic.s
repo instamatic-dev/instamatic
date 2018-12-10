@@ -63,6 +63,7 @@ number show_buffer = false                  // show the buffer during data colle
 number keep_buffer_open = false             // open buffer / keep buffer open after data collection
 number default_auto_stop = true // Check the angle and stop data collection automatically, 
                                             // only works with the higher exposure times (>0.3s tested)
+number default_auto_blank = false           // Automatically blank the beam after data collection
 
 number verbose = false                      // Increase the verbosity, print some testing variables
 
@@ -72,6 +73,7 @@ number top, left, bottom, right  // image selection (top, left, bottom, right)
 image stream, buffer
 number loop = false
 number EventTimeout = 1.0
+number check_angle_interval = 0.3  // If auto stop is enabled, check the angle every # s
 
 
 // Get date formatted as yyyy-mm-dd
@@ -138,6 +140,8 @@ void CameraGetPixelSize(number camid, number phys_pixelsize_x, number phys_pixel
 phys_pixelsize_x = 0.015; phys_pixelsize_y = 0.015 ; }
 void EMWaitUntilReady()  sleep(5)
 number EMGetHighTension()  Return 200000
+number EMHasBeamBlanker()  Return true
+void EMSetBeamBlanked( number toggle )  toggle
 */
 
 
@@ -173,6 +177,16 @@ Class Dialog_UI : UIFrame
     void end_collection(object self)
     {
         self.DialogEnabled(true)
+
+        number auto_blank
+        self.DLGGetValue("CheckAutoBlank", auto_blank)
+
+        // Automatically blank beam after data collection
+        if ( auto_blank && EMHasBeamBlanker() )
+        {
+            print("Blanking beam")
+            EMSetBeamBlanked( true )
+        }
     }
 
     void open_directory_pressed(object self)
@@ -192,7 +206,7 @@ Class Dialog_UI : UIFrame
         Print("Directory:" + directory)
         self.DLGValue("work_drc_field", directory)
     }
-	
+    
     // Set simple status message
     void SetStatus( object self, string message )
     {
@@ -200,16 +214,17 @@ Class Dialog_UI : UIFrame
     }
        
     // Stop the data collection when the sample stage stopped moving
+    // This works well if started in a separate thread, but it hangs the GUI
     void stop_when_ready(object self)
     {
-		EMWaitUntilReady()
+        EMWaitUntilReady()
         loop = false
     }
 
     void ExperimentTask( object self )
     // Main data collection task
     {
-		self.SetStatus( "Preparing" )
+        self.SetStatus( "Preparing" )
         // Setup directory structure
         number sample_number = 1
         string sample_name, work_drc
@@ -228,9 +243,9 @@ Class Dialog_UI : UIFrame
 
         Print("Experiment directory: " + exp_drc)
 
-		number auto_stop
-		self.DLGGetValue("CheckAutoStop", auto_stop)
-		print("Automatically stop data collection: " + auto_stop)
+        number auto_stop
+        self.DLGGetValue("CheckAutoStop", auto_stop)
+        print("Automatically stop data collection: " + auto_stop)
 
         number nframes
         self.DLGGetValue("buffersize_field", nframes)
@@ -259,8 +274,8 @@ Class Dialog_UI : UIFrame
         try  buffer.ImageResize( 3, (right-left), (bottom-top), nframes )           
         catch {
             OKDialog( "There is not enough memory, please reduce the buffer size or image size." )
-			self.end_collection()
-			self.SetStatus("Not enough memory!")
+            self.end_collection()
+            self.SetStatus("Not enough memory!")
             return
         }
 
@@ -283,22 +298,17 @@ Class Dialog_UI : UIFrame
             sleep(0.1)  // sleep to prevent request spam (can cause dm to crash)
             start_angle = EMGetStageAlpha()
             angle_delta = abs(start_angle - angle0)
-			self.SetStatus("Waiting (delta = " + angle_delta + ")")
+            self.SetStatus("Waiting (delta = " + angle_delta + ")")
         }
 
         number i = 0
         number t0, t1, delta
         number average
         
-		number prev_angle = start_angle
-		number current_angle
-		
-		if ( auto_stop )
-		// Interrupt the loop once the stage is ready
-		{
-		    self.startthread("stop_when_ready")
-		}
-		
+        number prev_angle = start_angle
+        number current_angle
+        number sum_delta = 0
+              
         // Synchronize t_start / start_angle with the first frame
         WaitOnSignal( DataValueChangedEvent, EventTimeout, NULL )
         DataValueChangedEvent.resetSignal()
@@ -323,9 +333,30 @@ Class Dialog_UI : UIFrame
             t1 = GetHighResTickCount()
             delta = CalcHighResSecondsBetween(t0, t1)
       
-			// increment frame number
-       		i += 1
-      
+            // increment frame number
+            i += 1
+
+            if ( auto_stop )
+            // Check if the stage is still rotating
+            {
+                if ( sum_delta > check_angle_interval )
+                {
+                    current_angle = EMGetStageAlpha()
+                    // Print(prev_angle + " -> " + current_angle)
+                    if ( current_angle - prev_angle == 0 )
+                    {
+                        loop = False
+                        Print("Rotation has ended")
+                    }
+                    prev_angle = current_angle
+                    sum_delta = 0
+                }
+                else
+                {
+                    sum_delta += delta
+                }
+            }
+
             // Stop collection when buffer is full
             if ( i == nframes )
             {
@@ -333,7 +364,7 @@ Class Dialog_UI : UIFrame
                 loop = false
             }
 
-			self.DLGSetProgress( "progress_bar", i/nframes )
+            self.DLGSetProgress( "progress_bar", i/nframes )
             self.SetStatus( "Collecting frame " + i )
         }
 
@@ -359,16 +390,16 @@ Class Dialog_UI : UIFrame
         number rotation_axis = calibrated_rotation_axis
         string timestamp = FormatTimeString(GetCurrentTime(), 34)  // 34 -> magic number for dateformat
  
-		// Get pixelsize (calibration)
-		number xdim = 0, ydim = 1
-		number image_pixelsize_x = ImageGetDimensionScale(stream, xdim)
-		number image_pixelsize_y = ImageGetDimensionScale(stream, ydim)
+        // Get pixelsize (calibration)
+        number xdim = 0, ydim = 1
+        number image_pixelsize_x = ImageGetDimensionScale(stream, xdim)
+        number image_pixelsize_y = ImageGetDimensionScale(stream, ydim)
         string units_x = ImageGetDimensionUnitString(stream, xdim)
-		string units_y = ImageGetDimensionUnitString(stream, xdim)
+        string units_y = ImageGetDimensionUnitString(stream, xdim)
 
         // get image resolution
         number image_res_x = right - left
-		number image_res_y = bottom - top
+        number image_res_y = bottom - top
 
         // get camera and tem name
         number camid = CameraGetActiveCameraID()
@@ -397,8 +428,8 @@ Class Dialog_UI : UIFrame
         number exposure
         tg.TagGroupGetTagAsNumber("Acquisition:Parameters:High Level:Exposure (s)", exposure)
 
-		// calculate rotation speed
-		number rot_speed = osc_angle / acquisition_time
+        // calculate rotation speed
+        number rot_speed = osc_angle / acquisition_time
 
         // Construct log message
         string log_message = ""
@@ -513,9 +544,10 @@ Class Dialog_UI : UIFrame
         buffersize_field = DLGCreateIntegerField(default_buffersize).DLGIdentifier("buffersize_field").DLGWidth(entry_width)
         TagGroup buffersize_group = DLGGroupItems(label, buffersize_field).DLGTableLayout(2, 1, 0)
 
-		TagGroup checkbox = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
-		
-        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, checkbox).DLGTableLayout(1, 3, 0).DLGAnchor("West")
+        TagGroup autostop_check = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
+        TagGroup autoblank_check = DLGCreateCheckBox("Blank the beam after data collection", default_auto_blank).DLGIdentifier("CheckAutoBlank").DLGAnchor("West")
+        
+        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, autostop_check, autoblank_check).DLGTableLayout(1, 4, 0).DLGAnchor("West")
         cred_box_items.DLGAddElement(cred_group)
         Dialog_UI.DLGAddElement(cred_box)
 
@@ -525,15 +557,15 @@ Class Dialog_UI : UIFrame
         TagGroup control_box = DLGCreateBox("Control", control_box_items).DLGFill("XY")
         TagGroup start_button = DLGCreatePushButton("Start", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
         TagGroup stop_button = DLGCreatePushButton("Stop", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
-		// self.SetElementIsEnabled("stop_button", false)
+        // self.SetElementIsEnabled("stop_button", false)
         
-		// Create the button box and contents
+        // Create the button box and contents
         label = DLGCreateLabel("Ready...").DLGWidth(label_width*2).DLGIdentifier("status")
         taggroup controlgroup = DLGGroupItems(start_button, stop_button, label).DLGTableLayout(3, 1, 0).DLGAnchor("West").DLGExpand("X")
         control_box_items.DLGAddElement(controlgroup)
         Dialog_UI.DLGAddElement(control_box)
         
-		TagGroup progress_bar = DLGCreateProgressBar( "progress_bar" ).DLGFill("X")
+        TagGroup progress_bar = DLGCreateProgressBar( "progress_bar" ).DLGFill("X")
         Dialog_UI.DLGAddElement(progress_bar)
         
         taggroup footer = DLGCreateLabel("Usage instructions: see the script source!")
