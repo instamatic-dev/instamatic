@@ -10,6 +10,8 @@ The script has been tested on a FEI themisZ with OneView camera and a JEOL 2100 
 
 This script helps with automatic data collection of continuous rotation electron diffraction (CRED) data using DigitalMicrograph.
 
+![Image of script](docs/dm_script.png)
+
 It uses the 'live view' of the camera as a source of data. Every time the frame is updated, DM fires off an event. 
 This scripts waits for this event and then clones the image. These data are equivalent to what can be obtained using the 'Record' function.
 Therefore, the settings of the image collection (exposure, resolution, binsize, etc.) are controlled through the right-side panel in DM, outside the script.
@@ -20,7 +22,7 @@ Data collection is interrupted when the buffer is full.
 When `<Start>` is pressed, the script will wait for rotation to start. When rotation passes the `angle activation threshold` (0.2 degrees), data collection is initiated.
 The rotation is controlled through an external script or by using the microscope tilt control.
 
-Press `<Stop>` to interrupt data collection. It is also possible to interrupt the data collection automatically if the sample stops moving.
+Press `<Stop>` to interrupt data collection. It is also possible to interrupt the data collection automatically if the sample stops moving. This is done by enabling the checkbox. The script will check the current angle every `0.3` seconds (tuneable), and will interrupt the data collection if the difference equals `0`. After data collection is finished, the beam can be blanked automatically by checking the box.
 
 The work directory and experiment name define where the data are saved. The experiment number is updated automatically so that data are never overwritten.
 
@@ -43,4 +45,4 @@ Use instamatic/scripts/process_dm.py to convert the data to formats compatible w
 5. Data are stored to the `<work_directory>/<sample_directory>_#`
    - Experiment meta data are stored in the `cRED_log.txt` file
    - Images are stored in `.tiff` format in the `tiff` subdirectory
-   - use `python instamatic/scripts/process_fei.py cRED_log.txt` to for data conversion
+   - use `python instamatic/scripts/process_dm.py cRED_log.txt` to for data conversion
