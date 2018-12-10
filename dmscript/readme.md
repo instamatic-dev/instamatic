@@ -10,7 +10,7 @@ The script has been tested on a FEI themisZ with OneView camera and a JEOL 2100 
 
 This script helps with automatic data collection of continuous rotation electron diffraction (CRED) data using DigitalMicrograph.
 
-![Image of script](docs/dm_script.png)
+![Image of script](../docs/DMscript.PNG)
 
 It uses the 'live view' of the camera as a source of data. Every time the frame is updated, DM fires off an event. 
 This scripts waits for this event and then clones the image. These data are equivalent to what can be obtained using the 'Record' function.
