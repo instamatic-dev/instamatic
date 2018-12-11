@@ -125,9 +125,10 @@ string messagemap = "data_value_changed:DataValueChanged"
 object objListener = Alloc(ImageListener)
 
 
-// Enable these lines to test the script on an offline version of DM
+// Uncomment these lines to test the script on an offline version of DM
+// This will mimic the microscope API
 // Use `simulate_stream.s` to generate a dummy live view
-///*
+/*
 number EMGetStageAlpha()  Return (random() - 0.5) * 70
 number EMGetCameraLength()  Return 300
 number EMGetSpotSize()  Return 3
@@ -142,8 +143,13 @@ void EMWaitUntilReady()  sleep(5)
 number EMGetHighTension()  Return 200000
 number EMHasBeamBlanker()  Return true
 void EMSetBeamBlanked( number toggle )  toggle
-//*/
+*/
 
+// If the beam blank api is not available (i.e. on Orius), uncomment these lines:
+/*
+number EMHasBeamBlanker()  Return false
+void EMSetBeamBlanked( number toggle )  toggle
+*/
 
 Class Dialog_UI : UIFrame
 {

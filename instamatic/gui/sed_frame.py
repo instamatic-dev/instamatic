@@ -180,7 +180,7 @@ def acquire_data_SED(controller, **kwargs):
 
     scan_radius = kwargs["scan_radius"]
 
-    controller.stream.get_module("sed").calib_path = expdir / "calib"
+    controller.app.get_module("sed").calib_path = expdir / "calib"
 
     exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log, 
         scan_radius=scan_radius, begin_here=True)
