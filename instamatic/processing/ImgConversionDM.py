@@ -111,7 +111,7 @@ class ImgConversionDM(ImgConversion):
         
     def write_xds_inp(self, path: str) -> None:
         """Write XDS.INP input file for XDS in directory `path`"""
-        from .XDS_template_dm import XDS_template
+        from .XDS_templateDM import XDS_template
 
         path.mkdir(exist_ok=True)
 

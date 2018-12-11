@@ -1,3 +1,4 @@
+/*
 ### insteaDMatic v0.1.0: a DM-Script to collect continuous rotation electron diffraction data
 
 Author: Stef Smeets (2018)  
@@ -60,7 +61,7 @@ number default_buffersize = 1000            // the maximum number of frames that
 number write_tiff_files = true              // write data to tiff format
 number show_buffer = false                  // show the buffer during data collection
 number keep_buffer_open = false             // open buffer / keep buffer open after data collection
-number default_auto_stop = true // Check the angle and stop data collection automatically, 
+number default_auto_stop = true             // Check the angle and stop data collection automatically, 
                                             // only works with the higher exposure times (>0.3s tested)
 number default_auto_blank = false           // Automatically blank the beam after data collection
 
@@ -110,7 +111,7 @@ Class ImageListener
 {
     Void DataValueChanged(object self, number e_fl, image img)
     {   
-        if ( false )
+        if ( verbose )
         {
             string event_desc
             ImageGetEventMap().DeconstructEventFlags( e_fl, event_desc )
@@ -126,7 +127,7 @@ object objListener = Alloc(ImageListener)
 
 // Enable these lines to test the script on an offline version of DM
 // Use `simulate_stream.s` to generate a dummy live view
-/*
+///*
 number EMGetStageAlpha()  Return (random() - 0.5) * 70
 number EMGetCameraLength()  Return 300
 number EMGetSpotSize()  Return 3
@@ -141,7 +142,7 @@ void EMWaitUntilReady()  sleep(5)
 number EMGetHighTension()  Return 200000
 number EMHasBeamBlanker()  Return true
 void EMSetBeamBlanked( number toggle )  toggle
-*/
+//*/
 
 
 Class Dialog_UI : UIFrame
@@ -263,10 +264,10 @@ Class Dialog_UI : UIFrame
         stream.GetSelection( top, left, bottom, right )
 
         // Attach data value changed event to live stream
-        number ListenerID = stream.ImageAddEventListener( objListener, messagemap)
+        number ListenerID = stream.ImageAddEventListener( objListener, messagemap )
 
         // clone selected portion (if any), this takes care of image data type and image calibration
-        buffer := stream[].ImageClone()  
+        buffer := stream[].ImageClone()
         buffer.SetName( "Electron Diffraction Data (" + stream.GetName() + ")" )
 
         // prepare data stack, thrown an error if there is not enough memory
