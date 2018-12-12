@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1217026.svg)](https://doi.org/10.5281/zenodo.1217026)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2026774.svg)](https://doi.org/10.5281/zenodo.2026774)
 
 # Instamatic
 
@@ -19,7 +19,7 @@ A DM script for collecting cRED data on a OneView camera can be found in the [dm
 
 If you find this software useful, please consider citing one of the references above and/or refer to the source code in your publications:
 
-- Stef Smeets, Bin Wang, Magdalena O. Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
+- Stef Smeets, Bin Wang, Magdalena O. Cichocka, Jonas Ångström, & Wei Wan. (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
 
 ## Usage
 
