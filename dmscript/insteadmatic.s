@@ -27,7 +27,7 @@ The work directory and experiment name define where the data are saved. The expe
 
 Make sure to set up the rotation axis (defined as the angle between the horizontal and the position of the rotation axis). The variable is defined as `calibrated_rotation_angle` at the top of the script. It can be calculated using PETS.
 
-Use instamatic/scripts/process_dm.py to convert the data to formats compatible with XDS/DIALS/REDp/PETS
+Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible with XDS/DIALS/REDp/PETS
 (www.github.com/stefsmeets/instamatic)
 
 ### Usage instructions:
@@ -334,7 +334,8 @@ Class Dialog_UI : UIFrame
             DataValueChangedEvent.resetSignal()
             
             // After live view has been updated, copy frame to buffer
-            buffer[ icol, irow, i ] = stream[top, left, bottom, right]
+            // buffer[ icol, irow, i ] = stream[top, left, bottom, right]  // slow
+            slice2(buffer, 0, 0, i, 0, xsize, 1, 1, ysize, 1) = stream  // fast
             
             t1 = GetHighResTickCount()
             delta = CalcHighResSecondsBetween(t0, t1)
@@ -507,26 +508,22 @@ Class Dialog_UI : UIFrame
         TagGroup Dialog_UI = DLGCreateDialog("insteadmatic")
         
         // Create a box for the i/o parameters             
-    
         TagGroup io_box_items
         TagGroup io_box = DLGCreateBox("Input/Output", io_box_items).DLGFill("XY")
 
         // Work directory field
-
         TagGroup work_drc_field
         label = DLGCreateLabel("Work directory:").DLGWidth(label_width)
         work_drc_field = DLGCreateStringField(default_work_drc).DLGIdentifier("work_drc_field").DLGWidth(entry_width*4)
         TagGroup work_drc_group = DLGGroupItems(label, work_drc_field).DLGTableLayout(2, 1, 0)
         
         // Sample name field
-
         TagGroup sample_name_field
         label = DLGCreateLabel("Experiment name:").DLGWidth(label_width)
         sample_name_field = DLGCreateStringField(default_sample_name).DLGIdentifier("sample_name_field").DLGWidth(entry_width*4)
         TagGroup sample_name_group = DLGGroupItems(label, sample_name_field).DLGTableLayout(2, 1, 0)
 
         // Buttons
-
         TagGroup open_button = DLGCreatePushButton("Open work directory", "open_directory_pressed").DLGWidth(button_width)
         TagGroup browse_button = DLGCreatePushButton("Select work directory..", "browse_directory_pressed").DLGWidth(button_width)
         TagGroup button_field = DLGGroupItems(open_button, browse_button).DLGTableLayout(2, 1, 0).DLGAnchor("East")
@@ -536,7 +533,6 @@ Class Dialog_UI : UIFrame
         Dialog_UI.DLGAddElement(io_box)
 
         // Box for the CRED experiment
-
         TagGroup cred_box_items
         TagGroup cred_box = DLGCreateBox("Continuous Rotation Electron Diffraction", cred_box_items).DLGFill("XY")
 
@@ -558,12 +554,10 @@ Class Dialog_UI : UIFrame
         Dialog_UI.DLGAddElement(cred_box)
 
         // Experiment control box
-
         TagGroup control_box_items
         TagGroup control_box = DLGCreateBox("Control", control_box_items).DLGFill("XY")
         TagGroup start_button = DLGCreatePushButton("Start", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
         TagGroup stop_button = DLGCreatePushButton("Stop", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
-        // self.SetElementIsEnabled("stop_button", false)
         
         // Create the button box and contents
         label = DLGCreateLabel("Ready...").DLGWidth(label_width*2).DLGIdentifier("status")
@@ -580,7 +574,6 @@ Class Dialog_UI : UIFrame
     }
 
     // default object constructor
-    
     Dialog_UI( object self )
     {
         loop = false
@@ -590,7 +583,6 @@ Class Dialog_UI : UIFrame
     }
 
     // default object destructor
-    
     ~Dialog_UI( object self )
     {
         number dialogID = self.ScriptObjectGetID()
@@ -598,7 +590,6 @@ Class Dialog_UI : UIFrame
     }
 
     // If the dialog is closed, the thread is stopped
-
     void abouttoclosedocument(object self)
     {
         if ( loop ) 
@@ -609,8 +600,8 @@ Class Dialog_UI : UIFrame
     }
 }
 
-// Contain the main script as a function. This will ensure all script objects are destructed properly
 
+// Contain the main script as a function. This will ensure all script objects are destructed properly
 void main()
     {
         // Create the dialog

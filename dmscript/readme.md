@@ -28,7 +28,7 @@ The work directory and experiment name define where the data are saved. The expe
 
 Make sure to set up the rotation axis (defined as the angle between the horizontal and the position of the rotation axis). The variable is defined as `calibrated_rotation_angle` at the top of the script. It can be calculated using PETS.
 
-Use instamatic/scripts/process_dm.py to convert the data to formats compatible with XDS/DIALS/REDp/PETS
+Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible with XDS/DIALS/REDp/PETS
 (www.github.com/stefsmeets/instamatic)
 
 ### Usage instructions:

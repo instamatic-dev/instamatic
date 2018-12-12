@@ -80,31 +80,24 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
 
     # convert from 1/nm to 1/angstrom
     pixelsize = pixelsize[0] * 10
-
-    # for the themisZ/Oneview
-    if camera == "OneView":
-        # the calibration seems to be off by a factor of 2*sqrt(2)...
-        # TODO: verify or calibrate, this correction factor works @ 540 mm camera length 
-        calibration_correction_factor = 2*2**0.5
-        pixelsize = pixelsize / calibration_correction_factor
     
     # rotation axis
     # for themisZ/Oneview: -171.0; for 2100LaB6/Orius: 53.0; otherwise: 0.0
     rotation_axis = np.radians(rotation_axis)
 
     print("timestamp:", timestamp)
-    print("camera_length:", camera_length)
-    print("pixelsize (1/Angstrom):", pixelsize)
-    print("physical_pixelsize (um):", physical_pixelsize)
-    print("Oscillation angle:", osc_angle)
-    print("Starting angle:", start_angle)
-    print("Ending angle:", end_angle)
-    print("Rotation axis:", rotation_axis)
-    print("Acquisition time:", acquisition_time)
-    # print("Binsize:", binsize)
-    print("Resolution:", resolution)
-    print("Camera:", camera)
     print("Wavelength:", wavelength)
+    print("Camera:", camera)
+    print("Resolution (px):", resolution)
+    print("TEM Camera length (mm):", camera_length)
+    print("Pixelsize (1/Angstrom):", pixelsize)
+    print("Physical pixelsize (um):", physical_pixelsize)
+    print("Starting angle (deg.):", start_angle)
+    print("Ending angle (deg.):", end_angle)
+    print("Oscillation angle (deg./frame):", osc_angle)
+    print("Acquisition time (s/frame):", acquisition_time)
+    print("Rotation axis (rad.):", rotation_axis)
+    # print("Binsize:", binsize)
 
 
     def extract_image_number(s):

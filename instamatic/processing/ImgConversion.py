@@ -390,7 +390,7 @@ class ImgConversion(object):
         fn = path / f"{i:05d}.mrc"
 
         # for RED these need to be as integers
-        dtype = np.int16
+        dtype = np.uint16
         if False:
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
