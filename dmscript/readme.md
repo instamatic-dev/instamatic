@@ -3,14 +3,16 @@
 Author: Stef Smeets (2018)  
 URL: www.github.com/stefsmeets/instamatic
 
+This script helps with automatic data collection of continuous rotation electron diffraction (cRED) data using DigitalMicrograph. It synchronizes with the 'live view' of the camera, and is therefore independent of the type of camera used. Everytime the frame is updated, the data are copied. The script will wait with data collection until rotation has started, and it will stop data collection when rotation stops. The experiment meta-data and diffraction patterns are automatically saved in a new directory, making it convenient for high-throughput data collection.
+
+The script has been tested succesfully on a Thermo Fisher Themis Z with OneView camera and a JEOL JEM-2100 with an Orius camera.
+
 Thanks to Bin Wang and Maria Roslova for helping with the testing, and Thomas Thersleff for discussions about DM and the idea of using the image clone function.
 The script is loosely based on an example by Dave Mitchell (http://www.dmscripting.com/example_running_a_thread_from_within_a_dialog.html)
 
-The script has been tested on a FEI themisZ with OneView camera and a JEOL 2100 with Orius Camera.
-
-This script helps with automatic data collection of continuous rotation electron diffraction (CRED) data using DigitalMicrograph.
-
 ![Image of script](../docs/DMscript.PNG)
+
+#### How it works:
 
 It uses the 'live view' of the camera as a source of data. Every time the frame is updated, DM fires off an event. 
 This scripts waits for this event and then clones the image. These data are equivalent to what can be obtained using the 'Record' function.
@@ -31,7 +33,7 @@ Make sure to set up the rotation axis (defined as the angle between the horizont
 Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible with XDS/DIALS/REDp/PETS
 (www.github.com/stefsmeets/instamatic)
 
-### Usage instructions:
+#### Usage instructions:
 1. Insert the camera in view mode (for Oneview, use 'In-situ Acquisition')
    - Set the exposure (i.e. 0.3 s) and press 'View'
    - For Oneview, set the diffraction mode for the acquisition (Click 'D')
