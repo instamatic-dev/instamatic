@@ -10,10 +10,12 @@ Some of the methods implemented in Instamatic are described in:
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
+Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries. The most-up-to-date version is available from: https://github.com/stefsmeets/instamatic/releases
+
 TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
 Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
 
-A DM script for collecting cRED data on a OneView camera can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
+A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
 
 ## Reference
 
