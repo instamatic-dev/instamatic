@@ -537,8 +537,8 @@ class FEIMicroscope(object):
         """to be tested"""
         return self.tem.Illumination.BeamBlanked
 
-    def setBeamBlank(self):
-        self.tem.Illumination.BeamBlanked = 1
+    def setBeamBlank(self, value):
+        self.tem.Illumination.BeamBlanked = value
     
     def setBeamUnblank(self):
         self.tem.Illumination.BeamBlanked = 0
