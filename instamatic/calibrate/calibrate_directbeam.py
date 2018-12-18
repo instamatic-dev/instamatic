@@ -10,6 +10,7 @@ from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
 from .filenames import *
 
+from instamatic import config
 from instamatic.tools import printer
 import pickle
 
@@ -204,9 +205,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = ctrl.cam.cam.calib_directbeam.get(key, {}).get("gridsize", 5)    # dat syntax...
+        gridsize = config.camera.calib_directbeam.get(key, {}).get("gridsize", 5)    # dat syntax...
     if not stepsize:
-        stepsize = ctrl.cam.cam.calib_directbeam.get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
+        stepsize = config.camera.calib_directbeam.get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
 
     attr = getattr(ctrl, key.lower())
 

@@ -230,7 +230,7 @@ class ImgConversion(object):
                 
             centers.append(center)
 
-        beam_centers = np.array(centers)
+        self._beam_centers = beam_centers = np.array(centers)
 
         # avg_center = np.mean(centers, axis=0)
         median_center = np.median(beam_centers, axis=0)
@@ -507,7 +507,7 @@ class ImgConversion(object):
         fn = path / f"{i:05d}.mrc"
 
         # for RED these need to be as integers
-        dtype = np.int16
+        dtype = np.uint16
         if False:
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case

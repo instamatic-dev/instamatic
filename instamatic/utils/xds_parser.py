@@ -48,6 +48,8 @@ class xds_parser(object):
                 in_block = False
             elif line.startswith(" UNIT CELL PARAMETERS"):
                 cell = list(map(float, line.strip("\n").split()[3:9]))
+            elif line.endswith("as used by INTEGRATE\n"):
+                raw_cell = list(map(float, line.strip("\n").split()[1:7]))
             elif line.startswith(" SPACE GROUP NUMBER"):
                 spgr = int(line.strip("\n").split()[-1])
             elif line.startswith("     a        b          ISa"):
@@ -67,6 +69,7 @@ class xds_parser(object):
                     block.append(line.strip("\n"))
     
         vol = volume(cell)
+        raw_vol = volume(raw_cell)
     
         d["ISa"] = ISa
         d["Boverall"] = Boverall
@@ -106,46 +109,55 @@ class xds_parser(object):
         d["res_range"] = resolution_range
         d["volume"] = vol
         d["cell"] = cell
+        d["raw_cell"] = raw_cell
+        d["raw_volume"] = raw_vol
         d["spgr"] = spgr
         d["fn"] = fn
     
         return d
 
-    def print_info_header(self):
-        print("  #   dmax  dmin    ntot   nuniq   compl   i/sig   rmeas CC(1/2)     ISa   B(ov)")
-        print("-------------------------------------------------------------------------")
+    def info_header(self):
+        s  = "  #   dmax  dmin    ntot   nuniq   compl   i/sig   rmeas CC(1/2)     ISa   B(ov)\n"
+        s += "--------------------------------------------------------------------------------\n"
+        return s
 
     def print_filename(self):
         print("#", self.filename)
 
-    def print_cell(self, sequence=0):
+    def cell_info(self, sequence=0):
         d = self.d
         i = sequence
         fn = self.filename
-        print(f"{i: 3d}: {fn.parents[0]} # {time.ctime(os.path.getmtime(fn))}")
-        print("Spgr {: 4d} - Cell {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} - Vol {:10.2f}".format(d["spgr"], *d["cell"], d["volume"]))
+        s = f"{i: 3d}: {fn.parents[0]} # {time.ctime(os.path.getmtime(fn))}\n"
+        s += "Spgr {: 4d} - Cell {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} - Vol {:10.2f}\n".format(d["spgr"], *d["cell"], d["volume"])
+        return s
 
-    def print_info(self, sequence=0, outer_shell=True, filename=False):
+    def integration_info(self, sequence=0, outer_shell=True, filename=False):
         d = self.d
         k = sequence
+
+        s = ""
+
         if k == 0:
-            self.print_info_header()
+            s += self.info_header()
         
         dmax, dmin = d["res_range"]
 
-        if filename:
-            end = f"  # {d['fn']}\n"
-        else:
-            end = "\n"
+        s += "{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}".format(
+        k=k, dmax=dmax, dmin=dmin, **d["total"], **d)
 
-        print("{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}".format(
-        k=k, dmax=dmax, dmin=dmin, **d["total"], **d), end=end)
+        if filename:
+            s += f"  # {d['fn']}\n"
+        else:
+            s += "\n"
 
         if outer_shell:
             outer = d["outer"]
             dmax_sh, dmin_sh = d["outer_shell"]
-            print("  - {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}".format(
-                k=k, dmax=dmax_sh, dmin=dmin_sh, **d[outer]))
+            s +="  - {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}\n".format(
+                k=k, dmax=dmax_sh, dmin=dmin_sh, **d[outer])
+
+        return s
 
     @property
     def volume(self):
@@ -191,12 +203,13 @@ def cells_to_cellparm(ps):
         for i, p in enumerate(ps):
             fn = p.filename
             cell = p.unit_cell
+            # cell = p.d["raw_cell"]
             ntot = p.d["total"]["ntot"]
             print(f"! {i: 3d} from {fn}", file=f)
             print("UNIT_CELL_CONSTANTS= {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} WEIGHT= {ntot}".format(*cell, ntot=ntot), file=f)
 
 
-def gather_xds_ascii(ps):
+def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
     """Takes a list of `xds_parser` instances and gathers the 
     corresponding `XDS_ASCII.HKL` files into the current directory.
     The data source and numbering scheme is summarized in the file `filelist.txt`.
@@ -204,6 +217,16 @@ def gather_xds_ascii(ps):
     # gather xds_ascii and prepare filelist
     with open("filelist.txt", "w") as f:
         for i, p in enumerate(ps):
+
+            completeness = p.d["total"]["completeness"]
+            cchalf = p.d["total"]["cchalf"]
+
+            if cchalf < min_cchalf:
+                continue
+
+            if completeness < min_completeness:
+                continue
+
             fn = p.filename
             src = fn.with_name("XDS_ASCII.HKL")
             dst = f"{i:02d}_XDS_ASCII.HKL"
@@ -237,15 +260,23 @@ def main():
     fns = parse_fns(fns)
     print(f"Found {len(fns)} files matching CORRECT.LP\n")
     
-    xdsall = [xds_parser(fn) for fn in fns]
+    xdsall = []
+    for fn in fns:
+        try:
+            p = xds_parser(fn)
+        except UnboundLocalError:
+            continue
+        else:
+            if p.d:
+                xdsall.append(p)
     
     for i, p in enumerate(xdsall):
-        p.print_cell(sequence=i)
+        print(p.cell_info(sequence=i))
     
     print()
     
     for i, p in enumerate(xdsall):
-        p.print_info(sequence=i, filename=True)
+        print(p.integration_info(sequence=i, filename=True))
     
     print()
     

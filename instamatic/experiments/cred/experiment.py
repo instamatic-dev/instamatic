@@ -7,6 +7,7 @@ from instamatic.processing import ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from pathlib import Path
+from instamatic import version
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -123,6 +124,7 @@ class Experiment(object):
         self.logger.info(self.stage_positions)
 
         with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Program: {version.__long_title__}", file=f)
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
             print(f"Time Period End: {self.t_end}", file=f)
@@ -143,6 +145,11 @@ class Experiment(object):
             if self.image_interval_enabled:
                 print(f"Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.exposure_image} s).", file=f)
                 print(f"Number of images: {self.nframes_image}", file=f)
+
+            print("", file=f)
+            print("References:", file=f)
+            print(" -", version.__citation__, file=f)
+            print(" -", version.__citation_cred__, file=f)
 
     def setup_paths(self):
         """Set up the paths for saving the data to"""

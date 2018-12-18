@@ -25,24 +25,34 @@ def parse_xds(path):
     with rlock:
         if not fn.exists():
             print(f"FAIL: Cannot find file `{fn.name}`, was the indexing successful??")
+            msg = f"{path}: Automatic indexing failed..."
         else:
-            p = xds_parser(fn)
-            print()
-            p.print_cell()
-            print()
-            p.print_info()
-            print()
+            try:
+                p = xds_parser(fn)
+            except UnboundLocalError:
+                msg = f"{path}: Automatic indexing completed but no cell reported..."
+                print(f"FAIL: `{fn.name}` found, but could not be parsed...")
+            else:
+                msg = "\n"
+                msg += p.cell_info()
+                msg += "\n"
+                msg += p.integration_info()
+                msg += "\n"
+                print(msg)
 
+    return msg
 
 def run_xds_indexing(path):
     """Call XDS on the given `path`. Uses WSL (Windows 10 only)."""
-    p = sp.Popen("bash -c xds 2>&1 >/dev/null", cwd=path)
+    p = sp.Popen("bash -c xds_par 2>&1 >/dev/null", cwd=path)
     p.wait()
 
-    parse_xds(path)
+    msg = parse_xds(path)
 
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     print(f"{now} | XDS indexing has finished")
+
+    return msg
 
 
 def handle(conn):
@@ -68,7 +78,8 @@ def handle(conn):
 
         else:
             conn.send(b"OK")
-            run_xds_indexing(data)
+            msg = run_xds_indexing(data)
+            conn.send(msg.encode())
 
     conn.send(b"Connection closed")
     conn.close()

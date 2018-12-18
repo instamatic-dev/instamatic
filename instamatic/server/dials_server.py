@@ -50,9 +50,16 @@ def run_dials_indexing(data):
             print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
     
     p.wait()
+    
     unitcelloutput = []
+
+    # parse_dials_index_log("dials.index.log")
+    msg = "DIALS indexing completed"
+
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     print(f"{now} | DIALS indexing has finished")
+
+    return msg
 
 
 def handle(conn):
@@ -80,7 +87,8 @@ def handle(conn):
 
         else:
             conn.send(b"OK")
-            run_dials_indexing(data)
+            msg = run_dials_indexing(data)
+            conn.send(msg.encode())
 
     conn.send(b"Connection closed")
     conn.close()

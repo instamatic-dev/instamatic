@@ -1,11 +1,27 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1217026.svg)](https://doi.org/10.5281/zenodo.1217026)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2026774.svg)](https://doi.org/10.5281/zenodo.2026774)
 
 # Instamatic
 
-Python program to collect serial and rotation electron diffraction data. Included is a Python library with bindings for the JEOL microscope, and orius/timepix camera, and data collection routines for collecting serial electron diffraction (serial ED) and continuous rotation electron diffraction (cRED) data.
+Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL microscope and interfaces to the gatan/timepix cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
+
+Some of the methods implemented in Instamatic are described in: 
+
+- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661, 
+
+- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
+
+Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries. The most-up-to-date version is available from: https://github.com/stefsmeets/instamatic/releases
 
 TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
 Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
+
+A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
+
+## Reference
+
+If you find this software useful, please consider citing one of the references above and/or refer to the source code in your publications:
+
+- Stef Smeets, Bin Wang, Magdalena O. Cichocka, Jonas Ångström, & Wei Wan. (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
 
 ## Usage
 
@@ -358,19 +374,13 @@ Requirements can be installed via:
 
 ## Installation
 
-The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases. Extract the archive, and open a terminal by double-clicking `Cmder.exe`.
-
-Download the latest release from https://github.com/stefsmeets/instamatic/releases/latest
-
-    pip install -r requirements.txt
-    python setup.py install
+The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
 Alternatively, the latest development version can always be obtained via:
     
     https://github.com/stefsmeets/instamatic/archive/master.zip
 
-## Citing instamatic
+To install:
 
-If you found this software useful, please consider citing the software:
-
-Stef Smeets, Bin Wang, O. Magdalena Cichocka, Jonas Ångström, & Wei Wan. (2018, April 11). Instamatic (Version 0.6). Zenodo. https://doi.org/10.5281/zenodo.1217026
+    pip install -r requirements.txt
+    python setup.py install
