@@ -28,8 +28,8 @@ def parse_dials_index_log(fn="dials.index.log"):
         print("Unit cell = ...")
 
 
-def run_dials_indexing(data):
-    cmd = [str(EXE), str(data["path"])]
+def run_dials_indexing(path):
+    cmd = [str(EXE), path]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
     unitcelloutput = []
@@ -42,16 +42,11 @@ def run_dials_indexing(data):
 
     if unitcelloutput:
         with open(fn, "a") as f:
-            f.write("\nData Path: {}\n".format(data["path"]))
-            f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
-            f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
-            f.write("Number of frames: {}\n".format(data["nframes"]))
-            f.write("Oscillation angle: {} deg\n\n\n\n".format(data["osc"]))
-            print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
+            f.write(f"\nData Path: {path}\n")
+            f.write("{unitcelloutput[4:].decode('utf-8')}")
+            print(f"Indexing result written to dials indexing log file; path: {path}")
     
     p.wait()
-    
-    unitcelloutput = []
 
     # parse_dials_index_log("dials.index.log")
     msg = "DIALS indexing completed"
@@ -67,9 +62,7 @@ def handle(conn):
     ret = 0
 
     while True:
-        data = conn.recv(BUFF)
-        data = pickle.loads(data)
-
+        data = conn.recv(BUFF).decode()
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
         if not data:
@@ -105,7 +98,7 @@ def main():
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
-    
+
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST,PORT))
     s.listen(5)

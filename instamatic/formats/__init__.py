@@ -40,6 +40,7 @@ def read_image(fname):
 
 def write_tiff(fname, data, header=None):
     """Simple function to write a tiff file
+
     fname: str,
         path or filename to which the image should be saved
     data: np.ndarray,
@@ -61,8 +62,10 @@ def write_tiff(fname, data, header=None):
 
 def read_tiff(fname):
     """Simple function to read a tiff file
+
     fname: str,
         path or filename to image which should be opened
+
     Returns:
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
@@ -87,6 +90,7 @@ def read_tiff(fname):
 
 def write_hdf5(fname, data, header=None):
     """Simple function to write data to hdf5 format using h5py
+
     fname: str,
         path or filename to which the image should be saved
     data: np.ndarray,
@@ -109,6 +113,7 @@ def read_hdf5(fname):
     
     fname: str,
         path or filename to image which should be opened
+
     Returns:
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes

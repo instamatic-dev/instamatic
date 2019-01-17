@@ -9,165 +9,102 @@ import logging
 logger = logging.getLogger(__name__)
 
 from instamatic import config
+
 """
-    0 --> 51.0 == LM 45*
-    1 --> 51.0 == LM 45*
-    2 --> 65.0 == LM 58*
-    3 --> 83.0 == LM 73*
-    4 --> 100.0 == LM 89*
-    5 --> 130.0 == LM 115*
-    6 --> 165.0 == LM 145*
-    7 --> 210.0 == LM 185*
-    8 --> 265.0 == LM 235*
-    9 --> 340.0 == LM 300*
-    10 --> 420.0 == LM 380*
-    11 --> 530.0 == LM 470*
-    12 --> 680.0 == LM 600*
-    13 --> 860.0 == LM 760*
-    14 --> 1050.0 == LM 950*
-    15 --> 1350.0 == LM 1200*
-    16 --> 1750.0 == LM 1550*
-    17 --> 3800.0 == SA 3400*
-    18 --> 4900.0 == SA 4400*
-    19 --> 6300.0 == SA 5600*
-    20 --> 8100.0 == SA 7200*
-    21 --> 10000.0 == SA 8800*
-    22 --> 13000.0 == SA 11500*
-    23 --> 16500.0 == SA 14500*
-    24 --> 21000.0 == SA 18500*
-    25 --> 27000.0 == SA 24000*
-    26 --> 34000.0 == SA 30000*
-    27 --> 43000.0 == SA 38000*
-    28 --> 56000.0 == SA 49000*
-    29 --> 69000.0 == SA 61000*
-    30 --> 87000.0 == SA 77000*
-    31 --> 114999.99999999999 == SA 100k*
-    32 --> 145000 == SA 130k*
-    33 --> 185000 == SA 165k*
-    34 --> 245000.00000000003 == SA 215k*
-    35 --> 300000 == SA 265k*
-    36 --> 380000 == SA 340k*
-    37 --> 490000.00000000006 == SA 430k*
-    38 --> 620000 == SA 550k*
-    39 --> 790000 == Mh 700k*
-    40 --> 1000000 == Mh 890k*
-    41 --> 1250000 == Mh 1.15M*
-    42 --> 1400000 == Mh 1.25M*
-    43 --> 1100000 == Mh 960k*
-    44 --> 850000 == Mh 750k*
-    45 --> 670000 == Mh 600k*
-    46 --> 530000 == Mh 470k*
-    47 --> 409999.99999999994 == Mh 360k*
-    48 --> 320000 == Mh 285k*
-    49 --> 254999.99999999997 == Mh 225k*
-    50 --> 200000 == Mh 175k*
-    51 --> 160000 == Mh 145k*
-    52 --> 130000 == Mh 115k*
-    53 --> 100000 == Mh 89000*
-    54 --> 75000 == Mh 66000*
-    55 --> 59000 == Mh 52000*
-    56 --> 46000 == Mh 41000*
-    57 --> 36000 == Mh 32000*
-    58 --> 29500 == Mh 26000*
-    59 --> 23500 == Mh 21000*
-    60 --> 9400 == Mh 8300*
-    61 --> 7000 == Mh 6200*
-    62 --> 3500 == Mh 3100*
-    > = 63 --> 3500 == Mh 3100*
-    """
-"""speed table (deg/s):
-1: 21.14
-0.9: 19.61
-0.8: 18.34
-0.7: 16.90
-0.6: 14.85
-0.5: 12.69
-0.4: 10.62
-0.3: 8.20
-0.2: 5.66
-0.1: 2.91
+speed table (deg/s):
+1.00: 21.14
+0.90: 19.61
+0.80: 18.34
+0.70: 16.90
+0.60: 14.85
+0.50: 12.69
+0.40: 10.62
+0.30: 8.20
+0.20: 5.66
+0.10: 2.91
 0.05: 1.48
 0.04: 1.18
 0.03: 0.888
 0.02: 0.593
-0.01: 0.297 (time-out error, COMError)"""
+0.01: 0.297
+"""
 
-FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
+FUNCTION_MODES = {0:'LM', 1:'Mi', 2:'SA', 3:'Mh', 4:'LAD', 5:'D'}
 
 MagnificationMapping = {
-    1:45,
-    2:58,
-    3:73,
-    4:89,
-    5:115,
-    6:145,
-    7:185,
-    8:235,
-    9:300,
-    10:380,
-    11:470,
-    12:600,
-    13:760,
-    14:950,
-    15:1200,
-    16:1550,
-    17:3400,
-    18:4400,
-    19:5600,
-    20:7200,
-    21:8800,
-    22:11500,
-    23:14500,
-    24:18500,
-    25:24000,
-    26:30000,
-    27:38000,
-    28:49000,
-    29:61000,
-    30:77000,
-    31:100000,
-    32:130000,
-    33:165000,
-    34:215000,
-    35:265000,
-    36:340000,
-    37:430000,
-    38:550000,
-    39:700000,
-    40:890000,
-    41:1150000,
-    42:1250000,
-    43:960000,
-    44:750000,
-    45:600000,
-    46:470000,
-    47:360000,
-    48:285000,
-    49:225000,
-    50:175000,
-    51:145000,
-    52:115000,
-    53:89000,
-    54:66000,
-    55:52000,
-    56:41000,
-    57:32000,
-    58:26000,
-    59:21000,
-    60:8300,
-    61:6200,
-    62:3100 }
+    1: 45,
+    2: 58,
+    3: 73,
+    4: 89,
+    5: 115,
+    6: 145,
+    7: 185,
+    8: 235,
+    9: 300,
+    10 :380,
+    11 :470,
+    12 :600,
+    13 :760,
+    14 :950,
+    15 :1200,
+    16 :1550,
+    17 :3400,
+    18 :4400,
+    19 :5600,
+    20 :7200,
+    21 :8800,
+    22 :11500,
+    23 :14500,
+    24 :18500,
+    25 :24000,
+    26 :30000,
+    27 :38000,
+    28 :49000,
+    29 :61000,
+    30 :77000,
+    31 :100000,
+    32 :130000,
+    33 :165000,
+    34 :215000,
+    35 :265000,
+    36 :340000,
+    37 :430000,
+    38 :550000,
+    39 :700000,
+    40 :890000,
+    41 :1150000,
+    42 :1250000,
+    43 :960000,
+    44 :750000,
+    45 :600000,
+    46 :470000,
+    47 :360000,
+    48 :285000,
+    49 :225000,
+    50 :175000,
+    51 :145000,
+    52 :115000,
+    53 :89000,
+    54 :66000,
+    55 :52000,
+    56 :41000,
+    57 :32000,
+    58 :26000,
+    59 :21000,
+    60 :8300,
+    61 :6200,
+    62 :3100 }
 
 CameraLengthMapping = {
-    1: 34,
-    2: 42,
-    3: 53,
-    4: 68,
-    5: 90,
-    6: 115,
-    7: 140,
-    8: 175,
-    9: 215,
+    1:  34,
+    2:  42,
+    3:  53,
+    4:  68,
+    5:  90,
+    6:  115,
+    7:  140,
+    8:  175,
+    9:  215,
     10: 265,
     11: 330,
     12: 420,
@@ -230,13 +167,12 @@ class FEIMicroscope(object):
         
         self.goniostopped = self.stage.Status
         
-        input("Please select the type of sample stage before moving on.")
+        input("Please select the type of sample stage before moving on.\nPress <ENTER> to continue...")
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
         #self.Magnification_value = 2500
         #self.Magnification_value_diff = 300
 
-        
     def getHTValue(self):
         return self.tem.GUN.HTValue
     
@@ -266,9 +202,8 @@ class FEIMicroscope(object):
     def setStageSpeed(self, value):
         """Value be 0 - 1"""
         if value > 1 or value < 0:
-            print("Can only be value between 0 and 1. Setting unsuccessful.")
-            return
-        
+            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {value}")
+
         self.tom.Stage.Speed = value
         
     def getStageSpeed(self):
@@ -284,8 +219,7 @@ class FEIMicroscope(object):
         axis = 0
         
         if speed > 1 or speed < 0:
-            print("Unsuccessful setting of stage speed. Has to be float number between 0 and 1")
-            speed = 1
+            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {value}")
         
         self.tom.Stage.Speed = speed
         goniospeed = self.tom.Stage.Speed
@@ -330,8 +264,7 @@ class FEIMicroscope(object):
         """x y can only be float numbers between -1 and 1"""
         gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-            return
+            raise ValueError(f"GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
         
         if x is not None:
             gs.X = x
@@ -348,8 +281,7 @@ class FEIMicroscope(object):
     def setGunTilt(self, x, y):
         gt = self.tecnai.Gun.Tilt
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-            return
+            raise ValueError(f"GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
         
         if x is not None:
             gt.X = x
@@ -368,9 +300,8 @@ class FEIMicroscope(object):
         """Align Shift"""
         bs = self.tom.Illumination.BeamAlignShift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-            return
-        
+            raise ValueError(f"BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            
         if x is not None:
             bs.X = x
         if y is not None:
@@ -389,13 +320,11 @@ class FEIMicroscope(object):
         
         if x is not None:
             if abs(x) > 1:
-                print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-                return
+                raise ValueError(f"BeamTilt x must be a floating number between -1 an 1. Input: x={x}")
             bt.X = x
         if y is not None:
             if abs(y) > 1:
-                print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-                return
+               raise ValueError(f"BeamTilt y must be a floating number between -1 an 1. Input: y={y}")
             bt.Y = y
         self.tom.Illumination.BeamAlignmentTilt = bt
 
@@ -406,9 +335,8 @@ class FEIMicroscope(object):
     def setImageShift1(self, x, y):
         is1 = self.tom.Projection.ImageShift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
-            return
-        
+            raise ValueError(f"ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            
         if x is not None:
             is1.X = x
         if y is not None:
@@ -430,7 +358,7 @@ class FEIMicroscope(object):
     
     def stopStage(self):
         #self.stage.Status = self.goniostopped
-        print("To be figured out.")
+        raise NotImplementedError
 
     def getFunctionMode(self):
         """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}"""
@@ -443,7 +371,7 @@ class FEIMicroscope(object):
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError("Unrecognized function mode: {}".format(value))
+                raise ValueError(f"Unrecognized function mode: {value}")
         self.FunctionMode_value = value
     
     def getHolderType(self):
@@ -468,10 +396,8 @@ class FEIMicroscope(object):
              return self.tom.Illumination.C1ApertureSize * 1e3
          elif aperture == 'C2':
              return self.tom.Illumination.C2ApertureSize * 1e3
-         
          else:
-             print("Invalid input. Please input either C1 or C2.")
-             return
+             raise ValueError("aperture must be specified as 'C1' or 'C2'.")
          
     def getBeamShift(self):
         return self.tom.Illumination.BeamShift.X, self.tom.Illumination.BeamShift.Y
@@ -479,7 +405,7 @@ class FEIMicroscope(object):
     def setBeamShift(self, x, y):
         us = self.tom.Illumination.BeamShift
         if x > 0 or y > 0 or x < -1 or y < -1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 0.")
+            raise ValueError(f"BeamShift x/y must be a floating number between -1 an 0. Input: x={x}, y={y}")
             return
         
         if x is not None:

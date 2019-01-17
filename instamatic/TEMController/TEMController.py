@@ -287,9 +287,9 @@ class StagePosition(object):
         """wait: bool, block until stage movement is complete"""
         self._setter(x, y, z, a, b, wait=wait)
         
-    def setfei(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0):
+    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0):
         """wait: bool, block until stage movement is complete"""
-        self._setter(x, y, z, a, b, wait=wait, speed = speed)
+        self._setter(x, y, z, a, b, wait=wait, speed=speed)
         
     def setspeed(self, speed = 1):
         self._tem.setStageSpeed(value = 1)

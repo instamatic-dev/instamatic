@@ -75,10 +75,7 @@ logs_drc.mkdir(exist_ok=True)
 
 print(f"Config directory: {config_drc}")
 
-try:
-    cfg = ConfigObject.from_file(base_drc / "config" / "global_new.yaml")
-except:
-    cfg = ConfigObject.from_file(base_drc / "config" / "global.yaml")
+cfg = ConfigObject.from_file(base_drc / "config" / "global.yaml")
 
 microscope = None
 calibration = None

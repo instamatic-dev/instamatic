@@ -289,7 +289,7 @@ class Experiment(object):
                     #print("crystal size: {}".format(crystalsize))
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     
-                    crystal_positions_new = find_crystals_timepix(img, magnification = self.magnification, offset=offset)
+                    crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=spread, offset=offset)
                     
                     n_crystals_new = len(crystal_positions_new)
                     #print(crystal_positions_new)
@@ -372,7 +372,7 @@ class Experiment(object):
     
         img_cropped = img[a1:b1,a2:b2]
         
-        #crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread = spread, offset = offset)
+        #crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread=spread, offset = offset)
         #crystalposition = self.find_crystal_center(img_cropped, window_size)
         crystalposition = self.find_crystal_center_fromhist(img_cropped)
         center = (window_size/2, window_size/2)
@@ -866,13 +866,13 @@ class Experiment(object):
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     if img.mean() > 10:
                         self.magnification = self.ctrl.magnification.value
-                        crystal_positions = find_crystals_timepix(img, self.magnification, spread = spread, offset=offset)
+                        crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
                         crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             
                         n_crystals = len(crystal_coords)
                         if n_crystals > 0:
                             print("centering z height...")
-                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread = spread, offset = offset)
+                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
                             if x_zheight != 999999:
                                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
@@ -997,7 +997,7 @@ class Experiment(object):
 
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread = spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 
                 n_crystals = len(crystal_coords)
@@ -1012,7 +1012,7 @@ class Experiment(object):
                 h["exp_magnification"] = 2500
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread = spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                 n_crystals = len(crystal_coords)
@@ -1087,7 +1087,7 @@ class Experiment(object):
                             h["exp_magnification"] = 2500
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
 
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread = spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             #self.ctrl.brightness.value = img_brightness
                             
@@ -1101,7 +1101,7 @@ class Experiment(object):
                             h["exp_magnification"] = 2500
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
             
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread = spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                             n_crystals = len(crystal_coords)
@@ -1183,7 +1183,7 @@ class Experiment(object):
                     t = pickle.load(f)
                     if t - time.clock() > 14400:
                         print("Z-height needs to be updated every session. Readjusting z-height...")
-                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread = spread, offset = offset)
+                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
                         xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                         self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                         t = time.clock()
@@ -1192,7 +1192,7 @@ class Experiment(object):
                             
             except:
                 input("No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>")
-                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread = spread, offset = offset)
+                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                 t = time.clock()
@@ -1200,7 +1200,7 @@ class Experiment(object):
                     pickle.dump(t, f)
         else:
             print("Z height adjusting...")
-            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread = spread, offset = offset)
+            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
             xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
             self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
             t = time.clock()

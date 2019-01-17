@@ -2,7 +2,6 @@ import comtypes.client
 import atexit
 import time
 import random
-import threading
 
 import logging
 logger = logging.getLogger(__name__)

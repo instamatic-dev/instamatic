@@ -95,7 +95,6 @@ class ServerMicroscope(object):
         # t0 = time.perf_counter()
 
         self.s.send(pickle.dumps(dct))
-
         response = self.s.recv(self._bufsize)
         if response:
             status, data = pickle.loads(response)

@@ -46,7 +46,6 @@ class DataCollectionController(threading.Thread):
                 pass  # module does not need/accept a trigger
         
         self.exitEvent = threading.Event()
-
         atexit.register(self.triggerEvent.set)
         atexit.register(self.exitEvent.set)
         atexit.register(self.close)
