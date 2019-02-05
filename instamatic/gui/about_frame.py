@@ -88,7 +88,7 @@ class About(LabelFrame):
         
         Label(frame, text="").grid(row=0, column=0, sticky="W")
         Label(frame, text="Author:").grid(row=1, column=0, sticky="W", padx=10)
-        Label(frame, text="Stef Smeets (stef.smeets@mmk.su.se)").grid(row=1, column=1, sticky="W")
+        Label(frame, text="Stef Smeets (stef.smeets@tudelft.nl)").grid(row=1, column=1, sticky="W")
         Label(frame, text="Contributors:").grid(row=2, column=0, sticky="W", padx=10)
         Label(frame, text="Bin Wang [cRED implementation]").grid(row=3, column=1, sticky="W")
         Label(frame, text="Magdalena O. Cichocka [Testing + feedback]").grid(row=2, column=1, sticky="W")
