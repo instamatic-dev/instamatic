@@ -105,6 +105,9 @@ class SimuMicroscope(object):
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
 
+    def getHTValue(self):
+        return 200000
+
     def getBrightness(self) -> int:
         return self.Brightness_value
 

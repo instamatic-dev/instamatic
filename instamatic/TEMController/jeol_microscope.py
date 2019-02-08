@@ -121,6 +121,9 @@ class JeolMicroscope(object):
                 arg = self.NTRLMAPPING[arg]
             self.def3.setNTRL(arg)
 
+    def getHTValue(self):
+        return self.ht3.GetHTValue()
+
     def getBrightness(self) -> int:
         value, result = self.lens3.GetCL3()
         return value
