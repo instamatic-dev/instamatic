@@ -7,13 +7,14 @@
 #                                                       #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-VERSION = (1, 0, 0)
+tag = "dev"
+VERSION = (1, 1, 0, tag)
 
-__version__ = "{}.{}.{}".format(*VERSION)
+__version__ = "{}.{}.{}{}".format(*VERSION, tag)
 __title__ = "instamatic"
 __long_title__ = f"{__title__} v{__version__}"
 __author__ = "Stef Smeets"
-__author_email__ = "stef.smeets@tudelft.nl"
+__author_email__ = "s.smeets@tudelft.nl"
 __description__ = "Python program to collect serial and rotation electron diffraction data"
 __license__ = "GPLv3"
 __url__ = "http://github.com/stefsmeets/instamatic"
