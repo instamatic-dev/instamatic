@@ -51,7 +51,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     OrderedLoader.add_constructor(
         yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
         construct_mapping)
-    return yaml.load(f, OrderedLoader)
+    return yaml.load(f, Loader=OrderedLoader)
 
 
 def write_csv(f, results):

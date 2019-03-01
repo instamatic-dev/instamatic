@@ -59,7 +59,7 @@ class ConfigObject(object):
 
     @classmethod
     def from_file(cls, path):
-        return cls(yaml.load(open(path, "r")))
+        return cls(yaml.load(open(path, "r"), Loader=yaml.Loader))
 
 
 base_drc = get_base_drc()

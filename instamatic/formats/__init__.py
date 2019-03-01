@@ -77,7 +77,7 @@ def read_tiff(fname):
 
     if "imageDescription" in header:
         try:
-            d = yaml.load(header.get("imageDescription"))
+            d = yaml.load(header.get("imageDescription"), Loader=yaml.Loader)
         except (Exception, ValueError) as e:
             print("Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription")))
         else:
