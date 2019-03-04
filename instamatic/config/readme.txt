@@ -44,7 +44,7 @@ camera/camera_name.yaml:
     default_exposure: Set the default exposure in seconds, i.e. 0.02
     dimensions: Give the dimensions of the camera at binning 1, for example: [516, 516]
     dynamic_range: Give the maximum counts of the camera, for example: 11800
-    name: Give the name of the camera to connect to, for example: timepix
+    name: Give the name of the camera to connect to, for example: timepix. Leave blank to load the camera specs, but do not load the camera module (also turns off the videostream gui).
     physical_pixelsize: The physical size of a pixel in micrometer, for example: 0.055
     possible_binsizes: Give here a list of possible binnings, for example: [1] or [1, 2, 4]
     camera_rotation_vs_stage_xy: In radians, give here the rotation of the position of the rotation axis with respect to the horizontal. Corresponds to the rotation axis in RED and PETS, for example: -2.24

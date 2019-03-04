@@ -136,10 +136,11 @@ class MainFrame(object):
         self.app = ModuleFrame(root, modules=modules)
         self.app.pack(side="top", fill="both", expand=True)
 
-        from .videostream_frame import VideoStreamFrame
+        if stream:
+            from .videostream_frame import VideoStreamFrame
 
-        self.stream_frame = VideoStreamFrame(root, stream=stream, app=self.app)
-        self.stream_frame.pack(side="top", fill="both", expand=True)
+            self.stream_frame = VideoStreamFrame(root, stream=stream, app=self.app)
+            self.stream_frame.pack(side="top", fill="both", expand=True)
 
         from instamatic import version
 
