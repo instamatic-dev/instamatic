@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+import threading
 
 
 class ExperimentalCtrl(LabelFrame):
@@ -25,7 +26,8 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text="Angle (-)", width=20).grid(row=1, column=0, sticky="W")
         Label(frame, text="Angle (0)", width=20).grid(row=2, column=0, sticky="W")
         Label(frame, text="Angle (+)", width=20).grid(row=3, column=0, sticky="W")
-
+        Label(frame, text="Alpha wobbler (±)", width=20).grid(row=4, column=0, sticky="W")
+        
         Label(frame, text="Stage(XY)", width=20).grid(row=5, column=0, sticky="W")
         
         e_negative_angle = Entry(frame, width=10, textvariable=self.var_negative_angle)
@@ -34,6 +36,14 @@ class ExperimentalCtrl(LabelFrame):
         e_neutral_angle.grid(row=2, column=1, sticky="EW")
         e_positive_angle = Entry(frame, width=10, textvariable=self.var_positive_angle)
         e_positive_angle.grid(row=3, column=1, sticky="EW")
+        
+        e_alpha_wobbler = Entry(frame, width=10, textvariable=self.var_alpha_wobbler)
+        e_alpha_wobbler.grid(row=4, column=1, sticky="EW")
+        self.b_start_wobble = Button(frame, text="Start", command=self.start_alpha_wobbler)
+        self.b_start_wobble.grid(row=4, column=2, sticky="W")
+        self.b_stop_wobble = Button(frame, text="Stop", command=self.stop_alpha_wobbler, state=DISABLED)
+        self.b_stop_wobble.grid(row=4, column=3, sticky="W")
+
         e_stage_x = Entry(frame, width=10, textvariable=self.var_stage_x)
         e_stage_x.grid(row=5, column=1, sticky="EW")
         e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_y)
@@ -69,6 +79,8 @@ class ExperimentalCtrl(LabelFrame):
         self.var_negative_angle = DoubleVar(value=-40)
         self.var_neutral_angle = DoubleVar(value=0)
         self.var_positive_angle = DoubleVar(value=40)
+
+        self.var_alpha_wobbler = DoubleVar(value=5)
 
         self.var_stage_x = DoubleVar(value=0)
         self.var_stage_y = DoubleVar(value=0)
@@ -111,6 +123,23 @@ class ExperimentalCtrl(LabelFrame):
                               "y": self.var_stage_y.get(),
                               "wait": self.var_stage_wait.get() } ))
         self.triggerEvent.set()
+
+    def start_alpha_wobbler(self):
+        self.wobble_stop_event = threading.Event()
+
+        self.b_stop_wobble.config(state=NORMAL)
+        self.b_start_wobble.config(state=DISABLED)
+
+        self.q.put(("ctrl", { "task": "stageposition.alpha_wobbler",
+                              "delta": self.var_alpha_wobbler.get(),
+                              "event": self.wobble_stop_event } ))
+        self.triggerEvent.set()
+
+    def stop_alpha_wobbler(self):
+        self.wobble_stop_event.set()
+
+        self.b_stop_wobble.config(state=DISABLED)
+        self.b_start_wobble.config(state=NORMAL)
 
     def stage_stop(self):
         self.q.put(("ctrl", { "task": "stageposition.stop" } ))
