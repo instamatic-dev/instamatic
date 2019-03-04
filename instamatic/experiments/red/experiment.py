@@ -18,7 +18,7 @@ class Experiment(object):
     flatfield:
         Path to flatfield correction image
     """
-    def __init__(self, ctrl, path: str=None, log=None, flatfield='flatfield.tiff'):
+    def __init__(self, ctrl, path: str=None, log=None, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = path

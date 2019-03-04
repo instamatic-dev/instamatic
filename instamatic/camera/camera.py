@@ -17,7 +17,7 @@ def Camera(name: str=None, as_stream: bool=False):
     if name == None:
         name = default_cam
     elif name != config.cfg.camera:
-        config.load_cfg(camera_name=name)
+        config.load(camera_name=name)
         name = config.cfg.camera
 
     if name == "simulate":

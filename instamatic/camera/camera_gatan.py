@@ -132,7 +132,7 @@ class CameraDLL(object):
 
     def load_defaults(self):
         if self.name != config.cfg.camera:
-            config.load_cfg(camera_name=self.name)
+            config.load(camera_name=self.name)
 
         self.__dict__.update(config.camera.d)
 

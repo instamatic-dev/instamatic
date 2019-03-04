@@ -3,6 +3,9 @@ global.yaml
     camera: name of the camera file (in ./camera/) to use
     calibration: name of the calibration file (in ./calibration) to use
     
+    data_directory: Default path to where data should be stored, i.e. C:/instamatic
+    flatfield: Path to tiff file containing flatfield, i.e. C:/instamatic/flatfield.tiff . Can be left blank if no flatfield should be applied.
+
     use_tem_server: use the tem server with the given host/port below. If instamatic cannot find the tem server, it will start a new temserver in a subprocess. The tem server can be started using 'instamatic.temserver.exe'. This helps to isolate the microscope communication. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread. 
     tem_server_host: Set this to 'localhost' if the TEM server is run locally. To make a remote connection, use '0.0.0.0' on the server, and the ip address on the client.
     tem_server_port: the server port, default: 8088
