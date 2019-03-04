@@ -393,6 +393,21 @@ class StagePosition(object):
         """This will halt the stage preemptively if `wait=False` is passed to StagePosition.set"""
         self._tem.stopStage()
 
+    def alpha_wobbler(self, delta: float=5.0) -> None:
+        """Tilt the stage by plus/minus the value of delta (degrees)
+        Press Ctrl-C to interrupt"""
+
+        a_center = self.a
+
+        try:
+            print(f"Wobbling 'alpha': {a_center:.2f}±{delta:.2f} (press 'CTRL-C' to interrupt)")
+            while True:
+                self.a = a_center + delta
+                self.a = a_center - delta
+        except KeyboardInterrupt:
+            print(f"Restoring 'alpha': {a_center:.2f}")
+            self.a = a_center
+
 
 class TEMController(object):
     """TEMController object that enables access to all defined microscope controls
