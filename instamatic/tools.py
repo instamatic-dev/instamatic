@@ -3,6 +3,7 @@ import sys, os
 import numpy as np
 import glob
 from skimage import exposure
+from skimage.measure import regionprops
 from scipy import ndimage, interpolate
 
 
@@ -84,6 +85,101 @@ def find_beam_center(img: np.ndarray, sigma: int=30, m: int=100, kind: int=3) ->
 
     center = np.array([cx, cy])
     return center
+
+
+def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False) -> (float, float):
+    """Find the beam center when a beam stop is present. 
+
+    methods: gauss, thresh
+
+    `thresh` uses a threshold to segment the image. The largest blob then corresponds to the
+    primary beam. The center of the bounding box of the blob defines the beam center.
+
+    `gauss` applies a gaussian filter with a very large standard deviation in an attempt
+    to smooth out the beam stop. The position of the largest pixel corresponds to the 
+    beam center.
+
+    z = thresh: percentile to segment the image at (99)
+        gauss: standard deviation for the gaussian blurring (50)"""
+    
+    if method == "gauss":
+        if not z:
+            z = 50
+        blurred = ndimage.filters.gaussian_filter(img, z)
+        cx, cy = np.unravel_index(blurred.argmax(), blurred.shape)
+    
+    elif method == "thresh":
+        if not z:
+            z = 99
+        seg = img > np.percentile(img, z)
+        labeled, _ = ndimage.label(seg)
+        
+        props = regionprops(labeled)
+        props.sort(key=lambda x: x.area, reverse=True)
+        prop = props[0]
+
+        dx = (prop.bbox[0] + prop.bbox[2]) / 2
+        dy = (prop.bbox[1] + prop.bbox[3]) / 2
+
+        if plot:
+            import matplotlib.pyplot as plt
+            import matplotlib.patches as mpatches
+
+            fig, (ax1, ax2) = plt.subplots(ncols=2)
+
+            ax1.imshow(labeled, vmax=5)
+            ax2.imshow(img, vmax=np.percentile(img, z))
+
+            ax1.scatter(dy, dx)
+            ax2.scatter(dy, dx)
+
+            plt.title(f"Beam center: {dx:.2f} {dy:.2f}")
+
+            minr, minc, maxr, maxc = prop.bbox
+
+            rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr, fill=False, edgecolor='red', linewidth=2)
+            ax2.add_patch(rect)
+            
+            plt.show()
+    
+    return np.array((dx, dy))
+
+
+def bin_ndarray(ndarray, new_shape, operation='mean'):
+    """
+    Bins an ndarray in all axes based on the target shape, by summing or
+        averaging.
+
+    Number of output dimensions must match number of input dimensions and 
+        new axes must divide old ones.
+
+    Example
+    -------
+    >>> m = np.arange(0,100,1).reshape((10,10))
+    >>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
+    >>> print(n)
+
+    [[ 22  30  38  46  54]
+     [102 110 118 126 134]
+     [182 190 198 206 214]
+     [262 270 278 286 294]
+     [342 350 358 366 374]]
+
+    """
+    operation = operation.lower()
+    if not operation in ['sum', 'mean']:
+        raise ValueError("Operation not supported.")
+    if ndarray.ndim != len(new_shape):
+        raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
+                                                           new_shape))
+    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
+                                                  ndarray.shape)]
+    flattened = [l for p in compression_pairs for l in p]
+    ndarray = ndarray.reshape(flattened)
+    for i in range(len(new_shape)):
+        op = getattr(ndarray, operation)
+        ndarray = op(-1*(i+1))
+    return ndarray
 
 
 def get_files(file_pat: str) -> list:
