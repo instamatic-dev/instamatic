@@ -140,6 +140,8 @@ class FEIMicroscope(object):
         self.tem_constant = comtypes.client.Constants(self.tem)
         
         self.stage = self.tem.Stage
+        #self.proj = self.tem.Projection
+        #self.proj = self.tecnai.Projection
         self.proj = self.tom.Projection
         t = 0
         while True:
@@ -432,15 +434,15 @@ class FEIMicroscope(object):
     
     def getDiffShift(self):
         """To be tested"""
-        """if self.tom.Projection.Mode != 1:
+        if self.proj.Mode != 1:
             return (0, 0)
         
-        return self.tom.Projection.DiffractionShift.X,self.tom.Projection.DiffractionShift.Y"""
-        return (0, 0)
+        return self.proj.DiffractionShift.X,self.proj.DiffractionShift.Y
+        #return (0, 0)
         
     def setDiffShift(self, x, y):
         """To be tested"""
-        """ds = self.tom.Projection.DiffractionShift
+        ds = self.proj.DiffractionShift
         if x > 1 or y > 1 or x < -1 or y < -1:
             print("Invalid PLA setting: can only be float numbers between -1 and 0.")
             return
@@ -451,8 +453,8 @@ class FEIMicroscope(object):
         if y is not None:
             ds.Y = y
         
-        self.tom.Projection.DiffractionShift = ds"""
-        pass
+        self.proj.DiffractionShift = ds
+        #pass
 
     def releaseConnection(self):
         comtypes.CoUninitialize()

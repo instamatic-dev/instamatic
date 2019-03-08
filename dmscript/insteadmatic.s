@@ -58,6 +58,10 @@ number calibrated_rotation_axis = -171.0
 // Setup experiment variables
 number default_activation_threshold = 0.2   // change in angle to start rotation
 number default_buffersize = 1000            // the maximum number of frames that will be collected, because memory must be reserved in advance
+
+number default_endangle = 40
+number default_rotspeed = 0.05
+
 number write_tiff_files = true              // write data to tiff format
 number show_buffer = false                  // show the buffer during data collection
 number keep_buffer_open = false             // open buffer / keep buffer open after data collection
@@ -146,10 +150,11 @@ void EMSetBeamBlanked( number toggle )  toggle
 */
 
 // If the beam blank api is not available (i.e. on Orius), uncomment these lines:
-/*
+
 number EMHasBeamBlanker()  Return false
 void EMSetBeamBlanked( number toggle )  toggle
-*/
+void CameraGetPixelSize(number camid, number phys_pixelsize_x, number phys_pixelsize_y){
+phys_pixelsize_x = 0.015; phys_pixelsize_y = 0.015 ; }
 
 Class Dialog_UI : UIFrame
 {
@@ -257,6 +262,14 @@ Class Dialog_UI : UIFrame
         self.DLGGetValue("buffersize_field", nframes)
         Print("Buffersize: " + nframes)
         
+        number rotationspeed
+        self.DLGGetValue("rotation_speed_field", rotationspeed)
+        Print("Desired rotation speed index: " + rotationspeed)
+        
+        number endangle
+        self.DLGGetValue("rotation_field", endangle)
+        Print("Targeted angle: " + endangle)
+        
         // get front image(), this is the live stream
         try  stream := GetFrontImage()        
         catch
@@ -298,7 +311,15 @@ Class Dialog_UI : UIFrame
 
         number angle0 = EMGetStageAlpha()
         Print("Angle0: " + angle0 + " (threshold: " + angle_activation_threshold + ")")
-
+		
+		//Launch external process using netcat to talk to the Python TEMserver
+		string externalcommand
+		externalcommand += "cmd /c echo "
+		externalcommand += endangle + "," + rotationspeed
+		externalcommand += "  | C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe 192.168.12.1 9999"
+		
+		LaunchExternalProcess(externalcommand)
+		
         while ( angle_delta < angle_activation_threshold )
         {
             sleep(0.1)  // sleep to prevent request spam (can cause dm to crash)
@@ -545,11 +566,22 @@ Class Dialog_UI : UIFrame
         label = DLGCreateLabel("Buffer size:").DLGWidth(label_width*2)
         buffersize_field = DLGCreateIntegerField(default_buffersize).DLGIdentifier("buffersize_field").DLGWidth(entry_width)
         TagGroup buffersize_group = DLGGroupItems(label, buffersize_field).DLGTableLayout(2, 1, 0)
+        
+        TagGroup rotation_field
+        label = DLGCreateLabel("targeted alpha angle (deg):").DLGWidth(label_width*2)
+        rotation_field = DLGCreateRealField(default_endangle).DLGIdentifier("rotation_field").DLGWidth(entry_width)
+        TagGroup rotation_group = DLGGroupItems(label, rotation_field).DLGTableLayout(2, 1, 0)
+        
+        TagGroup rotation_speed_field
+        label = DLGCreateLabel("Rotation speed:").DLGWidth(label_width*2)
+        rotation_speed_field = DLGCreateRealField(default_rotspeed).DLGIdentifier("rotation_speed_field").DLGWidth(entry_width)
+        TagGroup rotspeed_group = DLGGroupItems(label, rotation_speed_field).DLGTableLayout(2, 1, 0)
 
         TagGroup autostop_check = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
         TagGroup autoblank_check = DLGCreateCheckBox("Blank the beam after data collection", default_auto_blank).DLGIdentifier("CheckAutoBlank").DLGAnchor("West")
         
-        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, autostop_check, autoblank_check).DLGTableLayout(1, 4, 0).DLGAnchor("West")
+        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, rotation_group, rotspeed_group).DLGTableLayout(1, 4, 0).DLGAnchor("West")
+        cred_group = DLGGroupItems(cred_group, autostop_check, autoblank_check).DLGTableLayout(1,3,0).DLGAnchor("West")
         cred_box_items.DLGAddElement(cred_group)
         Dialog_UI.DLGAddElement(cred_box)
 
