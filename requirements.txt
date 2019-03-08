@@ -9,5 +9,6 @@ scikit-image
 tqdm
 pyyaml
 h5py
+tifffile
 # optional
 IPython # instamatic.controller

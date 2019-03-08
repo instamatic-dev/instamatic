@@ -50,6 +50,7 @@ setup(
                       'tqdm', 
                       'pyyaml', 
                       'h5py', 
+                      'tifffile',
                       'IPython'],
 
     include_package_data=True,
