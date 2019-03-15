@@ -10,6 +10,7 @@ from scipy.ndimage import morphology, interpolation
 import math
 
 from instamatic.formats import read_tiff
+from instamatic.tools import autoscale
 
 
 def apply_transform_to_image(img, transform, center=None):
@@ -105,8 +106,11 @@ def get_sigma_interactive(img, sigma=20):
     fig, ax = plt.subplots()
     plt.subplots_adjust(bottom=0.25)
 
-    prop = get_ring_props(edges)[0]
-    ax.set_title(make_title(prop))
+    try:
+        prop = get_ring_props(edges)[0]
+        ax.set_title(make_title(prop))
+    except IndexError:
+        ax.set_title("No rings")
 
     im1 = ax.imshow(img, interpolation=None)
     im2 = ax.imshow(edges, alpha=0.5, interpolation=None)
@@ -125,8 +129,11 @@ def get_sigma_interactive(img, sigma=20):
     def update_sigma(val):
         edges = canny(img, sigma=slsigma.val, low_threshold=None, high_threshold=None)
         im2.set_data(edges)
-        prop = get_ring_props(edges)[0]
-        ax.set_title(make_title(prop))
+        try:
+            prop = get_ring_props(edges)[0]
+            ax.set_title(make_title(prop))
+        except IndexError:
+            ax.set_title("No rings")
         fig.canvas.draw()
     
     slsigma.on_changed(update_sigma)
@@ -197,7 +204,11 @@ def main_entry(sigma=None):
         exit()
 
     fname = sys.argv[1]
-    img,h = read_tiff(fname)
+    img, h = read_tiff(fname)
+
+    if max(img.shape) > 1024:
+        img, scale = autoscale(img, 1024)
+        print(f"Downsampling to {img.shape}")
 
     if not sigma:
         sigma = get_sigma_interactive(img)
