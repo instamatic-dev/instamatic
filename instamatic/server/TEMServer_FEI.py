@@ -6,10 +6,15 @@ from instamatic import TEMController
 import threading
 import logging
 
+from instamatic import config
+
 ctrl = TEMController.initialize()
 """The host computer is the TEM computer in the FEI room"""
-HOST = "192.168.12.1"
-PORT = 9999
+#HOST = "192.168.12.1"
+#PORT = 9999
+
+HOST = config.cfg.fei_server_host
+PORT = config.cfg.fei_server_port
 
 def handle(conn):
     ret = 0
