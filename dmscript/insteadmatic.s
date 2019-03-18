@@ -36,6 +36,16 @@ Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible
    - For Oneview, set the diffraction mode for the acquisition (Click 'D')
    - Set the binsize and other processing parameters
 2. Set the buffer size to the maximum number of frames to be collected (i.e. 1000)
+
+*** Using TEM server to allow operation from the camera computer only
+2.0 Keep the box unchecked if you don't want to use it
+2.1 Check the box for TEM server options
+2.2 Make sure you have run instamatic.temserver_fei on the microscope computer
+2.3 Find the location of software NETCAT in your PC
+2.4 Give the correct IP address and port for TEM Python server
+2.5 Fill in the desired rotation angle and speed
+***
+
 3. Press `<Start>` to prime the script for data collection
    - The script will wait until rotation is initiated, and then start acquiring data
 4. Press `<Stop>` to stop the data acquisition
@@ -71,6 +81,7 @@ number default_auto_blank = false           // Automatically blank the beam afte
 
 number verbose = false                      // Increase the verbosity, print some testing variables
 
+number default_use_server = false           // Option to use TEM Python server to allow operation only from the camera computer
 
 // Initialize other parameters
 number top, left, bottom, right  // image selection (top, left, bottom, right)
@@ -105,6 +116,9 @@ string documents_drc = PathConcatenate(user_drc, "documents")
 string default_work_drc = "C:\\instamatic\\work_"+get_date_string()
 string default_sample_name = "experiment"
 
+// Default NETCAT.exe directory
+string default_server_drc = "C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe"
+string default_host_address = "192.168.12.1 9999"
 
 // Signal that fires when the live view is updated
 Object DataValueChangedEvent = NewSignal(0)
@@ -257,18 +271,32 @@ Class Dialog_UI : UIFrame
         number auto_stop
         self.DLGGetValue("CheckAutoStop", auto_stop)
         print("Automatically stop data collection: " + auto_stop)
-
+		
+		number use_temserver
+		self.DLGGetValue("UsingTemServer", use_temserver)
+		print("Using TEM Python server: " + use_temserver)
+		
         number nframes
         self.DLGGetValue("buffersize_field", nframes)
         Print("Buffersize: " + nframes)
         
-        number rotationspeed
-        self.DLGGetValue("rotation_speed_field", rotationspeed)
-        Print("Desired rotation speed index: " + rotationspeed)
-        
-        number endangle
-        self.DLGGetValue("rotation_field", endangle)
-        Print("Targeted angle: " + endangle)
+        string ncat_drc, ncat_ip
+        number rotationspeed, endangle
+
+        if (use_temserver)
+        {
+	        self.DLGGetValue("server_drc_field", ncat_drc)
+	        Print("NETCAT directory:" + ncat_drc)
+
+	        self.DLGGetValue("", ncat_ip)
+	        Print("Connecting to TEM server at: " + ncat_ip)
+
+	        self.DLGGetValue("rotation_speed_field", rotationspeed)
+	        Print("Desired rotation speed index: " + rotationspeed)
+
+	        self.DLGGetValue("rotation_field", endangle)
+	        Print("Targeted angle: " + endangle)
+        }
         
         // get front image(), this is the live stream
         try  stream := GetFrontImage()        
@@ -313,12 +341,16 @@ Class Dialog_UI : UIFrame
         Print("Angle0: " + angle0 + " (threshold: " + angle_activation_threshold + ")")
 		
 		//Launch external process using netcat to talk to the Python TEMserver
-		string externalcommand
-		externalcommand += "cmd /c echo "
-		externalcommand += endangle + "," + rotationspeed
-		externalcommand += "  | C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe 192.168.12.1 9999"
-		
-		LaunchExternalProcess(externalcommand)
+		if (use_temserver)
+		{
+			string externalcommand
+			externalcommand += "cmd /c echo "
+			externalcommand += endangle + "," + rotationspeed
+			//externalcommand += "  | C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe 192.168.12.1 9999"
+			externalcommand += "  | " +  ncat_drc + " " + ncat_ip
+
+			LaunchExternalProcess(externalcommand)
+		}
 		
         while ( angle_delta < angle_activation_threshold )
         {
@@ -566,7 +598,31 @@ Class Dialog_UI : UIFrame
         label = DLGCreateLabel("Buffer size:").DLGWidth(label_width*2)
         buffersize_field = DLGCreateIntegerField(default_buffersize).DLGIdentifier("buffersize_field").DLGWidth(entry_width)
         TagGroup buffersize_group = DLGGroupItems(label, buffersize_field).DLGTableLayout(2, 1, 0)
+
+        TagGroup autostop_check = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
+        TagGroup autoblank_check = DLGCreateCheckBox("Blank the beam after data collection", default_auto_blank).DLGIdentifier("CheckAutoBlank").DLGAnchor("West")
         
+        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group).DLGTableLayout(1, 2, 0).DLGAnchor("West")
+        cred_group = DLGGroupItems(cred_group, autostop_check, autoblank_check).DLGTableLayout(1,3,0).DLGAnchor("West")
+        cred_box_items.DLGAddElement(cred_group)
+        Dialog_UI.DLGAddElement(cred_box)
+        
+        // box for TEM server
+        TagGroup server_box_items
+        TagGroup server_box = DLGCreateBox("Server Options", server_box_items).DLGFill("XY")
+        
+        TagGroup use_server = DLGCreateCheckBox("Connect to TEM Server", default_use_server).DLGIdentifier("UsingTemServer").DLGAnchor("West")
+
+        TagGroup server_drc_field
+        label = DLGCreateLabel("NETCAT.exe directory:").DLGWidth(label_width)
+        server_drc_field = DLGCreateStringField(default_server_drc).DLGIdentifier("server_drc_field").DLGWidth(entry_width*4)
+        TagGroup server_drc_group = DLGGroupItems(label, server_drc_field).DLGTableLayout(2,1,0)
+
+        TagGroup network_address_field
+        label = DLGCreateLabel("TEM host IP PORT").DLGWidth(label_width)
+        network_address_field = DLGCreateStringField(default_host_address).DLGIdentifier("network_ip_port").DLGWidth(entry_width*4)
+        TagGroup network_address_group = DLGGroupItems(label, network_address_field).DLGTableLayout(2,1,0)
+
         TagGroup rotation_field
         label = DLGCreateLabel("targeted alpha angle (deg):").DLGWidth(label_width*2)
         rotation_field = DLGCreateRealField(default_endangle).DLGIdentifier("rotation_field").DLGWidth(entry_width)
@@ -577,13 +633,11 @@ Class Dialog_UI : UIFrame
         rotation_speed_field = DLGCreateRealField(default_rotspeed).DLGIdentifier("rotation_speed_field").DLGWidth(entry_width)
         TagGroup rotspeed_group = DLGGroupItems(label, rotation_speed_field).DLGTableLayout(2, 1, 0)
 
-        TagGroup autostop_check = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
-        TagGroup autoblank_check = DLGCreateCheckBox("Blank the beam after data collection", default_auto_blank).DLGIdentifier("CheckAutoBlank").DLGAnchor("West")
-        
-        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, rotation_group, rotspeed_group).DLGTableLayout(1, 4, 0).DLGAnchor("West")
-        cred_group = DLGGroupItems(cred_group, autostop_check, autoblank_check).DLGTableLayout(1,3,0).DLGAnchor("West")
-        cred_box_items.DLGAddElement(cred_group)
-        Dialog_UI.DLGAddElement(cred_box)
+        TagGroup server_command_group = DLGGroupItems(rotation_group, rotspeed_group).DLGTableLayout(1,2,0).DLGAnchor("West")
+        TagGroup server_group = DLGGroupItems(server_drc_group, network_address_group, server_command_group).DLGTableLayout(1,3,0).DLGAnchor("West")
+        server_group = DLGGroupItems(use_server, server_group).DLGTableLayout(1,2,0).DLGAnchor("West")
+        server_box_items.DLGAddElement(server_group)
+        Dialog_UI.DLGAddElement(server_box)
 
         // Experiment control box
         TagGroup control_box_items
