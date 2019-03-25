@@ -487,15 +487,15 @@ class ImgConversion(object):
         
         logger.info("XDS INP file created.")
 
-    def write_beam_centers(self, drc: str) -> None:
-        """Write list of beam centers to file `beam_centers.txt` in `drc`"""
+    def write_beam_centers(self, path: str) -> None:
+        """Write list of beam centers to file `beam_centers.txt` in `path`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
         for i, h in self.headers.items():
             centers[i-1] = h["beam_center"]
         for i in self.missing_range:
             centers[i-1] = [np.NaN, np.NaN]
 
-        np.savetxt(drc / "beam_centers.txt", centers, fmt="%10.4f")
+        np.savetxt(path / "beam_centers.txt", centers, fmt="%10.4f")
 
     def write_pets_inp(self, path: str) -> None:
         """Write PETS input file `pets.pts` in directory `path`"""

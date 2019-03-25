@@ -105,5 +105,6 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 ! ********** Indexing **********
 
-MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    !0.50 is default.
+MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    ! 0.50 is default.
+!MAXIMUM_ERROR_OF_SPOT_POSITION=6.0        ! 3.0 is default
 """
