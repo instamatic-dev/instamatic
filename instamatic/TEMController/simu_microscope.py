@@ -238,7 +238,7 @@ class SimuMicroscope(object):
     def stopStage(self):
         pass
 
-    def setStagePosition(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
+    def setStagePosition(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, speed: float= -1, wait: bool=True):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:

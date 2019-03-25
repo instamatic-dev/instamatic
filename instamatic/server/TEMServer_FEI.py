@@ -6,44 +6,37 @@ from instamatic import TEMController
 import threading
 import logging
 
-from instamatic import config
+"""
+Utility script to enable rotation control from a dmscript
+See `https://github.com/stefsmeets/instamatic/tree/master/dmscript` for usage
+"""
 
 ctrl = TEMController.initialize()
-"""The host computer is the TEM computer in the FEI room"""
-#HOST = "192.168.12.1"
-#PORT = 9999
 
 HOST = config.cfg.fei_server_host
 PORT = config.cfg.fei_server_port
 
+
 def handle(conn):
-    ret = 0
-    
     while True:
-        try:
-            data = conn.recv(1024).decode()
-            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-            
-            if not data:
-                break
-            
-            if data == "close":
-                break
-            elif data == "kill":
-                ret = 1
-                break
-            else:
-                conn.send(b"Connection closed")
-                conn.close()
-                
-                print("Connection closed")
-                run_rotation_with_speed(data)
-                
-        except OSError:
-            print("OSError raised: check client, connection closing...")
+        data = conn.recv(1024).decode()
+        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        
+        if not data:
             break
         
-        
+        if data == "close":
+            break
+        elif data == "kill":
+            break
+        else:
+            conn.send(b"Connection closed")
+            conn.close()
+            
+            print("Connection closed")
+            run_rotation_with_speed(data)
+
+
 def run_rotation_with_speed(data):
     data = [float(s) for s in data.split(',')]
     target_angle = data[0]
@@ -51,7 +44,8 @@ def run_rotation_with_speed(data):
     print("Rotating to {} with speed level {}...".format(target_angle, speed))
     ctrl.stageposition.set_with_speed(a = target_angle, speed = speed)
     print("Rotation completed.")
-    
+
+
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_temserver_Themis_{date}.log"
