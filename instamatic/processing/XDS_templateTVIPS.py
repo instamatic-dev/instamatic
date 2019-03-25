@@ -35,8 +35,8 @@ FRIEDEL'S_LAW=TRUE            !TRUE is default
 STARTING_ANGLE= {starting_angle:0.4f}
 STARTING_FRAME= 1
 
-MAX_CELL_AXIS_ERROR=  0.05      !0.03 is default
-MAX_CELL_ANGLE_ERROR= 3.0       !2.0  is default
+MAX_CELL_AXIS_ERROR=  0.03      !0.03 is default
+MAX_CELL_ANGLE_ERROR= 2.0       !2.0  is default
 
 TEST_RESOLUTION_RANGE=10. 1.0 !for calculation of Rmeas when analysing the intensity data for space group symmetry in the CORRECT step.
 !MIN_RFL_Rmeas=50             !50 is default - used in the CORRECT step for identification of possible space groups.
@@ -49,11 +49,6 @@ QX={QX:.4f}  QY={QY:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
 TRUSTED_REGION= 0.0  1.05   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
 {untrusted_areas}
-
-DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections
-X-GEO_CORR= XCORR.cbf  ! X stretch correction
-Y-GEO_CORR= YCORR.cbf  ! Y stretch correction
-
 SENSOR_THICKNESS=0.30
 AIR=0.0
 
@@ -98,7 +93,7 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 !NBX=7  NBY=7            ! 3 is default, used to estimate the expected variation in a data image, see GAIN.cbf
 !BACKGROUND_PIXEL= 6.0   ! Background pixel belongs to background if variation less than given esds
-!STRONG_PIXEL= 3.0       ! Strong pixel must exceed background by more than number of given esds
+STRONG_PIXEL= 6.0       ! Strong pixel must exceed background by more than number of given esds
 !MAXIMUM_NUMBER_OF_STRONG_PIXELS= 1500000 ! Approximate upper limit for the total number of 'strong' pixels
 !MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT= 6    ! Used to suppress spurious, isolated 'strong' pixels from entering the spot list
 !SPOT_MAXIMUM-CENTROID= 3.0               ! Maximum deviation of spot maximum from spot centroid
@@ -112,6 +107,6 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 ! ********** Indexing **********
 
-!MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    !0.50 is default.
+!MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    ! 0.50 is default.
 !MAXIMUM_ERROR_OF_SPOT_POSITION=6.0        ! 3.0 is default
 """

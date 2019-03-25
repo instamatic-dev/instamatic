@@ -21,6 +21,7 @@ NAME_TEMPLATE_OF_DATA_FRAMES= {data_drc}/0????.img   SMV
 DATA_RANGE=           {data_begin:d} {data_end:d}
 SPOT_RANGE=           {data_begin:d} {data_end:d}
 BACKGROUND_RANGE=     {data_begin:d} {data_end:d}
+{exclude:s}
 
 ! ********** Crystal **********
 
@@ -47,6 +48,7 @@ NX={NX}     NY={NY}             !Number of pixels
 QX={QX:.4f}  QY={QY:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
 TRUSTED_REGION= 0.0  1.05   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
+{untrusted_areas}
 
 SENSOR_THICKNESS=0.30
 AIR=0.0
@@ -79,6 +81,7 @@ ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}           !Detector origin (pixels)
 DETECTOR_DISTANCE= {sign}{detector_distance:.2f}            !Can be negative. Positive because the detector normal points away from the crystal.
 
 OSCILLATION_RANGE= {osc_angle:.4f}
+!OSCILLATION_RANGE {calib_osc_angle:.4f}               !Calibrated value if above one is too far off
 
 ROTATION_AXIS= {rot_x:.4f} {rot_y:.4f} {rot_z:.4f}
 
@@ -105,5 +108,6 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 ! ********** Indexing **********
 
-MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    !0.50 is default.
+MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    ! 0.50 is default.
+!MAXIMUM_ERROR_OF_SPOT_POSITION=6.0        ! 3.0 is default
 """

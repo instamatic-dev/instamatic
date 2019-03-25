@@ -1,9 +1,10 @@
-from .TiffIO import TiffIO
 import time
 import os
 import yaml
 import numpy as np
 from pathlib import Path
+
+import tifffile
 
 from .csvIO import read_csv, write_csv, read_ycsv, write_ycsv, yaml_ordered_load, yaml_ordered_dump
 from .adscimage import write_adsc, read_adsc
@@ -17,7 +18,6 @@ with warnings.catch_warnings():
 
 from .mrc import read_image as read_mrc
 from .mrc import write_image as write_mrc
-
 
 from .xdscbf import write as write_cbf
 
@@ -52,12 +52,12 @@ def write_tiff(fname, data, header=None):
     if isinstance(header, dict):
         header = yaml.dump(header)
     if not header:
-        header = "No description"
+        header = ""
 
     fname = Path(fname).with_suffix(".tiff")
 
-    tiffIO = TiffIO(fname, mode="w")
-    tiffIO.writeImage(data, info=header, software="instamatic", date=time.ctime())
+    with tifffile.TiffWriter(fname) as f:
+        f.save(data=data, software="instamatic", description=header)
 
 
 def read_tiff(fname):
@@ -70,20 +70,17 @@ def read_tiff(fname):
         image: np.ndarray, header: dict
             a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
     """
+    tiff = tifffile.TiffFile(fname)
 
-    tiff = TiffIO(fname)
-    img = tiff.getImage(0)
-    header = tiff.getInfo(0)
+    page = tiff.pages[0]
+    img = page.asarray()
 
-    if "imageDescription" in header:
-        try:
-            d = yaml.load(header.get("imageDescription"), Loader=yaml.Loader)
-        except (Exception, ValueError) as e:
-            print("Warning: could not read info from tiff header: {} (input={})".format(e, header.get("imageDescription")))
-        else:
-            if isinstance(d, dict):
-                header.update(d)
-                del header["imageDescription"]
+    if page.software == 'instamatic':
+        header = yaml.load(page.tags["ImageDescription"].value, Loader=yaml.Loader)
+    elif tiff.is_tvips:
+        header = tiff.tvips_metadata
+    else:
+        header = {}
 
     return img, header
 

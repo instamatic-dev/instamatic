@@ -1,7 +1,7 @@
 from .ImgConversion import *
 
 
-class ImgConversionDM(ImgConversion):
+class ImgConversionTVIPS(ImgConversion):
     """This class is for converting data collected with the insteaDMatic DM-script
     Files can be generated for REDp, DIALS, XDS, and PETS.
 
@@ -41,6 +41,8 @@ class ImgConversionDM(ImgConversion):
             else:
                 self.data[i] = img
 
+        self.untrusted_areas = []
+
         self.observed_range = set(self.data.keys())
         self.complete_range = set(range(min(self.observed_range), max(self.observed_range) + 1))
         self.missing_range = self.observed_range ^ self.complete_range
@@ -50,6 +52,8 @@ class ImgConversionDM(ImgConversion):
         self.pixelsize = pixelsize
         self.physical_pixelsize = physical_pixelsize
         self.wavelength = wavelength
+        
+        self.use_beamstop = True
 
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
@@ -63,9 +67,9 @@ class ImgConversionDM(ImgConversion):
 
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
 
-        self.name = "DigitalMicrograph"
+        self.name = "TVIPS F416"
 
-        from .XDS_templateDM import XDS_template
+        from .XDS_templateTVIPS import XDS_template
         self.XDS_template = XDS_template
 
         self.check_settings()
