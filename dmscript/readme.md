@@ -1,4 +1,4 @@
-### insteaDMatic v0.1.0: a DM-Script to collect continuous rotation electron diffraction data
+### insteaDMatic v0.2.0: a DM-Script to collect continuous rotation electron diffraction data
 
 Author: Stef Smeets (2018)  
 URL: www.github.com/stefsmeets/instamatic
@@ -48,3 +48,14 @@ Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible
    - Experiment meta data are stored in the `cRED_log.txt` file
    - Images are stored in `.tiff` format in the `tiff` subdirectory
    - use `python instamatic/scripts/process_dm.py cRED_log.txt` to for data conversion
+
+#### FEI only:
+If you are running on a FEI machine, you can control the rotation directly from the dmscript
+To do so, instamatic should be installed on the microscope computer. The communication is done through a utility called netcat (available from (available from https://joncraton.org/blog/46/netcat-for-windows/))
+
+- Set the `use_temserver` toggle to `true` in the script
+- Make sure you have run `instamatic.temserver_fei` on the microscope computer
+- Set the location of software NETCAT on the camera PC (the one running DM) in the variable `netcat_path`
+- Give the IP address and port for TEM Python server in the variable `server_host_address`
+- Fill in the desired rotation angle and speed
+

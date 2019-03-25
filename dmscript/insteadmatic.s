@@ -1,5 +1,5 @@
 /*
-### insteaDMatic v0.1.0: a DM-Script to collect continuous rotation electron diffraction data
+### insteaDMatic v0.2.0: a DM-Script to collect continuous rotation electron diffraction data
 
 Author: Stef Smeets (2018)  
 URL: www.github.com/stefsmeets/instamatic
@@ -10,6 +10,8 @@ The script is loosely based on an example by Dave Mitchell (http://www.dmscripti
 The script has been tested on a FEI themisZ with OneView camera and a JEOL 2100 with Orius Camera.
 
 This script helps with automatic data collection of continuous rotation electron diffraction (CRED) data using DigitalMicrograph.
+
+#### How it works:
 
 It uses the 'live view' of the camera as a source of data. Every time the frame is updated, DM fires off an event. 
 This scripts waits for this event and then clones the image. These data are equivalent to what can be obtained using the 'Record' function.
@@ -30,7 +32,7 @@ Make sure to set up the rotation axis (defined as the angle between the horizont
 Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible with XDS/DIALS/REDp/PETS
 (www.github.com/stefsmeets/instamatic)
 
-### Usage instructions:
+#### Usage instructions:
 1. Insert the camera in view mode (for Oneview, use 'In-situ Acquisition')
    - Set the exposure (i.e. 0.3 s) and press 'View'
    - For Oneview, set the diffraction mode for the acquisition (Click 'D')
@@ -46,17 +48,15 @@ Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible
    - Images are stored in `.tiff` format in the `tiff` subdirectory
    - use `python instamatic/scripts/process_dm.py cRED_log.txt` to for data conversion
 
-*** FEI only:
+#### FEI only:
 If you are running on a FEI machine, you can control the rotation directly from the dmscript
 To do so, instamatic should be installed on the microscope computer. The communication is done through a utility called netcat (available from (available from https://joncraton.org/blog/46/netcat-for-windows/))
 
-A.0 Keep the box unchecked if you do not want to use it
-A.1 Check the box for TEM server options
-A.2 Make sure you have run `instamatic.temserver_fei` on the microscope computer
-A.3 Find the location of software NETCAT on the camera PC (running DM)
-A.4 Give the correct IP address and port for TEM Python server
-A.5 Fill in the desired rotation angle and speed
-***
+- Set the `use_temserver` toggle to `true` in the script
+- Make sure you have run `instamatic.temserver_fei` on the microscope computer
+- Set the location of software NETCAT on the camera PC (the one running DM) in the variable `netcat_path`
+- Give the correct IP address and port for TEM Python server in the variable `server_host_address`
+- Fill in the desired rotation angle and speed
 
 */
 
