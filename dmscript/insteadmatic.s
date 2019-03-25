@@ -46,9 +46,21 @@ Use `instamatic/scripts/process_dm.py` to convert the data to formats compatible
    - Images are stored in `.tiff` format in the `tiff` subdirectory
    - use `python instamatic/scripts/process_dm.py cRED_log.txt` to for data conversion
 
+*** FEI only:
+If you are running on a FEI machine, you can control the rotation directly from the dmscript
+To do so, instamatic should be installed on the microscope computer. The communication is done through a utility called netcat (available from (available from https://joncraton.org/blog/46/netcat-for-windows/))
+
+A.0 Keep the box unchecked if you do not want to use it
+A.1 Check the box for TEM server options
+A.2 Make sure you have run `instamatic.temserver_fei` on the microscope computer
+A.3 Find the location of software NETCAT on the camera PC (running DM)
+A.4 Give the correct IP address and port for TEM Python server
+A.5 Fill in the desired rotation angle and speed
+***
+
 */
 
-string progname = "insteaDMatic v0.1.0"
+string progname = "insteaDMatic v0.2.0"
 number true = 1, false = 0
 
 // Setup rotation axis (deg)
@@ -58,6 +70,11 @@ number calibrated_rotation_axis = -171.0
 // Setup experiment variables
 number default_activation_threshold = 0.2   // change in angle to start rotation
 number default_buffersize = 1000            // the maximum number of frames that will be collected, because memory must be reserved in advance
+
+// FEI only, to control rotation directly from the dmscript
+number default_target_angle = 40            // default target angle for rotation
+number default_rotspeed = 0.05              // rotation speed index (must be in the range 0.0 - 1.0)
+
 number write_tiff_files = true              // write data to tiff format
 number show_buffer = false                  // show the buffer during data collection
 number keep_buffer_open = false             // open buffer / keep buffer open after data collection
@@ -67,9 +84,14 @@ number default_auto_blank = false           // Automatically blank the beam afte
 
 number verbose = false                      // Increase the verbosity, print some testing variables
 
+number use_temserver = false                // Option to use TEM Python server to allow operation only from the camera computer
+
+// Default NETCAT.exe directory
+string netcat_path = "C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe"      // location of the netcat program for communication with the microscope computer
+string server_host_address = "localhost 9999"                                              // IP + port of the microscope computer running `instamatic.temserver_fei
 
 // Initialize other parameters
-number top, left, bottom, right  // image selection (top, left, bottom, right)
+number top, left, bottom, right    // image selection (top, left, bottom, right)
 image stream, buffer
 number loop = false
 number EventTimeout = 1.0
@@ -86,13 +108,6 @@ string get_date_string()
 }
 
 
-// Helper print function
-void Print(string message)
-{
-    Result(message + "\n")
-}
-
-
 // Setup default directory
 // Don't ask...
 string user_drc = PathExtractParentDirectory(PathExtractParentDirectory(PathExtractParentDirectory(GetApplicationDirectory(4, 0), 0), 0), 0)
@@ -101,9 +116,15 @@ string documents_drc = PathConcatenate(user_drc, "documents")
 string default_work_drc = "C:\\instamatic\\work_"+get_date_string()
 string default_sample_name = "experiment"
 
-
 // Signal that fires when the live view is updated
 Object DataValueChangedEvent = NewSignal(0)
+
+
+// Helper print function
+void Print(string message)
+{
+    Result(message + "\n")
+}
 
 
 Class ImageListener
@@ -144,6 +165,7 @@ number EMGetHighTension()  Return 200000
 number EMHasBeamBlanker()  Return true
 void EMSetBeamBlanked( number toggle )  toggle
 */
+
 
 // If the beam blank api is not available (i.e. on Orius), uncomment these lines:
 /*
@@ -256,7 +278,7 @@ Class Dialog_UI : UIFrame
         number nframes
         self.DLGGetValue("buffersize_field", nframes)
         Print("Buffersize: " + nframes)
-        
+       
         // get front image(), this is the live stream
         try  stream := GetFrontImage()        
         catch
@@ -289,7 +311,7 @@ Class Dialog_UI : UIFrame
         Get3DSize(buffer, xsize, ysize, zsize)
 
         // Show the buffer; TODO: make it show the latest updated frame
-        if (show_buffer )  showimage(buffer)
+        if ( show_buffer )  showimage(buffer)
 
         number angle_activation_threshold
         self.DLGGetValue("angle_activation_field", angle_activation_threshold)
@@ -298,7 +320,26 @@ Class Dialog_UI : UIFrame
 
         number angle0 = EMGetStageAlpha()
         Print("Angle0: " + angle0 + " (threshold: " + angle_activation_threshold + ")")
+        
+        //Launch external process using netcat to talk to the Python TEMserver
+        if ( use_temserver )
+        {
+            number rotation_speed, target_angle
 
+            self.DLGGetValue("rotation_speed_field", rotation_speed)
+            Print("Desired rotation speed index: " + rotation_speed)
+
+            self.DLGGetValue("rotation_field", target_angle)
+            Print("Targeted angle: " + target_angle)
+        
+            string externalcommand
+            externalcommand += "cmd /c echo "
+            externalcommand += target_angle + "," + rotation_speed
+            externalcommand += "  | " +  netcat_path + " " + server_host_address
+
+            LaunchExternalProcess(externalcommand)
+        }
+        
         while ( angle_delta < angle_activation_threshold )
         {
             sleep(0.1)  // sleep to prevent request spam (can cause dm to crash)
@@ -549,9 +590,31 @@ Class Dialog_UI : UIFrame
         TagGroup autostop_check = DLGCreateCheckBox("Stop data collection when stage stops moving", default_auto_stop).DLGIdentifier("CheckAutoStop").DLGAnchor("West")
         TagGroup autoblank_check = DLGCreateCheckBox("Blank the beam after data collection", default_auto_blank).DLGIdentifier("CheckAutoBlank").DLGAnchor("West")
         
-        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group, autostop_check, autoblank_check).DLGTableLayout(1, 4, 0).DLGAnchor("West")
+        TagGroup cred_group = DLGGroupItems(activation_threshold_group, buffersize_group).DLGTableLayout(1, 2, 0).DLGAnchor("West")
+        cred_group = DLGGroupItems(cred_group, autostop_check, autoblank_check).DLGTableLayout(1,3,0).DLGAnchor("West")
         cred_box_items.DLGAddElement(cred_group)
         Dialog_UI.DLGAddElement(cred_box)
+        
+        if ( use_temserver )
+        {    
+            // box for TEM server
+            TagGroup server_box_items
+            TagGroup server_box = DLGCreateBox("Rotation control (via TEM server)", server_box_items).DLGFill("XY")
+           
+            TagGroup rotation_field
+            label = DLGCreateLabel("Target alpha angle (deg):").DLGWidth(label_width*2)
+            rotation_field = DLGCreateRealField(default_target_angle).DLGIdentifier("rotation_field").DLGWidth(entry_width)
+            TagGroup rotation_group = DLGGroupItems(label, rotation_field).DLGTableLayout(2, 1, 0)
+            
+            TagGroup rotation_speed_field
+            label = DLGCreateLabel("Rotation speed:").DLGWidth(label_width*2)
+            rotation_speed_field = DLGCreateRealField(default_rotspeed).DLGIdentifier("rotation_speed_field").DLGWidth(entry_width)
+            TagGroup rotspeed_group = DLGGroupItems(label, rotation_speed_field).DLGTableLayout(2, 1, 0)
+
+            TagGroup server_group = DLGGroupItems(rotation_group, rotspeed_group).DLGTableLayout(1,2,0).DLGAnchor("West")
+            server_box_items.DLGAddElement(server_group)
+            Dialog_UI.DLGAddElement(server_box)
+        }
 
         // Experiment control box
         TagGroup control_box_items
