@@ -7,6 +7,22 @@ from skimage.measure import regionprops
 from scipy import ndimage, interpolate
 
 
+def to_xds_untrusted_area(kind: str, coords: list) -> str:
+    """Takes coordinate list and turns it into an XDS untrusted area
+    kind: rectangle, ellipse, quadrilateral
+    coords: coordinates corresponding to the untrusted area
+    """
+    if kind == "quadrilateral":
+        coords = np.round(coords).astype(int)
+        s = "UNTRUSTED_QUADRILATERAL="
+        for qx, qy in coords:
+            s += f" {qy} {qx}"
+        
+        return s
+    else:
+        raise ValueError("Only quadrilaterals are supported for now")
+
+
 def find_subranges(lst: list) -> (int, int):
     """Takes a range of sequential numbers (possibly with gaps) and 
     splits them in sequential sub-ranges defined by the minimum and maximum value.

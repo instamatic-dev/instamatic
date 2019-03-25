@@ -140,12 +140,12 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
     # image segmentation
     seg = radial_scaled < threshold
 
-    seg = morph.remove_small_objects(seg, 64)
-    seg = morph.remove_small_holes(seg, 64)
+    seg = morphology.remove_small_objects(seg, 64)
+    seg = morphology.remove_small_holes(seg, 64)
     
     # pad the beamstop to make the outline a big bigger
     if pad:
-        seg = morph.binary_dilation(seg, selem=morph.disk(pad))
+        seg = morphology.binary_dilation(seg, selem=morphology.disk(pad))
 
     arr = find_contours(seg, 0.5)
 
@@ -188,19 +188,6 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
     return rect
 
 
-def rect2xds_quadrilateral(rect) -> str:
-    """Takes the coordinats of a rectangle and formats it as an XDS quadrilateral"""
-    
-    rect = np.round(rect).astype(int)
-       
-    s = "UNTRUSTED_QUADRILATERAL="
-    
-    for qx, qy in rect:
-        s += f" {qy} {qx}"
-    
-    return s
-
-
 if __name__ == '__main__':
     drc = "."
     fns = list(Path(drc).glob("raw/*.tif"))
@@ -215,7 +202,9 @@ if __name__ == '__main__':
 
     beamstop_rect = find_beamstop_rect(stack_mean, center, pad=1, plot=True)
     
-    xds_quad = rect2xds_quadrilateral(beamstop_rect)
+    from instamatic.tools import to_xds_untrusted_area
+
+    xds_quad = to_xds_untrusted_area("quadrilateral", beamstop_rect)
 
     print(xds_quad)
 
