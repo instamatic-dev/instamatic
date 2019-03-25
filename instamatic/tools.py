@@ -11,14 +11,36 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
     """Takes coordinate list and turns it into an XDS untrusted area
     kind: rectangle, ellipse, quadrilateral
     coords: coordinates corresponding to the untrusted area
+
+    For definitions, see:
+    http://xds.mpimf-heidelberg.mpg.de/html_doc/xds_parameters.html#UNTRUSTED_ELLIPSE=
+
+    `coords` corresponds to a list of (x, y) coordinates of the corners of the quadrilateral / rectangle
     """
     if kind == "quadrilateral":
         coords = np.round(coords).astype(int)
         s = "UNTRUSTED_QUADRILATERAL="
-        for qx, qy in coords:
-            s += f" {qy} {qx}"
+        for x, y in coords:   
+            s += f" {y} {x}"  # coords are flipped in XDS
         
         return s
+
+    elif kind == "rectangle":
+        coords = np.round(coords).astype(int)
+        s = "UNTRUSTED_RECTANGLE="
+        (x1, y1), (x2, y2) = coords
+        s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
+        
+        return s
+
+    elif kind == "ellipse":
+        coords = np.round(coords).astype(int)
+        s = "UNTRUSTED_ELLIPSE="
+        (x1, y1), (x2, y2) = coords
+        s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
+        
+        return s
+
     else:
         raise ValueError("Only quadrilaterals are supported for now")
 

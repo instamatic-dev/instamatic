@@ -3,7 +3,7 @@ import time, datetime, tqdm
 import numpy as np
 from instamatic import config
 from instamatic.formats import write_tiff
-from instamatic.processing import ImgConversion
+from instamatic.processing import ImgConversionTPX as ImgConversion
 
 
 class Experiment(object):

@@ -3,7 +3,7 @@ import datetime
 from tkinter import *
 import numpy as np
 import time
-from instamatic.processing import ImgConversion
+from instamatic.processing import ImgConversionTPX as ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from pathlib import Path
