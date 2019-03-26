@@ -3,7 +3,7 @@ import time, datetime, tqdm
 import numpy as np
 from instamatic import config
 from instamatic.formats import write_tiff
-from instamatic.processing import ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
 class Experiment(object):
@@ -124,23 +124,39 @@ class Experiment(object):
         self.logger.info(f"Data saving path: {self.path}")
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
+        self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize # mm
+        self.wavelength = config.microscope.wavelength # angstrom
+        self.stretch_azimuth = config.camera.stretch_azimuth
+        self.stretch_amplitude = config.camera.stretch_amplitude
+
         with open(self.path / "summary.txt", "a") as f:
             print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
             print(f"Exposure Time: {self.exposure_time:.3f} s", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
             print(f"Camera length: {self.camera_length} mm", file=f)
+            print(f"Pixelsize: {self.pixelsize} px/Angstrom", file=f)
+            print(f"Physical pixelsize: {self.physical_pixelsize} um", file=f)
+            print(f"Wavelength: {self.wavelength} Angstrom", file=f)
+            print(f"Stretch amplitude: {self.stretch_azimuth} %", file=f)
+            print(f"Stretch azimuth: {self.stretch_amplitude} degrees", file=f)
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Stepsize: {self.stepsize:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes}", file=f)
 
-        img_conv = ImgConversion.ImgConversion(buffer=self.buffer, 
-                 camera_length=self.camera_length,
+        img_conv = ImgConversion(buffer=buffer, 
                  osc_angle=self.stepsize,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
                  rotation_axis=self.rotation_axis,
                  acquisition_time=self.exposure_time,
-                 flatfield=self.flatfield)
+                 flatfield=self.flatfield,
+                 pixelsize=self.pixelsize,
+                 physical_pixelsize=self.physical_pixelsize,
+                 wavelength=self.wavelength,
+                 stretch_amplitude=self.stretch_amplitude,
+                 stretch_azimuth=self.stretch_azimuth
+                 )
 
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,

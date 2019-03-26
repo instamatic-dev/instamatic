@@ -3,7 +3,7 @@ import datetime
 from tkinter import *
 import numpy as np
 import time
-from instamatic.processing import ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from pathlib import Path
@@ -136,6 +136,11 @@ class Experiment(object):
             print(f"Total time: {self.total_time:.3f} s", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
             print(f"Camera length: {self.camera_length} mm", file=f)
+            print(f"Pixelsize: {self.pixelsize} px/Angstrom", file=f)
+            print(f"Physical pixelsize: {self.physical_pixelsize} um", file=f)
+            print(f"Wavelength: {self.wavelength} Angstrom", file=f)
+            print(f"Stretch amplitude: {self.stretch_azimuth} %", file=f)
+            print(f"Stretch azimuth: {self.stretch_amplitude} degrees", file=f)
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes_diff}", file=f)
@@ -315,6 +320,12 @@ class Experiment(object):
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
+        self.pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length] # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize # mm
+        self.wavelength = config.microscope.wavelength # angstrom
+        self.stretch_azimuth = config.camera.stretch_azimuth # deg
+        self.stretch_amplitude = config.camera.stretch_amplitude # %
+
         self.nframes_diff = len(buffer)
         self.nframes_image = len(image_buffer)
 
@@ -337,14 +348,20 @@ class Experiment(object):
         index (int), image data (2D numpy array), metadata/header (dict).
         
         The buffer index must start at 1."""
-        img_conv = ImgConversion.ImgConversion(buffer=buffer, 
-                 camera_length=self.camera_length,
+
+        img_conv = ImgConversion(buffer=buffer, 
                  osc_angle=self.osc_angle,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
                  rotation_axis=self.rotation_axis,
                  acquisition_time=self.acquisition_time,
-                 flatfield=self.flatfield)
+                 flatfield=self.flatfield,
+                 pixelsize=self.pixelsize,
+                 physical_pixelsize=self.physical_pixelsize,
+                 wavelength=self.wavelength,
+                 stretch_amplitude=self.stretch_amplitude,
+                 stretch_azimuth=self.stretch_azimuth
+                 )
         
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,

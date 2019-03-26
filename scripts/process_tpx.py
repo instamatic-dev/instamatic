@@ -1,4 +1,4 @@
-from instamatic.processing import ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX as ImgConversionTPX as ImgConversion
 from instamatic.formats import read_tiff
 import glob, sys
 from pathlib import Path
@@ -90,6 +90,17 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path="SMV_reprocessed"
                 acquisition_time = float(line.split()[2])
             if line.startswith("Exposure Time"):
                 exposure_time = float(line.split()[2])
+            if line.startswith("Pixelsize"):
+                pixelsize = float(line.split()[1])
+            if line.startswith("Physical pixelsize"):
+                physical_pixelsize = float(line.split()[2])
+            if line.startswith("Wavelength"):
+                wavelength = float(line.split()[1])
+            if line.startswith("Stretch amplitude"):
+                stretch_azimuth = float(line.split()[2])
+            if line.startswith("Stretch azimuth"):
+                stretch_amplitude = float(line.split()[2])
+
     
     if not acquisition_time:
         acquisition_time = exposure_time + 0.015
@@ -110,15 +121,20 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path="SMV_reprocessed"
         img, h = read_tiff(fn)
         buffer.append((j, img, h))
     
-    img_conv = ImgConversion.ImgConversion(buffer=buffer, 
-             camera_length=camera_length,
-             osc_angle=osc_angle,
-             start_angle=start_angle,
-             end_angle=end_angle,
-             rotation_axis=rotation_axis,
-             acquisition_time=acquisition_time,
-             flatfield=None)
-    
+    img_conv = ImgConversion(buffer=buffer, 
+             osc_angle=self.osc_angle,
+             start_angle=self.start_angle,
+             end_angle=self.end_angle,
+             rotation_axis=self.rotation_axis,
+             acquisition_time=self.acquisition_time,
+             flatfield=None,
+             pixelsize=self.pixelsize,
+             physical_pixelsize=self.physical_pixelsize,
+             wavelength=self.wavelength,
+             stretch_amplitude=self.stretch_amplitude,
+             stretch_azimuth=self.stretch_azimuth
+             )
+
     # azimuth, amplitude = 83.37, 2.43  # add 90 to azimuth for old files
     # img_conv.stretch_azimuth, img_conv.stretch_amplitude = azimuth, amplitude
     print("Stretch amplitude", img_conv.stretch_amplitude)

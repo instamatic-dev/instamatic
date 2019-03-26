@@ -3,7 +3,7 @@ import datetime
 import logging
 import numpy as np
 import time
-from instamatic.processing import ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic import config
 from instamatic.formats import write_tiff
 from skimage.feature import register_translation
@@ -734,33 +734,51 @@ class Experiment(object):
         self.logger.info("Data collected from {} degree to {} degree.".format(self.startangle, self.endangle))
         self.logger.info("Oscillation angle: {}".format(osangle))
         self.logger.info("Pixel size and actual camera length updated in SMV file headers for DIALS processing.")
-        
+
+        rotation_angle = config.camera.camera_rotation_vs_stage_xy
+
+        self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize # mm
+        self.wavelength = config.microscope.wavelength # angstrom
+        self.stretch_azimuth = config.camera.stretch_azimuth
+        self.stretch_amplitude = config.camera.stretch_amplitude
+       
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         with open(os.path.join(path, "cRED_log.txt"), "w") as f:
-            f.write("Data Collection Time: {}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            f.write("Starting angle: {}\n".format(self.startangle))
-            f.write("Ending angle: {}\n".format(self.endangle))
-            f.write("Exposure Time: {} s\n".format(self.expt))
-            f.write("Spot Size: {}\n".format(spotsize))
-            f.write("Camera length: {} mm\n".format(camera_length))
-            f.write("Oscillation angle: {} degrees\n".format(osangle))
-            f.write("Number of frames: {}\n".format(len(buffer)))
-            f.write("Particle found at stage position: x: {}, y: {}, z: {}\n".format(stageposx, stageposy, stageposz))
+            print(f"Data Collection Time: {now}", file=f)
+            print(f"Starting angle: {self.startangle}", file=f)
+            print(f"Ending angle: {self.endangle}", file=f)
+            print(f"Exposure Time: {self.expt} s", file=f)
+            print(f"Spot Size: {spotsize}", file=f)
+            print(f"Camera length: {camera_length} mm\n", file=f)
+            print(f"Pixelsize: {self.pixelsize} px/Angstrom", file=f)
+            print(f"Physical pixelsize: {self.physical_pixelsize} um", file=f)
+            print(f"Wavelength: {self.wavelength} Angstrom", file=f)
+            print(f"Stretch amplitude: {self.stretch_azimuth} %", file=f)
+            print(f"Stretch azimuth: {self.stretch_amplitude} degrees", file=f)
+            print(f"Rotation axis: {rotation_angle} radians", file=f)            
+            print(f"Oscillation angle: {osangle} degrees", file=f)
+            print(f"Number of frames: {len(buffer)}", file=f)
+            print(f"Particle found at stage position: x: {stageposx}, y: {stageposy}, z: {stageposz}")
 
         with open(log_rotaterange, "a") as f:
             f.write("{}\t{}\t{}\t{}\n".format(stageposx, stageposy, stageposz, rotrange))
         
-        rotation_angle = config.camera.camera_rotation_vs_stage_xy
-
-        img_conv = ImgConversion.ImgConversion(buffer=buffer, 
-                 camera_length=camera_length,
+        img_conv = ImgConversion(buffer=buffer, 
                  osc_angle=osangle,
                  start_angle=self.startangle,
                  end_angle=self.endangle,
                  rotation_axis=rotation_angle,
                  acquisition_time=acquisition_time,
                  flatfield=self.flatfield,
-                 centerDP=self.autocenterDP)
-        
+                 pixelsize=self.pixelsize,
+                 physical_pixelsize=self.physical_pixelsize,
+                 wavelength=self.wavelength,
+                 stretch_amplitude=self.stretch_amplitude,
+                 stretch_azimuth=self.stretch_azimuth
+                 )
+
         img_conv.tiff_writer(pathtiff)
         img_conv.smv_writer(pathsmv)
         img_conv.mrc_writer(pathred)

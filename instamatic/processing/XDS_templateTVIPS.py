@@ -49,6 +49,7 @@ QX={QX:.4f}  QY={QY:.4f}          !Physical size of pixels (mm)
 OVERLOAD= 130000              !default value dependent on the detector used
 TRUSTED_REGION= 0.0  1.05   !default \"0.0 1.05\". Corners for square detector max \"0.0 1.4142\"
 {untrusted_areas}
+{stretch_correction}
 SENSOR_THICKNESS=0.30
 AIR=0.0
 

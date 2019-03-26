@@ -167,7 +167,7 @@ class ImgConversion(object):
         from .XDS_template import XDS_template  # hook XDS_template here, because it is difficult to override as a global
         self.XDS_template = XDS_template
 
-        self.check_settings()
+        self.check_settings()  # check if all required parameters are present, and fill default values if needed
 
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
         logger.debug("Primary beam at: {}".format(self.mean_beam_center))
@@ -520,6 +520,9 @@ class ImgConversion(object):
 
         if self.do_stretch_correction:
             self.write_geometric_correction_files(path)
+            stretch_correction = "DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections\nX-GEO_CORR= XCORR.cbf  ! X stretch correction\nY-GEO_CORR= YCORR.cbf  ! Y stretch correction\n"
+        else:
+            stretch_correction=""
 
         if self.missing_range:
             exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
@@ -537,6 +540,7 @@ class ImgConversion(object):
             data_begin=1,
             data_end=nframes,
             exclude=exclude,
+            stretch_correction=stretch_correction,
             starting_angle=self.start_angle,
             wavelength=self.wavelength,
             # reverse XY coordinates for XDS

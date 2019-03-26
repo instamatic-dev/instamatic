@@ -2,7 +2,7 @@ from .ImgConversion import *
 
 
 class ImgConversionTVIPS(ImgConversion):
-    """This class is for converting data collected with the insteaDMatic DM-script
+    """This class is for converting data collected with a TVIPS camera
     Files can be generated for REDp, DIALS, XDS, and PETS.
 
     The image buffer is passed as a list of tuples, where each tuple contains the
@@ -54,8 +54,8 @@ class ImgConversionTVIPS(ImgConversion):
         self.wavelength = wavelength
         
         self.use_beamstop = True
-
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
+
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle

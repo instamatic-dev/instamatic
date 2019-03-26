@@ -51,7 +51,9 @@ class ImgConversionDM(ImgConversion):
         self.physical_pixelsize = physical_pixelsize
         self.wavelength = wavelength
 
+        self.use_beamstop = False
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
+
         self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
