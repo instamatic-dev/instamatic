@@ -1,6 +1,7 @@
 import os
 import time, datetime, tqdm
 import numpy as np
+from pathlib import Path
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
@@ -21,7 +22,7 @@ class Experiment(object):
     def __init__(self, ctrl, path: str=None, log=None, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
-        self.path = path
+        self.path = Path(path)
 
         self.mrc_path = path / "mrc"
         self.tiff_path = path / "tiff"
