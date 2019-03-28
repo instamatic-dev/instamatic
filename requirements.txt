@@ -12,3 +12,4 @@ h5py
 tifffile
 # optional
 IPython # instamatic.controller
+pyautogui # tvips integration

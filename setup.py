@@ -28,6 +28,7 @@ setup(
 
     classifiers=[
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
@@ -51,7 +52,8 @@ setup(
                       'pyyaml', 
                       'h5py', 
                       'tifffile',
-                      'IPython'],
+                      'IPython',
+                      'pyautogui'],
 
     include_package_data=True,
 
