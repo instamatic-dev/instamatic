@@ -14,7 +14,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        Label(frame, text="Exposure time (s):").grid(row=4, column=0, sticky="W")
+        Label(frame, text="Target angle (degrees):").grid(row=4, column=0, sticky="W")
         self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0)
         self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
         
@@ -116,7 +116,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
     elif task == "stop":
-        del controller.red_exp
+        pass
 
 
 from .base_module import BaseModule

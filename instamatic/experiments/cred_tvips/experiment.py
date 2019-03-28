@@ -24,10 +24,11 @@ class Experiment(object):
         self.path = Path(path)
 
         self.emmenu = EMMenuWrapper()
+
         self.logger = log
 
     def get_ready(self):
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.ctrl.beamblank = True
 
         if self.ctrl.mode != 'diff':
             print("Switching to diffraction mode")
@@ -36,27 +37,30 @@ class Experiment(object):
         spotsize = self.ctrl.spotsize
         if spotsize not in (4, 5):
             print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
-    
+
+        if not self.emmenu.live_view_is_running:
+            delay = 2.0
+            self.emmenu.toggle_liveview()
+            time.sleep(delay)
+
+    def start_collection(self, target_angle: float):
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position[3]  
 
-    def start_collection(self, target_angle: float):
         self.ctrl.beamblank = False
 
-        if not self.emmenu.live_view_is_running:
-            delay = 3.0
-            self.emmenu.press_liveview()
-            self.time.sleep(delay)
-
-        self.emmenu.press_record()
+        self.emmenu.toggle_record()  # start recording
 
         t0 = time.perf_counter()
         self.ctrl.stageposition.a = target_angle
         # time.sleep(5.0)
         t1 = time.perf_counter()
+
         self.ctrl.beamblank = True
 
-        self.emmenu.press_liveview()
+        self.emmenu.toggle_liveview()  # end liveview and stop recording
 
         end_position = self.ctrl.stageposition.get()
         end_angle = end_position[3]
@@ -86,7 +90,7 @@ class Experiment(object):
         print(f"Data collection spot size: {spotsize}")
         print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
 
-        with open(path / "cRED_log.txt", "w") as f:
+        with open(self.path / "cRED_log.txt", "w") as f:
             print(f"Program: {version.__long_title__} + EMMenu 4.0", file=f)
             print(f"Data Collection Time: {now}", file=f)
             print(f"Time Period Start: {t_start}", file=f)
@@ -107,6 +111,11 @@ class Experiment(object):
             print("", file=f)
 
         print(f"Wrote file {f.name}")
+
+        path_data = self.path / "raw"
+        path_data.mkdir(exist_ok=True, parents=True)
+
+        print(f"Don't forget to save the data to {path_data}")
 
 
 if __name__ == '__main__':
