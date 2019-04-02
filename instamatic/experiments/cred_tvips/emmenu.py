@@ -43,7 +43,7 @@ class EMMenuWrapper(object, metaclass=Singleton):
 
         record_button_pos = pg.locateCenterOnScreen(self._path_start_record_button, grayscale=True)
         if not record_button_pos:
-            raise EMMenuError("Could not locate live view button")
+            raise EMMenuError("Could not locate record view button")
         self.record_button_pos = record_button_pos
         
         # attempt 1, liveview is running
@@ -55,8 +55,12 @@ class EMMenuWrapper(object, metaclass=Singleton):
                 # attempt 3, liveview is running, but deselected
                 liveview_button_pos = pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True)
                 if not liveview_button_pos:
-                    raise EMMenuError("Could not locate record button")
+                    raise EMMenuError("Could not locate live view button")
+
         self.liveview_button_pos = pg.center(liveview_button_pos)
+
+        print(f"Record button position: {self.record_button_pos}")
+        print(f"Liveview button position: {self.liveview_button_pos}")
 
         self.activate_previous()
 

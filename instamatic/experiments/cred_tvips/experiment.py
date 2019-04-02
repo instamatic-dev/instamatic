@@ -50,7 +50,7 @@ class Experiment(object):
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position[3]  
 
-        self.ctrl.beamblank_off
+        self.ctrl.beamblank_off()
 
         self.emmenu.toggle_record()  # start recording
 
