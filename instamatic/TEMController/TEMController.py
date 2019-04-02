@@ -11,6 +11,8 @@ from typing import Tuple
 import numpy as np
 
 
+_ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
+
 default_cam = config.camera.name
 default_tem = config.microscope.name
 use_server  = config.cfg.use_tem_server
@@ -34,7 +36,22 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
     else:
         cam = None
 
-    ctrl = TEMController(tem=tem, cam=cam)
+    global _ctrl
+    ctrl = _ctrl = TEMController(tem=tem, cam=cam)
+
+    return ctrl
+
+
+def get_instance() -> "TEMController":
+    """Gets the current `ctrl` instance if it has been initialized, otherwise
+    initialize it using default parameters"""
+
+    global _ctrl
+    
+    if _ctrl:
+        ctrl = _ctrl
+    else:
+        ctrl = _ctrl = initialize()
 
     return ctrl
 
