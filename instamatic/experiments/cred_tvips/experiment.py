@@ -23,12 +23,13 @@ class Experiment(object):
         self.ctrl = ctrl
         self.path = Path(path)
 
-        self.emmenu = EMMenuWrapper()
+        self.emmenu = self.ctrl.emmenu = EMMenuWrapper()
 
         self.logger = log
 
     def get_ready(self):
-        self.ctrl.beamblank = True
+        self.ctrl.beamblank_on()
+        self.ctrl.screen_up()
 
         if self.ctrl.mode != 'diff':
             print("Switching to diffraction mode")
@@ -49,7 +50,7 @@ class Experiment(object):
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position[3]  
 
-        self.ctrl.beamblank = False
+        self.ctrl.beamblank_off
 
         self.emmenu.toggle_record()  # start recording
 
@@ -58,7 +59,7 @@ class Experiment(object):
         # time.sleep(5.0)
         t1 = time.perf_counter()
 
-        self.ctrl.beamblank = True
+        self.ctrl.beamblank_on()
 
         self.emmenu.toggle_liveview()  # end liveview and stop recording
 
