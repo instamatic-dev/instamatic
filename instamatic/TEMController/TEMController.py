@@ -470,6 +470,28 @@ class TEMController(object):
         self.tem.setFunctionMode("diff")
 
     @property
+    def screen(self):
+        """Returns one of 'up', 'down'"""
+        self.tem.getScreenPosition()
+
+    @screen.setter
+    def screen(self, value: str):
+        """Should be one of 'up', 'down'"""
+        self.tem.setScreenPosition(value)
+
+    def screen_up(self):
+        self.tem.setScreenPosition("up")
+
+    def screen_down(self):
+        self.tem.setScreenPosition("down")
+
+    def beamblank_on(self):
+        self.tem.setBeamBlank(True)
+
+    def beamblank_off(self):
+        self.tem.setBeamBlank(False)
+
+    @property
     def mode(self):
         """Returns one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'"""
         return self.tem.getFunctionMode()
