@@ -108,7 +108,7 @@ def radial_average(z, center, as_radial_map=False):
         return averaged
 
 
-def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot=False):
+def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot=False, savefig=False):
     """Find rectangle fitting the beamstop
     
     1. Radially scale the image (divide each point in the image by the radial average)
@@ -162,7 +162,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
     # rect = sorted(arr, key=lambda x: len(x), reverse=True)[0]
     # rect = minimum_bounding_rectangle(beamstop)
 
-    if plot:
+    if plot or savefig:
         fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
         for ax in ax1, ax2, ax3:
             ax.axis('off')
@@ -183,7 +183,11 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
         bx, by = np.vstack((rect, rect[0])).T
         ax3.plot(by, bx, "r-o")
 
-        plt.show()
+        if savefig:
+            fn = "beamstop.png"
+            plt.savefig(fn, dpi=150)
+        if plot:
+            plt.show()
 
     return rect
 

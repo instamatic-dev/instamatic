@@ -481,7 +481,7 @@ class ImgConversion(object):
         omega = np.degrees(self.rotation_axis)
 
         # for red, -180 <= omega <= 180
-        if omega < 180:
+        if omega < -180:
             omega += 360
         elif omega > 180:
             omega -= 360

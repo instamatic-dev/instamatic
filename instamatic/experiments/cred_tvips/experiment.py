@@ -108,7 +108,8 @@ class Experiment(object):
             print(f"Rotation axis: {rotation_axis} radians", file=f)
             # print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*start_position), file=f)
-            print("Stage end:   X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*end_position), file=f)
+            print(f"Rotation axis: {rotation_axis} radians", file=f)
+            print("Beam stopper: yes", file=f)
             print("", file=f)
 
         print(f"Wrote file {f.name}")
