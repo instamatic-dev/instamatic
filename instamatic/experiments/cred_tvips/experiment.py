@@ -1,9 +1,7 @@
 import datetime
 import time
-from math import floor
 from instamatic import config, version
 from pathlib import Path
-from .emmenu import EMMenuWrapper
 
 
 class Experiment(object):
@@ -21,9 +19,8 @@ class Experiment(object):
         super().__init__()
 
         self.ctrl = ctrl
+        self.emmenu = ctrl.cam
         self.path = Path(path)
-
-        self.emmenu = self.ctrl.emmenu = EMMenuWrapper()
 
         self.logger = log
 
@@ -39,10 +36,11 @@ class Experiment(object):
         if spotsize not in (4, 5):
             print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
 
-        if not self.emmenu.live_view_is_running:
-            delay = 2.0
-            self.emmenu.toggle_liveview()
-            time.sleep(delay)
+        with self.emmenu.keep_in_focus():
+            if not self.emmenu.live_view_is_running:
+                delay = 2.0
+                self.emmenu.toggle_liveview()
+                time.sleep(delay)
 
     def start_collection(self, target_angle: float):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -69,8 +67,6 @@ class Experiment(object):
         t_start = t0
         t_end = t1
         total_time = t1 - t0
-        
-        # nframes = floor(total_time / 1)  # Is there a way to guess this ?
         
         # osc_angle = abs(end_angle - start_angle) / nframes
         

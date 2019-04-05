@@ -3,6 +3,7 @@ import pygetwindow as pw
 from instamatic.utils.singleton import Singleton
 from pathlib import Path
 from instamatic import config
+from contextlib import contextmanager
 
 
 class EMMenuError(Exception):
@@ -17,6 +18,7 @@ class EMMenuWrapper(object):
         super(EMMenuWrapper, self).__init__()
 
         self.name = name
+        self._switch_back = True
 
         self.load_defaults()
 
@@ -139,11 +141,13 @@ class EMMenuWrapper(object):
     def _press(self, button_loc):
         """Toggle the liveview button, and switch back to the currently active window"""
         switch_back = False
+        current_loc = pg.position()
         if not self.is_active:
             self.activate()
             switch_back = True
         pg.moveTo(button_loc)
         pg.click()
+        pg.moveTo(current_loc)
         if switch_back:
             self.activate_previous()
 
@@ -154,3 +158,13 @@ class EMMenuWrapper(object):
     def toggle_liveview(self):
         """Toggle the liveview button, and switch back to the currently active window"""
         self._press(self.liveview_button_pos)
+
+    @contextmanager
+    def keep_in_focus(self):
+        """Keep the EMMENU window in focus while executing a few clicks in a row to prevent windows flashing"""
+        was_active = self.is_active
+        self._switch_back = False
+        yield
+        self._switch_back = True
+        if not was_active:
+            self.activate_previous()
