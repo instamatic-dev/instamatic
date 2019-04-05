@@ -76,6 +76,8 @@ class VideoStream(threading.Thread):
 
         self.grabber = self.setup_grabber()
 
+        self.streamable = self.cam.streamable
+
         self.start()
 
     def start(self):

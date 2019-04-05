@@ -23,6 +23,8 @@ class VideoStream(threading.Thread):
 
         self.frametime = self.default_exposure
 
+        self.streamable = self.cam.streamable
+
         self.display_dim = 512
 
         self.frame, scale = autoscale(np.ones(self.dimensions), maxdim=self.display_dim)
