@@ -57,6 +57,8 @@ class ExperimentalCtrl(LabelFrame):
         b_positive_angle.grid(row=3, column=2, sticky="W")
         b_stage = Button(frame, text="Set", command=self.set_stage)
         b_stage.grid(row=5, column=3, sticky="W")
+        b_stage_get = Button(frame, text="Get", command=self.get_stage)
+        b_stage_get.grid(row=5, column=4, sticky="W")
 
         # frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -70,10 +72,16 @@ class ExperimentalCtrl(LabelFrame):
         b_brightness = Button(frame, text="Set", command=self.set_brightness)
         b_brightness.grid(row=11, column=2, sticky="W")
 
+        b_brightness_get = Button(frame, text="Get", command=self.get_brightness)
+        b_brightness_get.grid(row=11, column=3, sticky="W")
+
         slider = Scale(frame, variable=self.var_brightness, from_=0, to=2**16-1, orient=HORIZONTAL, command=self.set_brightness)
         slider.grid(row=12, column=0, columnspan=3, sticky="EW")
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
+
+        from instamatic import TEMController
+        self.ctrl = TEMController.get_instance()
 
     def init_vars(self):
         self.var_negative_angle = DoubleVar(value=-40)
@@ -82,8 +90,8 @@ class ExperimentalCtrl(LabelFrame):
 
         self.var_alpha_wobbler = DoubleVar(value=5)
 
-        self.var_stage_x = DoubleVar(value=0)
-        self.var_stage_y = DoubleVar(value=0)
+        self.var_stage_x = IntVar(value=0)
+        self.var_stage_y = IntVar(value=0)
         
         self.var_brightness = IntVar(value=65535)
 
@@ -98,6 +106,9 @@ class ExperimentalCtrl(LabelFrame):
         self.q.put(("ctrl", { "task": "brightness.set", 
                               "value": self.var_brightness.get() } ))
         self.triggerEvent.set()
+
+    def get_brightness(self, event=None):
+        self.var_brightness.set(self.ctrl.brightness.get())
 
     def set_negative_angle(self):
         self.q.put(("ctrl", { "task": "stageposition.set", 
@@ -123,6 +134,11 @@ class ExperimentalCtrl(LabelFrame):
                               "y": self.var_stage_y.get(),
                               "wait": self.var_stage_wait.get() } ))
         self.triggerEvent.set()
+
+    def get_stage(self, event=None):
+        x, y, _, _, _ = self.ctrl.stageposition.get()
+        self.var_stage_x.set(int(x))
+        self.var_stage_y.set(int(y))
 
     def start_alpha_wobbler(self):
         self.wobble_stop_event = threading.Event()
