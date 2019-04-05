@@ -44,6 +44,22 @@ class ExperimentalTVIPS(LabelFrame):
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
+        self.SearchButton = Button(frame, text="Search", command=self.search)
+        self.SearchButton.grid(row=1, column=0, sticky="EW")
+
+        self.FocusButton = Button(frame, text="Focus", command=self.focus)
+        self.FocusButton.grid(row=1, column=1, sticky="EW")
+
+        self.GetImageButton = Button(frame, text="Get image", command=self.get_image)
+        self.GetImageButton.grid(row=1, column=2, sticky="EW")
+
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=1)
+
+        frame.pack(fill="x", padx=10, pady=10)
+
+        frame = Frame(self)
         self.GetReadyButton = Button(frame, text="Get Ready", command=self.prime_collection)
         self.GetReadyButton.grid(row=1, column=0, sticky="EW")
 
@@ -58,6 +74,9 @@ class ExperimentalTVIPS(LabelFrame):
         frame.columnconfigure(2, weight=1)
 
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
+
+        from instamatic import TEMController
+        self.ctrl = TEMController.get_instance()
 
     def init_vars(self):
         self.var_target_angle = DoubleVar(value=40.0)
@@ -84,6 +103,11 @@ class ExperimentalTVIPS(LabelFrame):
         self.GetReadyButton.config(state=DISABLED)
         self.AcquireButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)
+        self.e_target_angle.config(state=DISABLED)
+        self.b_toggle_liveview.config(state=DISABLED)
+        self.SearchButton.config(state=DISABLED)
+        self.FocusButton.config(state=DISABLED)
+        self.GetImageButton.config(state=DISABLED)
         # self.e_target_angle.config(state=DISABLED)
         params = self.get_params(task="get_ready")
         self.q.put(("cred_tvips", params))
@@ -100,6 +124,9 @@ class ExperimentalTVIPS(LabelFrame):
         self.FinalizeButton.config(state=DISABLED)
         self.e_target_angle.config(state=NORMAL)
         self.b_toggle_liveview.config(state=NORMAL)
+        self.SearchButton.config(state=NORMAL)
+        self.FocusButton.config(state=NORMAL)
+        self.GetImageButton.config(state=NORMAL)
         params = self.get_params(task="stop")
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
@@ -123,18 +150,13 @@ class ExperimentalTVIPS(LabelFrame):
         toggle = self.var_toggle_screen.get()
 
         if toggle:
-            self.q.put(("ctrl", {"task": "screen_up"} ))
+            self.ctrl.screen_up()
         else:
-            self.q.put(("ctrl", {"task": "screen_down"} ))
-
-        self.triggerEvent.set()
+            self.ctrl.screen_down()
 
     def toggle_live_view(self):
         toggle = True
-
-        self.q.put(("emmenu", {"task": "view", "toggle": toggle} ))
-
-        self.triggerEvent.set()
+        self.ctrl.cam.toggle_live_view()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
@@ -149,6 +171,20 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_diff_defocus.set(False)
         self.q.put(("toggle_difffocus", {"value": 0, "toggle": False} ))
         self.triggerEvent.set()
+
+    def search(self):
+        self.ctrl.screen_down()
+        self.ctrl.beamblank_off()
+        self.ctrl.mode_mag1()
+
+    def focus(self):
+        self.ctrl.screen_up()
+        self.ctrl.beamblank_off()
+        self.ctrl.mode_diffraction()
+
+    def get_image(self):
+        self.ctrl.cam.acquire()
+
 
 
 def acquire_data_CRED_TVIPS(controller, **kwargs):
@@ -171,20 +207,9 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         pass
 
 
-def ctrl_emmenu(controller, **kwargs):
-    emmenu = controller.emmenu
-
-    task = kwargs.get("task")
-
-    if task == "view":
-        toggle = kwargs.get("toggle")
-        emmenu.toggle_live_view()
-
-
 from .base_module import BaseModule
 module = BaseModule("tvips", "TVIPS", True, ExperimentalTVIPS, commands={
     "cred_tvips": acquire_data_CRED_TVIPS,
-    "emmenu": ctrl_emmenu,
     })
 
 
