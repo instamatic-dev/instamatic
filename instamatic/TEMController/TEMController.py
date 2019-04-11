@@ -18,6 +18,10 @@ default_tem = config.microscope.name
 use_server  = config.cfg.use_tem_server
 
 
+class TEMControllerException(Exception):
+    pass
+
+
 def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: bool=True) -> "TEMController":
     """Initialize TEMController object giving access to the TEM and Camera interfaces
 
@@ -153,6 +157,7 @@ class DiffFocus(Lens):
         super().__init__(tem=tem)
         self._getter = self._tem.getDiffFocus
         self._setter = self._tem.setDiffFocus
+        self.is_defocused = False
 
     def set(self, value: int, confirm_mode: bool=True):
         """confirm_mode: verify that TEM is set to the correct mode ('diff').
@@ -162,21 +167,27 @@ class DiffFocus(Lens):
 
     def defocus(self, offset):
         """Apply a defocus to the IL1 lens, use `.refocus` to restore the previous setting"""
+        if self.is_defocused:
+            raise TEMControllerException(f"{self.__class__.__name__} is already defocused!")
+
         try:
             self._focused_value = current = self.get()
         except ValueError:
-            self._tem.setFunctionMode("mag1")
+            self._tem.setFunctionMode("diff")
             self._focused_value = current = self.get()
 
         target = current + offset
         self.set(target)
+        self.is_defocused = True
         print(f"Defocusing from {current} to {target}")
 
     def refocus(self):
         """Restore the IL1 lens to the focused condition a defocus has been applied using `.defocus`"""
-        target = self._focused_value
-        self.set(target)
-        print(f"Refocusing to {target}")
+        if self.is_defocused:
+            target = self._focused_value
+            self.set(target)
+            self.is_defocused = False
+            print(f"Refocusing to {target}")
 
 
 class Brightness(Lens):
@@ -326,8 +337,8 @@ class StagePosition(object):
         """wait: bool, block until stage movement is complete"""
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
         
-    def setspeed(self, speed = 1):
-        self._tem.setStageSpeed(value = 1)
+    def setspeed(self, speed=1):
+        self._tem.setStageSpeed(value=1)
         
     def get(self) -> Tuple[int, int, int, int, int]:
         return self._getter()

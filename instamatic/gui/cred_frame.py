@@ -199,20 +199,17 @@ class ExperimentalcRED(LabelFrame):
 def relax_beam(controller, **kwargs):
     import time
     n_cycles = 4
-    print(f"Relaxing beam ({n_cycles} cycles)", end='')
+    print(f"Relaxing beam ({n_cycles} cycles)")
 
     controller.ctrl.mode_diffraction()
 
-    diff_focus_proper = controller.ctrl.difffocus.value
-    diff_focus_defocused = diff_focus_proper + kwargs["value"]
+    offset = kwargs["value"]
 
     for i in range(n_cycles):
-        controller.ctrl.difffocus.set(diff_focus_defocused)
+        controller.ctrl.difffocus.defocus(offset=offset)
         time.sleep(0.25)
-        print(f".", end='')
-        controller.ctrl.difffocus.set(diff_focus_proper)
+        controller.ctrl.difffocus.refocus()
         time.sleep(0.25)
-        print(f".", end='')
 
     print("Done.")
 
@@ -222,9 +219,9 @@ def toggle_difffocus(controller, **kwargs):
 
     if toggle:
         offset = kwargs["value"]
-        controller.difffocus.defocus(offset=offset)
+        controller.ctrl.difffocus.defocus(offset=offset)
     else:
-        controller.difffocus.refocus()
+        controller.ctrl.difffocus.refocus()
 
 
 def acquire_data_cRED(controller, **kwargs):
