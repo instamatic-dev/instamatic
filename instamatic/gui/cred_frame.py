@@ -221,18 +221,10 @@ def toggle_difffocus(controller, **kwargs):
     toggle = kwargs["toggle"]
 
     if toggle:
-        try:
-            controller._difffocus_proper = controller.ctrl.difffocus.value
-        except ValueError:
-            controller.ctrl.mode_diffraction()
-            controller._difffocus_proper = controller.ctrl.difffocus.value
-
-        value = controller._difffocus_proper + kwargs["value"]
-        print(f"Defocusing from {controller._difffocus_proper} to {value}")
+        offset = kwargs["value"]
+        controller.difffocus.defocus(offset=offset)
     else:
-        value = controller._difffocus_proper
-
-    controller.ctrl.difffocus.set(value=value)
+        controller.difffocus.refocus()
 
 
 def acquire_data_cRED(controller, **kwargs):

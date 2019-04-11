@@ -160,6 +160,24 @@ class DiffFocus(Lens):
             Turning it off results in a 2x speed-up in the call, but it will silently fail if the TEM is in the wrong mode."""
         self._setter(value, confirm_mode=confirm_mode)
 
+    def defocus(self, offset):
+        """Apply a defocus to the IL1 lens, use `.refocus` to restore the previous setting"""
+        try:
+            self._focused_value = current = self.get()
+        except ValueError:
+            self._tem.setFunctionMode("mag1")
+            self._focused_value = current = self.get()
+
+        target = current + offset
+        self.set(target)
+        print(f"Defocusing from {current} to {target}")
+
+    def refocus(self):
+        """Restore the IL1 lens to the focused condition a defocus has been applied using `.defocus`"""
+        target = self._focused_value
+        self.set(target)
+        print(f"Refocusing to {target}")
+
 
 class Brightness(Lens):
     """Brightness control"""

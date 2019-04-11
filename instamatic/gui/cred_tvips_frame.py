@@ -160,17 +160,18 @@ class ExperimentalTVIPS(LabelFrame):
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
-        difffocus = self.var_diff_defocus.get()
-
-        self.b_reset_defocus.config(state=NORMAL)
-
-        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
-        self.triggerEvent.set()
+        
+        if toggle:
+            offset = self.var_diff_defocus.get()
+            self.ctrl.difffocus.defocus(offset=offset)
+            self.b_reset_defocus.config(state=NORMAL)
+        else:
+            self.ctrl.difffocus.refocus()
+            self.var_toggle_diff_defocus.set(False)
 
     def reset_diff_defocus(self):
+        self.ctrl.difffocus.refocus()
         self.var_toggle_diff_defocus.set(False)
-        self.q.put(("toggle_difffocus", {"value": 0, "toggle": False} ))
-        self.triggerEvent.set()
 
     def search(self):
         self.ctrl.screen_down()
