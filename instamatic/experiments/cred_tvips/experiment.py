@@ -45,6 +45,9 @@ class Experiment(object):
     def start_collection(self, target_angle: float):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        self.stage_positions = []
+        interval = 1.0
+
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position[3]  
 
@@ -53,7 +56,18 @@ class Experiment(object):
         self.emmenu.toggle_record()  # start recording
 
         t0 = time.perf_counter()
-        self.ctrl.stageposition.a = target_angle
+        t_delta = t0
+        
+        self.ctrl.stageposition.set(a=target_angle, wait=False)
+
+        while self.ctrl.stageposition.is_moving():
+            t = time.perf_counter()
+            if t - t_delta > interval:
+                pos = self.ctrl.stageposition.get()
+                self.stage_positions.append((t, pos))
+                t_delta = t
+                print(t, pos)
+
         # time.sleep(5.0)
         t1 = time.perf_counter()
 
@@ -107,6 +121,13 @@ class Experiment(object):
             print(f"Rotation axis: {rotation_axis} radians", file=f)
             print("Beam stopper: yes", file=f)
             print("", file=f)
+
+        print(f"Wrote file {f.name}")
+
+        with open(self.path / "stage_positions.txt", "w") as f:
+            print("# timestamp x y z a b", file=f)
+            for t, (x, y, z, a, b) in self.stage_positions:
+                print(t, x, y, z, a, b, file=f)
 
         print(f"Wrote file {f.name}")
 
