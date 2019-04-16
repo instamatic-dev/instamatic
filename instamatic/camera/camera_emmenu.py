@@ -57,28 +57,35 @@ class EMMenuWrapper(object):
         """Locate the buttons to start/stop recording/live view"""
         self.activate()
 
-        record_button_pos = pg.locateCenterOnScreen(self._path_start_record_button, grayscale=True)
+        screenshot = pg.screenshot()
+
+        record_button_pos = pg.locate(self._path_start_record_button, screenshot, grayscale=True)
         if not record_button_pos:
             raise EMMenuError("Could not locate record view button")
-        self.record_button_pos = record_button_pos
+        self.record_button_region = record_button_pos
+        self.record_button_pos = pg.center(record_button_pos)
         
         # attempt 1, liveview is running
-        liveview_button_pos = pg.locateOnScreen(self._path_stop_liveview_button1, grayscale=True)
+        liveview_button_pos = pg.locate(self._path_stop_liveview_button1, screenshot, grayscale=True)
         if not liveview_button_pos:
             # attempt 2, liveview is not running
-            liveview_button_pos = pg.locateOnScreen(self._path_start_liveview_button, grayscale=True)
+            liveview_button_pos = pg.locate(self._path_start_liveview_button, screenshot, grayscale=True)
             if not liveview_button_pos:
                 # attempt 3, liveview is running, but deselected
-                liveview_button_pos = pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True)
+                liveview_button_pos = pg.locate(self._path_stop_liveview_button2, screenshot, grayscale=True)
                 if not liveview_button_pos:
                     raise EMMenuError("Could not locate live view button")
         
+        self.liveview_button_region = liveview_button_pos
         self.liveview_button_pos = pg.center(liveview_button_pos)
 
-        acquire_button_pos = pg.locateCenterOnScreen(self._path_acquire_button, grayscale=True)
+        acquire_button_pos = pg.locate(self._path_acquire_button, screenshot, grayscale=True)
         if not acquire_button_pos:
             raise EMMenuError("Could not locate record view button")
-        self.acquire_button_pos = acquire_button_pos
+        self.acquire_button_region = acquire_button_pos
+        self.acquire_button_pos = pg.center(acquire_button_pos)
+
+        screenshot.close()
 
         print(f"Record button position: {self.record_button_pos}")
         print(f"Liveview button position: {self.liveview_button_pos}")
@@ -110,9 +117,11 @@ class EMMenuWrapper(object):
         """Return `True` if the live view is running"""
         self.activate()
 
-        if pg.locateOnScreen(self._path_stop_liveview_button1, grayscale=True):
+        region = self.liveview_button_region
+
+        if pg.locateOnScreen(self._path_stop_liveview_button1, grayscale=True, region=region):
             ret = True
-        elif pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True):
+        elif pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True, region=region):
             ret = True
         else:
             ret = False
