@@ -59,6 +59,10 @@ class EMMenuWrapper(object):
 
         screenshot = pg.screenshot()
 
+        # record_button_pos = (1071, 56, 18, 18)
+        # liveview_button_pos = (1629, 238, 42, 18)
+        # acquire_button_pos = (1628, 143, 44, 20)
+
         record_button_pos = pg.locate(self._path_start_record_button, screenshot, grayscale=True)
         if not record_button_pos:
             raise EMMenuError("Could not locate record view button")
@@ -87,9 +91,9 @@ class EMMenuWrapper(object):
 
         screenshot.close()
 
-        print(f"Record button position: {self.record_button_pos}")
-        print(f"Liveview button position: {self.liveview_button_pos}")
-        print(f"Acquire button position: {self.acquire_button_pos}")
+        print(f"Record button position: {self.record_button_pos} ({self.record_button_region})")
+        print(f"Liveview button position: {self.liveview_button_pos} ({self.liveview_button_region})")
+        print(f"Acquire button position: {self.acquire_button_pos} ({self.acquire_button_region})")
 
         self.activate_previous()
 
@@ -122,6 +126,22 @@ class EMMenuWrapper(object):
         if pg.locateOnScreen(self._path_stop_liveview_button1, grayscale=True, region=region):
             ret = True
         elif pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True, region=region):
+            ret = True
+        else:
+            ret = False
+
+        self.activate_previous()
+        
+        return ret
+
+    @property
+    def record_is_running(self):
+        """Return `True` if the live view is running"""
+        self.activate()
+
+        region = self.record_button_region
+
+        if pg.locateOnScreen(self._path_start_record_button, grayscale=True, region=region):
             ret = True
         else:
             ret = False
@@ -164,9 +184,37 @@ class EMMenuWrapper(object):
         """Toggle the record button, and switch back to the currently active window"""
         self._press(self.record_button_pos)
 
+    def stop_record(self):
+        """Stop recording"""
+        with self.keep_in_focus:
+            if self.record_is_running:
+                self._press(self.record_button_pos)
+
+    def start_record(self):
+        """Start recording"""
+        with self.keep_in_focus:
+            if not self.record_is_running:
+                self._press(self.record_button_pos)
+            else:
+                print("Recording is already running")
+
     def toggle_liveview(self):
         """Toggle the liveview button, and switch back to the currently active window"""
         self._press(self.liveview_button_pos)
+
+    def stop_liveview(self):
+        """Stop liveview"""
+        with self.keep_in_focus:
+            if self.liveview_is_running:
+                self._press(self.liveview_button_pos)
+
+    def start_liveview(self):
+        """Start liveview"""
+        with self.keep_in_focus:
+            if not self.liveview_is_running:
+                self._press(self.liveview_button_pos)
+            else:
+                print("Recording is already running")
 
     @contextmanager
     def keep_in_focus(self):

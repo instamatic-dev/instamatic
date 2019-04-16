@@ -461,6 +461,7 @@ class StagePosition(object):
 
         print(f"Restoring 'alpha': {a_center:.2f}")
         self.a = a_center
+        print(f"Print z={self.z:.2f}")
 
 
 class TEMController(object):
