@@ -15,7 +15,7 @@ class Experiment(object):
     log:
         Instance of `logging.Logger`
     """
-    def __init__(self, ctrl, path: str=None, log=None):
+    def __init__(self, ctrl, path: str=None, log=None, track=None):
         super().__init__()
 
         self.ctrl = ctrl
@@ -23,24 +23,40 @@ class Experiment(object):
         self.path = Path(path)
 
         self.logger = log
+        
+        self.skip_check = True  # for debugging/testing
+
+        self.track = False
+        if track:
+            from scipy.interpolate import interp1d
+            import numpy as np
+            arr = np.loadtxt(track)
+            track_a = arr[:,4]
+            track_y = arr[:,2]
+            print(f"Loading tracking file: {track}")
+            print(f"Interpolating a={track_a.min():.1f} -> a={track_a.max():.1f} (+extrapolated)")
+            self.track = True
+            self.track_interval = 2
+            self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
 
     def get_ready(self):
-        self.ctrl.beamblank_on()
-        self.ctrl.screen_up()
-
-        if self.ctrl.mode != 'diff':
-            print("Switching to diffraction mode")
-            self.ctrl.mode = 'diff'
+        if not self.skip_check:
+            self.ctrl.beamblank_on()
+            self.ctrl.screen_up()
     
-        spotsize = self.ctrl.spotsize
-        if spotsize not in (4, 5):
-            print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
-
-        with self.emmenu.keep_in_focus():
-            if not self.emmenu.live_view_is_running:
-                delay = 2.0
-                self.emmenu.toggle_liveview()
-                time.sleep(delay)
+            if self.ctrl.mode != 'diff':
+                print("Switching to diffraction mode")
+                self.ctrl.mode = 'diff'
+        
+            spotsize = self.ctrl.spotsize
+            if spotsize not in (4, 5):
+                print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
+    
+            with self.emmenu.keep_in_focus():
+                if not self.emmenu.live_view_is_running:
+                    delay = 2.0
+                    self.emmenu.toggle_liveview()
+                    time.sleep(delay)
 
     def start_collection(self, target_angle: float):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -53,27 +69,40 @@ class Experiment(object):
 
         self.ctrl.beamblank_off()
 
-        self.emmenu.toggle_record()  # start recording
+        if not self.skip_check:
+            self.emmenu.toggle_record()  # start recording
 
         t0 = time.perf_counter()
         t_delta = t0
         
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
+        n = 0
+        
+        # while time.perf_counter()-t0 < 10:  # for testing
         while self.ctrl.stageposition.is_moving():
+            # time.sleep(1)
             t = time.perf_counter()
             if t - t_delta > interval:
-                pos = self.ctrl.stageposition.get()
+                n += 1
+                x, y, z, a, _ = pos = self.ctrl.stageposition.get()
                 self.stage_positions.append((t, pos))
                 t_delta = t
                 print(t, pos)
 
+                # tracking routine
+                if self.track and (n % self.track_interval == 0):
+                    target_y = int(self.track_func(a))
+                    self.ctrl.stageposition.set(y=target_y, wait=False)
+                    print(f"Tracking -> set y={target_y}")
+
         # time.sleep(5.0)
         t1 = time.perf_counter()
 
-        self.ctrl.beamblank_on()
-
-        self.emmenu.toggle_liveview()  # end liveview and stop recording
+        if not self.skip_check:
+            self.ctrl.beamblank_on()
+            
+            self.emmenu.toggle_liveview()  # end liveview and stop recording
 
         end_position = self.ctrl.stageposition.get()
         end_angle = end_position[3]

@@ -1,6 +1,8 @@
 from tkinter import *
+from tkinter import filedialog
 from tkinter.ttk import *
 from instamatic.utils.spinbox import Spinbox
+from pathlib import Path
 
 
 class ExperimentalTVIPS(LabelFrame):
@@ -41,6 +43,14 @@ class ExperimentalTVIPS(LabelFrame):
         self.b_toggle_liveview = Button(frame, text="Toggle live", command=self.toggle_live_view, state=DISABLED)
         self.b_toggle_liveview.grid(row=7, column=2, sticky="EW")
 
+        frame.pack(side="top", fill="x", padx=10, pady=10)
+
+        frame = Frame(self)
+        self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking)
+        self.e_tracking.grid(row=4, column=1, sticky="EW")
+        self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_tracking)
+        self.BrowseTrackButton.grid(row=4, column=2, sticky="EW")
+        Label(frame, text="Tracking file:").grid(row=4, column=0, sticky="W")
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
@@ -91,6 +101,9 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_screen = BooleanVar(value=False)
         self.var_toggle_live_view = BooleanVar(value=False)
 
+        self.var_tracking = StringVar(value="")
+
+
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -131,8 +144,17 @@ class ExperimentalTVIPS(LabelFrame):
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
 
+    def browse_tracking(self):
+        fn = filedialog.askopenfilename(parent=self.parent, initialdir=None, title="Select tracking file")
+        if not fn:
+            return
+        fn = Path(fn).absolute()
+        self.var_tracking.set(fn)
+        return fn
+
     def get_params(self, task=None):
-        params = { "target_angle": self.var_target_angle.get(), 
+        params = { "target_angle": self.var_target_angle.get(),
+                   "tracking": self.var_tracking.get(),
                    "task": task }
         return params
 
@@ -140,9 +162,9 @@ class ExperimentalTVIPS(LabelFrame):
         toggle = self.var_toggle_diff_mode.get()
 
         if toggle:
-            self.q.put(("ctrl", {"task": "mode_diffraction"} ))
+            self.ctrl.mode_diffraction()
         else:
-            self.q.put(("ctrl", {"task": "mode_mag1"} ))
+            self.ctrl.mode_mag1()
 
         self.triggerEvent.set()
 
@@ -195,12 +217,14 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     task = kwargs["task"]
 
     target_angle = kwargs["target_angle"]
+    tracking = kwargs["tracking"]
 
     if task == "get_ready":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
     
-        controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log)
+        controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
+                                                          log=controller.log, track=tracking)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
