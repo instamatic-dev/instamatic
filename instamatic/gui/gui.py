@@ -139,7 +139,7 @@ class MainFrame(object):
         if cam and cam.streamable:
             from .videostream_frame import VideoStreamFrame
 
-            self.stream_frame = VideoStreamFrame(root, stream=stream, app=self.app)
+            self.stream_frame = VideoStreamFrame(root, stream=cam, app=self.app)
             self.stream_frame.pack(side="top", fill="both", expand=True)
 
         from instamatic import version
