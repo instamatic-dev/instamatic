@@ -320,6 +320,7 @@ class StagePosition(object):
         self._tem = tem
         self._setter = self._tem.setStagePosition
         self._getter = self._tem.getStagePosition
+        self._wait = True  # properties only
         
     def __repr__(self):
         x, y, z, a, b = self.get()
@@ -350,7 +351,7 @@ class StagePosition(object):
 
     @x.setter
     def x(self, value: int):
-        self.set(x=value)
+        self.set(x=value, wait=self._wait)
 
     @property
     def y(self) -> int:
@@ -365,11 +366,11 @@ class StagePosition(object):
     @xy.setter
     def xy(self, values: Tuple[int, int]):
         x, y = values
-        self.set(x=x, y=y)
+        self.set(x=x, y=y, wait=self._wait)
 
     @y.setter
     def y(self, value: int):
-        self.set(y=value)
+        self.set(y=value, wait=self._wait)
 
     def move_in_projection(self, delta_x: int, delta_y: int):
         r"""y and z are always perpendicular to the sample stage. To achieve the movement
@@ -407,7 +408,7 @@ class StagePosition(object):
 
     @z.setter
     def z(self, value: int):
-        self.set(z=value)
+        self.set(z=value, wait=self._wait)
 
     @property
     def a(self) -> int:
@@ -416,7 +417,7 @@ class StagePosition(object):
 
     @a.setter
     def a(self, value: int):
-        self.set(a=value)
+        self.set(a=value, wait=self._wait)
 
     @property
     def b(self) -> int:
@@ -425,7 +426,7 @@ class StagePosition(object):
 
     @b.setter
     def b(self, value: int):
-        self.set(b=value)
+        self.set(b=value, wait=self._wait)
 
     def neutral(self) -> None:
         """Reset the position of the stage to the 0-position"""
@@ -434,6 +435,10 @@ class StagePosition(object):
     def is_moving(self) -> bool:
         """Return 'True' if the stage is moving"""
         return self._tem.isStageMoving()
+
+    def wait_for_stage(self) -> None:
+        """Blocking call that waits for stage movement to finish"""
+        self._tem.waitForStage()
 
     def stop(self) -> None:
         """This will halt the stage preemptively if `wait=False` is passed to StagePosition.set"""
