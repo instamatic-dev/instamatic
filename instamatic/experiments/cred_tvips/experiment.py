@@ -15,7 +15,7 @@ class Experiment(object):
     log:
         Instance of `logging.Logger`
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None):
+    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False):
         super().__init__()
 
         self.ctrl = ctrl
@@ -24,7 +24,7 @@ class Experiment(object):
 
         self.logger = log
         
-        self.skip_check = True  # for debugging/testing
+        self.obtain_track = obtain_track  # do not go to diff mode to measure crystal track
 
         self.track = False
         if track:
@@ -40,7 +40,7 @@ class Experiment(object):
             self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
 
     def get_ready(self):
-        if not self.skip_check:
+        if not self.obtain_track:
             self.ctrl.beamblank_on()
             self.ctrl.screen_up()
     
@@ -69,7 +69,7 @@ class Experiment(object):
 
         self.ctrl.beamblank_off()
 
-        if not self.skip_check:
+        if not self.obtain_track:
             self.emmenu.toggle_record()  # start recording
 
         t0 = time.perf_counter()
@@ -88,7 +88,7 @@ class Experiment(object):
                 x, y, z, a, _ = pos = self.ctrl.stageposition.get()
                 self.stage_positions.append((t, pos))
                 t_delta = t
-                print(t, pos)
+                # print(t, pos)
 
                 # tracking routine
                 if self.track and (n % self.track_interval == 0):
@@ -99,7 +99,7 @@ class Experiment(object):
         # time.sleep(5.0)
         t1 = time.perf_counter()
 
-        if not self.skip_check:
+        if not self.obtain_track:
             self.ctrl.beamblank_on()
             
             self.emmenu.toggle_liveview()  # end liveview and stop recording
@@ -153,7 +153,8 @@ class Experiment(object):
 
         print(f"Wrote file {f.name}")
 
-        with open(self.path / "stage_positions.txt", "w") as f:
+        fn = "stage_positions(tracked).txt" if self.track else "stage_positions.txt"
+        with open(self.path / fn, "w") as f:
             print("# timestamp x y z a b", file=f)
             for t, (x, y, z, a, b) in self.stage_positions:
                 print(t, x, y, z, a, b, file=f)

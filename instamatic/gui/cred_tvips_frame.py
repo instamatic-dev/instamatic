@@ -34,6 +34,9 @@ class ExperimentalTVIPS(LabelFrame):
         self.b_reset_defocus = Button(frame, text="Reset", command=self.reset_diff_defocus, state=DISABLED)
         self.b_reset_defocus.grid(row=6, column=2, sticky="EW")
 
+        self.c_toggle_beamblank = Checkbutton(frame, text="Toggle beamblank", variable=self.var_toggle_beamblank, command=self.toggle_beamblank)
+        self.c_toggle_beamblank.grid(row=4, column=3, sticky="W")
+
         self.c_toggle_diffraction = Checkbutton(frame, text="Toggle DIFF", variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
         self.c_toggle_diffraction.grid(row=7, column=3, sticky="W")
 
@@ -46,6 +49,9 @@ class ExperimentalTVIPS(LabelFrame):
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
+        self.c_obtain_track = Checkbutton(frame, text="Obtain crystal track in image mode", variable=self.var_obtain_track)
+        self.c_obtain_track.grid(row=3, column=1, sticky="W")
+
         self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking)
         self.e_tracking.grid(row=4, column=1, sticky="EW")
         self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_tracking)
@@ -97,12 +103,13 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_diff_defocus = IntVar(value=1500)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
 
+        self.var_toggle_beamblank = BooleanVar(value=False)
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
         self.var_toggle_live_view = BooleanVar(value=False)
 
         self.var_tracking = StringVar(value="")
-
+        self.var_obtain_track = BooleanVar(value=False)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -155,6 +162,7 @@ class ExperimentalTVIPS(LabelFrame):
     def get_params(self, task=None):
         params = { "target_angle": self.var_target_angle.get(),
                    "tracking": self.var_tracking.get(),
+                   "obtain_track": self.var_obtain_track.get(),
                    "task": task }
         return params
 
@@ -166,7 +174,13 @@ class ExperimentalTVIPS(LabelFrame):
         else:
             self.ctrl.mode_mag1()
 
-        self.triggerEvent.set()
+    def toggle_beamblank(self):
+        toggle = self.var_toggle_beamblank.get()
+
+        if toggle:
+            self.ctrl.beamblank_on()
+        else:
+            self.ctrl.beamblank_off()
 
     def toggle_screen(self):
         toggle = self.var_toggle_screen.get()
@@ -218,13 +232,15 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
 
     target_angle = kwargs["target_angle"]
     tracking = kwargs["tracking"]
+    obtain_track = kwargs["obtain_track"]
 
     if task == "get_ready":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
-                                                          log=controller.log, track=tracking)
+                                                          log=controller.log, 
+                                                          track=tracking, obtain_track=obtain_track)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
