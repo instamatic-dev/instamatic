@@ -9,6 +9,7 @@ from .microscope import Microscope
 
 from typing import Tuple
 from contextlib import contextmanager
+from collections import namedtuple
 import numpy as np
 
 
@@ -61,6 +62,11 @@ def get_instance() -> "TEMController":
     return ctrl
 
 
+# namedtuples to store results from .get()
+StagePositionTuple = namedtuple("StagePositionTuple", ["x", "y", "z", "a", "b"])
+DeflectorTuple = namedtuple("DeflectorTuple", ["x", "y"])
+
+
 class Deflector(object):
     """Generic microscope deflector object defined by X/Y values
     Must be subclassed to set the self._getter, self._setter functions"""
@@ -83,7 +89,7 @@ class Deflector(object):
         self._setter(x, y)
 
     def get(self) -> Tuple[int, int]:
-        return self._getter()
+        return DeflectorTuple(*self._getter())
 
     @property
     def x(self) -> int:
@@ -348,7 +354,7 @@ class StagePosition(object):
         
     def get(self) -> Tuple[int, int, int, int, int]:
         """Get stage positions; x, y, z, and status of the rotation axes; a, b"""
-        return self._getter()
+        return StagePositionTuple(*self._getter())
 
     @property
     def x(self) -> int:
