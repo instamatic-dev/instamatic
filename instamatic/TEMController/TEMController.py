@@ -8,6 +8,7 @@ from instamatic.camera import Camera
 from .microscope import Microscope
 
 from typing import Tuple
+from contextlib import contextmanager
 import numpy as np
 
 
@@ -331,17 +332,22 @@ class StagePosition(object):
         return self.__class__.__name__
 
     def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
-        """wait: bool, block until stage movement is complete"""
+        """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
         
     def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0):
-        """wait: bool, block until stage movement is complete"""
+        """
+        wait: bool, block until stage movement is complete (JEOL only)
+        speed: float, set stage rotation with specified speed (FEI only)
+        """
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
         
     def setspeed(self, speed=1):
+        """Sets the stage (rotation) movement speed on the TEM (FEI only)"""
         self._tem.setStageSpeed(value=1)
         
     def get(self) -> Tuple[int, int, int, int, int]:
+        """Get stage positions; x, y, z, and status of the rotation axes; a, b"""
         return self._getter()
 
     @property
@@ -439,6 +445,20 @@ class StagePosition(object):
     def wait_for_stage(self) -> None:
         """Blocking call that waits for stage movement to finish"""
         self._tem.waitForStage()
+
+    @contextmanager
+    def no_wait(self):
+        """
+        Context manager that prevents blocking stage position calls on properties.
+
+        Usage:
+            with ctrl.stageposition.no_wait():
+                ctrl.stageposition.x += 1000
+                ctrl.stageposition.y += 1000
+        """
+        self._wait = False
+        yield
+        self._wait = True
 
     def stop(self) -> None:
         """This will halt the stage preemptively if `wait=False` is passed to StagePosition.set"""
