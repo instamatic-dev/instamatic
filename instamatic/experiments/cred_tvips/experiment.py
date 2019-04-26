@@ -15,7 +15,7 @@ class Experiment(object):
     log:
         Instance of `logging.Logger`
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False):
+    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False, track_relative=True):
         super().__init__()
 
         self.ctrl = ctrl
@@ -38,6 +38,7 @@ class Experiment(object):
             self.track = True
             self.track_interval = 2
             self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
+            self.track_relative = track_relative
 
     def get_ready(self):
         if not self.obtain_track:
@@ -65,7 +66,7 @@ class Experiment(object):
         interval = 1.0
 
         start_position = self.ctrl.stageposition.get()
-        start_angle = start_position[3]  
+        start_angle = start_position.a
 
         self.ctrl.beamblank_off()
 
@@ -78,6 +79,9 @@ class Experiment(object):
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
         n = 0
+
+        if self.track and self.track_relative:
+            track_y_start = int(self.track_func(start_angle)) 
         
         # while time.perf_counter()-t0 < 10:  # for testing
         while self.ctrl.stageposition.is_moving():
@@ -92,7 +96,11 @@ class Experiment(object):
 
                 # tracking routine
                 if self.track and (n % self.track_interval == 0):
-                    target_y = int(self.track_func(a))
+                    if self.track_relative:
+                        shift_y = int(self.track_func(a)) - track_y_start
+                        target_y = start_position.y + shift_y
+                    else:
+                        target_y = int(self.track_func(a))
                     self.ctrl.stageposition.set(y=target_y, wait=False)
                     print(f"Tracking -> set y={target_y}")
 
