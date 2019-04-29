@@ -47,6 +47,22 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="Scan Area (um):").grid(row=8, column=0, sticky="W")
         self.scan_area = Entry(frame, textvariable=self.var_scan_area)
         self.scan_area.grid(row=8, column=1, sticky="W", padx=10)
+
+        Separator(frame, orient=HORIZONTAL).grid(row=12, columnspan=3, sticky="ew", pady=10)
+
+        Label(frame, text="advanced variables").grid(row=13, column=0, sticky="W")
+
+        Label(frame, text="angle activation deadtime (s):").grid(row=14, column=0, sticky="W")
+        self.activ_thr = Entry(frame, textvariable=self.var_activ_thr)
+        self.activ_thr.grid(row=14, column=1, sticky="W", padx=10)
+
+        Label(frame, text="spread (particle recog):").grid(row=15, column=0, sticky="W")
+        self.spread = Entry(frame, textvariable=self.var_spread)
+        self.spread.grid(row=15, column=1, sticky="W", padx=10)
+
+        Label(frame, text="offset (particle recog):").grid(row=16, column=0, sticky="W")
+        self.offset = Entry(frame, textvariable=self.var_offset)
+        self.offset.grid(row=16, column=1, sticky="W", padx=10)
         
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
@@ -60,19 +76,13 @@ class ExperimentalautocRED(LabelFrame):
         self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight)
         self.zheight.grid(row=10, column=2, sticky="W")
 
-        self.lb_coll0 = Label(frame, text="")
-        self.lb_coll1 = Label(frame, text="")
-        self.lb_coll2 = Label(frame, text="")
-        self.lb_coll0.grid(row=11, column=0, columnspan=3, sticky="EW")
-        self.lb_coll1.grid(row=12, column=0, columnspan=3, sticky="EW")
-        self.lb_coll2.grid(row=13, column=0, columnspan=3, sticky="EW")
+        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
+        self.auto_center_SMV.grid(row=11, column=2, sticky="W")
+
         frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
-        
-        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
-        self.auto_center_SMV.grid(row=13, column=2, sticky="W")
         
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
@@ -109,8 +119,11 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_fullacred = BooleanVar(value=True)
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=True)
         self.var_scan_area = IntVar(value=0)
+        self.var_activ_thr = DoubleVar(value=0.1)
+        self.var_spread = DoubleVar(value=2.0)
+        self.var_offset = DoubleVar(value=15.0)
         self.var_zheight = BooleanVar(value = False)
-        self.var_autoc = BooleanVar(value = False)
+        self.var_autoc = BooleanVar(value = True)
         
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -119,8 +132,8 @@ class ExperimentalautocRED(LabelFrame):
     def start_collection(self):
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
-        self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        #self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
+        #self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
         self.parent.bind_all("<space>", self.stop_collection)
 
@@ -136,8 +149,8 @@ class ExperimentalautocRED(LabelFrame):
 
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
-        self.lb_coll1.config(text="")
-        self.lb_coll2.config(text="")
+        #self.lb_coll1.config(text="")
+        #self.lb_coll2.config(text="")
 
     def stop_collection_acred(self, event = None):
         self.stopEvent.set()
@@ -156,7 +169,10 @@ class ExperimentalautocRED(LabelFrame):
                    "stop_event": self.stopEvent,
                    "stop_event_experiment": self.stopEvent_experiment,
                    "zheight": self.var_zheight.get(),
-                   "autocenterDP": self.var_autoc.get() }
+                   "autocenterDP": self.var_autoc.get(),
+                   "angle_activation": self.var_activ_thr.get(),
+                   "spread": self.var_spread.get(),
+                   "offset": self.var_offset.get() }
         return params
 
     def toggle_interval_buttons(self):
@@ -283,6 +299,11 @@ def acquire_data_autocRED(controller, **kwargs):
     scan_area=kwargs["scan_area"]
     auto_zheight=kwargs["zheight"]
     auto_centerDP=kwargs["autocenterDP"]
+
+    angle_threshold=kwargs["angle_activation"]
+    spread=kwargs["spread"]
+    offset=kwargs["offset"]
+
     try:
         diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
     except:

@@ -17,7 +17,7 @@ from instamatic.neural_network import predict, preprocess
 import pickle
 from pathlib import Path
 from tqdm import tqdm
-from instamatic.calibrate.filenames import CALIB_IS1_DEFOC, CALIB_IS1_FOC, CALIB_IS2_DEFOC, CALIB_IS2_FOC, CALIB_BEAMSHIFT_DP
+from instamatic.calibrate.filenames import *
 from instamatic.processing.find_crystals import find_crystals_timepix
 import traceback
 import socket
@@ -25,17 +25,19 @@ import datetime
 import shutil
 from scipy import ndimage
 
-ACTIVATION_THRESHOLD = 0.2
 rotation_speed = 0.86
 
 """Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
-imgvar_threshold = 600
+#imgvar_threshold = 600
 """spread, offset: parameters for find_crystals_timepix"""
-spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
-offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
+#spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
+#offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
 
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 log_rotaterange = config.logs_drc / f"Rotrange_stagepos_{date}.log"
+log_iscalibs = config.logs_drc / f"ImageShift_LOGS_{date}"
+log_iscalibs.mkdir(exist_ok=True)
+
 if not os.path.isfile(log_rotaterange):
     with open(log_rotaterange, "a") as f:
         f.write("x\ty\tz\trotation range\n")
@@ -69,7 +71,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         return 0
     
     try:
-        with open(file,'rb') as f:
+        with open(log_iscalibs / file,'rb') as f:
             transform_imgshift, c = pickle.load(f)
     except:
         print("No {}, defocus = {} calibration found. Choose the desired defocus value.".format(imageshift, diff_defocus))
@@ -88,7 +90,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
                 transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = 100, logger = logger)
             elif imageshift == 'S':
                 transform_imgshift, c = Calibrate_Stage(ctrl, stepsize = 1000, logger = logger)
-            with open(file, 'wb') as f:
+            with open(log_iscalibs / file, 'wb') as f:
                 pickle.dump([transform_imgshift, c], f)
             satisfied = input(f"{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.")
             
@@ -107,6 +109,9 @@ class Experiment(object):
                        scan_area,
                        zheight,
                        autocenterDP,
+                       angle_activation,
+                       spread,
+                       offset,
                        unblank_beam=False, 
                        path=None, 
                        log=None, 
@@ -136,7 +141,16 @@ class Experiment(object):
         self.mode = 0
 
         self.diff_brightness = self.ctrl.brightness.value
-        self.autocenterDP = autocenterDP
+        #self.autocenterDP = autocenterDP
+        self.angle_activation = angle_activation
+        self.spread = spread
+        self.offset = offset
+
+        self.calibdir = self.path.parent / "calib"
+
+        if not os.path.exists(self.calibdir):
+            os.makedirs(self.calibdir)
+
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
             self.image_interval = image_interval
@@ -289,7 +303,7 @@ class Experiment(object):
                     #print("crystal size: {}".format(crystalsize))
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     
-                    crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=spread, offset=offset)
+                    crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=self.spread, offset=self.offset)
                     
                     n_crystals_new = len(crystal_positions_new)
                     #print(crystal_positions_new)
@@ -410,6 +424,16 @@ class Experiment(object):
         print(msg)
         logger.debug(msg)
 
+    def imagevar_blank_estimator(self, cycle=3):
+        input("Please move your stage to a blank area for image variance calculation. Press ENTER when ready.")
+        img_var=[]
+        for i in range(0,cycle):
+            img, h = self.ctrl.getImage(self.expt, header_keys=None)
+            img_var.append(np.var(img))
+
+        image_var = np.average(img_var)
+        return image_var
+
     def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, calib_beamshift):
         
         """track method
@@ -519,7 +543,7 @@ class Experiment(object):
         if self.camtype == "simulate":
             self.startangle = a
         else:
-            time.sleep(0.1)
+            time.sleep(self.angle_activation)
 
         i = 1
 
@@ -588,7 +612,7 @@ class Experiment(object):
                         print(imgvar)
                         print("Collection stopping because crystal out of the beam...")
                         self.stopEvent.set()
-                    if imgvar < imgvar_threshold:
+                    if imgvar < self.imgvar_threshold:
                         print("Image variance smaller than blank image.")
                         self.stopEvent.set()
                     
@@ -825,7 +849,7 @@ class Experiment(object):
         is1status = self.ctrl.imageshift1.get()
         is2status = self.ctrl.imageshift2.get()
         plastatus = self.ctrl.diffshift.get()
-        with open("beam_brightness.pkl",'wb') as f:
+        with open(self.calibdir / "beam_brightness.pkl",'wb') as f:
             pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus], f)
         
         print("Brightness recorded.")
@@ -884,13 +908,13 @@ class Experiment(object):
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     if img.mean() > 10:
                         self.magnification = self.ctrl.magnification.value
-                        crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                        crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                         crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             
                         n_crystals = len(crystal_coords)
                         if n_crystals > 0:
                             print("centering z height...")
-                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                             if x_zheight != 999999:
                                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
@@ -920,13 +944,13 @@ class Experiment(object):
                 os.makedirs(path)
         
         try:
-            with open("beam_brightness.pkl",'rb') as f:
+            with open(self.calibdir / "beam_brightness.pkl",'rb') as f:
                 [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = pickle.load(f)
         except IOError:
             [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = self.write_BrightnessStates()
         
         try:
-            self.calib_beamshift = CalibBeamShift.from_file()
+            self.calib_beamshift = CalibBeamShift.from_file(fn = self.calibdir / CALIB_BEAMSHIFT)
             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
 
         except IOError:
@@ -940,7 +964,7 @@ class Experiment(object):
             calib_file = "x"
             while calib_file == "x":
                 print("Find a clear area, toggle the beam to the desired defocus value.")
-                self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
+                self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl, outdir = self.calibdir)
                 #mag1foc_brightness = self.ctrl.brightness.value
                 print("Beam shift calibration done.")
                 calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
@@ -948,8 +972,8 @@ class Experiment(object):
         self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
         
         try:
-            self.calib_directbeam = CalibDirectBeam.from_file()
-            with open('diff_par.pkl','rb') as f:
+            self.calib_directbeam = CalibDirectBeam.from_file(fn = self.calibdir / CALIB_DIRECTBEAM)
+            with open(self.calibdir / 'diff_par.pkl','rb') as f:
                 self.diff_brightness, self.diff_difffocus = pickle.load(f)
         except IOError:
             if not self.ctrl.mode == 'diff':
@@ -959,11 +983,19 @@ class Experiment(object):
                 self.ctrl.mode = 'diff'
             self.ctrl.difffocus.value = dp_focus
             
-            self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir='.')
+            self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir = self.calibdir)
             self.diff_brightness = self.ctrl.brightness.value
             self.diff_difffocus = self.ctrl.difffocus.value
-            with open('diff_par.pkl','wb') as f:
+            with open(self.calibdir / 'diff_par.pkl','wb') as f:
                 pickle.dump([self.diff_brightness, self.diff_difffocus], f)
+
+        try:
+            with open(self.calibdir / "imgvariance.pkl","rb") as f:
+                self.imgvar_threshold = pickle.load(f)
+        except IOError:
+            self.imgvar_threshold = self.imagevar_blank_estimator()
+            with open(self.calibdir / "imgvariance.pkl","wb") as f:
+                pickle.dump(self.imgvar_threshold, f)
         
         self.neutral_beamshift = bs
         #print("Neutral beamshift: from beam_brightness.pkl {}".format(bs))
@@ -977,7 +1009,10 @@ class Experiment(object):
         transform_imgshift2, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = self.diff_defocus, logger = self.logger, mode = 'diff')
         transform_imgshift_foc, c = load_IS_Calibrations(imageshift = 'IS1', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
         transform_imgshift2_foc, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
-        transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
+
+        #transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
+        transform_beamshift_d = self.calib_beamshift.transform
+
         transform_stagepos, c = load_IS_Calibrations(imageshift = 'S', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'mag1')
         
         if self.mode == 3:
@@ -1015,7 +1050,7 @@ class Experiment(object):
 
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 
                 n_crystals = len(crystal_coords)
@@ -1030,7 +1065,7 @@ class Experiment(object):
                 h["exp_magnification"] = 2500
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                 n_crystals = len(crystal_coords)
@@ -1105,7 +1140,7 @@ class Experiment(object):
                             h["exp_magnification"] = 2500
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
 
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             #self.ctrl.brightness.value = img_brightness
                             
@@ -1119,7 +1154,7 @@ class Experiment(object):
                             h["exp_magnification"] = 2500
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
             
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                             n_crystals = len(crystal_coords)
@@ -1197,36 +1232,36 @@ class Experiment(object):
             
         if self.auto_zheight == False:
             try:
-                with open("z-height-adjustment-time.pkl", "rb") as f:
+                with open(self.calibdir / "z-height-adjustment-time.pkl", "rb") as f:
                     t = pickle.load(f)
                     if t - time.clock() > 14400:
                         print("Z-height needs to be updated every session. Readjusting z-height...")
-                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                         xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                         self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                         t = time.clock()
-                        with open("z-height-adjustment-time.pkl", "wb") as f:
+                        with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                             pickle.dump(t, f)
                             
             except:
                 input("No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>")
-                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                 t = time.clock()
-                with open("z-height-adjustment-time.pkl", "wb") as f:
+                with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                     pickle.dump(t, f)
         else:
             print("Z height adjusting...")
-            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
             xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
             self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
             t = time.clock()
-            with open("z-height-adjustment-time.pkl", "wb") as f:
+            with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                 pickle.dump(t, f)
             
         lensPar = self.ctrl.to_dict()
-        with open("LensPar.pkl","wb") as f:
+        with open(self.calibdir / "LensPar.pkl","wb") as f:
             pickle.dump(lensPar, f)
 
         ## Check DIALS server connection status here
@@ -1238,7 +1273,7 @@ class Experiment(object):
 
         self.stopEvent_rasterScan.clear()
 
-        with open("LensPar.pkl","rb") as f:
+        with open(self.calibdir / "LensPar.pkl","rb") as f:
             lensPar_i = pickle.load(f)
 
         self.ctrl.from_dict(lensPar_i)
