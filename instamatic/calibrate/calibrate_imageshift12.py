@@ -4,6 +4,8 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
+from tqdm import tqdm
+
 import logging
 logger = logging.getLogger(__name__)
     
@@ -51,7 +53,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
     imgpos = []
     stepsize = stepsize
     
-    for i in range(0, 5):
+    for i in tqdm(range(0, 5)):
         for j in range(0, 5):
             deflector.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
             img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")

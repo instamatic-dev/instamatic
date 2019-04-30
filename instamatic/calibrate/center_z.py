@@ -22,16 +22,14 @@ def eliminate_backlash_in_tiltx(ctrl):
         return 1
 
 
-def center_z_height(ctrl):
+def center_z_height(ctrl, verbose = False):
     """Automated routine to find the z-height
 
     Koster, A. J., et al. "Automated microscopy for electron tomography." 
     Ultramicroscopy 46.1-4 (1992): 207-227.
     http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
     """
-
-
-    print("Finding eucentric height...")
+    print("\033[k", "Finding eucentric height...", end="\r")
     if ctrl.mode != 'mag1':
         ctrl.mode = 'mag1'
 
@@ -59,7 +57,8 @@ def center_z_height(ctrl):
         if shift[0] < 0:
             d1 = -d1
         d.append(d1)
-        print("Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift)))
+        if verbose:
+            print("Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift)))
         ctrl.stageposition.set(z = z1 + 1000)
         time.sleep(1)
         
@@ -72,7 +71,8 @@ def center_z_height(ctrl):
     satisfied = input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
     if satisfied == "x":
         ctrl.stageposition.set(a = a0, z = z0)
-        print("Did not find proper eucentric height...")
+        if verbose:
+            print("Did not find proper eucentric height...")
     else:
         if z_center > ctrl.stageposition.z:
             ctrl.stageposition.set(a = a0, z = z_center-2000)
@@ -80,7 +80,8 @@ def center_z_height(ctrl):
         else:
             ctrl.stageposition.set(a = a0, z = z_center+2000)
             ctrl.stageposition.set(a = a0, z = z_center)
-        print("Eucentric height set. Find the crystal again and start data collection!")
+
+        print("\033[k", "Eucentric height set. Find the crystal again and start data collection!", end="\r")
 
 def find_crystal_max(img, magnification, spread, offset):
 
@@ -93,12 +94,12 @@ def find_crystal_max(img, magnification, spread, offset):
 
     return crystal_inter, crystal_inter_pos
 
-def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, offset = 10):
+def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, offset = 10, verbose = False):
     """Hongyi's empirical method for centering z height on our JEOL LAB6.
     Rotate the stage positively. If the particle moves upwards, adjust height to be higher.
     Vice versa."""
 
-    print("Finding eucentric height...")
+    print("\033[k", "Finding eucentric height...", end="\r")
     if ctrl.mode != 'mag1':
         ctrl.mode = 'mag1'
 
@@ -110,9 +111,11 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
     img0, h = ctrl.getImage(exposure = 0.01, comment = "z height finding HY")
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread = spread, offset=offset)
-        print("Feature Captured. Area: {} pixels".format(crystal_inter))
+        if verbose:
+            print("Feature Captured. Area: {} pixels".format(crystal_inter))
     except:
-        print("No crystals found. Please find another area for z height adjustment.")
+        if verbose:
+            print("No crystals found. Please find another area for z height adjustment.")
 
     rotation_dir = eliminate_backlash_in_tiltx(ctrl)
     if rotation_dir == 0:
@@ -156,7 +159,8 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
                     ctrl.stageposition.stop()
                     return 999999,999999
         except:
-            print("No crystal found. Finding another area for z height adjustment.")
+            if verbose:
+                print("No crystal found. Finding another area for z height adjustment.")
             ctrl.stageposition.stop()
             return 999999,999999
         
@@ -167,6 +171,6 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
         ctrl.stageposition.set(a = endangle, wait = False)
         time.sleep(0.5)
         
-    print("Z height adjustment done and eucentric z height found at: {}".format(z0))
+    print("\033[k", "Z height adjustment done and eucentric z height found at: {}".format(z0), end= "\r")
     x, y, z, a, b = ctrl.stageposition.get()
     return x, y

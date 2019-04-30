@@ -148,6 +148,10 @@ class Experiment(object):
 
         self.calibdir = self.path.parent / "calib"
 
+        self.verbose = False
+        self.number_crystals_scanned = 0
+        self.number_exp_performed = 0
+
         if not os.path.exists(self.calibdir):
             os.makedirs(self.calibdir)
 
@@ -155,7 +159,8 @@ class Experiment(object):
         if enable_image_interval:
             self.image_interval = image_interval
             msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_time_image} s)."
-            print(msg)
+            if self.verbose:
+                print(msg)
             self.logger.info(msg)
         else:
             self.image_interval = 99999
@@ -167,20 +172,23 @@ class Experiment(object):
         if enable_fullacred_crystalfinder:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Full autocRED feature with auto crystal finder enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Full autocRED feature with auto crystal finder enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 3
         
         elif enable_fullacred:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Full autocRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Full autocRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 2
             
         elif enable_autotrack:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 1
+
+        if self.verbose:
+            print(msg)
     
     def image_cropper(self, img, window_size = 0):
         crystal_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
@@ -209,7 +217,8 @@ class Experiment(object):
         warn = 0
         if MAX - lensvalue < threshold or lensvalue < threshold:
             warn = 1
-            print("Warning: {} close to limit!".format(lensname))
+            if self.verbose:
+                print("Warning: {} close to limit!".format(lensname))
         return warn
     
     def img_var(self, img, apert_pos):
@@ -267,22 +276,15 @@ class Experiment(object):
         transform_stagepos_ = np.linalg.inv(transform_stagepos)
         if pos_arr[0] < 200 or pos_arr[0] > 316 or pos_arr[1] < 200 or pos_arr[1] > 316:
 
-            #print(pos_arr)
             _x0 = self.ctrl.stageposition.x
             _y0 = self.ctrl.stageposition.y
             
             displacement = np.subtract((258,258), pos_arr)
-            #print("Displacement should be: {} in pixels".format(displacement))
             mag = self.ctrl.magnification.value
             image_dimensions = config.calibration.mag1_camera_dimensions[mag]
-            #print("Image size: {} um".format(image_dimensions))
             s = image_dimensions[0]/516
-            #print("scaling facor: {} um per px".format(s))
             mvmt = s * displacement
-            #print("Stage movement: {} um in x and y".format(mvmt))
             mvmt_x, mvmt_y = np.dot(1000 * mvmt, transform_stagepos_)
-
-            #print("Stagemovement: {} in x, {} in y".format(mvmt_x,mvmt_y))
             
             self.ctrl.stageposition.set(x = _x0 + mvmt_y, y = _y0 - mvmt_x)
             
@@ -292,7 +294,7 @@ class Experiment(object):
     def center_particle_from_crystalList(self, crystal_positions, transform_stagepos, magnification):
         n_crystals = len(crystal_positions)
         if n_crystals == 0:
-            print("No crystal found on image!")
+            self.print_and_del("No crystal found on image!")
             return (0,0)
         
         else:
@@ -308,14 +310,14 @@ class Experiment(object):
                     n_crystals_new = len(crystal_positions_new)
                     #print(crystal_positions_new)
                     if n_crystals_new == 0:
-                        print("No crystal found after centering...")
+                        self.print_and_del("No crystal found after centering...")
                         return (0,0)
                     
                     else:
                         #print("Start looping.")
                         for crystal in crystal_positions_new:
                             if crystal.isolated and crystal.area_pixel == crystalsize:
-                                print("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
+                                self.print_and_del("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
                                 beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift((crystal.x, crystal.y))
                                 
                                 return (beamshift_coords, crystalsize)
@@ -424,6 +426,9 @@ class Experiment(object):
         print(msg)
         logger.debug(msg)
 
+    def print_and_del(self, msg):
+        print("\033[k", msg, end="\r")
+
     def imagevar_blank_estimator(self, cycle=3):
         input("Please move your stage to a blank area for image variance calculation. Press ENTER when ready.")
         img_var=[]
@@ -466,7 +471,8 @@ class Experiment(object):
             
         if self.mode > 0:
 
-            print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
+            if self.verbose:
+                print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
             
             transform_imgshift_ = np.linalg.inv(transform_imgshift)
             transform_imgshift2_ = np.linalg.inv(transform_imgshift2)
@@ -512,7 +518,8 @@ class Experiment(object):
 
             img0_p = preprocess(img0.astype(np.float))
             scorefromCNN = predict(img0_p)
-            self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
+            #self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
+            self.logger.debug("Score for the DP: {}".format(scorefromCNN))
 
             crystal_pos, img0_cropped, window_size = self.image_cropper(img = img0, window_size = 0)
             img0var = self.img_var(img0_cropped, crystal_pos)
@@ -609,11 +616,10 @@ class Experiment(object):
                     
                     """If variance changed over 50%, then the crystal is outside the beam and stop data collection"""
                     if imgvar/img0var < 0.2 or imgvar/img0var > 5:
-                        print(imgvar)
-                        print("Collection stopping because crystal out of the beam...")
+                        self.print_and_del("Collection stopping because crystal out of the beam...")
                         self.stopEvent.set()
                     if imgvar < self.imgvar_threshold:
-                        print("Image variance smaller than blank image.")
+                        self.print_and_del("Image variance smaller than blank image.")
                         self.stopEvent.set()
                     
                     if trackmethod == "c":
@@ -715,10 +721,10 @@ class Experiment(object):
                 
                 if time.perf_counter() - t0 >= rotation_t:
                     self.stopEvent.set()
-                    print("Goniometer close to limit!")
+                    self.print_and_del("Goniometer close to limit!")
                 
             except Exception as e:
-                print (e)
+                self.print_and_del(e)
                 self.stopEvent.set()
 
         t1 = time.perf_counter()
@@ -735,7 +741,7 @@ class Experiment(object):
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
-            print("Blanking beam")
+            #print("Blanking beam")
             self.ctrl.beamblank = True
 
         self.stopEvent.clear()
@@ -747,7 +753,9 @@ class Experiment(object):
         stageposx, stageposy, stageposz, stageposa, stageposb = self.ctrl.stageposition.get()
         rotrange = abs(self.endangle-self.startangle)
         
-        print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
+        if self.verbose:
+            print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
+
         self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
         
         nframes = i - 1 # i + 1 is not correct since i+=1 was executed before next image is taken???
@@ -784,7 +792,7 @@ class Experiment(object):
             print(f"Rotation axis: {rotation_angle} radians", file=f)            
             print(f"Oscillation angle: {osangle} degrees", file=f)
             print(f"Number of frames: {len(buffer)}", file=f)
-            print(f"Particle found at stage position: x: {stageposx}, y: {stageposy}, z: {stageposz}")
+            print(f"Particle found at stage position: x: {stageposx}, y: {stageposy}, z: {stageposz}", file=f)
 
         with open(log_rotaterange, "a") as f:
             f.write("{}\t{}\t{}\t{}\n".format(stageposx, stageposy, stageposz, rotrange))
@@ -818,7 +826,7 @@ class Experiment(object):
 
         if s_c:
             s.send(msg_tosend)
-            print("SMVs sent to DIALS for processing.")
+            self.print_and_del("SMVs sent to DIALS for processing.")
         
         self.logger.info("XDS INP file created.")
 
@@ -831,8 +839,9 @@ class Experiment(object):
                 write_tiff(fn, img, header=h)
         
         self.ctrl.beamblank = False
-
-        print("Data Collection and Conversion Done.")
+        self.number_exp_performed += 1
+        if self.verbose:
+            print("Data Collection and Conversion Done.")
             
     def write_BrightnessStates(self):
         print("Go to your desired magnification and camera length. Now recording lens states...")
@@ -891,7 +900,7 @@ class Experiment(object):
         x_zheight = 0
         y_zheight = 0
         
-        t = tqdm(self.offsets, desc = "                          ")
+        t = tqdm(self.offsets, desc = "Number of crystals scanned: {}; Number of experiments performed: {}".format(self.number_crystals_scanned, self.number_exp_performed))
         
         for j, (x_offset, y_offset) in enumerate(t):
             x = center_x + x_offset
@@ -913,21 +922,23 @@ class Experiment(object):
                             
                         n_crystals = len(crystal_coords)
                         if n_crystals > 0:
-                            print("centering z height...")
+                            self.print_and_del("centering z height...")
                             x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                             if x_zheight != 999999:
                                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                             else:
-                                print("Z height not found.")
+                                self.print_and_del("Z height not found.")
                 except:
-                    print("Something went wrong, unable to adjust height")
+                    self.print_and_del("Something went wrong, unable to adjust height")
                     pass
 
             self.start_collection_point()
+
+            t.set_description("Number of crystals scanned: {}; Number of experiments performed: {}".format(self.number_crystals_scanned, self.number_exp_performed))
             
             if self.stopEvent_rasterScan.is_set():
-                print("Raster Scan stopped manually.")
+                print("\nRaster Scan stopped manually.")
                 break
         
     def start_collection_point(self):
@@ -1026,15 +1037,10 @@ class Experiment(object):
             
             header_keys = None
 
-            print("Beamshift reference: {}".format(self.calib_beamshift.reference_shift))
+            if self.verbose:
+                print("Beamshift reference: {}".format(self.calib_beamshift.reference_shift))
             
             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
-
-            #input("Find a good area for investigation. Center the beam using beamshift if beam is not centered. ENTER>>>")
-            
-            #bs = self.ctrl.beamshift.get()
-            #self.calib_beamshift.reference_shift = bs
-            #self.neutral_beamshift = bs
             
             self.magnification = self.ctrl.magnification.value
 
@@ -1056,7 +1062,7 @@ class Experiment(object):
                 n_crystals = len(crystal_coords)
 
                 if n_crystals == 0:
-                    print("No crystals found in the image. Find another area!")
+                    self.print_and_del("No crystals found in the image. Find another area!")
                     return 0
                 
                 (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
@@ -1071,16 +1077,16 @@ class Experiment(object):
                 n_crystals = len(crystal_coords)
 
                 if n_crystals == 0:
-                    print("No crystals found in the image. Find another area!")
+                    self.print_and_del("No crystals found in the image. Find another area!")
                     return 0
                 
                 if size_crystal_targeted != 0:
                     try:
                         ind_target = crystal_sizes.index(size_crystal_targeted)
                         crystal_coords[0], crystal_coords[ind_target] = crystal_coords[ind_target], crystal_coords[0]
-                        print("Targeted isolated crystal centered is swapped to the first of the list.")
+                        self.print_and_del("Targeted isolated crystal centered is swapped to the first of the list.")
                     except ValueError:
-                        print("Lost targeted isolated crystal.")
+                        self.print_and_del("Lost targeted isolated crystal.")
                         return 0
                 
                 self.logger.info("{} {} crystals found.".format(datetime.datetime.now(), n_crystals))
@@ -1092,9 +1098,8 @@ class Experiment(object):
                     try:
                         self.ctrl.brightness.value = img_brightness
 
-                        #print("{}, {}".format(k, crystal_coords[k]))
-
-                        print("Collecting on crystal {}/{}. Beamshift coordinates: {}".format(k + 1, n_crystals, self.ctrl.beamshift.get()))
+                        if self.verbose:
+                            print("Collecting on crystal {}/{}. Beamshift coordinates: {}".format(k + 1, n_crystals, self.ctrl.beamshift.get()))
 
                         outfile = path / f"crystal_{k:04d}"
                         comment = "crystal {}".format(k)
@@ -1105,7 +1110,8 @@ class Experiment(object):
                         img, h = self.ctrl.getImage(exposure=0.001, comment=comment, header_keys=header_keys)
                         h["exp_magnification"] = 2500
                         write_tiff(path / f"crystal_{k:04d}", img, h)
-                        """Sometimes k is out of range error!!!"""
+
+                        self.number_crystals_scanned += 1
 
                         if self.isolated(crystal_positions[k], crystal_coords) and crystal_positions[k].isolated and not any(t < 100 for t in crystal_coords[k]) and not any(t > 416 for t in crystal_coords[k]):
 
@@ -1145,7 +1151,7 @@ class Experiment(object):
                             #self.ctrl.brightness.value = img_brightness
                             
                             if n_crystals == 0:
-                                print("No crystals found in the image. exitting loop...")
+                                self.print_and_del("No crystals found in the image. exitting loop...")
                                 break
                             
                             (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
@@ -1160,21 +1166,21 @@ class Experiment(object):
                             n_crystals = len(crystal_coords)
             
                             if n_crystals == 0:
-                                print("No crystals found in the image. Find another area!")
+                                self.print_and_del("No crystals found in the image. Find another area!")
                                 break
                             
                             if size_crystal_targeted != 0:
                                 try:
                                     ind_target = crystal_sizes.index(size_crystal_targeted)
                                     crystal_coords[k+1], crystal_coords[ind_target] = crystal_coords[ind_target], crystal_coords[k+1]
-                                    print("{}, {}".format(k+1, crystal_coords[k+1]))
-                                    print("Targeted isolated crystal centered is swapped to the next.")
+                                    self.print_and_del("Targeted isolated crystal centered is swapped to the next.")
                                 except ValueError:
-                                    print("Lost targeted isolated crystal.")
+                                    self.print_and_del("Lost targeted isolated crystal.")
                                     break
                             
                         else:
-                            print("Crystal {} not isolated: not suitable for cred collection".format(k+1))
+                            if self.verbose:
+                                print("Crystal {} not isolated: not suitable for cred collection".format(k+1))
                         
                         k = k + 1
                         if k >= n_crystals:
@@ -1182,7 +1188,7 @@ class Experiment(object):
                     except:
                         traceback.print_exc()
                         self.ctrl.beamblank = False
-                        print("Exitting loop...")
+                        self.print_and_del("Exitting loop...")
                         break
                     
                 self.ctrl.mode = 'mag1'
@@ -1193,22 +1199,20 @@ class Experiment(object):
                 
                 self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
                 
-                print("AutocRED with crystal_finder data collection done. Find another area for particles.")
-
-            print(os.listdir(path))
+                if self.verbose:
+                    print("AutocRED with crystal_finder data collection done. Find another area for particles.")
             
             if os.listdir(path) == ['Overall_view.tiff']:
-                print("Removing path...")
                 shutil.rmtree(path)
-                print("Path {} removed since no crystal rotation data was collected.".format(path))
+                #print("Path {} removed since no crystal rotation data was collected.".format(path))
             
             try:
                 if len(os.listdir(path)) == 0:
                     os.rmdir(path)
-                    print("Path {} removed since it is empty.".format(path))
+                    #print("Path {} removed since it is empty.".format(path))
             except:
-                print("Deletion error. Path might have already been deleted.")
-                
+                #print("Deletion error. Path might have already been deleted.")
+                pass
                     
         elif self.mode == 1 or self.mode == 2:
             self.pathtiff = Path(self.path) / "tiff"
@@ -1235,7 +1239,7 @@ class Experiment(object):
                 with open(self.calibdir / "z-height-adjustment-time.pkl", "rb") as f:
                     t = pickle.load(f)
                     if t - time.clock() > 14400:
-                        print("Z-height needs to be updated every session. Readjusting z-height...")
+                        self.print_and_del("Z-height needs to be updated every session. Readjusting z-height...")
                         x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                         xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                         self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
@@ -1252,7 +1256,7 @@ class Experiment(object):
                 with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                     pickle.dump(t, f)
         else:
-            print("Z height adjusting...")
+            self.print_and_del("Z height adjusting...")
             x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
             xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
             self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
@@ -1280,3 +1284,5 @@ class Experiment(object):
         self.ctrl.beamblank = True
 
         print("AutocRED collection done.")
+        self.number_crystals_scanned = 0
+        self.number_exp_performed = 0
