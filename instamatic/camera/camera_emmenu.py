@@ -1,49 +1,80 @@
-import pyautogui as pg
-import pygetwindow as pw
-from instamatic.utils.singleton import Singleton
 from pathlib import Path
+
+import time
+import numpy as np
+import logging
+logger = logging.getLogger(__name__)
+
+import atexit
+
 from instamatic import config
-from contextlib import contextmanager
+
+import comtypes.client
+
+import sys
+
+type_dct = {
+    1: "GetDataByte",
+    2: "GetDataUShort",
+    3: "GetDataShort",
+    4: "GetDataLong",
+    5: "GetDataFloat",
+    6: "GetDataDouble",
+    7: "GetDataComplex",
+    8: "IMG_STRING",
+    8: "GEtDataBinary",
+    9: "GetDataRGB8",
+    10: "GetDataRGB16",
+    11: "IMG_EMVECTOR"
+}
 
 
-class EMMenuError(Exception):
-    pass
+class CameraEMMENU(object):
+    """docstring for CameraEMMENU"""
 
+    def __init__(self, drc_name="Instamatic data"):
+        """Initialize camera module """
+        super().__init__()
 
-class EMMenuWrapper(object):
-    """Small wrapper the EMMenu gui for automating data collection"""
-    instance = None
+        try:
+            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+        except WindowsError:
+            comtypes.CoInitialize()
 
-    def __init__(self, name="emmenu"):
-        super(EMMenuWrapper, self).__init__()
+        self.obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
 
-        self.name = name
-        self._switch_back = True
+        # get first camera
+        self._cam = self.obj.TEMCameras.Item(1)
+
+        # hi-jack first viewport
+        self._vp = obj.Viewports.Item(1)
+        self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
+
+        c.obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
+                                                   # other choices: DeleteBufferOnDeleteImage / Default
+        
+        # Image manager for managing image buffers (left panel)
+        self._immgr = c.obj.ImageManager 
+
+        # for writing tiff files
+        self._emf = c.obj.EMFile
+
+        # set up instamatic data directory
+        self.top_drc_index = im.TopDirectory 
+        self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
+        
+        im.CreateNewSubDirectory(t, drc_name, 2, 2)
+        self.drc_name = drc_name
+        self.drc_index = im.DirectoryHandleFromName(drc_name)
+        
+        self._vp.DirectoryHandle = self.drc_index  # set current directory
 
         self.load_defaults()
 
-        curdir = Path(__file__).parent
+        msg = f"Camera {self.getName()} initialized"
+        logger.info(msg)
 
-        self._path_start_liveview_button = str(curdir / "emmenu" / "start_liveview.png")
-        self._path_start_record_button   = str(curdir / "emmenu" / "start_record.png")
-        self._path_stop_liveview_button1 = str(curdir / "emmenu" / "stop_liveview1.png")
-        self._path_stop_liveview_button2 = str(curdir / "emmenu" / "stop_liveview2.png")
-        self._path_acquire_button        = str(curdir / "emmenu" / "acquire.png")
-
-        self.win_previous = None
-        windows = pw.getWindowsWithTitle("EMMENU4")
-
-        if len(windows) == 0:
-            raise EMMenuError("Could not find EMMENU, is it running?")
-        if len(windows) > 1:
-            for title in pw.getAllTitles():
-                if title:
-                    print(title)
-            raise EMMenuError("Found more than one instance of EMMENU -> ???")
-
-        self.win_emmenu = windows[0]
-        
-        self.locate_buttons()
+        atexit.register(self.releaseConnection)
 
     def load_defaults(self):
         if self.name != config.cfg.camera:
@@ -53,175 +84,136 @@ class EMMenuWrapper(object):
 
         self.streamable = False
 
-    def locate_buttons(self):
-        """Locate the buttons to start/stop recording/live view"""
-        self.activate()
+    def listConfigs(self):
+        """List the configs from the Configuration Manager"""
+        print(f"Configurations for camera {self.getName}")
+        count = c.obj.CameraConfigurations.Count
+        for j in range(1, count+1):
+            cfg = c.obj.CameraConfigurations.Item(j)
+            print(f"{j:02d} - {cfg.Name}")
 
-        screenshot = pg.screenshot()
+    def listDirectories(self):
+        """List subdirectories of the top directory"""
+        top_j = im.TopDirectory()
+        top_name = FullDirectorName(top_j)
+        print(f"{top_name} ({top_j})")
 
-        # record_button_pos = (1071, 56, 18, 18)
-        # liveview_button_pos = (1629, 238, 42, 18)
-        # acquire_button_pos = (1628, 143, 44, 20)
+        drc_j = im.SubDirectory(top_j)
 
-        record_button_pos = pg.locate(self._path_start_record_button, screenshot, grayscale=True)
-        if not record_button_pos:
-            raise EMMenuError("Could not locate record view button")
-        self.record_button_region = record_button_pos
-        self.record_button_pos = pg.center(record_button_pos)
+        while drc_j:
+            drc_name = FullDirectorName(drc_j)
+            print(f"{drc_name} ({drc_j})")
+
+            drc_j = im.NextDirectory(drc_j)  # get next
+
+    def getImageByIndex(self, img_index: int, drc_index: int=None) -> int:
+        """Grab data from the image manager by index. Return image pointer (COM)."""
+        if not drc:
+            drc_index = self.drc_index
+
+        p = im.Image(drc_index, img_index)
+
+        return p
+
+    def getImageDataByIndex(self, img_index: int, drc_index: int=None) -> np.array:
+        """Grab data from the image manager by index. Return numpy 2D array"""
+        p = self.getImageByIndex(img_index, drc_index)
+
+        tpe = p.DataType
+        method = type_dict[tpe]
+
+        f = getattr(p, method)
+        arr = f()  # -> tuple of tuples
         
-        # attempt 1, liveview is running
-        liveview_button_pos = pg.locate(self._path_stop_liveview_button1, screenshot, grayscale=True)
-        if not liveview_button_pos:
-            # attempt 2, liveview is not running
-            liveview_button_pos = pg.locate(self._path_start_liveview_button, screenshot, grayscale=True)
-            if not liveview_button_pos:
-                # attempt 3, liveview is running, but deselected
-                liveview_button_pos = pg.locate(self._path_stop_liveview_button2, screenshot, grayscale=True)
-                if not liveview_button_pos:
-                    raise EMMenuError("Could not locate live view button")
-        
-        self.liveview_button_region = liveview_button_pos
-        self.liveview_button_pos = pg.center(liveview_button_pos)
+        return np.array(arr)
 
-        acquire_button_pos = pg.locate(self._path_acquire_button, screenshot, grayscale=True)
-        if not acquire_button_pos:
-            raise EMMenuError("Could not locate record view button")
-        self.acquire_button_region = acquire_button_pos
-        self.acquire_button_pos = pg.center(acquire_button_pos)
+    def getDimensions(self) -> (int, int):
+        """Get the dimensions reported by the camera"""
+        return self._cam.RealSizeX, self._cam.RealSizeY
 
-        screenshot.close()
+    def getPixelsize(self) -> (int, int):
+        return self._cam.PixelSizeX, self._cam.PixelSizeY
 
-        print(f"Record button position: {self.record_button_pos} ({self.record_button_region})")
-        print(f"Liveview button position: {self.liveview_button_pos} ({self.liveview_button_region})")
-        print(f"Acquire button position: {self.acquire_button_pos} ({self.acquire_button_region})")
+    def getName(self) -> str:
+        """Get the name reported by the camera"""
+        return self._cam.name
 
-        self.activate_previous()
+    def writeTiff(self, image_pointer, filename):
+        """Write tiff file using the EMMENU machinery"""
+        return self._emf.WriteTiff(image_pointer, filename)
+
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True):
+        """Write a series of data in tiff format and writes them to 
+        the given `path` using EMMENU machinery"""
+        path = Path(path)
+        drc = self.drc_index
+        for i, image_index in enumerate(range(start_index, stop_index+1)):
+            p = self.getImageByIndex(j, drc)
+            fn = str(path / "{i:04d}.tiff")
+            print(f"Image #{image_index} -> {fn}")
+            self.writeTiff(p, fn)
+    
+            if clear_buffer:
+                self._immgr.DeleteImageBuffer(d, j)
+
+        print(f"Wrote {i+1} images to {path}")
 
     def getImage(self, **kwargs):
-        """Hi-jack `getImage` to display data collection warning."""
-        raise IOError(f"{self.__class__.__name__} does not support `getImage`. Use `ctrl.cam.acquire` or `ctrl.cam.record` instead. The images will be stored in the EMMENU buffer.")
+        raise NotImplementedError
+
+    @property
+    def image_index(self):
+        return self._vp.IndexInDirectory
+
+    @property.setter
+    def image_index(self, value):
+        self._vp.IndexInDirectory = value
 
     def acquire(self):
-        """
-        Collect image on the camera using the currently selected camera in EMMENU. 
-        The image is stored in the EMMENU buffer.
-        """
-        self._press(self.acquire_button_pos)
-
-    def start_record(self):
-        """Start recording the current live view of the currently selected camera. The data are saved in the EMMENU buffer."""
-        self.toggle_record() 
+        self._vp.AcquireAndDisplayImage()
 
     def stop_record(self):
-        """Stop the recording."""
-        self.toggle_liveview()
-
-    @property
-    def live_view_is_running(self):
-        """Return `True` if the live view is running"""
-        self.activate()
-
-        region = self.liveview_button_region
-
-        if pg.locateOnScreen(self._path_stop_liveview_button1, grayscale=True, region=region):
-            ret = True
-        elif pg.locateOnScreen(self._path_stop_liveview_button2, grayscale=True, region=region):
-            ret = True
-        else:
-            ret = False
-
-        self.activate_previous()
-        
-        return ret
-
-    @property
-    def record_is_running(self):
-        """Return `True` if the live view is running"""
-        self.activate()
-
-        region = self.record_button_region
-
-        if pg.locateOnScreen(self._path_start_record_button, grayscale=True, region=region):
-            ret = True
-        else:
-            ret = False
-
-        self.activate_previous()
-        
-        return ret
-
-    @property
-    def is_active(self):
-        """Return `True` if EMMENU is the active window"""
-        return self.win_emmenu.isActive
-
-    def activate(self):
-        """Active the EMMENU4 window"""
-        if not self.is_active:
-            self.win_previous = pw.getActiveWindow()
-        self.win_emmenu.activate()
-        self.win_emmenu.maximize()
-
-    def activate_previous(self):
-        """Go back to the previous active window after `self.activate` has been used"""
-        if self.win_previous:
-            self.win_previous.activate()
-
-    def _press(self, button_loc):
-        """Toggle the liveview button, and switch back to the currently active window"""
-        switch_back = False
-        current_loc = pg.position()
-        if not self.is_active:
-            self.activate()
-            switch_back = True
-        pg.moveTo(button_loc)
-        pg.click()
-        pg.moveTo(current_loc)
-        if switch_back:
-            self.activate_previous()
-
-    def toggle_record(self):
-        """Toggle the record button, and switch back to the currently active window"""
-        self._press(self.record_button_pos)
-
-    def stop_record(self):
-        """Stop recording"""
-        with self.keep_in_focus:
-            if self.record_is_running:
-                self._press(self.record_button_pos)
+        i = self.image_index
+        print("Stop recording (Image index={i})")
+        self._vp.StopRecorder()
+        self._recording = False
 
     def start_record(self):
-        """Start recording"""
-        with self.keep_in_focus:
-            if not self.record_is_running:
-                self._press(self.record_button_pos)
-            else:
-                print("Recording is already running")
-
-    def toggle_liveview(self):
-        """Toggle the liveview button, and switch back to the currently active window"""
-        self._press(self.liveview_button_pos)
+        i = self.image_index
+        print("Start recording (Image index={i})")
+        self._vp.StartRecorder()
+        self._recording = True
 
     def stop_liveview(self):
-        """Stop liveview"""
-        with self.keep_in_focus:
-            if self.liveview_is_running:
-                self._press(self.liveview_button_pos)
+        print("Stop live view")
+        self._vp.StopContinuous()
+        self._recording = False
+        # StopContinuous normally defaults to top directory
+        self._vp.DirectoryHandle = self.drc_index
 
-    def start_liveview(self):
-        """Start liveview"""
-        with self.keep_in_focus:
-            if not self.liveview_is_running:
-                self._press(self.liveview_button_pos)
-            else:
-                print("Recording is already running")
+    def start_liveview(self, delay=2.0):
+        print("Start live view")
+        self._vp.StartContinuous()
 
-    @contextmanager
-    def keep_in_focus(self):
-        """Keep the EMMENU window in focus while executing a few clicks in a row to prevent windows flashing"""
-        was_active = self.is_active
-        self._switch_back = False
-        yield
-        self._switch_back = True
-        if not was_active:
-            self.activate_previous()
+        # sleep for a few seconds to ensure live view is running
+        time.sleep(delay)
+
+    def releaseConnection(self) -> None:
+        """Release the connection to the camera"""
+        comtypes.CoUninitialize()
+        
+        self._vp.DirectoryHandle = self.top_drc_index
+        self.image_index = 0
+        self._immgr.DeleteDirectory(self.drc_index)
+
+        name = self.getName()
+        msg = f"Connection to camera '{name}' released" 
+        logger.info(msg)
+
+
+if __name__ == '__main__':
+    cam = CameraEMMENU()
+
+    from IPython import embed
+    embed()
+
