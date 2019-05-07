@@ -52,8 +52,7 @@ setup(
                       'pyyaml', 
                       'h5py', 
                       'tifffile',
-                      'IPython',
-                      'pyautogui'],
+                      'IPython'],
 
     include_package_data=True,
 

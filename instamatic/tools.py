@@ -259,3 +259,38 @@ def find_defocused_image_center(image: np.ndarray, treshold: int=1):
         center[n] = over[0] + rads[n]
     return center, rads
 
+
+def get_acquisition_time(timestamps: tuple, exp_time: float, plot: bool=True, savefig: bool=True, fn: str=None) -> object:
+    """take a list of timestamps and return the acquisition time and overhead
+    exp_time in s"""
+
+    from scipy.stats import linregress
+    from types import SimpleNamespace
+
+    timestamps = np.array(timestamps)
+
+    x = np.arange(len(timestamps))
+    res = linregress(x, timestamps)
+
+    y = x * res.slope + res.intercept
+    
+    acq_time = res.slope * 1000
+    overhead = acq_time - exp_time
+
+    if plot or savefig:
+        import matplotlib.pyplot as plt
+        plt.plot(x, y, color="red")
+        plt.scatter(x, timestamps, color="blue", marker="+")
+        plt.title(f"f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms")
+        plt.xlabel("Frame number")
+        plt.ylabel("Timestamp (s)")
+
+        if savefig:
+            if not fn:
+                fn = "acquisition_time.png"
+            plt.savefig(fn, dpi=150)
+        if plot:
+            plt.show()
+
+    return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
+

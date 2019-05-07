@@ -24,14 +24,19 @@ calibration/calibration_name.yaml
         Give here a list of camera lengths (as reported by the TEM) and the corresponding pixel dimensions in reciprocal angstrom, separated by a ':', for example:
           250: 0.0040
           300: 0.0050
+          ...
+          
     lowmag_pixeldimensions:
         Give here the magnification and pixel dimensions (x and y) for the lowmag mode in micrometer, for example:
           1000: [0.044779, 0.044779]
           1200: [0.037316, 0.037316]
+           ...
+
     mag1_camera_dimensions:
         Give here the magnification and pixel dimensions of the entire camera in micrometer, for exmaple:
           8000: [9.86148864, 9.86148864]
          10000: [7.99162368, 7.99162368]
+           ...
 
 camera/camera_name.yaml:
     calib_beamshift: Set up the grid and stepsize for the calibration of the beam shift in SerialED, for example:
@@ -44,7 +49,7 @@ camera/camera_name.yaml:
     default_exposure: Set the default exposure in seconds, i.e. 0.02
     dimensions: Give the dimensions of the camera at binning 1, for example: [516, 516]
     dynamic_range: Give the maximum counts of the camera, for example: 11800
-    name: Give the name of the camera to connect to, for example: timepix. Leave blank to load the camera specs, but do not load the camera module (also turns off the videostream gui).
+    name: Give the name of the camera interface to connect to, for example: timepix/emmenu/simulate/gatan. Leave blank to load the camera specs, but do not load the camera module (also turns off the videostream gui).
     physical_pixelsize: The physical size of a pixel in micrometer, for example: 0.055
     possible_binsizes: Give here a list of possible binnings, for example: [1] or [1, 2, 4]
     camera_rotation_vs_stage_xy: In radians, give here the rotation of the position of the rotation axis with respect to the horizontal. Corresponds to the rotation axis in RED and PETS, for example: -2.24
@@ -67,12 +72,12 @@ This file holds all the specifications of the microscope as necessary. It is imp
         200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000,
         2000000]
     
-        Magnification modes tells instamatic when to switch between mag1 and lowmag modes, i.e. where lowmag    starts and where mag1 starts
+        Magnification modes tells instamatic when to switch between mag1 and lowmag modes, i.e. where lowmag starts and where mag1 starts
       MAGNIFICATION_MODES: {
         lowmag: 50, 
         mag1: 2500 }
     
-        Here the rotation speeds can be calibrated. This is only used to correct the rotation speeds collected  during CRED if necessary. 
+        Here the rotation speeds can be calibrated. This is only used to correct the rotation speeds collected during CRED if necessary. 
       rotation_speeds: {
         fine: [ 0.114, 0.45, 1.126 ], 
         coarse: [ 0.45, 1.8, 4.5 ] }    

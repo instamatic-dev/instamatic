@@ -2,6 +2,7 @@ import datetime
 import time
 from instamatic import config, version
 from pathlib import Path
+from instamatic.tools import get_acquisition_time
 
 
 class Experiment(object):
@@ -53,11 +54,7 @@ class Experiment(object):
             if spotsize not in (4, 5):
                 print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
     
-            with self.emmenu.keep_in_focus():
-                if not self.emmenu.live_view_is_running:
-                    delay = 2.0
-                    self.emmenu.toggle_liveview()
-                    time.sleep(delay)
+            self.emmenu.start_liveview()
 
     def start_collection(self, target_angle: float):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -71,21 +68,21 @@ class Experiment(object):
         self.ctrl.beamblank_off()
 
         if not self.obtain_track:
-            self.emmenu.toggle_record()  # start recording
+            self.emmenu.start_record()  # start recording
+        
+        if self.track and self.track_relative:
+            track_y_start = int(self.track_func(start_angle)) 
+
+        start_index = self.emmenu.image_index
 
         t0 = time.perf_counter()
-        t_delta = t0
-        
+        t_delta = t0       
+
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
         n = 0
-
-        if self.track and self.track_relative:
-            track_y_start = int(self.track_func(start_angle)) 
         
-        # while time.perf_counter()-t0 < 10:  # for testing
         while self.ctrl.stageposition.is_moving():
-            # time.sleep(1)
             t = time.perf_counter()
             if t - t_delta > interval:
                 n += 1
@@ -104,22 +101,24 @@ class Experiment(object):
                     self.ctrl.stageposition.set(y=target_y, wait=False)
                     print(f"Tracking -> set y={target_y}")
 
-        # time.sleep(5.0)
         t1 = time.perf_counter()
 
         if not self.obtain_track:
             self.ctrl.beamblank_on()
-            
-            self.emmenu.toggle_liveview()  # end liveview and stop recording
+            self.emmenu.stop_liveview()  # end liveview and stop recording
+        
+        end_index = self.emmenu.image_index
 
         end_position = self.ctrl.stageposition.get()
-        end_angle = end_position[3]
+        end_angle = end_position.a
 
         t_start = t0
         t_end = t1
         total_time = t1 - t0
         
-        # osc_angle = abs(end_angle - start_angle) / nframes
+        nframes = end_index - start_index
+
+        osc_angle = abs(end_angle - start_angle) / nframes
         
         # acquisition_time = total_time / nframes
         total_angle = abs(end_angle - start_angle)
@@ -131,6 +130,11 @@ class Experiment(object):
 
         rotation_speed = (end_angle-start_angle) / total_time
 
+        exposure_time = self.emmenu.get_exposure()
+        timestamps = self.emmenu.get_timestamps(start_index, end_index)
+        acq_out = self.path / "acquisition_time.png"
+        get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out)
+
         print(f"\nRotated {total_angle:.2f} degrees from {start_angle:.2f} to {end_angle:.2f}")
         print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*start_position))
         print("End stage position:    X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*end_position))
@@ -138,8 +142,20 @@ class Experiment(object):
         print(f"Data collection spot size: {spotsize}")
         print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
 
+        pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length] # px / Angstrom
+        physical_pixelsize = config.camera.physical_pixelsize # mm
+        
+        binX, binY = self.emmenu.getBinning()
+
+        pixelsize *= binX
+        physical_pixelsize *= binX
+
+        wavelength = config.microscope.wavelength
+
         with open(self.path / "cRED_log.txt", "w") as f:
             print(f"Program: {version.__long_title__} + EMMenu 4.0", file=f)
+            print(f"Camera: {config.camera.name}", file=f)
+            print(f"Microscope: {config.microscope.name}", file=f)
             print(f"Data Collection Time: {now}", file=f)
             print(f"Time Period Start: {t_start}", file=f)
             print(f"Time Period End: {t_end}", file=f)
@@ -147,13 +163,14 @@ class Experiment(object):
             print(f"Ending angle: {end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {end_angle-start_angle:.2f} degrees", file=f)
             print(f"Rotation speed: {rotation_speed:.3f} degrees/s", file=f)
-            # print(f"Exposure Time: {exposure:.3f} s", file=f)
-            # print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
+            print(f"Exposure Time: {exposure_time:.3f} s", file=f)
+            print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
             print(f"Total time: {total_time:.3f} s", file=f)
+            print(f"Wavelength: {self.wavelength} Angstrom", file=f)
             print(f"Spot Size: {spotsize}", file=f)
             print(f"Camera length: {camera_length} cm", file=f)
             print(f"Rotation axis: {rotation_axis} radians", file=f)
-            # print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
+            print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*start_position), file=f)
             print(f"Rotation axis: {rotation_axis} radians", file=f)
             print("Beam stopper: yes", file=f)
@@ -169,10 +186,16 @@ class Experiment(object):
 
         print(f"Wrote file {f.name}")
 
-        path_data = self.path / "raw"
+        if self.obtain_track:
+            return
+
+        print("Writing data files...")
+        path_data = self.path / "tiff"
         path_data.mkdir(exist_ok=True, parents=True)
 
-        print(f"Don't forget to save the data to {path_data}")
+        self.emmenu.writeTiffs(start_index, end_index, path=path_data)
+
+        print(f"Wrote {nframes} images to {path_data}")
 
 
 if __name__ == '__main__':

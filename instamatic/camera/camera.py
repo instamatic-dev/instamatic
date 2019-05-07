@@ -33,9 +33,9 @@ def Camera(name: str=None, as_stream: bool=False):
         from . import camera_timepix
         tpx_config = Path(__file__).parent / "tpx" / "config.txt"  # TODO: put this somewhere central
         cam = camera_timepix.initialize(tpx_config)
-    elif name == "emmenu":
-        from .camera_emmenu import EMMenuWrapper
-        cam = EMMenuWrapper()
+    elif name in ("emmenu", "tvips"):
+        from .camera_emmenu import CameraEMMENU
+        cam = CameraEMMENU()
         as_stream = False  # override `as_stream` for this interface
     else:
         raise ValueError(f"No such camera: {name}")

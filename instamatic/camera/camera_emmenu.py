@@ -43,6 +43,8 @@ class CameraEMMENU(object):
 
         self.obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
 
+        self._recording = False
+
         # get first camera
         self._cam = self.obj.TEMCameras.Item(1)
 
@@ -51,7 +53,7 @@ class CameraEMMENU(object):
         self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
 
         self.obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
-                                                   # other choices: DeleteBufferOnDeleteImage / Default
+                                                      # other choices: DeleteBufferOnDeleteImage / Default
         
         # Image manager for managing image buffers (left panel)
         self._immgr = self.obj.ImageManager 
@@ -139,19 +141,15 @@ class CameraEMMENU(object):
         return np.array(arr)
 
     def getDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera"""
+        """Get the maximum dimensions reported by the camera"""
         # cfg = self.getCurrentConfig()
         # return cfg.DimensionX, cfg.DimensionY
         return self._cam.RealSizeX, self._cam.RealSizeY
+        # return self._cam.MaximumSizeX, self._cam.MaximumSizeY
 
     def getPhysicalPixelsize(self) -> (int, int):
         """In nanometers"""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
-
-    def getPixelsize(self) -> (float, float):
-        """In px/Angstrom
-        TODO: get pixelsize from calibration in EMMENU"""
-        return 0, 0
 
     def getBinning(self) -> (int, int):
         cfg = self.getCurrentConfig()
@@ -188,25 +186,27 @@ class CameraEMMENU(object):
 
         print(f"Wrote {i+1} images to {path}")
 
-    def getImage(self, **kwargs):
+    def getImage(self, **kwargs) -> np.array:
         """Acquire image through EMMENU and return data as np array"""
         self._vp.AcquireAndDisplayImage()
         i = self.image_index
         return self.getImageDataByIndex(i)  # TODO: header
 
+    def acquireImage(self, **kwargs) -> int:
+        """Acquire image through EMMENU and store in the Image Manager
+        Returns the image index"""
+        self._vp.AcquireAndDisplayImage()
+        return self.image_index
+
     @property
-    def image_index(self):
+    def image_index(self) -> int:
         """0-indexed"""
         return self._vp.IndexInDirectory
 
     @image_index.setter
-    def image_index(self, value):
+    def image_index(self, value: int):
         """0-indexed"""
         self._vp.IndexInDirectory = value
-
-    def acquire(self):
-        """Acquire and display image"""
-        self._vp.AcquireAndDisplayImage()
 
     def stop_record(self):
         i = self.image_index
@@ -244,6 +244,16 @@ class CameraEMMENU(object):
         """Return exposure time in ms"""
         return self._vp.ExposureTime
 
+    def get_timestamps(self, start_index: int, end_index: int) -> list:
+        """Get timestamps in seconds for given image index range"""
+        drc_index = self.drc_index
+        timestamps = []
+        for i, image_index in enumerate(range(start_index, stop_index+1)):
+            p = self.getImageByIndex(image_index, drc_index)
+            t = p.EMVector.lImgCreationTime
+            timestamps.append(t)
+        return timestamps
+
     def releaseConnection(self) -> None:
         """Release the connection to the camera"""
         self.stop_liveview()
@@ -260,6 +270,9 @@ class CameraEMMENU(object):
 
 if __name__ == '__main__':
     cam = CameraEMMENU()
+
+    # cam._vp.EMVectorHandle ?
+    # cam._vp.ImageHandle ?
 
     from IPython import embed
     embed()
