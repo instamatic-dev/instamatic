@@ -18,6 +18,8 @@ global.yaml
     cred_relax_beam_before_experiment: Relax the beam before a CRED experiment (for testing only), default: false
     cred_track_stage_positions: Track the stage position during a CRED experiment (for testing only), default: false
 
+    modules: List of modules to load for the GUI, must be one of {'cred', 'cred_tvips', 'cred_fei', 'sed', 'autocred', 'red', 'machine_learning', 'ctrl', 'debug', 'about', 'io'}
+
 calibration/calibration_name.yaml
     name: Name of the camera interface to use
     diffraction_pixeldimensions: 
