@@ -6,16 +6,12 @@ from functools import wraps
 import subprocess as sp
 from instamatic import config
 
-import datetime
-import threading
-
-
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.tem_server_host
-PORT = config.cfg.tem_server_port
-BUFSIZE = 1024
+HOST = config.cfg.cam_server_host
+PORT = config.cfg.cam_server_port
+BUFSIZE = 4096
 
 
 class ServerError(Exception):
@@ -28,13 +24,13 @@ def kill_server(p):
 
 
 def start_server_in_subprocess():
-   cmd = "instamatic.temserver.exe"
+   cmd = "instamatic.camserver.exe"
    p = sp.Popen(cmd, stdout=sp.DEVNULL)
-   print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
+   print(f"Starting CAM server ({HOST}:{PORT} on pid={p.pid})")
    atexit.register(kill_server, p)
 
 
-class ServerMicroscope(object):
+class ServerCam(object):
     """
     Simulates a Microscope object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the microscope API.
@@ -43,7 +39,7 @@ class ServerMicroscope(object):
         super().__init__()
         
         self.name = name
-        self._bufsize = BUFSIZE
+        self.bufsize = BUFSIZE
 
         try:
             self.connect()
@@ -63,24 +59,32 @@ class ServerMicroscope(object):
                     break
 
         self._init_dict()
+        self._init_attr_dict()
 
         atexit.register(self.s.close)
+
+        xres, yres = self.getDimensions()
+        bitdepth = 4
+        self.imagebufsize = bitdepth*xres*yres + self.bufsize
     
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to TEM server ({HOST}:{PORT})")
+        print(f"Connected to CAM server ({HOST}:{PORT})")
 
-    def __getattr__(self, func_name):
+    def __getattr__(self, attr_name):
 
-        try:
-            wrapped = self._dct[func_name]
-        except KeyError as e:
-            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+        if attr_name in self._dct:
+            wrapped = self._dct[attr_name]
+        elif attr_name in self._attr_dct:
+            dct = {"attr_name": attr_name}
+            return self._eval_dct(dct)
+        else:
+            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{attr_name}`")
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {"func_name": func_name,
+            dct = {"attr_name": attr_name,
                "args": args,
                "kwargs": kwargs}
             return self._eval_dct(dct)
@@ -92,7 +96,13 @@ class ServerMicroscope(object):
         # t0 = time.perf_counter()
 
         self.s.send(pickle.dumps(dct))
-        response = self.s.recv(self._bufsize)
+
+        if dct["attr_name"] == "getImage":
+            # approximately 2-3 ms for the interface
+            response = self.s.recv(self.imagebufsize)
+        else:
+            response = self.s.recv(self.bufsize)
+
         if response:
             status, data = pickle.loads(response)
 
@@ -106,46 +116,16 @@ class ServerMicroscope(object):
             raise ConnectionError(f"Unknown status code: {status}")
 
     def _init_dict(self):
-        from instamatic.TEMController.microscope import get_tem
-        tem = get_tem(self.name)
+        """Get list of functions and their doc strings from the uninitialized class"""
+        from instamatic.camera.camera import get_cam
+        cam = get_cam(self.name)
 
-        self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
+        self._dct = {key:value for key, value in  cam.__dict__.items() if not key.startswith("_")}
+        self._dct["get_attrs"] = None
+
+    def _init_attr_dict(self):
+        """Get list of attrs and their types"""
+        self._attr_dct = self.get_attrs()
 
     def __dir__(self):
-        return self._dct.keys()
-
-
-class TraceVariable(object):
-    """docstring for Tracer"""
-    def __init__(self, func, interval=1.0, name="variable", verbose=False):
-        super().__init__()
-        self.name = name
-        self.func = func
-        self.interval = interval
-        self.verbose = verbose
-
-        self._traced = []
-
-    def start(self):
-        print(f"Trace started: {self.name}")
-        self.update()
-
-    def stop(self):
-        self._timer.cancel()
-
-        print(f"Trace canceled: {self.name}")
-
-        return self._traced
-
-    def update(self):
-        ret = self.func()
-        
-        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    
-        if self.verbose:
-            print(f"{now} | Trace {self.name}: {ret}")
-    
-        self._traced.append((now, ret))
-        
-        self._timer = threading.Timer(self.interval, self.update)
-        self._timer.start()
+        return tuple(self._dct.keys()) + tuple(self._attr_dct.keys())

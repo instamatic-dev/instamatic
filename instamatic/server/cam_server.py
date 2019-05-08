@@ -19,18 +19,9 @@ box = []
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.tem_server_host
-PORT = config.cfg.tem_server_port
+HOST = config.cfg.cam_server_host
+PORT = config.cfg.cam_server_port
 BUFSIZE = 4096
-
-
-def init_cam(name=None):
-    if not name:
-        name = config.cfg.camera
-
-    cam = Camera(name)
-
-    return cam
 
 
 class CamServer(threading.Thread):
@@ -50,7 +41,7 @@ class CamServer(threading.Thread):
     
     def run(self):
         """Start server thread"""
-        self.cam = init_cam(name=self._name)  # TODO: use_server=False
+        self.cam = Camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
         print(f"Initialized connection to microscope: {self.cam.name}")

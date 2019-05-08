@@ -10,7 +10,7 @@ default_cam = config.camera.name
 
 
 def get_cam(name: str=None):
-    """Gets the camera object defined by `name`"""
+    """Grabs the camera object defined by `name`"""
 
     if name == "simulate":
         from .camera_simu import CameraSimu as cam
@@ -28,7 +28,7 @@ def get_cam(name: str=None):
     return cam
 
 
-def Camera(name: str=None, as_stream: bool=False):
+def Camera(name: str=None, as_stream: bool=False, use_server: bool=False):
     """Initialize the camera identified by the 'name' parameter
     if `as_stream` is True, it will return a VideoStream object
     if `as_stream` is False, it will return the raw Camera object
@@ -39,16 +39,21 @@ def Camera(name: str=None, as_stream: bool=False):
         config.load(camera_name=name)
         name = config.cfg.camera
 
-    cam_cls = get_cam(name)
-
-    if name in ("timepix", "pytimepix"):
-        tpx_config = Path(__file__).parent / "tpx" / "config.txt"  # TODO: put this somewhere central
-        cam = cam_cls(tpx_config)
-    elif name in ("emmenu", "tvips"):
-        cam = cam_cls()
-        as_stream = False  # override `as_stream` for this interface
+    if use_server:
+        from .camera_server import ServerCam
+        cam = ServerCam(name)
+        as_stream = False  # precaution
     else:
-        cam = cam_cls()
+        cam_cls = get_cam(name)
+
+        if name in ("timepix", "pytimepix"):
+            tpx_config = Path(__file__).parent / "tpx" / "config.txt"  # TODO: put this somewhere central
+            cam = cam_cls(tpx_config)
+        elif name in ("emmenu", "tvips"):
+            cam = cam_cls()
+            as_stream = False  # override `as_stream` for this interface
+        else:
+            cam = cam_cls()
 
     if as_stream:
         if cam.streamable:

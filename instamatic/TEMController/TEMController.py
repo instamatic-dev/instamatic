@@ -17,7 +17,9 @@ _ctrl = None  # store reference of ctrl so it can be accessed without re-initial
 
 default_cam = config.camera.name
 default_tem = config.microscope.name
-use_server  = config.cfg.use_tem_server
+
+use_tem_server = config.cfg.use_tem_server
+use_cam_server = config.cfg.use_cam_server
 
 
 class TEMControllerException(Exception):
@@ -32,13 +34,22 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
     stream: Open the camera as a stream (this enables `TEMController.show_stream()`)
     """
 
-    print(f"Microscope: {tem_name}{' (server)' if use_server else ''}")
-    print(f"Camera    : {cam_name}{' (stream)' if (cam_name and stream) else ''}")
-
-    tem = Microscope(tem_name, use_server=use_server)
+    print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
     
     if cam_name:
-        cam = Camera(cam_name, as_stream=stream)
+        if use_cam_server:
+            cam_tag = ' (server)'
+        elif stream:
+            cam_tag = ' (stream)'
+        else:
+            cam_tag = ''
+
+    print(f"Camera    : {cam_name}{cam_tag}")
+
+    tem = Microscope(tem_name, use_server=use_tem_server)
+    
+    if cam_name:
+        cam = Camera(cam_name, as_stream=stream, use_server=use_cam_server)
     else:
         cam = None
 
