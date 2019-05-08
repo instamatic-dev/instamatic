@@ -13,6 +13,7 @@ import comtypes.client
 
 import sys
 
+
 type_dict = {
     1: "GetDataByte",
     2: "GetDataUShort",
@@ -21,18 +22,39 @@ type_dict = {
     5: "GetDataFloat",
     6: "GetDataDouble",
     7: "GetDataComplex",
-    8: "IMG_STRING",
+    8: "IMG_STRING",  # no method on EMImage
     8: "GEtDataBinary",
     9: "GetDataRGB8",
     10: "GetDataRGB16",
-    11: "IMG_EMVECTOR"
+    11: "IMG_EMVECTOR"  # no method on EMImage
 }
+
+
+def EMVector2dict(v):
+    """Convert EMVector object to a Python dictionary"""
+    d = {}
+    for k in dir(v):
+        if k.startswith("_"):
+            continue
+        v = getattr(v, k)
+        if isinstance(v, int):
+            d[k] = v
+        elif isinstance(v, float):
+            d[k] = v
+        elif isinstance(v, str):
+            d[k] = v
+        elif isinstance(v, comtypes.Array):
+            d[k] = list(v)
+        else:
+            print(k, v, type(v))
+
+    return d
 
 
 class CameraEMMENU(object):
     """docstring for CameraEMMENU"""
 
-    def __init__(self, drc_name="Instamatic data"):
+    def __init__(self, drc_name="Instamatic data", interface="emmenu"):
         """Initialize camera module """
         super().__init__()
 
@@ -40,6 +62,8 @@ class CameraEMMENU(object):
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
         except WindowsError:
             comtypes.CoInitialize()
+
+        self.name = interface
 
         self.obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
 
@@ -73,9 +97,10 @@ class CameraEMMENU(object):
         
         self._vp.DirectoryHandle = self.drc_index  # set current directory
 
-        # self.load_defaults()  # TODO: how to deal with config?
+        self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = f"Camera `{self.getCameraName()}` ({self.name}) initialized"
+        # print(msg)
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -119,6 +144,13 @@ class CameraEMMENU(object):
 
             drc_j = self._immgr.NextDirectory(drc_j)  # get next
 
+    def getEMVectorByIndex(self, img_index: int, drc_index: int=None) -> dict:
+        """Returns the EMVector by index as a python dictionary"""
+        p = getImageByIndex(img_index, drc_index)
+        v = p.EMVector
+        d = EMVector2dict(v)
+        return d
+
     def getImageByIndex(self, img_index: int, drc_index: int=None) -> int:
         """Grab data from the image manager by index. Return image pointer (COM)."""
         if not drc_index:
@@ -155,14 +187,9 @@ class CameraEMMENU(object):
         cfg = self.getCurrentConfig()
         return cfg.BinningX, cfg.BinningY
 
-    def getName(self) -> str:
+    def getCameraName(self) -> str:
         """Get the name reported by the camera"""
         return self._cam.name
-
-    @property
-    def name(self) -> str:
-        """Get the name reported by the camera"""
-        return self.getName()
 
     def writeTiff(self, image_pointer, filename):
         """Write tiff file using the EMMENU machinery
@@ -190,7 +217,7 @@ class CameraEMMENU(object):
         """Acquire image through EMMENU and return data as np array"""
         self._vp.AcquireAndDisplayImage()
         i = self.image_index
-        return self.getImageDataByIndex(i)  # TODO: header
+        return self.getImageDataByIndex(i)
 
     def acquireImage(self, **kwargs) -> int:
         """Acquire image through EMMENU and store in the Image Manager
@@ -200,7 +227,7 @@ class CameraEMMENU(object):
 
     @property
     def image_index(self) -> int:
-        """0-indexed"""
+        """0-indexed, note that the image manager is 1-indexed"""
         return self._vp.IndexInDirectory
 
     @image_index.setter
@@ -208,12 +235,17 @@ class CameraEMMENU(object):
         """0-indexed"""
         self._vp.IndexInDirectory = value
 
+    def get_next_empty_image_index(self):
+        """Get the next empty buffer in the image manager, 0-indexed"""
+        i = self.image_index
+        while not self._immgr.ImageEmpty(self.drc_index, i):
+            i += 1        
+        return i
+
     def stop_record(self):
         i = self.image_index
         print(f"Stop recording (Image index={i})")
         self._vp.StopRecorder()
-        # StopContinuous normally defaults to top directory
-        self._vp.DirectoryHandle = self.drc_index
         self._recording = False
 
     def start_record(self):
@@ -226,8 +258,8 @@ class CameraEMMENU(object):
         print("Stop live view")
         self._vp.StopContinuous()
         self._recording = False
-        # StopContinuous normally defaults to top directory
-        # self._vp.DirectoryHandle = self.drc_index
+        # StopRecorder normally defaults to top directory
+        self._vp.DirectoryHandle = self.drc_index
 
     def start_liveview(self, delay=3.0):
         print("Start live view")
@@ -248,7 +280,7 @@ class CameraEMMENU(object):
         """Get timestamps in seconds for given image index range"""
         drc_index = self.drc_index
         timestamps = []
-        for i, image_index in enumerate(range(start_index, stop_index+1)):
+        for i, image_index in enumerate(range(start_index, end_index+1)):
             p = self.getImageByIndex(image_index, drc_index)
             t = p.EMVector.lImgCreationTime
             timestamps.append(t)
@@ -262,17 +294,14 @@ class CameraEMMENU(object):
         self.image_index = 0
         self._immgr.DeleteDirectory(self.drc_index)
 
-        name = self.getName()
-        msg = f"Connection to camera '{name}' released" 
+        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
+        # print(msg)
         logger.info(msg)
 
         comtypes.CoUninitialize()
 
 if __name__ == '__main__':
     cam = CameraEMMENU()
-
-    # cam._vp.EMVectorHandle ?
-    # cam._vp.ImageHandle ?
 
     from IPython import embed
     embed()
