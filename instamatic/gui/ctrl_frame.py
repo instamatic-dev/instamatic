@@ -173,7 +173,7 @@ def microscope_control(controller, **kwargs):
 
 
 from .base_module import BaseModule
-module = BaseModule("ctrl", "ctrl", True, ExperimentalCtrl, commands={
+module = BaseModule("ctrl", "control", True, ExperimentalCtrl, commands={
     "ctrl": microscope_control
     })
 

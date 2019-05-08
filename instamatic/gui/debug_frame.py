@@ -182,11 +182,13 @@ def debug(controller, **kwargs):
     elif task == "report_status":
         print(controller.ctrl)
     elif task == "close_down":
+        # TODO: make this run a script named 'close_down.py'
         controller.ctrl.stageposition.neutral()
         controller.ctrl.mode = "mag1"
         controller.ctrl.brightness.max()
-        controller.ctrl.magnification.value = 500000
+        controller.ctrl.magnification.value = 10000
         controller.ctrl.spotsize = 1
+        controller.ctrl.screen_down()
 
         print("All done!")
     elif task == "run_script":

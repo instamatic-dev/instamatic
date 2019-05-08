@@ -8,7 +8,7 @@ from pathlib import Path
 class ExperimentalTVIPS(LabelFrame):
     """docstring for ExperimentalRED"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction (TVIPS")
+        LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction (TVIPS)")
         self.parent = parent
 
         sbwidth = 10
