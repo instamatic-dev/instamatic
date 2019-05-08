@@ -20,9 +20,9 @@ box = []
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.host
-PORT = config.cfg.port
-BUFSIZE = 1024
+HOST = config.cfg.tem_server_host
+PORT = config.cfg.tem_server_port
+BUFSIZE = 4096
 
 
 def init_cam(name=None):
