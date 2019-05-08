@@ -81,6 +81,7 @@ setup(
             # server
             'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
             'instamatic.temserver                     = instamatic.server.tem_server:main',
+            'instamatic.camserver                     = instamatic.server.cam_server:main',
             'instamatic.dialsserver                   = instamatic.server.dials_server:main',
             'instamatic.xdsserver                     = instamatic.server.xds_server:main',
             'instamatic.temserver_fei                 = instamatic.server.TEMServer_FEI:main'
