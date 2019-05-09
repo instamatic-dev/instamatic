@@ -291,6 +291,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, plot: bool=True, sa
             plt.savefig(fn, dpi=150)
         if plot:
             plt.show()
+        plt.clf()
 
     return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
 

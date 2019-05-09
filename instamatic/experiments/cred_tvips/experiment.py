@@ -133,7 +133,7 @@ class Experiment(object):
         exposure_time = self.emmenu.get_exposure()
         timestamps = self.emmenu.get_timestamps(start_index, end_index)
         acq_out = self.path / "acquisition_time.png"
-        get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out)
+        timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out, plot=False)
 
         print(f"\nRotated {total_angle:.2f} degrees from {start_angle:.2f} to {end_angle:.2f}")
         print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*start_position))
@@ -142,7 +142,7 @@ class Experiment(object):
         print(f"Data collection spot size: {spotsize}")
         print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
 
-        pixelsize = config.calibration.diffraction_pixeldimensions[self.camera_length] # px / Angstrom
+        pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
         physical_pixelsize = config.camera.physical_pixelsize # mm
         
         binX, binY = self.emmenu.getBinning()
@@ -164,9 +164,10 @@ class Experiment(object):
             print(f"Rotation range: {end_angle-start_angle:.2f} degrees", file=f)
             print(f"Rotation speed: {rotation_speed:.3f} degrees/s", file=f)
             print(f"Exposure Time: {exposure_time:.3f} s", file=f)
-            print(f"Acquisition time: {acquisition_time:.3f} s", file=f)
+            print(f"Acquisition time: {timings.acquisition_time:.3f} s", file=f)
+            print(f"Overhead time: {timings.overhead:.3f} s", file=f)
             print(f"Total time: {total_time:.3f} s", file=f)
-            print(f"Wavelength: {self.wavelength} Angstrom", file=f)
+            print(f"Wavelength: {wavelength} Angstrom", file=f)
             print(f"Spot Size: {spotsize}", file=f)
             print(f"Camera length: {camera_length} cm", file=f)
             print(f"Rotation axis: {rotation_axis} radians", file=f)

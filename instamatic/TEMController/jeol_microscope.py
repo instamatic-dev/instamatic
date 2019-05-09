@@ -21,7 +21,7 @@ NTRLMAPPING = {
    "CLS" : 7,
    "IS1" : 8,
    "IS2" : 9,
-   "SPOT?" : 10,
+   "SPOT" : 10,
    "PLA" : 11,
    "OLS" : 12,
    "ILS" : 13
@@ -167,7 +167,7 @@ class JeolMicroscope(object):
         current_mode = self.getFunctionMode()
         try:
             if current_mode == "diff":
-                return self.CAMERALENGTHS.index(value)
+                return self.CAMERALENGTHS.index(value) + 1
             else:
                 return self.MAGNIFICATIONS.index(value)
         except Exception:
@@ -175,7 +175,7 @@ class JeolMicroscope(object):
 
     def setMagnificationIndex(self, index: int):
         current_mode = self.getFunctionMode()
-        
+
         if current_mode == "diff":
             value = self.CAMERALENGTHS[index]
         else:
