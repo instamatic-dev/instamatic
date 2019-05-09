@@ -65,33 +65,38 @@ class CameraEMMENU(object):
 
         self.name = interface
 
-        self.obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
+        self._obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
 
         self._recording = False
 
         # get first camera
-        self._cam = self.obj.TEMCameras.Item(1)
+        self._cam = self._obj.TEMCameras.Item(1)
 
         # hi-jack first viewport
-        self._vp = self.obj.Viewports.Item(1)
+        self._vp = self._obj.Viewports.Item(1)
         self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
 
-        self.obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
+        self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
                                                       # other choices: DeleteBufferOnDeleteImage / Default
         
         # Image manager for managing image buffers (left panel)
-        self._immgr = self.obj.ImageManager 
+        self._immgr = self._obj.ImageManager 
 
         # for writing tiff files
-        self._emf = self.obj.EMFile
+        self._emf = self._obj.EMFile
 
         # set up instamatic data directory
         self.top_drc_index = self._immgr.TopDirectory 
         self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
-        
+
         # check if exists
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
             self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
+        if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
+            # work-around for possible bug in EMMENU
+            # creating new subdirectories does not work on the 3200
+            raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
+
         self.drc_name = drc_name
         self.drc_index = self._immgr.DirectoryHandleFromName(drc_name)
         
@@ -116,17 +121,17 @@ class CameraEMMENU(object):
     def listConfigs(self):
         """List the configs from the Configuration Manager"""
         print(f"Configurations for camera {self.name}")
-        count = self.obj.CameraConfigurations.Count
+        count = self._obj.CameraConfigurations.Count
         for j in range(1, count+1):
-            cfg = self.obj.CameraConfigurations.Item(j)
+            cfg = self._obj.CameraConfigurations.Item(j)
             print(f"{j:2d} - {cfg.Name}")
 
     def getCurrentConfig(self):
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
-        count = self.obj.CameraConfigurations.Count
+        count = self._obj.CameraConfigurations.Count
         for j in range(1, count+1):
-            cfg = self.obj.CameraConfigurations.Item(j)
+            cfg = self._obj.CameraConfigurations.Item(j)
             if cfg.Name == vp_cfg_name:
                 return cfg
 
@@ -225,15 +230,14 @@ class CameraEMMENU(object):
         self._vp.AcquireAndDisplayImage()
         return self.image_index
 
-    @property
-    def image_index(self) -> int:
-        """0-indexed, note that the image manager is 1-indexed"""
-        return self._vp.IndexInDirectory
+    def set_image_index(self, index):
+        """Change the currently selected buffer by the image index
+        Note that the interface here is 0-indexed, whereas the image manager is 1-indexed (FIXME)"""
+        self._vp.IndexInDirectory = index
 
-    @image_index.setter
-    def image_index(self, value: int):
-        """0-indexed"""
-        self._vp.IndexInDirectory = value
+    def get_image_index(self):
+        """Retrieve the index of the currently selected buffer, 0-indexed"""
+        return self._vp.IndexInDirectory
 
     def get_next_empty_image_index(self):
         """Get the next empty buffer in the image manager, 0-indexed"""
@@ -292,13 +296,14 @@ class CameraEMMENU(object):
 
         self._vp.DirectoryHandle = self.top_drc_index
         self.image_index = 0
-        self._immgr.DeleteDirectory(self.drc_index)
+        # self._immgr.DeleteDirectory(self.drc_index)  # does not work on the 3200
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)
         logger.info(msg)
 
         comtypes.CoUninitialize()
+
 
 if __name__ == '__main__':
     cam = CameraEMMENU()

@@ -73,7 +73,7 @@ class Experiment(object):
         if self.track and self.track_relative:
             track_y_start = int(self.track_func(start_angle)) 
 
-        start_index = self.emmenu.image_index
+        start_index = self.emmenu.get_next_empty_image_index()
 
         t0 = time.perf_counter()
         t_delta = t0       
@@ -107,7 +107,7 @@ class Experiment(object):
             self.ctrl.beamblank_on()
             self.emmenu.stop_liveview()  # end liveview and stop recording
         
-        end_index = self.emmenu.image_index
+        end_index = self.emmenu.get_image_index()
 
         end_position = self.ctrl.stageposition.get()
         end_angle = end_position.a
