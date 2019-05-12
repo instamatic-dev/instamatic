@@ -37,13 +37,15 @@ def run_dials_indexing(path):
     p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
     for line in p.stdout:
         if b'Unit cell:' in line:
-            print(line.decode('utf-8'))
+            #print(line.decode('utf-8'))
+            print(line.decode('latin1'))
             unitcelloutput = line
 
     if unitcelloutput:
         with open(fn, "a") as f:
             f.write(f"\nData Path: {path}\n")
-            f.write("{unitcelloutput[4:].decode('utf-8')}")
+            #f.write("{unitcelloutput[4:].decode('utf-8')}")
+            f.write("{unitcelloutput[4:].decode('latin1')}")
             print(f"Indexing result written to dials indexing log file; path: {path}")
     
     p.wait()
