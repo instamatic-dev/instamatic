@@ -26,7 +26,8 @@ import shutil
 from scipy import ndimage
 
 rotation_speed = 0.86
-
+rotation_upperlimit = 70
+backlash_killer = 1
 """Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
 #imgvar_threshold = 600
 """spread, offset: parameters for find_crystals_timepix"""
@@ -263,11 +264,11 @@ class Experiment(object):
     def eliminate_backlash_in_tiltx(self):
         a_i = self.ctrl.stageposition.a
         if a_i < 0:
-            self.ctrl.stageposition.set(a = a_i + 0.5 , wait = True)
+            self.ctrl.stageposition.set(a = a_i + backlash_killer , wait = True)
             #print("Rotation positive!")
             return 0
         else:
-            self.ctrl.stageposition.set(a = a_i - 0.5 , wait = True)
+            self.ctrl.stageposition.set(a = a_i - backlash_killer , wait = True)
             #print("Rotation negative!")
             return 1
         
@@ -540,7 +541,7 @@ class Experiment(object):
         if self.mode > 1:
             a_i = self.ctrl.stageposition.a
             
-            rotation_range = 70 + abs(a_i)
+            rotation_range = rotation_upperlimit + abs(a_i)
             rotation_t = rotation_range / rotation_speed
             
             try:
