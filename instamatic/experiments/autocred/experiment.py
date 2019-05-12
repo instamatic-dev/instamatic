@@ -430,13 +430,20 @@ class Experiment(object):
         print("\033[k", msg, end="\r")
 
     def imagevar_blank_estimator(self, cycle=3):
-        input("Please move your stage to a blank area for image variance calculation. Press ENTER when ready.")
-        img_var=[]
+        self.ctrl.mode = 'mag1'
+        input("Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.")
+        img_var_est=[]
         for i in range(0,cycle):
-            img, h = self.ctrl.getImage(self.expt, header_keys=None)
-            img_var.append(np.var(img))
+            img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
+            crystal_pos, img0_cropped, window_size = self.image_cropper(img = img, window_size = 0)
+            v = self.img_var(img0_cropped, crystal_pos)
+            print("blank image variance: {}".format(v))
+            img_var_est.append(v)
 
-        image_var = np.average(img_var)
+        image_var = np.average(img_var_est)
+
+        self.ctrl.mode = 'samag'
+        self.ctrl.mode = 'diff'
         return image_var
 
     def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, calib_beamshift):
@@ -1021,8 +1028,8 @@ class Experiment(object):
         transform_imgshift_foc, c = load_IS_Calibrations(imageshift = 'IS1', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
         transform_imgshift2_foc, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
 
-        #transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
-        transform_beamshift_d = self.calib_beamshift.transform
+        transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
+        #transform_beamshift_d = self.calib_beamshift.transform
 
         transform_stagepos, c = load_IS_Calibrations(imageshift = 'S', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'mag1')
         
