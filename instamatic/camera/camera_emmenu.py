@@ -237,14 +237,14 @@ class CameraEMMENU(object):
     def getImage(self, **kwargs) -> np.array:
         """Acquire image through EMMENU and return data as np array"""
         self._vp.AcquireAndDisplayImage()
-        i = self.image_index
+        i = self.get_image_index()
         return self.getImageDataByIndex(i)
 
     def acquireImage(self, **kwargs) -> int:
         """Acquire image through EMMENU and store in the Image Manager
         Returns the image index"""
         self._vp.AcquireAndDisplayImage()
-        return self.image_index
+        return self.get_image_index()
 
     def set_image_index(self, index):
         """Change the currently selected buffer by the image index
@@ -257,19 +257,19 @@ class CameraEMMENU(object):
 
     def get_next_empty_image_index(self):
         """Get the next empty buffer in the image manager, 0-indexed"""
-        i = self.image_index
+        i = self.get_image_index()
         while not self._immgr.ImageEmpty(self.drc_index, i):
             i += 1        
         return i
 
     def stop_record(self):
-        i = self.image_index
+        i = self.get_image_index()
         print(f"Stop recording (Image index={i})")
         self._vp.StopRecorder()
         self._recording = False
 
     def start_record(self):
-        i = self.image_index
+        i = self.get_image_index()
         print(f"Start recording (Image index={i})")
         self._vp.StartRecorder()
         self._recording = True
@@ -311,7 +311,7 @@ class CameraEMMENU(object):
         self.stop_liveview()
 
         self._vp.DirectoryHandle = self.top_drc_index
-        self.image_index = 0
+        self.set_image_index(0)
         # self._immgr.DeleteDirectory(self.drc_index)  # does not work on the 3200
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 

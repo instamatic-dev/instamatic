@@ -67,18 +67,18 @@ class Experiment(object):
 
         self.ctrl.beamblank_off()
 
-        if not self.obtain_track:
-            self.emmenu.start_record()  # start recording
-        
         if self.track and self.track_relative:
             track_y_start = int(self.track_func(start_angle)) 
 
         start_index = self.emmenu.get_next_empty_image_index()
 
+        self.ctrl.stageposition.set(a=target_angle, wait=False)
+
+        if not self.obtain_track:
+            self.emmenu.start_record()  # start recording
+
         t0 = time.perf_counter()
         t_delta = t0       
-
-        self.ctrl.stageposition.set(a=target_angle, wait=False)
 
         n = 0
         
@@ -103,14 +103,14 @@ class Experiment(object):
 
         t1 = time.perf_counter()
 
+        end_position = self.ctrl.stageposition.get()
+        end_angle = end_position.a
+
         if not self.obtain_track:
             self.ctrl.beamblank_on()
             self.emmenu.stop_liveview()  # end liveview and stop recording
         
         end_index = self.emmenu.get_image_index()
-
-        end_position = self.ctrl.stageposition.get()
-        end_angle = end_position.a
 
         t_start = t0
         t_end = t1
@@ -163,7 +163,7 @@ class Experiment(object):
             print(f"Ending angle: {end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {end_angle-start_angle:.2f} degrees", file=f)
             print(f"Rotation speed: {rotation_speed:.3f} degrees/s", file=f)
-            print(f"Exposure Time: {exposure_time:.3f} s", file=f)
+            print(f"Exposure Time: {timings.exposure_time:.3f} s", file=f)
             print(f"Acquisition time: {timings.acquisition_time:.3f} s", file=f)
             print(f"Overhead time: {timings.overhead:.3f} s", file=f)
             print(f"Total time: {total_time:.3f} s", file=f)
@@ -173,7 +173,6 @@ class Experiment(object):
             print(f"Rotation axis: {rotation_axis} radians", file=f)
             print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*start_position), file=f)
-            print(f"Rotation axis: {rotation_axis} radians", file=f)
             print("Beam stopper: yes", file=f)
             print("", file=f)
 
