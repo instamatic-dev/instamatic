@@ -77,13 +77,16 @@ class CameraEMMENU(object):
         self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
 
         self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
-                                                      # other choices: DeleteBufferOnDeleteImage / Default
+                                                       # other choices: DeleteBufferOnDeleteImage / Default
         
         # Image manager for managing image buffers (left panel)
         self._immgr = self._obj.ImageManager 
 
         # for writing tiff files
         self._emf = self._obj.EMFile
+
+        # stores all pointers to image data
+        self._emi = self._obj.EMImages
 
         # set up instamatic data directory
         self.top_drc_index = self._immgr.TopDirectory 
@@ -121,10 +124,8 @@ class CameraEMMENU(object):
     def listConfigs(self):
         """List the configs from the Configuration Manager"""
         print(f"Configurations for camera {self.name}")
-        count = self._obj.CameraConfigurations.Count
-        for j in range(1, count+1):
-            cfg = self._obj.CameraConfigurations.Item(j)
-            print(f"{j:2d} - {cfg.Name}")
+        for i, cfg in enumerate(self._obj.CameraConfigurations):
+            print(f"{i+1:2d} - {cfg.Name}")
 
     def getCurrentConfig(self):
         """Get selected config object currently associated with the viewport"""
@@ -155,6 +156,20 @@ class CameraEMMENU(object):
         v = p.EMVector
         d = EMVector2dict(v)
         return d
+
+    def deleteAllImages(self):
+        """Clears all images currently stored in EMMENU buffers"""
+        for i, p in enumerate(self._emi):
+            try:
+                self._emi.DeleteImage(p)
+            except:
+                # sometimes EMMenu also loses track of image pointers...
+                print(f"Failed to delete buffer {i} ({p})")
+
+    def deleteImageByIndex(self, img_index: int, drc_index: int=None) -> int:
+        """Delete the image from EMMENU by its index"""
+        p = self.getImageByIndex(img_index, drc_index)
+        self._emi.DeleteImage(p)  # alternative: self._emi.Remove(p.ImgHandle)
 
     def getImageByIndex(self, img_index: int, drc_index: int=None) -> int:
         """Grab data from the image manager by index. Return image pointer (COM)."""
@@ -214,7 +229,8 @@ class CameraEMMENU(object):
             self.writeTiff(p, fn)
     
             if clear_buffer:
-                self._immgr.DeleteImageBuffer(drc_index, image_index)
+                # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
+                self._emi.DeleteImage(p)  # also clears from buffer
 
         print(f"Wrote {i+1} images to {path}")
 
@@ -310,4 +326,3 @@ if __name__ == '__main__':
 
     from IPython import embed
     embed()
-
