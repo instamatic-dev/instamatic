@@ -43,8 +43,11 @@ class ExperimentalTVIPS(LabelFrame):
         self.c_toggle_screen = Checkbutton(frame, text="Toggle screen", variable=self.var_toggle_screen, command=self.toggle_screen)
         self.c_toggle_screen.grid(row=8, column=3, sticky="W")
 
-        self.b_toggle_liveview = Button(frame, text="Toggle live", command=self.toggle_live_view, state=DISABLED)
-        self.b_toggle_liveview.grid(row=7, column=2, sticky="EW")
+        self.b_start_liveview = Button(frame, text="Start live view", command=self.start_live_view)
+        self.b_start_liveview.grid(row=7, column=2, sticky="EW")
+
+        self.b_stop_liveview = Button(frame, text="Stop live view", command=self.stop_live_view)
+        self.b_stop_liveview.grid(row=8, column=2, sticky="EW")
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -109,7 +112,6 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_beamblank = BooleanVar(value=False)
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
-        self.var_toggle_live_view = BooleanVar(value=False)
 
         self.var_tracking = StringVar(value="")
         self.var_obtain_track = BooleanVar(value=False)
@@ -128,10 +130,11 @@ class ExperimentalTVIPS(LabelFrame):
         self.AcquireButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)
         self.e_target_angle.config(state=DISABLED)
-        self.b_toggle_liveview.config(state=DISABLED)
         self.SearchButton.config(state=DISABLED)
         self.FocusButton.config(state=DISABLED)
         self.GetImageButton.config(state=DISABLED)
+        self.b_start_liveview.config(state=DISABLED)
+        self.b_stop_liveview.config(state=DISABLED)
         # self.e_target_angle.config(state=DISABLED)
         params = self.get_params(task="get_ready")
         self.q.put(("cred_tvips", params))
@@ -147,10 +150,11 @@ class ExperimentalTVIPS(LabelFrame):
         self.AcquireButton.config(state=DISABLED)
         self.FinalizeButton.config(state=DISABLED)
         self.e_target_angle.config(state=NORMAL)
-        self.b_toggle_liveview.config(state=NORMAL)
         self.SearchButton.config(state=NORMAL)
         self.FocusButton.config(state=NORMAL)
         self.GetImageButton.config(state=NORMAL)
+        self.b_start_liveview.config(state=NORMAL)
+        self.b_stop_liveview.config(state=NORMAL)
         params = self.get_params(task="stop")
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
@@ -195,9 +199,11 @@ class ExperimentalTVIPS(LabelFrame):
         else:
             self.ctrl.screen_down()
 
-    def toggle_live_view(self):
-        toggle = True
-        self.ctrl.cam.toggle_live_view()
+    def start_live_view(self):
+        self.ctrl.cam.start_live_view()
+
+    def stop_live_view(self):
+        self.ctrl.cam.stop_live_view()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
@@ -225,8 +231,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.ctrl.mode_diffraction()
 
     def get_image(self):
-        self.ctrl.cam.acquire()
-
+        self.ctrl.cam.acquireImage()
 
 
 def acquire_data_CRED_TVIPS(controller, **kwargs):
