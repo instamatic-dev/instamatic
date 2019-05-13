@@ -75,6 +75,7 @@ class CameraEMMENU(object):
         # hi-jack first viewport
         self._vp = self._obj.Viewports.Item(1)
         self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
+        self._vp.FlapState = 2  # pull out the flap, because we can :-) [0, 1, 2]
 
         self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
                                                        # other choices: DeleteBufferOnDeleteImage / Default
@@ -93,11 +94,11 @@ class CameraEMMENU(object):
         self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
 
         # check if exists
+        # if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
+        #     self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
-        if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            # work-around for possible bug in EMMENU
-            # creating new subdirectories does not work on the 3200
+            # creating new subdirectories is bugged in EMMENU 5.0.9.0, FIXME later
+            # raise exception for now until it is fixed
             raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
 
         self.drc_name = drc_name
@@ -113,7 +114,7 @@ class CameraEMMENU(object):
 
         atexit.register(self.releaseConnection)
 
-    def load_defaults(self):
+    def load_defaults(self) -> None:
         if self.name != config.cfg.camera:
             config.load(camera_name=self.name)
 
@@ -121,13 +122,13 @@ class CameraEMMENU(object):
 
         self.streamable = False
 
-    def listConfigs(self):
+    def listConfigs(self) -> None:
         """List the configs from the Configuration Manager"""
         print(f"Configurations for camera {self.name}")
         for i, cfg in enumerate(self._obj.CameraConfigurations):
             print(f"{i+1:2d} - {cfg.Name}")
 
-    def getCurrentConfig(self):
+    def getCurrentConfig(self) -> "ConfigObject":
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
         count = self._obj.CameraConfigurations.Count
@@ -136,7 +137,7 @@ class CameraEMMENU(object):
             if cfg.Name == vp_cfg_name:
                 return cfg
 
-    def listDirectories(self):
+    def listDirectories(self) -> None:
         """List subdirectories of the top directory"""
         top_j = self._immgr.TopDirectory
         top_name = self._immgr.FullDirectoryName(top_j)
@@ -157,7 +158,7 @@ class CameraEMMENU(object):
         d = EMVector2dict(v)
         return d
 
-    def deleteAllImages(self):
+    def deleteAllImages(self) -> None:
         """Clears all images currently stored in EMMENU buffers"""
         for i, p in enumerate(self._emi):
             try:
@@ -200,10 +201,11 @@ class CameraEMMENU(object):
         # return self._cam.MaximumSizeX, self._cam.MaximumSizeY
 
     def getPhysicalPixelsize(self) -> (int, int):
-        """In nanometers"""
+        """Returns the physical pixel size of the camera nanometers"""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
 
     def getBinning(self) -> (int, int):
+        """Returns the binning corresponding to the currently selected camera config"""
         cfg = self.getCurrentConfig()
         return cfg.BinningX, cfg.BinningY
 
@@ -211,13 +213,14 @@ class CameraEMMENU(object):
         """Get the name reported by the camera"""
         return self._cam.name
 
-    def writeTiff(self, image_pointer, filename):
+    def writeTiff(self, image_pointer, filename: str) -> None:
         """Write tiff file using the EMMENU machinery
+        `image_pointer` is the memory address returned by `getImageIndex()`
 
         TODO: write tiff from image_index instead of image_pointer??"""
-        return self._emf.WriteTiff(image_pointer, filename)
+        self._emf.WriteTiff(image_pointer, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True):
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
         """Write a series of data in tiff format and writes them to 
         the given `path` using EMMENU machinery"""
         path = Path(path)
@@ -246,55 +249,62 @@ class CameraEMMENU(object):
         self._vp.AcquireAndDisplayImage()
         return self.get_image_index()
 
-    def set_image_index(self, index):
+    def set_image_index(self, index: int) -> None:
         """Change the currently selected buffer by the image index
         Note that the interface here is 0-indexed, whereas the image manager is 1-indexed (FIXME)"""
         self._vp.IndexInDirectory = index
 
-    def get_image_index(self):
+    def get_image_index(self) -> int:
         """Retrieve the index of the currently selected buffer, 0-indexed"""
         return self._vp.IndexInDirectory
 
-    def get_next_empty_image_index(self):
+    def get_next_empty_image_index(self) -> int:
         """Get the next empty buffer in the image manager, 0-indexed"""
         i = self.get_image_index()
         while not self._immgr.ImageEmpty(self.drc_index, i):
             i += 1        
         return i
 
-    def stop_record(self):
+    def stop_record(self) -> None:
         i = self.get_image_index()
         print(f"Stop recording (Image index={i})")
         self._vp.StopRecorder()
         self._recording = False
 
-    def start_record(self):
+    def start_record(self) -> None:
         i = self.get_image_index()
         print(f"Start recording (Image index={i})")
         self._vp.StartRecorder()
         self._recording = True
 
-    def stop_liveview(self):
+    def stop_liveview(self) -> None:
         print("Stop live view")
         self._vp.StopContinuous()
         self._recording = False
         # StopRecorder normally defaults to top directory
         self._vp.DirectoryHandle = self.drc_index
 
-    def start_liveview(self, delay=3.0):
+    def start_liveview(self, delay=3.0) -> None:
         print("Start live view")
         self._vp.StartContinuous()
 
         # sleep for a few seconds to ensure live view is running
         time.sleep(delay)
 
-    def set_exposure(self, exposure_time: int):
+    def set_exposure(self, exposure_time: int) -> None:
         """Set exposure time in ms"""
         self._vp.ExposureTime = exposure_time
 
-    def get_exposure(self):
+    def get_exposure(self) -> int:
         """Return exposure time in ms"""
         return self._vp.ExposureTime
+
+    def set_autoincrement(self, toggle: bool) -> None:
+        """Tell EMMENU to autoincrement the index number (True/False)"""
+        if toggle:
+            self._vp.AutoIncrement = 1
+        else:
+            self._vp.AutoIncrement = 0
 
     def get_timestamps(self, start_index: int, end_index: int) -> list:
         """Get timestamps in seconds for given image index range"""
@@ -311,8 +321,9 @@ class CameraEMMENU(object):
         self.stop_liveview()
 
         self._vp.DirectoryHandle = self.top_drc_index
+        self._vp.SetCaption("Image")
         self.set_image_index(0)
-        # self._immgr.DeleteDirectory(self.drc_index)  # does not work on the 3200
+        # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0, FIXME later
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)
@@ -326,3 +337,4 @@ if __name__ == '__main__':
 
     from IPython import embed
     embed()
+

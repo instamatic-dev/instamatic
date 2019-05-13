@@ -42,6 +42,10 @@ class Experiment(object):
             self.track_relative = track_relative
 
     def get_ready(self):
+        # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
+        self.emmenu.set_autoincrement(False)
+        self.emmenu.set_image_index(0)
+
         if not self.obtain_track:
             self.ctrl.beamblank_on()
             self.ctrl.screen_up()
@@ -70,7 +74,10 @@ class Experiment(object):
         if self.track and self.track_relative:
             track_y_start = int(self.track_func(start_angle)) 
 
-        start_index = self.emmenu.get_next_empty_image_index()
+        # with autoincrement(False), otherwise use `get_next_empty_image_index()`
+        # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
+        start_index = 1
+        # start_index = self.emmenu.get_next_empty_image_index()
 
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
