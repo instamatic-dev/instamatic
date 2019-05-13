@@ -2,7 +2,7 @@
 
 # Instamatic
 
-Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL microscope and interfaces to the gatan/timepix cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
+Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL/FEI microscopes and interfaces to the gatan/timepix/tvips cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
 
 Some of the methods implemented in Instamatic are described in: 
 
@@ -10,10 +10,10 @@ Some of the methods implemented in Instamatic are described in:
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
-Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries. The most-up-to-date version is available from: https://github.com/stefsmeets/instamatic/releases
+Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/stefsmeets/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
 
-TEMs supported: JEOL JEM-2100 (tested), JEOL JEM-1400/3100/3200 (any JEOL TEM with the TEMCOM library)  
-Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI)  
+TEMs supported: any JEOL TEM with the TEMCOM library, and any FEI microscope via the scripting interface. Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras.  
+Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI), TVIPS cameras through EMMENU4  
 
 A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
 
@@ -260,15 +260,20 @@ TODO
 
 To blank the beam:
 ```python
-ctrl.beamblank = True
+ctrl.beamblank_on()
 ```
 To unblank the beam:
 ```python
-ctrl.beamblank = False
+ctrl.beamblank_off()
 ```
 To get the state of the beam blanker:
 ```python
-ctrl.beamblank()
+ctrl.beamblank
+```
+The fluorescence screen can be controlled via:
+```python
+ctrl.screen_up()
+ctrl.screen_down()
 ```
 To switch modes:
 ```python
