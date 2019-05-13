@@ -35,6 +35,7 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
     """
 
     print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
+    tem = Microscope(tem_name, use_server=use_tem_server)
     
     if cam_name:
         if use_cam_server:
@@ -44,11 +45,8 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
         else:
             cam_tag = ''
 
-    print(f"Camera    : {cam_name}{cam_tag}")
+        print(f"Camera    : {cam_name}{cam_tag}")
 
-    tem = Microscope(tem_name, use_server=use_tem_server)
-    
-    if cam_name:
         cam = Camera(cam_name, as_stream=stream, use_server=use_cam_server)
     else:
         cam = None
