@@ -70,6 +70,7 @@ This program initializes a connection to the TEM as defined in the config. On so
 The host and port are defined in `config/global.yaml`
 
 Usage:
+
     instamatic.temserver
 
 

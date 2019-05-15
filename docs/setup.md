@@ -1,6 +1,6 @@
 # Setting up Instamatic
 
-Download the latest zip package from the [releases page(https://github.com/stefsmeets/instamatic/releases). This installation is fully portable, and can be copied directly to the microscope computer.
+Download the latest zip package from the [releases page](https://github.com/stefsmeets/instamatic/releases). This installation is fully portable, and can be copied directly to the microscope computer.
 
 Running the program `start_Cmder` will run a terminal which has already been set up.
 
