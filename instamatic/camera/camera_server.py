@@ -40,6 +40,7 @@ class ServerCam(object):
         
         self.name = name
         self.bufsize = BUFSIZE
+        self.streamable = False  # overrides cam settings
 
         try:
             self.connect()
