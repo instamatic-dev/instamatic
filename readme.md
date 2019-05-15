@@ -35,13 +35,16 @@ Some of the methods implemented in Instamatic are described in:
 
 ## Documentation
 
-See [the documentation](http://github.com/stefsmeets/instamatic/tree/master/docs) for how to set up and use Instamatic.
+See [the documentation](docs) for how to set up and use Instamatic.
 
-- [Setting up instamatic](http://github.com/stefsmeets/instamatic/tree/master/docs)
-- [Usage](http://github.com/stefsmeets/instamatic/tree/master/docs)
-- [TEM scripting API](http://github.com/stefsmeets/instamatic/tree/master/docs)
-- [Programs included](http://github.com/stefsmeets/instamatic/tree/master/docs)
-- [Config](http://github.com/stefsmeets/instamatic/tree/master/docs)
+- [TEMController](docs/tem_api.md)
+- [Config](docs/config.md)
+- [Reading and writing image data](docs/formats.md)
+- [Setting up instamatic](docs/setup.md)
+- [Programs included](docs/programs.md)
+- [GUI and Module system](docs/gui.md)
+
+Use `pydoc` to access the full API reference: `pydoc -b instamatic`
 
 ## Requirements
 
