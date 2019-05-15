@@ -22,7 +22,7 @@ from .mrc import write_image as write_mrc
 from .xdscbf import write as write_cbf
 
 
-def read_image(fname):
+def read_image(fname: str) -> (np.array, dict):
     """Guess filetype by extension"""
     ext = Path(fname).suffix.lower()
     if ext in (".tif", ".tiff"):
@@ -38,7 +38,7 @@ def read_image(fname):
     return img, h 
 
 
-def write_tiff(fname, data, header=None):
+def write_tiff(fname: str, data, header: dict=None):
     """Simple function to write a tiff file
 
     fname: str,
@@ -60,7 +60,7 @@ def write_tiff(fname, data, header=None):
         f.save(data=data, software="instamatic", description=header)
 
 
-def read_tiff(fname):
+def read_tiff(fname: str) -> (np.array, dict):
     """Simple function to read a tiff file
 
     fname: str,
@@ -85,7 +85,7 @@ def read_tiff(fname):
     return img, header
 
 
-def write_hdf5(fname, data, header=None):
+def write_hdf5(fname: str, data, header: dict=None):
     """Simple function to write data to hdf5 format using h5py
 
     fname: str,
@@ -105,7 +105,7 @@ def write_hdf5(fname, data, header=None):
     f.close()
  
 
-def read_hdf5(fname):
+def read_hdf5(fname: str) -> (np.array, dict):
     """Simple function to read a hdf5 file written by Instamatic
     
     fname: str,
@@ -122,6 +122,6 @@ def read_hdf5(fname):
     return np.array(f["data"]), dict(f["data"].attrs)
 
 
-def read_cbf(fname):
+def read_cbf(fname: str):
     """CBF reader not implemented"""
     raise NotImplementedError("CBF reader not implemented.")

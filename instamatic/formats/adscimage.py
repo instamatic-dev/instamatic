@@ -3,7 +3,7 @@ import numpy as np
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py
 
 
-def swap_needed(header):
+def swap_needed(header: dict) -> bool:
     if "BYTE_ORDER" not in header:
         # logger.warning("No byte order specified, assuming little_endian")
         BYTE_ORDER = "little_endian"
@@ -19,7 +19,7 @@ def swap_needed(header):
         return True
 
 
-def write_adsc(fname, data, header={}):
+def write_adsc(fname: str, data: np.array, header: dict={}):
     """
     Write adsc format
     """
@@ -64,7 +64,7 @@ def readheader(infile):
     return header
 
 
-def read_adsc(fname):
+def read_adsc(fname: str) -> (np.array, dict):
     """ read in the file """
     with open(fname, "rb", buffering=0) as infile:
         try:
