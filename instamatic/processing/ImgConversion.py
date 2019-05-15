@@ -88,7 +88,7 @@ def get_calibrated_rotation_speed(val):
     was stopped before interrupting the data collection. It uses calibrated values for the 
     rotation speeds of the microscope, and matches them to the observed one"""
 
-    rotation_speeds = set(config.microscope.specifications["rotation_speeds"]["coarse"] + config.microscope.specifications["rotation_speeds"]["fine"])
+    rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
     logger.info("Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value))
     return calibrated_value

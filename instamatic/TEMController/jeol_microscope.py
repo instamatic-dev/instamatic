@@ -98,9 +98,9 @@ class JeolMicroscope(object):
         self._y_direction = 0
 
         self.name = name
-        self.MAGNIFICATIONS      = config.microscope.specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = config.microscope.specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = config.microscope.specifications["CAMERALENGTHS"]
+        self.MAGNIFICATIONS      = config.microscope.magnifications
+        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
+        self.CAMERALENGTHS       = config.microscope.cameralengths
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING

@@ -161,9 +161,9 @@ class FEIMicroscope(object):
 
         self.FunctionMode_value = 0
 
-        self.MAGNIFICATIONS      = config.microscope.specifications["MAGNIFICATIONS"]
-        self.MAGNIFICATION_MODES = config.microscope.specifications["MAGNIFICATION_MODES"]
-        self.CAMERALENGTHS       = config.microscope.specifications["CAMERALENGTHS"]
+        self.MAGNIFICATIONS      = config.microscope.magnifications
+        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
+        self.CAMERALENGTHS       = config.microscope.cameralengths
         
         self.goniostopped = self.stage.Status
         
