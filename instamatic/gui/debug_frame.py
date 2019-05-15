@@ -149,7 +149,11 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def close_down(self):
-        self.q.put(("debug", { "task": "close_down" } ))
+        script = self.scripts_drc / "close_down.py"
+        print(script, script.exists())
+        if not script.exists():
+            return IOError(f"No such script: {script}")
+        self.q.put(("debug", { "task": "run_script", "script": script } ))
         self.triggerEvent.set()
 
     def browse(self):
@@ -181,16 +185,6 @@ def debug(controller, **kwargs):
         embed(banner1="\nAssuming direct control.\n")
     elif task == "report_status":
         print(controller.ctrl)
-    elif task == "close_down":
-        # TODO: make this run a script named 'close_down.py'
-        controller.ctrl.stageposition.neutral()
-        controller.ctrl.mode = "mag1"
-        controller.ctrl.brightness.max()
-        controller.ctrl.magnification.value = 10000
-        controller.ctrl.spotsize = 1
-        controller.ctrl.screen_down()
-
-        print("All done!")
     elif task == "run_script":
         ctrl = controller.ctrl
         script = kwargs.pop("script")
