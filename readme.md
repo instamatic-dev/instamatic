@@ -4,358 +4,44 @@
 
 Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL/FEI microscopes and interfaces to the gatan/timepix/tvips cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
 
+Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/stefsmeets/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
+
+Electron microscopes supported: 
+
+- JEOL microscopes with the TEMCOM library
+- FEI microscopes via the scripting interface
+
+Cameras supported:
+
+- ASI Timepix (including live-view GUI)
+- Gatan cameras through DM plugin
+- TVIPS cameras through EMMENU4 API
+
+Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras.
+
+A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
+
+## Reference
+
+If you find this software useful, please consider citing one of the references below and/or refer to the source code in your publications:
+
+- S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, and W. Wan, (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
+
 Some of the methods implemented in Instamatic are described in: 
 
 - M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661, 
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
-Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/stefsmeets/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
-
-TEMs supported: any JEOL TEM with the TEMCOM library, and any FEI microscope via the scripting interface. Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras.  
-Cameras supported: ASI Timepix (including live-view GUI), Gatan cameras through DM plugin (no GUI), TVIPS cameras through EMMENU4  
-
-A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
-
-## Reference
-
-If you find this software useful, please consider citing one of the references above and/or refer to the source code in your publications:
-
-- Stef Smeets, Bin Wang, Magdalena O. Cichocka, Jonas Ångström, & Wei Wan. (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
-
-## Usage
-
-Start the gui by typing `instamatic` in the command line.
-
-![Main interface](docs/gui_main.png)
-
-On the left side, a live view of the camera will be shown. On the top, there are some fields to change the output of the view. The exposure time for the live view, brightness, and display range can be changed here. Pressing the `Save Image` button will dump the current frame to a tiff file in the active directory.
-
-On the right side, there is a pane for file i/o, and the available modules for data collection.
-
-### Data i/o
-
-This panel deals with input and output of the experimental data.
-
-![Input and output](docs/gui_io.png)
-
-* **Directory**: Root directory to work in. By default this is C:/instamatic/work_$date/
-
-* **Sample name and number**: This determines the subdirectory where experimental data are stored. The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
-
-* **Flatfield**: Here the path to the flatfield image can be specified. This hardly needs to be changed.
-
-* **Open work directory**: Open the current work directory, which is a combination of the root directory, sample name, and experiment number. In this case `C:/instamatic/work_2017-11-19/experiment_1`. All experimental data for the current experiment will be saved here.
-
-* **Open config directory**: By default `%APPDATA%/instamatic/`. The configuration files for the microscope, camera, and calibration files go here.
-
-* **Delete last experiment**: Sometimes, a data collection will go wrong... Pressing this button will mark the last experiment directy for deletion. It will not actually delete anything.
-
-### serialED data collection
-
-Serial electron diffraction (serialED) is a technique to collect diffraction data on a large number of crystals. One diffraction pattern per crystal is collected. These can then be combined for structure determination, or used for screening/phase analysis.
-
-![serial electron diffraction pane](docs/gui_serialed.png)
-
-Data collection can be started from the ‘serialED’ tab by pressing the ‘Start Collection’ button. Follow the instructions in the terminal to setup and calibrate the experiment.
-
-* **Scan area**: radius for the area to scan area for crystals (in micrometer).
-* **Exp. time image**: Exposure time for images.
-* **Exp. time diff**: Exposure time for diffraction pattern.
-* **Brightness**: Default value for the brightness of the focused beam.
-* **Spot size**: Spot size to use.
-
-### cRED data collection
-
-Continuous RED (cRED) data collection can be started from the ‘cRED’ tab.
-
-The data collection procedure can be initiated by pressing ‘Start Collection’. The program will then wait for the rotation to start. The moment the pedal is pressed to start the rotation, the program will start the data collection with the specified options. Do not release your foot until after you press ‘Stop Collection’. This will signal the program to stop data collection, and write the images. Images are written in TIFF, MRC, and SMV format. Input files for REDp (.ed3d) and XDS (XDS.INP) are also written.
-
-![Continous rotation electron diffraction pane](docs/gui_cred.png)
-
-* **Exposure time**: change the data collection time for each image.
-* **Beam unblanker**: If this option is selected, the beam will be automatically unblanked when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
-
-### Image interval
-With this feature, an image of the crystal will be shown every N frames. This is useful to control the position of the crystal in the beam for more reliable and reproducable data collections. This is achieved by applying a small defocus (diffraction focus) to every Nth image. a small defocus of the diffraction focus. If the defocus is large enough, this will show a view of the crystal in the aperture. 
-
-* **Enable Image interval**: This option will enable the image interval.
-* **Image interval**: Change the interval at which the image will be defocused. For example, if the value is 10, then every 10th image will be defocused.
-* **Diff. defocus**: This is the defocus value to apply. It is better not to make this value too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example). 
-* **Toggle defocus**: This toggle applies the defocus value, which is used for checking. It does not affect the data collection.
-
-
-## Programs included
-
-### instamatic
-
-Start the main instamatic experimental window to start a continuous RED or serial ED experiment.
-
-Usage:
-    
-    instamatic
-
-<!-- ### instamatic.serialed
-
-Command line program to run the serial ED data collection routine.
-
-Usage:
-    
-    instamatic.serialed -->
-
-### instamatic.controller
-
-Connect to the microscope and camera, and open an IPython terminal to interactively control the microscope. Useful for testing!
-
-Usage:
-    
-    instamatic.controller
-
-### instamatic.flatfield
-
-This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
-    
-    instamatic.flatfield --collect
-
-This will collect 100 images and average them to determine the flatfield image. A darkfield image is also collected by applying the same routine with the beam blanked. Dead pixels are identified as pixels with 0 intensities. To apply these corrections:
-
-    instamatic.flatfield image.tiff [image.tiff ..] -f flatfield.tiff [-d darkfield.tiff] [-o drc]
-   
-This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`.
-
-### instamatic.stretch_correction
-
-Program to determine the stretch correction from a series of powder diffraction patterns. It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis.
-
-Usage:
-    
-    instamatic.stretch_correction powder_pattern.tiff
-
-### instamatic.browser
-
-Visualize the data collected (both images and diffraction data) in a serial ED experiment. The `-s` flag attempts to stitch the images together.
-
-Usage:
-    
-    instamatic.browser images/*.h5 [-s]
-
-### instamatic.viewer
-
-Open any image collected collected using instamatic. Supported formats include [`hdf5`](http://www.h5py.org/), `TIFF`, and [`SMV`](https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php/SMV_file_format).
-
-Usage:
-    
-    instamatic.viewer image.tiff
-
-## API
-
-```python
-from instamatic.TEMController import initialize
-ctrl = initialize()
-```   
-The `ctrl` object allows full control over the electron microscope. For example, to read out the position of the sample stage:
-```python
-xy = ctrl.stageposition.xy
-print xy
-```
-To move to a different position:
-```python
-ctrl.stageposition.xy = 10000, 20000
-```
-A convenient way to experiment with the options available is to run `instamatic.controller`. This will initialize a `ctrl` object that can be played with interactively.
-
-### Lenses
-
- * Brightness: `ctrl.brightness`
- * DiffFocus: `ctrl.difffocus` (only accessible in diffraction mode)
- * Magnification: `ctrl.magnification`
-
-Lenses have one value, that can be accessed through the `.value` property.
-
-All lens objects have the same API and behave in the same way, i.e.:
-```python
-ctrl.brightness.value = 1234
-value = ctrl.brightness.value
-
-ctrl.brightness.set(value=1234)
-value = ctrl.brightness.get()
-```
-The Magnification lens has some extra features to increase/decrease the magnification:
-```python
-ctrl.magnification.increase()
-ctrl.magnification.decrease()
-```
-as well as the index of magnification:
-```python
-index = ctrl.magnification.index
-ctrl.magnfication.index = 0
-```
-### Deflectors
-
- * GunShift: `ctrl.gunshift`
- * GunTilt: `ctrl.guntilt`
- * BeamShift: `ctrl.beamshift`
- * BeamTilt: `ctrl.beamtilt`
- * DiffShift: `ctrl.diffshift`
- * ImageShift1: `ctrl.imageshift1`
- * ImageShift2: `ctrl.imageshift2`
-
-Deflectors have two values (x and y), that can be accessed through the `.x` and `.y` properties
-
-All deflectors have the same API and behave in the same way, i.e.:
-```python
-ctrl.beamshift.x = 1234
-ctrl.beamshift.y = 4321
-ctrl.beamshift.xy = 1234, 4321
-
-x = ctrl.beamshift.x
-y = ctrl.beamshift.y
-xy = ctrl.beamshift.xy
-
-ctrl.beamshift.get(x=1234, y=4321)
-x, y = ctrl.beamshift.get()
-```
-Additionally, the values of the lenses can be set to the neutral values:
-```python
-ctrl.beamshift.neutral()
-```
-### Stage Position
-
-The stageposition controls the translation of the samplestage (in nm):
-```python
-x = ctrl.stageposition.x
-y = ctrl.stageposition.y
-x, y = ctrl.stageposition.xy
-ctrl.stageposition.xy = 0, 0
-```
-the height of the sample stage (in nm):
-```python
-z = ctrl.stageposition.z
-ctrl.stageposition.z = 10
-```
-or rotation of the sample stage (in degrees), where `a` is the primary rotation axis, and `b` the secondary rotation axis:
-```python
-a = ctrl.stageposition.a
-ctrl.stageposition.a = 25
-
-b = ctrl.stageposition.b
-ctrl.stageposition.b = -10
-```
-All stage parameters can be retrieved and applied using the get/set methods:
-```python
-x, y, z, a, b = ctrl.stageposition.get()
-ctrl.stageposition.set(x=0, y=0)
-ctrl.stageposition.set(a=25)
-ctrl.stageposition.set(x=0, y=0, z=0, a=0, b=0)
-```
-The stage position can be neutralized (all values reset to 0) using:
-```python
-ctrl.stageposition.neutral()
-```
-### Camera
-
-TODO
-
-### Other functions
-
-To blank the beam:
-```python
-ctrl.beamblank_on()
-```
-To unblank the beam:
-```python
-ctrl.beamblank_off()
-```
-To get the state of the beam blanker:
-```python
-ctrl.beamblank
-```
-The fluorescence screen can be controlled via:
-```python
-ctrl.screen_up()
-ctrl.screen_down()
-```
-To switch modes:
-```python
-current_mode = ctrl.mode
-ctrl.mode = "diff"  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
-ctrl.mode_lowmag()
-ctrl.mode_mag1()
-ctrl.mode_samag()
-ctrl.mode_diff()
-```
-To change spotsize:
-```python
-spot = ctrl.spotsize
-ctrl.spotsize = 4  # 1, 2, 3, 4, 5
-```
-To retrieve all lens/deflector values in a dictionary:
-```python
-dct = ctrl.to_dict()
-```
-and to restore them:
-```python
-ctrl.from_dict(dct)
-```
-To store the current settings:
-```python
-ctrl.store(name="stash")
-```
-and to recall them:
-```python
-ctrl.restore(name="stash")
-```
-
-### Example experiment
-
-An example rotation experiment could look something like this:
-
-```python
-from instamatic.formats import write_tiff
-from instamatic import TEMController
-
-ctrl = TEMController.initialize()
-
-exposure_time = 1.0
-angles = range(-40, 40, 1)
-for i, angle in enumerate(angles):
-    ctrl.stageposition.a = angle
-    img, h = ctrl.getImage(exposure_time)
-    fn = "image_{:04d}.tiff".format(i)
-    print("Angle = {}".format(angle))
-    write_tiff(fn, img, header=h)
-```
-
-### Config/setup
-
-In IPython:
-
-```python
-from instamatic import TEMController
-ctrl = TEMController.initialize()
-```
- 
-If no names for the camera/microscope are given, it reads the defaults from the config directory listed when TEMController is imported (`config/global.yaml`). The config directory is generated on the first run of `instamatic`. By default these are set to load simulation of the camera/microscope. The simulation is is a good test to see if it works at all (a shortcut to this is to type `instamatic.controller.exe` in the terminal).
-
-The config files work as follows: The global configurations are defined in `config/global.yaml`. The values `cam_name` and `tem_name` correspond to the values given in `global.yaml`. The values given for calibration/camera/microscope in turn point to the files with the same name in the corresponding directories. For example, `camera: foo` corresponds to the file `config/camera/foo.yaml`, where you can customize the settings.
-
-You can override the defaults here, so on the microscope computer you could try:
-
-```python
-ctrl = TEMController.initialize(tem_name='jeol', cam_name='timepix', stream=True)
-```
- 
-`stream` indicates that the camera can be streamed (like the timepix camera). Other cameras, like the gatan (orius/ultrascan) cameras communicate through DigitalMicrograph, and can therefore not be streamed. Instead the live stream can be shown in DM, and therefore needs DM to be open.
- 
-Otherwise, to skip camera initialization:
-
-```python
-ctrl = TEMController.initialize(tem_name='jeol', cam_name=None)
-```
-
-Once a`ctrl` (control) object has been intialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `TEMController.initialize?`).
- 
-Based on this you can write your own python scripts to control the microscope and/or camera. Can check in `instamatic/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `instamatic/TEMController/TEMController.py`
+## Documentation
+
+See [the documentation](http://github.com/stefsmeets/instamatic/tree/master/docs) for how to set up and use Instamatic.
+
+- [Setting up instamatic](http://github.com/stefsmeets/instamatic/tree/master/docs)
+- [Usage](http://github.com/stefsmeets/instamatic/tree/master/docs)
+- [TEM scripting API](http://github.com/stefsmeets/instamatic/tree/master/docs)
+- [Programs included](http://github.com/stefsmeets/instamatic/tree/master/docs)
+- [Config](http://github.com/stefsmeets/instamatic/tree/master/docs)
 
 ## Requirements
 
