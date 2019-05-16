@@ -26,9 +26,9 @@ BUFSIZE = 4096
 
 class CamServer(threading.Thread):
     """Camera communcation server. Takes a logger object `log`, command queue `q`, and
-    name of the microscope `name` that is used to initialize the connection to the camera.
+    name of the camera `name` that is used to initialize the connection to the camera.
     Start the server using `CamServer.run` which will wait for items to appear on `q` and
-    execute them on the specified microscope instance.
+    execute them on the specified camera instance.
     """
     def __init__(self, log=None, q=None, name=None):
         super().__init__()
@@ -44,7 +44,7 @@ class CamServer(threading.Thread):
         self.cam = Camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
-        print(f"Initialized connection to microscope: {self.cam.name}")
+        print(f"Initialized connection to camera: {self.cam.name}")
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")

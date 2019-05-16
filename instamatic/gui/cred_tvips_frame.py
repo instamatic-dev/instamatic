@@ -43,10 +43,10 @@ class ExperimentalTVIPS(LabelFrame):
         self.c_toggle_screen = Checkbutton(frame, text="Toggle screen", variable=self.var_toggle_screen, command=self.toggle_screen)
         self.c_toggle_screen.grid(row=8, column=3, sticky="W")
 
-        self.b_start_liveview = Button(frame, text="Start live view", command=self.start_live_view)
+        self.b_start_liveview = Button(frame, text="Start live view", command=self.start_liveview)
         self.b_start_liveview.grid(row=7, column=2, sticky="EW")
 
-        self.b_stop_liveview = Button(frame, text="Stop live view", command=self.stop_live_view)
+        self.b_stop_liveview = Button(frame, text="Stop live view", command=self.stop_liveview)
         self.b_stop_liveview.grid(row=8, column=2, sticky="EW")
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -199,11 +199,11 @@ class ExperimentalTVIPS(LabelFrame):
         else:
             self.ctrl.screen_down()
 
-    def start_live_view(self):
-        self.ctrl.cam.start_live_view()
+    def start_liveview(self):
+        self.ctrl.cam.start_liveview()
 
-    def stop_live_view(self):
-        self.ctrl.cam.stop_live_view()
+    def stop_liveview(self):
+        self.ctrl.cam.stop_liveview()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()

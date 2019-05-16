@@ -225,6 +225,10 @@ class CameraEMMENU(object):
         the given `path` using EMMENU machinery"""
         path = Path(path)
         drc_index = self.drc_index
+
+        if stop_index >= start_index:
+            raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
+
         for i, image_index in enumerate(range(start_index, stop_index+1)):
             p = self.getImageByIndex(image_index, drc_index)
             fn = str(path / f"{i:04d}.tiff")

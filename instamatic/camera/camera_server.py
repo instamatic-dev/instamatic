@@ -32,8 +32,8 @@ def start_server_in_subprocess():
 
 class ServerCam(object):
     """
-    Simulates a Microscope object and synchronizes calls over a socket server.
-    For documentation, see the actual python interface to the microscope API.
+    Simulates a Camera object and synchronizes calls over a socket server.
+    For documentation, see the actual python interface to the camera API.
     """
     def __init__(self, name):
         super().__init__()

@@ -188,7 +188,11 @@ def debug(controller, **kwargs):
     elif task == "run_script":
         ctrl = controller.ctrl
         script = kwargs.pop("script")
+        print(f"Executing script: {script}")
+        print()
         exec(open(script).read())
+        print()
+        print("Script finished")
 
 
 def autoindex(controller, **kwargs):
