@@ -84,7 +84,9 @@ setup(
             'instamatic.camserver                     = instamatic.server.cam_server:main',
             'instamatic.dialsserver                   = instamatic.server.dials_server:main',
             'instamatic.xdsserver                     = instamatic.server.xds_server:main',
-            'instamatic.temserver_fei                 = instamatic.server.TEMServer_FEI:main'
+            'instamatic.temserver_fei                 = instamatic.server.TEMServer_FEI:main',
+            # setup
+            'instamatic.autoconfig                    = instamatic.config.autoconfig:main'
         ]
     }
 )
