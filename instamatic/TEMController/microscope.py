@@ -9,7 +9,7 @@ def get_tem(name: str):
     """Grab tem class"""
     if name == "jeol":
         from .jeol_microscope import JeolMicroscope as cls
-    elif name == "fei_themisZ":
+    elif name == "fei":
         from .FEI_microscope import FEIMicroscope as cls
     elif name == "fei_simu":
         from .fei_simu_microscope import FEISimuMicroscope as cls

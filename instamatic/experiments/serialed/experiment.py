@@ -209,7 +209,9 @@ class Experiment(object):
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
-        self.image_dimensions = config.calibration.mag1_camera_dimensions[self.magnification]
+        self.pixelsize_mag1 = config.calibration.pixelsize_mag1[self.magnification] / 1000  # nm -> um
+        xdim, ydim = config.camera.dimensions
+        self.image_dimensions = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
         self.log.info("Image dimensions %s", self.image_dimensions)
 
         self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
@@ -230,7 +232,7 @@ class Experiment(object):
             self.diff_difffocus = self.ctrl.difffocus.value
             self.diff_cameralength = self.ctrl.magnification.value
 
-        self.diff_pixelsize  = config.calibration.diffraction_pixeldimensions[self.diff_cameralength]
+        self.diff_pixelsize  = config.calibration.pixelsize_diff[self.diff_cameralength]
         self.change_spotsize = self.diff_spotsize != self.image_spotsize
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 

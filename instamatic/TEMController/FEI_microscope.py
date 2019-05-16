@@ -120,7 +120,7 @@ CameraLengthMapping = {
 
 class FEIMicroscope(object):
     """docstring for FEI microscope"""
-    def __init__(self, name = "fei_themisZ"):
+    def __init__(self, name = "fei"):
         super(FEIMicroscope, self).__init__()
         
         try:

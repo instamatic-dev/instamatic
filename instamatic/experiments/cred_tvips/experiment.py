@@ -149,7 +149,7 @@ class Experiment(object):
         print(f"Data collection spot size: {spotsize}")
         print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
 
-        pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+        pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
         physical_pixelsize = config.camera.physical_pixelsize # mm
         
         binX, binY = self.emmenu.getBinning()

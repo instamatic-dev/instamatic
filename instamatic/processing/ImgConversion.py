@@ -140,7 +140,7 @@ class ImgConversion(object):
 
         self.data_shape = img.shape
         try:
-            self.pixelsize = config.calibration.diffraction_pixeldimensions[camera_length] # px / Angstrom
+            self.pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
         except KeyError:
             self.pixelsize = 1
             print("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))

@@ -143,9 +143,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     props = measure.regionprops(labels, img)
     
     # calculate the pixel dimensions in micrometer
-    px, py = calibration.mag1_camera_dimensions[magnification]
-    px = px / (img.shape[0])
-    py = py / (img.shape[1])
+    px, py = calibration.pixelsize_mag1[magnification] / 1000  # nm -> um
     
     iters = 20
     
