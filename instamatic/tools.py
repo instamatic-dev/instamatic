@@ -295,3 +295,20 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, plot: bool=True, sa
 
     return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
 
+
+def relativistic_wavelength(voltage: float=200_000) -> float:
+    """
+    Calculate the relativistic wavelength of electrons from the accelarating voltage
+    
+    Input: Voltage in V
+    Output: Wavelength in Angstrom
+    """
+
+    h = 6.626070150e-34  # planck constant J.s
+    m = 9.10938356e-31   # electron rest mass kg
+    e = 1.6021766208e-19 # elementary charge C
+    c = 299792458        # speed of light m/s
+
+    wl = h/((2*m*voltage*e*(1+(e*voltage)/(2*m*c**2))))**0.5
+
+    return round(wl * 1e10, 6)  # m -> Angstrom
