@@ -255,6 +255,11 @@ class Magnification(Lens):
         except ValueError:
             print("Error: Cannot go to higher magnification (current={}).".format(self.value))
 
+    def get_ranges(self) -> dict:
+        """Runs through all modes and fetches all the magnification settings
+        possible on the microscope"""
+        return self.tem.getMagnificationRanges()
+
 
 class GunShift(Deflector):
     """GunShift control"""
