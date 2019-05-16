@@ -4,6 +4,12 @@ Instamatic can be configured through a series of yaml files. `global.yaml` at th
 
 By default, instamatic looks for the `config` directory in `%APPDATA%/Instamatic`. This directory is created automatically with the default config files on first use. The config directory is printed when the program is started. The default location can be overriden using the `Instamatic` environment variable, i.e. in Powershell: `$ENV:Instamatic = "C:/Instamatic"`. In the portable installation, the config directory is in the root directory as defined by the `Instamatic` environment variable.
 
+You can run:
+```bash
+instamatic.autoconfig.exe
+```
+To help generate some of the input files (in particular templates for the microscope/calibration files).
+
 Examples of configuration files can be found [here](https://github.com/stefsmeets/tree/master/instamatic/config).
 
 ## global.yaml
@@ -57,34 +63,39 @@ List of modules to load for the GUI, must be one of {`cred`, `cred_tvips`, `cred
 
 ## calibration.yaml
 
-In this file the calibration of the pixel size can be given, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `global.yaml`.
+In this file the calibration of the pixelsizes can be specified, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `global.yaml`. To begin with, the values can be safely set to 1.0, as their importance depends on the experiment you are running. 
 
 **name**  
 Name of the corresponding camera interface. This variable is not used currently in the code at present.
 
-**diffraction_pixeldimensions**  
+**pixelsize_diff**  
 Give here a list of camera lengths (as reported by the TEM) and the corresponding pixel dimensions in reciprocal angstrom, separated by a `:`, for example:
 ```
-250: 0.0040
-300: 0.0050
+  150: 0.02942304 
+  200: 0.02206728
+  250: 0.017653824
 ...
 ```
 
-**lowmag_pixeldimensions**  
-Give here the magnification and pixel dimensions (x and y) for the lowmag mode in micrometer, for example:
+**pixelsize_lowmag**  
+Give here the magnification and pixel size for images taken in lowmag mode in nanometer, for example:
 ```
-1000: [0.044779, 0.044779]
-1200: [0.037316, 0.037316]
+  50: 895.597
+  80: 559.748
+  100: 447.799
  ...
 ```
 
-**mag1_camera_dimensions**  
-Give here the magnification and pixel dimensions of the entire camera in micrometer, for exmaple:
+**pixelsize_mag1**  
+Likewise, give here the magnification and pixel size for the images taken in mag1 mode in nanometer, for exmaple:
 ```
- 8000: [9.86148864, 9.86148864]
-10000: [7.99162368, 7.99162368]
+  2500: 16.2926
+  3000: 13.3909
+  4000: 9.87389
   ...
 ```
+
+Optionally, tables for **pixelsize_mag2**, **pixelsize_samag** can also be defined, but they are not used.
 
 ## camera.yaml:
 
@@ -147,41 +158,18 @@ name of the microscope interface to use
 **wavelength**  
 The wavelength of the microscope in Ansgtroms. This is used to generate some of the output files after data collection, i.e. for 120kV: 0.033492, 200kV: 0.025079, or 300 kV: 0.019687. A useful website to calculate the de Broglie wavelength is [here](https://www.ou.edu/research/electron/bmz5364/calc-kv.html).
 
-**cameras**  
-The cameras that area accessible on this microscope (obsolete)
-
-**cameralengths**  
+**range_diff**  
 List here the available camera lengts available on the microscope in ascending order
 ```
-[150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200,
+range_diff: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 
 1500, 2000, 2500, 3000, 3500, 4000, 4500]
 ```
   
-**magnifications**  
-List here the available magnifications available on the microscope in ascending order
+**range_mag1**, **range_lowmag**, **range_mag2**, **range_samag**  
+List here the available magnifications available on the microscope in ascending order, for example:
 ```
-[50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600,
-800, 1000, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000,
+range_mag1: [2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000,
 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000,
 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000,
 2000000]
-```
-
-**magnification_modes**  
-Magnification modes tells instamatic when to switch between mag1 and lowmag modes, i.e. where lowmag starts and where mag1 starts.
-```
-{
-  lowmag: 50, 
-  mag1: 2500
-}
-```
-
-**rotation_speeds**  
-Here the rotation speeds can be calibrated. This is only used to correct the rotation speeds collected during cRED if necessary. Only used in one place, and probably redundant at this stage.
-
-```
-{
-  fine: [ 0.114, 0.45, 1.126 ], 
-  coarse: [ 0.45, 1.8, 4.5 ]
-}
 ```

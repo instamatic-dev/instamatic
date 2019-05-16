@@ -26,7 +26,13 @@ python setup.py install
 
 ## Setting up the config files
 
-Normally `instamatic` is not very fussy about starting up, but it may complain if you try to run some commands where it is missing some information from the config. 
+Normally `instamatic` is not very fussy about starting up, but it may complain if you try to run some commands where it is missing some information from the config.
+
+The easiest way to get started is to run:
+```bash
+instamatic.autoconfig.exe
+```
+To help generate some of the input files (in particular templates for the microscope/calibration files). This should give you a working setup for the microscope.
 
 In order of importance:
 
@@ -34,13 +40,13 @@ In order of importance:
    If you are running the portable installation, you can skip this step. Otherwise, if you are running instamatic for the first time, it will set up the config directory. Simply run `instamatic`. It should say that it sets up the config directory and tell the path where the data are.
 
 2. __Set up the microscope interface__  
-   In `config/global.yaml` define the camera interface you want to use. You can use one of the example files and modify those. for FEI, use `microscope: fei` and for jeol, use `microscope: jeol`. You can name these files anything you want, as long as the name under `microscope` matches the filename in `config/microscope`
+   In `config/global.yaml` define the camera interface you want to use. You can use the autoconfig tool or one of the example files and modify those. You can name these files anything you want, as long as the name under `microscope` matches the filename in `config/microscope`
 
 3. __Set up the magnifications and camera lengths__  
-   In the config file, i.e `config/microscope/jeol.yaml`, set the correct camera lengths and magnifications for your microscopes (`lowmag` and `mag1`). Also make sure you set the wavelength and magnification ranges, i.e. if the lowest magnification in `mag1` is 2000, then put 2000 for `mag1`. The easiest way to get those numbers is to simply write them down as you turn the know on the microcope.
+   In the config file, i.e `config/microscope/jeol.yaml`, set the correct camera lengths (`range_diff`) and magnifications for your microscopes (`range_lowmag` and `range_mag1`). Also make sure you set the wavelength. Again, the autoconfig tool is your best friend, otherwise, the way to get those numbers is to simply write them down as you turn the magnification knob on the microcope.
 
 4. __Set up the camera interface__  
-   Specify the file you want to use for the camera interface, i.e. `camera: timepix` points to `config/camera/timepix.yaml`. In this file, make sure that the interface is set to your camera type and update the numbers as specified in the config documentation. If you don't want to set up the camera interface, you can use `camera: simulate` and `calibration: simulate` to simulate them.
+   Specify the file you want to use for the camera interface, i.e. `camera: timepix` points to `config/camera/timepix.yaml`. In this file, make sure that the interface is set to your camera type and update the numbers as specified in the config documentation. If you do not want to set up the camera interface at this moment, you can use `camera: simulate` to fake the camera connection.
 
 5. __Make the calibration table__  
    For each of the magnfications defined in `config/microscope/jeol.yaml`, specify the pixel sizes in the file defined by `calibration: jeol`, corresponding to the file `calibration/jeol.yaml`. For starters, you can simply set the calibration values to 1.0.
