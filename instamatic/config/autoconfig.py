@@ -24,16 +24,34 @@ def main():
     else:
         raise ValueError(f"No microscope with index {q}")
 
+    # print("\n 1: gatan (orius)\n 2: timepix\n 3: tvips (emmenu)")
+    # print("\n 4: simulate\n 5: skip\n")
+
+    # q = int(input("Which camera should I configure? >> "))
+
+    # if q == 1:
+    #     cam_name = "gatan"
+    # elif q == 2:
+    #     cam_name = "timepix"
+    # elif q == 3:
+    #     cam_name = "tvips"
+    # elif q == 4:
+    #     cam_name = "simulate"
+    # elif q == 5:
+    #     cam_name = None
+    # else:
+    #     raise ValueError(f"No camera with index {q}")
+
     if tem_name == "simulate":
         ranges = {"mag1": [1, 2, 3], "diff": [10, 20, 30]}
         ht = 120000
     else:    
         from instamatic.TEMController import initialize
     
-        ctrl = initialize(tem_name=tem_name, camera=None)
+        ctrl = initialize(tem_name=tem_name, cam_name=None)
         ranges = ctrl.magnification.get_ranges()
     
-        ht = ctrl.HTValule.get()  # in V
+        ht = ctrl.HTValue.get()  # in V
 
     wavelength = relativistic_wavelength(ht)
 
@@ -53,19 +71,22 @@ def main():
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
+    # cam_config_fn = f"{cam_name}_cam.yaml"
 
     yaml.dump(tem_config, open(tem_config_fn, "w"), sort_keys=False)
     yaml.dump(calib_config, open(calib_config_fn, "w"), sort_keys=False)
+    # yaml.dump(cam_config, open(cam_config_fn, "w"), sort_keys=False)
     
     print()
     print(f"Wrote files {tem_config_fn} and {calib_config_fn}")
     print(f"    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`")
     print(f"    Copy {calib_config_fn} -> `{config.config_drc / calib_config_fn}`")
+    # print(f"    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`")
     print()
     print(f"In `{config.config_drc / 'global.yaml'}`:")
     print(f"    microscope: {tem_name}_tem")
-    # print(f"    camera: {camera_name}_cam")
     print(f"    calibration: {tem_name}_calib")
+    # print(f"    camera: {camera_name}_cam")
     print()
     print(f"Todo: Update the pixelsizes in `{calib_config_fn}`")
     print( "      In real space, pixelsize in nm")
