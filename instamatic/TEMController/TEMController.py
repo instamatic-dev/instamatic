@@ -247,18 +247,18 @@ class Magnification(Lens):
         try:
             self.index += 1
         except ValueError:
-            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
+            print("Error: Cannot change magnficication index (current={}).".format(self.value))
 
     def decrease(self) -> None:
         try:
             self.index -= 1
         except ValueError:
-            print("Error: Cannot go to higher magnification (current={}).".format(self.value))
+            print("Error: Cannot change magnficication index (current={}).".format(self.value))
 
     def get_ranges(self) -> dict:
         """Runs through all modes and fetches all the magnification settings
         possible on the microscope"""
-        return self.tem.getMagnificationRanges()
+        return self._tem.getMagnificationRanges()
 
 
 class GunShift(Deflector):

@@ -99,9 +99,9 @@ class JeolMicroscope(object):
         self._y_direction = 0
 
         self.name = name
-        self.MAGNIFICATIONS      = config.microscope.magnifications
-        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
-        self.CAMERALENGTHS       = config.microscope.cameralengths
+        self.range_diff = config.microscope.range_diff
+        self.range_mag1 = config.microscope.range_mag1
+        self.range_lowmag = config.microscope.range_lowmag
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
@@ -156,47 +156,60 @@ class JeolMicroscope(object):
         current_mode = self.getFunctionMode()
         
         if current_mode == "diff":
-            if value not in self.CAMERALENGTHS:
-                value = min(self.CAMERALENGTHS, key=lambda x: abs(x-value))
-            selector = self.CAMERALENGTHS.index(value)
-            self.eos3.SetSelector(selector) 
-        else:
-            if value not in self.MAGNIFICATIONS:
-                value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
-            
-            # get best mode for magnification
-            for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
-                v = self.MAGNIFICATION_MODES[k]
-                if v <= value:
-                    new_mode = k
-    
-            if current_mode != new_mode:
-                self.setFunctionMode(new_mode)
-    
-            # calculate index
-            selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
-                    
-            # self.eos3.SetMagValue(value)
-            self.eos3.SetSelector(selector) 
+            if value not in self.range_diff:
+                raise IndexError(f"No such camera length: {value}")
+            selector = self.range_diff.index(value)
+        elif current_mode == "lowmag":
+            if value not in self.range_lowmag:
+                raise IndexError(f"No such `lowmag` magnification: {value}")
+            selector = self.range_lowmag.index(value)
+        elif current_mode == "samag":
+            if value not in self.range_samag:
+                raise IndexError(f"No such `samag` magnification: {value}")
+            selector = self.range_samag.index(value)
+        elif current_mode == "mag1":
+            if value not in self.range_mag1:
+                raise IndexError(f"No such `mag1` magnification: {value}")
+            selector = self.range_mag1.index(value)
+        elif current_mode == "mag2":
+            if value not in self.range_mag2:
+                raise IndexError(f"No such `mag2` magnification: {value}")
+            selector = self.range_mag2.index(value)
+        self.eos3.SetSelector(selector) 
 
     def getMagnificationIndex(self) -> int:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
-        try:
-            if current_mode == "diff":
-                return self.CAMERALENGTHS.index(value) + 1
-            else:
-                return self.MAGNIFICATIONS.index(value)
-        except Exception:
-            raise ValueError("getMagnificationIndex - invalid magnification: {}".format(value)) 
+        
+        if current_mode =="diff":
+            selector = self.range_diff.index(value)
+        elif current_mode =="lowmag":
+            selector = self.range_lowmag.index(value)
+        elif current_mode =="samag":
+            selector = self.range_samag.index(value)
+        elif current_mode =="mag1":
+            selector = self.range_mag1.index(value)
+        elif current_mode =="mag2":
+            selector = self.range_mag2.index(value)
+
+        return selector
 
     def setMagnificationIndex(self, index: int):
         current_mode = self.getFunctionMode()
 
-        if current_mode == "diff":
-            value = self.CAMERALENGTHS[index]
-        else:
-            value = self.MAGNIFICATIONS[index]
+        if index < 0:
+            raise ValueError(f"Cannot lower magnification (index={index})")
+
+        if current_mode =="diff":
+            value = self.range_diff[index]
+        elif current_mode =="lowmag":
+            value = self.range_lowmag[index]
+        elif current_mode =="samag":
+            value = self.range_samag[index]
+        elif current_mode =="mag1":
+            value = self.range_mag1[index]
+        elif current_mode =="mag2":
+            value = self.range_mag2[index]
 
         self.setMagnification(value)
 
