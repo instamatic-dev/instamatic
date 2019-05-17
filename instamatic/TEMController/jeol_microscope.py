@@ -99,13 +99,19 @@ class JeolMicroscope(object):
         self._y_direction = 0
 
         self.name = name
-        self.range_diff = config.microscope.range_diff
-        self.range_mag1 = config.microscope.range_mag1
-        self.range_lowmag = config.microscope.range_lowmag
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
 
+        for mode in self.FUNCTION_MODES:
+            attrname = f"range_{mode}"
+            try:
+                rng = getattr(config.microscope, attrname)
+            except AttributeError:
+                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+            else:
+                setattr(self, attrname, rng)
+        
         self.ZERO = ZERO
         self.MAX = MAX
         self.MIN = MIN
@@ -200,18 +206,7 @@ class JeolMicroscope(object):
         if index < 0:
             raise ValueError(f"Cannot lower magnification (index={index})")
 
-        if current_mode =="diff":
-            value = self.range_diff[index]
-        elif current_mode =="lowmag":
-            value = self.range_lowmag[index]
-        elif current_mode =="samag":
-            value = self.range_samag[index]
-        elif current_mode =="mag1":
-            value = self.range_mag1[index]
-        elif current_mode =="mag2":
-            value = self.range_mag2[index]
-
-        self.setMagnification(value)
+        self.eos3.SetSelector(index) 
 
     def increaseMagnificationIndex(self) -> int:
         """Increment the magnification index, status==0 on success"""

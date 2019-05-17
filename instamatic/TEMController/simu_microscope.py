@@ -12,7 +12,7 @@ NTRLMAPPING = {
    "CLS" : 7,
    "IS1" : 8,
    "IS2" : 9,
-   "SPOT?" : 10,
+   "SPOT" : 10,
    "PLA" : 11,
    "OLS" : 12,
    "ILS" : 13
@@ -68,12 +68,18 @@ class SimuMicroscope(object):
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
         self.name = name
-        self.MAGNIFICATIONS      = config.microscope.magnifications
-        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
-        self.CAMERALENGTHS       = config.microscope.cameralengths
 
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
+
+        for mode in self.FUNCTION_MODES:
+            attrname = f"range_{mode}"
+            try:
+                rng = getattr(config.microscope, attrname)
+            except AttributeError:
+                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+            else:
+                setattr(self, attrname, rng)
 
         self.ZERO = ZERO
         self.MAX = MAX
@@ -121,24 +127,6 @@ class SimuMicroscope(object):
             return self.Magnification_value
 
     def setMagnification(self, value: int):
-        if value not in self.MAGNIFICATIONS:
-            value = min(self.MAGNIFICATIONS, key=lambda x: abs(x-value))
-        
-        # get best mode for magnification
-        for k in sorted(self.MAGNIFICATION_MODES.keys(), key=self.MAGNIFICATION_MODES.get): # sort by values
-            v = self.MAGNIFICATION_MODES[k]
-            if v <= value:
-                new_mode = k
-
-        current_mode = self.getFunctionMode()
-        if current_mode != new_mode:
-            self.setFunctionMode(new_mode)
-
-        # calculate index
-        ## i = 0-24 for lowmag
-        ## i = 0-29 for mag1
-        selector = self.MAGNIFICATIONS.index(value) - self.MAGNIFICATIONS.index(self.MAGNIFICATION_MODES[new_mode])
-                
         if self.getFunctionMode() == "diff":
             self.Magnification_value_diff = value
         else:
@@ -146,10 +134,38 @@ class SimuMicroscope(object):
 
     def getMagnificationIndex(self) -> int:
         value = self.getMagnification()
-        return self.MAGNIFICATIONS.index(value)
+        current_mode = self.getFunctionMode()
+        
+        if current_mode =="diff":
+            selector = self.range_diff.index(value)
+        elif current_mode =="lowmag":
+            selector = self.range_lowmag.index(value)
+        elif current_mode =="samag":
+            selector = self.range_samag.index(value)
+        elif current_mode =="mag1":
+            selector = self.range_mag1.index(value)
+        elif current_mode =="mag2":
+            selector = self.range_mag2.index(value)
+
+        return selector
 
     def setMagnificationIndex(self, index: int):
-        value = self.MAGNIFICATIONS[index]
+        current_mode = self.getFunctionMode()
+
+        if index < 0:
+            raise ValueError(f"Cannot lower magnification (index={index})")
+
+        if current_mode =="diff":
+            value = self.range_diff[index]
+        elif current_mode =="lowmag":
+            value = self.range_lowmag[index]
+        elif current_mode =="samag":
+            value = self.range_samag[index]
+        elif current_mode =="mag1":
+            value = self.range_mag1[index]
+        elif current_mode =="mag2":
+            value = self.range_mag2[index]
+
         self.setMagnification(value)
 
     def getGunShift(self) -> Tuple[int, int]:

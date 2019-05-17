@@ -161,9 +161,14 @@ class FEIMicroscope(object):
 
         self.FunctionMode_value = 0
 
-        self.MAGNIFICATIONS      = config.microscope.magnifications
-        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
-        self.CAMERALENGTHS       = config.microscope.cameralengths
+        for mode in self.FUNCTION_MODES.values():
+            attrname = f"range_{mode}"
+            try:
+                rng = getattr(config.microscope, attrname)
+            except AttributeError:
+                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+            else:
+                setattr(self, attrname, rng)
         
         self.goniostopped = self.stage.Status
         

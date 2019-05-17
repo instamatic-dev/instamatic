@@ -7,29 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from instamatic import config
-NTRLMAPPING = {
-   "GUN1" : 0,
-   "GUN2" : 1,
-   "CLA1" : 2,
-   "CLA2" : 3,
-   "SHIFT" : 4,
-   "TILT" : 5,
-   "ANGLE" : 6,
-   "CLS" : 7,
-   "IS1" : 8,
-   "IS2" : 9,
-   "SPOT?" : 10,
-   "PLA" : 11,
-   "OLS" : 12,
-   "ILS" : 13
-}
 
 FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
 
-# constants for FEI Hex value, (copied from JEOL now;) needs to be confirmed
-ZERO = 32768
-MAX = 65535
-MIN = 0
 
 class FEISimuMicroscope(object):
     """docstring for FEI microscope"""
@@ -76,16 +56,14 @@ class FEISimuMicroscope(object):
         self.DiffractionShift_x = random.randint(MIN, MAX)
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
-        self.name = name
-        self.MAGNIFICATIONS      = config.microscope.magnifications
-        self.MAGNIFICATION_MODES = config.microscope.magnification_modes
-        self.CAMERALENGTHS       = config.microscope.cameralengths
-
-        self.NTRLMAPPING = NTRLMAPPING
-
-        self.ZERO = ZERO
-        self.MAX = MAX
-        self.MIN = MIN
+        for mode in self.FUNCTION_MODES:
+            attrname = f"range_{mode}"
+            try:
+                rng = getattr(config.microscope, attrname)
+            except AttributeError:
+                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+            else:
+                setattr(self, attrname, rng)
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
         self.Magnification_value = 2500
@@ -360,15 +338,18 @@ class FEISimuMicroscope(object):
         return self.objectiveminilens_value
     
     def getMagnificationIndex(self):
-        try:
-            value = self.getMagnification()
-            return self.MAGNIFICATIONS.index(value)
-        except ValueError:
-            pass
+        if self.tom.Projection.Mode != 1:
+            ind = self.proj.MagnificationIndex
+            return ind
+        else:
+            ind = self.proj.CameraLengthIndex
+            return ind
 
     def setMagnificationIndex(self, index):
-        value = self.MAGNIFICATIONS[index]
-        self.setMagnification(value)
+        if self.tom.Projection.Mode != 1:
+            self.proj.MagnificationIndex = index
+        else:
+            self.proj.CameraLengthIndex = index
     
     def getBrightness(self):
         ## returned value is the DIAMETER of the illuminated area
@@ -379,5 +360,18 @@ class FEISimuMicroscope(object):
         
     def getFunctionMode(self):
         """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
-        mode = self.FunctionMode_value
-        return FUNCTION_MODES[mode]
+        mode = self.tom.Projection.Mode
+        if mode == 0:
+            return "LM"
+        elif mode == 1:
+            return "LAD"
+        else:
+            return "Unknown"
+        
+    def setFunctionMode(self, m):
+        if m == "diff":
+            self.tom.Projection.Mode = 1
+            print("Set to diffraction.")
+        elif m == "mag1":
+            self.tom.Projection.Mode = 0
+            print("Set to imaging.")
