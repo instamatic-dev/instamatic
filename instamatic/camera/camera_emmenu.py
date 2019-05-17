@@ -226,15 +226,20 @@ class CameraEMMENU(object):
         path = Path(path)
         drc_index = self.drc_index
 
-        if stop_index >= start_index:
+        if stop_index <= start_index:
             raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
 
-        for i, image_index in enumerate(range(start_index, stop_index+1)):
+        for i, image_index in enumerate(range(start_index, stop_index)):
             p = self.getImageByIndex(image_index, drc_index)
+
             fn = str(path / f"{i:04d}.tiff")
             print(f"Image #{image_index} -> {fn}")
+            
+            # TODO: wrap writeTiff in try/except
+            # writeTiff causes vague error if image does not exist
+
             self.writeTiff(p, fn)
-    
+
             if clear_buffer:
                 # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
                 self._emi.DeleteImage(p)  # also clears from buffer
