@@ -28,18 +28,39 @@ class Experiment(object):
         self.obtain_track = obtain_track  # do not go to diff mode to measure crystal track
 
         self.track = False
-        if track:
+        if track and track.endswith(".txt"):
             from scipy.interpolate import interp1d
             import numpy as np
             arr = np.loadtxt(track)
             track_a = arr[:,4]
             track_y = arr[:,2]
-            print(f"Loading tracking file: {track}")
-            print(f"Interpolating a={track_a.min():.1f} -> a={track_a.max():.1f} (+extrapolated)")
+            print(f"(autotracking) Loading tracking file: {track}")
+            print(f"(autotracking) Interpolating a={track_a.min():.1f} -> a={track_a.max():.1f} (+extrapolated)")
             self.track = True
             self.track_interval = 2
             self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
             self.track_relative = track_relative
+            self.track_routine = 1
+        elif track and track.endswith(".pickle"):
+            import pickle
+            print(f"(autotracking) Loading tracking file: {track}")
+            dct = pickle.load(open(track, "r"))
+
+            self.track_func = dct["track_y_func"]
+            self.x_offset = dct["x_offset"]
+            self.start_x = dct["x_center"]
+            self.start_x = dct["y_center"]
+            self.start_z = dct["z_pos"]
+            self.start_angle = dct["angle_min"]
+            self.target_angle = dct["angle_max"]
+
+            self.track = True
+            self.track_interval = 2
+            self.track_relative = True
+            self.track_routine = 2
+
+        elif track:
+            raise IOError("I don't know how to read file `{track}`")
 
     def get_ready(self):
         # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
@@ -63,6 +84,17 @@ class Experiment(object):
     def start_collection(self, target_angle: float):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        if self.track and self.track_routine == 2:
+            target_angle = self.target_angle
+            start_angle = self.start_angle
+
+            y_offset = int(self.track_func(start_angle))
+            x_offset = sefl.x_offset
+
+            print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
+            self.stageposition.set(a=self.start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
+            print(f"(autotracking) Overriding angle range: {self.start_angle:.0f} -> {target_angle:.0f}")
+
         self.stage_positions = []
         interval = 1.0
 
@@ -71,13 +103,14 @@ class Experiment(object):
 
         self.ctrl.beamblank_off()
 
-        if self.track and self.track_relative:
-            track_y_start = int(self.track_func(start_angle)) 
-
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
         start_index = 1
         # start_index = self.emmenu.get_next_empty_image_index()
+
+        if self.track and self.tracking_routine == 1 and self.track_relative:
+            track_y_start = int(self.track_func(start_angle))
+            self.ctrl.stageposition.set(y=track_y_start)
 
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
