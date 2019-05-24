@@ -44,19 +44,19 @@ class Experiment(object):
         elif track and track.endswith(".pickle"):
             import pickle
             print(f"(autotracking) Loading tracking file: {track}")
-            dct = pickle.load(open(track, "r"))
+            dct = pickle.load(open(track, "rb"))
 
-            self.track_func = dct["track_y_func"]
+            self.track_func = dct["y_offset"]
             self.x_offset = dct["x_offset"]
             self.start_x = dct["x_center"]
-            self.start_x = dct["y_center"]
+            self.start_y = dct["y_center"]
             self.start_z = dct["z_pos"]
             self.start_angle = dct["angle_min"]
             self.target_angle = dct["angle_max"]
 
             self.track = True
             self.track_interval = 2
-            self.track_relative = True
+            self.track_relative = False
             self.track_routine = 2
 
         elif track:
@@ -89,10 +89,10 @@ class Experiment(object):
             start_angle = self.start_angle
 
             y_offset = int(self.track_func(start_angle))
-            x_offset = sefl.x_offset
+            x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.stageposition.set(a=self.start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
+            self.ctrl.stageposition.set(a=self.start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
             print(f"(autotracking) Overriding angle range: {self.start_angle:.0f} -> {target_angle:.0f}")
 
         self.stage_positions = []
@@ -107,10 +107,6 @@ class Experiment(object):
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
         start_index = 1
         # start_index = self.emmenu.get_next_empty_image_index()
-
-        if self.track and self.tracking_routine == 1 and self.track_relative:
-            track_y_start = int(self.track_func(start_angle))
-            self.ctrl.stageposition.set(y=track_y_start)
 
         self.ctrl.stageposition.set(a=target_angle, wait=False)
 
@@ -133,11 +129,7 @@ class Experiment(object):
 
                 # tracking routine
                 if self.track and (n % self.track_interval == 0):
-                    if self.track_relative:
-                        shift_y = int(self.track_func(a)) - track_y_start
-                        target_y = start_position.y + shift_y
-                    else:
-                        target_y = int(self.track_func(a))
+                    target_y = start_position.y - int(self.track_func(a))
                     self.ctrl.stageposition.set(y=target_y, wait=False)
                     print(f"Tracking -> set y={target_y}")
 
@@ -171,9 +163,11 @@ class Experiment(object):
         rotation_speed = (end_angle-start_angle) / total_time
 
         exposure_time = self.emmenu.get_exposure()
-        timestamps = self.emmenu.get_timestamps(start_index, end_index)
-        acq_out = self.path / "acquisition_time.png"
-        timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out, plot=False)
+        
+        if not self.obtain_track:
+            timestamps = self.emmenu.get_timestamps(start_index, end_index)
+            acq_out = self.path / "acquisition_time.png"
+            timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out, plot=False)
 
         print(f"\nRotated {total_angle:.2f} degrees from {start_angle:.2f} to {end_angle:.2f}")
         print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*start_position))
@@ -203,9 +197,10 @@ class Experiment(object):
             print(f"Ending angle: {end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {end_angle-start_angle:.2f} degrees", file=f)
             print(f"Rotation speed: {rotation_speed:.3f} degrees/s", file=f)
-            print(f"Exposure Time: {timings.exposure_time:.3f} s", file=f)
-            print(f"Acquisition time: {timings.acquisition_time:.3f} s", file=f)
-            print(f"Overhead time: {timings.overhead:.3f} s", file=f)
+            if not self.obtain_track:
+                print(f"Exposure Time: {timings.exposure_time:.3f} s", file=f)
+                print(f"Acquisition time: {timings.acquisition_time:.3f} s", file=f)
+                print(f"Overhead time: {timings.overhead:.3f} s", file=f)
             print(f"Total time: {total_time:.3f} s", file=f)
             print(f"Wavelength: {wavelength} Angstrom", file=f)
             print(f"Spot Size: {spotsize}", file=f)
