@@ -295,10 +295,13 @@ class CameraEMMENU(object):
 
     def start_liveview(self, delay=3.0) -> None:
         print("Start live view")
-        self._vp.StartContinuous()
-
-        # sleep for a few seconds to ensure live view is running
-        time.sleep(delay)
+        try:
+            self._vp.StartContinuous()
+        except comtypes.COMError as e:
+            print(f"{e.details[1]}: {e.details[0]}")
+        else:
+            # sleep for a few seconds to ensure live view is running
+            time.sleep(delay)
 
     def set_exposure(self, exposure_time: int) -> None:
         """Set exposure time in ms"""
