@@ -163,9 +163,10 @@ class CalibStage(object):
         r, t = fit_affine_transformation(shifts, stagepos)
 
         if not camera_dimensions:
-            camera_dimensions = header["ImageCameraDimensions"]
-        else:
-            raise NameError("name 'camera_dimensions' is not defined.")
+            if header:
+                camera_dimensions = header["ImageCameraDimensions"]
+            else:
+                raise NameError("name 'camera_dimensions' is not defined.")
 
         c = cls(rotation=r, camera_dimensions=camera_dimensions, translation=t, reference_position=reference_position)
         c.data_shifts = shifts
@@ -180,7 +181,7 @@ class CalibStage(object):
         try:
             return pickle.load(open(fn, "r"))
         except IOError as e:
-            prog = "instamatic.calibrate_stage_lowmag"
+            prog = "instamatic.calibrate_stage_lowmag/mag1"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
 
     def to_file(self, fn=CALIB_STAGE_LOWMAG):
@@ -355,7 +356,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
 def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not input("\n >> Go too 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
+        if confirm and not input("\n >> Go to 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
             return
         else:
             calib = calibrate_stage_lowmag_live(ctrl, save_images=True)
@@ -375,10 +376,10 @@ Program to calibrate lowmag (100x) of microscope
 
 Usage: 
 prepare
-    instamatic.calibrate100x
+    instamatic.calibrate_lowmag
         To start live calibration routine on the microscope
 
-    instamatic.calibrate100x CENTER_IMAGE (CALIBRATION_IMAGE ...)
+    instamatic.calibrate_lowmag CENTER_IMAGE (CALIBRATION_IMAGE ...)
        To perform calibration using pre-collected images
 """)
         exit()
