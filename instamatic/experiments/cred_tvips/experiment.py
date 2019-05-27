@@ -129,7 +129,7 @@ class Experiment(object):
 
                 # tracking routine
                 if self.track and (n % self.track_interval == 0):
-                    target_y = start_position.y - int(self.track_func(a))
+                    target_y = self.start_y + int(self.track_func(a))
                     self.ctrl.stageposition.set(y=target_y, wait=False)
                     print(f"Tracking -> set y={target_y}")
 

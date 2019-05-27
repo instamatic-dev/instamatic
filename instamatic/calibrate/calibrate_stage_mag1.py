@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, time
 import numpy as np
 
 from instamatic.tools import *
@@ -44,7 +44,7 @@ def plot_it(arr1, arr2, params):
     plt.show()
 
 
-def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True, save_images=False, **kwargs):
+def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True, save_images=False, **kwargs):
     """
     Calibrate pixel->stageposition coordinates live on the microscope
 
@@ -70,8 +70,10 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True,
 
     if minimize_backlash:
         x, y = ctrl.stageposition.xy
-        ctrl.stageposition.set(x=x-stepsize, y=y-stepsize)
+        ctrl.stageposition.set(x=x-stepsize*1, y=y-stepsize*1)
+        time.sleep(settle_delay)
         ctrl.stageposition.set(x=x, y=y)
+        time.sleep(settle_delay)
 
     outfile = "calib_start" if save_images else None
 
@@ -79,6 +81,11 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True,
     #  because this will be our anchor point
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
     stage_cent = ctrl.stageposition.get()
+
+    cam_dimensions = h_cent["ImageCameraDimensions"]
+    bin_x, bin_y = cam_dimensions / np.array(img_cent.shape)
+    assert bin_x == bin_y, "Binsizes do not match {bin_x} != {bin_y}"
+    binsize = int(bin_x)
 
     x_cent = stage_cent.x
     y_cent = stage_cent.y
@@ -100,14 +107,18 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True,
     y_range = np.arange(-n, n+1) * stepsize
 
     if minimize_backlash:
-        ctrl.stageposition.x = x_cent + x_range[0] - stepsize
-        ctrl.stageposition.y = y_cent + y_range[0] - stepsize
+        xtarget = x_cent + x_range[0]
+        ytarget = y_cent + y_range[0]
+        ctrl.stageposition.set(x=xtarget-stepsize*1, y=ytarget-stepsize*1)
+        time.sleep(settle_delay)
+
         print("(minimize_backlash) Overshoot a bit in XY: ", ctrl.stageposition.xy)
 
     for dx in x_range:
         
         for dy in y_range:
             ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
+            time.sleep(settle_delay)
             stage = ctrl.stageposition.get()
 
             print()
@@ -132,11 +143,14 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True,
             i += 1
 
         if minimize_backlash:
-            ctrl.stageposition.y = y_cent + y_range[0] - stepsize
+            ytarget = y_cent + y_range[0]
+            ctrl.stageposition.set(y=ytarget-stepsize*1)
+            time.sleep(settle_delay)
             print("(minimize_backlash) Overshoot a bit in Y: ", ctrl.stageposition.xy)
     
     print(" >> Reset to center")
     ctrl.stageposition.set(x=x_cent, y=y_cent)
+    time.sleep(settle_delay)
     # ctrl.stageposition.reset_xy()
 
     # correct for binsize, store as binsize=1
@@ -155,12 +169,13 @@ def calibrate_mag1_live(ctrl, gridsize=3, stepsize=2000, minimize_backlash=True,
     params = fit_affine_transformation(shifts, stagepos, as_params=True)
     angle = params["angle"].value
     print("Angle =", angle)
+    print("Binsize:", binsize)
 
     plot_it(shifts, stagepos, params)
 
     # return angle
 
-    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=img.shape)
+    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()
 
     return c
@@ -189,9 +204,8 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
     # x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
-    
-    x_cent=-6049.0
-    y_cent= 19537.4
+    x_cent=40943.0
+    y_cent=-6258.4
 
     xy_cent = np.array([x_cent, y_cent])
     print("Center:", center_fn)
@@ -208,15 +222,31 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     # x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     # stagepos_p = np.array(zip(x_grid.flatten(), y_grid.flatten()))
 
-    stage = ( (-8116.3, 21474.9),
-              (-6047.7, 21399.9),
-              (-4116.8, 21541.6),
-              (-8183.8, 19399.9),
-              (-6049.0, 19537.4),
-              (-4116.8, 19405.5),
-              (-8183.8, 17468.0),
-              (-6049.0, 17540.2),
-              (-4116.8, 17401.3) )
+    stage = ((30943.5, -16255.5),
+    (30874.701171875, -11258.2998046875),
+    (31009.701171875, -6256.89990234375),
+    (30876.0, -1256.9000244140625),
+    (31011.0, 3744.400146484375), 
+    (35943.5, -16256.900390625),
+    (35874.6015625, -11256.900390625),
+    (36011.0, -6256.89990234375),
+    (35874.6015625, -1256.9000244140625),
+    (36012.30078125, 3743.0), 
+    (40943.40234375, -16252.7001953125),
+    (40943.40234375, -11256.900390625),
+    (40943.40234375, -6258.30029296875),
+    (40943.40234375, -1256.9000244140625),
+    (40943.40234375, 3744.400146484375),
+    (45943.40234375, -16255.5),
+    (45943.40234375, -11258.2998046875),
+    (45943.40234375, -6255.5),
+    (45943.40234375, -1259.7000732421875),
+    (45943.40234375, 3745.800048828125), 
+    (50943.40234375, -16255.5),
+    (50943.40234375, -11258.2998046875),
+    (50943.40234375, -6256.89990234375),
+    (50943.40234375, -1256.9000244140625),
+    (50943.40234375, 3743.0)) 
 
     for i, fn in enumerate(other_fn):
         img, h = read_image(fn)

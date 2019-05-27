@@ -158,6 +158,13 @@ class CalibStage(object):
         """
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
 
+    def pixelshift_to_stageshift(self, pixelshift, binsize=1):
+        """Convert from a pixel distance to a stage shift"""
+        dx, dy = pixelshift
+        dx = (dx*binsize) + self.center_pixel[0]
+        dy = (dy*binsize) + self.center_pixel[1]
+        return self.pixelcoord_to_stagepos((dx, dy), image_pos=(0, 0))
+
     @classmethod
     def from_data(cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None):
         r, t = fit_affine_transformation(shifts, stagepos)
@@ -179,7 +186,7 @@ class CalibStage(object):
     @classmethod
     def from_file(cls, fn=CALIB_STAGE_LOWMAG):
         try:
-            return pickle.load(open(fn, "r"))
+            return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_stage_lowmag/mag1"
             raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
