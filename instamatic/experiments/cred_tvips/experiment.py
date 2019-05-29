@@ -27,8 +27,9 @@ class Experiment(object):
         
         self.obtain_track = obtain_track  # do not go to diff mode to measure crystal track
 
+        track = Path(track)
         self.track = False
-        if track and track.endswith(".txt"):
+        if track and track.suffix == ".txt":
             from scipy.interpolate import interp1d
             import numpy as np
             arr = np.loadtxt(track)
@@ -41,7 +42,7 @@ class Experiment(object):
             self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
             self.track_relative = track_relative
             self.track_routine = 1
-        elif track and track.endswith(".pickle"):
+        elif track and track.suffix == ".pickle":
             import pickle
             print(f"(autotracking) Loading tracking file: {track}")
             dct = pickle.load(open(track, "rb"))
@@ -51,8 +52,9 @@ class Experiment(object):
             self.start_x = dct["x_center"]
             self.start_y = dct["y_center"]
             self.start_z = dct["z_pos"]
-            self.start_angle = dct["angle_min"]
-            self.target_angle = dct["angle_max"]
+
+            self.min_angle = dct["angle_min"]
+            self.max_angle = dct["angle_max"]
 
             self.track = True
             self.track_interval = 2
@@ -85,15 +87,24 @@ class Experiment(object):
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if self.track and self.track_routine == 2:
-            target_angle = self.target_angle
-            start_angle = self.start_angle
+            current_angle = self.ctrl.stageposition.a
 
+            min_angle = self.min_angle
+            max_angle = self.max_angle
+
+            # find start angle closest to current angle
+            if abs(min_angle - current_angle) > abs(max_angle - current_angle):
+                start_angle, target_angle = max_angle, min_angle
+            else:
+                start_angle, target_angle = min_angle, max_angle
+
+            print(f"(autotracking) Overriding angle range: {start_angle:.0f} -> {target_angle:.0f}")
+            
             y_offset = int(self.track_func(start_angle))
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stageposition.set(a=self.start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
-            print(f"(autotracking) Overriding angle range: {self.start_angle:.0f} -> {target_angle:.0f}")
+            self.ctrl.stageposition.set(a=start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
 
         self.stage_positions = []
         interval = 1.0
