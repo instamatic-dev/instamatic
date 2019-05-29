@@ -20,8 +20,8 @@ class ExperimentalTVIPS(LabelFrame):
         self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0)
         self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
         
-        InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
-        InvertAngleButton.grid(row=4, column=2, sticky="EW")
+        self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
+        self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
 
         # defocus button
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
@@ -58,7 +58,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.c_obtain_track = Checkbutton(frame, text="Obtain crystal track in image mode", variable=self.var_obtain_track)
         self.c_obtain_track.grid(row=3, column=1, sticky="W")
 
-        self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking)
+        self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking_file)
         self.e_tracking.grid(row=4, column=1, sticky="EW")
         self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_tracking)
         self.BrowseTrackButton.grid(row=4, column=2, sticky="EW")
@@ -78,6 +78,13 @@ class ExperimentalTVIPS(LabelFrame):
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
+
+        frame.pack(fill="x", padx=10, pady=10)
+
+        frame = Frame(self)
+
+        self.SerialButton = Button(frame, text="Serial acquisition", command=self.serial_collection)
+        self.SerialButton.grid(row=1, column=0, sticky="EW")
 
         frame.pack(fill="x", padx=10, pady=10)
 
@@ -113,7 +120,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
 
-        self.var_tracking = StringVar(value="")
+        self.var_tracking_file = StringVar(value="")
         self.var_obtain_track = BooleanVar(value=False)
         self.var_track_relative = BooleanVar(value=True)
 
@@ -125,16 +132,34 @@ class ExperimentalTVIPS(LabelFrame):
         angle = self.var_target_angle.get()
         self.var_target_angle.set(-angle)
 
-    def prime_collection(self):
+    def disable_ui(self):
+        self.InvertAngleButton.config(state=DISABLED)
         self.GetReadyButton.config(state=DISABLED)
         self.AcquireButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)
+        self.SerialButton.config(state=DISABLED)
         self.e_target_angle.config(state=DISABLED)
         self.SearchButton.config(state=DISABLED)
         self.FocusButton.config(state=DISABLED)
         self.GetImageButton.config(state=DISABLED)
         self.b_start_liveview.config(state=DISABLED)
         self.b_stop_liveview.config(state=DISABLED)
+
+    def enable_ui(self):
+        self.InvertAngleButton.config(state=NORMAL)
+        self.GetReadyButton.config(state=NORMAL)
+        self.AcquireButton.config(state=DISABLED)
+        self.FinalizeButton.config(state=DISABLED)
+        self.SerialButton.config(state=NORMAL)
+        self.e_target_angle.config(state=NORMAL)
+        self.SearchButton.config(state=NORMAL)
+        self.FocusButton.config(state=NORMAL)
+        self.GetImageButton.config(state=NORMAL)
+        self.b_start_liveview.config(state=NORMAL)
+        self.b_stop_liveview.config(state=NORMAL)
+
+    def prime_collection(self):
+        self.disable_ui()
         # self.e_target_angle.config(state=DISABLED)
         params = self.get_params(task="get_ready")
         self.q.put(("cred_tvips", params))
@@ -146,16 +171,14 @@ class ExperimentalTVIPS(LabelFrame):
         self.triggerEvent.set()
 
     def stop_collection(self):
-        self.GetReadyButton.config(state=NORMAL)
-        self.AcquireButton.config(state=DISABLED)
-        self.FinalizeButton.config(state=DISABLED)
-        self.e_target_angle.config(state=NORMAL)
-        self.SearchButton.config(state=NORMAL)
-        self.FocusButton.config(state=NORMAL)
-        self.GetImageButton.config(state=NORMAL)
-        self.b_start_liveview.config(state=NORMAL)
-        self.b_stop_liveview.config(state=NORMAL)
+        self.enable_ui()
         params = self.get_params(task="stop")
+        self.q.put(("cred_tvips", params))
+        self.triggerEvent.set()
+
+    def serial_collection(self):
+        self.disable_ui()
+        params = self.get_params(task="serial")
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
 
@@ -164,12 +187,12 @@ class ExperimentalTVIPS(LabelFrame):
         if not fn:
             return
         fn = Path(fn).absolute()
-        self.var_tracking.set(fn)
+        self.var_tracking_file.set(fn)
         return fn
 
     def get_params(self, task=None):
         params = { "target_angle": self.var_target_angle.get(),
-                   "tracking": self.var_tracking.get(),
+                   "tracking_file": self.var_tracking_file.get(),
                    "obtain_track": self.var_obtain_track.get(),
                    "track_relative": self.var_track_relative.get(),
                    "task": task }
@@ -241,7 +264,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     task = kwargs["task"]
 
     target_angle = kwargs["target_angle"]
-    tracking = kwargs["tracking"]
+    tracking_file = kwargs["tracking_file"]
     obtain_track = kwargs["obtain_track"]
     track_relative = kwargs["track_relative"]
 
@@ -251,11 +274,18 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
                                                           log=controller.log, 
-                                                          track=tracking, obtain_track=obtain_track,
+                                                          track=tracking_file, obtain_track=obtain_track,
                                                           track_relative=track_relative)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
+    elif task == "serial":
+        expdir = controller.module_io.get_new_experiment_directory()
+        expdir.mkdir(exist_ok=True, parents=True)
+
+        controller.cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
+                                                                log=controller.log, tracking_file=tracking_file)
+        controller.cred_tvips_exp.run()
     elif task == "stop":
         pass
 

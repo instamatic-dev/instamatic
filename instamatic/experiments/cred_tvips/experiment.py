@@ -5,6 +5,46 @@ from pathlib import Path
 from instamatic.tools import get_acquisition_time
 
 
+class SerialExperiment(object):
+    """docstring for SerialExperiment"""
+    def __init__(self, ctrl, path: str=None, log=None, tracking_file=None):
+        super().__init__()
+        
+        self.tracking_file = Path(tracking_file)
+        self.tracking_base_drc = self.tracking_file.parent
+        self.tracks = open(tracking_file, "r")
+        self.log = log
+        self.path = path
+        self.ctrl = ctrl
+
+    def run(self):
+        for track in self.tracks:
+            track = track.strip()
+            if not track:
+                continue
+
+            track = Path(track)
+            name = track.name
+            stem = track.stem
+
+            out_path = self.path / stem
+            out_path.mkdir(exist_ok=True, parents=True)
+
+            print()
+            print(f"Track: {stem}")
+            print(f"Track file: {self.tracking_base_drc / name}")
+            print(f"Data directory: {out_path}")
+            print()
+
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track)
+
+            exp.get_ready()
+
+            exp.start_collection(target_angle=0)
+
+            print("--")
+
+
 class Experiment(object):
     """Class to control data collection through EMMenu to collect
     continuous rotation electron diffraction data
