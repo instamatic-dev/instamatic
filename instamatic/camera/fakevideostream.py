@@ -29,6 +29,17 @@ class VideoStream(threading.Thread):
 
         self.frame, scale = autoscale(np.ones(self.dimensions), maxdim=self.display_dim)
 
+    def __getattr__(self, attrname):
+        """Pass attribute lookups to self.cam to prevent AttributeError"""
+        try:
+            return object.__getattribute__(self, attrname)
+        except AttributeError as e:
+            reraise_on_fail = e
+            try:
+                return getattr(self.cam, attrname)
+            except AttributeError:
+                raise reraise_on_fail
+
     def getImage(self, exposure=None, binsize=None):
         frame = self.cam.getImage(exposure=exposure, binsize=binsize)
 

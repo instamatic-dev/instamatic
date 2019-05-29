@@ -77,3 +77,44 @@ class CameraSimu(object):
         name = self.getName()
         msg = f"Connection to camera '{name}' released" 
         logger.info(msg)
+
+    #### Mimic EMMENU API
+
+    def set_autoincrement(self, value):
+        pass
+
+    def get_autoincrement(self):
+        return True
+
+    def set_image_index(self, value):
+        pass
+
+    def get_image_index(self):
+        return 0
+
+    def stop_record(self) -> None:
+        pass
+
+    def start_record(self) -> None:
+        pass
+
+    def stop_liveview(self) -> None:
+        pass
+
+    def start_liveview(self, delay=3.0) -> None:
+        pass
+
+    def set_exposure(self, exposure_time: int) -> None:
+        pass
+
+    def get_exposure(self) -> int:
+        return 400
+
+    def get_timestamps(self, start_index, end_index):
+        return list(range(20))
+
+    def getBinning(self):
+        return (1, 1)
+
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
+        pass

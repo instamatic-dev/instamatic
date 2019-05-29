@@ -80,6 +80,17 @@ class VideoStream(threading.Thread):
 
         self.start()
 
+    def __getattr__(self, attrname):
+        """Pass attribute lookups to self.cam to prevent AttributeError"""
+        try:
+            return object.__getattribute__(self, attrname)
+        except AttributeError as e:
+            reraise_on_fail = e
+            try:
+                return getattr(self.cam, attrname)
+            except AttributeError:
+                raise reraise_on_fail
+
     def start(self):
         self.grabber.start_loop()
 
