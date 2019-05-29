@@ -3,6 +3,8 @@ import time
 from instamatic import config, version
 from pathlib import Path
 from instamatic.tools import get_acquisition_time
+import time
+from instamatic.formats import write_tiff
 
 
 class SerialExperiment(object):
@@ -18,12 +20,15 @@ class SerialExperiment(object):
         self.ctrl = ctrl
 
     def run(self):
+        t0 = time.clock()
+        n_measured = 0
+
         for track in self.tracks:
             track = track.strip()
             if not track:
                 continue
 
-            track = Path(track)
+            track = self.tracking_base_drc / track
             name = track.name
             stem = track.stem
 
@@ -36,13 +41,21 @@ class SerialExperiment(object):
             print(f"Data directory: {out_path}")
             print()
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track)
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, obtain_track=False)
 
             exp.get_ready()
 
             exp.start_collection(target_angle=0)
 
+            n_measured += 1
+
             print("--")
+            time.sleep(3)
+
+        t1 = time.clock()
+        dt = t1 - t0
+        print("Serial experiment finished")
+        print(f"Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal")
 
 
 class Experiment(object):
@@ -62,6 +75,8 @@ class Experiment(object):
         self.ctrl = ctrl
         self.emmenu = ctrl.cam
         self.path = Path(path)
+
+        self.defocus_offset = 1500
 
         self.logger = log
         
@@ -106,8 +121,11 @@ class Experiment(object):
 
     def get_ready(self):
         # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
-        self.emmenu.set_autoincrement(False)
-        self.emmenu.set_image_index(0)
+        try:
+            self.emmenu.set_autoincrement(False)
+            self.emmenu.set_image_index(0)
+        except Exception as e:
+            print(e)
 
         if not self.obtain_track:
             self.ctrl.beamblank_on()
@@ -152,6 +170,20 @@ class Experiment(object):
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position.a
 
+        ### Center crystal position
+        self.ctrl.difffocus.defocus(self.defocus_offset)
+        self.ctrl.beamblank_off()
+
+        input("Center aperture and press <ENTER> to measure crystal ")
+
+        ## cannot do this while lieview is running
+        # img1 = self.ctrl.getRawImage()
+        # write_tiff(self.path / "image_before.tiff", img1)
+
+        self.ctrl.beamblank_on()
+        self.ctrl.difffocus.refocus()
+        time.sleep(3)
+        
         self.ctrl.beamblank_off()
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
@@ -182,7 +214,7 @@ class Experiment(object):
                 if self.track and (n % self.track_interval == 0):
                     target_y = self.start_y + int(self.track_func(a))
                     self.ctrl.stageposition.set(y=target_y, wait=False)
-                    print(f"Tracking -> set y={target_y}")
+                    print(f"Tracking -> set y={target_y:.0f}")
 
         t1 = time.perf_counter()
 
@@ -227,7 +259,12 @@ class Experiment(object):
         print(f"Data collection spot size: {spotsize}")
         print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
 
-        pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
+        try:
+            pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
+        except KeyError:
+            print(f"Warning: No such camera length: {camera_length} in diff calibration, defaulting to 1.0")
+            pixelsize = 1.0
+
         physical_pixelsize = config.camera.physical_pixelsize # mm
         
         binX, binY = self.emmenu.getBinning()
@@ -280,6 +317,16 @@ class Experiment(object):
         path_data.mkdir(exist_ok=True, parents=True)
 
         self.emmenu.writeTiffs(start_index, end_index, path=path_data)
+
+        ### Center crystal position
+        self.ctrl.difffocus.defocus(self.defocus_offset)
+        self.ctrl.beamblank_off()
+
+        img2 = self.ctrl.getRawImage()
+        write_tiff(self.path / "image_after.tiff", img2)
+
+        self.ctrl.beamblank_on()
+        self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
 
