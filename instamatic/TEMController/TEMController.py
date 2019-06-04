@@ -637,7 +637,7 @@ class TEMController(object):
             'ImageShift1': self.imageshift1.get,
             'ImageShift2': self.imageshift2.get,
             'DiffShift': self.diffshift.get,
-            # 'StagePosition': self.stageposition.get,
+            'StagePosition': self.stageposition.get,
             'Magnification': self.magnification.get,
             'DiffFocus': self.difffocus.get,
             'Brightness': self.brightness.get,

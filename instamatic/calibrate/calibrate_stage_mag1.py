@@ -65,6 +65,8 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
         instance of Calibration class with conversion methods
     """
 
+    settle_delay = 1.0 # seconds
+
     exposure = kwargs.get("exposure", config.camera.default_exposure)
     binsize = kwargs.get("binsize", config.camera.default_binsize)
 
@@ -166,12 +168,12 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
-    params = fit_affine_transformation(shifts, stagepos, as_params=True)
-    angle = params["angle"].value
-    print("Angle =", angle)
-    print("Binsize:", binsize)
+    # params = fit_affine_transformation(shifts, stagepos, as_params=True)
+    # angle = params["angle"].value
+    # print("Angle =", angle)
+    # print("Binsize:", binsize)
 
-    plot_it(shifts, stagepos, params)
+    # plot_it(shifts, stagepos, params)
 
     # return angle
 
@@ -268,13 +270,13 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
 
-    params = fit_affine_transformation(shifts, stagepos, translation=False, as_params=True, verbose=True)
-    angle = params["angle"].value
+    # params = fit_affine_transformation(shifts, stagepos, translation=True, as_params=True, verbose=True)
+    # angle = params["angle"].value
 
-    print("\nMag1 correction angle = {:.2f}".format(np.degrees(angle)))
-    print("Binsize:", binsize)
+    # print("\nMag1 correction angle = {:.2f}".format(np.degrees(angle)))
+    # print("Binsize:", binsize)
 
-    plot_it(shifts, stagepos, params)
+    # plot_it(shifts, stagepos, params)
 
     # return angle
 

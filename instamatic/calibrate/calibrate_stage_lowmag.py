@@ -2,6 +2,7 @@
 
 import sys, os
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
@@ -167,7 +168,7 @@ class CalibStage(object):
 
     @classmethod
     def from_data(cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None):
-        r, t = fit_affine_transformation(shifts, stagepos)
+        r, t = fit_affine_transformation(shifts, stagepos, verbose=True, translation=True)
 
         if not camera_dimensions:
             if header:
