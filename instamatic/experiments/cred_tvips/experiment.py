@@ -9,7 +9,7 @@ from instamatic.formats import write_tiff
 
 class SerialExperiment(object):
     """docstring for SerialExperiment"""
-    def __init__(self, ctrl, path: str=None, log=None, tracking_file=None):
+    def __init__(self, ctrl, path: str=None, log=None, tracking_file=None, exposure=None):
         super().__init__()
         
         self.tracking_file = Path(tracking_file)
@@ -18,6 +18,7 @@ class SerialExperiment(object):
         self.log = log
         self.path = path
         self.ctrl = ctrl
+        self.exposure = exposure
 
     def run(self):
         t0 = time.clock()
@@ -41,7 +42,7 @@ class SerialExperiment(object):
             print(f"Data directory: {out_path}")
             print()
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, obtain_track=False)
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, obtain_track=False, exposure=self.exposure)
 
             exp.get_ready()
 
@@ -68,23 +69,31 @@ class Experiment(object):
         `str` or `pathlib.Path` object giving the path to save data at
     log:
         Instance of `logging.Logger`
+    exposure:
+        Exposure time in ms
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False, track_relative=True):
+    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False, track_relative=True, exposure=400):
         super().__init__()
 
         self.ctrl = ctrl
         self.emmenu = ctrl.cam
         self.path = Path(path)
 
+        self.exposure = exposure
         self.defocus_offset = 1500
 
         self.logger = log
         
         self.obtain_track = obtain_track  # do not go to diff mode to measure crystal track
 
-        track = Path(track)
-        self.track = False
-        if track and track.suffix == ".txt":
+        if track:
+            track = Path(track)
+            self.track = True
+        else:
+            self.track_routine = 0
+            self.track = False
+        
+        if self.track and track.suffix == ".txt":
             from scipy.interpolate import interp1d
             import numpy as np
             arr = np.loadtxt(track)
@@ -92,12 +101,11 @@ class Experiment(object):
             track_y = arr[:,2]
             print(f"(autotracking) Loading tracking file: {track}")
             print(f"(autotracking) Interpolating a={track_a.min():.1f} -> a={track_a.max():.1f} (+extrapolated)")
-            self.track = True
             self.track_interval = 2
             self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
             self.track_relative = track_relative
             self.track_routine = 1
-        elif track and track.suffix == ".pickle":
+        elif self.track and track.suffix == ".pickle":
             import pickle
             print(f"(autotracking) Loading tracking file: {track}")
             dct = pickle.load(open(track, "rb"))
@@ -111,12 +119,11 @@ class Experiment(object):
             self.min_angle = dct["angle_min"]
             self.max_angle = dct["angle_max"]
 
-            self.track = True
             self.track_interval = 2
             self.track_relative = False
             self.track_routine = 2
 
-        elif track:
+        elif self.track:
             raise IOError("I don't know how to read file `{track}`")
 
     def get_ready(self):
@@ -126,6 +133,8 @@ class Experiment(object):
             self.emmenu.set_image_index(0)
         except Exception as e:
             print(e)
+
+        self.emmenu.set_exposure(self.exposure)
 
         if not self.obtain_track:
             self.ctrl.beamblank_on()
@@ -170,19 +179,20 @@ class Experiment(object):
         start_position = self.ctrl.stageposition.get()
         start_angle = start_position.a
 
-        ### Center crystal position
-        self.ctrl.difffocus.defocus(self.defocus_offset)
-        self.ctrl.beamblank_off()
+        if self.track_routine == 2:
+            ### Center crystal position
+            self.ctrl.difffocus.defocus(self.defocus_offset)
+            self.ctrl.beamblank_off()
+    
+            input("Center aperture and press <ENTER> to measure crystal ")
 
-        input("Center aperture and press <ENTER> to measure crystal ")
+            ## cannot do this while lieview is running
+            # img1 = self.ctrl.getRawImage()
+            # write_tiff(self.path / "image_before.tiff", img1)
 
-        ## cannot do this while lieview is running
-        # img1 = self.ctrl.getRawImage()
-        # write_tiff(self.path / "image_before.tiff", img1)
-
-        self.ctrl.beamblank_on()
-        self.ctrl.difffocus.refocus()
-        time.sleep(3)
+            self.ctrl.beamblank_on()
+            self.ctrl.difffocus.refocus()
+            time.sleep(3)
         
         self.ctrl.beamblank_off()
 
@@ -318,15 +328,16 @@ class Experiment(object):
 
         self.emmenu.writeTiffs(start_index, end_index, path=path_data)
 
-        ### Center crystal position
-        self.ctrl.difffocus.defocus(self.defocus_offset)
-        self.ctrl.beamblank_off()
-
-        img2 = self.ctrl.getRawImage()
-        write_tiff(self.path / "image_after.tiff", img2)
-
-        self.ctrl.beamblank_on()
-        self.ctrl.difffocus.refocus()
+        if self.track_routine == 2:
+            ### Center crystal position
+            self.ctrl.difffocus.defocus(self.defocus_offset)
+            self.ctrl.beamblank_off()
+    
+            img2 = self.ctrl.getRawImage()
+            write_tiff(self.path / "image_after.tiff", img2)
+    
+            self.ctrl.beamblank_on()
+            self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
 

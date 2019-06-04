@@ -23,6 +23,10 @@ class ExperimentalTVIPS(LabelFrame):
         self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
         self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
 
+        Label(frame, text="Exposure (ms):").grid(row=7, column=0, sticky="W")
+        self.e_exposure = Spinbox(frame, textvariable=self.var_exposure, width=sbwidth, from_=0, to=10000, increment=100)
+        self.e_exposure.grid(row=7, column=1, sticky="W", padx=10)
+
         # defocus button
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100)
@@ -83,7 +87,7 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame = Frame(self)
 
-        self.SerialButton = Button(frame, text="Serial acquisition", command=self.serial_collection)
+        self.SerialButton = Button(frame, text="Start serial acquisition", width=25, command=self.serial_collection)
         self.SerialButton.grid(row=1, column=0, sticky="EW")
 
         frame.pack(fill="x", padx=10, pady=10)
@@ -109,6 +113,7 @@ class ExperimentalTVIPS(LabelFrame):
 
     def init_vars(self):
         self.var_target_angle = DoubleVar(value=40.0)
+        self.var_exposure = IntVar(value=400)
 
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
@@ -193,6 +198,7 @@ class ExperimentalTVIPS(LabelFrame):
     def get_params(self, task=None):
         params = { "target_angle": self.var_target_angle.get(),
                    "tracking_file": self.var_tracking_file.get(),
+                   "exposure": self.var_exposure.get(),
                    "obtain_track": self.var_obtain_track.get(),
                    "track_relative": self.var_track_relative.get(),
                    "task": task }
@@ -265,6 +271,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
 
     target_angle = kwargs["target_angle"]
     tracking_file = kwargs["tracking_file"]
+    exposure = kwargs["exposure"]
     obtain_track = kwargs["obtain_track"]
     track_relative = kwargs["track_relative"]
 
@@ -275,7 +282,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
                                                           log=controller.log, 
                                                           track=tracking_file, obtain_track=obtain_track,
-                                                          track_relative=track_relative)
+                                                          track_relative=track_relative,
+                                                          exposure=exposure)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
@@ -283,9 +291,10 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
 
-        controller.cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
-                                                                log=controller.log, tracking_file=tracking_file)
-        controller.cred_tvips_exp.run()
+        cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
+                                                     log=controller.log, tracking_file=tracking_file,
+                                                     exposure=exposure)
+        cred_tvips_exp.run()
     elif task == "stop":
         pass
 
