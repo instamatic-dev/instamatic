@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from pathlib import Path
 
@@ -108,7 +107,7 @@ def radial_average(z, center, as_radial_map=False):
         return averaged
 
 
-def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot=False, savefig=False):
+def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False):
     """Find rectangle fitting the beamstop
     
     1. Radially scale the image (divide each point in the image by the radial average)
@@ -157,19 +156,23 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
         i = np.argmin(dists)
     
         rect = rects[i]
-    
+
     ## This is not robust if there are other shaded areas
     # rect = sorted(arr, key=lambda x: len(x), reverse=True)[0]
     # rect = minimum_bounding_rectangle(beamstop)
 
-    if plot or savefig:
+    if savefig:
+        import matplotlib
+        matplotlib.use("pdf")
+        import matplotlib.pyplot as plt
+
         fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
         for ax in ax1, ax2, ax3:
             ax.axis('off')
 
         ax1.imshow(radial_scaled, vmax=np.percentile(radial_scaled, 99))
         ax1.set_title("Radially scaled image")
-        
+
         cx, cy = center
         ax1.scatter(cy, cx, marker="+", color="red")
 
@@ -183,11 +186,8 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, plot
         bx, by = np.vstack((rect, rect[0])).T
         ax3.plot(by, bx, "r-o")
 
-        if savefig:
-            fn = "beamstop.png"
-            plt.savefig(fn, dpi=150)
-        if plot:
-            plt.show()
+        fn = "beamstop.png"
+        plt.savefig(fn, dpi=150)
 
     return rect
 

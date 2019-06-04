@@ -250,7 +250,7 @@ class Experiment(object):
         if not self.obtain_track:
             timestamps = self.emmenu.get_timestamps(start_index, end_index)
             acq_out = self.path / "acquisition_time.png"
-            timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out, plot=False)
+            timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out)
 
         print(f"\nRotated {total_angle:.2f} degrees from {start_angle:.2f} to {end_angle:.2f}")
         print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*start_position))
