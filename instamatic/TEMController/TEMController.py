@@ -351,18 +351,18 @@ class StagePosition(object):
     def name(self) -> str:
         return self.__class__.__name__
 
-    def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True):
+    def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True) -> None:
         """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
         
-    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0):
+    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0) -> None:
         """
         wait: bool, block until stage movement is complete (JEOL only)
         speed: float, set stage rotation with specified speed (FEI only)
         """
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
         
-    def setspeed(self, speed=1):
+    def setspeed(self, speed=1) -> None:
         """Sets the stage (rotation) movement speed on the TEM (FEI only)"""
         self._tem.setStageSpeed(value=1)
         
@@ -384,6 +384,10 @@ class StagePosition(object):
         x, y, z, a, b = self.get()
         return y
 
+    @y.setter
+    def y(self, value: int):
+        self.set(y=value, wait=self._wait)
+    
     @property
     def xy(self) -> Tuple[int, int]:
         x, y, z, a, b = self.get()
@@ -394,11 +398,8 @@ class StagePosition(object):
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
-    @y.setter
-    def y(self, value: int):
-        self.set(y=value, wait=self._wait)
 
-    def move_in_projection(self, delta_x: int, delta_y: int):
+    def move_in_projection(self, delta_x: int, delta_y: int) -> None:
         r"""y and z are always perpendicular to the sample stage. To achieve the movement
         in the projection, x and yshould be broken down into the components z' and y'.
 
@@ -508,9 +509,126 @@ class StagePosition(object):
         self.a = a_center
         print(f"Print z={self.z:.2f}")
 
+    def relax_xy(self, step: int=100) -> None:
+        """Relax the stage by moving it in the opposite direction from the last movement"""
+        pass
+
+    def set_xy_with_backlash_correction(self, x: int=None, y: int=None, step: float=5000, settle_delay: float=0.200) -> None:
+        """
+        Move to new x/y position with backlash correction. This is done
+        by approaching the target x/y position always from the same direction.
+
+        step: float,
+            stepsize in nm
+        settle_delay: float,
+            delay between movements in seconds to allow the stage to settle
+        """
+        wait = True
+        self.set(x=x-step, y=y-step)
+        if settle_delay:
+            time.sleep(settle_delay)
+        
+        self.set(x=x, y=y, wait=wait)
+        if settle_delay:
+            time.sleep(settle_delay)
+
+    def move_xy_with_backlash_correction(self, shift_x: int=None, shift_y: int=None, step: float=5000, settle_delay: float=0.200, wait=True) -> None:
+        """
+        Move xy by given shifts in stage coordinates with backlash correction. This is done by moving backwards
+        from the targeted position by `step`, before moving to the targeted position. This function is meant
+        to be used when precise relative movements are needed, for example when a shift is calculated from an
+        image. Based on Liu et al., Sci. Rep. (2016) DOI: 10.1038/srep29231
+
+        shift_x, shift_y: float,
+            relative movement in x and y (nm)
+        step: float,
+            stepsize in nm
+        settle_delay: float,
+            delay between movements in seconds to allow the stage to settle
+        wait: bool, 
+            block until stage movement is complete (JEOL only)
+        """
+
+        stage = self.get()
+
+        if shift_x:
+            target_x = stage.x + shift_x
+            if target_x > stage.x:
+                pre_x = stage.x - step
+            elif target_x < stage.x:
+                pre_x = stage.x + step
+        else:
+            pre_x = None
+            target_x = None
+
+        if shift_y:
+            target_y = stage.y + shift_y
+            if target_y > stage.y:
+                pre_y = stage.y - step
+            elif target_y < stage.y:
+                pre_y = stage.y + step
+        else:
+            pre_y = None
+            target_y = None
+
+        self.set(x=pre_x, y=pre_y)
+        if settle_delay:
+            time.sleep(settle_delay)
+        
+        self.set(x=target_x, y=target_y, wait=wait)
+        if settle_delay:
+            time.sleep(settle_delay)
+
+    def eliminate_backlash_xy(self, step: float=5000, settle_delay: float=0.200) -> None:
+        """
+        Eliminate backlash by in XY by moving the stage away from the current position, and
+        approaching it from the common direction
+
+        step: float,
+            stepsize in nm
+        settle_delay: float,
+            delay between movements in seconds to allow the stage to settle
+        """
+        wait = True
+        stage = ctrl.stageposition.get()
+        self.set_xy(x=stage.x, y=stage.y)
+
+    def eliminate_backlash_a(self, target_angle: float=0.0, step: float=1.0, n_steps: int=3, settle_delay: float=0.200) -> None:
+        """
+        Eliminate backlash by relaxing the position. The routine will move in opposite direction
+        of the targeted angle by `n_steps`*`step`, and walk up to the current 
+        tilt angle in `n_steps`. 
+        Based on Suloway et al., J. Struct. Biol. (2009), doi: 10.1016/j.jsb.2009.03.019
+
+        target_angle: float,
+            target angle for the rotation in degrees
+        step: float,
+            stepsize in degrees
+        n_steps: int > 0,
+            number of steps to walk up to current angle
+        settle_delay: float,
+            delay between movements in seconds to allow the stage to settle
+        """
+        current = self.a
+        
+        if target_angle > current:
+            s = +1
+        elif target_angle < current:
+            s = -1
+        else:
+            return
+
+        n_steps += 1
+        s = target_direction/abs(target_direction)  # get sign of movement
+        
+        for i in reversed(range(n_steps)):
+            self.a = current - s*i*stepsize
+            time.sleep(settle_delay)
+
 
 class TEMController(object):
-    """TEMController object that enables access to all defined microscope controls
+    """
+    TEMController object that enables access to all defined microscope controls
 
     tem: Microscope control object (e.g. instamatic/TEMController/simu_microscope.SimuMicroscope)
     cam: Camera control object (see instamatic.camera) [optional]

@@ -71,11 +71,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     binsize = kwargs.get("binsize", config.camera.default_binsize)
 
     if minimize_backlash:
-        x, y = ctrl.stageposition.xy
-        ctrl.stageposition.set(x=x-stepsize*1, y=y-stepsize*1)
-        time.sleep(settle_delay)
-        ctrl.stageposition.set(x=x, y=y)
-        time.sleep(settle_delay)
+        ctrl.stageposition.eliminate_backlash_xy(step=stepsize, settle_delay=settle_delay)
 
     outfile = "calib_start" if save_images else None
 
@@ -111,13 +107,12 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     if minimize_backlash:
         xtarget = x_cent + x_range[0]
         ytarget = y_cent + y_range[0]
-        ctrl.stageposition.set(x=xtarget-stepsize*1, y=ytarget-stepsize*1)
+        ctrl.stageposition.set(x=xtarget-stepsize, y=ytarget-stepsize)
         time.sleep(settle_delay)
 
         print("(minimize_backlash) Overshoot a bit in XY: ", ctrl.stageposition.xy)
 
     for dx in x_range:
-        
         for dy in y_range:
             ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
             time.sleep(settle_delay)
@@ -146,7 +141,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
         if minimize_backlash:
             ytarget = y_cent + y_range[0]
-            ctrl.stageposition.set(y=ytarget-stepsize*1)
+            ctrl.stageposition.set(y=ytarget-stepsize)
             time.sleep(settle_delay)
             print("(minimize_backlash) Overshoot a bit in Y: ", ctrl.stageposition.xy)
     
