@@ -1,0 +1,14 @@
+calib_beamshift: {gridsize: 5, stepsize: 500}
+calib_directbeam:
+  BeamShift: {gridsize: 5, stepsize: 75}
+  DiffShift: {gridsize: 5, stepsize: 300}
+default_binsize: 2
+default_exposure: 0.4
+dimensions: [4096, 4096]
+dynamic_range: 65535
+name: emmenu
+physical_pixelsize: 0.0165
+possible_binsizes: [1, 2, 4]
+camera_rotation_vs_stage_xy: -3.213
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0

@@ -10,7 +10,6 @@ def main():
     and magnification ranges
     """
 
-
     print("\n 1: jeol\n 2: fei\n 3: simulate\n")
 
     q = int(input("Which microscope should I connect to? >> "))
