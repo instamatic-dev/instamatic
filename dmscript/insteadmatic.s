@@ -443,7 +443,7 @@ Class Dialog_UI : UIFrame
         number image_pixelsize_x = ImageGetDimensionScale(stream, xdim)
         number image_pixelsize_y = ImageGetDimensionScale(stream, ydim)
         string units_x = ImageGetDimensionUnitString(stream, xdim)
-        string units_y = ImageGetDimensionUnitString(stream, xdim)
+        string units_y = ImageGetDimensionUnitString(stream, ydim)
 
         // get image resolution
         number image_res_x = right - left
