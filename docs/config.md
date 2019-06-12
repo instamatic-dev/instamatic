@@ -35,10 +35,10 @@ Path to tiff file containing flatfield, i.e. `C:/instamatic/flatfield.tiff`. Lea
 use the tem server with the given host/port below. If instamatic cannot find the tem server, it will start a new temserver in a subprocess. The tem server can be started using `instamatic.temserver.exe`. This helps to isolate the microscope communication. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread. 
 
 **tem_server_host**  
-Set this to `localhost` if the TEM server is run locally. To make a remote connection over the network, use '0.0.0.0' on the server, and the ip address of the server on the client.
+Set this to `localhost` if the TEM server is run locally. To make a remote connection over the network, use `'0.0.0.0'` on the server, and the ip address of the server on the client.
 
 **tem_server_port**  
-the server port, default: 8088
+the server port, default: `8088`
 
 **indexing_server_exe**  
 After data are collected, the path where the data are saved can be sent to this program via a socket connection for automated data processing. Available are the dials indexing server (`instamatic.dialsserver.exe`) and the XDS indexing server (`instamatic.xdsserver.exe`)
@@ -47,16 +47,16 @@ After data are collected, the path where the data are saved can be sent to this 
 IP to use for the indexing server, similar to above.
 
 **indexing_server_port**  
-Port to use for the indexing server, default: 8089
+Port to use for the indexing server, default: `8089`
 
 **dials_script**  
 The script that is run when the dials indexing server is used.
 
 **cred_relax_beam_before_experiment**  
-Relax the beam before a CRED experiment (for testing only), default: false
+Relax the beam before a CRED experiment (for testing only), default: `false`
 
 **cred_track_stage_positions**  
-Track the stage position during a CRED experiment (for testing only), default: false
+Track the stage position during a CRED experiment (for testing only), default: `false`
 
 **modules**  
 List of modules to load for the GUI, must be one of {`cred`, `cred_tvips`, `cred_fei`, `sed`, `autocred`, `red`, `machine_learning`, `ctrl`, `debug`, `about`, `io`}
@@ -105,32 +105,32 @@ This file holds the specifications of the camera. This file is must be located t
 Give the name of the camera interface to connect to, for example: `timepix`/`emmenu`/`simulate`/`gatan`. Leave blank to load the camera specs, but do not load the camera module (this also turns off the videostream gui).
 
 **default_binsize**  
-Set the default binsize, default: 1
+Set the default binsize, default: `1`
 
 **default_exposure**  
-Set the default exposure in seconds, i.e. 0.02
+Set the default exposure in seconds, i.e. `0.02`
 
 **dimensions**  
-Give the dimensions of the camera at binning 1, for example: [516, 516]
+Give the dimensions of the camera at binning 1, for example: `[516, 516]`
 
 **dynamic_range**  
-Give the maximum counts of the camera, for example: 11800
+Give the maximum counts of the camera, for example: `11800`
 
 **physical_pixelsize**  
-The physical size of a pixel in micrometer, for example: 0.055
+The physical size of a pixel in micrometer, for example: `0.055`
 
 **possible_binsizes**  
 Give here a list of possible binnings, for example: `[1]` or `[1, 2, 4]`
 
 **camera_rotation_vs_stage_xy**  
 In radians, give here the rotation of the position of the rotation axis with respect to the 
-horizontal. Corresponds to the rotation axis in RED and PETS, for example: -2.24
+horizontal. Corresponds to the rotation axis in RED and PETS, for example: `-2.24`. You can find the rotation axis for your setup using the script `edtools.find_rotation_axis` available from [here](https://github.com/stefsmeets/edtools#find_rotation_axispy).
 
 **stretch_amplitude**  
-Use `instamatic.stretch_correction` to characterize the lens distortion. The numbers here are used to calculate the XCORR/YCORR maps. The amplitude is the percentage difference between the maximum and minimum eigenvectors of the ellipsoid, i.e. if the amplitude is 2.43, eig(max)/eig(min) = 1.0243
+Use `instamatic.stretch_correction` to characterize the lens distortion. The numbers here are used to calculate the XCORR/YCORR maps. The amplitude is the percentage difference between the maximum and minimum eigenvectors of the ellipsoid, i.e. if the amplitude is `2.43`, eig(max)/eig(min) = 1.0243. You can use the program `instamatic.stretch_correction` available [here](https://github.com/stefsmeets/instamatic/blob/master/docs/programs.md#instamaticstretch_correction) on some powder patterns to define these numbers.
 
 **stretch_azimuth**  
-The azimuth is gives the direction of the maximum eigenvector with respect to the horizontal X-axis (pointing right) in degrees, for example: 83.37
+The azimuth is gives the direction of the maximum eigenvector with respect to the horizontal X-axis (pointing right) in degrees, for example: `83.37`
 
 **correction_ratio**  
 Set the correction ratio for the cross pixels in the Timepix detector, default: 3
@@ -156,7 +156,7 @@ This file holds all the specifications of the microscope as necessary. It is imp
 name of the microscope interface to use
 
 **wavelength**  
-The wavelength of the microscope in Ansgtroms. This is used to generate some of the output files after data collection, i.e. for 120kV: 0.033492, 200kV: 0.025079, or 300 kV: 0.019687. A useful website to calculate the de Broglie wavelength is [here](https://www.ou.edu/research/electron/bmz5364/calc-kv.html).
+The wavelength of the microscope in Ansgtroms. This is used to generate some of the output files after data collection, i.e. for 120kV: `0.033492`, 200kV: `0.025079`, or 300 kV: `0.019687`. A useful website to calculate the de Broglie wavelength is [here](https://www.ou.edu/research/electron/bmz5364/calc-kv.html).
 
 **range_diff**  
 List here the available camera lengts available on the microscope in ascending order
