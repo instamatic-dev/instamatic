@@ -163,15 +163,6 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
-    # params = fit_affine_transformation(shifts, stagepos, as_params=True)
-    # angle = params["angle"].value
-    # print("Angle =", angle)
-    # print("Binsize:", binsize)
-
-    # plot_it(shifts, stagepos, params)
-
-    # return angle
-
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()
 
@@ -200,57 +191,52 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    # x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
-    x_cent=40943.0
-    y_cent=-6258.4
+    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
+    # x_cent=40943.0
+    # y_cent=-6258.4
 
     xy_cent = np.array([x_cent, y_cent])
     print("Center:", center_fn)
     print("Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent))
     print()
 
-
     shifts = []
     stagepos = []
-    
-    # gridsize = 5
-    # stepsize = 50000
-    # n = (gridsize - 1) / 2 # number of points = n*(n+1)
-    # x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    # stagepos_p = np.array(zip(x_grid.flatten(), y_grid.flatten()))
 
-    stage = ((30943.5, -16255.5),
-    (30874.701171875, -11258.2998046875),
-    (31009.701171875, -6256.89990234375),
-    (30876.0, -1256.9000244140625),
-    (31011.0, 3744.400146484375), 
-    (35943.5, -16256.900390625),
-    (35874.6015625, -11256.900390625),
-    (36011.0, -6256.89990234375),
-    (35874.6015625, -1256.9000244140625),
-    (36012.30078125, 3743.0), 
-    (40943.40234375, -16252.7001953125),
-    (40943.40234375, -11256.900390625),
-    (40943.40234375, -6258.30029296875),
-    (40943.40234375, -1256.9000244140625),
-    (40943.40234375, 3744.400146484375),
-    (45943.40234375, -16255.5),
-    (45943.40234375, -11258.2998046875),
-    (45943.40234375, -6255.5),
-    (45943.40234375, -1259.7000732421875),
-    (45943.40234375, 3745.800048828125), 
-    (50943.40234375, -16255.5),
-    (50943.40234375, -11258.2998046875),
-    (50943.40234375, -6256.89990234375),
-    (50943.40234375, -1256.9000244140625),
-    (50943.40234375, 3743.0)) 
+    # stage = ((30943.5, -16255.5),
+    # (30874.701171875, -11258.2998046875),
+    # (31009.701171875, -6256.89990234375),
+    # (30876.0, -1256.9000244140625),
+    # (31011.0, 3744.400146484375), 
+    # (35943.5, -16256.900390625),
+    # (35874.6015625, -11256.900390625),
+    # (36011.0, -6256.89990234375),
+    # (35874.6015625, -1256.9000244140625),
+    # (36012.30078125, 3743.0), 
+    # (40943.40234375, -16252.7001953125),
+    # (40943.40234375, -11256.900390625),
+    # (40943.40234375, -6258.30029296875),
+    # (40943.40234375, -1256.9000244140625),
+    # (40943.40234375, 3744.400146484375),
+    # (45943.40234375, -16255.5),
+    # (45943.40234375, -11258.2998046875),
+    # (45943.40234375, -6255.5),
+    # (45943.40234375, -1259.7000732421875),
+    # (45943.40234375, 3745.800048828125), 
+    # (50943.40234375, -16255.5),
+    # (50943.40234375, -11258.2998046875),
+    # (50943.40234375, -6256.89990234375),
+    # (50943.40234375, -1256.9000244140625),
+    # (50943.40234375, 3743.0)) 
 
     for i, fn in enumerate(other_fn):
         img, h = read_image(fn)
 
+
         img = imgscale(img, scale)
         
-        xobs, yobs = stage[i]
+        x_xobs, yobs, _, _, _ = h_cent["StagePosition"]
+        # xobs, yobs = stage[i]
         print("Image:", fn)
         print("Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs))
         
@@ -264,16 +250,6 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
-
-    # params = fit_affine_transformation(shifts, stagepos, translation=True, as_params=True, verbose=True)
-    # angle = params["angle"].value
-
-    # print("\nMag1 correction angle = {:.2f}".format(np.degrees(angle)))
-    # print("Binsize:", binsize)
-
-    # plot_it(shifts, stagepos, params)
-
-    # return angle
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()
