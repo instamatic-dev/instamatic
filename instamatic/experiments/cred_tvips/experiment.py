@@ -150,10 +150,8 @@ class Experiment(object):
     
             self.emmenu.start_liveview()
 
-    def start_collection(self, target_angle: float):
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        if self.track and self.track_routine == 2:
+    def prepare_tracking(self):
+        if self.track_routine == 2:
             current_angle = self.ctrl.stageposition.a
 
             min_angle = self.min_angle
@@ -173,11 +171,26 @@ class Experiment(object):
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
             self.ctrl.stageposition.set(a=start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
 
+            return start_angle, target_angle
+
+    def track_crystal(self, n, angle):
+        # tracking routine
+        if (n % self.track_interval == 0):
+            target_y = self.start_y + int(self.track_func(angle))
+            self.ctrl.stageposition.set(y=target_y, wait=False)
+            print(f"Tracking -> set y={target_y:.0f}")
+
+    def start_collection(self, target_angle: float):
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         self.stage_positions = []
         interval = 1.0
 
-        start_position = self.ctrl.stageposition.get()
-        start_angle = start_position.a
+        if self.track:
+            start_angle, target_angle = self.prepare_tracking()
+
+        self.start_position = self.ctrl.stageposition.get()
+        start_angle = self.start_position.a
 
         if self.track_routine == 2:
             ### Center crystal position
@@ -220,16 +233,13 @@ class Experiment(object):
                 t_delta = t
                 # print(t, pos)
 
-                # tracking routine
-                if self.track and (n % self.track_interval == 0):
-                    target_y = self.start_y + int(self.track_func(a))
-                    self.ctrl.stageposition.set(y=target_y, wait=False)
-                    print(f"Tracking -> set y={target_y:.0f}")
+                if self.track:
+                    self.track_crystal(n=n, angle=angle)
 
         t1 = time.perf_counter()
 
-        end_position = self.ctrl.stageposition.get()
-        end_angle = end_position.a
+        self.end_position = self.ctrl.stageposition.get()
+        end_angle = self.end_position.a
 
         if not self.obtain_track:
             self.ctrl.beamblank_on()
@@ -237,87 +247,30 @@ class Experiment(object):
         
         end_index = self.emmenu.get_image_index()
 
-        t_start = t0
-        t_end = t1
-        total_time = t1 - t0
+        self.t_start = t0
+        self.t_end = t1
+        self.total_time = t1 - t0
         
         nframes = end_index - start_index
 
-        osc_angle = abs(end_angle - start_angle) / nframes
+        self.osc_angle = abs(end_angle - start_angle) / nframes
         
         # acquisition_time = total_time / nframes
-        total_angle = abs(end_angle - start_angle)
-        rotation_axis = config.camera.camera_rotation_vs_stage_xy
+        self.total_angle = abs(end_angle - start_angle)
+        self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        camera_length = int(self.ctrl.magnification.get())
-
-        spotsize = self.ctrl.spotsize
-
-        rotation_speed = (end_angle-start_angle) / total_time
-
-        exposure_time = self.emmenu.get_exposure()
+        self.camera_length = int(self.ctrl.magnification.get())
+        self.spotsize = self.ctrl.spotsize
+        self.rotation_speed = (end_angle-start_angle) / total_time
+        self.exposure_time = self.emmenu.get_exposure()
         
         if not self.obtain_track:
             timestamps = self.emmenu.get_timestamps(start_index, end_index)
             acq_out = self.path / "acquisition_time.png"
-            timings = get_acquisition_time(timestamps, exp_time=exposure_time, savefig=True, fn=acq_out)
-
-        print(f"\nRotated {total_angle:.2f} degrees from {start_angle:.2f} to {end_angle:.2f}")
-        print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*start_position))
-        print("End stage position:    X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*end_position))
-        print(f"Data collection camera length: {camera_length} cm")
-        print(f"Data collection spot size: {spotsize}")
-        print(f"Rotation speed: {rotation_speed:.3f} degrees/s")
-
-        try:
-            pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
-        except KeyError:
-            print(f"Warning: No such camera length: {camera_length} in diff calibration, defaulting to 1.0")
-            pixelsize = 1.0
-
-        physical_pixelsize = config.camera.physical_pixelsize # mm
-        
-        binX, binY = self.emmenu.getBinning()
-
-        pixelsize *= binX
-        physical_pixelsize *= binX
-
-        wavelength = config.microscope.wavelength
-
-        with open(self.path / "cRED_log.txt", "w") as f:
-            print(f"Program: {version.__long_title__} + EMMenu 4.0", file=f)
-            print(f"Camera: {config.camera.name}", file=f)
-            print(f"Microscope: {config.microscope.name}", file=f)
-            print(f"Data Collection Time: {now}", file=f)
-            print(f"Time Period Start: {t_start}", file=f)
-            print(f"Time Period End: {t_end}", file=f)
-            print(f"Starting angle: {start_angle:.2f} degrees", file=f)
-            print(f"Ending angle: {end_angle:.2f} degrees", file=f)
-            print(f"Rotation range: {end_angle-start_angle:.2f} degrees", file=f)
-            print(f"Rotation speed: {rotation_speed:.3f} degrees/s", file=f)
-            if not self.obtain_track:
-                print(f"Exposure Time: {timings.exposure_time:.3f} s", file=f)
-                print(f"Acquisition time: {timings.acquisition_time:.3f} s", file=f)
-                print(f"Overhead time: {timings.overhead:.3f} s", file=f)
-            print(f"Total time: {total_time:.3f} s", file=f)
-            print(f"Wavelength: {wavelength} Angstrom", file=f)
-            print(f"Spot Size: {spotsize}", file=f)
-            print(f"Camera length: {camera_length} cm", file=f)
-            print(f"Rotation axis: {rotation_axis} radians", file=f)
-            print(f"Oscillation angle: {osc_angle:.4f} degrees", file=f)
-            print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*start_position), file=f)
-            print("Beam stopper: yes", file=f)
-            print("", file=f)
-
-        print(f"Wrote file {f.name}")
-
-        fn = "stage_positions(tracked).txt" if self.track else "stage_positions.txt"
-        with open(self.path / fn, "w") as f:
-            print("# timestamp x y z a b", file=f)
-            for t, (x, y, z, a, b) in self.stage_positions:
-                print(t, x, y, z, a, b, file=f)
-
-        print(f"Wrote file {f.name}")
+            self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
+       
+        self.log_end_status()
+        self.log_stage_positions()
 
         if self.obtain_track:
             return
@@ -341,6 +294,64 @@ class Experiment(object):
 
         print(f"Wrote {nframes} images to {path_data}")
 
+    def log_end_status(self):
+        wavelength = config.microscope.wavelength
+
+        try:
+            pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
+        except KeyError:
+            print(f"Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0")
+            pixelsize = 1.0
+
+        physical_pixelsize = config.camera.physical_pixelsize # mm
+        
+        binX, binY = self.emmenu.getBinning()
+
+        pixelsize *= binX
+        physical_pixelsize *= binX
+
+        print(f"\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f}")
+        print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*self.start_position))
+        print("End stage position:    X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*self.end_position))
+        print(f"Data collection camera length: {self.camera_length} cm")
+        print(f"Data collection spot size: {self.spotsize}")
+        print(f"Rotation speed: {self.rotation_speed:.3f} degrees/s")
+
+        with open(self.path / "cRED_log.txt", "w") as f:
+            print(f"Program: {version.__long_title__} + EMMenu 4.0", file=f)
+            print(f"Camera: {config.camera.name}", file=f)
+            print(f"Microscope: {config.microscope.name}", file=f)
+            print(f"Data Collection Time: {self.now}", file=f)
+            print(f"Time Period Start: {self.t_start}", file=f)
+            print(f"Time Period End: {self.t_end}", file=f)
+            print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
+            print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
+            print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
+            print(f"Rotation speed: {self.rotation_speed:.3f} degrees/s", file=f)
+            if not self.obtain_track:
+                print(f"Exposure Time: {self.timings.exposure_time:.3f} s", file=f)
+                print(f"Acquisition time: {self.timings.acquisition_time:.3f} s", file=f)
+                print(f"Overhead time: {self.timings.overhead:.3f} s", file=f)
+            print(f"Total time: {self.total_time:.3f} s", file=f)
+            print(f"Wavelength: {wavelength} Angstrom", file=f)
+            print(f"Spot Size: {self.spotsize}", file=f)
+            print(f"Camera length: {self.camera_length} cm", file=f)
+            print(f"Rotation axis: {self.rotation_axis} radians", file=f)
+            print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
+            print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.start_position), file=f)
+            print("Beam stopper: yes", file=f)
+            print("", file=f)
+
+        print(f"Wrote file {f.name}")
+
+    def log_stage_positions(self):
+        fn = "stage_positions(tracked).txt" if self.track else "stage_positions.txt"
+        with open(self.path / fn, "w") as f:
+            print("# timestamp x y z a b", file=f)
+            for t, (x, y, z, a, b) in self.stage_positions:
+                print(t, x, y, z, a, b, file=f)
+
+        print(f"Wrote file {f.name}")
 
 if __name__ == '__main__':
     expdir = controller.module_io.get_new_experiment_directory()
