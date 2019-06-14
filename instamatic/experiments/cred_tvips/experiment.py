@@ -42,7 +42,7 @@ class SerialExperiment(object):
             print(f"Data directory: {out_path}")
             print()
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, obtain_track=False, exposure=self.exposure)
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, exposure=self.exposure)
 
             exp.get_ready()
 
@@ -72,7 +72,7 @@ class Experiment(object):
     exposure:
         Exposure time in ms
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None, obtain_track=False, track_relative=True, exposure=400):
+    def __init__(self, ctrl, path: str=None, log=None, track=None, exposure=400):
         super().__init__()
 
         self.ctrl = ctrl
@@ -84,74 +84,40 @@ class Experiment(object):
 
         self.logger = log
         
-        self.obtain_track = obtain_track  # do not go to diff mode to measure crystal track
-
         if track:
-            track = Path(track)
+            self.load_tracking_file(track)
             self.track = True
         else:
-            self.track_routine = 0
             self.track = False
-        
-        if self.track and track.suffix == ".txt":
-            from scipy.interpolate import interp1d
-            import numpy as np
-            arr = np.loadtxt(track)
-            track_a = arr[:,4]
-            track_y = arr[:,2]
-            print(f"(autotracking) Loading tracking file: {track}")
-            print(f"(autotracking) Interpolating a={track_a.min():.1f} -> a={track_a.max():.1f} (+extrapolated)")
-            self.track_interval = 2
-            self.track_func = interp1d(track_a, track_y, fill_value="extrapolate")
-            self.track_relative = track_relative
-            self.track_routine = 1
-        elif self.track and track.suffix == ".pickle":
-            import pickle
-            print(f"(autotracking) Loading tracking file: {track}")
-            dct = pickle.load(open(track, "rb"))
 
+    def load_tracking_file(self, trackfile):
+        trackfile = Path(trackfile)
+        if trackfile.suffix == ".pickle":
+            import pickle
+            print(f"(autotracking) Loading tracking file: {trackfile}")
+            dct = pickle.load(open(trackfile, "rb"))
+    
             self.track_func = dct["y_offset"]
             self.x_offset = dct["x_offset"]
             self.start_x = dct["x_center"]
             self.start_y = dct["y_center"]
             self.start_z = dct["z_pos"]
-
+    
             self.min_angle = dct["angle_min"]
             self.max_angle = dct["angle_max"]
 
+            self.crystal_number = dct["i"]
+
+            self.trackfile = trackfile
+    
             self.track_interval = 2
             self.track_relative = False
-            self.track_routine = 2
-
-        elif self.track:
-            raise IOError("I don't know how to read file `{track}`")
-
-    def get_ready(self):
-        # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
-        try:
-            self.emmenu.set_autoincrement(False)
-            self.emmenu.set_image_index(0)
-        except Exception as e:
-            print(e)
-
-        self.emmenu.set_exposure(self.exposure)
-
-        if not self.obtain_track:
-            self.ctrl.beamblank_on()
-            self.ctrl.screen_up()
-    
-            if self.ctrl.mode != 'diff':
-                print("Switching to diffraction mode")
-                self.ctrl.mode = 'diff'
         
-            spotsize = self.ctrl.spotsize
-            if spotsize not in (4, 5):
-                print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
-    
-            self.emmenu.start_liveview()
+        else:
+            raise IOError("I don't know how to read file `{trackfile}`")
 
     def prepare_tracking(self):
-        if self.track_routine == 2:
+        if self.track:
             current_angle = self.ctrl.stageposition.a
 
             min_angle = self.min_angle
@@ -169,7 +135,8 @@ class Experiment(object):
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stageposition.set(a=start_angle, x=self.start_x+x_offset, y=self.start_y+y_offset, z=self.start_z)
+            self.ctrl.stageposition.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset)
+            self.ctrl.stageposition.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
 
@@ -178,7 +145,30 @@ class Experiment(object):
         if (n % self.track_interval == 0):
             target_y = self.start_y + int(self.track_func(angle))
             self.ctrl.stageposition.set(y=target_y, wait=False)
-            print(f"Tracking -> set y={target_y:.0f}")
+            print(f"(autotracking) set y={target_y:.0f}")
+
+    def get_ready(self):
+        # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
+        try:
+            self.emmenu.set_autoincrement(False)
+            self.emmenu.set_image_index(0)
+        except Exception as e:
+            print(e)
+
+        self.emmenu.set_exposure(self.exposure)
+
+        self.ctrl.beamblank_on()
+        self.ctrl.screen_up()
+    
+        if self.ctrl.mode != 'diff':
+            print("Switching to diffraction mode")
+            self.ctrl.mode = 'diff'
+        
+        spotsize = self.ctrl.spotsize
+        if spotsize not in (4, 5):
+            print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
+    
+        self.emmenu.start_liveview()
 
     def start_collection(self, target_angle: float):
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -192,12 +182,12 @@ class Experiment(object):
         self.start_position = self.ctrl.stageposition.get()
         start_angle = self.start_position.a
 
-        if self.track_routine == 2:
+        if self.track:
             ### Center crystal position
             self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
     
-            input("Center aperture and press <ENTER> to measure crystal ")
+            input("Move SAED aperture to crystal and press <ENTER> to measure! ")
 
             ## cannot do this while lieview is running
             # img1 = self.ctrl.getRawImage()
@@ -215,9 +205,7 @@ class Experiment(object):
         # start_index = self.emmenu.get_next_empty_image_index()
 
         self.ctrl.stageposition.set(a=target_angle, wait=False)
-
-        if not self.obtain_track:
-            self.emmenu.start_record()  # start recording
+        self.emmenu.start_record()  # start recording
 
         t0 = time.perf_counter()
         t_delta = t0       
@@ -240,10 +228,6 @@ class Experiment(object):
 
         self.end_position = self.ctrl.stageposition.get()
         end_angle = self.end_position.a
-
-        if not self.obtain_track:
-            self.ctrl.beamblank_on()
-            self.emmenu.stop_liveview()  # end liveview and stop recording
         
         end_index = self.emmenu.get_image_index()
 
@@ -264,16 +248,12 @@ class Experiment(object):
         self.exposure_time = self.emmenu.get_exposure()
         self.start_angle, self.end_angle = start_angle, end_angle
         
-        if not self.obtain_track:
-            timestamps = self.emmenu.get_timestamps(start_index, end_index)
-            acq_out = self.path / "acquisition_time.png"
-            self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
+        timestamps = self.emmenu.get_timestamps(start_index, end_index)
+        acq_out = self.path / "acquisition_time.png"
+        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
        
         self.log_end_status()
         self.log_stage_positions()
-
-        if self.obtain_track:
-            return
 
         print("Writing data files...")
         path_data = self.path / "tiff"
@@ -281,7 +261,7 @@ class Experiment(object):
 
         self.emmenu.writeTiffs(start_index, end_index, path=path_data)
 
-        if self.track_routine == 2:
+        if self.track:
             ### Center crystal position
             self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
@@ -293,7 +273,11 @@ class Experiment(object):
             self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
-        print("Done with this crystal!")
+        
+        if self.track:
+            print(f"Done with this crystal (number #{self.crystal_number})!")
+        else:
+            print("Done with this crystal!")
 
     def log_end_status(self):
         wavelength = config.microscope.wavelength
@@ -329,10 +313,9 @@ class Experiment(object):
             print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
             print(f"Rotation speed: {self.rotation_speed:.3f} degrees/s", file=f)
-            if not self.obtain_track:
-                print(f"Exposure Time: {self.timings.exposure_time:.3f} s", file=f)
-                print(f"Acquisition time: {self.timings.acquisition_time:.3f} s", file=f)
-                print(f"Overhead time: {self.timings.overhead:.3f} s", file=f)
+            print(f"Exposure Time: {self.timings.exposure_time:.3f} s", file=f)
+            print(f"Acquisition time: {self.timings.acquisition_time:.3f} s", file=f)
+            print(f"Overhead time: {self.timings.overhead:.3f} s", file=f)
             print(f"Total time: {self.total_time:.3f} s", file=f)
             print(f"Wavelength: {wavelength} Angstrom", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
@@ -341,6 +324,13 @@ class Experiment(object):
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.start_position), file=f)
             print("Beam stopper: yes", file=f)
+
+            if self.track:
+                print()
+                print(f"Crystal number: {self.crystal_number}", file=f)
+                print(f"Tracking data: {self.trackfile}", file=f)
+                print(f"Tracking between {self.min_angle} and {self.max_angle}", file=f)
+
             print("", file=f)
 
         print(f"Wrote file {f.name}")

@@ -56,11 +56,6 @@ class ExperimentalTVIPS(LabelFrame):
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
-        self.c_track_relative = Checkbutton(frame, text="Relative tracking", variable=self.var_track_relative)
-        self.c_track_relative.grid(row=3, column=0, sticky="W")
-
-        self.c_obtain_track = Checkbutton(frame, text="Obtain crystal track in image mode", variable=self.var_obtain_track)
-        self.c_obtain_track.grid(row=3, column=1, sticky="W")
 
         self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking_file)
         self.e_tracking.grid(row=4, column=1, sticky="EW")
@@ -126,8 +121,6 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_screen = BooleanVar(value=False)
 
         self.var_tracking_file = StringVar(value="")
-        self.var_obtain_track = BooleanVar(value=False)
-        self.var_track_relative = BooleanVar(value=True)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -171,6 +164,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.triggerEvent.set()
 
     def start_collection(self):
+        self.AcquireButton.config(state=DISABLED)
         params = self.get_params(task="acquire")
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
@@ -199,8 +193,6 @@ class ExperimentalTVIPS(LabelFrame):
         params = { "target_angle": self.var_target_angle.get(),
                    "tracking_file": self.var_tracking_file.get(),
                    "exposure": self.var_exposure.get(),
-                   "obtain_track": self.var_obtain_track.get(),
-                   "track_relative": self.var_track_relative.get(),
                    "task": task }
         return params
 
@@ -272,8 +264,6 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     target_angle = kwargs["target_angle"]
     tracking_file = kwargs["tracking_file"]
     exposure = kwargs["exposure"]
-    obtain_track = kwargs["obtain_track"]
-    track_relative = kwargs["track_relative"]
 
     if task == "get_ready":
         expdir = controller.module_io.get_new_experiment_directory()
@@ -281,9 +271,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
                                                           log=controller.log, 
-                                                          track=tracking_file, obtain_track=obtain_track,
-                                                          track_relative=track_relative,
-                                                          exposure=exposure)
+                                                          track=tracking_file, exposure=exposure)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
