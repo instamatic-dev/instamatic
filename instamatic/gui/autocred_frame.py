@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Automated Continuous rotation electron diffraction")
+        LabelFrame.__init__(self, parent, text="Serial Rotation Electron Diffraction (SerialRED)")
         self.parent = parent
 
         self.init_vars()
@@ -63,6 +63,18 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="offset (particle recog):").grid(row=16, column=0, sticky="W")
         self.offset = Entry(frame, textvariable=self.var_offset)
         self.offset.grid(row=16, column=1, sticky="W", padx=10)
+
+        Label(frame, text="tilt range limit:").grid(row=14, column=2, sticky="W")
+        self.rotrangelimit = Entry(frame, textvariable=self.var_rotrange)
+        self.rotrangelimit.grid(row=14, column=2, sticky="E", padx=10)
+
+        Label(frame, text="backlash estimation:").grid(row=15, column=2, sticky="W")
+        self.backlash_killer = Entry(frame, textvariable=self.var_backlash)
+        self.backlash_killer.grid(row=15, column=2, sticky="E", padx=10)
+
+        Label(frame, text="expected rot speed").grid(row=16, column=2, sticky="W")
+        self.rot_speed = Entry(frame, textvariable=self.var_rotspeed)
+        self.rot_speed.grid(row=16, column=2, sticky="E", padx=10)
         
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
@@ -124,6 +136,9 @@ class ExperimentalautocRED(LabelFrame):
         self.var_offset = DoubleVar(value=15.0)
         self.var_zheight = BooleanVar(value = False)
         self.var_autoc = BooleanVar(value = True)
+        self.var_rotrange = IntVar(value=70)
+        self.var_backlash = DoubleVar(value=1.0)
+        self.var_rotspeed = DoubleVar(value=0.86)
         
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -172,7 +187,10 @@ class ExperimentalautocRED(LabelFrame):
                    "autocenterDP": self.var_autoc.get(),
                    "angle_activation": self.var_activ_thr.get(),
                    "spread": self.var_spread.get(),
-                   "offset": self.var_offset.get() }
+                   "offset": self.var_offset.get(),
+                   "rotrange": self.var_rotrange.get(),
+                   "backlash_killer": self.var_backlash.get(),
+                   "rotation_speed": self.var_rotspeed.get() }
         return params
 
     def toggle_interval_buttons(self):

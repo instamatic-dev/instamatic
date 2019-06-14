@@ -25,9 +25,9 @@ import datetime
 import shutil
 from scipy import ndimage
 
-rotation_speed = 0.86
-rotation_upperlimit = 70
-backlash_killer = 1
+#rotation_speed = 0.86
+#rotation_upperlimit = 70
+#backlash_killer = 1
 """Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
 #imgvar_threshold = 600
 """spread, offset: parameters for find_crystals_timepix"""
@@ -113,6 +113,9 @@ class Experiment(object):
                        angle_activation,
                        spread,
                        offset,
+                       rotrange,
+                       backlash_killer,
+                       rotation_speed,
                        unblank_beam=False, 
                        path=None, 
                        log=None, 
@@ -146,7 +149,10 @@ class Experiment(object):
         self.angle_activation = angle_activation
         self.spread = spread
         self.offset = offset
-
+        self.rotrangelimit = rotrange
+        self.backlash_killer = backlash_killer
+        self.rotation_speed = rotation_speed
+        
         self.calibdir = self.path.parent / "calib"
 
         self.verbose = False
@@ -264,11 +270,11 @@ class Experiment(object):
     def eliminate_backlash_in_tiltx(self):
         a_i = self.ctrl.stageposition.a
         if a_i < 0:
-            self.ctrl.stageposition.set(a = a_i + backlash_killer , wait = True)
+            self.ctrl.stageposition.set(a = a_i + self.backlash_killer , wait = True)
             #print("Rotation positive!")
             return 0
         else:
-            self.ctrl.stageposition.set(a = a_i - backlash_killer , wait = True)
+            self.ctrl.stageposition.set(a = a_i - self.backlash_killer , wait = True)
             #print("Rotation negative!")
             return 1
         
@@ -541,8 +547,8 @@ class Experiment(object):
         if self.mode > 1:
             a_i = self.ctrl.stageposition.a
             
-            rotation_range = rotation_upperlimit + abs(a_i)
-            rotation_t = rotation_range / rotation_speed
+            rotation_range = self.rotrangelimit + abs(a_i)
+            rotation_t = rotation_range / self.rotation_speed
             
             try:
                 if self.rotation_direction == 0:
@@ -836,7 +842,7 @@ class Experiment(object):
             s.send(msg_tosend)
             self.print_and_del("SMVs sent to DIALS for processing.")
         
-        self.logger.info("XDS INP file created.")
+        #self.logger.info("XDS INP file created.")
 
         if image_buffer:
             drc = os.path.join(path,"tiff_image")
