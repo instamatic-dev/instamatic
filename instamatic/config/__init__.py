@@ -2,6 +2,7 @@ import os, sys
 import yaml
 from pathlib import Path
 import shutil
+import datetime
 
 import logging
 logger = logging.getLogger(__name__)
@@ -99,6 +100,9 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     cfg.microscope = microscope.name
     cfg.calibration = calibration.name
     cfg.camera = camera.name
+
+    cfg.data_directory = Path(cfg.data_directory)
+    cfg.work_directory = cfg.data_directory / "work_{}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
 
 
 base_drc = get_base_drc()

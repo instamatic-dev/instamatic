@@ -10,16 +10,11 @@ from pathlib import Path
 
 class IOFrame(LabelFrame):
     """docstring for ExperimentalSED"""
-    def __init__(self, parent, basedrc=""):
+    def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Input/Output")
         self.parent = parent
         
-        if not basedrc:
-            basedrc = config.cfg.data_directory
-        else:
-            basedrc = "C:/instamatic"
-
-        self.basedrc = Path(basedrc)
+        self.workdrc = Path(config.cfg.work_directory)
 
         self.init_vars()
 
@@ -69,17 +64,15 @@ class IOFrame(LabelFrame):
         self.update_experiment_number()
 
     def init_vars(self):
-        basedrc = self.basedrc
-        subdrc = "work_{}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
-        drc = basedrc / subdrc
-
+        workdrc = self.workdrc
+        
         ff = config.cfg.flatfield
         if not ff:
             self.var_flatfield = StringVar(value="")
         else:
             self.var_flatfield = StringVar(value=Path(ff).absolute())
 
-        self.var_directory = StringVar(value=drc.absolute())
+        self.var_directory = StringVar(value=workdrc.absolute())
         self.var_sample_name = StringVar(value="experiment")
         self.var_experiment_number = IntVar(value=1)
 

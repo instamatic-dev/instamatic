@@ -4,6 +4,7 @@ import sys, os, time
 import numpy as np
 
 from instamatic.tools import *
+from instamatic.io import get_new_work_subdirectory 
 from instamatic.processing.cross_correlate import cross_correlate
 from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
@@ -65,6 +66,8 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
         instance of Calibration class with conversion methods
     """
 
+    work_drc = get_new_work_subdirectory(stem="calib_mag1")
+
     settle_delay = 1.0 # seconds
 
     # make sure the angle == 0.0
@@ -78,7 +81,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     if minimize_backlash:
         ctrl.stageposition.eliminate_backlash_xy(step=stepsize, settle_delay=settle_delay)
 
-    outfile = "calib_start" if save_images else None
+    outfile = work_drc / "calib_start" if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
@@ -127,7 +130,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
             print("Position {}/{}".format(i+1, tot))
             print(stage)
             
-            outfile = "calib_{:04d}".format(i) if save_images else None
+            outfile = work_drc / "calib_{:04d}".format(i) if save_images else None
 
             comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
             img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment)
@@ -166,10 +169,12 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
         print()
     
     if save_images:
-        ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
+        outfile = work_drc / "calib_end"
+        ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (end)")
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()
+    c.to_file(work_drc / "calib.pickle")
 
     return c
 
@@ -258,6 +263,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()
+    c.to_file()
 
     return c
 
@@ -274,7 +280,7 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
     print()
     print(calib)
 
-    calib.to_file()
+    
 
 
 def main_entry():
