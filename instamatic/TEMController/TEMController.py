@@ -590,8 +590,8 @@ class StagePosition(object):
             delay between movements in seconds to allow the stage to settle
         """
         wait = True
-        stage = ctrl.stageposition.get()
-        self.set_xy(x=stage.x, y=stage.y)
+        stage = self.get()
+        self.set_xy_with_backlash_correction(x=stage.x, y=stage.y)
 
     def eliminate_backlash_a(self, target_angle: float=0.0, step: float=1.0, n_steps: int=3, settle_delay: float=0.200) -> None:
         """

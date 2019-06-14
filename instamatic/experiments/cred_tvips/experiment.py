@@ -181,7 +181,7 @@ class Experiment(object):
             print(f"Tracking -> set y={target_y:.0f}")
 
     def start_collection(self, target_angle: float):
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         self.stage_positions = []
         interval = 1.0
@@ -234,7 +234,7 @@ class Experiment(object):
                 # print(t, pos)
 
                 if self.track:
-                    self.track_crystal(n=n, angle=angle)
+                    self.track_crystal(n=n, angle=a)
 
         t1 = time.perf_counter()
 
@@ -258,11 +258,11 @@ class Experiment(object):
         # acquisition_time = total_time / nframes
         self.total_angle = abs(end_angle - start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
-
         self.camera_length = int(self.ctrl.magnification.get())
         self.spotsize = self.ctrl.spotsize
-        self.rotation_speed = (end_angle-start_angle) / total_time
+        self.rotation_speed = (end_angle-start_angle) / self.total_time
         self.exposure_time = self.emmenu.get_exposure()
+        self.start_angle, self.end_angle = start_angle, end_angle
         
         if not self.obtain_track:
             timestamps = self.emmenu.get_timestamps(start_index, end_index)
@@ -293,6 +293,7 @@ class Experiment(object):
             self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
+        print("Done with this crystal!")
 
     def log_end_status(self):
         wavelength = config.microscope.wavelength
