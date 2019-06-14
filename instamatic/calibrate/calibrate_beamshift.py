@@ -144,13 +144,15 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     if not gridsize:
         gridsize = config.camera.calib_beamshift.get("gridsize", 5)
     if not stepsize:
-        stepsize = config.camera.calib_beamshift.get("stepsize", 2500)
+        stepsize = config.camera.calib_beamshift.get("stepsize", 250)
 
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image")
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
 
     magnification = h_cent["Magnification"]
     stepsize = 2500.0/magnification * stepsize
+
+    print(f"Gridsize: {gridsize} | Stepsize: {stepsize:.2f}")
 
     img_cent, scale = autoscale(img_cent)
     

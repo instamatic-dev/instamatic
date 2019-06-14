@@ -67,6 +67,11 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     settle_delay = 1.0 # seconds
 
+    # make sure the angle == 0.0
+    for _ in range(3):
+        ctrl.stageposition.a = 0.0
+        time.sleep(settle_delay)
+
     exposure = kwargs.get("exposure", config.camera.default_exposure)
     binsize = kwargs.get("binsize", config.camera.default_binsize)
 

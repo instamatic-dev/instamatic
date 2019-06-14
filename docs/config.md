@@ -136,7 +136,7 @@ The azimuth is gives the direction of the maximum eigenvector with respect to th
 Set the correction ratio for the cross pixels in the Timepix detector, default: 3
 
 **calib_beamshift**  
-Set up the grid and stepsize for the calibration of the beam shift in SerialED, for example:
+Set up the grid and stepsize for the calibration of the beam shift in SerialED. The calibration will run a grid of `stepsize` by `stepsize` points, with steps of `stepsize`. The stepsize must be given corresponding to 2500x, and instamatic will then adjust the stepsize depending on the actual magnification, if needed. For example:
 ```
 {gridsize: 5, stepsize: 500}
 ```
