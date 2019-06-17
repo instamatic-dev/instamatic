@@ -30,13 +30,13 @@ type_dict = {
 }
 
 
-def EMVector2dict(v):
+def EMVector2dict(vec):
     """Convert EMVector object to a Python dictionary"""
     d = {}
-    for k in dir(v):
+    for k in dir(vec):
         if k.startswith("_"):
             continue
-        v = getattr(v, k)
+        v = getattr(vec, k)
         if isinstance(v, int):
             d[k] = v
         elif isinstance(v, float):
@@ -125,17 +125,101 @@ class CameraEMMENU(object):
     def listConfigs(self) -> None:
         """List the configs from the Configuration Manager"""
         print(f"Configurations for camera {self.name}")
+        current = self._vp.Configuration
         for i, cfg in enumerate(self._obj.CameraConfigurations):
-            print(f"{i+1:2d} - {cfg.Name}")
+            is_selected = (current == cfg.Name)
+            end = " (selected)" if is_selected else ""
+            print(f"{i+1:2d} - {cfg.Name}{end}")
 
-    def getCurrentConfig(self) -> "ConfigObject":
+    def getCurrentConfigName(self) -> str:
+        """Return the name of the currently selected configuration in EMMENU"""
+        cfg = self.getCurrentConfig(as_dict=False)
+        return cfg.Name
+
+    def getCurrentConfig(self, as_dict=True) -> dict:
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
         count = self._obj.CameraConfigurations.Count
         for j in range(1, count+1):
             cfg = self._obj.CameraConfigurations.Item(j)
             if cfg.Name == vp_cfg_name:
-                return cfg
+                break
+
+        if as_dict:
+            d = {}
+            d["Name"] = cfg.Name  # str
+            d["CCDOffsetX"] = cfg.CCDOffsetX  # int
+            d["CCDOffsetY"] = cfg.CCDOffsetY  # int
+            d["DimensionX"] = cfg.DimensionX  # int
+            d["DimensionY"] = cfg.DimensionY  # int
+            d["BinningX"] = cfg.BinningX  # int
+            d["BinningY"] = cfg.BinningY  # int
+            d["CameraType"] = cfg.CameraType  # str
+            d["GainValue"] = cfg.GainValue  # float
+            d["SpeedValue"] = cfg.SpeedValue  # int
+            d["FlatMode"] = cfg.FlatMode  # int
+            d["FlatModeStr"] = ("Uncorrected", "Dark subtracted", None, "Gain corrected")[cfg.FlatMode]  # str, 2 undefined
+            d["PreExposureTime"] = cfg.PreExposureTime  # int
+            d["UsePreExposure"] = bool(cfg.UsePreExposure)
+            d["ReadoutMode"] = cfg.ReadoutMode  # int
+            d["ReadoutModeStr"] = (None, "Normal", "Frame transfer", "Rolling shutter")[cfg.ReadoutMode]  # str, 0 undefined
+            d["UseRollingAverage"] = bool(cfg.UseRollingAverage)
+            d["RollingAverageValue"] = cfg.RollingAverageValue  # int
+            d["UseRollingShutter"] = bool(cfg.UseRollingShutter)
+            d["UseScriptPreExposure"] = bool(cfg.UseScriptPreExposure)
+            d["UseScriptPostExposure"] = bool(cfg.UseScriptPostExposure)
+            d["UseScriptPreContinuous"] = bool(cfg.UseScriptPreContinuous)
+            d["UseScriptPostContinuous"] = bool(cfg.UseScriptPostContinuous)
+            d["ScriptPathPostExposure"] = cfg.ScriptPathPostExposure  # str
+            d["ScriptPathPreContinuous"] = cfg.ScriptPathPreContinuous  # str
+            d["ScriptPathPostContinuous"] = cfg.ScriptPathPostContinuous  # str
+            d["ScriptPathBeforeSeries"] = cfg.ScriptPathBeforeSeries  # str
+            d["ScriptPathWithinSeries"] = cfg.ScriptPathWithinSeries  # str
+            d["ScriptPathAfterSeries"] = cfg.ScriptPathAfterSeries  # str
+            d["SCXAmplifier"] = cfg.SCXAmplifier  # int
+            d["SCXAmplifierStr"] = ("Unknown", "Low noise", "High capacity")[cfg.SCXAmplifier]  # str
+            d["CenterOnChip"] = bool(cfg.CenterOnChip)
+            d["SeriesType"] = cfg.SeriesType  # int
+            d["SeriesTypeStr"] = ("Single image", "Delay series", "Script series")[cfg.SeriesType]  # str
+            d["SeriesNumberOfImages"] = cfg.SeriesNumberOfImages
+            d["SeriesDelay"] = cfg.SeriesDelay  # int
+            d["SeriesAlignImages"] = bool(cfg.SeriesAlignImages)
+            d["SeriesIntegrateImages"] = bool(cfg.SeriesIntegrateImages)
+            d["SeriesAverageImages"] = bool(cfg.SeriesAverageImages)
+            d["SeriesDiscardIndividualImages"] = bool(cfg.SeriesDiscardIndividualImages)
+            d["UseScriptBeforeSeries"] = bool(cfg.UseScriptBeforeSeries)
+            d["UseScriptWithinSeries"] = bool(cfg.UseScriptWithinSeries)
+            d["UseScriptAfterSeries"] = bool(cfg.UseScriptAfterSeries)
+            d["ShutterMode"] = cfg.ShutterMode  # int
+            d["ShutterModeStr"] = ("None", "SH", "BB", "SH/BB", "Dark/SH", "Dark/BB", "Dark/SH/BB")[cfg.ShutterMode]  # str
+            return d
+        else:
+            return cfg
+
+    def getCurrentCameraInfo(self) -> dict:
+        """Gets the current camera object"""
+        cam = self._cam
+
+        d = {}
+        d["RealSizeX"] = cam.RealSizeX  # int
+        d["RealSizeY"] = cam.RealSizeY  # int
+        d["MaximumSizeX"] = cam.MaximumSizeX  # int
+        d["MaximumSizeY"] = cam.MaximumSizeY  # int
+        d["NumberOfGains"] = cam.NumberOfGains  # int
+        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains+1)]
+        d["NumberOfSpeeds"] = cam.NumberOfSpeeds  # int
+        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds+1)]
+        d["PixelSizeX"] = cam.PixelSizeX  # int
+        d["PixelSizeY"] = cam.PixelSizeY  # int
+        d["Dynamic"] = cam.Dynamic  # int
+        d["PostMag"] = cam.PostMag  # float
+        d["CamCGroup"] = cam.CamCGroup  # int
+        return d
+
+    def getCameraType(self) -> str:
+        """Get the name of the camera currently in use"""
+        cfg = self.getCurrentConfig(as_dict=False)
+        return cfg.CameraType
 
     def listDirectories(self) -> None:
         """List subdirectories of the top directory"""
@@ -153,7 +237,7 @@ class CameraEMMENU(object):
 
     def getEMVectorByIndex(self, img_index: int, drc_index: int=None) -> dict:
         """Returns the EMVector by index as a python dictionary"""
-        p = getImageByIndex(img_index, drc_index)
+        p = self.getImageByIndex(img_index, drc_index)
         v = p.EMVector
         d = EMVector2dict(v)
         return d
