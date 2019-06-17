@@ -198,6 +198,7 @@ class Experiment(object):
             time.sleep(3)
         
         self.ctrl.beamblank_off()
+        time.sleep(0.5)  # give the beamblank some time to dissappear to avoid weak first frame
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
@@ -290,10 +291,12 @@ class Experiment(object):
 
         physical_pixelsize = config.camera.physical_pixelsize # mm
         
-        binX, binY = self.emmenu.getBinning()
+        bin_x, bin_y = self.emmenu.getBinning()
+        image_dimensions_x, image_dimensions_y = self.emmenu.getImageDimensions()
+        camera_dimensions_x, camera_dimensions_y = self.emmenu.getCameraDimensions()
 
-        pixelsize *= binX
-        physical_pixelsize *= binX
+        pixelsize *= bin_x
+        physical_pixelsize *= bin_x
 
         print(f"\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f}")
         print("Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}".format(*self.start_position))
@@ -320,6 +323,11 @@ class Experiment(object):
             print(f"Wavelength: {wavelength} Angstrom", file=f)
             print(f"Spot Size: {self.spotsize}", file=f)
             print(f"Camera length: {self.camera_length} cm", file=f)
+            print(f"Pixelsize: {pixelsize} px/Angstrom", file=f)
+            print(f"Physical pixelsize: {physical_pixelsize} um", file=f)
+            print(f"Binning: {bin_x} {bin_y}", file=f)
+            print(f"Image dimensions: {image_dimensions}", file=f)
+            print(f"Camera dimensions: {camera_dimensions}", file=f)
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.start_position), file=f)
