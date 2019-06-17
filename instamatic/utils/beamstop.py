@@ -166,7 +166,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
         matplotlib.use("pdf")
         import matplotlib.pyplot as plt
 
-        fig, (ax1, ax2, ax3) = plt.subplots(ncols=3)
+        fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, figsize=(16, 8))
         for ax in ax1, ax2, ax3:
             ax.axis('off')
 
@@ -187,7 +187,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
         ax3.plot(by, bx, "r-o")
 
         fn = "beamstop.png"
-        plt.savefig(fn, dpi=150)
+        plt.savefig(fn, dpi=150, bbox_inches='tight', pad_inches=0.1)
 
     return rect
 
