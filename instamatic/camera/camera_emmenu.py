@@ -54,7 +54,7 @@ def EMVector2dict(vec):
 class CameraEMMENU(object):
     """docstring for CameraEMMENU"""
 
-    def __init__(self, drc_name="Instamatic data", interface="emmenu"):
+    def __init__(self, drc_name: str="Instamatic data", interface: str="emmenu"):
         """Initialize camera module """
         super().__init__()
 
@@ -136,7 +136,7 @@ class CameraEMMENU(object):
         cfg = self.getCurrentConfig(as_dict=False)
         return cfg.Name
 
-    def getCurrentConfig(self, as_dict=True) -> dict:
+    def getCurrentConfig(self, as_dict: bool=True) -> dict:
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
         count = self._obj.CameraConfigurations.Count
@@ -220,6 +220,22 @@ class CameraEMMENU(object):
         """Get the name of the camera currently in use"""
         cfg = self.getCurrentConfig(as_dict=False)
         return cfg.CameraType
+
+    def getEMMenuVersion(self) -> str:
+        """Get the version number of EMMENU"""
+        return self._obj.EMMENUVersion
+
+    def lock(self) -> None:
+        """
+        Lockdown interactions with emmenu, must call `self.unlock` to unlock.
+        If EMMenu is locked, no mouse or keyboard input will be accepted by the interface.
+        The script calling this function is responsible for unlocking EMMenu.
+        """
+        self._obj.EnableMainframe(1)
+
+    def unlock(self) -> None:
+        """Unlock emmenu after it has been locked down with `self.lock`"""
+        self._obj.EnableMainframe(0)
 
     def listDirectories(self) -> None:
         """List subdirectories of the top directory"""
@@ -313,7 +329,7 @@ class CameraEMMENU(object):
         TODO: write tiff from image_index instead of image_pointer??"""
         self._emf.WriteTiff(image_pointer, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=True) -> None:
         """Write a series of data in tiff format and writes them to 
         the given `path` using EMMENU machinery"""
         path = Path(path)
@@ -386,7 +402,7 @@ class CameraEMMENU(object):
         # StopRecorder normally defaults to top directory
         self._vp.DirectoryHandle = self.drc_index
 
-    def start_liveview(self, delay=3.0) -> None:
+    def start_liveview(self, delay: float=3.0) -> None:
         print("Start live view")
         try:
             self._vp.StartContinuous()

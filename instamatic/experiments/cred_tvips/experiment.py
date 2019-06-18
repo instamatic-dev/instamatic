@@ -306,9 +306,11 @@ class Experiment(object):
         print(f"Rotation speed: {self.rotation_speed:.3f} degrees/s")
 
         with open(self.path / "cRED_log.txt", "w") as f:
-            print(f"Program: {version.__long_title__} + EMMenu 4.0", file=f)
+            print(f"Program: {version.__long_title__} + EMMenu {self.emmenu.getEMMenuVersion()}", file=f)
             print(f"Camera: {config.camera.name}", file=f)
             print(f"Microscope: {config.microscope.name}", file=f)
+            print(f"Camera type: {self.emmenu.getCameraType()}", file=f)
+            print(f"Camera config: {self.emmenu.getCurrentConfigName()}", file=f)
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
             print(f"Time Period End: {self.t_end}", file=f)
@@ -328,6 +330,8 @@ class Experiment(object):
             print(f"Binning: {bin_x} {bin_y}", file=f)
             print(f"Image dimensions: {image_dimensions}", file=f)
             print(f"Camera dimensions: {camera_dimensions}", file=f)
+            print(f"Stretch amplitude: {config.camera.stretch_azimuth} %", file=f)
+            print(f"Stretch azimuth: {config.camera.stretch_amplitude} degrees", file=f)
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.start_position), file=f)
