@@ -15,6 +15,7 @@ from instamatic.tools import find_defocused_image_center, find_beam_center
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.neural_network import predict, preprocess
 import pickle
+import json
 from pathlib import Path
 from tqdm import tqdm
 from instamatic.calibrate.filenames import *
@@ -66,7 +67,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         elif imageshift == 'BS':
             file = CALIB_BEAMSHIFT_DP
         elif imageshift == 'S':
-            file = "CalibStage.pkl"
+            file = CALIB_Stage
     else:
         print("Wrong input. Mode can either be mag1 or diff for calibration!")
         return 0
@@ -521,14 +522,14 @@ class Experiment(object):
 
             img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
                 
-            if trackmethod == "p":
+            """if trackmethod == "p":
                 shift = self.tracking_by_particlerecog(img0)
                 delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
                 self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                 
                 bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
             
-                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
+                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)"""
 
             img0_p = preprocess(img0.astype(np.float))
             scorefromCNN = predict(img0_p)
@@ -832,11 +833,12 @@ class Experiment(object):
         img_conv.write_xds_inp(pathsmv)
 
         img_conv.to_dials(pathsmv)
-        msg = {"path": pathsmv,
+        pathsmv_str = str(pathsmv)
+        msg = {"path": pathsmv_str,
                "rotrange": rotrange,
                "nframes": nframes,
                "osc": osangle}
-        msg_tosend = pickle.dumps(msg)
+        msg_tosend = json.dumps(msg).encode('utf8')
 
         if s_c:
             s.send(msg_tosend)

@@ -9,6 +9,7 @@ import threading
 from pathlib import Path
 
 import pickle
+import ast
 
 
 try:
@@ -28,8 +29,8 @@ def parse_dials_index_log(fn="dials.index.log"):
         print("Unit cell = ...")
 
 
-def run_dials_indexing(path):
-    cmd = [str(EXE), path]
+def run_dials_indexing(data):
+    cmd = [str(EXE), data["path"]]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
     unitcelloutput = []
@@ -37,26 +38,22 @@ def run_dials_indexing(path):
     p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
     for line in p.stdout:
         if b'Unit cell:' in line:
-            #print(line.decode('utf-8'))
-            print(line.decode('latin1'))
+            print(line.decode('utf-8'))
             unitcelloutput = line
 
     if unitcelloutput:
         with open(fn, "a") as f:
-            f.write(f"\nData Path: {path}\n")
-            #f.write("{unitcelloutput[4:].decode('utf-8')}")
-            f.write("{unitcelloutput[4:].decode('latin1')}")
-            print(f"Indexing result written to dials indexing log file; path: {path}")
+            f.write("\nData Path: {}\n".format(data["path"]))
+            f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
+            f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
+            f.write("Number of frames: {}\n".format(data["nframes"]))
+            f.write("Oscillation angle: {} deg\n\n\n\n".format(data["osc"]))
+            print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
     
     p.wait()
-
-    # parse_dials_index_log("dials.index.log")
-    msg = "DIALS indexing completed"
-
+    unitcelloutput = []
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
     print(f"{now} | DIALS indexing has finished")
-
-    return msg
 
 
 def handle(conn):
@@ -65,6 +62,7 @@ def handle(conn):
 
     while True:
         data = conn.recv(BUFF).decode()
+        data = ast.literal_eval(data)
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
         if not data:
@@ -82,8 +80,7 @@ def handle(conn):
 
         else:
             conn.send(b"OK")
-            msg = run_dials_indexing(data)
-            conn.send(msg.encode())
+            run_dials_indexing(data)
 
     conn.send(b"Connection closed")
     conn.close()
