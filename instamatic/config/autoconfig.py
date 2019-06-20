@@ -3,6 +3,38 @@ import yaml
 from instamatic import config
 
 
+
+def get_tvips_calibs(ctrl, rng, mode, wavelength):
+    """Loop over magnification ranges and return calibrations from EMMENU"""
+
+    if mode == "diff":
+        print("Warning: Pixelsize can be a factor 10 off in diff mode (bug in EMMENU)")
+
+    calib_range = {}
+
+    BinX, BinY = ctrl.cam.getBinning()
+    assert BinX == BinY, "Binnings differ in X and Y direction?! (X: {BinX} | Y: {BinY})"
+
+    ctrl.mode(mode)
+
+    for mag in rng:
+        ctrl.magnification.set(mag)
+        d = ctrl.cam.getCurrentCameraInfo()
+
+        PixelSizeX = d["PixelSizeX"]
+        PixelSizeY = d["PixelSizeY"]
+        assert PixelSizeX == PixelSizeY, "Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})"
+
+        if mode == "diff":
+            pixelsize = np.sin(PixelSizeX / 1_000_000) / wavelength  #  µrad/px -> rad/px -> px/Å
+        else:
+            pixelsize = PixelSizeX
+
+        calib_range[mode] = pixelsize
+
+    return calib_range
+
+
 def main():
     """
     This tool will help to set up the configuration files for `instamatic`
@@ -25,21 +57,24 @@ def main():
 
     # print("\n 1: gatan (orius)\n 2: timepix\n 3: tvips (emmenu)")
     # print("\n 4: simulate\n 5: skip\n")
+    print("\n 3: tvips\n 5: None\n")
 
-    # q = int(input("Which camera should I configure? >> "))
+    q = int(input("Which camera should I configure? >> [None] "))
 
-    # if q == 1:
-    #     cam_name = "gatan"
-    # elif q == 2:
-    #     cam_name = "timepix"
-    # elif q == 3:
-    #     cam_name = "tvips"
-    # elif q == 4:
-    #     cam_name = "simulate"
-    # elif q == 5:
-    #     cam_name = None
-    # else:
-    #     raise ValueError(f"No camera with index {q}")
+    if not q:
+        cam_name = None
+    elif q == 1:
+        cam_name = "gatan"
+    elif q == 2:
+        cam_name = "timepix"
+    elif q == 3:
+        cam_name = "tvips"
+    elif q == 4:
+        cam_name = "simulate"
+    elif q == 5:
+        cam_name = None
+    else:
+        raise ValueError(f"No camera with index {q}")
 
     if tem_name == "simulate":
         ranges = {"mag1": [1, 2, 3], "diff": [10, 20, 30]}
@@ -47,7 +82,7 @@ def main():
     else:    
         from instamatic.TEMController import initialize
     
-        ctrl = initialize(tem_name=tem_name, cam_name=None)
+        ctrl = initialize(tem_name=tem_name, cam_name=cam_name)
         ranges = ctrl.magnification.get_ranges()
     
         ht = ctrl.HTValue.get()  # in V
@@ -58,15 +93,18 @@ def main():
     tem_config["name"] = tem_name
     tem_config["wavelength"] = wavelength
 
-    for k, v in ranges.items():
-        tem_config["range_"+k] = v
+    for mode, rng in ranges.items():
+        tem_config["range_"+mode] = rng
 
     calib_config = {}
     calib_config["name"] = tem_name
 
-    for k, r in ranges.items():
-        pixelsizes = {val: 1.0 for val in r}
-        calib_config["pixelsize_"+k] = pixelsizes
+    for mode, rng in ranges.items():
+        if cam_name == "tvips":
+            pixelsizes = get_tvips_calibs(ctrl=ctrl, rng=rng, mode=mode, wavelength=wavelength)
+        else:
+            pixelsizes = {r: 1.0 for r in rng}
+        calib_config["pixelsize_"+mode] = pixelsizes
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
@@ -87,7 +125,7 @@ def main():
     print(f"    calibration: {tem_name}_calib")
     # print(f"    camera: {camera_name}_cam")
     print()
-    print(f"Todo: Update the pixelsizes in `{calib_config_fn}`")
+    print(f"Todo: Check and update the pixelsizes in `{calib_config_fn}`")
     print( "      In real space, pixelsize in nm")
     print( "      In reciprocal space, pixelsize in px/Angstrom")
 
