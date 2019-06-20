@@ -256,8 +256,7 @@ class Magnification(Lens):
             print("Error: Cannot change magnficication index (current={}).".format(self.value))
 
     def get_ranges(self) -> dict:
-        """Runs through all modes and fetches all the magnification settings
-        possible on the microscope"""
+        """Runs through all modes and fetches all the magnification settings possible on the microscope"""
         return self._tem.getMagnificationRanges()
 
 
@@ -690,16 +689,22 @@ class TEMController(object):
         self.tem.setScreenPosition(value)
 
     def screen_up(self):
+        """Raise the fluorescence screen"""
         self.tem.setScreenPosition("up")
 
     def screen_down(self):
+        """Lower the fluorescence screen"""
         self.tem.setScreenPosition("down")
 
     def beamblank_on(self):
+        """Turn the beamblank on."""
         self.tem.setBeamBlank(True)
 
-    def beamblank_off(self):
+    def beamblank_off(self, delay: float=0.0):
+        """Turn the beamblank off, optionally wait for `delay` ms to allow the beam to settle."""
         self.tem.setBeamBlank(False)
+        if delay:
+            time.sleep(delay)
 
     @property
     def mode(self):
@@ -745,7 +750,7 @@ class TEMController(object):
         self.to_dict('all') or self.to_dict() will return all properties
         """
         
-        ## Each of these costs about 62 ms per call, stageposition is 265 ms per call
+        ## Each of these costs about 40-60 ms per call on a JEOL 2100, stageposition is 265 ms per call
         funcs = { 
             'FunctionMode': self.tem.getFunctionMode,
             'GunShift': self.gunshift.get,

@@ -197,8 +197,7 @@ class Experiment(object):
             self.ctrl.difffocus.refocus()
             time.sleep(3)
         
-        self.ctrl.beamblank_off()
-        time.sleep(0.5)  # give the beamblank some time to dissappear to avoid weak first frame
+        self.ctrl.beamblank_off(delay=0.5)  # give the beamblank some time to dissappear to avoid weak first frame
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
