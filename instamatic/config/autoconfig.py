@@ -1,10 +1,11 @@
 from instamatic.tools import relativistic_wavelength
 import yaml
 from instamatic import config
+from pathlib import Path
+import shutil
 
 
-
-def get_tvips_calibs(ctrl, rng, mode, wavelength):
+def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     """Loop over magnification ranges and return calibrations from EMMENU"""
 
     if mode == "diff":
@@ -42,9 +43,9 @@ def main():
     and magnification ranges
     """
 
-    print("\n 1: jeol\n 2: fei\n 3: simulate\n")
+    print("\n 1: jeol\n 2: fei\n 3: simulate")
 
-    q = int(input("Which microscope should I connect to? >> "))
+    q = int(input("\nWhich microscope can I connect to? [simulate] >> ") or 3)
 
     if q == 1:
         tem_name = "jeol"
@@ -56,10 +57,9 @@ def main():
         raise ValueError(f"No microscope with index {q}")
 
     # print("\n 1: gatan (orius)\n 2: timepix\n 3: tvips (emmenu)")
-    # print("\n 4: simulate\n 5: skip\n")
-    print("\n 3: tvips\n 5: None\n")
+    print("\n 0: None\n 3: tvips (emmenu)\n 4: simulate")
 
-    q = int(input("Which camera should I configure? >> [None] "))
+    q = int(input("\nWhich camera can I connect to? [None] >> ") or 0)
 
     if not q:
         cam_name = None
@@ -71,10 +71,23 @@ def main():
         cam_name = "tvips"
     elif q == 4:
         cam_name = "simulate"
-    elif q == 5:
-        cam_name = None
     else:
         raise ValueError(f"No camera with index {q}")
+
+    drc = Path(__file__).parent
+    default_configs = list(drc.glob("camera/*.yaml"))
+    print("\n 0 - None")
+    for i, default_config in enumerate(default_configs):
+        print(f"{i+1: 2d} - {default_config.stem}")  # 1-indexed
+
+    q = int(input("\nWhich camera type do you want to use (select closest one and modify if needed) [None] >> ") or 0)
+
+    if not q:
+        cam_config = None
+    elif 0 < q < len(default_configs):
+        cam_config = default_configs[q-1]  # 0-indexed
+    else:
+        raise ValueError(f"No config with index {q}")
 
     if tem_name == "simulate":
         ranges = {"mag1": [1, 2, 3], "diff": [10, 20, 30]}
@@ -108,26 +121,29 @@ def main():
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
-    # cam_config_fn = f"{cam_name}_cam.yaml"
+    if cam_config:
+        cam_config_fn = f"{cam_name}_cam.yaml"
+        shutil.copyfile(cam_config, cam_config_fn)
 
     yaml.dump(tem_config, open(tem_config_fn, "w"), sort_keys=False)
     yaml.dump(calib_config, open(calib_config_fn, "w"), sort_keys=False)
-    # yaml.dump(cam_config, open(cam_config_fn, "w"), sort_keys=False)
     
     print()
-    print(f"Wrote files {tem_config_fn} and {calib_config_fn}")
+    print(f"Wrote files config files:")
     print(f"    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`")
     print(f"    Copy {calib_config_fn} -> `{config.config_drc / calib_config_fn}`")
-    # print(f"    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`")
+    if cam_config:
+        print(f"    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`")
     print()
     print(f"In `{config.config_drc / 'global.yaml'}`:")
     print(f"    microscope: {tem_name}_tem")
     print(f"    calibration: {tem_name}_calib")
-    # print(f"    camera: {camera_name}_cam")
+    if cam_config:
+        print(f"    camera: {cam_name}_cam")
     print()
     print(f"Todo: Check and update the pixelsizes in `{calib_config_fn}`")
-    print( "      In real space, pixelsize in nm")
-    print( "      In reciprocal space, pixelsize in px/Angstrom")
+    print( "    In real space, pixelsize in nm")
+    print( "    In reciprocal space, pixelsize in px/Angstrom")
 
 
 if __name__ == '__main__':
