@@ -89,16 +89,17 @@ def main():
     else:
         raise ValueError(f"No config with index {q}")
 
-    if tem_name == "simulate":
-        ranges = {"mag1": [1, 2, 3], "diff": [10, 20, 30]}
-        ht = 120000
-    else:    
-        from instamatic.TEMController import initialize
-    
-        ctrl = initialize(tem_name=tem_name, cam_name=cam_name)
-        ranges = ctrl.magnification.get_ranges()
-    
-        ht = ctrl.HTValue.get()  # in V
+    from instamatic.TEMController.microscope import get_tem
+    from instamatic.camera.camera import get_cam
+    from instamatic.TEMController.TEMController import TEMController
+
+    cam = get_cam(cam_name)() if cam_name else None
+    tem = get_tem(tem_name)()
+
+    ctrl = TEMController(tem=tem, cam=cam)
+    ranges = ctrl.magnification.get_ranges()
+
+    ht = ctrl.HTValue.get()  # in V
 
     wavelength = relativistic_wavelength(ht)
 

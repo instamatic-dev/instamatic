@@ -168,6 +168,26 @@ class SimuMicroscope(object):
 
         self.setMagnification(value)
 
+    def increaseMagnificationIndex(self) -> int:
+        idx = self.getMagnificationIndex
+        self.setMagnificationIndex(idx+1)
+        return 1
+
+    def decreaseMagnificationIndex(self) -> int:
+        idx = self.getMagnificationIndex
+        self.setMagnificationIndex(idx-1)
+        return 1
+
+    def getMagnificationRanges(self) -> dict:
+        mag_ranges = {}
+        for i, mode in enumerate(self.FUNCTION_MODES):
+            try:
+                mag_ranges[mode] = getattr(self, f"range_{mode}")
+            except AttributeError:
+                pass
+
+        return mag_ranges     
+
     def getGunShift(self) -> Tuple[int, int]:
         return self.GunShift_x, self.GunShift_y
 

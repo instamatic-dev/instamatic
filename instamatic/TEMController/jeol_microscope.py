@@ -218,7 +218,7 @@ class JeolMicroscope(object):
         status = self.eos3.DownSelector()
         return status
 
-    def getMagnificationRanges(self):
+    def getMagnificationRanges(self) -> dict:
         """Get the magnification range for setting up the config"""
         mag_ranges = {}
         for i, mode in enumerate(self.FUNCTION_MODES):
