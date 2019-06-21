@@ -315,7 +315,7 @@ class CameraEMMENU(object):
 
     def getBinning(self) -> (int, int):
         """Returns the binning corresponding to the currently selected camera config"""
-        cfg = self.getCurrentConfig()
+        cfg = self.getCurrentConfig(as_dict=False)
         return cfg.BinningX, cfg.BinningY
 
     def getCameraName(self) -> str:
