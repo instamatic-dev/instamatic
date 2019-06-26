@@ -1,5 +1,7 @@
 from instamatic import config
 from typing import Tuple
+import time
+
 
 NTRLMAPPING = {
    "GUN1" : 0,
@@ -55,7 +57,7 @@ class SimuMicroscope(object):
         self.StagePosition_x = random.randint(-100000, 100000)
         self.StagePosition_y = random.randint(-100000, 100000)
         self.StagePosition_z = random.randint(-10000,  10000)
-        self.StagePosition_a = random.randint(-40, 40)
+        self._StagePosition_a = random.randint(-40, 40)
         self.StagePosition_b = random.randint(-40, 40)
 
         # self.FunctionMode_value = random.randint(0, 2)
@@ -110,6 +112,34 @@ class SimuMicroscope(object):
         self.objectivelensecoarse_value = random.randint(MIN, MAX)
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
+
+        self._is_moving = False
+        self._StagePosition_a_speed = 10.0  # degree / sec
+
+    @property
+    def StagePosition_a(self):
+        if self._is_moving:
+            dt = time.clock() - self._StagePosition_a_t0
+            val = self._StagePosition_a_start + dt * self._StagePosition_a_speed
+
+            if abs(val - self._StagePosition_a_start) > abs(self._StagePosition_a_end - self._StagePosition_a_start):
+                self._StagePosition_a = self._StagePosition_a_end
+                self._is_moving = False
+                ret = self._StagePosition_a
+            else:
+                ret = val
+        else:
+            ret = self._StagePosition_a
+
+        return ret
+
+    @StagePosition_a.setter
+    def StagePosition_a(self, value):
+        self._is_moving = True
+
+        self._StagePosition_a_start = self._StagePosition_a
+        self._StagePosition_a_end = value
+        self._StagePosition_a_t0 = time.clock()
 
     def getHTValue(self):
         return 200000
@@ -234,7 +264,8 @@ class SimuMicroscope(object):
         return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
 
     def isStageMoving(self) -> bool:
-        return False
+        self.getStagePosition()  # trigger update of self._is_moving
+        return self._is_moving
 
     def waitForStage(self, delay: float=0.1):
         while self.isStageMoving():
@@ -242,27 +273,27 @@ class SimuMicroscope(object):
 
     def setStageX(self, value: int, wait: bool=True):
         self.StagePosition_x = value
-        if True:
+        if wait:
             self.waitForStage()
 
     def setStageY(self, value: int, wait: bool=True):
         self.StagePosition_y = value
-        if True:
+        if wait:
             self.waitForStage()
 
     def setStageZ(self, value: int, wait: bool=True):
         self.StagePosition_z = value
-        if True:
+        if wait:
             self.waitForStage()
 
     def setStageA(self, value: int, wait: bool=True):
         self.StagePosition_a = value
-        if True:
+        if wait:
             self.waitForStage()
 
     def setStageB(self, value: int, wait: bool=True):
         self.StagePosition_b = value
-        if True:
+        if wait:
             self.waitForStage()
 
     def setStageXY(self, x: int, y: int, wait: bool=True):
