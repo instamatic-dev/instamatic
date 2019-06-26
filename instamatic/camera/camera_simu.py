@@ -62,6 +62,14 @@ class CameraSimu(object):
         """Get the dimensions reported by the camera"""
         return self.dimensions
 
+    def getImageDimensions(self) -> (int, int):
+        """Get the dimensions reported by the camera"""
+        return self.dimensions
+
+    def getCameraDimensions(self) -> (int, int):
+        """Get the dimensions reported by the camera"""
+        return self.dimensions
+
     def getName(self) -> str:
         """Get the name reported by the camera"""
         return self.name
@@ -79,6 +87,15 @@ class CameraSimu(object):
         logger.info(msg)
 
     #### Mimic EMMENU API
+
+    def getEMMenuVersion(self) -> str:
+        return "simu"
+
+    def getCameraType(self) -> str:
+        return "SimuType"
+
+    def getCurrentConfigName(self) -> str:
+        return "SimuCfg"
 
     def set_autoincrement(self, value):
         pass
