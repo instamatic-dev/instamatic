@@ -5,6 +5,10 @@ from pathlib import Path
 from instamatic.tools import get_acquisition_time
 import time
 from instamatic.formats import write_tiff
+import numpy as np
+from scipy.interpolate import interp1d
+import pickle
+
 
 
 class SerialExperiment(object):
@@ -72,7 +76,7 @@ class Experiment(object):
     exposure:
         Exposure time in ms
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None, exposure=400):
+    def __init__(self, ctrl, path: str=None, log=None, track=None, exposure=400, mode="diff"):
         super().__init__()
 
         self.ctrl = ctrl
@@ -83,6 +87,7 @@ class Experiment(object):
         self.defocus_offset = 1500
 
         self.logger = log
+        self.mode = mode
         
         if track:
             self.load_tracking_file(track)
@@ -93,7 +98,6 @@ class Experiment(object):
     def load_tracking_file(self, trackfile):
         trackfile = Path(trackfile)
         if trackfile.suffix == ".pickle":
-            import pickle
             print(f"(autotracking) Loading tracking file: {trackfile}")
             dct = pickle.load(open(trackfile, "rb"))
     
@@ -160,9 +164,9 @@ class Experiment(object):
         self.ctrl.beamblank_on()
         self.ctrl.screen_up()
     
-        if self.ctrl.mode != 'diff':
-            print("Switching to diffraction mode")
-            self.ctrl.mode = 'diff'
+        if self.ctrl.mode != self.mode:
+            print(f"Switching to {self.mode} mode")
+            self.ctrl.mode = self.mode
         
         spotsize = self.ctrl.spotsize
         if spotsize not in (4, 5):
@@ -184,7 +188,8 @@ class Experiment(object):
 
         if self.track:
             ### Center crystal position
-            self.ctrl.difffocus.defocus(self.defocus_offset)
+            if self.mode == "diff":
+                self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
     
             input("Move SAED aperture to crystal and press <ENTER> to measure! ")
@@ -194,7 +199,8 @@ class Experiment(object):
             # write_tiff(self.path / "image_before.tiff", img1)
 
             self.ctrl.beamblank_on()
-            self.ctrl.difffocus.refocus()
+            if self.mode == "diff":
+                self.ctrl.difffocus.refocus()
             time.sleep(3)
         
         self.ctrl.beamblank_off(delay=0.5)  # give the beamblank some time to dissappear to avoid weak first frame
@@ -263,14 +269,16 @@ class Experiment(object):
 
         if self.track:
             ### Center crystal position
-            self.ctrl.difffocus.defocus(self.defocus_offset)
+            if self.mode == "diff":
+                self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
     
             img2 = self.ctrl.getRawImage()
             write_tiff(self.path / "image_after.tiff", img2)
     
             self.ctrl.beamblank_on()
-            self.ctrl.difffocus.refocus()
+            if self.mode == "diff":
+                self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
         
@@ -352,8 +360,34 @@ class Experiment(object):
             print("# timestamp x y z a b", file=f)
             for t, (x, y, z, a, b) in self.stage_positions:
                 print(t, x, y, z, a, b, file=f)
-
+        
         print(f"Wrote file {f.name}")
+
+        if self.mode != "diff":
+            pos = np.array(self.stage_positions)  # x y z a b
+            idx = np.argmin(np.abs(pos[:,3]))
+            x_center = pos[:,0].mean()
+            y_center = pos[idx,1]
+            z_pos = pos[0:,2].mean()
+            f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
+
+            d = {}
+            d["y_offset"] = f
+            d["x_offset"] = 0
+            d["x_center"] = x_center
+            d["y_center"] = y_center
+            d["z_pos"] = self.startposition.z
+
+            d["angle_min"] = self.start_angle
+            d["angle_max"] = self.end_angle
+
+            d["i"] = 0
+
+            fn = self.path / f"track.pickle"
+            pickle.dump(d, open(fn, "wb"))
+
+            print(f"Wrote file {fn.name}")
+
 
 if __name__ == '__main__':
     expdir = controller.module_io.get_new_experiment_directory()
