@@ -153,6 +153,8 @@ class Experiment(object):
 
     def get_ready(self):
         # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
+        self.emmenu.stop_liveview()  # just in case
+
         try:
             self.emmenu.set_autoincrement(False)
             self.emmenu.set_image_index(0)
@@ -231,6 +233,7 @@ class Experiment(object):
                     self.track_crystal(n=n, angle=a)
 
         t1 = time.perf_counter()
+        self.emmenu.stop_liveview()
 
         self.end_position = self.ctrl.stageposition.get()
         end_angle = self.end_position.a
