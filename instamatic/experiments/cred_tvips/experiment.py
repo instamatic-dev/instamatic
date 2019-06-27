@@ -321,6 +321,7 @@ class Experiment(object):
             print(f"Microscope: {config.microscope.name}", file=f)
             print(f"Camera type: {self.emmenu.getCameraType()}", file=f)
             print(f"Camera config: {self.emmenu.getCurrentConfigName()}", file=f)
+            print(f"Mode: {self.mode}", file=f)
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
             print(f"Time Period End: {self.t_end}", file=f)

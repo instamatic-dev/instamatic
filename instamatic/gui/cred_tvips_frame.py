@@ -23,14 +23,18 @@ class ExperimentalTVIPS(LabelFrame):
         self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
         self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
 
-        Label(frame, text="Exposure (ms):").grid(row=7, column=0, sticky="W")
-        self.e_exposure = Spinbox(frame, textvariable=self.var_exposure, width=sbwidth, from_=0, to=10000, increment=100)
-        self.e_exposure.grid(row=7, column=1, sticky="W", padx=10)
-
         # defocus button
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+
+        Label(frame, text="Exposure (ms):").grid(row=7, column=0, sticky="W")
+        self.e_exposure = Spinbox(frame, textvariable=self.var_exposure, width=sbwidth, from_=0, to=10000, increment=100)
+        self.e_exposure.grid(row=7, column=1, sticky="W", padx=10)
+
+        Label(frame, text="Mode:").grid(row=8, column=0, sticky="W")
+        self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag')
+        self.o_mode.grid(row=8, column=1, sticky="W", padx=10)
 
         self.c_toggle_defocus = Checkbutton(frame, text="Toggle defocus", variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
         self.c_toggle_defocus.grid(row=6, column=3, sticky="W")
@@ -121,6 +125,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_screen = BooleanVar(value=False)
 
         self.var_tracking_file = StringVar(value="")
+        self.var_mode = StringVar(value="diff")
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -193,6 +198,7 @@ class ExperimentalTVIPS(LabelFrame):
         params = { "target_angle": self.var_target_angle.get(),
                    "tracking_file": self.var_tracking_file.get(),
                    "exposure": self.var_exposure.get(),
+                   "mode": self.var_mode.get(),
                    "task": task }
         return params
 
@@ -264,13 +270,14 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     target_angle = kwargs["target_angle"]
     tracking_file = kwargs["tracking_file"]
     exposure = kwargs["exposure"]
+    mode = kwargs["mode"]
 
     if task == "get_ready":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
-                                                          log=controller.log, 
+                                                          log=controller.log, mode=mode,
                                                           track=tracking_file, exposure=exposure)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
@@ -280,8 +287,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         expdir.mkdir(exist_ok=True, parents=True)
 
         cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
-                                                     log=controller.log, tracking_file=tracking_file,
-                                                     exposure=exposure)
+                                                     log=controller.log, mode=mode,
+                                                     tracking_file=tracking_file, exposure=exposure)
         cred_tvips_exp.run()
     elif task == "stop":
         pass
