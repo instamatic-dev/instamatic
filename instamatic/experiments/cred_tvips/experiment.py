@@ -176,7 +176,7 @@ class Experiment(object):
     
         self.emmenu.start_liveview()
 
-    def start_collection(self, target_angle: float):
+    def start_collection(self, target_angle: float, start_angle: float=None):
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         self.stage_positions = []
@@ -184,6 +184,10 @@ class Experiment(object):
 
         if self.track:
             start_angle, target_angle = self.prepare_tracking()
+        
+        if start_angle:
+            print(f"Going to starting angle: {start_angle:.1f}")
+            self.ctrl.stageposition.a = start_angle
 
         self.start_position = self.ctrl.stageposition.get()
         start_angle = self.start_position.a
@@ -368,29 +372,32 @@ class Experiment(object):
         print(f"Wrote file {f.name}")
 
         if self.mode != "diff":
-            pos = np.array(self.stage_positions)  # x y z a b
-            idx = np.argmin(np.abs(pos[:,3]))
-            x_center = pos[:,0].mean()
-            y_center = pos[idx,1]
-            z_pos = pos[0:,2].mean()
-            f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
-
-            d = {}
-            d["y_offset"] = f
-            d["x_offset"] = 0
-            d["x_center"] = x_center
-            d["y_center"] = y_center
-            d["z_pos"] = self.startposition.z
-
-            d["angle_min"] = self.start_angle
-            d["angle_max"] = self.end_angle
-
-            d["i"] = 0
-
-            fn = self.path / f"track.pickle"
-            pickle.dump(d, open(fn, "wb"))
-
-            print(f"Wrote file {fn.name}")
+            if len(self.stage_positions) < 3:
+                print("Not enough stage positions for interpolation")
+            else:
+                pos = np.array([p[1] for p in self.stage_positions])  # (t, (x y z a b))
+                idx = np.argmin(np.abs(pos[:,3]))
+                x_center = pos[:,0].mean()
+                y_center = pos[idx,1]
+                z_pos = pos[0:,2].mean()
+                f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
+    
+                d = {}
+                d["y_offset"] = f
+                d["x_offset"] = 0
+                d["x_center"] = x_center
+                d["y_center"] = y_center
+                d["z_pos"] = z_pos
+    
+                d["angle_min"] = self.start_angle
+                d["angle_max"] = self.end_angle
+    
+                d["i"] = 0
+    
+                fn = self.path / f"track.pickle"
+                pickle.dump(d, open(fn, "wb"))
+    
+                print(f"Wrote file {fn.name}")
 
 
 if __name__ == '__main__':
