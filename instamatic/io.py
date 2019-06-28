@@ -2,7 +2,7 @@ from instamatic import config
 from pathlib import Path
 
 
-def get_new_work_subdirectory(stem, drc=None, number=1, mkdir=True):
+def get_new_work_subdirectory(stem="experiment", drc=None, number=1, mkdir=True):
     """Simple function to grab new empty working directory"""
     if not drc:
         drc = config.cfg.work_directory
