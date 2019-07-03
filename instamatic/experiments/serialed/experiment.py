@@ -253,6 +253,9 @@ class Experiment(object):
     
         self.camera_rotation_angle = config.camera.camera_rotation_vs_stage_xy
 
+        # Make negative to reflect config change 2019-07-03 to make omega more in line with other software
+        self.camera_rotation_angle = -self.camera_rotation_angle
+
         box_x, box_y = self.image_dimensions
 
         offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)

@@ -857,7 +857,11 @@ class Experiment(object):
         pixelsize_mag1 = config.calibration.pixelsize_mag1[self.magnification] / 1000  # nm -> um
         xdim, ydim = config.camera.dimensions
         box_x, box_y = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
-        offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_area, angle = config.camera.camera_rotation_vs_stage_xy)
+
+        # Make negative to reflect config change 2019-07-03 to make omega more in line with other software
+        rot_axis = -config.camera.camera_rotation_vs_stage_xy
+
+        offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_area, angle=rot_axis)
         self.offsets = offsets * 1000
         
         center_x = self.ctrl.stageposition.x

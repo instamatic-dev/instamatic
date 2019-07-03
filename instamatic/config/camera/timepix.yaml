@@ -10,6 +10,6 @@ dynamic_range: 11800
 name: timepix
 physical_pixelsize: 0.055
 possible_binsizes: [1]
-camera_rotation_vs_stage_xy: -2.24
+camera_rotation_vs_stage_xy: 2.24
 stretch_amplitude: 2.43
 stretch_azimuth: 83.37
