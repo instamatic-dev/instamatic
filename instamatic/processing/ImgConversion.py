@@ -221,18 +221,25 @@ class ImgConversion(object):
                 raise AttributeError(f"`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`")
 
 
-    def get_beam_centers(self) -> (float, float):
+    def get_beam_centers(self, invert_x: bool=False, invert_y: bool=False) -> (float, float):
         """Obtain beam centers from the diffraction data
         Returns a tuple with the median beam center and its standard deviation
         """
+        shape_x, shape_y = self.data_shape
         centers = []
         for i, h in self.headers.items():
             if self.use_beamstop:
-                center = find_beam_center_with_beamstop(self.data[i], z=99)
+                cx, cy = find_beam_center_with_beamstop(self.data[i], z=99)
             else:
-                center = find_beam_center(self.data[i], sigma=10)
-            h["beam_center"] = center
-            centers.append(center)
+                cx, cy = find_beam_center(self.data[i], sigma=10)
+
+            if invert_x:
+                cx = shape_x - cx
+            if invert_y:
+                cy = shape_y - cy
+
+            h["beam_center"] = (cx, cy)
+            centers.append((cx, cy))
 
         self._beam_centers = beam_centers = np.array(centers)
 
