@@ -54,12 +54,6 @@ class SimuMicroscope(object):
         self.ImageShift2_x = random.randint(MIN, MAX)
         self.ImageShift2_y = random.randint(MIN, MAX)
 
-        self.StagePosition_x = random.randint(-100000, 100000)
-        self.StagePosition_y = random.randint(-100000, 100000)
-        self.StagePosition_z = random.randint(-10000,  10000)
-        self._StagePosition_a = random.randint(-40, 40)
-        self.StagePosition_b = random.randint(-40, 40)
-
         # self.FunctionMode_value = random.randint(0, 2)
         self.FunctionMode_value = 0
 
@@ -87,6 +81,8 @@ class SimuMicroscope(object):
         self.MAX = MAX
         self.MIN = MIN
 
+        self._HT = 200_000  # V
+
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
         self.Magnification_value = 2500
         self.Magnification_value_diff = 300
@@ -113,36 +109,115 @@ class SimuMicroscope(object):
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
 
-        self._is_moving = False
-        self._StagePosition_a_speed = 10.0  # degree / sec
+        self._StagePosition_x = random.randint(-100000, 100000)
+        self._StagePosition_y = random.randint(-100000, 100000)
+        self._StagePosition_z = random.randint(-10000,  10000)
+        self._StagePosition_a = random.randint(-40, 40)
+        self._StagePosition_b = random.randint(-40, 40)
 
-    @property
-    def StagePosition_a(self):
-        if self._is_moving:
-            dt = time.clock() - self._StagePosition_a_t0
-            val = self._StagePosition_a_start + dt * self._StagePosition_a_speed
+        self._stage_dict = {}
+        for key in ("a", "b", "x", "y", "z"):
+            if key in ("a", "b"):
+                speed = 10.0  # degree / sec
+                current = random.randint(-40, 40)
+            elif key in ("x", "y"):
+                speed = 10_000.0  # nm / sec
+                current = random.randint(-100000, 100000)
+            elif key == "z":
+                speed = 10_000.0  # nm / sec
+                current = random.randint(-10000, 10000)
 
-            if abs(val - self._StagePosition_a_start) > abs(self._StagePosition_a_end - self._StagePosition_a_start):
-                self._StagePosition_a = self._StagePosition_a_end
-                self._is_moving = False
-                ret = self._StagePosition_a
+            self._stage_dict[key] = {
+                "current": current,
+                "is_moving": False,
+                "speed": speed,
+                "direction": +1,
+                "start": 0.0,
+                "end": 0.0,
+                "t0": 0.0
+            }
+
+    def _StagePositionSetter(self, var: str, val: float) -> None:
+        """General stage position setter, models stage movement speed"""
+        d = self._stage_dict[var]
+        current = d["current"]
+        direction = +1 if (val > current) else -1
+        
+        d["is_moving"] = True
+        d["start"] = current
+        d["end"] = val
+        d["t0"] = time.clock()
+        d["direction"] = direction
+
+    def _StagePositionGetter(self, var: str) -> float:
+        """General stage position getter, models stage movement speed"""
+        d = self._stage_dict[var]
+        is_moving = d["is_moving"]
+        if is_moving:
+            dt = time.clock() - d["t0"]
+            direction = d["direction"]
+            speed = d["speed"]
+            start = d["start"]
+            end = d["end"]
+            val = start + direction * dt * speed
+
+            if abs(val - start) > abs(end - start):
+                d["current"] = end
+                d["is_moving"] = False
+                ret = end
             else:
                 ret = val
         else:
-            ret = self._StagePosition_a
+            ret = d["current"]
 
-        return ret
+        return ret  
+    
+    @property
+    def StagePosition_a(self):
+        return self._StagePositionGetter("a")
 
     @StagePosition_a.setter
     def StagePosition_a(self, value):
-        self._is_moving = True
+        self._StagePositionSetter("a", value)
+        
+    @property
+    def StagePosition_b(self):
+        return self._StagePositionGetter("b")
 
-        self._StagePosition_a_start = self._StagePosition_a
-        self._StagePosition_a_end = value
-        self._StagePosition_a_t0 = time.clock()
+    @StagePosition_b.setter
+    def StagePosition_b(self, value):
+        self._StagePositionSetter("b", value)
+        
+    @property
+    def StagePosition_x(self):
+        return self._StagePositionGetter("x")
+
+    @StagePosition_x.setter
+    def StagePosition_x(self, value):
+        self._StagePositionSetter("x", value)
+        
+    @property
+    def StagePosition_y(self):
+        return self._StagePositionGetter("y")
+
+    @StagePosition_y.setter
+    def StagePosition_y(self, value):
+        self._StagePositionSetter("y", value)
+
+    @property
+    def StagePosition_z(self):
+        return self._StagePositionGetter("z")
+
+    @StagePosition_z.setter
+    def StagePosition_z(self, value):
+        self._StagePositionSetter("z", value)
+
+    @property
+    def _is_moving(self) -> bool:
+        return any([self._stage_dict[key]["is_moving"] for key in self._stage_dict.keys()])
 
     def getHTValue(self):
-        return 200000
+        return self._HT
 
     def getBrightness(self) -> int:
         return self.Brightness_value
@@ -264,7 +339,8 @@ class SimuMicroscope(object):
         return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
 
     def isStageMoving(self) -> bool:
-        self.getStagePosition()  # trigger update of self._is_moving
+        res = self.getStagePosition()  # trigger update of self._is_moving
+        # print(res, self._is_moving)
         return self._is_moving
 
     def waitForStage(self, delay: float=0.1):
