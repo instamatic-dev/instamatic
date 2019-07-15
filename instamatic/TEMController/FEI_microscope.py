@@ -169,10 +169,7 @@ class FEIMicroscope(object):
         
         input("Please select the type of sample stage before moving on.\nPress <ENTER> to continue...")
 
-        # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
-        #self.Magnification_value = 2500
-        #self.Magnification_value_diff = 300
-
+        
     def getHTValue(self):
         return self.tem.GUN.HTValue
     
@@ -290,6 +287,26 @@ class FEIMicroscope(object):
             
         self.tecnai.Gun.Tilt = gt
         
+    def getBeamShift(self):
+        """User Shift"""
+        "1.19 ms in communication. Super fast!"
+        x = self.tom.Illumination.BeamShift.X
+        y = self.tom.Illumination.BeamShift.Y
+        return x, y
+    
+    def setBeamShift(self, x, y):
+        """User Shift"""
+        bs = self.tom.Illumination.BeamShift
+        if abs(x) > 1 or abs(y) > 1:
+            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
+            return
+        
+        if x is not None:
+            bs.X = x
+        if y is not None:
+            bs.Y = y
+        self.tom.Illumination.BeamShift = bs
+
     def getBeamAlignShift(self):
         """Align Shift"""
         x = self.tom.Illumination.BeamAlignShift.X
@@ -350,6 +367,23 @@ class FEIMicroscope(object):
     def setImageShift2(self, x, y):
         return 0
 
+    def getImageBeamShift(self):
+        """image-beam shift"""
+        return self.tom.Projection.ImageBeamShift.X, self.tom.Projection.ImageBeamShift.Y
+
+    def setImageBeamShift(self, x, y):
+        is1 = self.tom.Projection.ImageBeamShift
+        if abs(x) > 1 or abs(y) > 1:
+            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
+            return
+        
+        if x is not None:
+            is1.X = x
+        if y is not None:
+            is1.Y = y
+        
+        self.tom.Projection.ImageBeamShift = is1
+
     def isStageMoving(self):
         if self.stage.Status == 0:
             return False
@@ -396,25 +430,10 @@ class FEIMicroscope(object):
              return self.tom.Illumination.C1ApertureSize * 1e3
          elif aperture == 'C2':
              return self.tom.Illumination.C2ApertureSize * 1e3
+         
          else:
              raise ValueError("aperture must be specified as 'C1' or 'C2'.")
-         
-    def getBeamShift(self):
-        return self.tom.Illumination.BeamShift.X, self.tom.Illumination.BeamShift.Y
-    
-    def setBeamShift(self, x, y):
-        us = self.tom.Illumination.BeamShift
-        if x > 0 or y > 0 or x < -1 or y < -1:
-            raise ValueError(f"BeamShift x/y must be a floating number between -1 an 0. Input: x={x}, y={y}")
-            return
-        
-        if x is not None:
-            us.X = x
-            
-        if y is not None:
-            us.Y = y
-        
-        self.tom.Illumination.BeamShift = us
+
         
     def getDarkFieldTilt(self):
         return self.tom.Illumination.DarkfieldTilt.X, self.tom.Illumination.DarkfieldTilt.Y
@@ -431,26 +450,21 @@ class FEIMicroscope(object):
         return self.tom.Screen.IsFocusScreenIn
     
     def getDiffShift(self):
-        """To be tested"""
-        if self.proj.Mode != 1:
-            return (0, 0)
-        
-        return self.proj.DiffractionShift.X,self.proj.DiffractionShift.Y
-        
+        """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough"""
+        return 180/pi*self.tem.Projection.DiffractionShift.X, 180/pi*self.tem.Projection.DiffractionShift.Y
+
     def setDiffShift(self, x, y):
-        """To be tested"""
-        ds = self.proj.DiffractionShift
-        if x > 1 or y > 1 or x < -1 or y < -1:
-            print("Invalid PLA setting: can only be float numbers between -1 and 0.")
+        ds1 = self.tem.Projection.DiffractionShift
+        if abs(x) > 1 or abs(y) > 1:
+            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
             return
         
         if x is not None:
-            ds.X = x
-            
+            ds1.X = x/180*pi
         if y is not None:
-            ds.Y = y
+            ds1.Y = y/180*pi
         
-        self.proj.DiffractionShift = ds
+        self.tem.Projection.DiffractionShift = ds1
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
@@ -462,6 +476,7 @@ class FEIMicroscope(object):
         return self.tem.Illumination.BeamBlanked
 
     def setBeamBlank(self, value):
+        """True/False or 1/0"""
         self.tem.Illumination.BeamBlanked = value
     
     def setBeamUnblank(self):
@@ -515,7 +530,7 @@ class FEIMicroscope(object):
         return self.tom.Illumination.IlluminatedAreaDiameter * 1e6
 
     def setBrightness(self, value):
-        self.tom.Illumination.IlluminatedAreaDiameter = value
+        self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-6
         
     def getFunctionMode(self):
         """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
