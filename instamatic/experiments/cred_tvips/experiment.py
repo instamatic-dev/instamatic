@@ -249,6 +249,9 @@ class Experiment(object):
         self.total_time = t1 - t0
         
         nframes = end_index - start_index
+        if nframes < 1:
+            print("No frames measured??")
+            return
 
         self.osc_angle = abs(end_angle - start_angle) / nframes
         
