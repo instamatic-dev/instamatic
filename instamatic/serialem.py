@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import numpy as np
 
 
 # int
@@ -19,10 +20,10 @@ str_map = ("MapFile", "Note")
 
 # list, float
 list_float_map = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
-                  "PtsX",     "PtsY",       "StageXYZ")
+                  "PtsX",     "PtsY",       "StageXYZ",    "MapMinMaxScale")
 
 # list, int
-list_int_map = ("BklshXY", "MapWidthHeight", "MapMinMaxScale", "MapFramesXY")
+list_int_map = ("BklshXY", "MapWidthHeight", "MapFramesXY")
 
 unknown_map = ()
 
@@ -49,23 +50,27 @@ class NavItem(object):
         return f"{self.__class__.__name__}({self.kind}[Item = {self.tag}])"
 
     @property
-    def kind(self):
+    def kind(self) -> str:
         return ("Marker", "Polygon", "Map")[self.Type]
 
     @property
-    def stage_x(self):
+    def stage_x(self) -> float:
         return self.StageXYZ[0]
 
     @property
-    def stage_y(self):
+    def stage_y(self) -> float:
         return self.StageXYZ[1]
 
     @property
-    def stage_z(self):
+    def stage_z(self) -> list:
         return self.StageXYZ[2]
 
     @property
-    def map_scale_matrix(self):
+    def stage_xy(self) -> list:
+        return self.StageXYZ[0:2]
+
+    @property
+    def map_scale_matrix(self) -> np.array:
         MapBinning = self.MapBinning
         MontBinning = self.MontBinning
         return (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
@@ -99,6 +104,56 @@ class NavItem(object):
         return {key: self.__dict__[key] for key in self._keys}
 
 
+class MapItem(NavItem):
+    """Adds some extra methods for map items"""
+    
+    def pixel_to_stagecoords(self, coords: list) -> np.array:
+        """Convert from pixel coordinates to stage coordinates"""
+        coords = np.array(coords)
+        cp = np.array(self.MapWidthHeight) / 2
+        cs = np.array(self.StageXYZ)[0:2]
+        mati = np.linalg.inv(self.map_scale_matrix)
+
+        return np.dot(coords - cp, mati) + cs
+
+    def stage_to_pixelcoords(self, coords: list) -> np.array:
+        """Convert from stage coordinates to pixel coordinates"""
+        coords = np.array(coords)
+        cp = np.array(self.MapWidthHeight) / 2
+        cs = np.array(self.StageXYZ)[0:2]
+        mat = self.map_scale_matrix
+
+        return np.dot(coords - cs, mat) + cp
+
+    def load_image(self, drc: str=None) -> np.array:
+        """Loads the image corresponding to this item"""
+        import mrcfile
+
+        if not drc:
+            drc = "."
+        drc = Path(drc)
+    
+        map_file = Path(self.MapFile)        
+        if not map_file.exists():
+            map_file = drc / Path(self.MapFile).name
+    
+        m = mrcfile.mmap(map_file)
+        s = self.MapSection
+        return np.array(m.data[s])
+
+    def plot_image(self, markers: list=[]) -> None:
+        """Plot the image including optional markers"""
+        import matplotlib.pyplot as plt
+
+        im = self.load_image()
+        plt.matshow(im, vmax=np.percentile(im, 99))
+        yres = self.MapWidthHeight[1]
+        for marker in markers:
+            xy = np.array([marker.stage_x, marker.stage_y])
+            px, py = self.stage_to_pixelcoords(xy)
+            plt.plot(px, yres - py, "ro", markerfacecolor='none', markersize=20, markeredgewidth=2)
+
+
 def block2dict(block: list) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
     dictionary"""
@@ -127,7 +182,6 @@ def block2dict(block: list) -> dict:
             print(e)
             print(item)
             print(key, value)
-            breakpoint();exit()
             raise
 
         d[key] = value
@@ -137,8 +191,16 @@ def block2dict(block: list) -> dict:
 
 def block2nav(block: list, tag=None) -> "NavItem":
     """Takes a text block from a SerialEM .nav file and converts it into a
-    instance of `NavItem`"""
-    return NavItem(block2dict(block), tag=tag)
+    instance of `NavItem` or `MapItem`"""
+    d = block2dict(block)
+    kind = d["Type"]
+
+    if kind == 2:
+        ret = MapItem(d, tag=tag)
+    else:
+        ret = NavItem(d, tag=tag)
+
+    return ret 
 
 
 def read_nav_file(fn: str) -> list:
