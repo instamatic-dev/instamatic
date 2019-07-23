@@ -83,15 +83,25 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         satisfied = "x"
         while satisfied == "x":
             if imageshift == 'IS1' and diff_defocus != 0:
-                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = 1500, logger = logger, key = 'IS1')
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 1500)
+                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = s_calib, logger = logger, key = 'IS1')
             elif imageshift == 'IS1' and diff_defocus == 0:
-                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = 1000, logger = logger, key = 'IS1')
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 1000)
+                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = s_calib, logger = logger, key = 'IS1')
             elif imageshift == 'IS2':
-                transform_imgshift, c = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = 750, logger = logger)
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 750)
+                transform_imgshift, c = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = s_calib, logger = logger)
             elif imageshift == 'BS':
-                transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = 100, logger = logger)
+                mag_calib = ctrl.magnification.value
+                s_calib = int(250.0 / mag_calib * 100)
+                transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = s_calib, logger = logger)
             elif imageshift == 'S':
-                transform_imgshift, c = Calibrate_Stage(ctrl, stepsize = 1000, logger = logger)
+                mag_calib = ctrl.magnification.value
+                s_calib = int(2500.0 / mag_calib * 1000)
+                transform_imgshift, c = Calibrate_Stage(ctrl, stepsize = s_calib, logger = logger)
             with open(log_iscalibs / file, 'wb') as f:
                 pickle.dump([transform_imgshift, c], f)
             satisfied = input(f"{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.")
@@ -437,8 +447,11 @@ class Experiment(object):
     def print_and_del(self, msg):
         print("\033[k", msg, end="\r")
 
-    def imagevar_blank_estimator(self, cycle=3):
+    def imagevar_blank_estimator(self, brightness, cycle=3):
+        #previous_mode = self.ctrl.mode
         self.ctrl.mode = 'mag1'
+        self.ctrl.brightness.value = brightness
+
         input("Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.")
         img_var_est=[]
         for i in range(0,cycle):
@@ -1020,7 +1033,7 @@ class Experiment(object):
             with open(self.calibdir / "imgvariance.pkl","rb") as f:
                 self.imgvar_threshold = pickle.load(f)
         except IOError:
-            self.imgvar_threshold = self.imagevar_blank_estimator()
+            self.imgvar_threshold = self.imagevar_blank_estimator(brightness = img_brightness)
             with open(self.calibdir / "imgvariance.pkl","wb") as f:
                 pickle.dump(self.imgvar_threshold, f)
         
