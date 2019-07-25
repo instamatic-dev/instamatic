@@ -11,7 +11,7 @@ int_map = ("Color",        "NumPts",       "Draw",         "Regis",
            "MapSlitIn",    "MapSlitWidth", "ImageType",    "MontUseStage", 
            "MapProbeMode", "MapLDConSet",  "Type",         "GroupID",
            "MapID",        "PieceOn",      "Acquire",      "DrawnID",
-           "MontBinning",  "SamePosId" )
+           "MontBinning",  "SamePosId",    "OrigReg" )
 
 # float
 float_map = ("MapExposure", "MapIntensity", "MapTiltAngle")
@@ -182,7 +182,10 @@ class MapItem(NavItem):
         stage_x, stage_y = self.pixel_to_stagecoords((px, py))
 
         d = {}
-        d["BklshXY"] = self.BklshXY
+        try:
+            d["BklshXY"] = self.BklshXY
+        except AttributeError:
+            d["BklshXY"] = 10 ,-10
         d["Color"] = 0
         d["DrawnID"] = self.MapID
         d["GroupID"] = MapItem.GROUP_ID_ITERATOR
