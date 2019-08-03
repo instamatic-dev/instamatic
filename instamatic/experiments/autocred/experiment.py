@@ -9,7 +9,7 @@ from instamatic.formats import write_tiff
 from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
-from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_Beamshift_D, Calibrate_Stage
+from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_Beamshift_D, Calibrate_Beamshift_D_Defoc, Calibrate_Stage
 from instamatic.calibrate.center_z import center_z_height, center_z_height_HYMethod
 from instamatic.tools import find_defocused_image_center, find_beam_center
 from instamatic.processing.flatfield import apply_flatfield_correction
@@ -26,14 +26,16 @@ import datetime
 import shutil
 from scipy import ndimage
 
-#rotation_speed = 0.86
-#rotation_upperlimit = 70
-#backlash_killer = 1
+"""SerialRED:
+Currently only working if live view can be read directly from camera via Python API
+Extensively tested on a JEOL 2100 LaB6 TEM with a Timepix camera."""
+
 """Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
-#imgvar_threshold = 600
+
 """spread, offset: parameters for find_crystals_timepix"""
 #spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
 #offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
+#imgvar_threshold = 600
 
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 log_rotaterange = config.logs_drc / f"Rotrange_stagepos_{date}.log"
@@ -64,8 +66,10 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
             file = CALIB_IS1_FOC
         elif imageshift == 'IS2' and diff_defocus == 0:
             file = CALIB_IS2_FOC
-        elif imageshift == 'BS':
+        elif imageshift == 'BS' and diff_defocus == 0:
             file = CALIB_BEAMSHIFT_DP
+        elif imageshift == 'BS' and diff_defocus !=0:
+            file = CALIB_BEAMSHIFT_DP_DEFOC
         elif imageshift == 'S':
             file = CALIB_Stage
     else:
@@ -94,10 +98,15 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
                 mag_calib = ctrl.magnification.value
                 s_calib = int(200.0 / mag_calib * 750)
                 transform_imgshift, c = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = s_calib, logger = logger)
-            elif imageshift == 'BS':
+            elif imageshift == 'BS' and diff_defocus == 0:
                 mag_calib = ctrl.magnification.value
                 s_calib = int(250.0 / mag_calib * 100)
                 transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = s_calib, logger = logger)
+            elif imageshift == 'BS' and diff_defocus != 0:
+                mag_calib = ctrl.magnification.value
+                s_calib = int(250.0 / mag_calib * 100)
+                transform_imgshift, c = Calibrate_Beamshift_D_Defoc(ctrl, diff_defocus, stepsize = s_calib, logger = logger)
+
             elif imageshift == 'S':
                 mag_calib = ctrl.magnification.value
                 s_calib = int(2500.0 / mag_calib * 1000)
@@ -230,6 +239,22 @@ class Experiment(object):
             
         img_cropped = img[a1:b1,a2:b2]
         return crystal_pos, img_cropped, window_size
+
+    def hysteresis_check(self, n_cycle = 4):
+        print("Relaxing beam...")
+        modes = ["mag1", "samag", "diff"]
+        current_mode = self.ctrl.mode
+        mode_index = modes.index(current_mode)
+
+        for i in range(n_cycle):
+            self.ctrl.mode = modes[(mode_index+1) % 3] 
+            time.sleep(0.5)
+            self.ctrl.mode = modes[(mode_index+2) % 3] 
+            time.sleep(0.5)
+            self.ctrl.mode = modes[mode_index]
+            time.sleep(0.5)
+
+        print("Beam relaxing done.")
     
     def check_lens_close_to_limit_warning(self, lensname, lensvalue, MAX = 65535, threshold = 5000):
         warn = 0
@@ -372,7 +397,7 @@ class Experiment(object):
     
     def find_crystal_center_fromhist(self, img, bins = 20, plot = False, gauss_window = 5):
         h, b = np.histogram(img, bins)
-        sel = (img > b[1]) & (img < b[4])
+        sel = (img > b[1]) & (img < b[8])
         
         blurred = ndimage.filters.gaussian_filter(sel.astype(float), gauss_window)
         x, y = np.unravel_index(np.argmax(blurred, axis=None), blurred.shape)
@@ -467,7 +492,7 @@ class Experiment(object):
         self.ctrl.mode = 'diff'
         return image_var
 
-    def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, calib_beamshift):
+    def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, calib_beamshift):
         
         """track method
         p: particle recognition
@@ -672,7 +697,7 @@ class Experiment(object):
                     elif trackmethod == "p":
                         
                         shift = self.tracking_by_particlerecog(img)
-                        delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
+                        delta_beamshiftcoord = np.matmul(shift, transform_beamshift_d_defoc)
                         self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                         
                         bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
@@ -872,10 +897,14 @@ class Experiment(object):
         if self.verbose:
             print("Data Collection and Conversion Done.")
             
-    def write_BrightnessStates(self):
+    def write_BrightnessStates(self, n_cycles = 2):
         print("Go to your desired magnification and camera length. Now recording lens states...")
         self.ctrl.mode = 'mag1'
         input("Please partially converge the beam in MAG1 to around 1 um in diameter, press ENTER when ready")
+
+        for i in range(0, n_cycles):
+            self.hysteresis_check()
+            input("Please recenter the beam, press ENTER when ready")
         
         img_brightness = self.ctrl.brightness.value
         bs = self.ctrl.beamshift.get()
@@ -883,6 +912,10 @@ class Experiment(object):
         self.ctrl.mode = 'samag'
         self.ctrl.mode = 'diff'
         input("Please go to diffraction mode and focus the diffraction spots, press ENTER when ready")
+        for i in range(0, n_cycles):
+            self.hysteresis_check()
+            input("Please recenter the diffraction spot, press ENTER when ready")
+
         dp_focus = self.ctrl.difffocus.value
         is1status = self.ctrl.imageshift1.get()
         is2status = self.ctrl.imageshift2.get()
@@ -1005,9 +1038,8 @@ class Experiment(object):
             while calib_file == "x":
                 print("Find a clear area, toggle the beam to the desired defocus value.")
                 self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl, outdir = self.calibdir)
-                #mag1foc_brightness = self.ctrl.brightness.value
                 print("Beam shift calibration done.")
-                calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
+                calib_file = input("Press ENTER when ready to continue. Press x to REDO the calibration.")
                 
         self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
         
@@ -1051,6 +1083,7 @@ class Experiment(object):
         transform_imgshift2_foc, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
 
         transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
+        transform_beamshift_d_defoc, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= self.diff_defocus, logger = self.logger, mode = 'diff')
         #transform_beamshift_d = self.calib_beamshift.transform
 
         transform_stagepos, c = load_IS_Calibrations(imageshift = 'S', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'mag1')
@@ -1163,7 +1196,7 @@ class Experiment(object):
                             pathsmv = outfile / "SMV"
                             pathred = outfile / "RED"
                             
-                            self.auto_cred_collection(outfile, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, self.calib_beamshift)
+                            self.auto_cred_collection(outfile, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, self.calib_beamshift)
                             
                             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
                             self.ctrl.mode = 'mag1'
@@ -1251,7 +1284,7 @@ class Experiment(object):
             for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
                 if not os.path.exists(path):
                     os.makedirs(path)
-            self.auto_cred_collection(self.path, self.pathtiff, self.pathsmv, self.pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, self.calib_beamshift)
+            self.auto_cred_collection(self.path, self.pathtiff, self.pathsmv, self.pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, self.calib_beamshift)
         
         else:
             print("Choose cRED tab for data collection with manual/blind tracking.")

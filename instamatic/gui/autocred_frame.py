@@ -9,6 +9,9 @@ from instamatic.calibrate import CalibBeamShift
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from instamatic import config
+import datetime
+
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
     def __init__(self, parent):
@@ -16,8 +19,10 @@ class ExperimentalautocRED(LabelFrame):
         self.parent = parent
 
         self.init_vars()
-        
-        self.calib_path = Path("")
+
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        self.calib_path_is = config.logs_drc / f"ImageShift_LOGS_{date}"
+        self.calib_path = Path("..")
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
@@ -261,12 +266,13 @@ class ExperimentalautocRED(LabelFrame):
         3. IS2 defocused
         4. IS2 focused
         5. Beamshift for DP
+        6. Beamshift for DP defocused
         Only input a number and press ENTER>>""")
         idx = int(idx)
         
-        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP)])
+        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP),(6, CALIB_BEAMSHIFT_DP_DEFOC)])
         
-        path = self.calib_path / FLIST[idx]
+        path = self.calib_path_is / FLIST[idx]
         print(path)
         try:
             with open(path,'rb') as f:

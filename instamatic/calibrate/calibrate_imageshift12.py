@@ -99,6 +99,9 @@ def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize, logger):
 def Calibrate_Beamshift_D(ctrl, stepsize, logger):
     return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = 0, stepsize = stepsize, logger = logger, key="BS")
 
+def Calibrate_Beamshift_D_Defoc(ctrl, diff_defocus, stepsize, logger):
+    return Calibrate_Imageshift(ctrl = ctrl, diff_defocus = diff_defocus, stepsize = stepsize, logger = logger, key = "BS")
+
 def Calibrate_Stage(ctrl, stepsize, logger):
     if ctrl.mode != "mag1":
         ctrl.mode = "mag1"
