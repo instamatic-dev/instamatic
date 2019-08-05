@@ -334,13 +334,15 @@ class Experiment(object):
         else:
             pass
         
-    def center_particle_from_crystalList(self, crystal_positions, transform_stagepos, magnification):
+    def center_particle_from_crystalList(self, crystal_positions, transform_stagepos, magnification, beamsize):
         n_crystals = len(crystal_positions)
         if n_crystals == 0:
             self.print_and_del("No crystal found on image!")
             return (0,0)
         
         else:
+            beam_area = beamsize ** 2
+
             for crystal in crystal_positions:
                 if crystal.isolated:
                     self.center_particle_ofinterest((crystal.x, crystal.y), transform_stagepos)
@@ -359,7 +361,7 @@ class Experiment(object):
                     else:
                         #print("Start looping.")
                         for crystal in crystal_positions_new:
-                            if crystal.isolated and crystal.area_pixel == crystalsize:
+                            if crystal.isolated and crystalsize*0.9 <= crystal.area_pixel <= crystalsize * 1.1:
                                 self.print_and_del("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
                                 beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift((crystal.x, crystal.y))
                                 
@@ -478,19 +480,22 @@ class Experiment(object):
         self.ctrl.brightness.value = brightness
 
         input("Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.")
-        img_var_est=[]
+        img_var_est = []
+        beamsize_est = []
         for i in range(0,cycle):
             img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
             crystal_pos, img0_cropped, window_size = self.image_cropper(img = img, window_size = 0)
             v = self.img_var(img0_cropped, crystal_pos)
             print("blank image variance: {}".format(v))
             img_var_est.append(v)
+            beamsize_est.append(window_size)
 
         image_var = np.average(img_var_est)
+        beamsize_avg = np.average(window_size)
 
         self.ctrl.mode = 'samag'
         self.ctrl.mode = 'diff'
-        return image_var
+        return image_var, beamsize_avg
 
     def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, calib_beamshift):
         
@@ -900,31 +905,33 @@ class Experiment(object):
     def write_BrightnessStates(self, n_cycles = 2):
         print("Go to your desired magnification and camera length. Now recording lens states...")
         self.ctrl.mode = 'mag1'
-        input("Please partially converge the beam in MAG1 to around 1 um in diameter, press ENTER when ready")
+        input("Please choose the desired magnification, partially converge the beam in MAG1 to around 1 um in diameter, and center it using beamshift. Press ENTER when ready")
 
         for i in range(0, n_cycles):
             self.hysteresis_check()
-            input("Please recenter the beam, press ENTER when ready")
+            input("Please recenter the beam with beamshift. Press ENTER when ready")
         
+        desired_mag = self.ctrl.magnification.get()
         img_brightness = self.ctrl.brightness.value
         bs = self.ctrl.beamshift.get()
         
         self.ctrl.mode = 'samag'
         self.ctrl.mode = 'diff'
-        input("Please go to diffraction mode and focus the diffraction spots, press ENTER when ready")
+        input("Please go to diffraction mode, choose desired camera length, focus the diffraction spots, and center it using PLA. Press ENTER when ready")
         for i in range(0, n_cycles):
             self.hysteresis_check()
-            input("Please recenter the diffraction spot, press ENTER when ready")
+            input("Please recenter the diffraction spot using PLA. Press ENTER when ready")
 
+        desired_cl = self.ctrl.magnification.get()
         dp_focus = self.ctrl.difffocus.value
         is1status = self.ctrl.imageshift1.get()
         is2status = self.ctrl.imageshift2.get()
         plastatus = self.ctrl.diffshift.get()
         with open(self.calibdir / "beam_brightness.pkl",'wb') as f:
-            pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus], f)
+            pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl], f)
         
         print("Brightness recorded.")
-        return [img_brightness, bs, dp_focus, is1status, is2status, plastatus]
+        return [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl]
 
     def update_referencepoint_bs(self, bs, br):
         exposure = 0.01
@@ -1018,9 +1025,9 @@ class Experiment(object):
         
         try:
             with open(self.calibdir / "beam_brightness.pkl",'rb') as f:
-                [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = pickle.load(f)
+                [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = pickle.load(f)
         except IOError:
-            [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = self.write_BrightnessStates()
+            [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = self.write_BrightnessStates()
         
         try:
             self.calib_beamshift = CalibBeamShift.from_file(fn = self.calibdir / CALIB_BEAMSHIFT)
@@ -1028,10 +1035,10 @@ class Experiment(object):
 
         except IOError:
             print("No beam shift calibration result found. Running instamatic.calibrate_beamshift first...\n")
-            print("Going to MAG1, 2500*, and desired brightness. DO NOT change brightness!")
+            print("Going to MAG1, desired magnification, and desired brightness. DO NOT change brightness!")
             if self.ctrl.mode != 'mag1':
                 self.ctrl.mode = 'mag1'
-                self.ctrl.magnification.value = 2500
+                self.ctrl.magnification.value = desired_mag
                 self.ctrl.brightness.value = img_brightness
                 
             calib_file = "x"
@@ -1063,11 +1070,11 @@ class Experiment(object):
 
         try:
             with open(self.calibdir / "imgvariance.pkl","rb") as f:
-                self.imgvar_threshold = pickle.load(f)
+                self.imgvar_threshold, self.beam_size_avg = pickle.load(f)
         except IOError:
-            self.imgvar_threshold = self.imagevar_blank_estimator(brightness = img_brightness)
+            self.imgvar_threshold, self.beam_size_avg = self.imagevar_blank_estimator(brightness = img_brightness)
             with open(self.calibdir / "imgvariance.pkl","wb") as f:
-                pickle.dump(self.imgvar_threshold, f)
+                pickle.dump([self.imgvar_threshold, self.beam_size_avg], f)
         
         self.neutral_beamshift = bs
         #print("Neutral beamshift: from beam_brightness.pkl {}".format(bs))
@@ -1094,7 +1101,7 @@ class Experiment(object):
             if self.ctrl.mode != 'mag1':
                 self.ctrl.mode = 'mag1'
                 
-            self.ctrl.magnification.value = 2500
+            self.ctrl.magnification.value = desired_mag
             self.ctrl.brightness.value = 65535
             
             header_keys = None
@@ -1114,7 +1121,7 @@ class Experiment(object):
             
             if img.mean() > threshold:
 
-                h["exp_magnification"] = 2500
+                h["exp_magnification"] = self.ctrl.magnification.get()
 
                 write_tiff(path / f"Overall_view", img, h)
 
@@ -1127,10 +1134,10 @@ class Experiment(object):
                     self.print_and_del("No crystals found in the image. Find another area!")
                     return 0
                 
-                (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
+                (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
                 
                 img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                h["exp_magnification"] = 2500
+                h["exp_magnification"] = self.ctrl.magnification.get()
                 write_tiff(path / f"Overall_view", img, h)
 
                 crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
@@ -1170,7 +1177,7 @@ class Experiment(object):
                         self.ctrl.beamshift.set(*beamshift_coords.astype(int))
 
                         img, h = self.ctrl.getImage(exposure=0.001, comment=comment, header_keys=header_keys)
-                        h["exp_magnification"] = 2500
+                        h["exp_magnification"] = self.ctrl.magnification.get()
                         write_tiff(path / f"crystal_{k:04d}", img, h)
 
                         self.number_crystals_scanned += 1
@@ -1205,7 +1212,7 @@ class Experiment(object):
                             
                             self.rotation_direction = self.eliminate_backlash_in_tiltx()
                             img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                            h["exp_magnification"] = 2500
+                            h["exp_magnification"] = self.ctrl.magnification.get()
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
 
                             crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
@@ -1216,10 +1223,10 @@ class Experiment(object):
                                 self.print_and_del("No crystals found in the image. exitting loop...")
                                 break
                             
-                            (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
+                            (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
                 
                             img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                            h["exp_magnification"] = 2500
+                            h["exp_magnification"] = self.ctrl.magnification.get()
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
             
                             crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
