@@ -71,7 +71,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         elif imageshift == 'BS' and diff_defocus !=0:
             file = CALIB_BEAMSHIFT_DP_DEFOC
         elif imageshift == 'S':
-            file = CALIB_Stage
+            file = CALIB_STAGE
     else:
         print("Wrong input. Mode can either be mag1 or diff for calibration!")
         return 0

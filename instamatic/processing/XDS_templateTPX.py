@@ -110,4 +110,8 @@ INCIDENT_BEAM_DIRECTION= 0 0 1        !The vector points from the source towards
 
 !MINIMUM_FRACTION_OF_INDEXED_SPOTS= 0.25    !0.50 is default.
 !MAXIMUM_ERROR_OF_SPOT_POSITION=6.0        ! 3.0 is default
+!REFLECTING_RANGE= 
+!REFLECTING_RANGE_E.S.D.= 
+!BEAM_DIVERGENCE= 
+!BEAM_DIVERGENCE_E.S.D.=
 """

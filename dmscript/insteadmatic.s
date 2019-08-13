@@ -84,7 +84,7 @@ number default_auto_blank = false           // Automatically blank the beam afte
 
 number verbose = false                      // Increase the verbosity, print some testing variables
 
-number use_temserver = true                // Option to use TEM Python server to allow operation only from the camera computer
+number use_temserver = false                // Option to use TEM Python server to allow operation only from the camera computer
 
 // Default NETCAT.exe directory
 string netcat_path = "C:\\Users\\VALUEDGATANCUSTOMER\\Documents\\Bin\\Nmap\\ncat.exe"      // location of the netcat program for communication with the microscope computer
@@ -149,22 +149,22 @@ object objListener = Alloc(ImageListener)
 // Uncomment these lines to test the script on an offline version of DM
 // This will mimic the microscope API
 // Use `simulate_stream.s` to generate a dummy live view
-
-//number EMGetStageAlpha()  Return (random() - 0.5) * 70
-//number EMGetCameraLength()  Return 300
-//number EMGetSpotSize()  Return 3
-//number CameraGetActiveCameraID()  Return 0
-//string CameraGetName(number camid)  Return "Camera"
-//string EMGetMicroscopeName()  Return "TEM"
-//void CameraGetSize(number camid, number cam_res_x, number cam_res_y){
-//cam_res_x = 1024; cam_res_y = 1024; }
+/*
+number EMGetStageAlpha()  Return (random() - 0.5) * 70
+number EMGetCameraLength()  Return 300
+number EMGetSpotSize()  Return 3
+number CameraGetActiveCameraID()  Return 0
+string CameraGetName(number camid)  Return "Camera"
+string EMGetMicroscopeName()  Return "TEM"
+void CameraGetSize(number camid, number cam_res_x, number cam_res_y){
+cam_res_x = 1024; cam_res_y = 1024; }
 void CameraGetPixelSize(number camid, number phys_pixelsize_x, number phys_pixelsize_y){
 phys_pixelsize_x = 0.015; phys_pixelsize_y = 0.015 ; }
-//void EMWaitUntilReady()  sleep(5)
-//number EMGetHighTension()  Return 200000
+void EMWaitUntilReady()  sleep(5)
+number EMGetHighTension()  Return 200000
 number EMHasBeamBlanker()  Return true
 void EMSetBeamBlanked( number toggle )  toggle
-
+*/
 
 
 // If the beam blank api is not available (i.e. on Orius), uncomment these lines:

@@ -430,7 +430,6 @@ class FEIMicroscope(object):
              return self.tom.Illumination.C1ApertureSize * 1e3
          elif aperture == 'C2':
              return self.tom.Illumination.C2ApertureSize * 1e3
-         
          else:
              raise ValueError("aperture must be specified as 'C1' or 'C2'.")
 

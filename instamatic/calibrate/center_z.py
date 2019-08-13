@@ -22,7 +22,7 @@ def eliminate_backlash_in_tiltx(ctrl):
         return 1
 
 
-def center_z_height(ctrl, verbose = False):
+def center_z_height(ctrl, verbose=False):
     """Automated routine to find the z-height
 
     Koster, A. J., et al. "Automated microscopy for electron tomography." 
