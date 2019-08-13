@@ -9,15 +9,16 @@ from instamatic.formats import write_tiff
 from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
-from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_Beamshift_D, Calibrate_Stage
+from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_Beamshift_D, Calibrate_Beamshift_D_Defoc, Calibrate_Stage
 from instamatic.calibrate.center_z import center_z_height, center_z_height_HYMethod
 from instamatic.tools import find_defocused_image_center, find_beam_center
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.neural_network import predict, preprocess
 import pickle
+import json
 from pathlib import Path
 from tqdm import tqdm
-from instamatic.calibrate.filenames import CALIB_IS1_DEFOC, CALIB_IS1_FOC, CALIB_IS2_DEFOC, CALIB_IS2_FOC, CALIB_BEAMSHIFT_DP
+from instamatic.calibrate.filenames import *
 from instamatic.processing.find_crystals import find_crystals_timepix
 import traceback
 import socket
@@ -25,17 +26,22 @@ import datetime
 import shutil
 from scipy import ndimage
 
-ACTIVATION_THRESHOLD = 0.2
-rotation_speed = 0.86
+"""SerialRED:
+Currently only working if live view can be read directly from camera via Python API
+Extensively tested on a JEOL 2100 LaB6 TEM with a Timepix camera."""
 
 """Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
-imgvar_threshold = 600
+
 """spread, offset: parameters for find_crystals_timepix"""
-spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
-offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
+#spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
+#offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
+#imgvar_threshold = 600
 
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 log_rotaterange = config.logs_drc / f"Rotrange_stagepos_{date}.log"
+log_iscalibs = config.logs_drc / f"ImageShift_LOGS_{date}"
+log_iscalibs.mkdir(exist_ok=True)
+
 if not os.path.isfile(log_rotaterange):
     with open(log_rotaterange, "a") as f:
         f.write("x\ty\tz\trotation range\n")
@@ -60,16 +66,18 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
             file = CALIB_IS1_FOC
         elif imageshift == 'IS2' and diff_defocus == 0:
             file = CALIB_IS2_FOC
-        elif imageshift == 'BS':
+        elif imageshift == 'BS' and diff_defocus == 0:
             file = CALIB_BEAMSHIFT_DP
+        elif imageshift == 'BS' and diff_defocus !=0:
+            file = CALIB_BEAMSHIFT_DP_DEFOC
         elif imageshift == 'S':
-            file = "CalibStage.pkl"
+            file = CALIB_STAGE
     else:
         print("Wrong input. Mode can either be mag1 or diff for calibration!")
         return 0
     
     try:
-        with open(file,'rb') as f:
+        with open(log_iscalibs / file,'rb') as f:
             transform_imgshift, c = pickle.load(f)
     except:
         print("No {}, defocus = {} calibration found. Choose the desired defocus value.".format(imageshift, diff_defocus))
@@ -79,16 +87,31 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         satisfied = "x"
         while satisfied == "x":
             if imageshift == 'IS1' and diff_defocus != 0:
-                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = 1500, logger = logger, key = 'IS1')
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 1500)
+                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = s_calib, logger = logger, key = 'IS1')
             elif imageshift == 'IS1' and diff_defocus == 0:
-                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = 1000, logger = logger, key = 'IS1')
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 1000)
+                transform_imgshift, c = Calibrate_Imageshift(ctrl, diff_defocus, stepsize = s_calib, logger = logger, key = 'IS1')
             elif imageshift == 'IS2':
-                transform_imgshift, c = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = 750, logger = logger)
-            elif imageshift == 'BS':
-                transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = 100, logger = logger)
+                mag_calib = ctrl.magnification.value
+                s_calib = int(200.0 / mag_calib * 750)
+                transform_imgshift, c = Calibrate_Imageshift2(ctrl, diff_defocus, stepsize = s_calib, logger = logger)
+            elif imageshift == 'BS' and diff_defocus == 0:
+                mag_calib = ctrl.magnification.value
+                s_calib = int(250.0 / mag_calib * 100)
+                transform_imgshift, c = Calibrate_Beamshift_D(ctrl, stepsize = s_calib, logger = logger)
+            elif imageshift == 'BS' and diff_defocus != 0:
+                mag_calib = ctrl.magnification.value
+                s_calib = int(250.0 / mag_calib * 100)
+                transform_imgshift, c = Calibrate_Beamshift_D_Defoc(ctrl, diff_defocus, stepsize = s_calib, logger = logger)
+
             elif imageshift == 'S':
-                transform_imgshift, c = Calibrate_Stage(ctrl, stepsize = 1000, logger = logger)
-            with open(file, 'wb') as f:
+                mag_calib = ctrl.magnification.value
+                s_calib = int(2500.0 / mag_calib * 1000)
+                transform_imgshift, c = Calibrate_Stage(ctrl, stepsize = s_calib, logger = logger)
+            with open(log_iscalibs / file, 'wb') as f:
                 pickle.dump([transform_imgshift, c], f)
             satisfied = input(f"{imageshift}, defocus = {diff_defocus} calibration done. \nPress Enter to continue. Press x to redo calibration.")
             
@@ -107,6 +130,12 @@ class Experiment(object):
                        scan_area,
                        zheight,
                        autocenterDP,
+                       angle_activation,
+                       spread,
+                       offset,
+                       rotrange,
+                       backlash_killer,
+                       rotation_speed,
                        unblank_beam=False, 
                        path=None, 
                        log=None, 
@@ -136,12 +165,29 @@ class Experiment(object):
         self.mode = 0
 
         self.diff_brightness = self.ctrl.brightness.value
-        self.autocenterDP = autocenterDP
+        #self.autocenterDP = autocenterDP
+        self.angle_activation = angle_activation
+        self.spread = spread
+        self.offset = offset
+        self.rotrangelimit = rotrange
+        self.backlash_killer = backlash_killer
+        self.rotation_speed = rotation_speed
+        
+        self.calibdir = self.path.parent / "calib"
+
+        self.verbose = False
+        self.number_crystals_scanned = 0
+        self.number_exp_performed = 0
+
+        if not os.path.exists(self.calibdir):
+            os.makedirs(self.calibdir)
+
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
             self.image_interval = image_interval
             msg = f"Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_time_image} s)."
-            print(msg)
+            if self.verbose:
+                print(msg)
             self.logger.info(msg)
         else:
             self.image_interval = 99999
@@ -153,20 +199,23 @@ class Experiment(object):
         if enable_fullacred_crystalfinder:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Full autocRED feature with auto crystal finder enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Full autocRED feature with auto crystal finder enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 3
         
         elif enable_fullacred:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Full autocRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Full autocRED feature enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 2
             
         elif enable_autotrack:
             self.diff_defocus = diff_defocus
             self.image_interval = image_interval
-            print("Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus))
+            msg = "Image autotrack enabled: every {} frames an image with defocus value {} will be displayed.".format(image_interval, diff_defocus)
             self.mode = 1
+
+        if self.verbose:
+            print(msg)
     
     def image_cropper(self, img, window_size = 0):
         crystal_pos, r = find_defocused_image_center(img) #find_defocused_image_center crystal position (y,x)
@@ -190,12 +239,29 @@ class Experiment(object):
             
         img_cropped = img[a1:b1,a2:b2]
         return crystal_pos, img_cropped, window_size
+
+    def hysteresis_check(self, n_cycle = 4):
+        print("Relaxing beam...")
+        modes = ["mag1", "samag", "diff"]
+        current_mode = self.ctrl.mode
+        mode_index = modes.index(current_mode)
+
+        for i in range(n_cycle):
+            self.ctrl.mode = modes[(mode_index+1) % 3] 
+            time.sleep(0.5)
+            self.ctrl.mode = modes[(mode_index+2) % 3] 
+            time.sleep(0.5)
+            self.ctrl.mode = modes[mode_index]
+            time.sleep(0.5)
+
+        print("Beam relaxing done.")
     
     def check_lens_close_to_limit_warning(self, lensname, lensvalue, MAX = 65535, threshold = 5000):
         warn = 0
         if MAX - lensvalue < threshold or lensvalue < threshold:
             warn = 1
-            print("Warning: {} close to limit!".format(lensname))
+            if self.verbose:
+                print("Warning: {} close to limit!".format(lensname))
         return warn
     
     def img_var(self, img, apert_pos):
@@ -240,11 +306,11 @@ class Experiment(object):
     def eliminate_backlash_in_tiltx(self):
         a_i = self.ctrl.stageposition.a
         if a_i < 0:
-            self.ctrl.stageposition.set(a = a_i + 0.5 , wait = True)
+            self.ctrl.stageposition.set(a = a_i + self.backlash_killer , wait = True)
             #print("Rotation positive!")
             return 0
         else:
-            self.ctrl.stageposition.set(a = a_i - 0.5 , wait = True)
+            self.ctrl.stageposition.set(a = a_i - self.backlash_killer , wait = True)
             #print("Rotation negative!")
             return 1
         
@@ -253,33 +319,32 @@ class Experiment(object):
         transform_stagepos_ = np.linalg.inv(transform_stagepos)
         if pos_arr[0] < 200 or pos_arr[0] > 316 or pos_arr[1] < 200 or pos_arr[1] > 316:
 
-            #print(pos_arr)
             _x0 = self.ctrl.stageposition.x
             _y0 = self.ctrl.stageposition.y
             
             displacement = np.subtract((258,258), pos_arr)
-            #print("Displacement should be: {} in pixels".format(displacement))
             mag = self.ctrl.magnification.value
+
             s = config.calibration.pixelsize_mag1[mag] / 1000 # nm -> um
             #print("scaling facor: {} um per px".format(s))
-            mvmt = s * displacement
-            #print("Stage movement: {} um in x and y".format(mvmt))
-            mvmt_x, mvmt_y = np.dot(1000 * mvmt, transform_stagepos_)
 
-            #print("Stagemovement: {} in x, {} in y".format(mvmt_x,mvmt_y))
+            mvmt = s * displacement
+            mvmt_x, mvmt_y = np.dot(1000 * mvmt, transform_stagepos_)
             
             self.ctrl.stageposition.set(x = _x0 + mvmt_y, y = _y0 - mvmt_x)
             
         else:
             pass
         
-    def center_particle_from_crystalList(self, crystal_positions, transform_stagepos, magnification):
+    def center_particle_from_crystalList(self, crystal_positions, transform_stagepos, magnification, beamsize):
         n_crystals = len(crystal_positions)
         if n_crystals == 0:
-            print("No crystal found on image!")
+            self.print_and_del("No crystal found on image!")
             return (0,0)
         
         else:
+            beam_area = beamsize ** 2
+
             for crystal in crystal_positions:
                 if crystal.isolated:
                     self.center_particle_ofinterest((crystal.x, crystal.y), transform_stagepos)
@@ -287,19 +352,19 @@ class Experiment(object):
                     #print("crystal size: {}".format(crystalsize))
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     
-                    crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=spread, offset=offset)
+                    crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=self.spread, offset=self.offset)
                     
                     n_crystals_new = len(crystal_positions_new)
                     #print(crystal_positions_new)
                     if n_crystals_new == 0:
-                        print("No crystal found after centering...")
+                        self.print_and_del("No crystal found after centering...")
                         return (0,0)
                     
                     else:
                         #print("Start looping.")
                         for crystal in crystal_positions_new:
-                            if crystal.isolated and crystal.area_pixel == crystalsize:
-                                print("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
+                            if crystal.isolated and crystalsize*0.9 <= crystal.area_pixel <= crystalsize * 1.1:
+                                self.print_and_del("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
                                 beamshift_coords = self.calib_beamshift.pixelcoord_to_beamshift((crystal.x, crystal.y))
                                 
                                 return (beamshift_coords, crystalsize)
@@ -336,7 +401,7 @@ class Experiment(object):
     
     def find_crystal_center_fromhist(self, img, bins = 20, plot = False, gauss_window = 5):
         h, b = np.histogram(img, bins)
-        sel = (img > b[1]) & (img < b[4])
+        sel = (img > b[1]) & (img < b[8])
         
         blurred = ndimage.filters.gaussian_filter(sel.astype(float), gauss_window)
         x, y = np.unravel_index(np.argmax(blurred, axis=None), blurred.shape)
@@ -408,7 +473,33 @@ class Experiment(object):
         print(msg)
         logger.debug(msg)
 
-    def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, calib_beamshift):
+    def print_and_del(self, msg):
+        print("\033[k", msg, end="\r")
+
+    def imagevar_blank_estimator(self, brightness, cycle=3):
+        #previous_mode = self.ctrl.mode
+        self.ctrl.mode = 'mag1'
+        self.ctrl.brightness.value = brightness
+
+        input("Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.")
+        img_var_est = []
+        beamsize_est = []
+        for i in range(0,cycle):
+            img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
+            crystal_pos, img0_cropped, window_size = self.image_cropper(img = img, window_size = 0)
+            v = self.img_var(img0_cropped, crystal_pos)
+            print("blank image variance: {}".format(v))
+            img_var_est.append(v)
+            beamsize_est.append(window_size)
+
+        image_var = np.average(img_var_est)
+        beamsize_avg = np.average(window_size)
+
+        self.ctrl.mode = 'samag'
+        self.ctrl.mode = 'diff'
+        return image_var, beamsize_avg
+
+    def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, calib_beamshift):
         
         """track method
         p: particle recognition
@@ -440,7 +531,8 @@ class Experiment(object):
             
         if self.mode > 0:
 
-            print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
+            if self.verbose:
+                print("Auto tracking feature activated. Please remember to bring sample to proper Z height in order for autotracking to be effective.")
             
             transform_imgshift_ = np.linalg.inv(transform_imgshift)
             transform_imgshift2_ = np.linalg.inv(transform_imgshift2)
@@ -475,18 +567,19 @@ class Experiment(object):
 
             img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
                 
-            if trackmethod == "p":
+            """if trackmethod == "p":
                 shift = self.tracking_by_particlerecog(img0)
                 delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
                 self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                 
                 bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
             
-                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)
+                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)"""
 
             img0_p = preprocess(img0.astype(np.float))
             scorefromCNN = predict(img0_p)
-            self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
+            #self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
+            self.logger.debug("Score for the DP: {}".format(scorefromCNN))
 
             crystal_pos, img0_cropped, window_size = self.image_cropper(img = img0, window_size = 0)
             img0var = self.img_var(img0_cropped, crystal_pos)
@@ -500,8 +593,8 @@ class Experiment(object):
         if self.mode > 1:
             a_i = self.ctrl.stageposition.a
             
-            rotation_range = 70 + abs(a_i)
-            rotation_t = rotation_range / rotation_speed
+            rotation_range = self.rotrangelimit + abs(a_i)
+            rotation_t = rotation_range / self.rotation_speed
             
             try:
                 if self.rotation_direction == 0:
@@ -517,7 +610,7 @@ class Experiment(object):
         if self.camtype == "simulate":
             self.startangle = a
         else:
-            time.sleep(0.1)
+            time.sleep(self.angle_activation)
 
         i = 1
 
@@ -583,11 +676,10 @@ class Experiment(object):
                     
                     """If variance changed over 50%, then the crystal is outside the beam and stop data collection"""
                     if imgvar/img0var < 0.2 or imgvar/img0var > 5:
-                        print(imgvar)
-                        print("Collection stopping because crystal out of the beam...")
+                        self.print_and_del("Collection stopping because crystal out of the beam...")
                         self.stopEvent.set()
-                    if imgvar < imgvar_threshold:
-                        print("Image variance smaller than blank image.")
+                    if imgvar < self.imgvar_threshold:
+                        self.print_and_del("Image variance smaller than blank image.")
                         self.stopEvent.set()
                     
                     if trackmethod == "c":
@@ -612,7 +704,7 @@ class Experiment(object):
                     elif trackmethod == "p":
                         
                         shift = self.tracking_by_particlerecog(img)
-                        delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
+                        delta_beamshiftcoord = np.matmul(shift, transform_beamshift_d_defoc)
                         self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                         
                         bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
@@ -689,10 +781,10 @@ class Experiment(object):
                 
                 if time.perf_counter() - t0 >= rotation_t:
                     self.stopEvent.set()
-                    print("Goniometer close to limit!")
+                    self.print_and_del("Goniometer close to limit!")
                 
             except Exception as e:
-                print (e)
+                self.print_and_del(e)
                 self.stopEvent.set()
 
         t1 = time.perf_counter()
@@ -709,7 +801,7 @@ class Experiment(object):
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
-            print("Blanking beam")
+            #print("Blanking beam")
             self.ctrl.beamblank = True
 
         self.stopEvent.clear()
@@ -721,7 +813,9 @@ class Experiment(object):
         stageposx, stageposy, stageposz, stageposa, stageposb = self.ctrl.stageposition.get()
         rotrange = abs(self.endangle-self.startangle)
         
-        print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
+        if self.verbose:
+            print("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
+
         self.logger.info("Rotated {:.2f} degrees from {:.2f} to {:.2f}".format(abs(self.endangle-self.startangle), self.startangle, self.endangle))
         
         nframes = i - 1 # i + 1 is not correct since i+=1 was executed before next image is taken???
@@ -758,7 +852,7 @@ class Experiment(object):
             print(f"Rotation axis: {rotation_angle} radians", file=f)            
             print(f"Oscillation angle: {osangle} degrees", file=f)
             print(f"Number of frames: {len(buffer)}", file=f)
-            print(f"Particle found at stage position: x: {stageposx}, y: {stageposy}, z: {stageposz}")
+            print(f"Particle found at stage position: x: {stageposx}, y: {stageposy}, z: {stageposz}", file=f)
 
         with open(log_rotaterange, "a") as f:
             f.write("{}\t{}\t{}\t{}\n".format(stageposx, stageposy, stageposz, rotrange))
@@ -784,17 +878,18 @@ class Experiment(object):
         img_conv.write_xds_inp(pathsmv)
 
         img_conv.to_dials(pathsmv)
-        msg = {"path": pathsmv,
+        pathsmv_str = str(pathsmv)
+        msg = {"path": pathsmv_str,
                "rotrange": rotrange,
                "nframes": nframes,
                "osc": osangle}
-        msg_tosend = pickle.dumps(msg)
+        msg_tosend = json.dumps(msg).encode('utf8')
 
         if s_c:
             s.send(msg_tosend)
-            print("SMVs sent to DIALS for processing.")
+            self.print_and_del("SMVs sent to DIALS for processing.")
         
-        self.logger.info("XDS INP file created.")
+        #self.logger.info("XDS INP file created.")
 
         if image_buffer:
             drc = os.path.join(path,"tiff_image")
@@ -805,29 +900,40 @@ class Experiment(object):
                 write_tiff(fn, img, header=h)
         
         self.ctrl.beamblank = False
-
-        print("Data Collection and Conversion Done.")
+        self.number_exp_performed += 1
+        if self.verbose:
+            print("Data Collection and Conversion Done.")
             
-    def write_BrightnessStates(self):
+    def write_BrightnessStates(self, n_cycles = 2):
         print("Go to your desired magnification and camera length. Now recording lens states...")
         self.ctrl.mode = 'mag1'
-        input("Please partially converge the beam in MAG1 to around 1 um in diameter, press ENTER when ready")
+        input("Please choose the desired magnification, partially converge the beam in MAG1 to around 1 um in diameter, and center it using beamshift. Press ENTER when ready")
+
+        for i in range(0, n_cycles):
+            self.hysteresis_check()
+            input("Please recenter the beam with beamshift. Press ENTER when ready")
         
+        desired_mag = self.ctrl.magnification.get()
         img_brightness = self.ctrl.brightness.value
         bs = self.ctrl.beamshift.get()
         
         self.ctrl.mode = 'samag'
         self.ctrl.mode = 'diff'
-        input("Please go to diffraction mode and focus the diffraction spots, press ENTER when ready")
+        input("Please go to diffraction mode, choose desired camera length, focus the diffraction spots, and center it using PLA. Press ENTER when ready")
+        for i in range(0, n_cycles):
+            self.hysteresis_check()
+            input("Please recenter the diffraction spot using PLA. Press ENTER when ready")
+
+        desired_cl = self.ctrl.magnification.get()
         dp_focus = self.ctrl.difffocus.value
         is1status = self.ctrl.imageshift1.get()
         is2status = self.ctrl.imageshift2.get()
         plastatus = self.ctrl.diffshift.get()
-        with open("beam_brightness.pkl",'wb') as f:
-            pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus], f)
+        with open(self.calibdir / "beam_brightness.pkl",'wb') as f:
+            pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl], f)
         
         print("Brightness recorded.")
-        return [img_brightness, bs, dp_focus, is1status, is2status, plastatus]
+        return [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl]
 
     def update_referencepoint_bs(self, bs, br):
         exposure = 0.01
@@ -870,7 +976,7 @@ class Experiment(object):
         x_zheight = 0
         y_zheight = 0
         
-        t = tqdm(self.offsets, desc = "                          ")
+        t = tqdm(self.offsets, desc = "Number of crystals scanned: {}; Number of experiments performed: {}".format(self.number_crystals_scanned, self.number_exp_performed))
         
         for j, (x_offset, y_offset) in enumerate(t):
             x = center_x + x_offset
@@ -887,26 +993,28 @@ class Experiment(object):
                     img, h = self.ctrl.getImage(exposure = self.expt, header_keys=None)
                     if img.mean() > 10:
                         self.magnification = self.ctrl.magnification.value
-                        crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                        crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                         crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             
                         n_crystals = len(crystal_coords)
                         if n_crystals > 0:
-                            print("centering z height...")
-                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                            self.print_and_del("centering z height...")
+                            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                             if x_zheight != 999999:
                                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                             else:
-                                print("Z height not found.")
+                                self.print_and_del("Z height not found.")
                 except:
-                    print("Something went wrong, unable to adjust height")
+                    self.print_and_del("Something went wrong, unable to adjust height")
                     pass
 
             self.start_collection_point()
+
+            t.set_description("Number of crystals scanned: {}; Number of experiments performed: {}".format(self.number_crystals_scanned, self.number_exp_performed))
             
             if self.stopEvent_rasterScan.is_set():
-                print("Raster Scan stopped manually.")
+                print("\nRaster Scan stopped manually.")
                 break
         
     def start_collection_point(self):
@@ -923,36 +1031,35 @@ class Experiment(object):
                 os.makedirs(path)
         
         try:
-            with open("beam_brightness.pkl",'rb') as f:
-                [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = pickle.load(f)
+            with open(self.calibdir / "beam_brightness.pkl",'rb') as f:
+                [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = pickle.load(f)
         except IOError:
-            [img_brightness, bs, dp_focus, is1status, is2status, plastatus] = self.write_BrightnessStates()
+            [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = self.write_BrightnessStates()
         
         try:
-            self.calib_beamshift = CalibBeamShift.from_file()
+            self.calib_beamshift = CalibBeamShift.from_file(fn = self.calibdir / CALIB_BEAMSHIFT)
             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
 
         except IOError:
             print("No beam shift calibration result found. Running instamatic.calibrate_beamshift first...\n")
-            print("Going to MAG1, 2500*, and desired brightness. DO NOT change brightness!")
+            print("Going to MAG1, desired magnification, and desired brightness. DO NOT change brightness!")
             if self.ctrl.mode != 'mag1':
                 self.ctrl.mode = 'mag1'
-                self.ctrl.magnification.value = 2500
+                self.ctrl.magnification.value = desired_mag
                 self.ctrl.brightness.value = img_brightness
                 
             calib_file = "x"
             while calib_file == "x":
                 print("Find a clear area, toggle the beam to the desired defocus value.")
-                self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl)
-                #mag1foc_brightness = self.ctrl.brightness.value
+                self.calib_beamshift = calibrate_beamshift(ctrl = self.ctrl, outdir = self.calibdir)
                 print("Beam shift calibration done.")
-                calib_file = input("Find your particle, go back to diffraction mode, and press ENTER when ready to continue. Press x to REDO the calibration.")
+                calib_file = input("Press ENTER when ready to continue. Press x to REDO the calibration.")
                 
         self.logger.debug("Transform_beamshift: {}".format(self.calib_beamshift.transform))
         
         try:
-            self.calib_directbeam = CalibDirectBeam.from_file()
-            with open('diff_par.pkl','rb') as f:
+            self.calib_directbeam = CalibDirectBeam.from_file(fn = self.calibdir / CALIB_DIRECTBEAM)
+            with open(self.calibdir / 'diff_par.pkl','rb') as f:
                 self.diff_brightness, self.diff_difffocus = pickle.load(f)
         except IOError:
             if not self.ctrl.mode == 'diff':
@@ -962,11 +1069,19 @@ class Experiment(object):
                 self.ctrl.mode = 'diff'
             self.ctrl.difffocus.value = dp_focus
             
-            self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir='.')
+            self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir = self.calibdir)
             self.diff_brightness = self.ctrl.brightness.value
             self.diff_difffocus = self.ctrl.difffocus.value
-            with open('diff_par.pkl','wb') as f:
+            with open(self.calibdir / 'diff_par.pkl','wb') as f:
                 pickle.dump([self.diff_brightness, self.diff_difffocus], f)
+
+        try:
+            with open(self.calibdir / "imgvariance.pkl","rb") as f:
+                self.imgvar_threshold, self.beam_size_avg = pickle.load(f)
+        except IOError:
+            self.imgvar_threshold, self.beam_size_avg = self.imagevar_blank_estimator(brightness = img_brightness)
+            with open(self.calibdir / "imgvariance.pkl","wb") as f:
+                pickle.dump([self.imgvar_threshold, self.beam_size_avg], f)
         
         self.neutral_beamshift = bs
         #print("Neutral beamshift: from beam_brightness.pkl {}".format(bs))
@@ -980,7 +1095,11 @@ class Experiment(object):
         transform_imgshift2, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = self.diff_defocus, logger = self.logger, mode = 'diff')
         transform_imgshift_foc, c = load_IS_Calibrations(imageshift = 'IS1', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
         transform_imgshift2_foc, c = load_IS_Calibrations(imageshift = 'IS2', ctrl = self.ctrl, diff_defocus = 0, logger = self.logger, mode = 'diff')
+
         transform_beamshift_d, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'diff')
+        transform_beamshift_d_defoc, c = load_IS_Calibrations(imageshift = 'BS', ctrl = self.ctrl, diff_defocus= self.diff_defocus, logger = self.logger, mode = 'diff')
+        #transform_beamshift_d = self.calib_beamshift.transform
+
         transform_stagepos, c = load_IS_Calibrations(imageshift = 'S', ctrl = self.ctrl, diff_defocus= 0, logger = self.logger, mode = 'mag1')
         
         if self.mode == 3:
@@ -989,20 +1108,15 @@ class Experiment(object):
             if self.ctrl.mode != 'mag1':
                 self.ctrl.mode = 'mag1'
                 
-            self.ctrl.magnification.value = 2500
+            self.ctrl.magnification.value = desired_mag
             self.ctrl.brightness.value = 65535
             
             header_keys = None
 
-            print("Beamshift reference: {}".format(self.calib_beamshift.reference_shift))
+            if self.verbose:
+                print("Beamshift reference: {}".format(self.calib_beamshift.reference_shift))
             
             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
-
-            #input("Find a good area for investigation. Center the beam using beamshift if beam is not centered. ENTER>>>")
-            
-            #bs = self.ctrl.beamshift.get()
-            #self.calib_beamshift.reference_shift = bs
-            #self.neutral_beamshift = bs
             
             self.magnification = self.ctrl.magnification.value
 
@@ -1014,41 +1128,41 @@ class Experiment(object):
             
             if img.mean() > threshold:
 
-                h["exp_magnification"] = 2500
+                h["exp_magnification"] = self.ctrl.magnification.get()
 
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 
                 n_crystals = len(crystal_coords)
 
                 if n_crystals == 0:
-                    print("No crystals found in the image. Find another area!")
+                    self.print_and_del("No crystals found in the image. Find another area!")
                     return 0
                 
-                (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
+                (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
                 
                 img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                h["exp_magnification"] = 2500
+                h["exp_magnification"] = self.ctrl.magnification.get()
                 write_tiff(path / f"Overall_view", img, h)
 
-                crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                 crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                 n_crystals = len(crystal_coords)
 
                 if n_crystals == 0:
-                    print("No crystals found in the image. Find another area!")
+                    self.print_and_del("No crystals found in the image. Find another area!")
                     return 0
                 
                 if size_crystal_targeted != 0:
                     try:
                         ind_target = crystal_sizes.index(size_crystal_targeted)
                         crystal_coords[0], crystal_coords[ind_target] = crystal_coords[ind_target], crystal_coords[0]
-                        print("Targeted isolated crystal centered is swapped to the first of the list.")
+                        self.print_and_del("Targeted isolated crystal centered is swapped to the first of the list.")
                     except ValueError:
-                        print("Lost targeted isolated crystal.")
+                        self.print_and_del("Lost targeted isolated crystal.")
                         return 0
                 
                 self.logger.info("{} {} crystals found.".format(datetime.datetime.now(), n_crystals))
@@ -1060,9 +1174,8 @@ class Experiment(object):
                     try:
                         self.ctrl.brightness.value = img_brightness
 
-                        #print("{}, {}".format(k, crystal_coords[k]))
-
-                        print("Collecting on crystal {}/{}. Beamshift coordinates: {}".format(k + 1, n_crystals, self.ctrl.beamshift.get()))
+                        if self.verbose:
+                            print("Collecting on crystal {}/{}. Beamshift coordinates: {}".format(k + 1, n_crystals, self.ctrl.beamshift.get()))
 
                         outfile = path / f"crystal_{k:04d}"
                         comment = "crystal {}".format(k)
@@ -1071,9 +1184,10 @@ class Experiment(object):
                         self.ctrl.beamshift.set(*beamshift_coords.astype(int))
 
                         img, h = self.ctrl.getImage(exposure=0.001, comment=comment, header_keys=header_keys)
-                        h["exp_magnification"] = 2500
+                        h["exp_magnification"] = self.ctrl.magnification.get()
                         write_tiff(path / f"crystal_{k:04d}", img, h)
-                        """Sometimes k is out of range error!!!"""
+
+                        self.number_crystals_scanned += 1
 
                         if self.isolated(crystal_positions[k], crystal_coords) and crystal_positions[k].isolated and not any(t < 100 for t in crystal_coords[k]) and not any(t > 416 for t in crystal_coords[k]):
 
@@ -1096,7 +1210,7 @@ class Experiment(object):
                             pathsmv = outfile / "SMV"
                             pathred = outfile / "RED"
                             
-                            self.auto_cred_collection(outfile, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, self.calib_beamshift)
+                            self.auto_cred_collection(outfile, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, self.calib_beamshift)
                             
                             self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
                             self.ctrl.mode = 'mag1'
@@ -1105,44 +1219,44 @@ class Experiment(object):
                             
                             self.rotation_direction = self.eliminate_backlash_in_tiltx()
                             img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                            h["exp_magnification"] = 2500
+                            h["exp_magnification"] = self.ctrl.magnification.get()
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
 
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             #self.ctrl.brightness.value = img_brightness
                             
                             if n_crystals == 0:
-                                print("No crystals found in the image. exitting loop...")
+                                self.print_and_del("No crystals found in the image. exitting loop...")
                                 break
                             
-                            (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification)
+                            (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
                 
                             img, h = self.ctrl.getImage(exposure = self.expt, header_keys=header_keys)
-                            h["exp_magnification"] = 2500
+                            h["exp_magnification"] = self.ctrl.magnification.get()
                             write_tiff(path / f"Overall_view_{k:04d}", img, h)
             
-                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=spread, offset=offset)
+                            crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
                             crystal_sizes = [crystal.area_pixel for crystal in crystal_positions]             
                             n_crystals = len(crystal_coords)
             
                             if n_crystals == 0:
-                                print("No crystals found in the image. Find another area!")
+                                self.print_and_del("No crystals found in the image. Find another area!")
                                 break
                             
                             if size_crystal_targeted != 0:
                                 try:
                                     ind_target = crystal_sizes.index(size_crystal_targeted)
                                     crystal_coords[k+1], crystal_coords[ind_target] = crystal_coords[ind_target], crystal_coords[k+1]
-                                    print("{}, {}".format(k+1, crystal_coords[k+1]))
-                                    print("Targeted isolated crystal centered is swapped to the next.")
+                                    self.print_and_del("Targeted isolated crystal centered is swapped to the next.")
                                 except ValueError:
-                                    print("Lost targeted isolated crystal.")
+                                    self.print_and_del("Lost targeted isolated crystal.")
                                     break
                             
                         else:
-                            print("Crystal {} not isolated: not suitable for cred collection".format(k+1))
+                            if self.verbose:
+                                print("Crystal {} not isolated: not suitable for cred collection".format(k+1))
                         
                         k = k + 1
                         if k >= n_crystals:
@@ -1150,7 +1264,7 @@ class Experiment(object):
                     except:
                         traceback.print_exc()
                         self.ctrl.beamblank = False
-                        print("Exitting loop...")
+                        self.print_and_del("Exitting loop...")
                         break
                     
                 self.ctrl.mode = 'mag1'
@@ -1161,22 +1275,20 @@ class Experiment(object):
                 
                 self.ctrl.beamshift.set(x = self.calib_beamshift.reference_shift[0], y = self.calib_beamshift.reference_shift[1])
                 
-                print("AutocRED with crystal_finder data collection done. Find another area for particles.")
-
-            print(os.listdir(path))
+                if self.verbose:
+                    print("AutocRED with crystal_finder data collection done. Find another area for particles.")
             
             if os.listdir(path) == ['Overall_view.tiff']:
-                print("Removing path...")
                 shutil.rmtree(path)
-                print("Path {} removed since no crystal rotation data was collected.".format(path))
+                #print("Path {} removed since no crystal rotation data was collected.".format(path))
             
             try:
                 if len(os.listdir(path)) == 0:
                     os.rmdir(path)
-                    print("Path {} removed since it is empty.".format(path))
+                    #print("Path {} removed since it is empty.".format(path))
             except:
-                print("Deletion error. Path might have already been deleted.")
-                
+                #print("Deletion error. Path might have already been deleted.")
+                pass
                     
         elif self.mode == 1 or self.mode == 2:
             self.pathtiff = Path(self.path) / "tiff"
@@ -1186,7 +1298,7 @@ class Experiment(object):
             for path in (self.path, self.pathtiff, self.pathsmv, self.pathred):
                 if not os.path.exists(path):
                     os.makedirs(path)
-            self.auto_cred_collection(self.path, self.pathtiff, self.pathsmv, self.pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, self.calib_beamshift)
+            self.auto_cred_collection(self.path, self.pathtiff, self.pathsmv, self.pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, self.calib_beamshift)
         
         else:
             print("Choose cRED tab for data collection with manual/blind tracking.")
@@ -1200,36 +1312,36 @@ class Experiment(object):
             
         if self.auto_zheight == False:
             try:
-                with open("z-height-adjustment-time.pkl", "rb") as f:
+                with open(self.calibdir / "z-height-adjustment-time.pkl", "rb") as f:
                     t = pickle.load(f)
                     if t - time.clock() > 14400:
-                        print("Z-height needs to be updated every session. Readjusting z-height...")
-                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                        self.print_and_del("Z-height needs to be updated every session. Readjusting z-height...")
+                        x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                         xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                         self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                         t = time.clock()
-                        with open("z-height-adjustment-time.pkl", "wb") as f:
+                        with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                             pickle.dump(t, f)
                             
             except:
                 input("No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>")
-                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+                x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                 t = time.clock()
-                with open("z-height-adjustment-time.pkl", "wb") as f:
+                with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                     pickle.dump(t, f)
         else:
-            print("Z height adjusting...")
-            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=spread, offset = offset)
+            self.print_and_del("Z height adjusting...")
+            x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
             xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
             self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
             t = time.clock()
-            with open("z-height-adjustment-time.pkl", "wb") as f:
+            with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                 pickle.dump(t, f)
             
         lensPar = self.ctrl.to_dict()
-        with open("LensPar.pkl","wb") as f:
+        with open(self.calibdir / "LensPar.pkl","wb") as f:
             pickle.dump(lensPar, f)
 
         ## Check DIALS server connection status here
@@ -1241,10 +1353,12 @@ class Experiment(object):
 
         self.stopEvent_rasterScan.clear()
 
-        with open("LensPar.pkl","rb") as f:
+        with open(self.calibdir / "LensPar.pkl","rb") as f:
             lensPar_i = pickle.load(f)
 
         self.ctrl.from_dict(lensPar_i)
         self.ctrl.beamblank = True
 
         print("AutocRED collection done.")
+        self.number_crystals_scanned = 0
+        self.number_exp_performed = 0

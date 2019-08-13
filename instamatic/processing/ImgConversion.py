@@ -291,7 +291,7 @@ class ImgConversion(object):
 
     def tiff_writer(self, path: str) -> None:
         """Write all data as tiff files to given `path`"""
-        print ("Writing TIFF files......")
+        print ("\033[k", "Writing TIFF files......", end="\r")
 
         path.mkdir(exist_ok=True)
 
@@ -302,7 +302,7 @@ class ImgConversion(object):
 
     def smv_writer(self, path: str) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
-        print ("Writing SMV files......")
+        print ("\033[k", "Writing SMV files......", end="\r")
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
@@ -314,7 +314,7 @@ class ImgConversion(object):
      
     def mrc_writer(self, path: str) -> None:
         """Write all data as mrc files to `path`"""
-        print ("Writing MRC files......")
+        print ("\033[k", "Writing MRC files......", end="\r")
 
         path.mkdir(exist_ok=True)
 

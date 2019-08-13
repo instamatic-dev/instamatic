@@ -9,15 +9,20 @@ from instamatic.calibrate import CalibBeamShift
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+from instamatic import config
+import datetime
+
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Automated Continuous rotation electron diffraction")
+        LabelFrame.__init__(self, parent, text="Serial Rotation Electron Diffraction (SerialRED)")
         self.parent = parent
 
         self.init_vars()
-        
-        self.calib_path = Path("")
+
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        self.calib_path_is = config.logs_drc / f"ImageShift_LOGS_{date}"
+        self.calib_path = Path("..")
 
         frame = Frame(self)
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
@@ -47,6 +52,34 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="Scan Area (um):").grid(row=8, column=0, sticky="W")
         self.scan_area = Entry(frame, textvariable=self.var_scan_area)
         self.scan_area.grid(row=8, column=1, sticky="W", padx=10)
+
+        Separator(frame, orient=HORIZONTAL).grid(row=12, columnspan=3, sticky="ew", pady=10)
+
+        Label(frame, text="advanced variables").grid(row=13, column=0, sticky="W")
+
+        Label(frame, text="angle activation deadtime (s):").grid(row=14, column=0, sticky="W")
+        self.activ_thr = Entry(frame, textvariable=self.var_activ_thr)
+        self.activ_thr.grid(row=14, column=1, sticky="W", padx=10)
+
+        Label(frame, text="spread (particle recog):").grid(row=15, column=0, sticky="W")
+        self.spread = Entry(frame, textvariable=self.var_spread)
+        self.spread.grid(row=15, column=1, sticky="W", padx=10)
+
+        Label(frame, text="offset (particle recog):").grid(row=16, column=0, sticky="W")
+        self.offset = Entry(frame, textvariable=self.var_offset)
+        self.offset.grid(row=16, column=1, sticky="W", padx=10)
+
+        Label(frame, text="tilt range limit:").grid(row=14, column=2, sticky="W")
+        self.rotrangelimit = Entry(frame, textvariable=self.var_rotrange)
+        self.rotrangelimit.grid(row=14, column=2, sticky="E", padx=10)
+
+        Label(frame, text="backlash estimation:").grid(row=15, column=2, sticky="W")
+        self.backlash_killer = Entry(frame, textvariable=self.var_backlash)
+        self.backlash_killer.grid(row=15, column=2, sticky="E", padx=10)
+
+        Label(frame, text="expected rot speed").grid(row=16, column=2, sticky="W")
+        self.rot_speed = Entry(frame, textvariable=self.var_rotspeed)
+        self.rot_speed.grid(row=16, column=2, sticky="E", padx=10)
         
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
@@ -60,19 +93,13 @@ class ExperimentalautocRED(LabelFrame):
         self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight)
         self.zheight.grid(row=10, column=2, sticky="W")
 
-        self.lb_coll0 = Label(frame, text="")
-        self.lb_coll1 = Label(frame, text="")
-        self.lb_coll2 = Label(frame, text="")
-        self.lb_coll0.grid(row=11, column=0, columnspan=3, sticky="EW")
-        self.lb_coll1.grid(row=12, column=0, columnspan=3, sticky="EW")
-        self.lb_coll2.grid(row=13, column=0, columnspan=3, sticky="EW")
+        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
+        self.auto_center_SMV.grid(row=11, column=2, sticky="W")
+
         frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
-        
-        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
-        self.auto_center_SMV.grid(row=13, column=2, sticky="W")
         
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
@@ -109,8 +136,14 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_fullacred = BooleanVar(value=True)
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=True)
         self.var_scan_area = IntVar(value=0)
+        self.var_activ_thr = DoubleVar(value=0.1)
+        self.var_spread = DoubleVar(value=2.0)
+        self.var_offset = DoubleVar(value=15.0)
         self.var_zheight = BooleanVar(value = False)
-        self.var_autoc = BooleanVar(value = False)
+        self.var_autoc = BooleanVar(value = True)
+        self.var_rotrange = IntVar(value=70)
+        self.var_backlash = DoubleVar(value=1.0)
+        self.var_rotspeed = DoubleVar(value=0.86)
         
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
@@ -119,8 +152,8 @@ class ExperimentalautocRED(LabelFrame):
     def start_collection(self):
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
-        self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        #self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
+        #self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
         self.parent.bind_all("<space>", self.stop_collection)
 
@@ -136,8 +169,8 @@ class ExperimentalautocRED(LabelFrame):
 
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
-        self.lb_coll1.config(text="")
-        self.lb_coll2.config(text="")
+        #self.lb_coll1.config(text="")
+        #self.lb_coll2.config(text="")
 
     def stop_collection_acred(self, event = None):
         self.stopEvent.set()
@@ -156,7 +189,13 @@ class ExperimentalautocRED(LabelFrame):
                    "stop_event": self.stopEvent,
                    "stop_event_experiment": self.stopEvent_experiment,
                    "zheight": self.var_zheight.get(),
-                   "autocenterDP": self.var_autoc.get() }
+                   "autocenterDP": self.var_autoc.get(),
+                   "angle_activation": self.var_activ_thr.get(),
+                   "spread": self.var_spread.get(),
+                   "offset": self.var_offset.get(),
+                   "rotrange": self.var_rotrange.get(),
+                   "backlash_killer": self.var_backlash.get(),
+                   "rotation_speed": self.var_rotspeed.get() }
         return params
 
     def toggle_interval_buttons(self):
@@ -227,12 +266,13 @@ class ExperimentalautocRED(LabelFrame):
         3. IS2 defocused
         4. IS2 focused
         5. Beamshift for DP
+        6. Beamshift for DP defocused
         Only input a number and press ENTER>>""")
         idx = int(idx)
         
-        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP)])
+        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP),(6, CALIB_BEAMSHIFT_DP_DEFOC)])
         
-        path = self.calib_path / FLIST[idx]
+        path = self.calib_path_is / FLIST[idx]
         print(path)
         try:
             with open(path,'rb') as f:
@@ -283,6 +323,11 @@ def acquire_data_autocRED(controller, **kwargs):
     scan_area=kwargs["scan_area"]
     auto_zheight=kwargs["zheight"]
     auto_centerDP=kwargs["autocenterDP"]
+
+    angle_threshold=kwargs["angle_activation"]
+    spread=kwargs["spread"]
+    offset=kwargs["offset"]
+
     try:
         diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
     except:
