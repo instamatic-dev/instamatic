@@ -17,9 +17,9 @@ Cameras supported:
 - Gatan cameras through DM plugin
 - TVIPS cameras through EMMENU4 API
 
-Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras.
+Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-A DigitalMicrograph script for collecting cRED data on a OneView camera (or any Gatan camera) can be found in the [dmscript](https://github.com/stefsmeets/instamatic/tree/master/dmscript) directory.
+A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/stefsmeets/InsteaDMatic).
 
 ## Reference
 
