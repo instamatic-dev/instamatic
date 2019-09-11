@@ -168,7 +168,7 @@ class Lens(object):
 
 
 class DiffFocus(Lens):
-    """DiffFocus control"""
+    """Control the Difffraction focus lens (IL1)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getDiffFocus
@@ -176,9 +176,11 @@ class DiffFocus(Lens):
         self.is_defocused = False
 
     def set(self, value: int, confirm_mode: bool=True):
-        """confirm_mode: verify that TEM is set to the correct mode ('diff').
-            IL1 maps to different values in image and diffraction mode. 
-            Turning it off results in a 2x speed-up in the call, but it will silently fail if the TEM is in the wrong mode."""
+        """
+        confirm_mode: verify that TEM is set to the correct mode ('diff').
+        IL1 maps to different values in image and diffraction mode. 
+        Turning it off results in a 2x speed-up in the call, but it will silently fail if the TEM is in the wrong mode.
+        """
         self._setter(value, confirm_mode=confirm_mode)
 
     def defocus(self, offset):
@@ -207,7 +209,7 @@ class DiffFocus(Lens):
 
 
 class Brightness(Lens):
-    """Brightness control"""
+    """Control object for the Brightness (CL3)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getBrightness
@@ -221,8 +223,10 @@ class Brightness(Lens):
 
 
 class Magnification(Lens):
-    """Magnification control. The magnification can be set directly, or
-    by passing the corresponding index"""
+    """
+    Magnification control. The magnification can be set directly, or
+    by passing the corresponding index
+    """
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getMagnification
@@ -280,7 +284,7 @@ class GunTilt(Deflector):
 
 
 class BeamShift(Deflector):
-    """BeamShift control"""
+    """BeamShift control (CLA1)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamShift
@@ -289,7 +293,7 @@ class BeamShift(Deflector):
 
 
 class BeamTilt(Deflector):
-    """BeamTilt control"""
+    """BeamTilt control (CLA2)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamTilt
@@ -298,7 +302,7 @@ class BeamTilt(Deflector):
         
 
 class DiffShift(Deflector):
-    """DiffShift control"""
+    """Control for the Diffraction Shift (PLA)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setDiffShift
@@ -307,7 +311,7 @@ class DiffShift(Deflector):
         
  
 class ImageShift1(Deflector):
-    """ImageShift control"""
+    """ImageShift control (IS1)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift1
@@ -315,7 +319,7 @@ class ImageShift1(Deflector):
         self.key = "IS1"
 
 class ImageShift2(Deflector):
-    """ImageShift control"""
+    """ImageShift control (IS2)"""
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift2

@@ -7,6 +7,29 @@ from skimage.measure import regionprops
 from scipy import ndimage, interpolate
 
 
+
+def prepare_grid_coordinates(nx: int, ny: int, stepsize: float=1.0) -> "np.array":
+    """
+    Prepare a list of grid coordinates nx by ny in size.
+    The grid is centered at the center of the grid
+    
+    nx, ny: int,
+        Defines the grid in x and y direction.
+        The number of steps is defined by nx * ny
+    stepsize:
+        Distance between each grid point in x/y
+    
+    returns:
+        list of coordinates
+    """
+    cx = (nx-1) * stepsize / 2
+    cy = (ny-1) * stepsize / 2
+    center = np.array((cx, cy))
+    
+    x_grid, y_grid = np.meshgrid(np.arange(nx) * stepsize, np.arange(ny) * stepsize)
+    return np.stack([x_grid, y_grid]).reshape(2,-1).T - center
+
+
 def to_xds_untrusted_area(kind: str, coords: list) -> str:
     """Takes coordinate list and turns it into an XDS untrusted area
     kind: rectangle, ellipse, quadrilateral
