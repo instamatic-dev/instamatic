@@ -29,7 +29,7 @@ class CalibStage(object):
         self.center_pixel = np.array(camera_dimensions) / 2.0
    
     def __repr__(self):
-        return "CalibStage(rotation=\n{},\n translation=\n{},\n reference_position=\n{})".format(self.rotation, self.translation, self.reference_position)
+        return f"CalibStage(rotation=\n{self.rotation},\n translation=\n{self.translation},\n reference_position=\n{self.reference_position})"
 
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, t, reference_pos):
         """
@@ -190,7 +190,7 @@ class CalibStage(object):
             return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_stage_lowmag/mag1"
-            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     def to_file(self, fn=CALIB_STAGE_LOWMAG):
         pickle.dump(self, open(fn, "wb"))
@@ -258,12 +258,12 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     i = 0
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         print()
-        print("Position {}/{}: x: {:.0f}, y: {:.0f}".format(i+1, tot, x_cent+dx, y_cent+dy))
+        print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
         
         ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
         print(ctrl.stageposition)
         
-        outfile = "calib_{:04d}".format(i) if save_images else None
+        outfile = f"calib_{i:04d}" if save_images else None
 
         comment = comment
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="StagePosition")
@@ -288,7 +288,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     m = gridsize**2 // 2 
     if gridsize % 2 and stagepos[m].max() > 50:
-        print(" >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m))
+        print(f" >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.")
         print("    Difference:", stagepos[m])
         print()
     
@@ -344,7 +344,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         
         xobs, yobs, _, _, _ = h["StagePosition"]
         print("Image:", fn)
-        print("Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs))
+        print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
         print()
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)

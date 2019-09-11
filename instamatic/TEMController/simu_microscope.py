@@ -408,7 +408,7 @@ class SimuMicroscope(object):
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError("Unrecognized function mode: {}".format(value))
+                raise ValueError(f"Unrecognized function mode: {value}")
         self.FunctionMode_value = value
 
     def getDiffFocus(self, confirm_mode: bool=True) -> int:

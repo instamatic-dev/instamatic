@@ -149,7 +149,7 @@ class FEIMicroscope(object):
             time.sleep(1)
             t += 1
             if t > 3:
-                print("Waiting for microscope, t = {}s".format(t))
+                print(f"Waiting for microscope, t = {t}s")
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 

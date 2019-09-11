@@ -231,8 +231,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
     if not operation in ['sum', 'mean']:
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
-        raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
-                                                           new_shape))
+        raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
     compression_pairs = [(d, c//d) for d,c in zip(new_shape,
                                                   ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
@@ -258,7 +257,7 @@ def get_files(file_pat: str) -> list:
         fns = glob.glob(file_pat)
 
     if len(fns) == 0:
-        raise IOError("No files matching '{}' were found.".format(file_pat))
+        raise IOError(f"No files matching '{file_pat}' were found.")
 
     return fns
 

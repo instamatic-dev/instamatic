@@ -256,12 +256,12 @@ class Experiment(object):
                 image_buffer.append((i, img, h))
 
                 next_interval = t_start + acquisition_time
-                # print i, "BLOOP! {:.3f} {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time, t_start-t0)
+                # print(f"{i} BLOOP! {next_interval-t_start:.3f} {acquisition_time:.3f} {t_start-t0:.3f}")
 
                 while time.perf_counter() > next_interval:
                     next_interval += acquisition_time
                     i += 1
-                    # print i, "SKIP!  {:.3f} {:.3f}".format(next_interval-t_start, acquisition_time)
+                    # print(f"{i} "SKIP!  {next_interval-t_start:.3f} {acquisition_time:.3f}")
 
                 diff = next_interval - time.perf_counter() # seconds
 
@@ -272,7 +272,7 @@ class Experiment(object):
 
             else:
                 img, h = self.ctrl.getImage(self.exposure, header_keys=None)
-                # print i, "Image!"
+                # print(f"{i} Image!")
                 buffer.append((i, img, h))
 
             i += 1

@@ -90,7 +90,7 @@ def get_calibrated_rotation_speed(val):
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
-    logger.info("Correcting oscillation angle from {:.3f} to calibrated value {:.3f}".format(val, calibrated_value))
+    logger.info(f"Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}")
     return calibrated_value
 
 
@@ -143,8 +143,8 @@ class ImgConversion(object):
             self.pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
         except KeyError:
             self.pixelsize = 1
-            print("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))
-            logger.warning("No calibrated pixelsize for camera length={}. Setting pixelsize to 1.".format(camera_length))
+            print(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
+            logger.warning(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
 
         self.physical_pixelsize = config.camera.physical_pixelsize # mm
         self.wavelength = config.microscope.wavelength # angstrom
@@ -170,7 +170,7 @@ class ImgConversion(object):
         self.check_settings()  # check if all required parameters are present, and fill default values if needed
 
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
-        logger.debug("Primary beam at: {}".format(self.mean_beam_center))
+        logger.debug(f"Primary beam at: {self.mean_beam_center}")
 
     def check_settings(self) -> None:
         """
@@ -298,7 +298,7 @@ class ImgConversion(object):
         for i in self.observed_range:
             self.write_tiff(path, i)
 
-        logger.debug("Tiff files saved in folder: {}".format(path))
+        logger.debug(f"Tiff files saved in folder: {path}")
 
     def smv_writer(self, path: str) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
@@ -310,7 +310,7 @@ class ImgConversion(object):
         for i in self.observed_range:
             self.write_smv(path, i)
                
-        logger.debug("SMV files saved in folder: {}".format(path))
+        logger.debug(f"SMV files saved in folder: {path}")
      
     def mrc_writer(self, path: str) -> None:
         """Write all data as mrc files to `path`"""
@@ -321,7 +321,7 @@ class ImgConversion(object):
         for i in self.observed_range:
             self.write_mrc(path, i)
 
-        logger.debug("MRC files created in folder: {}".format(path))
+        logger.debug(f"MRC files created in folder: {path}")
 
     def threadpoolwriter(self, tiff_path: str=None, smv_path: str=None, mrc_path: str=None, workers: int=8) -> None:
         """Efficiently write all data to the specified formats using a threadpool. 
@@ -335,15 +335,15 @@ class ImgConversion(object):
         if write_smv:
             smv_path = smv_path / self.smv_subdrc
             smv_path.mkdir(exist_ok=True, parents=True)
-            logger.debug("SMV files saved in folder: {}".format(smv_path))
+            logger.debug(f"SMV files saved in folder: {smv_path}")
 
         if write_tiff:
             tiff_path.mkdir(exist_ok=True, parents=True)
-            logger.debug("Tiff files saved in folder: {}".format(tiff_path))
+            logger.debug(f"Tiff files saved in folder: {tiff_path}")
 
         if write_mrc:
             mrc_path.mkdir(exist_ok=True, parents=True)
-            logger.debug("MRC files saved in folder: {}".format(mrc_path))
+            logger.debug(f"MRC files saved in folder: {mrc_path}")
 
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
@@ -382,7 +382,7 @@ class ImgConversion(object):
 
         # add data to self.data/self.headers so that existing functions can be used
         # make sure to remove them afterwards, not to interfere with other data writing
-        logger.debug("Writing missing files for DIALS: {}".format(self.missing_range))
+        logger.debug(f"Writing missing files for DIALS: {self.missing_range}")
 
         for n in self.missing_range:
             self.data[n] = empty
@@ -442,17 +442,17 @@ class ImgConversion(object):
         header['DETECTOR_SN'] = 901         # special ID for DIALS
         header['DATE'] = date
         header['TIME'] = str(h["ImageExposureTime"])
-        header['DISTANCE'] = "{:.4f}".format(self.distance)
+        header['DISTANCE'] = f"{self.distance:.4f}"
         header['TWOTHETA'] = 0.00
-        header['PHI'] = "{:.4f}".format(phi)
-        header['OSC_START'] = "{:.4f}".format(phi)
-        header['OSC_RANGE'] = "{:.4f}".format(self.osc_angle)
-        header['WAVELENGTH'] = "{:.4f}".format(self.wavelength)
+        header['PHI'] = "{phi:.4f}"
+        header['OSC_START'] = f"{phi:.4f}"
+        header['OSC_RANGE'] = f"{self.osc_angle:.4f}"
+        header['WAVELENGTH'] = f"{self.wavelength:.4f}"
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = "{:.4f}".format(mean_beam_center[1])
-        header['BEAM_CENTER_Y'] = "{:.4f}".format(mean_beam_center[0])
-        header['DENZO_X_BEAM'] = "{:.4f}".format((mean_beam_center[0]*self.physical_pixelsize))
-        header['DENZO_Y_BEAM'] = "{:.4f}".format((mean_beam_center[1]*self.physical_pixelsize))
+        header['BEAM_CENTER_X'] = f"{mean_beam_center[1]:.4f}"
+        header['BEAM_CENTER_Y'] = f"{mean_beam_center[0]:.4f}"
+        header['DENZO_X_BEAM'] = f"{mean_beam_center[0]*self.physical_pixelsize:.4f}"
+        header['DENZO_Y_BEAM'] = f"{mean_beam_center[1]*self.physical_pixelsize:.4f}"
         fn = path / f"{i:05d}.img"
         write_adsc(fn, img, header=header)
         return fn
@@ -511,13 +511,13 @@ class ImgConversion(object):
             print(f"FILELIST", file=f)
         
             for i in self.observed_range:
-                fn = "{:05d}.mrc".format(i)
+                fn = f"{i:05d}.mrc"
                 angle = self.start_angle+sign*self.osc_angle*i
                 print(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}", file=f)
             
             print(f"ENDFILELIST", file=f)
 
-        logger.debug("Ed3d file created in path: {}".format(path))
+        logger.debug(f"ED3D file created in path: {path}")
         
     def write_xds_inp(self, path: str) -> None:
         """Write XDS.INP input file for XDS in directory `path`"""
@@ -538,7 +538,7 @@ class ImgConversion(object):
             stretch_correction=""
 
         if self.missing_range:
-            exclude = "\n".join(["EXCLUDE_DATA_RANGE={} {}".format(i, j) for i, j in find_subranges(self.missing_range)])
+            exclude = "\n".join([f"EXCLUDE_DATA_RANGE={i} {j}" for i, j in find_subranges(self.missing_range)])
         else:
             exclude = "!EXCLUDE_DATA_RANGE="
 
@@ -626,7 +626,7 @@ class ImgConversion(object):
             # print("", file=f)
             print("imagelist", file=f)
             for i in self.observed_range:
-                fn = "{:05d}.tiff".format(i)
+                fn = f"{i:05d}.tiff"
                 angle = self.start_angle+sign*self.osc_angle*i
                 print(f"{tiff_path}/{fn} {angle:10.4f} 0.00", file=f)
             print("endimagelist", file=f)

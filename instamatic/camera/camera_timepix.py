@@ -102,7 +102,7 @@ class CameraTPX(object):
         ret = self.lib.EMCameraObj_Connect(self.obj, hwId)
         if ret:
             self.is_connected = True
-            print("Camera connected (hwId={})".format(hwId.value))
+            print(f"Camera connected (hwId={hwId.value})")
         else:
             raise IOError("Could not establish connection to camera.")
         return ret
@@ -124,7 +124,7 @@ class CameraTPX(object):
     def readRealDacs(self, filename):
         "std::string filename"
         if not os.path.exists(filename):
-            raise IOError("Cannot find `RealDacs` file: {}".format(filename))
+            raise IOError(f"Cannot find `RealDacs` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -140,7 +140,7 @@ class CameraTPX(object):
     def readHwDacs(self, filename):
         "std::string filename"
         if not os.path.exists(filename):
-            raise IOError("Cannot find `HwDacs` file: {}".format(filename))
+            raise IOError(f"Cannot find `HwDacs` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -157,7 +157,7 @@ class CameraTPX(object):
         "std::string filename"
         "int mode = TPX_MODE_DONT_SET  ->  set in header file"
         if not os.path.exists(filename):
-            raise IOError("Cannot find `PixelsCfg` file: {}".format(filename))
+            raise IOError(f"Cannot find `PixelsCfg` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -360,7 +360,7 @@ if __name__ == '__main__':
         n = 100
 
         arr = cam.acquireData(t)
-        print("[ py hardware timer] -> shape: {}".format(arr.shape))
+        print(f"[ py hardware timer] -> shape: {arr.shape}")
         t0 = time.perf_counter()
         for x in range(n):
             cam.acquireData(t)

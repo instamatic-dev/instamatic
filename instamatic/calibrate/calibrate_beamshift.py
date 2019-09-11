@@ -32,8 +32,7 @@ class CalibBeamShift(object):
         self.has_data = False
    
     def __repr__(self):
-        return "CalibBeamShift(transform=\n{},\n   reference_shift=\n{},\n   reference_pixel=\n{})".format(
-            self.transform, self.reference_shift, self.reference_pixel)
+        return f"CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})"
 
     def beamshift_to_pixelcoord(self, beamshift):
         """Converts from beamshift x,y to pixel coordinates"""
@@ -67,7 +66,7 @@ class CalibBeamShift(object):
             return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_beamshift"
-            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     @classmethod
     def live(cls, ctrl, outdir="."):
@@ -86,7 +85,7 @@ class CalibBeamShift(object):
             return
 
         if to_file == True:
-            to_file = "calib_{}.png".format("beamshift")
+            to_file = f"calib_{beamshift}.png"
 
         beampos = self.data_beampos
         shifts = self.data_shifts
@@ -107,8 +106,6 @@ class CalibBeamShift(object):
     def center(self, ctrl):
         """Return beamshift values to center the beam in the frame"""
         pixel_center = [val/2.0 for val in ctrl.cam.dimensions]
-
-        # print " >> Moving beam to pixel: {}".format(pixel_center)
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
@@ -176,9 +173,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
         printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))
 
-        outfile = os.path.join(outdir, "calib_beamshift_{:04d}".format(i)) if save_images else None
+        outfile = os.path.join(outdir, "calib_beamshift_{i:04d}") if save_images else None
 
-        comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+        comment = f"Calib image {i}: dx={dx} - dy={dy}"
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="BeamShift")
         img = imgscale(img, scale)
 

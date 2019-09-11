@@ -68,9 +68,7 @@ def plot_props(img, props, fname=None, scale=1):
         cy, cx = prop.weighted_centroid*scale
         plt.scatter([cx], [cy], c=color, s=10, edgecolor='none')
 
-        # s = " {}".format(i, int(cx), int(cy))
-        s = " {}:\n {:d}\n {:d}".format(i, int(cx), int(cy))
-        # s = " {}:\n {:f}".format(i, prop.eccentricity)
+        s = f" {i}:\n {cx:d}\n {cy:d}"
         plt.text(x2, y2, s=s, color="red", size=15)
 
     ymax, xmax = img.shape
@@ -103,9 +101,9 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
         markers[img > upper] = features
     
     if verbose:
-        print("\nother      {:6.2%}".format(1.0*np.sum(markers == 0) / markers.size))
-        print("background {:6.2%}".format(1.0*np.sum(markers == background) / markers.size))
-        print("features   {:6.2%}".format(1.0*np.sum(markers == features) / markers.size))
+        print(f"\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}")
+        print(f"background {1.0*np.sum(markers == background) / markers.size:6.2%}")
+        print(f"features   {1.0*np.sum(markers == features) / markers.size:6.2%}")
 
     return markers
 
@@ -158,8 +156,8 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     l = otsu - (otsu - np.min(img))*n
     u = otsu + (np.max(img) - otsu)*n
     if verbose:
-        print("img range: {} - {}".format(img.min(), img.max()))
-        print("otsu: {:.0f} ({:.0f} - {:.0f})".format(otsu, l, u))
+        print(f"img range: {img.min()} - {img.max()}")
+        print(f"otsu: {otsu:.0f} ({l:.0f} - {i:.0f})")
     
     markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
@@ -185,7 +183,7 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
 
         newprops.append(prop)
     
-    print(" >> {} holes found in {} objects.".format(len(newprops), numlabels))
+    print(f" >> {len(newprops)} holes found in {numlabels} objects.")
     
     if plot:
         plot_props(img, newprops)
@@ -216,7 +214,7 @@ def find_holes_entry():
             px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
             area = hole.area*px*py / scale**2
             d = 2*(area/np.pi)**0.5
-            print("x: {:.2f}, y: {:.2f}, d: {:.2f} um".format(x*scale, y*scale, d))
+            print(f"x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um")
 
 
 if __name__ == '__main__':

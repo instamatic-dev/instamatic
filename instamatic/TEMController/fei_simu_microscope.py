@@ -39,7 +39,7 @@ class FEISimuMicroscope(object):
             time.sleep(1)
             t += 1
             if t > 3:
-                print("Waiting for microscope, t = {}s".format(t))
+                print(f"Waiting for microscope, t = {t}s")
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
@@ -249,7 +249,7 @@ class FEISimuMicroscope(object):
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError("Unrecognized function mode: {}".format(value))
+                raise ValueError(f"Unrecognized function mode: {value}")
         self.FunctionMode_value = value
 
     def getDiffFocus(self):

@@ -63,7 +63,7 @@ class ImgConversionDM(ImgConversion):
         self.acquisition_time = acquisition_time
         self.rotation_speed = 0  # n/a
 
-        logger.debug("Primary beam at: {}".format(self.mean_beam_center))
+        logger.debug(f"Primary beam at: {self.mean_beam_center}")
 
         self.name = "DigitalMicrograph"
 

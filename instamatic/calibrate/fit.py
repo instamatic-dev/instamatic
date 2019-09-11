@@ -38,7 +38,7 @@ def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=Fal
     res = lmfit.minimize(objective_func, params, args=args, method=method)
     
     if res.success and not verbose:
-        print("Minimization converged after {} cycles with chisqr of {}".format(res.nfev, res.chisqr))
+        print(f"Minimization converged after {res.nfev} cycles with chisqr of {res.chisqr}")
     else:
         lmfit.report_fit(res)
 

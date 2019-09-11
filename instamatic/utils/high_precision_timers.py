@@ -28,10 +28,10 @@ def enable(milliseconds: int=1) -> None:
 
     winmm.timeBeginPeriod(milliseconds)
 
-    # print("Change time period to {} ms".format(milliseconds))
+    # print(f"Change time period to {milliseconds} ms")
 
     def reset_time_period():
-        # print("Reset time period from {} ms".format(milliseconds))
+        # print(f"Reset time period from milliseconds{} ms")
         winmm.timeEndPeriod(milliseconds)
 
     atexit.register(reset_time_period)

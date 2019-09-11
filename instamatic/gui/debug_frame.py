@@ -135,10 +135,10 @@ class DebugFrame(LabelFrame):
         print(">> trigger event has been reset.")
 
     def empty_queue(self):
-        print("There are {} items left in the queue.".format(self.q.qsize()))
+        print(f"There are {self.q.qsize()} items left in the queue.")
         while not self.q.empty():
             job, kwargs = self.q.get()
-            print("Flushed job: {}->{}".format(job, kwargs))
+            print(f"Flushed job: {job}->{kwargs}")
 
     def open_ipython(self):
         self.q.put(("debug", { "task": "open_ipython" } ))

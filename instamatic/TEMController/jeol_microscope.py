@@ -88,7 +88,7 @@ class JeolMicroscope(object):
             time.sleep(1)
             t += 1
             if t > 3:
-                print("Waiting for microscope, t = {}s".format(t))
+                print(f"Waiting for microscope, t = {t}s")
             if t > 30:
                 raise RuntimeError("Cannot establish microscope connection (timeout).")
 
@@ -347,15 +347,15 @@ class JeolMicroscope(object):
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()
             if x is not None and abs(nx - x) > 150:
-                logger.warning("stage.x -> requested: {:.1f}, got: {:.1f}".format(x, nx))
+                logger.warning(f"stage.x -> requested: {x:.1f}, got: {nx:.1f}")
             if y is not None and abs(ny - y) > 150:
-                logger.warning("stage.y -> requested: {:.1f}, got: {:.1f}".format(y, ny))
+                logger.warning(f"stage.y -> requested: {y:.1f}, got: {ny:.1f}")
             if z is not None and abs(nz - z) > 500:
-                logger.warning("stage.z -> requested: {}, got: {}".format(z, nz))
+                logger.warning(f"stage.z -> requested: {z}, got: {nz}")
             if a is not None and abs(na - a) > 0.057:
-                logger.warning("stage.a -> requested: {}, got: {}".format(a, na))
+                logger.warning(f"stage.a -> requested: {a}, got: {na}")
             if b is not None and abs(nb - b) > 0.057:
-                logger.warning("stage.b -> requested: {}, got: {}".format(b, nb))
+                logger.warning(f"stage.b -> requested: {b}, got: {nb}")
 
     def stopStageMV(self):
         self.stage3.Stop()
@@ -372,7 +372,7 @@ class JeolMicroscope(object):
             try:
                 value = self.FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError("Unrecognized function mode: {}".format(value))
+                raise ValueError(f"Unrecognized function mode: {value}")
         self.eos3.SelectFunctionMode(value)
 
     def getDiffFocus(self, confirm_mode: bool=True) -> int:

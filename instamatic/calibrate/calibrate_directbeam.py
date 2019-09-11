@@ -64,7 +64,7 @@ class CalibDirectBeam(object):
             r = self._dct[key]["r"]
             t = self._dct[key]["t"]
 
-            ret += "\n {}(rotation=\n{},\n  translation={})".format(key, r, t)
+            ret += f"\n {key}(rotation=\n{r},\n  translation={t})"
         ret += ")"
         return ret
 
@@ -134,7 +134,7 @@ class CalibDirectBeam(object):
             return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_directbeam"
-            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     @classmethod
     def live(cls, ctrl, outdir="."):
@@ -160,7 +160,7 @@ class CalibDirectBeam(object):
         data_readout = self._dct[key]["data_readout"] # microscope readout
 
         if to_file == True:
-            to_file = "calib_db_{}.png".format(key)
+            to_file = f"calib_db_{key}.png"
 
         shifts_ = self.any2pixelshift(shift=data_readout, key=key)
 
@@ -211,7 +211,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
     attr = getattr(ctrl, key.lower())
 
-    outfile = os.path.join(outdir, "calib_db_{}_0000".format(key)) if save_images else None
+    outfile = os.path.join(outdir, f"calib_db_{key}_0000") if save_images else None
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
@@ -233,9 +233,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
         printer("Position: {}/{}: {}".format(i, tot, attr))
         
-        outfile = os.path.join(outdir, "calib_db_{}_{:04d}".format(key, i)) if save_images else None
+        outfile = os.path.join(outdir, f"calib_db_{key}_{i:04d}") if save_images else None
 
-        comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+        comment = f"Calib image {i}: dx={dx} - dy={dy}"
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
@@ -332,7 +332,7 @@ Calibrate direct beam position
         cs = []
         for pattern in patterns:
             key, pattern = pattern.split(":")
-            assert key in keys, "Unknown key: {}".format(key)
+            assert key in keys, f"Unknown key: {key}"
             fns = glob.glob(pattern)
             center_fn = fns[0]
             other_fn = fns[1:]

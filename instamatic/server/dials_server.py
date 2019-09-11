@@ -43,12 +43,12 @@ def run_dials_indexing(data):
 
     if unitcelloutput:
         with open(fn, "a") as f:
-            f.write("\nData Path: {}\n".format(data["path"]))
+            f.write(f"\nData Path: {data["path"]}\n")
             f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
-            f.write("Rotation range: {} degrees\n".format(data["rotrange"]))
-            f.write("Number of frames: {}\n".format(data["nframes"]))
-            f.write("Oscillation angle: {} deg\n\n\n\n".format(data["osc"]))
-            print("Indexing result written to dials indexing log file; path: {}".format(data["path"]))
+            f.write(f"Rotation range: {data["rotrange"]} degrees\n")
+            f.write(f"Number of frames: {data["nframes"]}\n")
+            f.write(f"Oscillation angle: {data["osc"]} deg\n\n\n\n")
+            print(f"Indexing result written to dials indexing log file; path: {data["path"]}")
     
     p.wait()
     unitcelloutput = []

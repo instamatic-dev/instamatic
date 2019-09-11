@@ -125,8 +125,9 @@ class CameraDLL(object):
         msg = f"Camera {self.getName()} initialized"
         logger.info(msg)
 
-        # print("Dimensions {}x{}".format(*self.getDimensions()))
-        # print("Info {} | Count {}".format(self.isCameraInfoAvailable(), self.getCameraCount()))
+        # dim_x, dim_y = self.getDimensions()
+        # print(f"Dimensions {dim_x}x{dim_y}")
+        # print(f"Info {self.isCameraInfoAvailable()} | Count {self.getCameraCount()}")
 
         atexit.register(self.releaseConnection)
 
@@ -160,7 +161,7 @@ class CameraDLL(object):
 
         if binsize not in self.possible_binsizes:
             raise ValueError(
-                "Cannot use binsize={}..., should be one of {}".format(binsize, self.possible_binsizes))
+                f"Cannot use binsize={binsize}..., should be one of {self.possible_binsizes}")
 
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
@@ -205,11 +206,11 @@ class CameraDLL(object):
         """Establish connection to the camera"""
         res = self._initCCDCOM(20120101)
         if res != 1:
-            raise RuntimeError("Could not establish camera connection to {}".format(self.name))
+            raise RuntimeError(f"Could not establish camera connection to {self.name}")
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera"""
         name = self.getName()
         self._releaseCCDCOM()
-        msg = "Connection to camera {} released".format(name) 
+        msg = f"Connection to camera {name} released"
         logger.info(msg)

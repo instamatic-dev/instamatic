@@ -95,7 +95,7 @@ def make_title(prop):
     azimuth = np.degrees(prop.orientation)
     amplitude = -1 + prop.major_axis_length/prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
-    s = "Azimuth: {:.2f}, amplitude: {:.2%}\nmin/max length: {:.1f}, {:.1f}".format(azimuth, amplitude, minlen, maxlen)
+    s = f"Azimuth: {azimuth:.2f}, amplitude: {amplitude:.2%}\nmin/max length: {minlen:.1f}, {maxlen:.1f}"
     return s
 
 
@@ -149,11 +149,11 @@ def plot_props(edges, props):
     plt.imshow(edges)
     for prop in props:
         print("centroid = ({:.2f}, {:.2f})".format(*prop.centroid))
-        print("eccentricity = {:.2f}".format(prop.eccentricity))
-        print("stretch azimuth = {:.2f} degrees".format(np.degrees(prop.orientation)))
-        print("stretch amplitude = {:.2%}".format(-1 + prop.major_axis_length/prop.minor_axis_length))
-        print("min/max lengths = ({:.2f}, {:.2f})".format(prop.minor_axis_length, prop.major_axis_length))
-        print("avg. diameter = {:.2f}".format(prop.equivalent_diameter))
+        print(f"eccentricity = {prop.eccentricity:.2f}")
+        print(f"stretch azimuth = {np.degrees(prop.orientation):.2f} degrees")
+        print(f"stretch amplitude = {-1 + prop.major_axis_length/prop.minor_axis_length:.2%}")
+        print(f"min/max lengths = ({prop.minor_axis_length:.2f}, {prop.major_axis_length:.2f})")
+        print(f"avg. diameter = {prop.equivalent_diameter:.2f}")
         print()
         y0, x0 = prop.centroid
         orientation = prop.orientation

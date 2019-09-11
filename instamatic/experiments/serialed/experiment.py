@@ -99,7 +99,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         from matplotlib import patches
 
         num = len(x_offsets)
-        textstr = "grid: {} x {}\nk: {}\nborder: {:.2f}\nradius: {:.2f}\nboxsize: {:.2f} x {:.2f} um\nnumber: {}".format(nx, ny, k, borderwidth, radius, box_x, box_y, num)
+        textstr = f"grid: {nx} x {ny}\nk: {k}\nborder: {borderwidth:.2f}\nradius: {radius:.2f}\nboxsize: {box_x:.2f} x {box_y:.2f} um\nnumber: {num}"
         
         print()
         print(textstr)
@@ -323,16 +323,16 @@ class Experiment(object):
         """Report experiment status"""
 
         print()
-        print("Output directory:\n{}".format(self.expdir))
+        print(f"Output directory:\n{self.expdir}")
         print()
-        print("Imaging     : binsize = {}".format(self.image_binsize))
-        print("              exposure = {}".format(self.image_exposure))
-        print("              magnification = {}".format(self.magnification))
-        print("              spotsize = {}".format(self.image_spotsize))
-        print("Diffraction : binsize = {}".format(self.diff_binsize))
-        print("              exposure = {}".format(self.diff_exposure))
-        print("              brightness = {}".format(self.diff_brightness))
-        print("              spotsize = {}".format(self.diff_spotsize))
+        print(f"Imaging     : binsize = {self.image_binsize}")
+        print(f"              exposure = {self.image_exposure}")
+        print(f"              magnification = {self.magnification}")
+        print(f"              spotsize = {self.image_spotsize}")
+        print(f"Diffraction : binsize = {self.diff_binsize}")
+        print(f"              exposure = {self.diff_exposure}")
+        print(f"              brightness = {self.diff_brightness}")
+        print(f"              spotsize = {self.diff_spotsize}")
 
     def loop_centers(self):
         """Loop over scan centers defined
@@ -504,7 +504,7 @@ class Experiment(object):
     
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = self.datadir / f"image_{i:04d}_{k:04d}"
-                comment = "Image {} Crystal {}".format(i, k)
+                comment = f"Image {i} Crystal {k}"
                 img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
 

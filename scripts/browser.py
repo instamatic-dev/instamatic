@@ -104,7 +104,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax1.set_xlabel("Stage X")
     ax1.set_ylabel("Stage Y")
 
-    ax2 = plt.subplot(132, title="{}\nx={}, y={}".format(fn, 0, 0))
+    ax2 = plt.subplot(132, title=f"{fn}\nx={0}, y={0}")
     im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
     plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
     highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=2)
@@ -131,7 +131,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             im2.set_clim(vmax=np.percentile(img, 99.5))
 
             stage_x, stage_y = h.get("exp_stage_position", (0, 0))
-            ax2.set_xlabel("x={:.0f} y={:.0f}".format(stage_x, stage_y))
+            ax2.set_xlabel("x={stage_x:.0f} y={stage_y:.0f}")
             ax2.set_title(fn)
             crystal_coords = np.array(h["exp_crystal_coords"])
 
@@ -147,7 +147,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                         pass
                     else:
                         if score > 10:
-                            text = " {}\n {:.0f}".format(phase, score)
+                            text = f" {phase}\n {score:.0f}"
                             ax2.text(coord[1], coord[0], text)
 
             if len(crystal_coords) > 0:
@@ -176,7 +176,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
             img_processed = neural_network.preprocess(img.astype(np.float))
             quality = neural_network.predict(img_processed)
-            ax3.set_xlabel("Crystal quality: {:.2%}".format(quality))
+            ax3.set_xlabel(f"Crystal quality: {quality:.2%}")
 
             im3.set_data(img)
             im3.set_clim(vmax=np.percentile(img, 99.5))

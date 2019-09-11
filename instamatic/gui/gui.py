@@ -64,15 +64,15 @@ class DataCollectionController(threading.Thread):
             try:
                 func = job_dict[job]
             except KeyError:
-                print("Unknown job: {}".format(job))
-                print("Kwargs:\n{}".format(kwargs))
+                print(f"Unknown job: {job}")
+                print(f"Kwargs:\n{kwargs}")
                 continue
 
             try:
                 func(self, **kwargs)
             except Exception as e:
                 traceback.print_exc()
-                self.log.debug("Error caught -> {} while running '{}' with {}".format(repr(e), job, kwargs))
+                self.log.debug(f"Error caught -> {repr(e)} while running '{job}' with {kwargs}")
                 self.log.exception(e)
 
     def close(self):

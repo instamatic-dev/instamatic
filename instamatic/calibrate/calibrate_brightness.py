@@ -24,7 +24,7 @@ class CalibBrightness(object):
         self.has_data = False
 
     def __repr__(self):
-        return "CalibBrightness(slope={}, intercept={})".format(self.slope, self.intercept)
+        return f"CalibBrightness(slope={self.slope}, intercept={self.intercept})"
 
     def brightness_to_pixelsize(self, val):
         return self.slope*val + self.intercept
@@ -36,8 +36,8 @@ class CalibBrightness(object):
     def from_data(cls, brightness, pixeldiameter, header=None):
         slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
         print()
-        print("r_value: {:.4f}".format(r_value))
-        print("p_value: {:.4f}".format(p_value))
+        print(f"r_value: {r_value:.4f}")
+        print(f"p_value: {p_value:.4f}")
 
         c = cls(slope=slope, intercept=intercept)
         c.data_brightness = brightness
@@ -53,7 +53,7 @@ class CalibBrightness(object):
             return pickle.load(open(fn, "rb"))
         except IOError as e:
             prog = "instamatic.calibrate_brightness"
-            raise IOError("{}: {}. Please run {} first.".format(e.strerror, fn, prog))
+            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     def to_file(self, fn=CALIB_BRIGHTNESS):
         pickle.dump(self, open(fn, "wb"))
@@ -105,9 +105,9 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
         target = start + i*step
         ctrl.brightness.value = int(target)
 
-        outfile = "calib_brightness_{:04d}".format(i) if save_images else None
+        outfile = f"calib_brightness_{i:04d}" if save_images else None
 
-        comment = "Calib image {}: brightness={}".format(i, target)
+        comment = f"Calib image {i}: brightness={target}"
         img, h = ctrl.getImage(exposure=exposure, out=outfile, comment=comment, header_keys="Brightness")
         
         img, scale = autoscale(img)
@@ -161,7 +161,7 @@ def calibrate_brightness_from_image_fn(fns):
         
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print("Brightness: {:.0f}, equivalent diameter: {:.1f}px".format(brightness, size))
+        print(f"Brightness: {brightness:.0f}, equivalent diameter: {size:.1f}px")
         values.append((brightness, size))
 
     values = np.array(values)

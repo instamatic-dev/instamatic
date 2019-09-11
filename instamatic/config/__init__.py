@@ -102,7 +102,9 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     cfg.camera = camera.name
 
     cfg.data_directory = Path(cfg.data_directory)
-    cfg.work_directory = cfg.data_directory / "work_{}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    cfg.work_directory = cfg.data_directory / f"work_{today}"
 
 
 base_drc = get_base_drc()

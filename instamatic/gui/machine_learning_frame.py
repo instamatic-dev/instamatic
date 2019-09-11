@@ -137,8 +137,8 @@ class MachineLearningFrame(LabelFrame):
         cryst_x, cryst_y = img_h["exp_crystal_coords"][number]
 
         fig = plt.figure()
-        ax1 = plt.subplot(121, title="Image\nframe={} | number={}\nsize={} | x,y=({}, {})".format(frame, number, size, stage_x, stage_y), aspect="equal")
-        ax2 = plt.subplot(122, title="Diffraction pattern\nprediction={}".format(prediction, aspect="equal"))
+        ax1 = plt.subplot(121, title=f"Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})", aspect="equal")
+        ax2 = plt.subplot(122, title=f"Diffraction pattern\nprediction={prediction}", aspect="equal")
         
         # img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates

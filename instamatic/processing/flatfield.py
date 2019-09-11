@@ -97,7 +97,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     
     # ctrl.brightness.max()
     if confirm:
-        input("\n >> Press <ENTER> to continue to collect {} flat field images".format(frames))
+        input(f"\n >> Press <ENTER> to continue to collect {frames} flat field images")
     
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
@@ -111,7 +111,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
-        img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Flat field #{:04d}".format(n), header_keys=None)
+        img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
         buffer.append(img)
     
     f = np.mean(buffer, axis=0)
@@ -132,7 +132,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
         print("\nCollecting darkfield images")
         for n in tqdm(range(frames)):
             outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
-            img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Dark field #{:04d}".format(n), header_keys=None)
+            img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
             buffer.append(img)
         
         d = np.mean(buffer, axis=0)

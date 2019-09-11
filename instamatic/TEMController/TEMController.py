@@ -237,7 +237,7 @@ class Magnification(Lens):
     def __repr__(self):
         value = self.value
         index = self.index
-        return "Magnification(value={}, index={})".format(value, index)
+        return f"Magnification(value={value}, index={index})"
 
     @property
     def index(self) -> int:
@@ -251,13 +251,13 @@ class Magnification(Lens):
         try:
             self.index += 1
         except ValueError:
-            print("Error: Cannot change magnficication index (current={}).".format(self.value))
+            print(f"Error: Cannot change magnficication index (current={self.value}).")
 
     def decrease(self) -> None:
         try:
             self.index -= 1
         except ValueError:
-            print("Error: Cannot change magnficication index (current={}).".format(self.value))
+            print(f"Error: Cannot change magnficication index (current={self.value}).")
 
     def get_ranges(self) -> dict:
         """Runs through all modes and fetches all the magnification settings possible on the microscope"""
@@ -731,20 +731,20 @@ class TEMController(object):
         self.tem.setBeamBlank(on)
 
     def __repr__(self):
-        return "\n".join(("Mode: {}".format(self.tem.getFunctionMode()),
-                          str(self.gunshift),
-                          str(self.guntilt),
-                          str(self.beamshift),
-                          str(self.beamtilt),
-                          str(self.imageshift1),
-                          str(self.imageshift2),
-                          str(self.diffshift),
-                          str(self.stageposition),
-                          str(self.magnification),
-                          str(self.difffocus),
-                          str(self.brightness),
-                          "SpotSize({})".format(self.spotsize),
-                          "Saved settings: {}".format(", ".join(self._saved_settings.keys()))))
+        return (f"Mode: {self.tem.getFunctionMode()}\n"
+                f"{self.gunshift}\n"
+                f"{self.guntilt}\n"
+                f"{self.beamshift}\n"
+                f"{self.beamtilt}\n"
+                f"{self.imageshift1}\n"
+                f"{self.imageshift2}\n"
+                f"{self.diffshift}\n"
+                f"{self.stageposition}\n"
+                f"{self.magnification}\n"
+                f"{self.difffocus}\n"
+                f"{self.brightness}\n"
+                f"SpotSize({self.spotsize})\n"
+                f"Saved settings: {tuple(self._saved_settings.keys())}\n")
 
     def to_dict(self, *keys) -> dict:
         """
@@ -851,7 +851,7 @@ class TEMController(object):
         """
 
         if not self.cam:
-            raise AttributeError("{} object has no attribute 'cam' (Camera has not been initialized)".format(repr(self.__class__.__name__)))
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
 
         if not header_keys:
             h = {}
@@ -879,7 +879,7 @@ class TEMController(object):
         h["ImageCameraDimensions"] = self.cam.dimensions
 
         if verbose:
-            print("Image acquired - shape: {}, size: {:.0f} kB".format(arr.shape, arr.nbytes / 1024))
+            print(f"Image acquired - shape: {arr.shape}, size: {arr.nbytes / 1024:.0f} kB")
 
         if out:
             write_tiff(out, arr, header=h)
@@ -902,7 +902,7 @@ class TEMController(object):
         """Restsores settings from dictionary by the given name."""
         d = self._saved_settings[name]
         self.from_dict(d)
-        print("Microscope alignment restored from '{}'".format(name))
+        print(f"Microscope alignment restored from '{name}'")
 
     def close(self):
         try:

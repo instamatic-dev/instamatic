@@ -58,7 +58,7 @@ def center_z_height(ctrl, verbose=False):
             d1 = -d1
         d.append(d1)
         if verbose:
-            print("Step {}: z = {}, d = {}".format(i, z1, np.linalg.norm(shift)))
+            print(f"Step {i}: z = {z1}, d = {np.linalg.norm(shift)}")
         ctrl.stageposition.set(z = z1 + 1000)
         time.sleep(1)
         
@@ -68,7 +68,7 @@ def center_z_height(ctrl, verbose=False):
         z_f.append(z[d.index(e)])
     p = np.polyfit(z, d, 1)
     z_center = -p[1]/p[0]
-    satisfied = input("Found eucentric height: {}. Press ENTER to set the height, x to cancel setting.".format(z_center))
+    satisfied = input(f"Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.")
     if satisfied == "x":
         ctrl.stageposition.set(a = a0, z = z0)
         if verbose:
@@ -112,7 +112,7 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread = spread, offset=offset)
         if verbose:
-            print("Feature Captured. Area: {} pixels".format(crystal_inter))
+            print(f"Feature Captured. Area: {crystal_inter} pixels")
     except:
         if verbose:
             print("No crystals found. Please find another area for z height adjustment.")
@@ -135,23 +135,23 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread = spread, offset=offset)
             
             if crystal_inter1/crystal_inter < 2 and crystal_inter1/crystal_inter > 0.5:
-                #print("Feature Captured. Area: {} pixels".format(crystal_inter1))
+                #print(f"Feature Captured. Area: {crystal_inter1} pixels")
                 shift = np.subtract(crystal_inter_pos, crystal_inter1_pos)
-                #print("shift: {}".format(shift))
+                #print(f"Shift: {shift}")
                 ctrl.stageposition.stop()
                 if shift[0] > 5:
                     ctrl.stageposition.z = z0 - (rotation_dir - 0.5)*increment
-                    #print("Z height adjusted: - {}.".format((rotation_dir - 0.5)*increment))
+                    #print(f"Z height adjusted: - {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
                 elif shift[0] < -5:
                     ctrl.stageposition.z = z0 + (rotation_dir - 0.5)*increment
-                    #print("Z height adjusted: + {}.".format((rotation_dir - 0.5)*increment))
+                    #print(f"Z height adjusted: + {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
 
             else:
-                #print("Feature lost. New feature captured: {} pixels".format(crystal_inter1))
+                #print(f"Feature lost. New feature captured: {crystal_inter1} pixels")
                 if crystal_inter1:
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
@@ -171,6 +171,6 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
         ctrl.stageposition.set(a = endangle, wait = False)
         time.sleep(0.5)
         
-    print("\033[k", "Z height adjustment done and eucentric z height found at: {}".format(z0), end= "\r")
+    print("\033[k", f"Z height adjustment done and eucentric z height found at: {z0}", end= "\r")
     x, y, z, a, b = ctrl.stageposition.get()
     return x, y

@@ -139,8 +139,8 @@ def main_entry():
         print("    XXX         -> Add comment to header")
         print("    exit        -> exit the program")
     while take_series:
-        outfile = "image_{:04d}".format(i)
-        inp = input("\nHit enter to take an image: \n >> [{}] ".format(outfile))
+        outfile = f"image_{i:04d}"
+        inp = input(f"\nHit enter to take an image: \n >> [{outfile}] ")
         if inp == "exit":
             break
         elif inp.startswith("set"):
@@ -170,7 +170,7 @@ def main_entry():
                     print(e)
                 if value > 0:
                     i = value
-            print("binsize = {} | exposure = {} | file #{}".format(binsize, exposure, i))
+            print(f"binsize = {binsize} | exposure = {exposure} | file #{i}")
         else:
             arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
 

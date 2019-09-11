@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
     if key != 'S':
-        inp = input("""Calibrate {}
+        inp = input(f"""Calibrate {key}
     -------------------
      1. Go to diffraction mode.
      2. Focus the diffraction spots.
      3. Center the beam with PLA.
         
-     >> Press <ENTER> to start >> \n""".format(key))
+     >> Press <ENTER> to start >> \n""")
     else:
         inp = input("""Calibrate stage vs camera
         ------------------
@@ -75,14 +75,14 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
     print("ImageShift calibration done.")
     
     print("Transformation matrix: ", r)
-    logger.debug("Transformation matrix: {}".format(r))
-    logger.debug("Parameters: angle: {}".format(result["angle"]))
-    logger.debug("sx: {}".format(result["sx"]))
-    logger.debug("sy: {}".format(result["sy"])) 
-    logger.debug("tx: {}".format(result["tx"]))
-    logger.debug("ty: {}".format(result["ty"])) 
-    logger.debug("k1: {}".format(result["k1"]))
-    logger.debug("k2: {}".format(result["k2"]))
+    logger.debug(f"Transformation matrix: {r}")
+    logger.debug(f"Parameters: angle: {result['angle']}")
+    logger.debug(f"sx: {result['sx']}")
+    logger.debug(f"sy: {result['sy']}") 
+    logger.debug(f"tx: {result['tx']}")
+    logger.debug(f"ty: {result['ty']}") 
+    logger.debug(f"k1: {result['k1']}")
+    logger.debug(f"k2: {result['k2']}")
     
     r_i = np.linalg.inv(r)
     imgpos_ = np.dot(imgpos, r_i)

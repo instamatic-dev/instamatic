@@ -127,12 +127,12 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
             stage = ctrl.stageposition.get()
 
             print()
-            print("Position {}/{}".format(i+1, tot))
+            print(f"Position {I+1}/{tot}")
             print(stage)
             
-            outfile = work_drc / "calib_{:04d}".format(i) if save_images else None
+            outfile = work_drc / f"calib_{i:04d}" if save_images else None
 
-            comment = "Calib image {}: dx={} - dy={}".format(i, dx, dy)
+            comment = f"Calib image {i}: dx={dx} - dy={dy}"
             img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment)
             
             img = imgscale(img, scale)
@@ -164,7 +164,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     m = gridsize**2 // 2 
     if gridsize % 2 and stagepos[m].max() > 50:
-        print(" >> Warning: Large difference between image {}, and center image. These should be close for a good calibration.".format(m))
+        print(f" >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.")
         print("    Difference:", stagepos[m])
         print()
     
@@ -248,7 +248,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
         x_xobs, yobs, _, _, _ = h_cent["StagePosition"]
         # xobs, yobs = stage[i]
         print("Image:", fn)
-        print("Stageposition: x={:.0f} | y={:.0f}".format(xobs, yobs))
+        print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
         
         shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
         print("Shift:", shift)

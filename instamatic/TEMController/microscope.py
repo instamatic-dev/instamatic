@@ -16,7 +16,7 @@ def get_tem(name: str):
     elif name == "simulate":
         from .simu_microscope import SimuMicroscope as cls
     else:
-        raise ValueError("No such microscope: `{}`".format(name))
+        raise ValueError(f"No such microscope: `{name}`")
 
     return cls
 
