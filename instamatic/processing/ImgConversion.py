@@ -160,7 +160,7 @@ class ImgConversion(object):
         self.rotation_axis = rotation_axis
         
         self.acquisition_time = acquisition_time
-        self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
+        #self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
         self.name = "Instamatic"
 
@@ -192,7 +192,7 @@ class ImgConversion(object):
                 setattr(self, attr, default)
 
         attrs = [
-        "rotation_speed",
+        # "rotation_speed",
         "acquisition_time",
         "start_angle",
         "end_angle",
@@ -567,7 +567,6 @@ class ImgConversion(object):
             QX=self.physical_pixelsize,
             QY=self.physical_pixelsize,
             osc_angle=self.osc_angle,
-            calib_osc_angle=self.rotation_speed * self.acquisition_time,
             rot_x=rot_x,
             rot_y=rot_y,
             rot_z=rot_z

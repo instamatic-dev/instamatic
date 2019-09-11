@@ -81,7 +81,6 @@ ORGX= {origin_x:.2f}    ORGY= {origin_y:.2f}           !Detector origin (pixels)
 DETECTOR_DISTANCE= {sign}{detector_distance:.2f}            !Can be negative. Positive because the detector normal points away from the crystal.
 
 OSCILLATION_RANGE= {osc_angle:.4f}
-!OSCILLATION_RANGE {calib_osc_angle:.4f}               !Calibrated value if above one is too far off
 
 ROTATION_AXIS= {rot_x:.4f} {rot_y:.4f} {rot_z:.4f}
 

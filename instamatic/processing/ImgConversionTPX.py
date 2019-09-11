@@ -71,7 +71,7 @@ class ImgConversionTPX(ImgConversion):
         self.rotation_axis = rotation_axis
         
         self.acquisition_time = acquisition_time
-        self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
+        #self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
 
         logger.debug(f"Primary beam at: {self.mean_beam_center}")
 
