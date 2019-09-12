@@ -587,16 +587,16 @@ class StagePosition(object):
     def eliminate_backlash_xy(self, step: float=5000, settle_delay: float=0.200) -> None:
         """
         Eliminate backlash by in XY by moving the stage away from the current position, and
-        approaching it from the common direction
+        approaching it from the common direction. Uses `set_xy_with_backlash_correction`
+        internally.
 
         step: float,
             stepsize in nm
         settle_delay: float,
             delay between movements in seconds to allow the stage to settle
         """
-        wait = True
         stage = self.get()
-        self.set_xy_with_backlash_correction(x=stage.x, y=stage.y)
+        self.set_xy_with_backlash_correction(x=stage.x, y=stage.y, step=step, settle_delay=settle_delay)
 
     def eliminate_backlash_a(self, target_angle: float=0.0, step: float=1.0, n_steps: int=3, settle_delay: float=0.200) -> None:
         """
