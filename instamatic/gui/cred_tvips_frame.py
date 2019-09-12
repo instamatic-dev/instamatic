@@ -61,11 +61,11 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame = Frame(self)
 
-        self.e_tracking = Entry(frame, width=50, textvariable=self.var_tracking_file)
-        self.e_tracking.grid(row=4, column=1, sticky="EW")
-        self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_tracking)
+        self.e_instructions = Entry(frame, width=50, textvariable=self.var_instruction_file)
+        self.e_instructions.grid(row=4, column=1, sticky="EW")
+        self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_instructions)
         self.BrowseTrackButton.grid(row=4, column=2, sticky="EW")
-        Label(frame, text="Tracking file:").grid(row=4, column=0, sticky="W")
+        Label(frame, text="Instruction file:").grid(row=4, column=0, sticky="W")
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
         frame = Frame(self)
@@ -124,7 +124,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
 
-        self.var_tracking_file = StringVar(value="")
+        self.var_instruction_file = StringVar(value="")
         self.var_mode = StringVar(value="diff")
 
     def set_trigger(self, trigger=None, q=None):
@@ -186,17 +186,17 @@ class ExperimentalTVIPS(LabelFrame):
         self.q.put(("cred_tvips", params))
         self.triggerEvent.set()
 
-    def browse_tracking(self):
-        fn = filedialog.askopenfilename(parent=self.parent, initialdir=None, title="Select tracking file")
+    def browse_instructions(self):
+        fn = filedialog.askopenfilename(parent=self.parent, initialdir=None, title="Select instruction file")
         if not fn:
             return
         fn = Path(fn).absolute()
-        self.var_tracking_file.set(fn)
+        self.var_instruction_file.set(fn)
         return fn
 
     def get_params(self, task=None):
         params = { "target_angle": self.var_target_angle.get(),
-                   "tracking_file": self.var_tracking_file.get(),
+                   "instruction_file": self.var_instruction_file.get(),
                    "exposure": self.var_exposure.get(),
                    "mode": self.var_mode.get(),
                    "task": task }
@@ -268,7 +268,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     task = kwargs["task"]
 
     target_angle = kwargs["target_angle"]
-    tracking_file = kwargs["tracking_file"]
+    instruction_file = kwargs["instruction_file"]
     exposure = kwargs["exposure"]
     mode = kwargs["mode"]
 
@@ -278,7 +278,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
                                                           log=controller.log, mode=mode,
-                                                          track=tracking_file, exposure=exposure)
+                                                          track=instruction_file, exposure=exposure)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle)
@@ -288,7 +288,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
 
         cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
                                                      log=controller.log, mode=mode,
-                                                     tracking_file=tracking_file, exposure=exposure)
+                                                     instruction_file=instruction_file, exposure=exposure,
+                                                     target_angle=target_angle)
         cred_tvips_exp.run()
     elif task == "stop":
         pass
