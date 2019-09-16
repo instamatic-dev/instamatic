@@ -2,6 +2,7 @@ from pathlib import Path
 import re
 import numpy as np
 import random
+from collections import defaultdict
 
 
 # int
@@ -40,9 +41,14 @@ class NavItem(object):
     """
 
     TAG_ID_ITERATOR = 1
+    # MAP_ID_ITERATOR = 1
     
     def __init__(self, d: dict, tag: str):
         super().__init__()
+        # if not "MapID" in d:
+        #     d["MapID"] = NavItem.MAP_ID_ITERATOR
+        #     NavItem.MAP_ID_ITERATOR += 1
+        
         self._keys = tuple(d.keys())
         
         self.Acquire = 0
@@ -110,10 +116,22 @@ class NavItem(object):
         return {key: self.__dict__[key] for key in self._keys}
 
 
+class ClassName(object):
+    """docstring for ClassName"""
+    def __init__(self, arg):
+        super(ClassName, self).__init__()
+        self.arg = arg
+        
+
 class MapItem(NavItem):
     """Adds some extra methods for map items"""
     
     GROUP_ID_ITERATOR = random.randint(1, 90000)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.markers = {}
 
     @property
     def map_scale_matrix(self) -> np.array:
@@ -155,9 +173,14 @@ class MapItem(NavItem):
         s = self.MapSection
         return np.array(m.data[s])
 
-    def plot_image(self, markers: list=[]) -> None:
-        """Plot the image including optional markers"""
+    def plot_image(self, markers: bool=True) -> None:
+        """Plot the image including markers (optional)"""
         import matplotlib.pyplot as plt
+
+        if markers:
+            markers = self.markers.values()
+        else:
+            markers = []
 
         im = self.load_image()
         plt.matshow(im, vmax=np.percentile(im, 99))
@@ -197,7 +220,12 @@ class MapItem(NavItem):
         d["Regis"] = self.Regis
         d["StageXYZ"] = [stage_x, stage_y, self.stage_z]
         d["Type"] = 0
-        return NavItem(d, tag=tag)
+
+        item = NavItem(d, tag=tag)
+
+        self.markers[item.tag] = item
+
+        return item
 
     def add_marker_group(self, coords, acquire=True) -> list:
         """Add pixel coordinates (numpy) as markers to a map item"""
@@ -210,6 +238,12 @@ class MapItem(NavItem):
         MapItem.GROUP_ID_ITERATOR += 1
 
         return ret
+
+    def update_markers(self, *items):
+        """Update the list of markers belonging to this `Map` with
+        the given items."""
+        for item in items:
+            self.markers[item.tag] = item
 
 
 def block2dict(block: list) -> dict:
@@ -301,6 +335,19 @@ def read_nav_file(fn: str, acquire_only: bool=False) -> list:
 
     if acquire_only:
         items = [item for item in items if item.Acquire]
+
+    # associate markers with map items
+    map_items = (item for item in items if item.kind == "Map")
+    markers = (item for item in items if item.kind == "Marker")
+    
+    d = defaultdict(list)
+    
+    for marker in markers:
+        d[marker.DrawnID].append(marker)
+    
+    for map_item in map_items:
+        markers = d[map_item.MapID]
+        map_item.update_markers(*markers)
 
     return items
 
