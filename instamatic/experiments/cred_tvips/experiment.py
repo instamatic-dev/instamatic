@@ -8,32 +8,101 @@ from instamatic.formats import write_tiff
 import numpy as np
 from scipy.interpolate import interp1d
 import pickle
-
+from instamatic import serialem
+import msvcrt
 
 
 class SerialExperiment(object):
     """docstring for SerialExperiment"""
-    def __init__(self, ctrl, path: str=None, log=None, tracking_file=None, exposure=None):
+
+    def __init__(self, ctrl, path: str=None, log=None, instruction_file: str=None, exposure: float=400, mode: str="diff", target_angle: float=40):
         super().__init__()
+
+        self.instruction_file = Path(instruction_file)
+        self.base_drc = self.instruction_file.parent
         
-        self.tracking_file = Path(tracking_file)
-        self.tracking_base_drc = self.tracking_file.parent
-        self.tracks = open(tracking_file, "r")
+        if self.instruction_file.suffix == ".nav":
+            self.nav_items = serialem.read_nav_file(self.instruction_file, acquire_only=True)
+            self.run = self.run_from_nav_file
+            self.start_angle = target_angle / 2
+            self.end_angle = -self.start_angle
+        else:
+            self.tracks = open(self.instruction_file, "r").readlines()
+            self.run = self.run_from_tracking_file
+        
         self.log = log
         self.path = path
         self.ctrl = ctrl
         self.exposure = exposure
+        self.mode = mode
 
     def run(self):
+        raise RuntimeError(f"`{self.__class__.__name__}` has not been initialized.")
+
+    def run_from_nav_file(self):
         t0 = time.clock()
         n_measured = 0
 
-        for track in self.tracks:
+        start_angle = self.start_angle
+        end_angle = self.end_angle
+
+        self.ctrl.stageposition.set(a=start_angle)
+
+        n_items = len(self.nav_items)
+
+        for i, item in enumerate(self.nav_items):
+            x = item.stage_x*1000 # um to nm
+            y = item.stage_y*1000
+            z = item.stage_z*1000
+            self.ctrl.stageposition.set(z=z)
+            self.ctrl.stageposition.set_xy_with_backlash_correction(x, y, step=10000)
+
+            tag = item.tag
+
+            out_path = self.path / tag
+            out_path.mkdir(exist_ok=True, parents=True)
+
+            print()
+            print(f"({i} / {n_items}) Acquiring at point `{tag}`")
+            print(f"Data directory: {out_path}")
+            print(f"Rotating from {start_angle} to {end_angle} degrees")
+            print(self.ctrl.stageposition)
+            print()
+
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, exposure=self.exposure, mode=self.mode)
+            exp.get_ready()
+            
+            try:
+                exp.start_collection(target_angle=end_angle, start_angle=start_angle)
+            except InterruptedError:
+                break
+            finally:
+                del exp
+
+            n_measured += 1
+
+            # switch for next run
+            start_angle, end_angle = end_angle, start_angle
+
+        t1 = time.clock()
+        dt = t1 - t0
+        print()
+        print(f"Serial experiment finished -> {n_measured} crystals measured")
+        print(f"Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal")
+        print(f"Data directory: {self.path}")
+
+    def run_from_tracking_file(self):
+        t0 = time.clock()
+        n_measured = 0
+
+        n_items = len(self.tracks)
+
+        for i, track in enumerate(self.tracks):
             track = track.strip()
             if not track:
                 continue
 
-            track = self.tracking_base_drc / track
+            track = self.base_drc / track
             name = track.name
             stem = track.stem
 
@@ -41,42 +110,49 @@ class SerialExperiment(object):
             out_path.mkdir(exist_ok=True, parents=True)
 
             print()
-            print(f"Track: {stem}")
-            print(f"Track file: {self.tracking_base_drc / name}")
+            print(f"({i} / {n_items}) Acquiring track: {stem}")
+            print(f"Track file: {self.base_drc / name}")
             print(f"Data directory: {out_path}")
+            print(self.ctrl.stageposition)
             print()
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, exposure=self.exposure)
+            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, exposure=self.exposure, mode=self.mode)
 
             exp.get_ready()
 
-            exp.start_collection(target_angle=0)
+            try:
+                exp.start_collection(target_angle=0)
+            except InterruptedError:
+                break
+            finally:
+                del exp
 
             n_measured += 1
 
-            print("--")
             time.sleep(3)
 
         t1 = time.clock()
         dt = t1 - t0
-        print("Serial experiment finished")
+        print(f"Serial experiment finished -> {n_measured} crystals measured")
         print(f"Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal")
+        print(f"Data directory: {self.path}")
 
 
 class Experiment(object):
     """Class to control data collection through EMMenu to collect
     continuous rotation electron diffraction data
 
-    ctrl:
+    ctrl: `TEMController`
         Instance of instamatic.TEMController.TEMController
-    path:
+    path: str
         `str` or `pathlib.Path` object giving the path to save data at
-    log:
+    log: `logging.Logger`
         Instance of `logging.Logger`
-    exposure:
+    exposure: float
         Exposure time in ms
+    mode: str
     """
-    def __init__(self, ctrl, path: str=None, log=None, track=None, exposure=400, mode="diff"):
+    def __init__(self, ctrl, path: str=None, log=None, track: str=None, exposure: float=400, mode: str="diff"):
         super().__init__()
 
         self.ctrl = ctrl
@@ -139,7 +215,7 @@ class Experiment(object):
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stageposition.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset)
+            self.ctrl.stageposition.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset, step=10000)
             self.ctrl.stageposition.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
@@ -171,8 +247,6 @@ class Experiment(object):
             self.ctrl.mode = self.mode
         
         spotsize = self.ctrl.spotsize
-        if spotsize not in (4, 5):
-            print(f"Spotsize is quite high ({spotsize}), maybe you want to lower it?")
     
         self.emmenu.start_liveview()
 
@@ -224,6 +298,8 @@ class Experiment(object):
 
         n = 0
         
+        print("Starting data acquisition...")
+
         while self.ctrl.stageposition.is_moving():
             t = time.perf_counter()
             if t - t_delta > interval:
@@ -235,6 +311,15 @@ class Experiment(object):
 
                 if self.track:
                     self.track_crystal(n=n, angle=a)
+            
+            # Stop/interrupt and go to next crystal
+            if msvcrt.kbhit():
+                key = msvcrt.getch().decode()
+                if key == " ":
+                    print("Stopping the stage!")
+                    self.ctrl.stageposition.stop()
+                if key == "q":
+                    raise InterruptedError("Data collection was interrupted!")
 
         t1 = time.perf_counter()
         self.emmenu.stop_liveview()
