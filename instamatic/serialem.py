@@ -177,14 +177,20 @@ class MapItem(NavItem):
         """Plot the image including markers (optional)"""
         import matplotlib.pyplot as plt
 
-        if markers:
+        if markers is True:
             markers = self.markers.values()
+        elif isinstance(markers, dict):
+            markers = markers.values()
+        elif isinstance(markers, (list, tuple, np.ndarray)):
+            pass
         else:
             markers = []
 
         im = self.load_image()
         plt.matshow(im, vmax=np.percentile(im, 99))
         yres = self.MapWidthHeight[1]
+
+        coords = []
         for marker in markers:
             if isinstance(marker, NavItem):
                 xy = np.array([marker.stage_x, marker.stage_y])
@@ -192,7 +198,11 @@ class MapItem(NavItem):
                 py = yres - py
             else:
                 py, px = marker
-    
+
+            coords.append((px, py))
+
+        if coords:
+            px, py = np.array(coords).T
             plt.plot(px, py, "ro", markerfacecolor='none', markersize=20, markeredgewidth=2)
 
     def add_marker(self, coord, tag=None, acquire=True) -> "NavItem":
@@ -227,8 +237,13 @@ class MapItem(NavItem):
 
         return item
 
-    def add_marker_group(self, coords, acquire=True) -> list:
-        """Add pixel coordinates (numpy) as markers to a map item"""
+    def add_marker_group(self, coords, acquire=True, replace=True) -> list:
+        """Add pixel coordinates (numpy) as markers to a map item
+        If `replace==True`, replace the entire list of existing markers
+        on the map item."""
+        if replace:
+            self.markers = {}
+
         ret = []
         for i, coord in enumerate(coords):
             tag = f"{self.tag}-{i}"
@@ -244,6 +259,12 @@ class MapItem(NavItem):
         the given items."""
         for item in items:
             self.markers[item.tag] = item
+
+    def set_markers(self, *items):
+        """Replace the list of markers belonging to this `Map` with
+        the given items."""
+        self.markers = {}
+        self.update_markers(*items)
 
 
 def block2dict(block: list) -> dict:
