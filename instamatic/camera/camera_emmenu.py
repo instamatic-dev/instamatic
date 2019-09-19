@@ -94,8 +94,8 @@ class CameraEMMENU(object):
         self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
 
         # check if exists
-        # if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-        #     self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
+        if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
+            self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
             # creating new subdirectories is bugged in EMMENU 5.0.9.0, FIXME later
             # raise exception for now until it is fixed
@@ -338,7 +338,7 @@ class CameraEMMENU(object):
         if stop_index <= start_index:
             raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
 
-        for i, image_index in enumerate(range(start_index, stop_index)):
+        for i, image_index in enumerate(range(start_index, stop_index+1)):
             p = self.getImageByIndex(image_index, drc_index)
 
             fn = str(path / f"{i:04d}.tiff")
@@ -444,7 +444,7 @@ class CameraEMMENU(object):
         self._vp.DirectoryHandle = self.top_drc_index
         self._vp.SetCaption("Image")
         self.set_image_index(0)
-        # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0, FIXME later
+        self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0, FIXME later
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)

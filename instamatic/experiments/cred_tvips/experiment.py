@@ -298,7 +298,7 @@ class Experiment(object):
 
         n = 0
         
-        print("Starting data acquisition...")
+        print("Acquiring data...")
 
         while self.ctrl.stageposition.is_moving():
             t = time.perf_counter()
@@ -333,7 +333,7 @@ class Experiment(object):
         self.t_end = t1
         self.total_time = t1 - t0
         
-        nframes = end_index - start_index
+        nframes = end_index - start_index + 1
         if nframes < 1:
             print("No frames measured??")
             return
@@ -375,7 +375,7 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
 
-        print(f"Wrote {nframes} images to {path_data}")
+        print(f"Wrote {nframes} images (#{start_index}->#{end_index}) to {path_data}")
         
         if self.track:
             print(f"Done with this crystal (number #{self.crystal_number})!")
