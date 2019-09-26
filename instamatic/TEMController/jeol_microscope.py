@@ -288,7 +288,8 @@ class JeolMicroscope(object):
         x, y, z, a, b, result = self.stage3.GetStatus()
         return x or y or z or a or b 
 
-    def waitForStage(self, delay: float=0.0):
+    def waitForStage(self, delay: float=0.0, skip_delay: float=0.5):
+        time.sleep(skip_delay)  # skip the first readout delay, necessary on NeoARM200
         while self.isStageMoving():
             if delay > 0:
                 time.sleep(delay)
