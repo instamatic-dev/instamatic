@@ -54,7 +54,7 @@ def EMVector2dict(vec):
 class CameraEMMENU(object):
     """docstring for CameraEMMENU"""
 
-    def __init__(self, drc_name: str="Instamatic data", interface: str="emmenu"):
+    def __init__(self, drc_name: str="Diffraction", interface: str="emmenu"):
         """Initialize camera module """
         super().__init__()
 
@@ -94,10 +94,10 @@ class CameraEMMENU(object):
         self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
 
         # check if exists
+        # if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
+            # self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
-        if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            # creating new subdirectories is bugged in EMMENU 5.0.9.0, FIXME later
+            # creating new subdirectories is bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
             # raise exception for now until it is fixed
             raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
 
@@ -329,7 +329,7 @@ class CameraEMMENU(object):
         TODO: write tiff from image_index instead of image_pointer??"""
         self._emf.WriteTiff(image_pointer, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=True) -> None:
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=False) -> None:
         """Write a series of data in tiff format and writes them to 
         the given `path` using EMMENU machinery"""
         path = Path(path)
@@ -444,7 +444,7 @@ class CameraEMMENU(object):
         self._vp.DirectoryHandle = self.top_drc_index
         self._vp.SetCaption("Image")
         self.set_image_index(0)
-        self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0, FIXME later
+        # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)

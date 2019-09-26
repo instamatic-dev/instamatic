@@ -230,10 +230,10 @@ class Experiment(object):
             print(f"(autotracking) set y={target_y:.0f}")
 
     def get_ready(self):
-        # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
         self.emmenu.stop_liveview()  # just in case
 
         try:
+            # next 2 lines are a workaround for EMMENU 5.0.9.0 bugs, FIXME later
             self.emmenu.set_autoincrement(False)
             self.emmenu.set_image_index(0)
         except Exception as e:
@@ -351,10 +351,18 @@ class Experiment(object):
         self.exposure_time = self.emmenu.get_exposure()
         self.start_angle, self.end_angle = start_angle, end_angle
         
-        timestamps = self.emmenu.get_timestamps(start_index, end_index)
+        try:
+            # sometimes breaks with:
+            # AttributeError: 'NoneType' object has no attribute 'EMVector'
+            timestamps = self.emmenu.get_timestamps(start_index, end_index)
+        except AttributeError as e:
+            print(e)
+            print(f"Timestamps from {start_index} to {end_index}")
+            timestamps = [1,2,3,4,5]  # just to make it work
+
         acq_out = self.path / "acquisition_time.png"
         self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
-       
+
         self.log_end_status()
         self.log_stage_positions()
 
