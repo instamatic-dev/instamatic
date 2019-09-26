@@ -84,7 +84,9 @@ class Experiment(object):
             ctrl.mode_diffraction()
             time.sleep(1.0)  # add some delay to account for beam lag
 
-        ctrl.cam.block()
+        if ctrl.cam.streamable:
+            ctrl.cam.block()
+    
         # for i, a in enumerate(tilt_positions):
         for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
             ctrl.stageposition.a = angle
@@ -100,7 +102,8 @@ class Experiment(object):
 
         self.end_angle = end_angle = ctrl.stageposition.a
 
-        ctrl.cam.unblock()
+        if ctrl.cam.streamable:
+            ctrl.cam.unblock()
 
         self.camera_length = camera_length = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
@@ -125,7 +128,7 @@ class Experiment(object):
         self.logger.info(f"Data saving path: {self.path}")
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
+        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize # mm
         self.wavelength = config.microscope.wavelength # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth
@@ -145,7 +148,7 @@ class Experiment(object):
             print(f"Stepsize: {self.stepsize:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes}", file=f)
 
-        img_conv = ImgConversion(buffer=buffer, 
+        img_conv = ImgConversion(buffer=self.buffer, 
                  osc_angle=self.stepsize,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
