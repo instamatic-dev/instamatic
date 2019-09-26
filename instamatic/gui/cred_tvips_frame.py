@@ -17,11 +17,14 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text="Target angle (degrees):").grid(row=4, column=0, sticky="W")
-        self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0)
+        self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=DISABLED)
         self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
         
         self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
         self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
+
+        self.c_toggle_manual_control = Checkbutton(frame, text="Manual rotation control", variable=self.var_toggle_manual_control, command=self.toggle_manual_control)
+        self.c_toggle_manual_control.grid(row=4, column=3, sticky="W")
 
         # defocus button
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
@@ -42,8 +45,6 @@ class ExperimentalTVIPS(LabelFrame):
         self.b_reset_defocus = Button(frame, text="Reset", command=self.reset_diff_defocus, state=DISABLED)
         self.b_reset_defocus.grid(row=6, column=2, sticky="EW")
 
-        self.c_toggle_beamblank = Checkbutton(frame, text="Toggle beamblank", variable=self.var_toggle_beamblank, command=self.toggle_beamblank)
-        self.c_toggle_beamblank.grid(row=4, column=3, sticky="W")
 
         self.c_toggle_diffraction = Checkbutton(frame, text="Toggle DIFF", variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
         self.c_toggle_diffraction.grid(row=7, column=3, sticky="W")
@@ -56,6 +57,9 @@ class ExperimentalTVIPS(LabelFrame):
 
         self.b_stop_liveview = Button(frame, text="Stop live view", command=self.stop_liveview)
         self.b_stop_liveview.grid(row=8, column=2, sticky="EW")
+
+        self.c_toggle_beamblank = Checkbutton(frame, text="Toggle beamblank", variable=self.var_toggle_beamblank, command=self.toggle_beamblank)
+        self.c_toggle_beamblank.grid(row=10, column=3, sticky="W")
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -123,6 +127,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_beamblank = BooleanVar(value=False)
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
+        self.var_toggle_manual_control = BooleanVar(value=True)
 
         self.var_instruction_file = StringVar(value="")
         self.var_mode = StringVar(value="diff")
@@ -154,7 +159,8 @@ class ExperimentalTVIPS(LabelFrame):
         self.AcquireButton.config(state=DISABLED)
         self.FinalizeButton.config(state=DISABLED)
         self.SerialButton.config(state=NORMAL)
-        self.e_target_angle.config(state=NORMAL)
+        if not self.var_toggle_beamblank.get():
+            self.e_target_angle.config(state=NORMAL)
         self.SearchButton.config(state=NORMAL)
         self.FocusButton.config(state=NORMAL)
         self.GetImageButton.config(state=NORMAL)
@@ -199,8 +205,17 @@ class ExperimentalTVIPS(LabelFrame):
                    "instruction_file": self.var_instruction_file.get(),
                    "exposure": self.var_exposure.get(),
                    "mode": self.var_mode.get(),
+                   "manual_control": self.var_toggle_manual_control.get(),
                    "task": task }
         return params
+
+    def toggle_manual_control(self):
+        toggle = self.var_toggle_manual_control.get()
+
+        if toggle:
+            self.e_target_angle.config(state=DISABLED)
+        else:
+            self.e_target_angle.config(state=NORMAL)
 
     def toggle_diff_mode(self):
         toggle = self.var_toggle_diff_mode.get()
@@ -270,6 +285,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     target_angle = kwargs["target_angle"]
     instruction_file = kwargs["instruction_file"]
     exposure = kwargs["exposure"]
+    manual_control = kwargs["manual_control"]
     mode = kwargs["mode"]
 
     if task == "get_ready":
@@ -281,7 +297,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
                                                           track=instruction_file, exposure=exposure)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
-        controller.cred_tvips_exp.start_collection(target_angle=target_angle)
+        controller.cred_tvips_exp.start_collection(target_angle=target_angle, 
+                                                   manual_control=manual_control)
     elif task == "serial":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)

@@ -252,11 +252,31 @@ class Experiment(object):
     
         self.emmenu.start_liveview()
 
-    def start_collection(self, target_angle: float, start_angle: float=None):
+        print("Ready...")
+
+    def manual_activation(self) -> float:
+        ACTIVATION_THRESHOLD = 0.2
+
+        print("Waiting for rotation to start...", end=' ')
+        a0 = a = self.ctrl.stageposition.a
+        while abs(a - a0) < ACTIVATION_THRESHOLD:           
+            a = self.ctrl.stageposition.a
+
+        print("Rotation started...")
+
+        return a
+
+    def start_collection(self, target_angle: float, start_angle: float=None, manual_control: bool=False):
+        """
+        manual_control : bool
+            Control the rotation using the buttons or pedals
+        """
+        angle_tolerance = 0.1  # degrees
+
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         self.stage_positions = []
-        interval = 1.0
+        interval = 0.7  # interval at which it check for rotation to end / does tracking
 
         if self.track:
             start_angle, target_angle = self.prepare_tracking()
@@ -292,7 +312,12 @@ class Experiment(object):
         start_index = 1
         # start_index = self.emmenu.get_next_empty_image_index()
 
-        self.ctrl.stageposition.set(a=target_angle, wait=False)
+        if manual_control:
+            start_angle = self.manual_activation()
+            last_angle = 999
+        else:
+            self.ctrl.stageposition.set(a=target_angle, wait=False)
+            
         self.emmenu.start_record()  # start recording
 
         t0 = time.perf_counter()
@@ -302,14 +327,29 @@ class Experiment(object):
         
         print("Acquiring data...")
 
-        while self.ctrl.stageposition.is_moving():
+        while True:
             t = time.perf_counter()
+
+            if not manual_control:
+                if abs(self.ctrl.stageposition.a - target_angle) > angle_tolerance:
+                    break
+
             if t - t_delta > interval:
+
                 n += 1
                 x, y, z, a, _ = pos = self.ctrl.stageposition.get()
                 self.stage_positions.append((t, pos))
                 t_delta = t
                 # print(t, pos)
+
+                if manual_control:
+                    current_angle = a
+                    if last_angle == current_angle:
+                        print(f"Manual rotation was interrupted (current: {current_angle:.2f} | last {last_angle:.2f})")
+                        break
+                    last_angle = current_angle
+
+                    print(f" >> Current angle: {a:.2f}", end="      \r")
 
                 if self.track:
                     self.track_crystal(n=n, angle=a)
@@ -320,6 +360,7 @@ class Experiment(object):
                 if key == " ":
                     print("Stopping the stage!")
                     self.ctrl.stageposition.stop()
+                    break
                 if key == "q":
                     raise InterruptedError("Data collection was interrupted!")
 
@@ -335,7 +376,7 @@ class Experiment(object):
         self.t_end = t1
         self.total_time = t1 - t0
         
-        nframes = end_index - start_index + 1
+        self.nframes = nframes = end_index - start_index + 1
         if nframes < 1:
             print("No frames measured??")
             return
@@ -427,6 +468,7 @@ class Experiment(object):
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
             print(f"Time Period End: {self.t_end}", file=f)
+            print(f"Number of frames: {self.nframes}", file=f)
             print(f"Starting angle: {self.start_angle:.2f} degrees", file=f)
             print(f"Ending angle: {self.end_angle:.2f} degrees", file=f)
             print(f"Rotation range: {self.end_angle-self.start_angle:.2f} degrees", file=f)
