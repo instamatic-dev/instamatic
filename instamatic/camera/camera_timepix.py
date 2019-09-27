@@ -346,7 +346,7 @@ if __name__ == '__main__':
             ./startcooling
     """
 
-    base = Path("..\\instamatic\\camera\\tpx").resolve()
+    base = (Path(__file__).parent / "tpx").resolve()
 
     print(base)
     print()
