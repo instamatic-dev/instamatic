@@ -7,6 +7,7 @@ import logging
 import datetime
 from instamatic import config
 from instamatic.TEMController import Microscope
+import traceback
 
 # import sys
 # sys.setswitchinterval(0.001)  # seconds
@@ -56,8 +57,9 @@ class TemServer(threading.Thread):
                     ret = self.evaluate(func_name, args, kwargs)
                     status = 200
                 except Exception as e:
-                    # traceback.print_exc()
-                    # self.log.exception(e)
+                    traceback.print_exc()
+                    if self.log:
+                        self.log.exception(e)
                     ret = e
                     status = 500
     

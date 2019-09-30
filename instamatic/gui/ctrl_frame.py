@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 import threading
+from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalCtrl(LabelFrame):
@@ -30,14 +31,14 @@ class ExperimentalCtrl(LabelFrame):
         
         Label(frame, text="Stage(XY)", width=20).grid(row=5, column=0, sticky="W")
         
-        e_negative_angle = Entry(frame, width=10, textvariable=self.var_negative_angle)
+        e_negative_angle = Spinbox(frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5)
         e_negative_angle.grid(row=1, column=1, sticky="EW")
-        e_neutral_angle = Entry(frame, width=10, textvariable=self.var_neutral_angle)
+        e_neutral_angle = Spinbox(frame, width=10, textvariable=self.var_neutral_angle, from_=-90, to=90,  increment=5)
         e_neutral_angle.grid(row=2, column=1, sticky="EW")
-        e_positive_angle = Entry(frame, width=10, textvariable=self.var_positive_angle)
+        e_positive_angle = Spinbox(frame, width=10, textvariable=self.var_positive_angle, from_=-90, to=90,  increment=5)
         e_positive_angle.grid(row=3, column=1, sticky="EW")
         
-        e_alpha_wobbler = Entry(frame, width=10, textvariable=self.var_alpha_wobbler)
+        e_alpha_wobbler = Spinbox(frame, width=10, textvariable=self.var_alpha_wobbler, from_=-90, to=90,  increment=1)
         e_alpha_wobbler.grid(row=4, column=1, sticky="EW")
         self.b_start_wobble = Button(frame, text="Start", command=self.start_alpha_wobbler)
         self.b_start_wobble.grid(row=4, column=2, sticky="W")

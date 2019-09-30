@@ -77,7 +77,7 @@ class JeolMicroscope(object):
         ## faster stage readout using gonio2
         # self.gonio2.GetPosition() -> get stage position, 78 ms
         # self.stage3.GetPos() -> 277 ms
-        self.gonio2 = self.tem3.CreateGonio2()
+        # self.gonio2 = self.tem3.CreateGonio2()  # buggy on NeoArm200
 
         # wait for interface to activate
         t = 0
@@ -281,14 +281,15 @@ class JeolMicroscope(object):
         x, y, z in nanometer
         a and b in degrees
         """
-        x, y, z, a, b, result = self.gonio2.GetPosition()
+        x, y, z, a, b, result = self.stage3.GetPos()
         return x, y, z, a, b
 
     def isStageMoving(self):
-        x, y, z, a, b, result = self.gonio2.GetStatus()
+        x, y, z, a, b, result = self.stage3.GetStatus()
         return x or y or z or a or b 
 
-    def waitForStage(self, delay: float=0.0):
+    def waitForStage(self, delay: float=0.0, skip_delay: float=0.5):
+        time.sleep(skip_delay)  # skip the first readout delay, necessary on NeoARM200
         while self.isStageMoving():
             if delay > 0:
                 time.sleep(delay)
@@ -321,7 +322,7 @@ class JeolMicroscope(object):
             self.waitForStage()
 
     def setStageXY(self, x: int, y: int, wait: bool=True):
-        self.gonio2.SetPosition(x, y)  ## combined call is faster than to separate calls
+        self.stage3.SetPosition(x, y)  ## combined call is faster than to separate calls
         if wait:
             self.waitForStage()
 

@@ -54,7 +54,7 @@ def EMVector2dict(vec):
 class CameraEMMENU(object):
     """docstring for CameraEMMENU"""
 
-    def __init__(self, drc_name: str="Instamatic data", interface: str="emmenu"):
+    def __init__(self, drc_name: str="Diffraction", interface: str="emmenu"):
         """Initialize camera module """
         super().__init__()
 
@@ -95,11 +95,12 @@ class CameraEMMENU(object):
 
         # check if exists
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
-        if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            # creating new subdirectories is bugged in EMMENU 5.0.9.0, FIXME later
-            # raise exception for now until it is fixed
-            raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
+            if self.getEMMenuVersion().startswith("4."):
+                self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
+            else:
+                # creating new subdirectories is bugged in EMMENU 5.0.9.0/5.0.10.0
+                # No work-around -> raise exception for now until it is fixed
+                raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
 
         self.drc_name = drc_name
         self.drc_index = self._immgr.DirectoryHandleFromName(drc_name)
@@ -122,14 +123,20 @@ class CameraEMMENU(object):
 
         self.streamable = False
 
-    def listConfigs(self) -> None:
+    def listConfigs(self) -> list:
         """List the configs from the Configuration Manager"""
         print(f"Configurations for camera {self.name}")
         current = self._vp.Configuration
+
+        lst = []
+
         for i, cfg in enumerate(self._obj.CameraConfigurations):
             is_selected = (current == cfg.Name)
             end = " (selected)" if is_selected else ""
             print(f"{i+1:2d} - {cfg.Name}{end}")
+            lst.append(cfg.Name)
+
+        return lst
 
     def getCurrentConfigName(self) -> str:
         """Return the name of the currently selected configuration in EMMENU"""
@@ -196,6 +203,14 @@ class CameraEMMENU(object):
         else:
             return cfg
 
+    def selectConfig(self) -> None:
+        """Select config by name"""
+        cfgs = self.listConfigs()
+        if config not in cfgs:
+            raise ValueError(f"No such config: {config} -> must be one of {cfgs}")
+
+        raise NotImplementedError
+
     def getCurrentCameraInfo(self) -> dict:
         """Gets the current camera object"""
         cam = self._cam
@@ -237,7 +252,7 @@ class CameraEMMENU(object):
         """Unlock emmenu after it has been locked down with `self.lock`"""
         self._obj.EnableMainframe(0)
 
-    def listDirectories(self) -> None:
+    def listDirectories(self) -> dict:
         """List subdirectories of the top directory"""
         top_j = self._immgr.TopDirectory
         top_name = self._immgr.FullDirectoryName(top_j)
@@ -245,11 +260,17 @@ class CameraEMMENU(object):
 
         drc_j = self._immgr.SubDirectory(top_j)
 
+        d = {}
+
         while drc_j:
             drc_name = self._immgr.FullDirectoryName(drc_j)
             print(f"{drc_j} - {drc_name} ")
 
+            d[drc_j] = drc_name
+
             drc_j = self._immgr.NextDirectory(drc_j)  # get next
+
+        return d
 
     def getEMVectorByIndex(self, img_index: int, drc_index: int=None) -> dict:
         """Returns the EMVector by index as a python dictionary"""
@@ -273,7 +294,9 @@ class CameraEMMENU(object):
         self._emi.DeleteImage(p)  # alternative: self._emi.Remove(p.ImgHandle)
 
     def getImageByIndex(self, img_index: int, drc_index: int=None) -> int:
-        """Grab data from the image manager by index. Return image pointer (COM)."""
+        """Grab data from the image manager by index. Return image pointer (COM).
+
+        Not accessible through server."""
         if not drc_index:
             drc_index = self.drc_index
 
@@ -322,14 +345,22 @@ class CameraEMMENU(object):
         """Get the name reported by the camera"""
         return self._cam.name
 
-    def writeTiff(self, image_pointer, filename: str) -> None:
+    def writeTiffFromPointer(self, image_pointer, filename: str) -> None:
         """Write tiff file using the EMMENU machinery
         `image_pointer` is the memory address returned by `getImageIndex()`
-
-        TODO: write tiff from image_index instead of image_pointer??"""
+        """
         self._emf.WriteTiff(image_pointer, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=True) -> None:
+    def writeTiff(self, image_index, filename: str) -> None:
+        """Write tiff file using the EMMENU machinery
+        `image_index` is the index in the current directory of the image to be written
+        """
+        drc_index = self.drc_index
+        p = self.getImageByIndex(image_index, drc_index)
+
+        self.writeTiffFromPointer(p, filename)
+
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=False) -> None:
         """Write a series of data in tiff format and writes them to 
         the given `path` using EMMENU machinery"""
         path = Path(path)
@@ -347,7 +378,7 @@ class CameraEMMENU(object):
             # TODO: wrap writeTiff in try/except
             # writeTiff causes vague error if image does not exist
 
-            self.writeTiff(p, fn)
+            self.writeTiffFromPointer(p, fn)
 
             if clear_buffer:
                 # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
@@ -444,7 +475,7 @@ class CameraEMMENU(object):
         self._vp.DirectoryHandle = self.top_drc_index
         self._vp.SetCaption("Image")
         self.set_image_index(0)
-        self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0, FIXME later
+        # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
 
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)
