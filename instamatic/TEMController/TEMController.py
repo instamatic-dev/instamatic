@@ -730,6 +730,101 @@ class TEMController(object):
     def beamblank(self, on: bool):
         self.tem.setBeamBlank(on)
 
+    def acquire_at_points(self, script):
+        """Run script at given points"""
+        raise NotImplementedError
+
+    def center_object(self, img):
+        """Center current view by comparing it against the given image"""
+        raise NotImplementedError
+
+    def find_eucentric_height(self, tilt: float=5, 
+                                    steps: int=5, 
+                                    dz: int=50_000, 
+                                    update: bool=True, 
+                                    verbose: bool=True) -> float:
+        """Automated routine to find the eucentric height, accurate up to ~1 um
+        Measures the shift (cross correlation) between 2 angles (-+tilt) over 
+        a range of z values (defined by `dz` and `steps`). The height is calculated
+        by fitting the shifts vs. z.
+
+        Fit: shift = alpha*z + beta -> z0 = -beta/alpha
+
+        Takes roughly 35 seconds (2 steps) or 70 seconds (5 steps) on a JEOL 1400 with a TVIPS camera.
+
+        Based on: Koster, et al., Ultramicroscopy 46 (1992): 207–27. 
+                  https://doi.org/10.1016/0304-3991(92)90016-D.
+
+        Parameters
+        ----------
+        tilt:
+            Tilt angles (+-)
+        steps: int
+            Number of images to take along the defined Z range
+        dz: int
+            Range to cover in nm (i.e. from -dz to +dz) around the current Z value
+        update: bool
+            Update the Z height immediately
+        verbose: bool
+            Toggle the verbosity level
+
+        Returns
+        -------
+        z: float
+            Optimized Z value for eucentric tilting
+        """
+        from instamatic.processing.cross_correlate import cross_correlate
+
+        def one_cycle(tilt: float=5, sign=1) -> list:
+            angle1 = -tilt*sign
+            self.stageposition.a = angle1
+            img1 = self.getRawImage()
+            
+            angle2 = +tilt*sign
+            self.stageposition.a = angle2
+            img2 = self.getRawImage()
+            
+            if sign < 1:
+                img2, img1 = img1, img2
+
+            shift = cross_correlate(img1, img2, upsample_factor=10, verbose=verbose)
+
+            return shift
+
+        self.stageposition.a = 0
+        # self.stageposition.z = 0 # for testing
+
+        zc = self.stageposition.z
+        print(f"Current z = {zc:.1f} nm")
+
+        zs = zc + np.linspace(-dz, dz, steps)
+        shifts = []
+
+        sign = 1
+
+        for i, z in enumerate(zs):
+            self.stageposition.z = z
+            if verbose:
+                print(f"z = {z:.1f} nm")
+
+            di = one_cycle(tilt=tilt, sign=sign)
+            shifts.append(di)
+
+            sign *= -1
+
+        mean_shift = shifts[-1] + shifts[0]
+        mean_shift = mean_shift/np.linalg.norm(mean_shift)
+        ds = np.dot(shifts, mean_shift)
+
+        p = np.polyfit(zs, ds, 1)  # linear fit
+        alpha, beta = p
+
+        z0 = -beta/alpha
+
+        print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
+        if update:
+            self.stageposition.set(a=0, z=z0)
+
     def __repr__(self):
         return (f"Mode: {self.tem.getFunctionMode()}\n"
                 f"{self.gunshift}\n"
