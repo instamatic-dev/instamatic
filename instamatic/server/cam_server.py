@@ -6,6 +6,7 @@ import logging
 import datetime
 from instamatic import config
 from instamatic.camera import Camera
+import traceback
 
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
@@ -60,8 +61,9 @@ class CamServer(threading.Thread):
                     ret = self.evaluate(attr_name, args, kwargs)
                     status = 200
                 except Exception as e:
-                    # traceback.print_exc()
-                    # self.log.exception(e)
+                    traceback.print_exc()
+                    if self.log:
+                        self.log.exception(e)
                     ret = e
                     status = 500
 
