@@ -664,6 +664,22 @@ class TEMController(object):
         print(self)
         self.store()
 
+    def __repr__(self):
+        return (f"Mode: {self.tem.getFunctionMode()}\n"
+                f"{self.gunshift}\n"
+                f"{self.guntilt}\n"
+                f"{self.beamshift}\n"
+                f"{self.beamtilt}\n"
+                f"{self.imageshift1}\n"
+                f"{self.imageshift2}\n"
+                f"{self.diffshift}\n"
+                f"{self.stageposition}\n"
+                f"{self.magnification}\n"
+                f"{self.difffocus}\n"
+                f"{self.brightness}\n"
+                f"SpotSize({self.spotsize})\n"
+                f"Saved settings: {tuple(self._saved_settings.keys())}\n")
+
     @property
     def spotsize(self) -> int:
         return self.tem.getSpotSize()
@@ -730,13 +746,83 @@ class TEMController(object):
     def beamblank(self, on: bool):
         self.tem.setBeamBlank(on)
 
-    def acquire_at_points(self, script):
+    def acquire_at_items(self, script):
         """Run script at given points"""
         raise NotImplementedError
 
-    def center_object(self, img):
-        """Center current view by comparing it against the given image"""
-        raise NotImplementedError
+    def get_stagematrix(self, binning: int=None, mag: int=None, mode: int=None):
+        """Helper function to get the stage matrix from the config file.
+        The stagematrix is used to convert from pixel coordinates to stage
+        coordiantes. The parameters are optional and if not given, 
+        the current values are read out from the microscope/camera.
+        
+        Parameters
+        ----------
+        binning: int
+            Binning of the image that the stagematrix will be applied to
+        mag: int
+            Magnification value
+        mode: str
+            Current TEM mode ("lowmag", "mag1")
+        
+        Returns
+        -------
+        stagematrix : np.array[2, 2]
+            Affine transformation matrix to convert from stage to pixel coordinates
+        """
+
+        if not mode:
+            mode = self.mode
+        if not mag:
+            mag = self.magnification.value
+        if not binning:
+            binning = self.cam.getBinning()
+
+        stagematrix = getattr(config.calibration, f"stagematrix_{mode}")[mag]
+
+        return binning * np.array(stagematrix).reshape(2, 2)
+
+    def center_object(self, ref_img: np.array, 
+                            apply_shift: bool= True,
+                            verbose: bool=True) -> list:
+        """Center current view by comparing it against the given image using
+        cross correlation. The stage is translated so that the object of interest
+        is at the center of the image.
+        
+        Parameters
+        ----------
+        ref_img: np.array
+            Reference image that the microscope will be aligned to
+        apply_shift: bool
+            Toggle to translate the stage to center the image
+        verbose: bool
+            Be more verbose
+        
+        Returns
+        -------
+        stage_shift : np.array[2]
+            The stage shift vector determined from cross correlation
+            
+        """
+        from instamatic.processing.cross_correlate import cross_correlate
+
+        stage_pos = np.array(self.stageposition.xy)
+        stagematrix = self.get_stagematrix()
+        mati = np.linalg.inv(stagematrix)
+
+        img = self.getRawImage()
+
+        pixel_shift = cross_correlate(ref_img, img, upsample_factor=10, verbose=verbose)
+
+        stage_shift = np.dot(pixel_shift, mati)
+
+        print(f"Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}")
+
+        stage_x, stage_y = stage_pos + stage_shift
+        if apply_shift:
+            self.stageposition.set_xy_with_backlash_correction(x=stage_x, y=stage_y)
+
+        return stage_shift
 
     def find_eucentric_height(self, tilt: float=5, 
                                     steps: int=5, 
@@ -824,22 +910,6 @@ class TEMController(object):
         print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
         if update:
             self.stageposition.set(a=0, z=z0)
-
-    def __repr__(self):
-        return (f"Mode: {self.tem.getFunctionMode()}\n"
-                f"{self.gunshift}\n"
-                f"{self.guntilt}\n"
-                f"{self.beamshift}\n"
-                f"{self.beamtilt}\n"
-                f"{self.imageshift1}\n"
-                f"{self.imageshift2}\n"
-                f"{self.diffshift}\n"
-                f"{self.stageposition}\n"
-                f"{self.magnification}\n"
-                f"{self.difffocus}\n"
-                f"{self.brightness}\n"
-                f"SpotSize({self.spotsize})\n"
-                f"Saved settings: {tuple(self._saved_settings.keys())}\n")
 
     def to_dict(self, *keys) -> dict:
         """
