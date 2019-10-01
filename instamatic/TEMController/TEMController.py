@@ -746,9 +746,90 @@ class TEMController(object):
     def beamblank(self, on: bool):
         self.tem.setBeamBlank(on)
 
-    def acquire_at_items(self, script):
-        """Run script at given points"""
-        raise NotImplementedError
+    def acquire_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
+        """"Run the given script at all corodinates defined by the nav_items.
+        
+        Parameters
+        ----------
+        nav_items: list
+            Takes a list of nav items (read from a SerialEM .nav file) and loops over the
+            stage coordinates
+        script: str
+            Runs this script at each of the positions specified in coordinate list
+        backlash: bool
+            Toggle to move to each position with backlash correction
+        """
+
+        import time
+        import msvcrt
+
+        ntot = len(nav_items)
+
+        print(f"\nRunning script: {script} on {ntot} items.")
+        print("Press <Q> to interrupt.\n")
+
+        if backlash:
+            set_xy = self.stageposition.set_xy_with_backlash_correction
+        else:
+            set_xy = self.stageposition.set
+
+        t0 = time.time()
+        eta = 999
+        
+        for i, item in enumerate(nav_items):
+        
+            print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
+            
+            x = item.stage_x
+            y = item.stage_y
+        
+            set_xy(x=x, y=y)
+
+            self.run_script(script, verbose=False)
+        
+            # calculate remaining time
+            dt = (time.time() - t0)/(i+1)
+            eta = ((ntot-i)*dt) / 60 # min
+        
+            # Stop/interrupt acquisition
+            if msvcrt.kbhit():
+                key = msvcrt.getch().decode()
+                if key == "q":
+                    print("Acquisition was interrupted!")
+                    break
+
+        t1 = time.time()
+
+        dt = t1-t0
+        print(f"Total time taken: {dt:.0f} s ({dt/i:.2f} s/item)")
+
+    def run_script(self, script: str, verbose: bool=True) -> None:
+        """Run a custom python script with access to the `ctrl` object. It will check
+        if the script exists in the scripts directory if it cannot find it directly."""
+        from pathlib import Path
+
+        ctrl = self
+
+        script = Path(script)
+
+        if not script.exists():
+            test_location = config.scripts_drc / script
+            if not test_location.exists():
+                raise IOError(f"No such script: {script}")
+            else:
+                script = test_location
+
+        if verbose:
+            print(f"Executing script: {script}")
+            print()
+
+        t0 = time.time()
+        exec(open(script).read())
+        t1 = time.time()
+
+        if verbose:
+            print()
+            print(f"Script finished in {t1-t0} s")
 
     def get_stagematrix(self, binning: int=None, mag: int=None, mode: int=None):
         """Helper function to get the stage matrix from the config file.
