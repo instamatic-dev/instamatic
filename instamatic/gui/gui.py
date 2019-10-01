@@ -156,38 +156,14 @@ class MainFrame(object):
             pass
         sys.exit()
 
-def main():
-    from instamatic.utils import high_precision_timers
-    high_precision_timers.enable()  # sleep timers with 1 ms resolution
-    
-    # enable faster switching between threads
-    sys.setswitchinterval(0.001)  # seconds
 
-    from instamatic import version
-    version.register_thank_you_message()
-
-    from instamatic import config
-
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_{date}.log"
-
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
-                        level=logging.DEBUG)
-
-    logging.captureWarnings(True)
-    log = logging.getLogger(__name__)
-    log.info("Instamatic.gui started")
-
-    from instamatic import TEMController
-    ctrl = TEMController.initialize(stream=True)
-    
+def start_gui(ctrl, log=None):
+    """Function to start the gui, to be imported and run elsewhere when ctrl is initialized
+    Requires the `ctrl` object to be passed.
+    """
     root = Tk()
 
     gui = MainFrame(root, cam=ctrl.cam, modules=MODULES)
-
-    # while not gui.app._modules_have_loaded:
-        # time.sleep(0.1)
 
     experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, log=log)
     experiment_ctrl.start()

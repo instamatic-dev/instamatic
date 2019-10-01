@@ -59,7 +59,7 @@ setup(
     entry_points={
         'console_scripts': [
             # main
-            'instamatic                               = instamatic.gui:main',
+            'instamatic                               = instamatic.main:main',
             'instamatic.gui                           = instamatic.gui:main',
             'instamatic.serialed                      = instamatic.experiments.serialed.experiment:main',
             # experiment
