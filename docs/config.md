@@ -97,6 +97,25 @@ Likewise, give here the magnification and pixel size for the images taken in mag
 
 Optionally, tables for **pixelsize_mag2**, **pixelsize_samag** can also be defined, but they are not used.
 
+**stagematrix_lowmag**
+This is a mapping of the pixel coordinates to the stage coordinates. They can be obtained using SerialEM (`StageToCameraMatrix` in `SerialEMCalibration.txt`) via _Calibration_ > _Image & Stage Shift_ > _Stage Shift_ ([link](http://bio3d.colorado.edu/SerialEM/betaHlp/html/menu_calibration.htm#hid_calibration_stageshift)). These are used to convert from detected shifts in pixel coordinates (i.e. using cross correlation) to the corresponding translation of the stage.
+```
+  ...
+  250: [ 0.276258, -21.935572, 22.306572, 0.565116 ]
+  300: [ 0.331509, -26.322686, 26.767886, 0.678139 ]
+  400: [ 0.442012, -35.096915, 35.690515, 0.904185 ]
+  ...
+```
+
+**stagematrix_mag1**
+Same as above, but for Mag1 mode.
+```
+  200: [ 20.450142, 0.974105,  0.200866, 19.46804 ]
+  250: [ 24.747572, 0.910169, -0.473581, 24.16539 ]
+  300: [ 28.800819, 0.854005, -0.418774, 28.18689 ]
+  ...
+```
+
 ## camera.yaml:
 
 This file holds the specifications of the camera. This file is must be located the `config/camera` directory, and can have any name as defined in `global.yaml`.
