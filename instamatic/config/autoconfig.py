@@ -4,6 +4,13 @@ from instamatic import config
 from pathlib import Path
 import shutil
 
+def list_representer(dumper, data):
+    """For cleaner printing of lists in yaml files"""
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+
+
+yaml.representer.Representer.add_representer(list, list_representer)
+
 
 def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     """Loop over magnification ranges and return calibrations from EMMENU"""
@@ -119,6 +126,10 @@ def main():
         else:
             pixelsizes = {r: 1.0 for r in rng}
         calib_config["pixelsize_"+mode] = pixelsizes
+
+        stagematrices = {r: [1, 0, 0, 1] for r in rng}
+
+        calib_config["stagematrix_"+mode] = stagematrices
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
