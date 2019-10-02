@@ -797,8 +797,8 @@ class TEMController(object):
         
             print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
             
-            x = item.stage_x
-            y = item.stage_y
+            x = item.stage_x * 1000  # um -> nm
+            y = item.stage_y * 1000  # um -> nm
         
             set_xy(x=x, y=y)
 
@@ -880,7 +880,9 @@ class TEMController(object):
 
         stagematrix = getattr(config.calibration, f"stagematrix_{mode}")[mag]
 
-        return binning * np.array(stagematrix).reshape(2, 2)
+        stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning[0])  # um -> nm
+
+        return stagematrix
 
     def center_object(self, ref_img: np.array, 
                             apply_shift: bool= True,
@@ -906,7 +908,8 @@ class TEMController(object):
         """
         from instamatic.processing.cross_correlate import cross_correlate
 
-        stage_pos = np.array(self.stageposition.xy)
+        current_x, current_y = self.stageposition.xy
+        print(f"Current stage position: {current_x:.0f} {current_y:.0f}")
         stagematrix = self.get_stagematrix()
         mati = np.linalg.inv(stagematrix)
 
@@ -918,9 +921,11 @@ class TEMController(object):
 
         print(f"Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}")
 
-        stage_x, stage_y = stage_pos + stage_shift
+        new_x = current_x - stage_shift[0] 
+        new_y = current_y + stage_shift[1] 
+        print(f"New stage position: {new_x:.0f} {new_y:.0f}")
         if apply_shift:
-            self.stageposition.set_xy_with_backlash_correction(x=stage_x, y=stage_y)
+            self.stageposition.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
         return stage_shift
 
