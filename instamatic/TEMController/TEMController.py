@@ -884,12 +884,12 @@ class TEMController(object):
 
         return stagematrix
 
-    def center_object(self, ref_img: np.array, 
+    def align_to(self, ref_img: "np.array", 
                             apply_shift: bool= True,
                             verbose: bool=True) -> list:
-        """Center current view by comparing it against the given image using
+        """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
-        is at the center of the image.
+        (in the reference image) is at the center of the view.
         
         Parameters
         ----------

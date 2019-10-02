@@ -134,12 +134,12 @@ class MapItem(NavItem):
         self.markers = {}
 
     @property
-    def map_scale_matrix(self) -> np.array:
+    def map_scale_matrix(self) -> "np.array":
         MapBinning = self.MapBinning
         MontBinning = self.MontBinning
         return (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
 
-    def pixel_to_stagecoords(self, coords: list) -> np.array:
+    def pixel_to_stagecoords(self, coords: list) -> "np.array":
         """Convert from pixel coordinates to stage coordinates"""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
@@ -148,7 +148,7 @@ class MapItem(NavItem):
 
         return np.dot(coords - cp, mati) + cs
 
-    def stage_to_pixelcoords(self, coords: list) -> np.array:
+    def stage_to_pixelcoords(self, coords: list) -> "np.array":
         """Convert from stage coordinates to pixel coordinates"""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
@@ -157,7 +157,7 @@ class MapItem(NavItem):
 
         return np.dot(coords - cs, mat) + cp
 
-    def load_image(self, drc: str=None) -> np.array:
+    def load_image(self, drc: str=None) -> "np.array":
         """Loads the image corresponding to this item"""
         import mrcfile
 

@@ -304,7 +304,7 @@ class CameraEMMENU(object):
 
         return p
 
-    def getImageDataByIndex(self, img_index: int, drc_index: int=None) -> np.array:
+    def getImageDataByIndex(self, img_index: int, drc_index: int=None) -> "np.array":
         """Grab data from the image manager by index. Return numpy 2D array"""
         p = self.getImageByIndex(img_index, drc_index)
 
@@ -386,7 +386,7 @@ class CameraEMMENU(object):
 
         print(f"Wrote {i+1} images to {path}")
 
-    def getImage(self, **kwargs) -> np.array:
+    def getImage(self, **kwargs) -> "np.array":
         """Acquire image through EMMENU and return data as np array"""
         self._vp.AcquireAndDisplayImage()
         i = self.get_image_index()
