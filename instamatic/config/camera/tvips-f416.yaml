@@ -1,4 +1,4 @@
-calib_beamshift: {gridsize: 5, stepsize: 50}
+calib_beamshift: {gridsize: 5, stepsize: 500}
 calib_directbeam:
   BeamShift: {gridsize: 5, stepsize: 75}
   DiffShift: {gridsize: 5, stepsize: 300}

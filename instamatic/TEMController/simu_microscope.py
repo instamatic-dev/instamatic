@@ -84,8 +84,8 @@ class SimuMicroscope(object):
         self._HT = 200_000  # V
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
-        self.Magnification_value = 2500
-        self.Magnification_value_diff = 300
+        self.Magnification_value = config.microscope.range_mag1[10]
+        self.Magnification_value_diff = config.microscope.range_diff[3]
 
         self.beamblank = False
 
@@ -121,7 +121,7 @@ class SimuMicroscope(object):
                 speed = 10.0  # degree / sec
                 current = random.randint(-40, 40)
             elif key in ("x", "y"):
-                speed = 10_000.0  # nm / sec
+                speed = 100_000.0  # nm / sec
                 current = random.randint(-100000, 100000)
             elif key == "z":
                 speed = 10_000.0  # nm / sec
