@@ -19,6 +19,9 @@ class ExperimentalCtrl(LabelFrame):
 
         b_stage_stop = Button(frame, text="Stop stage", command=self.stage_stop)
         b_stage_stop.grid(row=0, column=0, sticky="W")
+        
+        b_find_eucentric_height = Button(frame, text="Find eucentric height", command=self.find_eucentric_height)
+        b_find_eucentric_height.grid(row=1, column=0, sticky="EW", columnspan=3)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -162,6 +165,9 @@ class ExperimentalCtrl(LabelFrame):
         self.q.put(("ctrl", { "task": "stageposition.stop" } ))
         self.triggerEvent.set()
 
+    def find_eucentric_height(self):
+        self.q.put(("ctrl", { "task": "find_eucentric_height" } ))
+        self.triggerEvent.set()
 
 
 def microscope_control(controller, **kwargs):
