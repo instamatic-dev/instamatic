@@ -322,7 +322,10 @@ class JeolMicroscope(object):
             self.waitForStage()
 
     def setStageXY(self, x: int, y: int, wait: bool=True):
-        self.stage3.SetPosition(x, y)  ## combined call is faster than to separate calls
+        # BUG: stage3.SetPosition is applied as a shift from current coordinates
+        # self.stage3.SetPosition(x, y)  ## combined call is faster than to separate calls
+        self.stage3.SetX(x)
+        self.stage3.SetY(y)
         if wait:
             self.waitForStage()
 
