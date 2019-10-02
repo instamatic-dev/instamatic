@@ -7,6 +7,24 @@ from skimage.measure import regionprops
 from scipy import ndimage, interpolate
 
 
+def find_script(script: str) -> "pathlib.Path":
+    """Resolves the script name
+    Looks in the local directory, absolute directory and in the scripts directory
+    """
+    from pathlib import Path
+    from instamatic import config
+
+    script = Path(script)
+
+    if not script.exists():
+        test_location = config.scripts_drc / script
+        if not test_location.exists():
+            raise IOError(f"No such script: {script}")
+        else:
+            script = test_location
+
+    return script
+
 
 def prepare_grid_coordinates(nx: int, ny: int, stepsize: float=1.0) -> "np.array":
     """

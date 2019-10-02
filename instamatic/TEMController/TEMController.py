@@ -747,7 +747,7 @@ class TEMController(object):
         self.tem.setBeamBlank(on)
 
     def acquire_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
-        """"Run the given script at all corodinates defined by the nav_items.
+        """"Run the given script at all coordinates defined by the nav_items.
         
         Parameters
         ----------
@@ -759,24 +759,41 @@ class TEMController(object):
         backlash: bool
             Toggle to move to each position with backlash correction
         """
+        from instamatic.tools import find_script
+        script = find_script(script)
+
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("acquire", script)
+        acquire = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(acquire)
 
         import time
         import msvcrt
+
+        ctrl = self
 
         ntot = len(nav_items)
 
         print(f"\nRunning script: {script} on {ntot} items.")
         print("Press <Q> to interrupt.\n")
 
+        try:
+            acquire.pre_acquisition(ctrl)
+        except AttributeError:
+            pass
+
         if backlash:
             set_xy = self.stageposition.set_xy_with_backlash_correction
         else:
             set_xy = self.stageposition.set
 
-        t0 = time.time()
+        t0 = t_last = time.perf_counter()
         eta = 999
+        last_interval = interval = 1
         
         for i, item in enumerate(nav_items):
+            ctrl.current_item = item
+            ctrl.current_i = i
         
             print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
             
@@ -785,11 +802,17 @@ class TEMController(object):
         
             set_xy(x=x, y=y)
 
-            self.run_script(script, verbose=False)
+            try:
+                acquire.acquire(ctrl)
+            except AttributeError:
+                raise AttributeError("No `acquire` function in script (i.e. `def acquire(ctrl): pass`)")
         
             # calculate remaining time
-            dt = (time.time() - t0)/(i+1)
-            eta = ((ntot-i)*dt) / 60 # min
+            t = time.perf_counter()
+            interval = t - t_last
+            last_interval = interval = (interval * 0.10) + (last_interval * 0.90)
+            eta = ((ntot-i)*interval) / 60 # min
+            t_last = t
         
             # Stop/interrupt acquisition
             if msvcrt.kbhit():
@@ -798,38 +821,34 @@ class TEMController(object):
                     print("Acquisition was interrupted!")
                     break
 
-        t1 = time.time()
+        t1 = time.perf_counter()
+
+        try:
+            acquire.post_acquisition(ctrl)
+        except AttributeError:
+            pass
 
         dt = t1-t0
         print(f"Total time taken: {dt:.0f} s ({dt/i:.2f} s/item)")
 
     def run_script(self, script: str, verbose: bool=True) -> None:
         """Run a custom python script with access to the `ctrl` object. It will check
-        if the script exists in the scripts directory if it cannot find it directly."""
-        from pathlib import Path
+        if the script exists in the scripts directory if it cannot find it directly.
+        """
+        from instamatic.tools import find_script
+        script = find_script(script)
 
         ctrl = self
 
-        script = Path(script)
-
-        if not script.exists():
-            test_location = config.scripts_drc / script
-            if not test_location.exists():
-                raise IOError(f"No such script: {script}")
-            else:
-                script = test_location
-
         if verbose:
-            print(f"Executing script: {script}")
-            print()
+            print(f"Executing script: {script}\n")
 
-        t0 = time.time()
+        t0 = time.perf_counter()
         exec(open(script).read())
-        t1 = time.time()
+        t1 = time.perf_counter()
 
         if verbose:
-            print()
-            print(f"Script finished in {t1-t0} s")
+            print(f"\nScript finished in {t1-t0} s")
 
     def get_stagematrix(self, binning: int=None, mag: int=None, mode: int=None):
         """Helper function to get the stage matrix from the config file.
