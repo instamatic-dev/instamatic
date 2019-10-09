@@ -43,6 +43,30 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     return calib_range
 
 
+def choice_prompt(choices: list=[], default=None, question: str="Which one?"):
+    """Simple cli to prompt for a list of choices"""
+    print()
+    choices = "jeol fei simulate".split()
+
+    if default:
+        default_choice = choices.index(default)
+        suffix = f" [{default}]"
+    else:
+        suffix = ""
+
+    for i, choice in enumerate(choices):
+        print(f"{i+1: 2d}: {choice}")
+
+    q = input(f"\nWhich microscope can I connect to?{suffix} >> ")
+    if not q:
+        picked = default_choice
+    else:
+        q = int(q) - 1
+        picked = choices[q]
+
+    return picked
+
+
 def main():
     """
     This tool will help to set up the configuration files for `instamatic`
@@ -50,51 +74,29 @@ def main():
     and magnification ranges
     """
 
-    print("\n 1: jeol\n 2: fei\n 3: simulate")
+    ### Connect to microscope
 
-    q = int(input("\nWhich microscope can I connect to? [simulate] >> ") or 3)
+    tem_name = choice_prompt(choices="jeol fei simulate".split(),
+                             default="simulate",
+                             question="Which microscope can I connect to?")
 
-    if q == 1:
-        tem_name = "jeol"
-    elif q == 2:
-        tem_name = "fei"
-    elif q == 3:
-        tem_name = "simulate"
-    else:
-        raise ValueError(f"No microscope with index {q}")
+    ### Connect to camera
 
-    # print("\n 1: gatan (orius)\n 2: timepix\n 3: tvips (emmenu)")
-    print("\n 0: None\n 3: tvips (emmenu)\n 4: simulate")
+    cam_name = choice_prompt(choices="None gatan tvips simulate".split(),
+                             default="simulate",
+                             question="Which camera can I connect to?")
 
-    q = int(input("\nWhich camera can I connect to? [None] >> ") or 0)
-
-    if not q:
-        cam_name = None
-    elif q == 1:
-        cam_name = "gatan"
-    elif q == 2:
-        cam_name = "timepix"
-    elif q == 3:
-        cam_name = "tvips"
-    elif q == 4:
-        cam_name = "simulate"
-    else:
-        raise ValueError(f"No camera with index {q}")
+    ## Fetch camera config
 
     drc = Path(__file__).parent
-    default_configs = list(drc.glob("camera/*.yaml"))
-    print("\n 0 - None")
-    for i, default_config in enumerate(default_configs):
-        print(f"{i+1: 2d} - {default_config.stem}")  # 1-indexed
+    choices = list(drc.glob("camera/*.yaml"))
+    choices.append(None)
 
-    q = int(input("\nWhich camera type do you want to use (select closest one and modify if needed) [None] >> ") or 0)
+    cam_config = choice_prompt(choices=choices,
+                               default=None,
+                               question="Which camera type do you want to use (select closest one and modify if needed)?")
 
-    if not q:
-        cam_config = None
-    elif 0 < q < len(default_configs):
-        cam_config = default_configs[q-1]  # 0-indexed
-    else:
-        raise ValueError(f"No config with index {q}")
+    ### Instantiate microscope / camera connection
 
     from instamatic.TEMController.microscope import get_tem
     from instamatic.camera.camera import get_cam
@@ -120,6 +122,8 @@ def main():
     calib_config = {}
     calib_config["name"] = tem_name
 
+    ### Find magnification ranges
+
     for mode, rng in ranges.items():
         if cam_name == "tvips":
             pixelsizes = get_tvips_calibs(ctrl=ctrl, rng=rng, mode=mode, wavelength=wavelength)
@@ -130,6 +134,8 @@ def main():
         stagematrices = {r: [1, 0, 0, 1] for r in rng}
 
         calib_config["stagematrix_"+mode] = stagematrices
+
+    ### Write/copy configs
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
