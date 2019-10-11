@@ -354,6 +354,8 @@ def read_nav_file(fn: str, acquire_only: bool=False) -> list:
         else:
             print(line)
 
+    items.append(block2nav(block, tag=tag))
+
     if acquire_only:
         items = [item for item in items if item.Acquire]
 

@@ -17,7 +17,7 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text="Target angle (degrees):").grid(row=4, column=0, sticky="W")
-        self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=DISABLED)
+        self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=ENABLED)
         self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
         
         self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
@@ -127,7 +127,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_beamblank = BooleanVar(value=False)
         self.var_toggle_diff_mode = BooleanVar(value=False)
         self.var_toggle_screen = BooleanVar(value=False)
-        self.var_toggle_manual_control = BooleanVar(value=True)
+        self.var_toggle_manual_control = BooleanVar(value=False)
 
         self.var_instruction_file = StringVar(value="")
         self.var_mode = StringVar(value="diff")

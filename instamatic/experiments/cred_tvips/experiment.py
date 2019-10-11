@@ -271,7 +271,7 @@ class Experiment(object):
         manual_control : bool
             Control the rotation using the buttons or pedals
         """
-        angle_tolerance = 0.1  # degrees
+        angle_tolerance = 0.5  # degrees
 
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -331,7 +331,8 @@ class Experiment(object):
             t = time.perf_counter()
 
             if not manual_control:
-                if abs(self.ctrl.stageposition.a - target_angle) > angle_tolerance:
+                if abs(self.ctrl.stageposition.a - target_angle) < angle_tolerance:
+                    print("Target angle reached!")
                     break
 
             if t - t_delta > interval:
