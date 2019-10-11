@@ -3,10 +3,12 @@
 """
 This defines a client class to interface with the socket based DM plugin.
 
-Adapted and converted from Python2.7 to Python3.6+ from:
+Script adapted from Leginon (http://emg.nysbc.org/redmine/projects/leginon/wiki/Leginon_Homepage)
+Leginon is licenced under the Apache License, Version 2.0
+Converted from Python2.7 to Python3.6+ from:
 http://emg.nysbc.org/redmine/projects/leginon/repository/revisions/trunk/entry/pyscope/gatansocket.py
 
-Needs the SERIALEMCCD plugin to be installedi in DigitalMicrograph:
+Needs the SERIALEMCCD plugin to be installed in DigitalMicrograph:
 https://bio3d.colorado.edu/SerialEM/hlp/html/setting_up_serialem.htm
 
 To connect to DigitalMicrograph through a socket interface on the same or a different computer, such as for a K2/K3 camera with SerialEM running on an FEI microscope, you need to do the following:
@@ -595,6 +597,24 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 		return message_recv
 
+	def RunScript(self, fn: str, background: bool=False):
+		"""Run a DM script
+
+		background: bool
+			Prepend `// $BACKGROUND$` to run the script in the background
+			and make it non-blocking.
+		"""
+
+		bkg = r"// $BACKGROUND$\n\n"
+
+		with open(fn, "r") as f:
+			cmd_str = ''.join(f.readlines())
+
+		if background:
+			cmd_str = bkg + cmd_str
+
+		return self.ExecuteScript(cmd_str)
+
 
 def test1():
 	g = GatanSocket()
@@ -606,6 +626,7 @@ def test1():
 	s = 'Result("Hello world\\n")'
 	g.ExecuteScript(s)
 
+	breakpoint(); exit()
 
 if __name__ == '__main__':
 	test1()
