@@ -34,7 +34,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     credlog = Path(credlog)
     drc = credlog.parent
     
-    pattern = "tiff/*.tiff"
+    pattern = "tiff/*.tif*"
 
     image_fns = list(drc.glob(pattern))
 
@@ -115,34 +115,36 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     image_res_x_tvips = h0["ImageSizeX"]
     image_res_y_tvips = h0["ImageSizeY"]
     
-    print("nframes", nframes)
+    print(f"Number of frames: {nframes}")
     print()
     print("# cRED_log.txt")
-    print("timestamp", timestamp)
-    print("start_angle", start_angle)
-    print("end_angle", end_angle)
-    print("rotation_axis", rotation_axis)
-    print("rotation_speed", rotation_speed)
-    print("osc_angle", osc_angle)
-    print("camera_length", camera_length)
-    print("beamstop", beamstop)
-    print("pixelsize", pixelsize)
-    print("physical_pixelsize", physical_pixelsize)
-    print("wavelength", wavelength)
+    print(f"Timestamp:                {timestamp}")
+    print(f"Start angle:              {start_angle:.2f} degrees")
+    print(f"End angle:                {end_angle:.2f} degrees")
+    print(f"Oscillation angle:        {osc_angle:.2f} degrees")
+    print(f"Rotation speed:           {rotation_speed:.2f} degrees/s")
+    print(f"Rotation axis at:         {rotation_axis:.2f} radians ({np.degrees(rotation_axis):.2f} degrees)")
+    print(f"Beamstop:                 {beamstop}")
+    print(f"Pixelsize:                {pixelsize} px/Ångstrom")
+    print(f"Physical Pixelsize:       {physical_pixelsize} mm")
+    print(f"Wavelength:               {wavelength} Ångstrom")
+    print(f"TEM Camera length:        {camera_length:.1f} cm")
 
     print()
     print("# TVIPS header")
-    print("camera", camera)
-    print("camera_length", camera_length_tvips)
-    print("high_tension", high_tension)
-    print("wavelength", wavelength_tvips)
-    print("acquisition_time", acquisition_time)
-    print("exposure_time", exposure_time)
-    print("overhead", overhead)
-    print("physical_pixelsize_x", physical_pixelsize_x_tvips, physical_pixelsize_y_tvips)
-    print("binning_x/y", binning_x, binning_y)
-    print("image_res_x/y", image_res_x_tvips, image_res_y_tvips)
-    print("pixelsize_x/y", pixelsize_x_tvips, pixelsize_y_tvips)
+    print(f"Camera:                   {camera}")
+    print(f"Acquisition time:         {acquisition_time:.3f} s")
+    print(f"Exposure time:            {exposure_time/1000:.3f} s")
+    print(f"Overhead time:            {overhead:.3f} s")
+    print(f"Binning (X/Y):            {binning_x} {binning_y} px/bin")
+    print(f"Image resolution (X/Y):   {image_res_x_tvips} {image_res_y_tvips} pixels")
+    print(f"Pixelsize (X/Y):          {pixelsize_x_tvips:.5f} {pixelsize_y_tvips:.5f} px/Ångstrom???")
+    print(f"Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm")
+    print(f"High tension:             {high_tension/1000} kV")
+    print(f"Wavelength:               {wavelength_tvips} Ångstrom")
+    print(f"Camera length:            {camera_length_tvips} cm")
+
+    exit()
 
     # implement this later if it turns out to be necessary
     assert pixelsize_x_tvips == pixelsize_y_tvips, "Pixelsize is different in X / Y direction"
