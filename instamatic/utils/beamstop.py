@@ -156,6 +156,9 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
         i = np.argmin(dists)
     
         rect = rects[i]
+    else:
+        a = arr[0]
+        rect = minimum_bounding_rectangle(a)
 
     ## This is not robust if there are other shaded areas
     # rect = sorted(arr, key=lambda x: len(x), reverse=True)[0]
