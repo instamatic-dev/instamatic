@@ -144,8 +144,6 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     print(f"Wavelength:               {wavelength_tvips} Ångstrom")
     print(f"Camera length:            {camera_length_tvips} cm")
 
-    exit()
-
     # implement this later if it turns out to be necessary
     assert pixelsize_x_tvips == pixelsize_y_tvips, "Pixelsize is different in X / Y direction"
     assert physical_pixelsize_x_tvips == physical_pixelsize_y_tvips, "Physical pixelsize is different in X / Y direction"
