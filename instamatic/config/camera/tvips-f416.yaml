@@ -9,6 +9,6 @@ dynamic_range: 65535
 name: emmenu
 physical_pixelsize: 0.0156
 possible_binsizes: [1, 2, 4]
-camera_rotation_vs_stage_xy: 0.0
+camera_rotation_vs_stage_xy: -0.017
 stretch_amplitude: 0.0
 stretch_azimuth: 0.0
