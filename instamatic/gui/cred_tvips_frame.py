@@ -263,14 +263,10 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_diff_defocus.set(False)
 
     def search(self):
-        self.ctrl.screen_down()
-        self.ctrl.beamblank_off()
-        self.ctrl.mode_mag1()
+        self.ctrl.run_script("search_mode.py")
 
     def focus(self):
-        self.ctrl.screen_up()
-        self.ctrl.beamblank_off()
-        self.ctrl.mode_diffraction()
+        self.ctrl.run_script("focus_mode.py")
 
     def get_image(self):
         self.ctrl.cam.acquireImage()

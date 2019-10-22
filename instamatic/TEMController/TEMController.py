@@ -817,7 +817,7 @@ class TEMController(object):
         t1 = time.perf_counter()
 
         if verbose:
-            print(f"\nScript finished in {t1-t0} s")
+            print(f"\nScript finished in {t1-t0:.4f} s")
 
     def get_stagematrix(self, binning: int=None, mag: int=None, mode: int=None):
         """Helper function to get the stage matrix from the config file.
