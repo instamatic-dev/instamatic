@@ -75,7 +75,7 @@ class SerialExperiment(object):
             try:
                 exp.start_collection(target_angle=end_angle, start_angle=start_angle)
             except InterruptedError:
-                ctrl.cam.stop_liveview()
+                self.ctrl.cam.stop_liveview()
                 break
             finally:
                 del exp

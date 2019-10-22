@@ -414,17 +414,19 @@ class CameraEMMENU(object):
             i += 1        
         return i
 
-    def stop_record(self) -> None:
+    def stop_record(self) -> int:
         i = self.get_image_index()
         print(f"Stop recording (Image index={i})")
         self._vp.StopRecorder()
         self._recording = False
+        return i
 
-    def start_record(self) -> None:
+    def start_record(self) -> int:
         i = self.get_image_index()
         print(f"Start recording (Image index={i})")
         self._vp.StartRecorder()
         self._recording = True
+        return i
 
     def stop_liveview(self) -> None:
         print("Stop live view")
