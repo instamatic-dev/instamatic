@@ -241,7 +241,10 @@ class Experiment(object):
 
         self.emmenu.set_exposure(self.exposure)
 
-        self.ctrl.beamblank_on()
+        self.beamblank_is_on = self.ctrl.beamblank
+        if not self.beamblank_is_on:
+            self.ctrl.beamblank_on()
+        
         self.ctrl.screen_up()
     
         if self.ctrl.mode != self.mode:
@@ -305,7 +308,7 @@ class Experiment(object):
                 self.ctrl.difffocus.refocus()
             time.sleep(3)
         
-        self.ctrl.beamblank_off(delay=0.5)  # give the beamblank some time to dissappear to avoid weak first frame
+        self.ctrl.beamblank_off(delay=0.2)  # give the beamblank some time to dissappear to avoid weak first frame
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
@@ -367,6 +370,9 @@ class Experiment(object):
 
         t1 = time.perf_counter()
         self.emmenu.stop_liveview()
+
+        if self.beamblank_is_on:
+            self.ctrl.beamblank_on()
 
         self.end_position = self.ctrl.stageposition.get()
         end_angle = self.end_position.a
