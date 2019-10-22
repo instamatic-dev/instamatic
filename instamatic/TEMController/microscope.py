@@ -7,6 +7,12 @@ __all__ = ["Microscope"]
 
 def get_tem(name: str):
     """Grab tem class"""
+
+    if config.cfg.tem_require_admin:
+        from instamatic import admin
+        if not admin.is_admin():
+            raise PermissionError("Access to the TEM interface requires admin rights.")
+
     if name == "jeol":
         from .jeol_microscope import JeolMicroscope as cls
     elif name == "fei":

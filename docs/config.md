@@ -40,6 +40,9 @@ Set this to `localhost` if the TEM server is run locally. To make a remote conne
 **tem_server_port**  
 the server port, default: `8088`
 
+**tem_require_admin**
+Some microscopes require admin rights to access their API, set `tem_require_admin: True` to enable some checks for admin rights and request UAC elevation before enabling the connection. Default: `False`.
+
 **indexing_server_exe**  
 After data are collected, the path where the data are saved can be sent to this program via a socket connection for automated data processing. Available are the dials indexing server (`instamatic.dialsserver.exe`) and the XDS indexing server (`instamatic.xdsserver.exe`)
 

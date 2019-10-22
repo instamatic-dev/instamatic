@@ -102,6 +102,12 @@ def handle(conn, q):
 
 
 def main():
+    if config.cfg.tem_require_admin:
+        from instamatic import admin
+        if not admin.is_admin():
+            admin.run_as_admin(__file__)
+            exit()
+
     import argparse
 
     parser = argparse.ArgumentParser()
