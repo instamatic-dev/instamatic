@@ -62,7 +62,7 @@ def main():
         nav_items = read_nav_file(options.nav_file, acquire_only=True)
 
     if options.acquire_at_items:
-        ctrl.acquire_at_items(nav_items=nav_items, script=options.script)
+        ctrl.run_script_at_items(nav_items=nav_items, script=options.script)
     elif options.script:
         ctrl.run_script(options.script)
     elif options.start_gui:   

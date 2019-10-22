@@ -159,7 +159,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.AcquireButton.config(state=DISABLED)
         self.FinalizeButton.config(state=DISABLED)
         self.SerialButton.config(state=NORMAL)
-        if not self.var_toggle_beamblank.get():
+        if not self.var_toggle_manual_control.get():
             self.e_target_angle.config(state=NORMAL)
         self.SearchButton.config(state=NORMAL)
         self.FocusButton.config(state=NORMAL)

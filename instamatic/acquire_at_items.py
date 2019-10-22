@@ -1,7 +1,5 @@
 
 
-
-
 class AcquireAtItems(object):
     """Class to automated acquisition at many stage locations.
 
@@ -37,28 +35,38 @@ class AcquireAtItems(object):
         self.ctrl = ctrl
 
         if pre_acquire:
+            print("Pre-acquire: OK")
             self.pre_acquire = pre_acquire
 
-        if post_acquire:
-            self.post_acquire = post_acquire
-
         if acquire:
+            print("Acquire: OK")
             self.acquire = acquire
+
+        if post_acquire:
+            print("Post-acquire: OK")
+            self.post_acquire = post_acquire
 
         self.backlash = backlash
 
     def pre_acquire(self, ctrl):
+        """Function called after the last NavItem"""
         pass
 
     def post_acquire(self, ctrl):
+        """Function called before the first NavItem"""
         pass
 
     def acquire(self, ctrl):
+        """Function to call at each stage position"""
         print("Acquirement function has not been set.")
 
     def move_to_item(self, item):
+        """Move the stage to the stage coordinates given by the NavItem"""
         x = item.stage_x * 1000  # um -> nm
         y = item.stage_y * 1000  # um -> nm
+        z = item.stage_z * 1000  # um -> nm
+
+        self.ctrl.stageposition.set(z=z)
 
         if self.backlash:
             set_xy = self.ctrl.stageposition.set_xy_with_backlash_correction
@@ -68,6 +76,7 @@ class AcquireAtItems(object):
         set_xy(x=x, y=y)
 
     def start(self):
+        """Start serial acquisition protocol"""
         import time
         import msvcrt
 
@@ -79,10 +88,10 @@ class AcquireAtItems(object):
         print(f"\nAcquiring on {ntot} items.")
         print("Press <Q> to interrupt.\n")
 
-        self.pre_acquire:
+        self.pre_acquire
 
         t0 = t_last = time.perf_counter()
-        eta = 999
+        eta = 0
         last_interval = interval = 1
         
         for i, item in enumerate(nav_items):
@@ -93,8 +102,12 @@ class AcquireAtItems(object):
             
             self.move_to_item(item)
 
-            self.acquire(ctrl)
-        
+            try:
+                self.acquire(ctrl)
+            except InterruptedError:
+                print(f"\nAcquisition was interrupted during item `{item}`!")
+                break
+
             # calculate remaining time
             t = time.perf_counter()
             interval = t - t_last
@@ -106,7 +119,7 @@ class AcquireAtItems(object):
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode()
                 if key == "q":
-                    print("Acquisition was interrupted!")
+                    print(f"\nAcquisition was interrupted after item `{item}`!")
                     break
 
         t1 = time.perf_counter()
@@ -114,5 +127,6 @@ class AcquireAtItems(object):
         self.post_acquire(ctrl)
 
         dt = t1-t0
-        print(f"Total time taken: {dt:.0f} s ({dt/i:.2f} s/item)")
-
+        n_items = i+1
+        print(f"Total time taken: {dt:.0f} s for {n_items} items ({dt/n_items:.2f} s/item)")
+        print("\nAll done!")

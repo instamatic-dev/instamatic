@@ -352,7 +352,12 @@ def read_nav_file(fn: str, acquire_only: bool=False) -> list:
         elif capture:
             block.append(line)
         else:
-            print(line)
+            if line.startswith("AdocVersion"):
+                pass
+            elif line.startswith("LastSavedAs"):
+                pass
+            else:
+                print(line)
 
     items.append(block2nav(block, tag=tag))
 

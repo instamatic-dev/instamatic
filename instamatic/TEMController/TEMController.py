@@ -750,7 +750,9 @@ class TEMController(object):
         """See instamatic.acquire_at_items.AcquireAtItems for documentation"""
         from instamatic.acquire_at_items import AcquireAtItems
 
-        aai = AcquireAtItems(self, *args, **kwargs)
+        ctrl = self
+
+        aai = AcquireAtItems(ctrl, *args, **kwargs)
         aai.start()
 
     def run_script_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
@@ -786,15 +788,16 @@ class TEMController(object):
 
         ntot = len(nav_items)
 
-        print(f"\nRunning script: {script} on {ntot} items.")
+        print(f"Running script: {script} on {ntot} items.")
         
-        pre_acquire = getattr(acquire, "pre_acquisition", None)
-        post_acquire = getattr(acquire, "post_acquisition", None)
+        pre_acquire = getattr(acquire, "pre_acquire", None)
+        post_acquire = getattr(acquire, "post_acquire", None)
         acquire = getattr(acquire, "acquire", None)
 
-        self.acquire_at_items(acquire=acquire, 
+        self.acquire_at_items(nav_items,
+                              acquire=acquire, 
                               pre_acquire=pre_acquire, 
-                              post_aquire=post_acquire, 
+                              post_acquire=post_acquire, 
                               backlash=backlash)
 
     def run_script(self, script: str, verbose: bool=True) -> None:
