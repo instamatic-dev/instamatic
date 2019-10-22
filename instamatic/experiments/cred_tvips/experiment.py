@@ -40,57 +40,45 @@ class SerialExperiment(object):
         raise RuntimeError(f"`{self.__class__.__name__}` has not been initialized.")
 
     def run_from_nav_file(self):
-        t0 = time.clock()
-        n_measured = 0
-
+        """Run serial RED on all the coordinates from the `.nav` file"""
         start_angle = self.start_angle
         end_angle = self.end_angle
+        path = self.path
+        mode = self.mode
+        log = self.log
+        exposure = self.exposure
 
-        self.ctrl.stageposition.set(a=start_angle)
+        def pre_acquire(ctrl):
+            ctrl.stageposition.set(a=start_angle)
 
-        n_items = len(self.nav_items)
+        def acquire(ctrl):
+            nonlocal start_angle
+            nonlocal end_angle
+            
+            tag = ctrl.current_item.tag
+            out_path = path / tag
 
-        for i, item in enumerate(self.nav_items):
-            x = item.stage_x*1000 # um to nm
-            y = item.stage_y*1000
-            z = item.stage_z*1000
-            self.ctrl.stageposition.set(z=z)
-            self.ctrl.stageposition.set_xy_with_backlash_correction(x, y, step=10000)
-
-            tag = item.tag
-
-            out_path = self.path / tag
             out_path.mkdir(exist_ok=True, parents=True)
 
             print()
-            print(f"({i} / {n_items}) Acquiring at point `{tag}`")
             print(f"Data directory: {out_path}")
             print(f"Rotating from {start_angle} to {end_angle} degrees")
-            print(self.ctrl.stageposition)
-            print()
+            print(ctrl.stageposition)
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, exposure=self.exposure, mode=self.mode)
+            exp = Experiment(ctrl, path=out_path, log=log, exposure=exposure, mode=mode)
             exp.get_ready()
-            
-            try:
-                exp.start_collection(target_angle=end_angle, start_angle=start_angle)
-            except InterruptedError:
-                self.ctrl.cam.stop_liveview()
-                break
-            finally:
-                del exp
+            exp.start_collection(target_angle=end_angle, start_angle=start_angle)
 
-            n_measured += 1
-
-            # switch for next run
             start_angle, end_angle = end_angle, start_angle
 
-        t1 = time.clock()
-        dt = t1 - t0
-        print()
-        print(f"Serial experiment finished -> {n_measured} crystals measured")
-        print(f"Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal")
-        print(f"Data directory: {self.path}")
+        def post_acquire(ctrl):
+            ctrl.cam.stop_liveview()
+
+        self.ctrl.acquire_at_items(self.nav_items, 
+                                   acquire=acquire, 
+                                   pre_acquire=pre_acquire, 
+                                   post_acquire=post_acquire)
+
 
     def run_from_tracking_file(self):
         t0 = time.clock()
