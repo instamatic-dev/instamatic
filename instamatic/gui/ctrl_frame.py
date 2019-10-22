@@ -14,14 +14,18 @@ class ExperimentalCtrl(LabelFrame):
 
         frame = Frame(self)
 
-        cb_nowait = Checkbutton(frame, text="Wait for stage", variable=self.var_stage_wait)
-        cb_nowait.grid(row=0, column=1)
-
         b_stage_stop = Button(frame, text="Stop stage", command=self.stage_stop)
-        b_stage_stop.grid(row=0, column=0, sticky="W")
-        
+        b_stage_stop.grid(row=0, column=2, sticky="W")
+
+        cb_nowait = Checkbutton(frame, text="Wait for stage", variable=self.var_stage_wait)
+        cb_nowait.grid(row=0, column=3)
+
         b_find_eucentric_height = Button(frame, text="Find eucentric height", command=self.find_eucentric_height)
-        b_find_eucentric_height.grid(row=1, column=0, sticky="EW", columnspan=3)
+        b_find_eucentric_height.grid(row=0, column=0, sticky="EW", columnspan=2)
+
+        Label(frame, text="Mode:").grid(row=8, column=0, sticky="W")
+        self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
+        self.o_mode.grid(row=8, column=1, sticky="W", padx=10)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -84,6 +88,24 @@ class ExperimentalCtrl(LabelFrame):
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
+        frame = Frame(self)
+        
+        Label(frame, text="DiffFocus", width=20).grid(row=11, column=0, sticky="W")
+        e_difffocus = Entry(frame, width=10, textvariable=self.var_difffocus)
+        e_difffocus.grid(row=11, column=1, sticky="W")
+
+        b_difffocus = Button(frame, text="Set", command=self.set_difffocus)
+        b_difffocus.grid(row=11, column=2, sticky="W")
+
+        b_difffocus_get = Button(frame, text="Get", command=self.get_difffocus)
+        b_difffocus_get.grid(row=11, column=3, sticky="W")
+
+        slider = Scale(frame, variable=self.var_difffocus, from_=0, to=2**16-1, orient=HORIZONTAL, command=self.set_difffocus)
+        slider.grid(row=12, column=0, columnspan=3, sticky="EW")
+
+        frame.pack(side="top", fill="x", padx=10, pady=10)
+
+
         from instamatic import TEMController
         self.ctrl = TEMController.get_instance()
 
@@ -92,18 +114,24 @@ class ExperimentalCtrl(LabelFrame):
         self.var_neutral_angle = DoubleVar(value=0)
         self.var_positive_angle = DoubleVar(value=40)
 
+        self.var_mode = StringVar(value="diff")
+
         self.var_alpha_wobbler = DoubleVar(value=5)
 
         self.var_stage_x = IntVar(value=0)
         self.var_stage_y = IntVar(value=0)
         
         self.var_brightness = IntVar(value=65535)
+        self.var_difffocus = IntVar(value=65535)
 
         self.var_stage_wait = BooleanVar(value=True)
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
+
+    def set_mode(self, event=None):
+        self.ctrl.mode = self.var_mode.get()
 
     def set_brightness(self, event=None):
         self.var_brightness.set((self.var_brightness.get()))
@@ -113,6 +141,15 @@ class ExperimentalCtrl(LabelFrame):
 
     def get_brightness(self, event=None):
         self.var_brightness.set(self.ctrl.brightness.get())
+
+    def set_difffocus(self, event=None):
+        self.var_difffocus.set((self.var_difffocus.get()))
+        self.q.put(("ctrl", { "task": "difffocus.set", 
+                              "value": self.var_difffocus.get() } ))
+        self.triggerEvent.set()
+
+    def get_difffocus(self, event=None):
+        self.var_difffocus.set(self.ctrl.difffocus.get())
 
     def set_negative_angle(self):
         self.q.put(("ctrl", { "task": "stageposition.set", 
