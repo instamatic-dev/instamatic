@@ -746,7 +746,14 @@ class TEMController(object):
     def beamblank(self, on: bool):
         self.tem.setBeamBlank(on)
 
-    def acquire_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
+    def acquire_at_items(self, *args, **kwargs) -> None:
+        """See instamatic.acquire_at_items.AcquireAtItems for documentation"""
+        from instamatic.acquire_at_items import AcquireAtItems
+
+        aai = AcquireAtItems(self, *args, **kwargs)
+        aai.start()
+
+    def run_script_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
         """"Run the given script at all coordinates defined by the nav_items.
         
         Parameters
@@ -756,6 +763,11 @@ class TEMController(object):
             stage coordinates
         script: str
             Runs this script at each of the positions specified in coordinate list
+                This function will call 3 functions, which must be defined as:
+                    `acquire`
+                    `pre_acquire`
+                    `post_acquire`
+
         backlash: bool
             Toggle to move to each position with backlash correction
         """
@@ -775,61 +787,15 @@ class TEMController(object):
         ntot = len(nav_items)
 
         print(f"\nRunning script: {script} on {ntot} items.")
-        print("Press <Q> to interrupt.\n")
-
-        try:
-            acquire.pre_acquisition(ctrl)
-        except AttributeError:
-            pass
-
-        if backlash:
-            set_xy = self.stageposition.set_xy_with_backlash_correction
-        else:
-            set_xy = self.stageposition.set
-
-        t0 = t_last = time.perf_counter()
-        eta = 999
-        last_interval = interval = 1
         
-        for i, item in enumerate(nav_items):
-            ctrl.current_item = item
-            ctrl.current_i = i
-        
-            print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
-            
-            x = item.stage_x * 1000  # um -> nm
-            y = item.stage_y * 1000  # um -> nm
-        
-            set_xy(x=x, y=y)
+        pre_acquire = getattr(acquire, "pre_acquisition", None)
+        post_acquire = getattr(acquire, "post_acquisition", None)
+        acquire = getattr(acquire, "acquire", None)
 
-            try:
-                acquire.acquire(ctrl)
-            except AttributeError:
-                raise AttributeError("No `acquire` function in script (i.e. `def acquire(ctrl): pass`)")
-        
-            # calculate remaining time
-            t = time.perf_counter()
-            interval = t - t_last
-            last_interval = interval = (interval * 0.10) + (last_interval * 0.90)
-            eta = ((ntot-i)*interval) / 60 # min
-            t_last = t
-        
-            # Stop/interrupt acquisition
-            if msvcrt.kbhit():
-                key = msvcrt.getch().decode()
-                if key == "q":
-                    print("Acquisition was interrupted!")
-                    break
-
-        t1 = time.perf_counter()
-
-        try:
-            acquire.post_acquisition(ctrl)
-        except AttributeError:
-            pass
-
-        dt = t1-t0
-        print(f"Total time taken: {dt:.0f} s ({dt/i:.2f} s/item)")
+        self.acquire_at_items(acquire=acquire, 
+                              pre_acquire=pre_acquire, 
+                              post_aquire=post_acquire, 
+                              backlash=backlash)
 
     def run_script(self, script: str, verbose: bool=True) -> None:
         """Run a custom python script with access to the `ctrl` object. It will check
