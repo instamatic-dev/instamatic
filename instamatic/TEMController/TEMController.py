@@ -987,6 +987,14 @@ class TEMController(object):
         if update:
             self.stageposition.set(a=0, z=z0)
 
+    def get_diff_beam(self):
+        """Record settings for current diffraction beam"""
+        return self.to_dict("FunctionMode", "Brightness", "GunTilt", "DiffFocus", "SpotSize")
+
+    def set_diff_beam(self, d: dict):
+        """Restore settings for saved diffraction beam"""
+        self.from_dict(d)
+
     def to_dict(self, *keys) -> dict:
         """
         Store microscope parameters to dict
