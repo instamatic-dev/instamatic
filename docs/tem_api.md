@@ -223,9 +223,21 @@ and to recall them:
 ctrl.restore(name="stash")
 ```
 
+High tension:
+```python
+ht = ctrl.high_tension
+print(ht, "V")
+```
+
+Current density:
+```python
+cd = ctrl.current_density
+print(cd, "pA/cm2")
+```
+
 ### Direct access
 
-Direct access to the camera and tem interfaces is available through the `ctrl.tem` and `ctrl.cam` properties.
+Direct access to the camera and tem interfaces is available through the `ctrl.tem` and `ctrl.cam` properties, but only when running without the server configuration.
 
 ### Example experiment
 
