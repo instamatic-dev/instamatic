@@ -141,7 +141,7 @@ class JeolMicroscope(object):
     def getCurrentDensity(self) -> float:
         """Get the current density from the fluorescence screen in pA/cm2"""
         value, status = self.camera3.GetCurrentDensity()
-        return value
+        return value / 10_000
 
     def setBeamValve(self, switch: bool):
         """Open (switch=True) or close (switch=False)"""
@@ -152,6 +152,15 @@ class JeolMicroscope(object):
         value, result = self.feg3.GetBeamValve()
         return bool(value)
 
+    def getCL1(self) -> int:
+        value, result = self.lens3.GetCL2()
+        return value
+
+    def getCL2(self) -> int:
+        value, result = self.lens3.GetCL2()
+        return value
+
+    # def getCL3(self)
     def getBrightness(self) -> int:
         value, result = self.lens3.GetCL3()
         return value
@@ -365,6 +374,10 @@ class JeolMicroscope(object):
                 logger.warning(f"stage.a -> requested: {a}, got: {na}")
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning(f"stage.b -> requested: {b}, got: {nb}")
+
+    def resetStage(self):
+        """Move stage to origin"""
+        self.stage3.SetOrg()
 
     def stopStageMV(self):
         self.stage3.Stop()

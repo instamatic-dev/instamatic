@@ -656,8 +656,8 @@ class TEMController(object):
 
     def __repr__(self):
         return (f"Mode: {self.tem.getFunctionMode()}\n"
-                f"High tension: {self.high_tension/1000:.0f} kV"
-                f"Current density: {self.current_density:.0f} pA/cm2"
+                f"High tension: {self.high_tension/1000:.0f} kV\n"
+                f"Current density: {self.current_density:.2f} pA/cm2\n"
                 f"{self.gunshift}\n"
                 f"{self.guntilt}\n"
                 f"{self.beamshift}\n"
