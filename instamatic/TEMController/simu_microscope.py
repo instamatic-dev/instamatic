@@ -34,6 +34,8 @@ class SimuMicroscope(object):
         super(SimuMicroscope, self).__init__()
         import random
         
+        self.CurrentDensity_value = 100_000.0
+
         self.Brightness_value = random.randint(MIN, MAX)
 
         self.GunShift_x = random.randint(MIN, MAX)
@@ -216,8 +218,12 @@ class SimuMicroscope(object):
     def _is_moving(self) -> bool:
         return any([self._stage_dict[key]["is_moving"] for key in self._stage_dict.keys()])
 
-    def getHTValue(self):
+    def getHTValue(self) -> float:
         return self._HT
+
+    def getCurrentDensity(self) -> float:
+        rand_val = (random.random()-0.5) * 10000
+        return self.CurrentDensity_value + rand_val
 
     def getBrightness(self) -> int:
         return self.Brightness_value

@@ -60,7 +60,7 @@ class JeolMicroscope(object):
         self.tem3 = comtypes.client.CreateObject(temext.TEM3, comtypes.CLSCTX_ALL)
 
         # initialize each interface from the TEM3 object
-        # self.camera3 = self.tem3.CreateCamera3()
+        self.camera3 = self.tem3.CreateCamera3()
         # self.detector3 = self.tem3.CreateDetector3()
         # self.feg3 = self.tem3.CreateFEG3()
         # self.filter3 = self.tem3.CreateFilter3()
@@ -136,6 +136,11 @@ class JeolMicroscope(object):
     def getHTRange(self) -> list:
         """Get accelation voltage range (max, min) in V"""
         *value, status = self.ht3.GetHtRange()
+        return value
+
+    def getCurrentDensity(self) -> float:
+        """Get the current density from the fluorescence screen in pA/cm2"""
+        value, status = self.camera3.GetCurrentDensity()
         return value
 
     def setBeamValve(self, switch: bool):

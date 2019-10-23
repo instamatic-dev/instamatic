@@ -318,6 +318,7 @@ class ImageShift1(Deflector):
         self._getter = self._tem.getImageShift1
         self.key = "IS1"
 
+
 class ImageShift2(Deflector):
     """ImageShift control (IS2)"""
     def __init__(self, tem):
@@ -325,17 +326,7 @@ class ImageShift2(Deflector):
         self._setter = self._tem.setImageShift2
         self._getter = self._tem.getImageShift2
         self.key = "IS2"
-   
-class HTValue(object):
-    """get HT value"""
-    def __init__(self, tem):
-        super().__init__()
-        self._tem = tem
-        self._getter = self._tem.getHTValue
-        self.key = "HT"
-        
-    def get(self):
-        return self._getter()
+
 
 class StagePosition(object):
     """StagePosition control"""
@@ -656,7 +647,6 @@ class TEMController(object):
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
-        self.HTValue = HTValue(tem)
 
         self.autoblank = False
         self._saved_settings = {}
@@ -666,6 +656,8 @@ class TEMController(object):
 
     def __repr__(self):
         return (f"Mode: {self.tem.getFunctionMode()}\n"
+                f"High tension: {self.high_tension/1000:.0f} kV"
+                f"Current density: {self.current_density:.0f} pA/cm2"
                 f"{self.gunshift}\n"
                 f"{self.guntilt}\n"
                 f"{self.beamshift}\n"
@@ -679,6 +671,16 @@ class TEMController(object):
                 f"{self.brightness}\n"
                 f"SpotSize({self.spotsize})\n"
                 f"Saved settings: {tuple(self._saved_settings.keys())}\n")
+
+    @property
+    def high_tension(self) -> float:
+        """Get the high tension value in V"""
+        return self.tem.getHTValue()
+
+    @property
+    def current_density(self) -> float:
+        """Get current density from fluorescence screen in pA/cm2"""
+        return self.tem.getCurrentDensity()
 
     @property
     def spotsize(self) -> int:

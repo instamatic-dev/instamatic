@@ -108,7 +108,7 @@ def main():
     ctrl = TEMController(tem=tem, cam=cam)
     ranges = ctrl.magnification.get_ranges()
 
-    ht = ctrl.HTValue.get()  # in V
+    ht = ctrl.high_tension  # in V
 
     wavelength = relativistic_wavelength(ht)
 
