@@ -1,7 +1,47 @@
 import argparse
-import sys
+import os, sys
 import datetime
 import logging
+from instamatic import config
+
+
+def locate(name, open=False):
+    """Locate the directory given by `name`
+    
+    Parameters
+    ----------
+    name : str
+    open : bool
+        Open the directory in `File Explorer`
+    
+    Returns
+    -------
+    drc : pathlib.Path
+    """
+    if name == "base":
+        drc = config.base_drc
+    elif name == "config":
+        drc = config.config_drc
+    elif name == "logs":
+        drc = config.logs_drc
+    elif name == "scripts":
+        drc = config.scripts_drc
+    elif name == "work":
+        drc = config.cfg.work_directory
+    elif name == "data":
+        drc = config.cfg.data_directory
+    else:
+        raise ValueError(f"No such directory: `{name}`")
+    
+    if open:
+        try:
+            os.startfile(drc)
+        except FileNotFoundError:
+            os.startfile(drc.parent)
+    else:
+        print(drc)
+
+    return drc
 
 
 def main():
@@ -23,14 +63,30 @@ def main():
                         action="store_true", dest="acquire_at_items",
                         help="Run the script file `--script` at every point marked with `Acquire` in the nav file `--nav`.")
 
+    parser.add_argument("-l","--locate",
+                        action="store", type=str, dest="locate",
+                        help="Locate a requested directory and exit, i.e. `config`, `data`, `scripts`, `base`, 'work`, `logs`")
+
+    parser.add_argument("-o","--open",
+                        action="store", type=str, dest="open",
+                        help="Open the requested directory and exit, see `--locate`.")
 
     parser.set_defaults(script=None,
                         acquire_at_items=False,
                         nav_file=None,
                         start_gui=True,
+                        locate=None,
+                        open=False,
                         )
 
     options = parser.parse_args()
+
+    if options.locate:
+        locate(options.locate)
+        exit()
+    if options.open:
+        locate(options.open, open=True)
+        exit()
 
     from instamatic.utils import high_precision_timers
     high_precision_timers.enable()  # sleep timers with 1 ms resolution
