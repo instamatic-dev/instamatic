@@ -1,6 +1,7 @@
 from instamatic import config
 from typing import Tuple
 import time
+import random
 
 
 NTRLMAPPING = {
@@ -32,7 +33,6 @@ class SimuMicroscope(object):
     """docstring for microscope"""
     def __init__(self, name: str="simulate"):
         super(SimuMicroscope, self).__init__()
-        import random
         
         self.CurrentDensity_value = 100_000.0
 

@@ -857,8 +857,8 @@ class TEMController(object):
         return stagematrix
 
     def align_to(self, ref_img: "np.array", 
-                            apply_shift: bool= True,
-                            verbose: bool=True) -> list:
+                       apply: bool= True,
+                       verbose: bool=True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
         (in the reference image) is at the center of the view.
@@ -867,7 +867,7 @@ class TEMController(object):
         ----------
         ref_img: np.array
             Reference image that the microscope will be aligned to
-        apply_shift: bool
+        apply: bool
             Toggle to translate the stage to center the image
         verbose: bool
             Be more verbose
@@ -896,7 +896,7 @@ class TEMController(object):
         new_x = current_x - stage_shift[0] 
         new_y = current_y + stage_shift[1] 
         print(f"New stage position: {new_x:.0f} {new_y:.0f}")
-        if apply_shift:
+        if apply:
             self.stageposition.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
         return stage_shift
@@ -904,7 +904,7 @@ class TEMController(object):
     def find_eucentric_height(self, tilt: float=5, 
                                     steps: int=5, 
                                     dz: int=50_000, 
-                                    update: bool=True, 
+                                    apply: bool=True, 
                                     verbose: bool=True) -> float:
         """Automated routine to find the eucentric height, accurate up to ~1 um
         Measures the shift (cross correlation) between 2 angles (-+tilt) over 
@@ -926,8 +926,8 @@ class TEMController(object):
             Number of images to take along the defined Z range
         dz: int
             Range to cover in nm (i.e. from -dz to +dz) around the current Z value
-        update: bool
-            Update the Z height immediately
+        apply: bool
+            apply the Z height immediately
         verbose: bool
             Toggle the verbosity level
 
@@ -985,16 +985,10 @@ class TEMController(object):
         z0 = -beta/alpha
 
         print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
-        if update:
+        if apply:
             self.stageposition.set(a=0, z=z0)
 
-    def get_diff_beam(self):
-        """Record settings for current diffraction beam"""
-        return self.to_dict("FunctionMode", "Brightness", "GunTilt", "DiffFocus", "SpotSize")
-
-    def set_diff_beam(self, d: dict):
-        """Restore settings for saved diffraction beam"""
-        self.from_dict(d)
+        return z0
 
     def to_dict(self, *keys) -> dict:
         """
@@ -1031,7 +1025,8 @@ class TEMController(object):
         for key in keys:
             try:
                 dct[key] = funcs[key]()
-            except ValueError:
+            except ValueError as e:
+                # print(f"No such key: `{key}`")
                 pass
 
         return dct
@@ -1068,8 +1063,6 @@ class TEMController(object):
                 func(*v)
             except TypeError:
                 func(v)
-
-        # print self
 
     def getRawImage(self, exposure: float=0.5, binsize: int=1) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the raw data array"""
