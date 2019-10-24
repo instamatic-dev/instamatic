@@ -30,7 +30,7 @@ def extract_image_number(s):
     return int(p.stem.split("_")[-1])
 
 
-def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
+def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     credlog = Path(credlog)
     drc = credlog.parent
     
@@ -57,7 +57,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     h0 = hs[0]
     exposure_time = h0["ExposureTime"]
 
-    res = get_acquisition_time(timestamps=ts, exp_time=exposure_time, savefig=True)
+    res = get_acquisition_time(timestamps=ts, exp_time=exposure_time, savefig=True, drc=drc)
     acquisition_time = res.acquisition_time
     overhead = res.overhead
 
@@ -187,7 +187,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
         print("Finding beam stop")
         stack_mean = np.mean(tuple(img_conv.data.values()), axis=0)
         img_conv.mean_beam_center
-        beamstop_rect = find_beamstop_rect(stack_mean, img_conv.mean_beam_center, pad=1, savefig=True)
+        beamstop_rect = find_beamstop_rect(stack_mean, img_conv.mean_beam_center, pad=1, savefig=True, drc=drc)
         img_conv.add_beamstop(beamstop_rect)
 
     if mrc_path:
@@ -213,7 +213,8 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
         img_conv.write_xds_inp(smv_path)
         # img_conv.to_dials(smv_path)
 
-    img_conv.write_pets_inp(path=drc, tiff_path=tiff_drc_name)
+    if tiff_path:
+        img_conv.write_pets_inp(path=drc, tiff_path=tiff_drc_name)
     img_conv.write_beam_centers(path=drc)
 
 

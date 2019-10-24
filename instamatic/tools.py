@@ -300,9 +300,24 @@ def find_defocused_image_center(image: np.ndarray, treshold: int=1):
     return center, rads
 
 
-def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True, fn: str=None) -> object:
+def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True, drc: str=None) -> object:
     """take a list of timestamps and return the acquisition time and overhead
-    exp_time in s"""
+
+    Parameters
+    ----------    
+    timestamps : tuple
+        List of timestamps
+    exp_time : float
+        Exposure time in s
+    savefig : bool
+        Save the resulting fit under the name `acquisition_time.png`
+    drc : str
+        Location where to store the image
+
+    Returns
+    -------
+    Namespace with acquisition/exposure/overhead time in s
+    """
 
     from scipy.stats import linregress
     from types import SimpleNamespace
@@ -326,8 +341,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True,
         plt.title(f"f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms")
         plt.xlabel("Frame number")
         plt.ylabel("Timestamp (s)")
-        if not fn:
-            fn = "acquisition_time.png"
+        fn = Path(drc) / "acquisition_time.png"
         plt.savefig(fn, dpi=150)
         plt.clf()
 
