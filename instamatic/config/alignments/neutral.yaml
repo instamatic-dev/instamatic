@@ -1,0 +1,12 @@
+FunctionMode: mag1
+SpotSize: 1
+Magnification: 2000
+StagePosition: [ 0.0, 0.0, 0.0, 0.0, 0.0 ]
+GunTilt: [ 32768, 32768 ]
+GunShift: [ 32768, 32768 ]
+BeamTilt: [ 32768, 32768 ]
+BeamShift: [ 32768, 32768 ]
+ImageShift1: [ 32768, 32768 ]
+ImageShift2: [ 32768, 32768 ]
+DiffShift: [ 32768, 32768 ]
+Brightness: 32768

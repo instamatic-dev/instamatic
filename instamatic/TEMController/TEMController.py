@@ -649,7 +649,8 @@ class TEMController(object):
         self.difffocus = DiffFocus(tem)
 
         self.autoblank = False
-        self._saved_settings = {}
+        self._saved_alignments = config.get_alignments()
+
         print()
         print(self)
         self.store()
@@ -670,7 +671,7 @@ class TEMController(object):
                 f"{self.difffocus}\n"
                 f"{self.brightness}\n"
                 f"SpotSize({self.spotsize})\n"
-                f"Saved settings: {tuple(self._saved_settings.keys())}\n")
+                f"Saved alignments: {tuple(self._saved_alignments.keys())}\n")
 
     @property
     def high_tension(self) -> float:
@@ -1140,16 +1141,37 @@ class TEMController(object):
 
         return arr, h
 
-    def store(self, name: str="stash"):
+    def store_diff_beam(self, name: str="beam", save_to_file: bool=False):
+        """Record alignment for current diffraction beam.
+        Stores Guntilt (for dose control), diffraction focus, spot size, brightness,
+        and the function mode.
+
+        Restore the alignment using:
+            `ctrl.restore("beam")`"""
+        if not self.mode == "diff":
+            raise TEMControllerException("Microscope is not in `diffraction mode`")
+        keys = "FunctionMode", "Brightness", "GunTilt", "DiffFocus", "SpotSize"
+        self.store(name=name, keys=keys, save_to_file=save_to_file)
+
+    def store(self, name: str="stash", keys: tuple=None, save_to_file: bool=False):
         """Stores current settings to dictionary.
-        Multiple settings can be stored under different names."""
-        d = self.to_dict()
+        Multiple settings can be stored under different names.
+        Specify which settings should be stored using `keys`"""
+        if not keys:
+            keys = ()
+        d = self.to_dict(*keys)
         d.pop("StagePosition", None)
-        self._saved_settings[name] = d
+        self._saved_alignments[name] = d
+
+        if save_to_file:
+            import yaml
+            fn = config.alignments_drc / (name + ".yaml")
+            yaml.dump(d, stream=open(fn, "w"))
+            print(f"Saved alignment to file `{fn}`")
 
     def restore(self, name: str="stash"):
-        """Restsores settings from dictionary by the given name."""
-        d = self._saved_settings[name]
+        """Restores alignment from dictionary by the given name."""
+        d = self._saved_alignments[name]
         self.from_dict(d)
         print(f"Microscope alignment restored from '{name}'")
 

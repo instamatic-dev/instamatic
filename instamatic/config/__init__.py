@@ -23,8 +23,10 @@ def initialize_in_appData():
 
     shutil.copy(src / "global.yaml", config_drc / "global.yaml")
     
-    os.mkdir(dst / "scripts")
     os.mkdir(dst / "logs")
+
+    for sub_drc in ("scripts", "alignments"):
+        shutil.copytree(src / sub_drc, dst / sub_drc)
 
     print("Configuration directory has been initialized.")
     print(f"Directory: {dst}")
@@ -46,6 +48,16 @@ def get_base_drc():
         return search
     else:
         initialize_in_appData()
+
+
+def get_alignments() -> dict:
+    """
+    Get alignments from the alignment directory and return them as a dict of dicts.
+    Use `ctrl.from_dict` to load the alignments
+    """
+    fns = alignments_drc.glob("*.yaml")
+    alignments = {fn.name: yaml.full_load(open(fn)) for fn in fns}
+    return alignments
 
 
 class ConfigObject(object):
@@ -114,6 +126,7 @@ assert config_drc.exists(), f"Configuration directory `{config_drc}` does not ex
 
 scripts_drc = base_drc / "scripts"
 logs_drc = base_drc / "logs"
+alignments_drc = base_drc / "alignments"
 
 scripts_drc.mkdir(exist_ok=True)
 logs_drc.mkdir(exist_ok=True)
