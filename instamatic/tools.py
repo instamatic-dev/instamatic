@@ -5,6 +5,7 @@ import glob
 from skimage import exposure
 from skimage.measure import regionprops
 from scipy import ndimage, interpolate
+from pathlib import Path
 
 
 def find_script(script: str) -> "pathlib.Path":
