@@ -30,7 +30,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
     d = {"IS1": ctrl.imageshift1,
          "IS2": ctrl.imageshift2,
          "BS": ctrl.beamshift,
-         "S": ctrl.stageposition}
+         "S": ctrl.stage}
     
     if diff_defocus != 0:
         diff_focus_proper = ctrl.difffocus.value

@@ -328,8 +328,8 @@ class ImageShift2(Deflector):
         self.key = "IS2"
 
 
-class StagePosition(object):
-    """StagePosition control"""
+class Stage(object):
+    """Stage control"""
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
@@ -366,8 +366,8 @@ class StagePosition(object):
         Context manager that sets the rotation speed for the duration of the `with` statement.
 
         Usage:
-            with ctrl.stageposition.rotating_speed():
-                ctrl.stageposition.a = 40.0
+            with ctrl.stage.rotating_speed():
+                ctrl.stage.a = 40.0
         """
         current_speed = self._tem.getRotationSpeed()
         self.set_rotation_speed(speed)
@@ -429,7 +429,7 @@ class StagePosition(object):
         self.set(x=x, y=y, z=z)
 
     def move_along_optical_axis(self, delta_z: int):
-        """See `StagePosition.move_in_projection`"""
+        """See `Stage.move_in_projection`"""
         x, y, z, a, b = self.get()
         a = np.radians(a)
         y = y + delta_z * np.sin(a)
@@ -481,16 +481,16 @@ class StagePosition(object):
         Context manager that prevents blocking stage position calls on properties.
 
         Usage:
-            with ctrl.stageposition.no_wait():
-                ctrl.stageposition.x += 1000
-                ctrl.stageposition.y += 1000
+            with ctrl.stage.no_wait():
+                ctrl.stage.x += 1000
+                ctrl.stage.y += 1000
         """
         self._wait = False
         yield
         self._wait = True
 
     def stop(self) -> None:
-        """This will halt the stage preemptively if `wait=False` is passed to StagePosition.set"""
+        """This will halt the stage preemptively if `wait=False` is passed to Stage.set"""
         self._tem.stopStage()
 
     def alpha_wobbler(self, delta: float=5.0, event=None) -> None:
@@ -657,7 +657,8 @@ class TEMController(object):
         self.imageshift1 = ImageShift1(tem)
         self.imageshift2 = ImageShift2(tem)
         self.diffshift = DiffShift(tem)
-        self.stageposition = StagePosition(tem)
+        self.stage = Stage(tem)
+        self.stageposition = self.stage  # for backwards compatibility
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
@@ -680,7 +681,7 @@ class TEMController(object):
                 f"{self.imageshift1}\n"
                 f"{self.imageshift2}\n"
                 f"{self.diffshift}\n"
-                f"{self.stageposition}\n"
+                f"{self.stage}\n"
                 f"{self.magnification}\n"
                 f"{self.difffocus}\n"
                 f"{self.brightness}\n"
@@ -894,7 +895,7 @@ class TEMController(object):
         """
         from instamatic.processing.cross_correlate import cross_correlate
 
-        current_x, current_y = self.stageposition.xy
+        current_x, current_y = self.stage.xy
         print(f"Current stage position: {current_x:.0f} {current_y:.0f}")
         stagematrix = self.get_stagematrix()
         mati = np.linalg.inv(stagematrix)
@@ -911,7 +912,7 @@ class TEMController(object):
         new_y = current_y + stage_shift[1] 
         print(f"New stage position: {new_x:.0f} {new_y:.0f}")
         if apply:
-            self.stageposition.set_xy_with_backlash_correction(x=new_x, y=new_y)
+            self.stage.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
         return stage_shift
 
@@ -954,11 +955,11 @@ class TEMController(object):
 
         def one_cycle(tilt: float=5, sign=1) -> list:
             angle1 = -tilt*sign
-            self.stageposition.a = angle1
+            self.stage.a = angle1
             img1 = self.getRawImage()
             
             angle2 = +tilt*sign
-            self.stageposition.a = angle2
+            self.stage.a = angle2
             img2 = self.getRawImage()
             
             if sign < 1:
@@ -968,10 +969,10 @@ class TEMController(object):
 
             return shift
 
-        self.stageposition.a = 0
-        # self.stageposition.z = 0 # for testing
+        self.stage.a = 0
+        # self.stage.z = 0 # for testing
 
-        zc = self.stageposition.z
+        zc = self.stage.z
         print(f"Current z = {zc:.1f} nm")
 
         zs = zc + np.linspace(-dz, dz, steps)
@@ -980,7 +981,7 @@ class TEMController(object):
         sign = 1
 
         for i, z in enumerate(zs):
-            self.stageposition.z = z
+            self.stage.z = z
             if verbose:
                 print(f"z = {z:.1f} nm")
 
@@ -1000,7 +1001,7 @@ class TEMController(object):
 
         print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
         if apply:
-            self.stageposition.set(a=0, z=z0)
+            self.stage.set(a=0, z=z0)
 
         return z0
 
@@ -1014,7 +1015,7 @@ class TEMController(object):
         self.to_dict('all') or self.to_dict() will return all properties
         """
         
-        ## Each of these costs about 40-60 ms per call on a JEOL 2100, stageposition is 265 ms per call
+        ## Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
         funcs = { 
             'FunctionMode': self.tem.getFunctionMode,
             'GunShift': self.gunshift.get,
@@ -1024,7 +1025,7 @@ class TEMController(object):
             'ImageShift1': self.imageshift1.get,
             'ImageShift2': self.imageshift2.get,
             'DiffShift': self.diffshift.get,
-            'StagePosition': self.stageposition.get,
+            'StagePosition': self.stage.get,
             'Magnification': self.magnification.get,
             'DiffFocus': self.difffocus.get,
             'Brightness': self.brightness.get,
@@ -1057,7 +1058,7 @@ class TEMController(object):
             'ImageShift1': self.imageshift1.set,
             'ImageShift2': self.imageshift2.set,
             'DiffShift': self.diffshift.set,
-            'StagePosition': self.stageposition.set,
+            'StagePosition': self.stage.set,
             'Magnification': self.magnification.set,
             'DiffFocus': self.difffocus.set,
             'Brightness': self.brightness.set,

@@ -260,8 +260,8 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         print()
         print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
         
-        ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
-        print(ctrl.stageposition)
+        ctrl.stage.set(x=x_cent+dx, y=y_cent+dy)
+        print(ctrl.stage)
         
         outfile = f"calib_{i:04d}" if save_images else None
 
@@ -279,8 +279,8 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         i += 1
     
     print(" >> Reset to center")
-    ctrl.stageposition.set(x=x_cent, y=y_cent)
-    ctrl.stageposition.reset_xy()
+    ctrl.stage.set(x=x_cent, y=y_cent)
+    ctrl.stage.reset_xy()
 
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize / scale

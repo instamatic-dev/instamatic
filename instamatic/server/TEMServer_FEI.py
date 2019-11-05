@@ -42,7 +42,7 @@ def run_rotation_with_speed(data):
     target_angle = data[0]
     speed = data[1]
     print(f"Rotating to {target_angle} with speed level {speed}...")
-    ctrl.stageposition.set_with_speed(a=target_angle, speed=speed)
+    ctrl.stage.set_with_speed(a=target_angle, speed=speed)
     print("Rotation completed.")
 
 

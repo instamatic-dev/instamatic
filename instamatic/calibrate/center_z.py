@@ -13,12 +13,12 @@ def reject_outlier(data, m=2):
     return filtered
 
 def eliminate_backlash_in_tiltx(ctrl):
-    a_i = ctrl.stageposition.a
+    a_i = ctrl.stage.a
     if a_i < 0:
-        ctrl.stageposition.set(a = a_i + 0.5 , wait = True)
+        ctrl.stage.set(a = a_i + 0.5 , wait = True)
         return 0
     else:
-        ctrl.stageposition.set(a = a_i - 0.5 , wait = True)
+        ctrl.stage.set(a = a_i - 0.5 , wait = True)
         return 1
 
 
@@ -36,21 +36,21 @@ def center_z_height(ctrl, verbose=False):
     ctrl.brightness.value = 65535
     ctrl.magnification.value = 2500
 
-    z0 = ctrl.stageposition.z
-    ctrl.stageposition.set(a = -5)
-    a0 = ctrl.stageposition.a
+    z0 = ctrl.stage.z
+    ctrl.stage.set(a = -5)
+    a0 = ctrl.stage.a
     z = []
     d = []
-    ctrl.stageposition.z = z0 - 2000
-    ctrl.stageposition.z = z0 - 1000
-    ctrl.stageposition.z = z0
+    ctrl.stage.z = z0 - 2000
+    ctrl.stage.z = z0 - 1000
+    ctrl.stage.z = z0
     
     for i in range(0,10):
-        z1 = ctrl.stageposition.z
-        ctrl.stageposition.set(a = a0)
+        z1 = ctrl.stage.z
+        ctrl.stage.set(a = a0)
         img0, h = ctrl.getImage(exposure = 0.01, comment = "z height finding")
         z.append(z0 + i * 1000)
-        ctrl.stageposition.set(a = a0 + 10)
+        ctrl.stage.set(a = a0 + 10)
         img1, h = ctrl.getImage(exposure = 0.01, comment = "z height finding")
         shift = cross_correlate(img0, img1, upsample_factor=10, verbose=False)
         d1 = np.linalg.norm(shift) 
@@ -59,7 +59,7 @@ def center_z_height(ctrl, verbose=False):
         d.append(d1)
         if verbose:
             print(f"Step {i}: z = {z1}, d = {np.linalg.norm(shift)}")
-        ctrl.stageposition.set(z = z1 + 1000)
+        ctrl.stage.set(z = z1 + 1000)
         time.sleep(1)
         
     d_f = reject_outlier(d)
@@ -70,16 +70,16 @@ def center_z_height(ctrl, verbose=False):
     z_center = -p[1]/p[0]
     satisfied = input(f"Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.")
     if satisfied == "x":
-        ctrl.stageposition.set(a = a0, z = z0)
+        ctrl.stage.set(a = a0, z = z0)
         if verbose:
             print("Did not find proper eucentric height...")
     else:
-        if z_center > ctrl.stageposition.z:
-            ctrl.stageposition.set(a = a0, z = z_center-2000)
-            ctrl.stageposition.set(a = a0, z = z_center)
+        if z_center > ctrl.stage.z:
+            ctrl.stage.set(a = a0, z = z_center-2000)
+            ctrl.stage.set(a = a0, z = z_center)
         else:
-            ctrl.stageposition.set(a = a0, z = z_center+2000)
-            ctrl.stageposition.set(a = a0, z = z_center)
+            ctrl.stage.set(a = a0, z = z_center+2000)
+            ctrl.stage.set(a = a0, z = z_center)
 
         print("\033[k", "Eucentric height set. Find the crystal again and start data collection!", end="\r")
 
@@ -107,7 +107,7 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
     ctrl.magnification.value = 2500
     magnification = ctrl.magnification.value
 
-    x0,y0,z0,a0,b0 = ctrl.stageposition.get()
+    x0,y0,z0,a0,b0 = ctrl.stage.get()
     img0, h = ctrl.getImage(exposure = 0.01, comment = "z height finding HY")
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread = spread, offset=offset)
@@ -119,17 +119,17 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
 
     rotation_dir = eliminate_backlash_in_tiltx(ctrl)
     if rotation_dir == 0:
-        ctrl.stageposition.set(a = a0 + rotation, wait = False)
+        ctrl.stage.set(a = a0 + rotation, wait = False)
         endangle = a0 + rotation
     else:
-        ctrl.stageposition.set(a = a0 - rotation, wait = False)
+        ctrl.stage.set(a = a0 - rotation, wait = False)
         endangle = a0 - rotation
     
     while True:
-        if abs(ctrl.stageposition.a - a0) > 2:
+        if abs(ctrl.stage.a - a0) > 2:
             break
         
-    while ctrl.stageposition.is_moving():
+    while ctrl.stage.is_moving():
         img, h = ctrl.getImage(exposure = 0.01, comment = "z height finding HY")
         try:
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread = spread, offset=offset)
@@ -138,14 +138,14 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
                 #print(f"Feature Captured. Area: {crystal_inter1} pixels")
                 shift = np.subtract(crystal_inter_pos, crystal_inter1_pos)
                 #print(f"Shift: {shift}")
-                ctrl.stageposition.stop()
+                ctrl.stage.stop()
                 if shift[0] > 5:
-                    ctrl.stageposition.z = z0 - (rotation_dir - 0.5)*increment
+                    ctrl.stage.z = z0 - (rotation_dir - 0.5)*increment
                     #print(f"Z height adjusted: - {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
                 elif shift[0] < -5:
-                    ctrl.stageposition.z = z0 + (rotation_dir - 0.5)*increment
+                    ctrl.stage.z = z0 + (rotation_dir - 0.5)*increment
                     #print(f"Z height adjusted: + {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
@@ -156,21 +156,21 @@ def center_z_height_HYMethod(ctrl, increment = 2000, rotation = 15, spread = 2, 
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
                 else:
-                    ctrl.stageposition.stop()
+                    ctrl.stage.stop()
                     return 999999,999999
         except:
             if verbose:
                 print("No crystal found. Finding another area for z height adjustment.")
-            ctrl.stageposition.stop()
+            ctrl.stage.stop()
             return 999999,999999
         
-        z0 = ctrl.stageposition.z
+        z0 = ctrl.stage.z
 
-        if abs(ctrl.stageposition.a - endangle) < 0.5:
+        if abs(ctrl.stage.a - endangle) < 0.5:
             break
-        ctrl.stageposition.set(a = endangle, wait = False)
+        ctrl.stage.set(a = endangle, wait = False)
         time.sleep(0.5)
         
     print("\033[k", f"Z height adjustment done and eucentric z height found at: {z0}", end= "\r")
-    x, y, z, a, b = ctrl.stageposition.get()
+    x, y, z, a, b = ctrl.stage.get()
     return x, y

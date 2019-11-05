@@ -68,7 +68,7 @@ class Experiment(object):
             tilt_range =  abs(tilt_range)
 
         if self.current_angle is None:
-            self.start_angle = start_angle = ctrl.stageposition.a
+            self.start_angle = start_angle = ctrl.stage.a
         else:
             start_angle = self.current_angle + stepsize
 
@@ -89,7 +89,7 @@ class Experiment(object):
     
         # for i, a in enumerate(tilt_positions):
         for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
-            ctrl.stageposition.a = angle
+            ctrl.stage.a = angle
 
             j = i + self.offset
 
@@ -100,7 +100,7 @@ class Experiment(object):
         self.offset += len(tilt_positions)
         self.nframes = j
 
-        self.end_angle = end_angle = ctrl.stageposition.a
+        self.end_angle = end_angle = ctrl.stage.a
 
         if ctrl.cam.streamable:
             ctrl.cam.unblock()

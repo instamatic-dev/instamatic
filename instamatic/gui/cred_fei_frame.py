@@ -70,7 +70,7 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.e_exposure_time.config(state=DISABLED)
         self.e_rotspeed.config(state=DISABLED)
                     
-        self.q.put(("credfei", {"task": "stageposition.set_with_speed",
+        self.q.put(("credfei", {"task": "stage.set_with_speed",
                                 "a": self.var_endangle.get(),
                                 "speed": self.var_rotspeed.get()}))
         self.triggerEvent.set()

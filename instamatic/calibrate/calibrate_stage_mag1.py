@@ -72,21 +72,21 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     # make sure the angle == 0.0
     for _ in range(3):
-        ctrl.stageposition.a = 0.0
+        ctrl.stage.a = 0.0
         time.sleep(settle_delay)
 
     exposure = kwargs.get("exposure", config.camera.default_exposure)
     binsize = kwargs.get("binsize", config.camera.default_binsize)
 
     if minimize_backlash:
-        ctrl.stageposition.eliminate_backlash_xy(step=stepsize, settle_delay=settle_delay)
+        ctrl.stage.eliminate_backlash_xy(step=stepsize, settle_delay=settle_delay)
 
     outfile = work_drc / "calib_start" if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
     img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
-    stage_cent = ctrl.stageposition.get()
+    stage_cent = ctrl.stage.get()
 
     cam_dimensions = h_cent["ImageCameraDimensions"]
     bin_x, bin_y = cam_dimensions / np.array(img_cent.shape)
@@ -115,16 +115,16 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     if minimize_backlash:
         xtarget = x_cent + x_range[0]
         ytarget = y_cent + y_range[0]
-        ctrl.stageposition.set(x=xtarget-stepsize, y=ytarget-stepsize)
+        ctrl.stage.set(x=xtarget-stepsize, y=ytarget-stepsize)
         time.sleep(settle_delay)
 
-        print("(minimize_backlash) Overshoot a bit in XY: ", ctrl.stageposition.xy)
+        print("(minimize_backlash) Overshoot a bit in XY: ", ctrl.stage.xy)
 
     for dx in x_range:
         for dy in y_range:
-            ctrl.stageposition.set(x=x_cent+dx, y=y_cent+dy)
+            ctrl.stage.set(x=x_cent+dx, y=y_cent+dy)
             time.sleep(settle_delay)
-            stage = ctrl.stageposition.get()
+            stage = ctrl.stage.get()
 
             print()
             print(f"Position {I+1}/{tot}")
@@ -149,14 +149,14 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
         if minimize_backlash:
             ytarget = y_cent + y_range[0]
-            ctrl.stageposition.set(y=ytarget-stepsize)
+            ctrl.stage.set(y=ytarget-stepsize)
             time.sleep(settle_delay)
-            print("(minimize_backlash) Overshoot a bit in Y: ", ctrl.stageposition.xy)
+            print("(minimize_backlash) Overshoot a bit in Y: ", ctrl.stage.xy)
     
     print(" >> Reset to center")
-    ctrl.stageposition.set(x=x_cent, y=y_cent)
+    ctrl.stage.set(x=x_cent, y=y_cent)
     time.sleep(settle_delay)
-    # ctrl.stageposition.reset_xy()
+    # ctrl.stage.reset_xy()
 
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize / scale

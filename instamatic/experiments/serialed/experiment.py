@@ -182,7 +182,7 @@ class Experiment(object):
             print("-------------------")
         if not self.begin_here:
             input(" >> Move the stage to where you want to start and press <ENTER> to continue")
-        x, y, _, _, _ = self.ctrl.stageposition.get()
+        x, y, _, _, _ = self.ctrl.stage.get()
         self.scan_centers = np.array([[x,y]])            
         if not self.scan_radius:
             self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
@@ -345,7 +345,7 @@ class Experiment(object):
 
         for i, (x, y) in enumerate(self.scan_centers):
             try:
-                self.ctrl.stageposition.set(x=x, y=y)
+                self.ctrl.stage.set(x=x, y=y)
             except ValueError as e:
                 print(e)
                 print(" >> Moving to next center...")
@@ -372,7 +372,7 @@ class Experiment(object):
                 x = center_x + x_offset
                 y = center_y + y_offset
                 try:
-                    self.ctrl.stageposition.set(x=x, y=y)
+                    self.ctrl.stage.set(x=x, y=y)
                 except ValueError as e:
                     print(e)
                     print(" >> Moving to next position...")
@@ -525,7 +525,7 @@ class Experiment(object):
                 if self.sample_rotation_angles:
                     for rotation_angle in self.sample_rotation_angles:
                         self.log.debug("Rotation angle = %f", rotation_angle)
-                        self.ctrl.stageposition.a = rotation_angle
+                        self.ctrl.stage.a = rotation_angle
         
                         outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
                         img, h = self.ctrl.getImage(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
@@ -536,7 +536,7 @@ class Experiment(object):
     
                         write_hdf5(outfile, img, header=h)
                     
-                    self.ctrl.stageposition.a = 0
+                    self.ctrl.stage.a = 0
     
             self.image_mode()
 

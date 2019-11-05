@@ -35,12 +35,12 @@ Based on this you can write your own python scripts to control the microscope an
 
 The `ctrl` object allows full control over the electron microscope. For example, to read out the position of the sample stage:
 ```python
-xy = ctrl.stageposition.xy
+xy = ctrl.stage.xy
 print(xy)
 ```
 To move to a different position:
 ```python
-ctrl.stageposition.xy = 10000, 20000
+ctrl.stage.xy = 10000, 20000
 ```
 A convenient way to experiment with the options available is to run `instamatic.controller`. This will initialize a `ctrl` object that can be played with interactively.
 
@@ -109,41 +109,41 @@ ctrl.beamshift.neutral()
 
 The stageposition controls the translation of the samplestage (in nm):
 ```python
-x = ctrl.stageposition.x
-y = ctrl.stageposition.y
-x, y = ctrl.stageposition.xy
-ctrl.stageposition.xy = 0, 0
+x = ctrl.stage.x
+y = ctrl.stage.y
+x, y = ctrl.stage.xy
+ctrl.stage.xy = 0, 0
 ```
 the height of the sample stage (in nm):
 ```python
-z = ctrl.stageposition.z
-ctrl.stageposition.z = 10
+z = ctrl.stage.z
+ctrl.stage.z = 10
 ```
 or rotation of the sample stage (in degrees), where `a` is the primary rotation axis, and `b` the secondary rotation axis (if available):
 ```python
-a = ctrl.stageposition.a
-ctrl.stageposition.a = 25
+a = ctrl.stage.a
+ctrl.stage.a = 25
 
-b = ctrl.stageposition.b
-ctrl.stageposition.b = -10
+b = ctrl.stage.b
+ctrl.stage.b = -10
 ```
 All stage parameters can be retrieved and applied using the get/set methods:
 ```python
-x, y, z, a, b = ctrl.stageposition.get()
-ctrl.stageposition.set(x=0, y=0)
-ctrl.stageposition.set(a=25)
-ctrl.stageposition.set(x=0, y=0, z=0, a=0, b=0)
+x, y, z, a, b = ctrl.stage.get()
+ctrl.stage.set(x=0, y=0)
+ctrl.stage.set(a=25)
+ctrl.stage.set(x=0, y=0, z=0, a=0, b=0)
 ```
 Using the `.get` method returns a `namedtuple`, so that individual values can be easily accessed without unpacking:
 ```python
-stage = ctrl.stageposition.get()
+stage = ctrl.stage.get()
 print(f"The stage position coordinates are ({stage.x}, {stage.y})")
 print(f"The height is {stage.z}")
 print(f"The tilt angle is {stage.a}")
 ```
 The stage position can be neutralized (all values reset to 0) using:
 ```python
-ctrl.stageposition.neutral()
+ctrl.stage.neutral()
 ```
 
 ### Camera
@@ -253,7 +253,7 @@ exposure_time = 1.0
 angles = range(-40, 40, 1)
 for i, angle in enumerate(angles):
     print(f"Angle = {angle}")
-    ctrl.stageposition.a = angle
+    ctrl.stage.a = angle
     img, h = ctrl.getImage(exposure_time)
     fn = "image_{:04d}.tiff".format(i)
     write_tiff(fn, img, header=h)
