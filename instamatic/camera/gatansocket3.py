@@ -88,14 +88,14 @@ MAX_BOOL_ARGS = 8
 sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 class Message(object):
-	'''
-Information packet to send and receive on the socket.
-Initialize with the sequences of args (longs, bools, doubles)
-and optional long array.
-	'''
-#Strings are packaged as long array using np.frombuffer(buffer,np.int_)
-# and can be converted back with longarray.tostring()
+	"""
+	Information packet to send and receive on the socket.
+	Initialize with the sequences of args (longs, bools, doubles)
+	and optional long array.
+	"""
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
+		# Strings are packaged as long array using np.frombuffer(buffer,np.int_)
+		# and can be converted back with longarray.tostring()
 		# add final longarg with size of the longarray
 		if len(longarray):
 			longargs = list(longargs)
@@ -117,25 +117,23 @@ and optional long array.
 		self.array['longarray'] = longarray
 
 		# create numpy arrays for the args and array
-		'''
-		self.longargs = np.asarray(longargs, dtype=np.int_)
-		self.dblargs = np.asarray(dblargs, dtype=np.double)
-		self.boolargs = np.asarray(boolargs, dtype=np.int32)
-		self.longarray = np.asarray(longarray, dtype=np.int_)
-		'''
+		# self.longargs = np.asarray(longargs, dtype=np.int_)
+		# self.dblargs = np.asarray(dblargs, dtype=np.double)
+		# self.boolargs = np.asarray(boolargs, dtype=np.int32)
+		# self.longarray = np.asarray(longarray, dtype=np.int_)
 
 	def pack(self):
-		'''
+		"""
 		Serialize the data
-		'''
+		"""
 		if self.array.data.itemsize > ARGS_BUFFER_SIZE:
 			raise RuntimeError('Message packet size %d is larger than maximum %d' % (len(packed), ARGS_BUFFER_SIZE))
 		return self.array.data
 
 	def unpack(self, buf):
-		'''
+		"""
 		unpack buffer into our data structure
-		'''
+		"""
 		self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
 def log(message):
@@ -147,8 +145,8 @@ def log(message):
 	f.write(line)
 	f.close()
 
-## decorator for socket send and recv calls, so they can make log
 def logwrap(func):
+	"""Decorator for socket send and recv calls, so they can make log"""
 	def newfunc(*args, **kwargs):
 		log('%s\t%s\t%s' % (func,args,kwargs))
 		try:
@@ -167,7 +165,7 @@ class GatanSocket(object):
 		elif 'SERIALEMCCD_PORT' in os.environ:
 			self.port = os.environ['SERIALEMCCD_PORT']
 		else:
-			raise ValueError('need to specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
+			raise ValueError('Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
 		
 		self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
 		if self.debug:
@@ -219,7 +217,7 @@ class GatanSocket(object):
 
 	def connect(self):
 		# recommended by Gatan to use localhost IP to avoid using tcp
-		self.sock = socket.create_connection(('127.0.0.1',self.port))
+		self.sock = socket.create_connection(('127.0.0.1', self.port))
 
 	def disconnect(self):
 		self.sock.shutdown(socket.SHUT_RDWR)
@@ -260,7 +258,7 @@ class GatanSocket(object):
 		log('Func: %d, Code: %d' % (sendargs[0],recvargs[0]))
 
 	def GetLong(self, funcName):
-		'''common class of function that gets a single long'''
+		"""Common class of function that gets a single long"""
 		funcCode = enum_gs[funcName]
 		message_send = Message(longargs=(funcCode,))
 		# First recieved message longargs is error code
@@ -270,8 +268,8 @@ class GatanSocket(object):
 		return result
 
 	def SendLongGetLong(self, funcName, longarg):
-		'''common class of function with one long arg
-		that returns a single long'''
+		"""Common class of function with one long arg
+		that returns a single long"""
 		funcCode = enum_gs[funcName]
 		message_send = Message(longargs=(funcCode,longarg))
 		# First recieved message longargs is error code
@@ -530,9 +528,9 @@ class GatanSocket(object):
 		return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
 
 	def ExecuteGetLongCameraObjectFunction(self, function_name, camera_id=0):
-		'''
+		"""
 		Execute DM script function that requires camera object as input and output one long integer.
-		'''
+		"""
 		recv_longargs_init = (0,)
 		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_longargs_init=recv_longargs_init)
 		if result is False:
@@ -540,9 +538,9 @@ class GatanSocket(object):
 		return result.array['longargs'][0]
 
 	def ExecuteGetDoubleCameraObjectFunction(self, function_name, camera_id=0):
-		'''
+		"""
 		Execute DM script function that requires camera object as input and output double floating point number.
-		'''
+		"""
 		recv_dblargs_init = (0,)
 		result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_dblargs_init=recv_dblargs_init)
 		if result is False:
@@ -550,9 +548,9 @@ class GatanSocket(object):
 		return result.array['dblargs'][0]
 
 	def ExecuteCameraObjectFunction(self, function_name, camera_id=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-		'''
+		"""
 		Execute DM script function that requires camera object as input.
-		'''
+		"""
 		if not self.hasScriptFunction(function_name):
 			# unsuccessful
 			return False
@@ -568,16 +566,16 @@ class GatanSocket(object):
 		return result.array['longargs'][0]
 
 	def ExecuteGetLongScript(self, command_line, select_camera=0):
-		'''
+		"""
 		Execute DM script and return the result as integer
-		'''
+		"""
 		# SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
 		return int(self.ExecuteGetDoubleScript(command_line,select_camera))
 
 	def ExecuteGetDoubleScript(self, command_line, select_camera=0):
-		'''
+		"""
 		Execute DM script that gets one double float number
-		'''
+		"""
 		recv_dblargs_init = (0.0,)
 		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
 		return result.array['dblargs'][0]
@@ -598,8 +596,11 @@ class GatanSocket(object):
 		return message_recv
 
 	def RunScript(self, fn: str, background: bool=False):
-		"""Run a DM script
+		"""
+		Run a DM script
 
+		fn: str
+			Path to the script to run
 		background: bool
 			Prepend `// $BACKGROUND$` to run the script in the background
 			and make it non-blocking.
