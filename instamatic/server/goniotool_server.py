@@ -39,7 +39,7 @@ class GonioToolServer(threading.Thread):
     
     def run(self):
         """Start the server thread"""
-        self.gpniotool = GonioToolWrapper()
+        self.goniotool = GonioToolWrapper()
         print(f"Initialized connection to GonioTool")
 
         while True:

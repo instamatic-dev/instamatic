@@ -105,14 +105,15 @@ class GonioToolClient(object):
 
 class GonioToolWrapper(object):
     """docstring for GonioToolWrapper"""
-    def __init__(self, arg):
-        super(GonioToolWrapper, self).__init__()
+    def __init__(self):
+        super().__init__()
         
         self.app = Application().start(GONIOTOOL_EXE)
-        input("Press <ENTER> to continue...")  # delay for password, TODO: automate
+        input("Enter password and press <ENTER> to continue...")  # delay for password, TODO: automate
         self.startup()
 
     def startup(self):
+        """Initialize and start up the GonioTool interface"""
         self.f1rate = self._app.TMainForm["f1/rate"] 
         
         self.f1 = app.TMainForm.f1
@@ -127,29 +128,37 @@ class GonioToolWrapper(object):
         self.edit = app.TMainForm.f1.Edit7
 
     def closedown(self):
+        """Set default speed and close the program"""
         self.set_rate(DEFAULT_SPEED)
         self.click_tkb()
         # TODO: close the program
 
     def list_f1rate(self):
+        """List GUI control identifiers for `f1/rate` tab"""
         self.f1rate.print_control_identifiers()
 
     def list_f1(self):
+        """List GUI control identifiers for `f1` box"""
         self.f1.print_control_identifiers()
 
     def click_get_button(self):
+        """Click GET button"""
         self.getbutton.click()
 
     def click_set_button(self):
+        """Click SET button"""
         self.setbutton.click()
 
     def click_tkb(self):
-       self.rb_tkb.click()
+        """Select TKB radio button"""
+        self.rb_tkb.click()
 
     def click_cmd(self):
-       self.rb_cmd.click()
+        """Select CMD radio button"""
+        self.rb_cmd.click()
 
-    def set_rate(speed: int):
+    def set_rate(self, speed: int):
+        """Set rate value for TX"""
         assert isinstance(speed, int)
         assert 0 < speed <= 12
 
@@ -159,7 +168,7 @@ class GonioToolWrapper(object):
 
 
 if __name__ == '__main__':
-    gt = GonioTool()
+    gt = GonioToolWrapper()
 
     from IPython import embed
     embed()
