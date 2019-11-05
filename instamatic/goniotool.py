@@ -166,6 +166,12 @@ class GonioToolWrapper(object):
         s.set_text(speed)
         self.click_set_button()
 
+    def get_rate(self) -> int:
+        """Get current rate value for TX"""
+        s = self.edit.select()
+        val = s.get_text(speed)
+        return int(val)
+
 
 if __name__ == '__main__':
     gt = GonioToolWrapper()

@@ -355,11 +355,25 @@ class StagePosition(object):
         speed: float, set stage rotation with specified speed (FEI only)
         """
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
-        
-    def setspeed(self, speed=1) -> None:
+
+    def set_rotation_speed(self, speed=1) -> None:
         """Sets the stage (rotation) movement speed on the TEM"""
-        self._tem.setStageSpeed(value=1)
-        
+        self._tem.setRotationSpeed(value=speed)
+
+    @contextmanager
+    def rotating_speed(self, speed: int):
+        """
+        Context manager that sets the rotation speed for the duration of the `with` statement.
+
+        Usage:
+            with ctrl.stageposition.rotating_speed():
+                ctrl.stageposition.a = 40.0
+        """
+        current_speed = self._tem.getRotationSpeed()
+        self.set_rotation_speed(speed)
+        yield
+        self.set_rotation_speed(current_speed)
+
     def get(self) -> Tuple[int, int, int, int, int]:
         """Get stage positions; x, y, z, and status of the rotation axes; a, b"""
         return StagePositionTuple(*self._getter())

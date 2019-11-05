@@ -74,7 +74,8 @@ class JeolMicroscope(object):
         self.lens3 = self.tem3.CreateLens3()
         self.stage3 = self.tem3.CreateStage3()
 
-        if config.use_goniotool:
+        self.goniotool_available = config.use_goniotool
+        if self.goniotool_available:
             from instamatic.goniotool import GonioToolClient
             self.goniotool = GonioToolClient()
 
@@ -379,8 +380,17 @@ class JeolMicroscope(object):
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning(f"stage.b -> requested: {b}, got: {nb}")
 
-    def setStageSpeed(self, value: int):
-        self.goniotool.set_rate(value)
+    def getRotationSpeed(self) -> int:
+        if self.goniotool_available:
+            self.goniotool.get_rate()
+        else:
+            raise IOError("Goniotool connection is not available.")
+
+    def setRotationSpeed(self, value: int):
+        if self.goniotool_available:
+            self.goniotool.set_rate(value)
+        else:
+            raise IOError("Goniotool connection is not available.")
 
     def resetStage(self):
         """Move stage to origin"""
