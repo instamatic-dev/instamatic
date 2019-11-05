@@ -357,7 +357,7 @@ class StagePosition(object):
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
         
     def setspeed(self, speed=1) -> None:
-        """Sets the stage (rotation) movement speed on the TEM (FEI only)"""
+        """Sets the stage (rotation) movement speed on the TEM"""
         self._tem.setStageSpeed(value=1)
         
     def get(self) -> Tuple[int, int, int, int, int]:
