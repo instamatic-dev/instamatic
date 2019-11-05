@@ -1,7 +1,106 @@
 from pywinauto import Application
+from instamatic import config
 
 GONIOTOOL_EXE = "C:\JEOL\TOOL\GonioTool.exe"
 DEFAULT_SPEED = 12
+
+HOST = config.cfg.goniotool_server_host
+PORT = config.cfg.goniotool_server_port
+BUFSIZE = 1024
+
+
+class ServerError(Exception):
+    pass
+
+
+def kill_server(p):
+    # p.kill is not adequate
+    sp.call(['taskkill', '/F', '/T', '/PID',  str(p.pid)])
+
+
+def start_server_in_subprocess():
+   cmd = "instamatic.goniotool.exe"
+   p = sp.Popen(cmd, stdout=sp.DEVNULL)
+   print(f"Starting GonioTool server ({HOST}:{PORT} on pid={p.pid})")
+   atexit.register(kill_server, p)
+
+
+class GonioToolClient(object):
+    """
+    Simulates a GonioToolWrapper object and synchronizes calls over a socket server.
+    For documentation, see the actual python interface to the GonioToolWrapper API.
+    """
+    def __init__(self, name: "GonioTool"):
+        super().__init__()
+        
+        self.name = name
+        self.bufsize = BUFSIZE
+
+        try:
+            self.connect()
+        except ConnectionRefusedError:
+            start_server_in_subprocess()
+
+            for t in range(30):
+                try:
+                    self.connect()
+                except ConnectionRefusedError:
+                    time.sleep(1)
+                    if t > 3:
+                        print("Waiting for server")
+                    if t > 30:
+                        raise RuntimeError("Cannot establish server connection (timeout)")
+                else:
+                    break
+
+        self._init_dict()
+
+        atexit.register(self.s.close)
+
+    def connect(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.connect((HOST, PORT))
+        print(f"Connected to GonioTool server ({HOST}:{PORT})")
+
+    def __getattr__(self, func_name):
+        try:
+            wrapped = self._dct[func_name]
+        except KeyError as e:
+            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+
+        @wraps(wrapped)
+        def wrapper(*args, **kwargs):
+            dct = {"func_name": func_name,
+               "args": args,
+               "kwargs": kwargs}
+            return self._eval_dct(dct)
+
+        return wrapper
+
+    def _eval_dct(self, dct):
+        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
+
+        self.s.send(pickle.dumps(dct))
+        response = self.s.recv(self._bufsize)
+        if response:
+            status, data = pickle.loads(response)
+
+        if status == 200:
+            return data
+
+        elif status == 500:
+            raise data
+
+        else:
+            raise ConnectionError(f"Unknown status code: {status}")
+
+    def _init_dict(self):
+        gtw = GonioToolWrapper
+
+        self._dct = {key:value for key, value in  gtw.__dict__.items() if not key.startswith("_")}
+
+    def __dir__(self):
+        return self._dct.keys()
 
 
 class GonioToolWrapper(object):
@@ -27,7 +126,7 @@ class GonioToolWrapper(object):
         
         self.edit = app.TMainForm.f1.Edit7
 
-    def closedown(self)
+    def closedown(self):
         self.set_rate(DEFAULT_SPEED)
         self.click_tkb()
         # TODO: close the program

@@ -1,69 +1,133 @@
-from socket import *
+import threading
+import queue
+import socket
+import pickle
+import logging
 import datetime
 from instamatic import config
 from instamatic.goniotool import GonioToolWrapper
-import threading
-import logging
+import traceback
 
-"""
-Utility script for remote/automated control of `GonioTool`
-"""
+# import sys
+# sys.setswitchinterval(0.001)  # seconds
 
-goniotool = GonioToolWrapper()
-goniotool.startup()
+condition = threading.Condition()
+box = []
 
-HOST = config.cfg.fei_server_host
-PORT = config.cfg.fei_server_port
+# HOST = 'localhost'
+# PORT = 8088
+
+HOST = config.cfg.goniotool_server_host
+PORT = config.cfg.goniotool_server_port
+BUFSIZE = 1024
 
 
-def handle(conn):
-    while True:
-        data = conn.recv(1024).decode()
-        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-        
-        if not data:
-            break
-        
-        if data == "close":
-            break
-        elif data == "kill":
-            break
-        else:
-            conn.send(b"Connection closed")
-            conn.close()
+class GonioToolServer(threading.Thread):
+    """GonioTool communcation server. Takes a logger object `log`, command queue `q`, and
+    name of the microscope `name` that is used to initialize the connection to the microscope.
+    Start the server using `GonioToolServer.run` which will wait for items to appear on `q` and
+    execute them on the specified microscope instance.
+    """
+    def __init__(self, log=None, q=None, name=None):
+        super().__init__()
+
+        self.log = log
+        self.q = q
+
+        # self.name is a reserved parameter for threads
+        self._name = name
+    
+    def run(self):
+        """Start the server thread"""
+        self.gpniotool = GonioToolWrapper()
+        print(f"Initialized connection to GonioTool")
+
+        while True:
+            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
             
-            print("Connection closed")
-            set_rotation_speed(data)
+            cmd = self.q.get()
+
+            with condition:
+                func_name = cmd["func_name"]
+                args = cmd.get("args", ())
+                kwargs = cmd.get("kwargs", {})
+    
+                try:
+                    ret = self.evaluate(func_name, args, kwargs)
+                    status = 200
+                except Exception as e:
+                    traceback.print_exc()
+                    if self.log:
+                        self.log.exception(e)
+                    ret = e
+                    status = 500
+    
+                box.append((status, ret))
+                condition.notify()
+                print(f"{now} | {status} {func_name}: {ret}")
+
+    def evaluate(self, func_name: str, args: list, kwargs: dict):
+        """Evaluate the function `func_name` on `self.tem` with *args and **kwargs."""
+        # print(func_name, args, kwargs)
+        f = getattr(self.tem, func_name)
+        ret = f(*args, **kwargs)
+        return ret
 
 
-def set_rotation_speed(data):
-    speed = int(data)
-    print(f"Setting rotation speed to `{speed}`")
-    goniotool.set_rate(speed)
+def handle(conn, q):
+    """Handle incoming connection, put command on the Queue `q`,
+    which is then handled by GonioToolServer."""
+    with conn:
+        while True:
+            data = conn.recv(BUFSIZE)
+            if not data:
+                break
+
+            data = pickle.loads(data)
+
+            if data == "exit":
+                break
+
+            if data == "kill":
+                # killEvent.set() ?
+                # s.shutdown() ?
+                break
+    
+            with condition:
+                q.put(data)
+                condition.wait()
+                response = box.pop()
+                conn.send(pickle.dumps(response))
 
 
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_goniotool_server_{date}.log"
+    logfile = config.logs_drc / f"instamatic_goniotool_{date}.log"
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
                         filename=logfile, 
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
+
+    q = queue.Queue(maxsize=100)
+
+    goniotool_server = GonioToolServer()
+    goniotool_server.start()
     
-    s = socket(AF_INET, SOCK_STREAM)
-    s.bind((HOST, PORT))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST,PORT))
     s.listen(5)
-    
-    log.info(f"Goniotool server listening on {HOST}:{PORT}")
-    print(f"Goniotool server listening on {HOST}:{PORT}")
-    
+
+    log.info(f"Server listening on {HOST}:{PORT}")
+    print(f"Server listening on {HOST}:{PORT}")
+
     with s:
         while True:
             conn, addr = s.accept()
             log.info('Connected by %s', addr)
             print('Connected by', addr)
-            threading.Thread(target=handle, args=(conn,)).start()
-            
+            threading.Thread(target=handle, args=(conn, q)).start()
+
+    
 if __name__ == '__main__':
     main()
