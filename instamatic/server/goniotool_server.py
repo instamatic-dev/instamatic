@@ -11,6 +11,8 @@ import traceback
 # import sys
 # sys.setswitchinterval(0.001)  # seconds
 
+barrier = threading.Barrier(2, timeout=60)
+
 condition = threading.Condition()
 box = []
 
@@ -39,7 +41,7 @@ class GonioToolServer(threading.Thread):
     
     def run(self):
         """Start the server thread"""
-        self.goniotool = GonioToolWrapper()
+        self.goniotool = GonioToolWrapper(barrier=barrier)
         print(f"Initialized connection to GonioTool")
 
         while True:
@@ -114,11 +116,7 @@ def main():
     goniotool_server = GonioToolServer(log=log, q=q)
     goniotool_server.start()
     
-    # FIXME: threading workaround
-    import time
-    for x in range(20):
-        time.sleep(1)
-        print(x)
+    barrier.wait()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))

@@ -110,13 +110,20 @@ class GonioToolClient(object):
 
 
 class GonioToolWrapper(object):
-    """docstring for GonioToolWrapper"""
-    def __init__(self):
+    """docstring for GonioToolWrapper
+
+    barrier: threading.Barrier
+        Synchronization primitive to synch with parent process
+    """
+    def __init__(self, barrier=None):
         super().__init__()
         
         self.app = Application().start(GONIOTOOL_EXE)
         input("Enter password and press <ENTER> to continue...")  # delay for password, TODO: automate
         self.startup()
+
+        if barrier:
+            barrier.wait()
 
     def startup(self):
         """Initialize and start up the GonioTool interface"""
