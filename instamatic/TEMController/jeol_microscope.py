@@ -74,7 +74,7 @@ class JeolMicroscope(object):
         self.lens3 = self.tem3.CreateLens3()
         self.stage3 = self.tem3.CreateStage3()
 
-        self.goniotool_available = config.use_goniotool
+        self.goniotool_available = config.cfg.use_goniotool
         if self.goniotool_available:
             from instamatic.goniotool import GonioToolClient
             self.goniotool = GonioToolClient()
