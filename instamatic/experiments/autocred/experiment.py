@@ -304,13 +304,13 @@ class Experiment(object):
             return 0
 
     def eliminate_backlash_in_tiltx(self):
-        a_i = self.ctrl.stageposition.a
+        a_i = self.ctrl.stage.a
         if a_i < 0:
-            self.ctrl.stageposition.set(a = a_i + self.backlash_killer , wait = True)
+            self.ctrl.stage.set(a = a_i + self.backlash_killer , wait = True)
             #print("Rotation positive!")
             return 0
         else:
-            self.ctrl.stageposition.set(a = a_i - self.backlash_killer , wait = True)
+            self.ctrl.stage.set(a = a_i - self.backlash_killer , wait = True)
             #print("Rotation negative!")
             return 1
         
@@ -319,8 +319,8 @@ class Experiment(object):
         transform_stagepos_ = np.linalg.inv(transform_stagepos)
         if pos_arr[0] < 200 or pos_arr[0] > 316 or pos_arr[1] < 200 or pos_arr[1] > 316:
 
-            _x0 = self.ctrl.stageposition.x
-            _y0 = self.ctrl.stageposition.y
+            _x0 = self.ctrl.stage.x
+            _y0 = self.ctrl.stage.y
             
             displacement = np.subtract((258,258), pos_arr)
             mag = self.ctrl.magnification.value
@@ -331,7 +331,7 @@ class Experiment(object):
             mvmt = s * displacement
             mvmt_x, mvmt_y = np.dot(1000 * mvmt, transform_stagepos_)
             
-            self.ctrl.stageposition.set(x = _x0 + mvmt_y, y = _y0 - mvmt_x)
+            self.ctrl.stage.set(x = _x0 + mvmt_y, y = _y0 - mvmt_x)
             
         else:
             pass
@@ -511,7 +511,7 @@ class Experiment(object):
                 if not os.path.exists(paths):
                     os.makedirs(paths)
 
-        a = a0 = self.ctrl.stageposition.a
+        a = a0 = self.ctrl.stage.a
         spotsize = self.ctrl.spotsize
         
         if self.mode == 1:
@@ -591,21 +591,21 @@ class Experiment(object):
             self.ctrl.beamblank = False
             
         if self.mode > 1:
-            a_i = self.ctrl.stageposition.a
+            a_i = self.ctrl.stage.a
             
             rotation_range = self.rotrangelimit + abs(a_i)
             rotation_t = rotation_range / self.rotation_speed
             
             try:
                 if self.rotation_direction == 0:
-                    self.ctrl.stageposition.set(a = a_i + rotation_range , wait = False)
+                    self.ctrl.stage.set(a = a_i + rotation_range , wait = False)
                 else:
-                    self.ctrl.stageposition.set(a = a_i - rotation_range , wait = False)
+                    self.ctrl.stage.set(a = a_i - rotation_range , wait = False)
             except:
                 if a_i < 0:
-                    self.ctrl.stageposition.set(a = a_i + rotation_range , wait = False)
+                    self.ctrl.stage.set(a = a_i + rotation_range , wait = False)
                 else:
-                    self.ctrl.stageposition.set(a = a_i - rotation_range , wait = False)
+                    self.ctrl.stage.set(a = a_i - rotation_range , wait = False)
         
         if self.camtype == "simulate":
             self.startangle = a
@@ -791,13 +791,13 @@ class Experiment(object):
 
         self.ctrl.cam.unblock()
         if self.mode > 1:
-            self.ctrl.stageposition.stop()
+            self.ctrl.stage.stop()
 
         if self.camtype == "simulate":
             self.endangle = self.startangle + np.random.random()*50
             camera_length = 300
         else:
-            self.endangle = self.ctrl.stageposition.a
+            self.endangle = self.ctrl.stage.a
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
@@ -810,7 +810,7 @@ class Experiment(object):
         self.ctrl.imageshift2.set(x = is2_init[0], y = is2_init[1])
 
         #stage_positions = tracer.stop()
-        stageposx, stageposy, stageposz, stageposa, stageposb = self.ctrl.stageposition.get()
+        stageposx, stageposy, stageposz, stageposa, stageposb = self.ctrl.stage.get()
         rotrange = abs(self.endangle-self.startangle)
         
         if self.verbose:
@@ -970,8 +970,8 @@ class Experiment(object):
         offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_area, angle=rot_axis)
         self.offsets = offsets * 1000
         
-        center_x = self.ctrl.stageposition.x
-        center_y = self.ctrl.stageposition.y
+        center_x = self.ctrl.stage.x
+        center_y = self.ctrl.stage.y
 
         x_zheight = 0
         y_zheight = 0
@@ -982,7 +982,7 @@ class Experiment(object):
             x = center_x + x_offset
             y = center_y + y_offset
             
-            self.ctrl.stageposition.set(x=x, y=y)
+            self.ctrl.stage.set(x=x, y=y)
             #print("Stage position: x = {}, y = {}".format(x,y))
             x_change = x - x_zheight
             y_change = y - y_zheight
@@ -1001,7 +1001,7 @@ class Experiment(object):
                             self.print_and_del("centering z height...")
                             x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
                             if x_zheight != 999999:
-                                xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
+                                xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                             else:
                                 self.print_and_del("Z height not found.")
@@ -1317,7 +1317,7 @@ class Experiment(object):
                     if t - time.clock() > 14400:
                         self.print_and_del("Z-height needs to be updated every session. Readjusting z-height...")
                         x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
-                        xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
+                        xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                         self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                         t = time.clock()
                         with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
@@ -1326,7 +1326,7 @@ class Experiment(object):
             except:
                 input("No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>")
                 x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
-                xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
+                xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                 t = time.clock()
                 with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
@@ -1334,7 +1334,7 @@ class Experiment(object):
         else:
             self.print_and_del("Z height adjusting...")
             x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset = self.offset)
-            xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stageposition.get()
+            xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
             self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
             t = time.clock()
             with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:

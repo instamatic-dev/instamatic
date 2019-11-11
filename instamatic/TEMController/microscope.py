@@ -44,8 +44,8 @@ def Microscope(name: str=None, use_server: bool=False):
         name = config.cfg.microscope
 
     if use_server:
-        from .server_microscope import ServerMicroscope
-        tem = ServerMicroscope(name)
+        from .microscope_client import MicroscopeClient
+        tem = MicroscopeClient(name)
     else:
         cls = get_tem(name)
         tem = cls()

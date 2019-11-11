@@ -403,6 +403,12 @@ class SimuMicroscope(object):
             if y is not None:
                 self.setStageY(y, wait=wait)
 
+    def getRotationSpeed(self) -> int:
+        return self._stage_dict["a"]["speed"]
+
+    def setRotationSpeed(self, value: int):
+        self._stage_dict["a"]["speed"] = 10.0 * (value / 12)
+
     def getFunctionMode(self) -> str:
         """mag1, mag2, lowmag, samag, diff"""
         mode = self.FunctionMode_value

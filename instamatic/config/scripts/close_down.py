@@ -1,4 +1,4 @@
-controller.ctrl.stageposition.neutral()
+controller.ctrl.stage.neutral()
 controller.ctrl.mode = "mag1"
 controller.ctrl.brightness.max()
 controller.ctrl.magnification.value = 10000

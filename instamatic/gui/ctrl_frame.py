@@ -152,32 +152,32 @@ class ExperimentalCtrl(LabelFrame):
         self.var_difffocus.set(self.ctrl.difffocus.get())
 
     def set_negative_angle(self):
-        self.q.put(("ctrl", { "task": "stageposition.set", 
+        self.q.put(("ctrl", { "task": "stage.set", 
                               "a": self.var_negative_angle.get(),
                               "wait": self.var_stage_wait.get()  } ))
         self.triggerEvent.set()
 
     def set_neutral_angle(self):
-        self.q.put(("ctrl", { "task": "stageposition.set", 
+        self.q.put(("ctrl", { "task": "stage.set", 
                               "a": self.var_neutral_angle.get(),
                               "wait": self.var_stage_wait.get()  } ))
         self.triggerEvent.set()
 
     def set_positive_angle(self):
-        self.q.put(("ctrl", { "task": "stageposition.set", 
+        self.q.put(("ctrl", { "task": "stage.set", 
                               "a": self.var_positive_angle.get(),
                               "wait": self.var_stage_wait.get()  } ))
         self.triggerEvent.set()
 
     def set_stage(self):
-        self.q.put(("ctrl", { "task": "stageposition.set", 
+        self.q.put(("ctrl", { "task": "stage.set", 
                               "x": self.var_stage_x.get(),
                               "y": self.var_stage_y.get(),
                               "wait": self.var_stage_wait.get() } ))
         self.triggerEvent.set()
 
     def get_stage(self, event=None):
-        x, y, _, _, _ = self.ctrl.stageposition.get()
+        x, y, _, _, _ = self.ctrl.stage.get()
         self.var_stage_x.set(int(x))
         self.var_stage_y.set(int(y))
 
@@ -187,7 +187,7 @@ class ExperimentalCtrl(LabelFrame):
         self.b_stop_wobble.config(state=NORMAL)
         self.b_start_wobble.config(state=DISABLED)
 
-        self.q.put(("ctrl", { "task": "stageposition.alpha_wobbler",
+        self.q.put(("ctrl", { "task": "stage.alpha_wobbler",
                               "delta": self.var_alpha_wobbler.get(),
                               "event": self.wobble_stop_event } ))
         self.triggerEvent.set()
@@ -199,7 +199,7 @@ class ExperimentalCtrl(LabelFrame):
         self.b_start_wobble.config(state=NORMAL)
 
     def stage_stop(self):
-        self.q.put(("ctrl", { "task": "stageposition.stop" } ))
+        self.q.put(("ctrl", { "task": "stage.stop" } ))
         self.triggerEvent.set()
 
     def find_eucentric_height(self):

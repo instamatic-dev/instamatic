@@ -66,12 +66,12 @@ class AcquireAtItems(object):
         y = item.stage_y * 1000  # um -> nm
         z = item.stage_z * 1000  # um -> nm
 
-        self.ctrl.stageposition.set(z=z)
+        self.ctrl.stage.set(z=z)
 
         if self.backlash:
-            set_xy = self.ctrl.stageposition.set_xy_with_backlash_correction
+            set_xy = self.ctrl.stage.set_xy_with_backlash_correction
         else:
-            set_xy = self.ctrl.stageposition.set
+            set_xy = self.ctrl.stage.set
 
         set_xy(x=x, y=y)
 

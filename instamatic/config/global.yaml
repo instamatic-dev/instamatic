@@ -19,8 +19,12 @@ indexing_server_exe: 'instamatic.dialsserver.exe'
 indexing_server_host: 'localhost'
 indexing_server_port: 8089
 
+use_goniotool: True
+goniotool_server_host: 'localhost'
+goniotool_server_port: 8090
+
 fei_server_host: '192.168.12.1'
-fei_server_port: 9999
+fei_server_port: 8091
 
 dials_script: 'E:/cctbx/dials_script.bat'
 

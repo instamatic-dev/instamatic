@@ -40,8 +40,8 @@ def Camera(name: str=None, as_stream: bool=False, use_server: bool=False):
         name = config.cfg.camera
 
     if use_server:
-        from .camera_server import ServerCam
-        cam = ServerCam(name)
+        from .camera_client import CamClient
+        cam = CamClient(name)
         as_stream = False  # precaution
     else:
         cam_cls = get_cam(name)

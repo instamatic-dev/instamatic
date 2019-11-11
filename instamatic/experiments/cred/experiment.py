@@ -171,7 +171,7 @@ class Experiment(object):
         In `simulate` mode, simulate the start condition.
 
         Returns the starting value for the rotation."""
-        self.start_position = self.ctrl.stageposition.get()
+        self.start_position = self.ctrl.stage.get()
         self.stage_positions.append((0, self.start_position))
         a = self.start_position[3]
 
@@ -182,8 +182,8 @@ class Experiment(object):
         elif self.mode == "footfree":
             rotate_to = self.footfree_rotate_to
 
-            start_angle = self.ctrl.stageposition.a
-            self.ctrl.stageposition.set(a=rotate_to, wait=False)
+            start_angle = self.ctrl.stage.a
+            self.ctrl.stage.set(a=rotate_to, wait=False)
         
         else:
             print("Waiting for rotation to start...", end=' ')
@@ -192,7 +192,7 @@ class Experiment(object):
                 if self.stopEvent.is_set():
                     break
                 
-                a = self.ctrl.stageposition.a
+                a = self.ctrl.stage.a
 
             print("Data Recording started.")
             start_angle = a
@@ -266,7 +266,7 @@ class Experiment(object):
                 diff = next_interval - time.perf_counter() # seconds
 
                 if self.track_stage_position and diff > 0.1:
-                    self.stage_positions.append((i, self.ctrl.stageposition.get()))
+                    self.stage_positions.append((i, self.ctrl.stage.get()))
 
                 time.sleep(diff)
 
@@ -280,7 +280,7 @@ class Experiment(object):
         t1 = time.perf_counter()
 
         if self.mode == "footfree":
-            self.ctrl.stageposition.stop()
+            self.ctrl.stage.stop()
 
         self.stopEvent.clear()
 
@@ -288,17 +288,17 @@ class Experiment(object):
 
         if self.mode == "simulate":
             # simulate somewhat realistic end numbers
-            self.ctrl.stageposition.x += np.random.randint(-5000, 5000)
-            self.ctrl.stageposition.y += np.random.randint(-5000, 5000)
-            self.ctrl.stageposition.a += np.random.randint(-100, 100)
+            self.ctrl.stage.x += np.random.randint(-5000, 5000)
+            self.ctrl.stage.y += np.random.randint(-5000, 5000)
+            self.ctrl.stage.a += np.random.randint(-100, 100)
             self.ctrl.magnification.set(300)
 
-        self.end_position = self.ctrl.stageposition.get()
+        self.end_position = self.ctrl.stage.get()
         self.end_angle = self.end_position[3]
         self.camera_length = int(self.ctrl.magnification.get())
         self.stage_positions.append((99999, self.end_position))
 
-        is_moving = bool(self.ctrl.stageposition.is_moving())
+        is_moving = bool(self.ctrl.stage.is_moving())
         self.logger.info(f"Experiment finished, stage is moving: {is_moving}")
 
         if self.unblank_beam:

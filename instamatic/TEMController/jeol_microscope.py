@@ -74,6 +74,11 @@ class JeolMicroscope(object):
         self.lens3 = self.tem3.CreateLens3()
         self.stage3 = self.tem3.CreateStage3()
 
+        self.goniotool_available = config.cfg.use_goniotool
+        if self.goniotool_available:
+            from instamatic.goniotool import GonioToolClient
+            self.goniotool = GonioToolClient()
+
         ## faster stage readout using gonio2
         # self.gonio2.GetPosition() -> get stage position, 78 ms
         # self.stage3.GetPos() -> 277 ms
@@ -374,6 +379,18 @@ class JeolMicroscope(object):
                 logger.warning(f"stage.a -> requested: {a}, got: {na}")
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning(f"stage.b -> requested: {b}, got: {nb}")
+
+    def getRotationSpeed(self) -> int:
+        if self.goniotool_available:
+            self.goniotool.get_rate()
+        else:
+            raise IOError("Goniotool connection is not available.")
+
+    def setRotationSpeed(self, value: int):
+        if self.goniotool_available:
+            self.goniotool.set_rate(value)
+        else:
+            raise IOError("Goniotool connection is not available.")
 
     def resetStage(self):
         """Move stage to origin"""

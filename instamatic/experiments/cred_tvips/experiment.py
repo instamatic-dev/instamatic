@@ -49,7 +49,7 @@ class SerialExperiment(object):
         exposure = self.exposure
 
         def pre_acquire(ctrl):
-            ctrl.stageposition.set(a=start_angle)
+            ctrl.stage.set(a=start_angle)
 
         def acquire(ctrl):
             nonlocal start_angle
@@ -63,7 +63,7 @@ class SerialExperiment(object):
             print()
             print(f"Data directory: {out_path}")
             print(f"Rotating from {start_angle} to {end_angle} degrees")
-            print(ctrl.stageposition)
+            print(ctrl.stage)
 
             exp = Experiment(ctrl, path=out_path, log=log, exposure=exposure, mode=mode)
             exp.get_ready()
@@ -102,7 +102,7 @@ class SerialExperiment(object):
             print(f"({i} / {n_items}) Acquiring track: {stem}")
             print(f"Track file: {self.base_drc / name}")
             print(f"Data directory: {out_path}")
-            print(self.ctrl.stageposition)
+            print(self.ctrl.stage)
             print()
 
             exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, exposure=self.exposure, mode=self.mode)
@@ -188,7 +188,7 @@ class Experiment(object):
 
     def prepare_tracking(self):
         if self.track:
-            current_angle = self.ctrl.stageposition.a
+            current_angle = self.ctrl.stage.a
 
             min_angle = self.min_angle
             max_angle = self.max_angle
@@ -205,8 +205,8 @@ class Experiment(object):
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stageposition.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset, step=10000)
-            self.ctrl.stageposition.set(a=start_angle, z=self.start_z)
+            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset, step=10000)
+            self.ctrl.stage.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
 
@@ -214,7 +214,7 @@ class Experiment(object):
         # tracking routine
         if (n % self.track_interval == 0):
             target_y = self.start_y + int(self.track_func(angle))
-            self.ctrl.stageposition.set(y=target_y, wait=False)
+            self.ctrl.stage.set(y=target_y, wait=False)
             print(f"(autotracking) set y={target_y:.0f}")
 
     def get_ready(self):
@@ -249,9 +249,9 @@ class Experiment(object):
         ACTIVATION_THRESHOLD = 0.2
 
         print("Waiting for rotation to start...", end=' ')
-        a0 = a = self.ctrl.stageposition.a
+        a0 = a = self.ctrl.stage.a
         while abs(a - a0) < ACTIVATION_THRESHOLD:           
-            a = self.ctrl.stageposition.a
+            a = self.ctrl.stage.a
 
         print("Rotation started...")
 
@@ -274,9 +274,9 @@ class Experiment(object):
         
         if start_angle:
             print(f"Going to starting angle: {start_angle:.1f}")
-            self.ctrl.stageposition.a = start_angle
+            self.ctrl.stage.a = start_angle
 
-        self.start_position = self.ctrl.stageposition.get()
+        self.start_position = self.ctrl.stage.get()
         start_angle = self.start_position.a
 
         if self.track:
@@ -307,7 +307,7 @@ class Experiment(object):
             start_angle = self.manual_activation()
             last_angle = 999
         else:
-            self.ctrl.stageposition.set(a=target_angle, wait=False)
+            self.ctrl.stage.set(a=target_angle, wait=False)
             
         self.emmenu.start_record()  # start recording
 
@@ -322,14 +322,14 @@ class Experiment(object):
             t = time.perf_counter()
 
             if not manual_control:
-                if abs(self.ctrl.stageposition.a - target_angle) < angle_tolerance:
+                if abs(self.ctrl.stage.a - target_angle) < angle_tolerance:
                     print("Target angle reached!")
                     break
 
             if t - t_delta > interval:
 
                 n += 1
-                x, y, z, a, _ = pos = self.ctrl.stageposition.get()
+                x, y, z, a, _ = pos = self.ctrl.stage.get()
                 self.stage_positions.append((t, pos))
                 t_delta = t
                 # print(t, pos)
@@ -351,7 +351,7 @@ class Experiment(object):
                 key = msvcrt.getch().decode()
                 if key == " ":
                     print("Stopping the stage!")
-                    self.ctrl.stageposition.stop()
+                    self.ctrl.stage.stop()
                     break
                 if key == "q":
                     raise InterruptedError("Data collection was interrupted!")
@@ -362,7 +362,7 @@ class Experiment(object):
         if self.beamblank_is_on:
             self.ctrl.beamblank_on()
 
-        self.end_position = self.ctrl.stageposition.get()
+        self.end_position = self.ctrl.stage.get()
         end_angle = self.end_position.a
         
         end_index = self.emmenu.get_image_index()
