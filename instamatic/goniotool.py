@@ -1,5 +1,11 @@
-from pywinauto import Application
+from functools import wraps
 from instamatic import config
+from pywinauto import Application
+import atexit
+import pickle
+import socket
+import subprocess as sp
+import time
 
 GONIOTOOL_EXE = "C:\JEOL\TOOL\GonioTool.exe"
 DEFAULT_SPEED = 12
@@ -30,7 +36,7 @@ class GonioToolClient(object):
     Simulates a GonioToolWrapper object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the GonioToolWrapper API.
     """
-    def __init__(self, name: "GonioTool"):
+    def __init__(self, name="GonioTool"):
         super().__init__()
         
         self.name = name
@@ -81,7 +87,7 @@ class GonioToolClient(object):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
 
         self.s.send(pickle.dumps(dct))
-        response = self.s.recv(self._bufsize)
+        response = self.s.recv(BUFSIZE)
         if response:
             status, data = pickle.loads(response)
 
