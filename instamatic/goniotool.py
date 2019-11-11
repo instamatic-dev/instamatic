@@ -1,7 +1,8 @@
 from pywinauto import Application
 from instamatic import config
+import time
 
-GONIOTOOL_EXE = "C:\JEOL\TOOL\GonioTool.exe"
+GONIOTOOL_EXE = "C:\\JEOL\\TOOL\\GonioTool.exe"
 DEFAULT_SPEED = 12
 
 HOST = config.cfg.goniotool_server_host
@@ -114,24 +115,25 @@ class GonioToolWrapper(object):
 
     def startup(self):
         """Initialize and start up the GonioTool interface"""
-        self.f1rate = self._app.TMainForm["f1/rate"] 
+        self.f1rate = self.app.TMainForm["f1/rate"] 
         
-        self.f1 = app.TMainForm.f1
-        self.rb_cmd = f1.CMDRadioButton
-        self.rb_tkb = f1.TKBRadioButton
-        self.set_button = f1.SetButton
-        self.get_button = f1.GetButton
+        self.f1 = self.app.TMainForm.f1
+        self.rb_cmd = self.f1.CMDRadioButton
+        self.rb_tkb = self.f1.TKBRadioButton
+        self.set_button = self.f1.SetButton
+        self.get_button = self.f1.GetButton
 
         self.click_get_button()
         self.click_cmd()
         
-        self.edit = app.TMainForm.f1.Edit7
+        self.edit = self.app.TMainForm.f1.Edit7
 
     def closedown(self):
         """Set default speed and close the program"""
         self.set_rate(DEFAULT_SPEED)
         self.click_tkb()
-        # TODO: close the program
+        time.sleep(1)
+        self.app.kill()
 
     def list_f1rate(self):
         """List GUI control identifiers for `f1/rate` tab"""
@@ -143,11 +145,11 @@ class GonioToolWrapper(object):
 
     def click_get_button(self):
         """Click GET button"""
-        self.getbutton.click()
+        self.get_button.click()
 
     def click_set_button(self):
         """Click SET button"""
-        self.setbutton.click()
+        self.set_button.click()
 
     def click_tkb(self):
         """Select TKB radio button"""
@@ -159,8 +161,8 @@ class GonioToolWrapper(object):
 
     def set_rate(self, speed: int):
         """Set rate value for TX"""
-        assert isinstance(speed, int)
-        assert 0 < speed <= 12
+        assert isinstance(speed, int), f"Variable `speed` must be of type `int`, is `{type(speed)}`"
+        assert 0 < speed <= 12, f"Variable `speed` must have a value of 1 to 12."
 
         s = self.edit.select()
         s.set_text(speed)
@@ -169,7 +171,7 @@ class GonioToolWrapper(object):
     def get_rate(self) -> int:
         """Get current rate value for TX"""
         s = self.edit.select()
-        val = s.get_text(speed)
+        val = s.text_block()
         return int(val)
 
 

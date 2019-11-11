@@ -69,7 +69,7 @@ class GonioToolServer(threading.Thread):
     def evaluate(self, func_name: str, args: list, kwargs: dict):
         """Evaluate the function `func_name` on `self.tem` with *args and **kwargs."""
         # print(func_name, args, kwargs)
-        f = getattr(self.tem, func_name)
+        f = getattr(self.goniotool, func_name)
         ret = f(*args, **kwargs)
         return ret
 
@@ -111,9 +111,15 @@ def main():
 
     q = queue.Queue(maxsize=100)
 
-    goniotool_server = GonioToolServer()
+    goniotool_server = GonioToolServer(log=log, q=q)
     goniotool_server.start()
     
+    # FIXME: threading workaround
+    import time
+    for x in range(20):
+        time.sleep(1)
+        print(x)
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))
     s.listen(5)
