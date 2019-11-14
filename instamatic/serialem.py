@@ -12,20 +12,38 @@ int_map = ("Color",        "NumPts",       "Draw",         "Regis",
            "MapSlitIn",    "MapSlitWidth", "ImageType",    "MontUseStage", 
            "MapProbeMode", "MapLDConSet",  "Type",         "GroupID",
            "MapID",        "PieceOn",      "Acquire",      "DrawnID",
-           "MontBinning",  "SamePosId",    "OrigReg" )
+           "MontBinning",  "SamePosId",    "OrigReg" ,
+           # mdoc
+           "Intensity",     "ExposureDose", "SpotSize",     "ExposureTime", 
+           "Binning",       "CameraIndex",  "DividedBy2",   "MagIndex", 
+           "Magnification", "ProbeMode",    "MoveStage",    "DriftSettling",
+           "Alpha" )
 
 # float
-float_map = ("MapExposure", "MapIntensity", "MapTiltAngle")
-
+float_map = ("MapExposure",       "MapIntensity",  "MapTiltAngle",
+             # .mdoc 
+             "StageZ",            "PixelSpacing",  "Defocus",     "RotationAngle",
+             "CountsPerElectron", "TargetDefocus", "TiltAngle" )
 # str
-str_map = ("MapFile", "Note")
+str_map = ("MapFile", "Note",
+           # .mdoc
+           "DateTime")
 
 # list, float
-list_float_map = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
-                  "PtsX",     "PtsY",       "StageXYZ",    "MapMinMaxScale")
+list_float_map = ("StageXYZ",      "RawStageXY", "MapScaleMat", "XYinPc",
+                  "PtsX",          "PtsY",       "StageXYZ",    "MapMinMaxScale",
+                  # .mdoc
+                  "StagePosition", "MinMaxMean", "XedgeDxyVS",  "YedgeDxyVS",
+                  "XedgeDxy",      "YedgeDxy" )
 
 # list, int
-list_int_map = ("BklshXY", "MapWidthHeight", "MapFramesXY")
+list_int_map = ("BklshXY",           "MapWidthHeight", "MapFramesXY",
+                # .mdoc
+                "PieceCoordinates",   "ImageShift",    "AlignedPieceCoordsVS", 
+                "AlignedPieceCoords", "BufISXY",       "MontBacklash", 
+                "ValidBacklash",      "CameraModes",   "FilterState",
+                "ConSetUsed" )
+
 
 unknown_map = ()
 
@@ -267,7 +285,7 @@ class MapItem(NavItem):
         self.update_markers(*items)
 
 
-def block2dict(block: list) -> dict:
+def block2dict(block: list, kind: str=None, sequence: int=-1) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
     dictionary"""
     patt_split = re.compile("\s?=\s?")
@@ -298,6 +316,11 @@ def block2dict(block: list) -> dict:
             raise
 
         d[key] = value
+
+    if sequence >= 0:
+        d["sequence"] = sequence
+    if kind:
+        d["kind"] = kind
 
     return d
 
@@ -399,6 +422,61 @@ def write_nav_file(fn: str, *items, mode="w") -> None:
     
     for item in items:
         print(item.to_string(), file=f)
+
+
+def read_mdoc_file(fn: str, only_kind: str=None) -> list:
+    """
+    Reads a SerialEM .mdoc file and returns a list of dictionaries
+    containing supporting data.
+    
+    Parameters
+    ----------
+    only_kind : str
+        Return only items of this kind, i.e. ZValue or MontSection (case-insensitive)
+    
+    Returns:
+    --------
+    List of dicts with header information from the .mdoc file
+    """
+
+    # https://regex101.com/
+    patt_match = re.compile("\[([a-zA-Z]+)\s?=\s?([0-9]+)\]")
+
+    capture = False
+    block = []
+    items = []
+    tag = ""
+
+    f = open(fn, "r")
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+
+        m = re.match(patt_match, line)
+        
+        if m:
+            if block:
+                items.append(block2dict(block, kind=kind, sequence=sequence))
+
+            # prep for next block
+            kind = m.groups()[0]
+            sequence = int(m.groups()[1])
+            
+            block = []
+            capture = True
+        elif capture:
+            block.append(line)
+        else:
+            print(line)
+
+    items.append(block2dict(block, kind=kind, sequence=sequence))
+    
+    if only_kind:
+        only_kind = only_kind.lower()
+        items = [item for item in items if item["kind"].lower() == only_kind]
+
+    return items
 
 
 if __name__ == '__main__':
