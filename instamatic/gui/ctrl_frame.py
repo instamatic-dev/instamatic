@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 import threading
 from instamatic.utils.spinbox import Spinbox
+from instamatic import config
 
 
 class ExperimentalCtrl(LabelFrame):
@@ -35,8 +36,7 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text="Angle (0)", width=20).grid(row=2, column=0, sticky="W")
         Label(frame, text="Angle (+)", width=20).grid(row=3, column=0, sticky="W")
         Label(frame, text="Alpha wobbler (±)", width=20).grid(row=4, column=0, sticky="W")
-        
-        Label(frame, text="Stage(XY)", width=20).grid(row=5, column=0, sticky="W")
+        Label(frame, text="Stage(XY)", width=20).grid(row=6, column=0, sticky="W")
         
         e_negative_angle = Spinbox(frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5)
         e_negative_angle.grid(row=1, column=1, sticky="EW")
@@ -53,9 +53,18 @@ class ExperimentalCtrl(LabelFrame):
         self.b_stop_wobble.grid(row=4, column=3, sticky="W")
 
         e_stage_x = Entry(frame, width=10, textvariable=self.var_stage_x)
-        e_stage_x.grid(row=5, column=1, sticky="EW")
+        e_stage_x.grid(row=6, column=1, sticky="EW")
         e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_y)
-        e_stage_y.grid(row=5, column=2, sticky="EW")
+        e_stage_y.grid(row=6, column=2, sticky="EW")
+
+        if config.cfg.use_goniotool:
+            Label(frame, text="Rot. Speed", width=20).grid(row=5, column=0, sticky="W")
+            e_goniotool_tx = Spinbox(frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1)
+            e_goniotool_tx.grid(row=5, column=1, sticky="EW")
+            b_goniotool_set = Button(frame, text="Set", command=self.set_goniotool_tx)
+            b_goniotool_set.grid(row=5, column=2, sticky="W")
+            b_goniotool_default = Button(frame, text="Default", command=self.set_goniotool_tx_default)
+            b_goniotool_default.grid(row=5, column=3, sticky="W")
 
         b_negative_angle = Button(frame, text="Set", command=self.set_negative_angle)
         b_negative_angle.grid(row=1, column=2, sticky="W")
@@ -63,10 +72,12 @@ class ExperimentalCtrl(LabelFrame):
         b_neutral_angle.grid(row=2, column=2, sticky="W")
         b_positive_angle = Button(frame, text="Set", command=self.set_positive_angle)
         b_positive_angle.grid(row=3, column=2, sticky="W")
+        
+
         b_stage = Button(frame, text="Set", command=self.set_stage)
-        b_stage.grid(row=5, column=3, sticky="W")
+        b_stage.grid(row=6, column=3, sticky="W")
         b_stage_get = Button(frame, text="Get", command=self.get_stage)
-        b_stage_get.grid(row=5, column=4, sticky="W")
+        b_stage_get.grid(row=6, column=4, sticky="W")
 
         # frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -105,7 +116,6 @@ class ExperimentalCtrl(LabelFrame):
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
-
         from instamatic import TEMController
         self.ctrl = TEMController.get_instance()
 
@@ -121,6 +131,8 @@ class ExperimentalCtrl(LabelFrame):
         self.var_stage_x = IntVar(value=0)
         self.var_stage_y = IntVar(value=0)
         
+        self.var_goniotool_tx = IntVar(value=1)
+
         self.var_brightness = IntVar(value=65535)
         self.var_difffocus = IntVar(value=65535)
 
@@ -168,6 +180,15 @@ class ExperimentalCtrl(LabelFrame):
                               "a": self.var_positive_angle.get(),
                               "wait": self.var_stage_wait.get()  } ))
         self.triggerEvent.set()
+
+    def set_goniotool_tx(self, event=None, value=None):
+        if not value:
+            value = self.var_goniotool_tx.get()
+        self.ctrl.stage.set_rotation_speed(value)
+
+    def set_goniotool_tx_default(self, event=None):
+        value = 12
+        self.set_goniotool_tx(value=value)
 
     def set_stage(self):
         self.q.put(("ctrl", { "task": "stage.set", 
