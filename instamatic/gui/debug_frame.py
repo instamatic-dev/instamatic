@@ -150,7 +150,7 @@ class DebugFrame(LabelFrame):
 
     def close_down(self):
         script = self.scripts_drc / "close_down.py"
-        print(script, script.exists())
+        # print(script, script.exists())
         if not script.exists():
             return IOError(f"No such script: {script}")
         self.q.put(("debug", { "task": "run_script", "script": script } ))

@@ -238,7 +238,10 @@ class Experiment(object):
         if self.ctrl.mode != self.mode:
             print(f"Switching to {self.mode} mode")
             self.ctrl.mode = self.mode
-        
+
+        if self.mode == "diff":
+            self.ctrl.difffocus.refocus()
+
         spotsize = self.ctrl.spotsize
     
         self.emmenu.start_liveview()
@@ -354,6 +357,7 @@ class Experiment(object):
                     self.ctrl.stage.stop()
                     break
                 if key == "q":
+                    self.ctrl.stage.stop()
                     raise InterruptedError("Data collection was interrupted!")
 
         t1 = time.perf_counter()
@@ -396,8 +400,8 @@ class Experiment(object):
             print(f"Timestamps from {start_index} to {end_index}")
             timestamps = [1,2,3,4,5]  # just to make it work
 
-        acq_out = self.path / "acquisition_time.png"
-        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
+        acq_out = self.path
+        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=acq_out)
 
         self.log_end_status()
         self.log_stage_positions()
