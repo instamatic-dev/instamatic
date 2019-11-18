@@ -365,7 +365,7 @@ class Stage(object):
         """
         with self.rotating_speed(speed):
             self.set(a=a, wait=False)
-        Do not wait on `set` to return to normal rotation speed quickly
+        # Do not wait on `set` to return to normal rotation speed quickly
         if wait:
             self.wait_for_stage()
 

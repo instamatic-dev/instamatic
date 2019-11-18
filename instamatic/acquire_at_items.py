@@ -8,6 +8,7 @@ class AcquireAtItems(object):
     ctrl: Instamatic.TEMController object
         Used to control the stage and TEM
     nav_items: list
+        List of (x, y) / (x, y, z) coordinates, or
         List of navigation items loaded from a `.nav` file.
     acquire: callable
         Main function to call, must take `ctrl` as an argument
@@ -62,11 +63,21 @@ class AcquireAtItems(object):
 
     def move_to_item(self, item):
         """Move the stage to the stage coordinates given by the NavItem"""
-        x = item.stage_x * 1000  # um -> nm
-        y = item.stage_y * 1000  # um -> nm
-        z = item.stage_z * 1000  # um -> nm
+        try:
+            x = item.stage_x * 1000  # um -> nm
+            y = item.stage_y * 1000  # um -> nm
+            z = item.stage_z * 1000  # um -> nm
+        except AttributeError:
+            if len(item) == 2:
+                x, y = item
+                z = None
+            elif len(item) == 3:
+                x, y, z = item
+            else:
+                raise IndexError(f"Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}")
 
-        self.ctrl.stage.set(z=z)
+        if z != None:
+            self.ctrl.stage.set(z=z)
 
         if self.backlash:
             set_xy = self.ctrl.stage.set_xy_with_backlash_correction
@@ -88,7 +99,7 @@ class AcquireAtItems(object):
         print(f"\nAcquiring on {ntot} items.")
         print("Press <Q> to interrupt.\n")
 
-        self.pre_acquire
+        self.pre_acquire(ctrl)
 
         t0 = t_last = time.perf_counter()
         eta = 0
