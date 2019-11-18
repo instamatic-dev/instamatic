@@ -3,7 +3,7 @@ from tkinter import filedialog
 from tkinter.ttk import *
 from instamatic.utils.spinbox import Spinbox
 from pathlib import Path
-
+from instamatic import config
 
 class ExperimentalTVIPS(LabelFrame):
     """docstring for ExperimentalRED"""
@@ -39,12 +39,13 @@ class ExperimentalTVIPS(LabelFrame):
         self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag')
         self.o_mode.grid(row=8, column=1, sticky="W", padx=10)
 
-        self.c_toggle_defocus = Checkbutton(frame, text="Toggle defocus", variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
-        self.c_toggle_defocus.grid(row=6, column=3, sticky="W")
+        if config.cfg.use_goniotool:
+            Label(frame, text="Rot. Speed", width=20).grid(row=10, column=0, sticky="W")
+            self.o_goniotool_tx = OptionMenu(frame, self.var_goniotool_tx, 1, *list(range(1, 13)))
+            self.o_goniotool_tx.grid(row=10, column=1, sticky="W", padx=10)
 
         self.b_reset_defocus = Button(frame, text="Reset", command=self.reset_diff_defocus, state=DISABLED)
         self.b_reset_defocus.grid(row=6, column=2, sticky="EW")
-
 
         self.c_toggle_diffraction = Checkbutton(frame, text="Toggle DIFF", variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
         self.c_toggle_diffraction.grid(row=7, column=3, sticky="W")
@@ -132,6 +133,8 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_instruction_file = StringVar(value="")
         self.var_mode = StringVar(value="diff")
 
+        self.var_goniotool_tx = IntVar(value=1)
+
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -205,6 +208,7 @@ class ExperimentalTVIPS(LabelFrame):
                    "instruction_file": self.var_instruction_file.get(),
                    "exposure": self.var_exposure.get(),
                    "mode": self.var_mode.get(),
+                   "rotation_speed": self.var_goniotool_tx.get(),
                    "manual_control": self.var_toggle_manual_control.get(),
                    "task": task }
         return params
@@ -282,6 +286,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     instruction_file = kwargs["instruction_file"]
     exposure = kwargs["exposure"]
     manual_control = kwargs["manual_control"]
+    rotation_speed = kwargs["rotation_speed"]
     mode = kwargs["mode"]
 
     if task == "get_ready":
@@ -290,7 +295,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     
         controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
                                                           log=controller.log, mode=mode,
-                                                          track=instruction_file, exposure=exposure)
+                                                          track=instruction_file, exposure=exposure,
+                                                          rotation_speed=rotation_speed)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
         controller.cred_tvips_exp.start_collection(target_angle=target_angle, 
@@ -302,7 +308,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
                                                      log=controller.log, mode=mode,
                                                      instruction_file=instruction_file, exposure=exposure,
-                                                     target_angle=target_angle)
+                                                     target_angle=target_angle, rotation_speed=rotation_speed)
         cred_tvips_exp.run()
     elif task == "stop":
         pass

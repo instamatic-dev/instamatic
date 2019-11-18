@@ -349,9 +349,8 @@ class Stage(object):
         """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
         
-    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0) -> None:
+    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, speed: float=1.0) -> None:
         """
-        wait: bool, block until stage movement is complete (JEOL only)
         speed: float, set stage rotation with specified speed (FEI only)
         """
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
@@ -359,6 +358,16 @@ class Stage(object):
     def set_rotation_speed(self, speed=1) -> None:
         """Sets the stage (rotation) movement speed on the TEM"""
         self._tem.setRotationSpeed(value=speed)
+
+    def set_a_with_speed(self, a: float, speed: int, wait: bool=False):
+        """Rotate to angle `a` with speed (JEOL only).
+        wait: bool, block until stage movement is complete.
+        """
+        with self.rotating_speed(speed):
+            self.set(a=a, wait=False)
+        Do not wait on `set` to return to normal rotation speed quickly
+        if wait:
+            self.wait_for_stage()
 
     @contextmanager
     def rotating_speed(self, speed: int):
@@ -370,9 +379,12 @@ class Stage(object):
                 ctrl.stage.a = 40.0
         """
         current_speed = self._tem.getRotationSpeed()
-        self.set_rotation_speed(speed)
-        yield
-        self.set_rotation_speed(current_speed)
+        if current_speed != speed:
+            self.set_rotation_speed(speed)
+            yield
+            self.set_rotation_speed(current_speed)
+        else:
+            yield
 
     def get(self) -> Tuple[int, int, int, int, int]:
         """Get stage positions; x, y, z, and status of the rotation axes; a, b"""
