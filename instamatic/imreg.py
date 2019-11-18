@@ -1,9 +1,21 @@
 from numpy.fft import fft2, ifft2, fftshift
+import numpy as np
+
 
 def translation(im0, im1, return_fft=False):
     """Return translation vector to register images.
 
-    TODO: doc
+    Parameters
+    ----------
+    im0, im1 : np.array
+        The two images to compare
+    return_fft : bool
+        Whether to additionally return the cross correlation array between the 2 images
+
+    Returns
+    -------
+    shift: list
+        Return the 2 coordinates defining the determined image shift
     """
     shape = im0.shape
     f0 = fft2(im0)
