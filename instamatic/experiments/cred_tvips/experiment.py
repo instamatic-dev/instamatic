@@ -420,8 +420,7 @@ class Experiment(object):
             print(f"Timestamps from {start_index} to {end_index}")
             timestamps = [1,2,3,4,5]  # just to make it work
 
-        acq_out = self.path / "acquisition_time.png"
-        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, fn=acq_out)
+        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=self.path)
 
         self.log_end_status()
         self.log_stage_positions()
