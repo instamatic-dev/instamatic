@@ -14,6 +14,45 @@ def sorted_grid_indices(grid):
     return np.dstack(np.unravel_index(np.argsort(grid.ravel()), grid.shape))[0]
 
 
+def weight_map(shape, method="block", plot=False):
+    """Generate a weighting map for the given shape
+    
+    shape : tuple
+        Shape defines the 2 integers defining the shape of the image
+    method : str
+        Method to use `circle`/`block`
+    plot : bool
+        Plot the image
+    
+    Returns
+    -------
+    weight : np.array
+        Weight array with the given shape
+    """
+    res_x, res_y = shape
+    c_x = int(res_x / 2) - 0.5
+    c_y = int(res_y / 2) - 0.5
+    
+    corner = (c_x**2 + c_y**2)**0.5
+    
+    a, b = np.meshgrid(np.arange(-c_x, c_x+1), np.arange(-c_y, c_y+1))
+    
+    if method == "block":
+        a2 = c_x - np.abs(a)
+        b2 = c_y - np.abs(b)
+        
+        d = np.min(np.stack((a2, b2)), axis=0)
+    elif method == "circle":
+        d = corner - np.sqrt(a**2+b**2)
+    else:
+        raise ValueError(f"No such method: `{method}`")
+        
+    if plot:
+        plt.imshow(d)
+    
+    return d
+
+
 def make_grid(shape: tuple, direction: str="updown", zigzag: bool=True) -> "np.array":
     """Defines the grid montage collection scheme
     
@@ -301,6 +340,8 @@ class Montage(object):
         Montage object constructed from the given images
             
         """
+        import mrcfile
+        from instamatic.serialem import read_mdoc_file
         gm = mrcfile.open(filename)
         images = gm.data
     
@@ -349,7 +390,7 @@ class Montage(object):
 
         return difference_vector
     
-    def get_difference_vectors(self, threshold: float=0.02, plot=False):
+    def get_difference_vectors(self, threshold: float=0.02, plot=False, verbose=True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -405,12 +446,14 @@ class Montage(object):
                 plot_fft(strip0, strip1, shift, fft, side0, side1)
 
             if score < threshold:
-                print("Score below threshold")
+                if verbose:
+                    print("Score below threshold")
                 shift = np.array((0,0))
-            print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
+            if verbose:
+                print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
 
             # pairwise difference vector
-            difference_vector = self.get_difference_vector(idx0, idx1, shift)
+            difference_vector = self.get_difference_vector(idx0, idx1, shift, verbose=False)
             # print(f"Difference vector: {difference_vector}")
 
             difference_vectors[seq0, seq1] = difference_vector
@@ -448,7 +491,7 @@ class Montage(object):
         
         return vects
 
-    def get_optimized_montage_coords(self, difference_vectors, method="leastsq"):
+    def get_optimized_montage_coords(self, difference_vectors, method="leastsq", verbose=False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares minimization
         
@@ -505,7 +548,7 @@ class Montage(object):
         args = difference_vectors,
         res = lmfit.minimize(obj_func, params, args=args, method=method)
 
-        lmfit.report_fit(res)
+        lmfit.report_fit(res, show_correl=verbose, min_correl=0.8)
 
         Vn = np.array([p.value for p in res.params.values()]).reshape(-1,2)
         offset = min(Vn[:,0]), min(Vn[:,1])
@@ -514,7 +557,7 @@ class Montage(object):
 
         return coords
    
-    def stitch(self, coords: "np.array[-1, 2]", plot: bool=False):
+    def stitch(self, coords: "np.array[-1, 2]", method=None, plot: bool=False):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -538,9 +581,18 @@ class Montage(object):
 
         stitched_x = int(ny * res_x)
         stitched_y = int(nx * res_y)
-        stitched = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
 
-        fig, ax = plt.subplots(figsize=(10, 10))
+        stitched = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
+        indexmap = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
+
+        if method in ("average", "weighted"):
+            n_images = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
+
+            if method == "weighted":
+                weight = weight_map(self.image_shape, method="circle")
+
+        if plot:
+            fig, ax = plt.subplots(figsize=(10, 10))
 
         for i, idx in enumerate(sorted_grid_indices(grid)):
             im = images[i]
@@ -552,18 +604,35 @@ class Montage(object):
             x1 = x0 + im.shape[0]
             y1 = y0 + im.shape[1]
 
-            stitched[y0:y1, x0:x1] = im
+            if method == "average":
+                stitched[y0:y1, x0:x1] += im
+                indexmap[y0:y1, x0:x1] += i
+                n_images[y0:y1, x0:x1] += 1
+            if method == "weighted":
+                stitched[y0:y1, x0:x1] += im * weight
+                indexmap[y0:y1, x0:x1] += i * weight
+                n_images[y0:y1, x0:x1] += weight
+            else:
+                stitched[y0:y1, x0:x1] = im
+                indexmap[y0:y1, x0:x1] = i
 
             if plot:
                 txt = f"{i}\n{idx}"
                 ax.text((x0 + x1) / 2, (y0 + y1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
 
+        if method in ("average", "weighted"):
+            n_images = np.where(n_images == 0, 1, n_images)
+            stitched /= n_images
+            indexmap /= n_images
+
         if plot:
             ax.imshow(stitched)
             plt.show()
 
-        return stitched
+        self.stitched = stitched
+        self.indexmap = indexmap
 
+        return stitched
 
     def plot(self, coords: "np.array[-1, 2]"):
         """Stitch the images together using the given list of pixel coordinates
