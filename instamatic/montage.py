@@ -357,7 +357,7 @@ class Montage(object):
         
         return cls(images=images, gridspec=gridspec)
 
-    def get_difference_vector(self, idx0: int, idx1: int, shift: list, verbose=False):
+    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose=False):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation
         
@@ -367,6 +367,10 @@ class Montage(object):
             Grid coordinate of im0 and im0, defining their relative position
         shift : list
             The offset between the 2 strips of the images used for cross correlation
+        overlap_k : float
+            Extend the overlap by this factor, may help with the cross correlation
+            For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
+            strips used for cross correlation to 75 pixels.
         
         Returns
         -------
@@ -374,8 +378,8 @@ class Montage(object):
             Vector describing the pixel offset between the 2 images
         """
         res_x, res_y = self.image_shape
-        overlap_x = self.overlap_x
-        overlap_y = self.overlap_y
+        overlap_x = int(self.overlap_x * overlap_k)
+        overlap_y = int(self.overlap_y * overlap_k)
         
         vect = np.array(idx1) - np.array(idx0)
         vect = vect * np.array((res_x - overlap_x, res_y - overlap_y))
@@ -390,7 +394,7 @@ class Montage(object):
 
         return difference_vector
     
-    def get_difference_vectors(self, threshold: float=0.02, plot=False, verbose=True):
+    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, plot=False, verbose=True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -401,6 +405,10 @@ class Montage(object):
         threshold : float
             Lower for the cross correlation score to accept a shift or not
             If a shift is not accepted, the shift is set to (0, 0)
+        overlap_k : float
+            Extend the overlap by this factor, may help with the cross correlation
+            For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
+            strips used for cross correlation to 75 pixels.
 
         Returns
         -------
@@ -412,13 +420,17 @@ class Montage(object):
         res_x, res_y = self.image_shape
         images = self.images
         
-        overlap_x = self.overlap_x
-        overlap_y = self.overlap_y
+        overlap_x = int(self.overlap_x * overlap_k)
+        overlap_y = int(self.overlap_y * overlap_k)
         
         pairs = define_pairs(grid)
         pairs = define_directions(pairs)
 
+        self.pairs = pairs
+
         slices = make_slices(overlap_x, overlap_y)
+
+        self.slices = slices
 
         difference_vectors = {}
         for i, pair in enumerate(pairs):
@@ -433,8 +445,6 @@ class Montage(object):
             
             if plot:
                 plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1)
-
-            vect = np.array(idx0) - np.array(idx1)
 
             strip0 = im0[slices[side0]]
             strip1 = im1[slices[side1]]
@@ -453,7 +463,7 @@ class Montage(object):
                 print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
 
             # pairwise difference vector
-            difference_vector = self.get_difference_vector(idx0, idx1, shift, verbose=False)
+            difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
             # print(f"Difference vector: {difference_vector}")
 
             difference_vectors[seq0, seq1] = difference_vector
