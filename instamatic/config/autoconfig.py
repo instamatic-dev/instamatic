@@ -46,7 +46,6 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 def choice_prompt(choices: list=[], default=None, question: str="Which one?"):
     """Simple cli to prompt for a list of choices"""
     print()
-    choices = "jeol fei simulate".split()
 
     if default:
         default_choice = choices.index(default)
