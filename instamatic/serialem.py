@@ -14,16 +14,17 @@ int_map = ("Color",        "NumPts",       "Draw",         "Regis",
            "MapID",        "PieceOn",      "Acquire",      "DrawnID",
            "MontBinning",  "SamePosId",    "OrigReg" ,
            # mdoc
-           "Intensity",     "ExposureDose", "SpotSize",     "ExposureTime", 
+           "Intensity",     "ExposureDose", "SpotSize",
            "Binning",       "CameraIndex",  "DividedBy2",   "MagIndex", 
-           "Magnification", "ProbeMode",    "MoveStage",    "DriftSettling",
+           "Magnification", "ProbeMode",    "MoveStage",
            "Alpha" )
 
 # float
 float_map = ("MapExposure",       "MapIntensity",  "MapTiltAngle",
              # .mdoc 
              "StageZ",            "PixelSpacing",  "Defocus",     "RotationAngle",
-             "CountsPerElectron", "TargetDefocus", "TiltAngle" )
+             "CountsPerElectron", "TargetDefocus", "TiltAngle",   "ExposureTime",
+             "DriftSettling" )
 # str
 str_map = ("MapFile", "Note",
            # .mdoc
@@ -34,13 +35,13 @@ list_float_map = ("StageXYZ",      "RawStageXY", "MapScaleMat", "XYinPc",
                   "PtsX",          "PtsY",       "StageXYZ",    "MapMinMaxScale",
                   # .mdoc
                   "StagePosition", "MinMaxMean", "XedgeDxyVS",  "YedgeDxyVS",
-                  "XedgeDxy",      "YedgeDxy" )
+                  "XedgeDxy",      "YedgeDxy",   "ImageShift",  "BufISXY" )
 
 # list, int
 list_int_map = ("BklshXY",           "MapWidthHeight", "MapFramesXY",
                 # .mdoc
-                "PieceCoordinates",   "ImageShift",    "AlignedPieceCoordsVS", 
-                "AlignedPieceCoords", "BufISXY",       "MontBacklash", 
+                "PieceCoordinates",   "AlignedPieceCoordsVS", 
+                "AlignedPieceCoords", "MontBacklash", 
                 "ValidBacklash",      "CameraModes",   "FilterState",
                 "ConSetUsed" )
 

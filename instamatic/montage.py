@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from instamatic.imreg import translation
+from skimage.feature import register_translation
 from scipy import ndimage
 import lmfit
 
@@ -46,7 +47,10 @@ def weight_map(shape, method="block", plot=False):
         d = corner - np.sqrt(a**2+b**2)
     else:
         raise ValueError(f"No such method: `{method}`")
-        
+    
+    # scale to 1
+    d = d / d.max()
+
     if plot:
         plt.imshow(d)
     
@@ -325,7 +329,7 @@ class Montage(object):
         self.overlap_y = overlap_y = int(res_y * overlap)
         
     @classmethod
-    def from_serialem_mrc(cls, filename: str, gridshape: tuple):
+    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="updown", zigzag: bool=True):
         """Load a montage object from a SerialEM file image stack
         
         Parameters
@@ -334,6 +338,10 @@ class Montage(object):
             Filename of the mrc file to load.
         gridshape : tuple(2)
             Tuple describing the number of of x and y points in the montage grid.
+        direction : str
+            Defines the direction of data collection
+        zigzag : bool
+            Defines if the data has been collected in a zigzag manner
 
         Returns
         -------
@@ -351,11 +359,21 @@ class Montage(object):
         
         gridspec = {
             "shape": gridshape,
-            "direction": "updown",
-            "zigzag": True
+            "direction": direction,
+            "zigzag": zigzag
         }
         
-        return cls(images=images, gridspec=gridspec)
+        m = cls(images=images, gridspec=gridspec)
+        m.mdoc = mdoc
+        m.filename = filename
+        m.piececoords = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
+        m.alignedpiececoords = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
+        try:
+            m.alignedpiececoordsvs = np.array([d["AlignedPieceCoordsVS"][0:2] for d in m.mdoc])
+        except KeyError:
+            pass
+
+        return m
 
     def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose=False):
         """Calculate the pixel distance between 2 images using the calculate
@@ -394,7 +412,7 @@ class Montage(object):
 
         return difference_vector
     
-    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, plot=False, verbose=True):
+    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, method="skimage", plot=False, verbose=True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -409,6 +427,8 @@ class Montage(object):
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
             strips used for cross correlation to 75 pixels.
+        method : str
+            Which cross correlation function to use `skimage`/`imreg`
 
         Returns
         -------
@@ -449,8 +469,13 @@ class Montage(object):
             strip0 = im0[slices[side0]]
             strip1 = im1[slices[side1]]
 
-            shift, fft = translation(strip0, strip1, return_fft=True)
-            score = fft.max()
+            if method == "imreg":
+                shift, fft = translation(strip0, strip1, return_fft=True)
+                score = fft.max()
+            else:  # method = skimage.feature.register_translation
+                shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
+                fft = np.ones_like(strip0)
+                score = error
 
             if plot:
                 plot_fft(strip0, strip1, shift, fft, side0, side1)
@@ -459,6 +484,7 @@ class Montage(object):
                 if verbose:
                     print("Score below threshold")
                 shift = np.array((0,0))
+                continue
             if verbose:
                 print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
 
@@ -519,6 +545,8 @@ class Montage(object):
         """
         res_x, res_y = self.image_shape
         grid = self.grid
+        grid_x, grid_y = grid.shape
+        n_gridpoints = grid_x * grid_y
         
         overlap_x = self.overlap_x
         overlap_y = self.overlap_y
@@ -526,13 +554,23 @@ class Montage(object):
         vects = self.get_montage_coords()
         vects = vects[:,::-1]
 
+        # determine which frames items have neighbours
+        has_neighbours = set([i for key in difference_vectors.keys() for i in key])
+
         # setup parameters
         params = lmfit.Parameters()
 
+        middle_i = int(n_gridpoints / 2 )  # Find index of middlemost item
         for i, row in enumerate(vects):
-            # fix first row; coords=(0, 0)
-            params.add(f"C{i}{0}", value=row[0], vary=bool(i))
-            params.add(f"C{i}{1}", value=row[1], vary=bool(i))
+            if i == middle_i:   # anchor on middle frame
+                vary = False
+            if i in has_neighbours:
+                vary = True
+            else:  # Fix coordinates with no observed neighbours
+                vary = True
+            vary = (i != middle_i)
+            params.add(f"C{i}{0}", value=row[0], vary=vary)
+            params.add(f"C{i}{1}", value=row[1], vary=vary)
 
         def obj_func(params, diff_vects):
             V = np.array([p.value for p in params.values()]).reshape(-1,2)
@@ -588,12 +626,15 @@ class Montage(object):
         images = self.images
         nx, ny = grid.shape
         res_x, res_y = self.image_shape
+        overlap_x, overlap_y = self.overlap_x, self.overlap_y
 
         stitched_x = int(ny * res_x)
         stitched_y = int(nx * res_y)
 
-        stitched = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
-        indexmap = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
+        offset = np.array((overlap_x, overlap_y))
+
+        stitched = np.zeros((int(stitched_x), int(stitched_y)))
+        indexmap = np.zeros((int(stitched_x), int(stitched_y)))
 
         if method in ("average", "weighted"):
             n_images = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
@@ -607,7 +648,7 @@ class Montage(object):
         for i, idx in enumerate(sorted_grid_indices(grid)):
             im = images[i]
 
-            x0, y0 = coords[i]
+            x0, y0 = coords[i] + offset
             x0 = int(x0)
             y0 = int(y0)
 
