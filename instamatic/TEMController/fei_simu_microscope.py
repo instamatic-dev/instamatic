@@ -96,7 +96,13 @@ class FEISimuMicroscope(object):
     
     def setHTValue(self, htvalue):
         self.tem.GUN.HTValue = htvalue
-        
+
+    def getCurrentDensity(self) -> float:
+        """Get the current density from the fluorescence screen in nA?"""
+        value = self.tecnai.Camera.ScreenCurrent
+        # value = -1
+        return value
+ 
     def getMagnification(self):
         return self.proj.Magnification
     
@@ -106,7 +112,6 @@ class FEISimuMicroscope(object):
             self.proj.MagnificationIndex = value
         except ValueError:
             pass
-        
         
     def getStagePosition(self):
         return self.stage.Position.X, self.stage.Position.Y, self.stage.Position.Z, self.stage.Position.A, self.stage.Position.B

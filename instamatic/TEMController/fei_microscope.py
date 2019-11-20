@@ -180,7 +180,13 @@ class FEIMicroscope(object):
     
     def setHTValue(self, htvalue):
         self.tem.GUN.HTValue = htvalue
-        
+
+    def getCurrentDensity(self) -> float:
+        """Get the current density from the fluorescence screen in nA?"""
+        value = self.tecnai.Camera.ScreenCurrent
+        # value = -1
+        return value
+
     def getMagnification(self):
         if self.tom.Projection.Mode != 1:
             ind = self.proj.MagnificationIndex
