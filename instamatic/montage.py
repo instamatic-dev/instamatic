@@ -267,7 +267,7 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
 def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):
     import matplotlib.patches as patches
     
-    blank = np.empty((res_x*2, res_y*2))
+    blank = np.zeros((res_x*2, res_y*2), dtype=np.int32)
 
     center = np.array(blank.shape) // 2
     origin = np.array((res_x, res_y)) // 2
@@ -637,11 +637,11 @@ class Montage(object):
         stitched_x += res_x
         stitched_y += res_y
 
-        stitched = np.zeros((int(stitched_x), int(stitched_y)))
-        indexmap = np.zeros((int(stitched_x), int(stitched_y)))
+        stitched = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
+        indexmap = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
 
         if method in ("average", "weighted"):
-            n_images = np.zeros((int(stitched_x), int(stitched_y)))
+            n_images = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
 
             if method == "weighted":
                 weight = weight_map(self.image_shape, method="circle")
@@ -776,34 +776,42 @@ class GridMontage(object):
 
         res_x, res_y = self.ctrl.cam.getDimensions()
 
-        print("Image shape:", res_x, res_y)
-
         overlap_x = int(res_x * overlap)
         overlap_y = int(res_y * overlap)
 
         vect = np.array((res_x - overlap_x, res_y - overlap_y))
 
-        grid = make_grid((nx, ny), direction="updown", zigzag=True)
+        grid = make_grid((nx, ny), direction=self.direction, zigzag=self.zigzag)
         grid_indices = sorted_grid_indices(grid)
         px_coords = grid_indices * vect
 
         px_center = vect * (np.array(grid.shape) / np.array((nx/2, ny/2)))
 
-        print("Pixel center:", px_center)
 
         stagematrix = self.ctrl.get_stagematrix(binning=binning)
 
         mati = np.linalg.inv(stagematrix)
-
-        print("Inverse stage matrix:", mati)
 
         stage_center = np.dot(px_center, mati) + stage_shift
         stagepos = np.dot(px_coords, mati)
 
         coords = ((stagepos - stage_center)).astype(int)
 
-        self.coords = coords
+        self.stagecoords = coords
         self.grid = grid
+        self.mode = self.ctrl.mode
+        self.magnification = self.ctrl.magnification.value
+        self.spotsize = self.ctrl.spotsize
+
+        print("Setting up gridscan.")
+        print("  Mag:", self.magnification)
+        print("  Mode:", self.mode)
+        print("  Grid:", nx, ny, self.direction, self.zigzag)
+        print("  Overlap:", self.overlap)
+        print()
+        print("  Image shape:", res_x, res_y)
+        print("  Pixel center:", px_center)
+        print("  Spot size:", self.spotsize)
 
         return coords
     
@@ -823,7 +831,7 @@ class GridMontage(object):
         def post_acquire(ctrl):
             print("Post-acquire: done!")
 
-        self.ctrl.acquire_at_items(self.coords, 
+        self.ctrl.acquire_at_items(self.stagecoords, 
                                    acquire=acquire, 
                                    pre_acquire=pre_acquire, 
                                    post_acquire=post_acquire)
@@ -837,8 +845,8 @@ class GridMontage(object):
         """Convert the experimental data to a `Montage` object."""
         images = [im for im,h in self.buffer]
         m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
-        m.stagecoords = self.coords
-        m.stagematrix = stagematrix
+        m.stagecoords = self.stagecoords
+        m.stagematrix = self.stagematrix
         return m
 
     def save(self, drc: str=None):
@@ -852,22 +860,26 @@ class GridMontage(object):
             drc = get_new_work_subdirectory("montage")
 
         fns = []
-        for i, (img, h) in self.buffer:
-            name = "mont_{i:04d}.tiff"
+        for i, (img, h) in enumerate(self.buffer):
+            name = f"mont_{i:04d}.tiff"
             write_tiff(drc / name, img, header=h)
             fns.append(name)
 
         d = {}
-        d["stagecoords"] = m.stagecoords.tolist()
-        d["stagematrix"] = m.stagematrix.tolist()
-        d["gridshape"] = self.nx, self.ny
+        d["stagecoords"] = self.stagecoords.tolist()
+        d["stagematrix"] = self.stagematrix.tolist()
+        d["gridshape"] = [self.nx, self.ny]
         d["direction"] = self.direction
         d["zigzag"] = self.zigzag
         d["overlap"] = self.overlap
         d["filenames"] = fns
+        d["magnification"] = self.magnification
+        d["mode"] = self.mode
+        d["spotsize"] = self.spotsize
 
         import yaml
-        yaml.dump(d, stream=open(drc / "montage.yaml"))
+        yaml.dump(d, stream=open(drc / "montage.yaml", "w"))
+        print(f" >> Wrote {len(self.stagecoords)} montage images to {drc}")
 
 
 if __name__ == '__main__':

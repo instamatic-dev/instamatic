@@ -122,7 +122,7 @@ class AcquireAtItems(object):
             # calculate remaining time
             t = time.perf_counter()
             interval = t - t_last
-            last_interval = interval = (interval * 0.10) + (last_interval * 0.90)
+            last_interval = interval = (interval * 0.20) + (last_interval * 0.80)
             eta = ((ntot-i)*interval) / 60 # min
             t_last = t
         
