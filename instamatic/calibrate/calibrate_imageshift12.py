@@ -1,5 +1,5 @@
 from instamatic.calibrate.fit import fit_affine_transformation
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -58,7 +58,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
             deflector.set(x= x0 + (i-2)*stepsize, y= y0 + (j-2)*stepsize)
             img, h = ctrl.getImage(exposure = 0.01, comment = "imageshifted image")
 
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+            shift = register_translation(img_cent, img, upsample_factor=10)
             imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
             imgpos.append(imgshift)
             shifts.append(shift)

@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
 from .filenames import *
@@ -270,7 +270,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         
         img = imgscale(img, scale)
 
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         xobs, yobs, _, _, _ = h["StagePosition"]
         stagepos.append((xobs, yobs))
@@ -347,7 +347,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
         print()
         
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         stagepos.append((xobs, yobs))
         shifts.append(shift)

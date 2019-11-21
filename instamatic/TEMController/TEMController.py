@@ -884,8 +884,7 @@ class TEMController(object):
         return stagematrix
 
     def align_to(self, ref_img: "np.array", 
-                       apply: bool= True,
-                       verbose: bool=True) -> list:
+                       apply: bool= True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
         (in the reference image) is at the center of the view.
@@ -896,8 +895,6 @@ class TEMController(object):
             Reference image that the microscope will be aligned to
         apply: bool
             Toggle to translate the stage to center the image
-        verbose: bool
-            Be more verbose
         
         Returns
         -------
@@ -905,7 +902,7 @@ class TEMController(object):
             The stage shift vector determined from cross correlation
             
         """
-        from instamatic.processing.cross_correlate import cross_correlate
+        from skimage.feature import register_translation
 
         current_x, current_y = self.stage.xy
         print(f"Current stage position: {current_x:.0f} {current_y:.0f}")
@@ -914,7 +911,7 @@ class TEMController(object):
 
         img = self.getRawImage()
 
-        pixel_shift = cross_correlate(ref_img, img, upsample_factor=10, verbose=verbose)
+        pixel_shift = register_translation(ref_img, img, upsample_factor=10)
 
         stage_shift = np.dot(pixel_shift, mati)
 
@@ -963,7 +960,7 @@ class TEMController(object):
         z: float
             Optimized Z value for eucentric tilting
         """
-        from instamatic.processing.cross_correlate import cross_correlate
+        from skimage.feature import register_translation
 
         def one_cycle(tilt: float=5, sign=1) -> list:
             angle1 = -tilt*sign
@@ -977,7 +974,7 @@ class TEMController(object):
             if sign < 1:
                 img2, img1 = img1, img2
 
-            shift = cross_correlate(img1, img2, upsample_factor=10, verbose=verbose)
+            shift = register_translation(img1, img2, upsample_factor=10)
 
             return shift
 

@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 from instamatic.processing.find_crystals import find_crystals_timepix
 
 def reject_outlier(data, m=2):
@@ -52,7 +52,7 @@ def center_z_height(ctrl, verbose=False):
         z.append(z0 + i * 1000)
         ctrl.stage.set(a = a0 + 10)
         img1, h = ctrl.getImage(exposure = 0.01, comment = "z height finding")
-        shift = cross_correlate(img0, img1, upsample_factor=10, verbose=False)
+        shift = register_translation(img0, img1, upsample_factor=10)
         d1 = np.linalg.norm(shift) 
         if shift[0] < 0:
             d1 = -d1
