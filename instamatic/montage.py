@@ -376,6 +376,11 @@ class Montage(object):
 
         return m
 
+    def from_tiffs(self, filename: str):
+        """Load montage from a series of tiff files + `montage.yaml`)
+        """
+        raise NotImplementedError
+
     def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose: bool=False):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation
@@ -707,7 +712,18 @@ class GridMontage(object):
     def __init__(self, ctrl):
         super().__init__()
         self.ctrl = ctrl
-    
+        self.direction = "updown"
+        self.zigzag = True
+
+    @property
+    def gridspec(self):
+        gridspec = {
+            "shape": (self.nx, self.ny),
+            "direction": self.direction,
+            "zigzag": self.zigzag,
+        }
+        return gridspec
+
     def setup(self, 
               nx: int, ny: int, 
               overlap: float=0.1, 
@@ -789,25 +805,46 @@ class GridMontage(object):
                                    pre_acquire=pre_acquire, 
                                    post_acquire=post_acquire)
 
+        self.stagematrix = self.ctrl.get_stagematrix()
         self.buffer = buffer
 
         return buffer
 
     def to_montage(self):
         """Convert the experimental data to a `Montage` object."""
-        gridspec = {
-            "shape": (self.nx, self.ny),
-            "direction": "updown",
-            "zigzag": True,
-        }
-
         images = [im for im,h in self.buffer]
-        m = Montage(images=images, gridspec=gridspec, overlap=self.overlap)
+        m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
+        m.stagecoords = self.coords
+        m.stagematrix = stagematrix
         return m
 
-    def save(self, path: str):
-        """Save the data to the given path"""
-        pass
+    def save(self, drc: str=None):
+        """Save the data to the given directory, 
+        defaults to the instamatic data directory defined in the config
+        """
+        from instamatic.formats import write_tiff
+        from instamatic.io import get_new_work_subdirectory
+
+        if not drc:
+            drc = get_new_work_subdirectory("montage")
+
+        fns = []
+        for i, (img, h) in self.buffer:
+            name = "mont_{i:04d}.tiff"
+            write_tiff(drc / name, img, header=h)
+            fns.append(name)
+
+        d = {}
+        d["stagecoords"] = m.stagecoords.tolist()
+        d["stagematrix"] = m.stagematrix.tolist()
+        d["gridshape"] = self.nx, self.ny
+        d["direction"] = self.direction
+        d["zigzag"] = self.zigzag
+        d["overlap"] = self.overlap
+        d["filenames"] = fns
+
+        import yaml
+        yaml.dump(d, stream=open(drc / "montage.yaml"))
 
 
 if __name__ == '__main__':
