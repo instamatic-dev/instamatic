@@ -367,6 +367,7 @@ class Montage(object):
         m = cls(images=images, gridspec=gridspec)
         m.mdoc = mdoc
         m.filename = filename
+        m.stagecoords = np.array([d["StagePosition"] for d in m.mdoc]) * 1000  # um->nm
         m.piececoords = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
         m.alignedpiececoords = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
         try:
@@ -687,6 +688,8 @@ class Montage(object):
 
         self.stitched = stitched
         self.indexmap = indexmap
+        self.centers = coords + np.array((res_x, res_y)) / 2
+        self.coords = coords
 
         return stitched
 
@@ -701,10 +704,30 @@ class Montage(object):
         """
         self.stitch(coords, plot=True)
 
-    def pixel_to_stagecoords(self, coord: tuple) -> tuple:
+    def pixel_to_stagecoord(self, px_coord: tuple) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage coordinate"""
+        # m.stagematrix = np.array([8.797544, 0.052175, 0.239726, 8.460119]).reshape(2,2) / (2*1000)
+        mati = np.linalg.inv(self.stagematrix)
+        
+        centers = self.centers
+        
+        diffs = np.linalg.norm((centers - px_coord), axis=1)
+        j = np.argmin(diffs)
+        coord = self.coords[j]
 
-        pass
+        stage_coord = self.stagecoords[j]
+        stage_shift = np.dot(px_coord - coord, mati)
+            
+        new_stagecoord = stage_coord + stage_shift
+
+        return new_stagecoord
+
+    def stage_to_pixelcoord(self, coord: tuple) -> tuple:
+        """Takes a stage coordinate and transforms it into a pixel coordinate"""
+        mat = self.stagematrix
+
+        raise NotImplementedError
+        return px_coord
 
 
 class GridMontage(object):
