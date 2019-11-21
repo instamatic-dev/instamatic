@@ -148,14 +148,15 @@ def define_directions(pairs: list):
     for pair in pairs:
         i0, j0 = pair["idx0"]
         i1, j1 = pair["idx1"]
-    
-        if i0 == i1:
-            if j1 > j0:
+        
+        # checked 21-11-2019 for 'leftright' config
+        if j0 == j1:
+            if i1 > i0:
                 side0, side1 = "bottom", "top"
             else:
                 side0, side1 = "top", "bottom"
         else:
-            if i1 > i0:
+            if j1 > j0:
                 side0, side1 = "right", "left"
             else:
                 side0, side1 = "left", "right"
@@ -329,7 +330,7 @@ class Montage(object):
         self.overlap_y = overlap_y = int(res_y * overlap)
         
     @classmethod
-    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="updown", zigzag: bool=True):
+    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="leftright", zigzag: bool=True):
         """Load a montage object from a SerialEM file image stack
         
         Parameters
@@ -375,7 +376,7 @@ class Montage(object):
 
         return m
 
-    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose=False):
+    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose: bool=False):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation
         
@@ -401,7 +402,6 @@ class Montage(object):
         
         vect = np.array(idx1) - np.array(idx0)
         vect = vect * np.array((res_x - overlap_x, res_y - overlap_y))
-        vect = vect[::-1]
 
         difference_vector = vect + shift
 
@@ -412,7 +412,7 @@ class Montage(object):
 
         return difference_vector
     
-    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, method="skimage", plot=False, verbose=True):
+    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, method: str="skimage", plot : bool=False, verbose : bool=True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -475,7 +475,7 @@ class Montage(object):
             else:  # method = skimage.feature.register_translation
                 shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
                 fft = np.ones_like(strip0)
-                score = error
+                score = 1-error
 
             if plot:
                 plot_fft(strip0, strip1, shift, fft, side0, side1)
@@ -527,7 +527,7 @@ class Montage(object):
         
         return vects
 
-    def get_optimized_montage_coords(self, difference_vectors, method="leastsq", verbose=False):
+    def get_optimized_montage_coords(self, difference_vectors, method: str="leastsq", verbose: bool=False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares minimization
         
@@ -552,7 +552,6 @@ class Montage(object):
         overlap_y = self.overlap_y
         
         vects = self.get_montage_coords()
-        vects = vects[:,::-1]
 
         # determine which frames items have neighbours
         has_neighbours = set([i for key in difference_vectors.keys() for i in key])
@@ -601,11 +600,10 @@ class Montage(object):
         Vn = np.array([p.value for p in res.params.values()]).reshape(-1,2)
         offset = min(Vn[:,0]), min(Vn[:,1])
         coords = Vn - offset
-        coords = coords[:,::-1]
 
         return coords
    
-    def stitch(self, coords: "np.array[-1, 2]", method=None, plot: bool=False):
+    def stitch(self, coords: "np.array[-1, 2]", method: str=None, plot: bool=False):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -628,16 +626,16 @@ class Montage(object):
         res_x, res_y = self.image_shape
         overlap_x, overlap_y = self.overlap_x, self.overlap_y
 
-        stitched_x = int(ny * res_x)
-        stitched_y = int(nx * res_y)
-
-        offset = np.array((overlap_x, overlap_y))
+        c = coords.astype(int)
+        stitched_x, stitched_y = c.max(axis=0) - c.min(axis=0)
+        stitched_x += res_x
+        stitched_y += res_y
 
         stitched = np.zeros((int(stitched_x), int(stitched_y)))
         indexmap = np.zeros((int(stitched_x), int(stitched_y)))
 
         if method in ("average", "weighted"):
-            n_images = np.zeros((int(stitched_x+res_x), int(stitched_y+res_y)))
+            n_images = np.zeros((int(stitched_x), int(stitched_y)))
 
             if method == "weighted":
                 weight = weight_map(self.image_shape, method="circle")
@@ -648,24 +646,26 @@ class Montage(object):
         for i, idx in enumerate(sorted_grid_indices(grid)):
             im = images[i]
 
-            x0, y0 = coords[i] + offset
+            x0, y0 = c[i]
             x0 = int(x0)
             y0 = int(y0)
 
             x1 = x0 + im.shape[0]
             y1 = y0 + im.shape[1]
 
+            # print(f"{x0:10d} {x1:10d} {y0:10d} {y1:10d}")
+
             if method == "average":
-                stitched[y0:y1, x0:x1] += im
-                indexmap[y0:y1, x0:x1] += i
-                n_images[y0:y1, x0:x1] += 1
+                stitched[x0:x1, y0:y1] += im
+                indexmap[x0:x1, y0:y1] += i
+                n_images[x0:x1, y0:y1] += 1
             if method == "weighted":
-                stitched[y0:y1, x0:x1] += im * weight
-                indexmap[y0:y1, x0:x1] += i * weight
-                n_images[y0:y1, x0:x1] += weight
+                stitched[x0:x1, y0:y1] += im * weight
+                indexmap[x0:x1, y0:y1] += i * weight
+                n_images[x0:x1, y0:y1] += weight
             else:
-                stitched[y0:y1, x0:x1] = im
-                indexmap[y0:y1, x0:x1] = i
+                stitched[x0:x1, y0:y1] = im
+                indexmap[x0:x1, y0:y1] = i
 
             if plot:
                 txt = f"{i}\n{idx}"
@@ -695,6 +695,11 @@ class Montage(object):
             List of x/y pixel coordinates
         """
         self.stitch(coords, plot=True)
+
+    def pixel_to_stagecoords(self, coord: tuple) -> tuple:
+        """Takes a pixel coordinate and transforms it into a stage coordinate"""
+
+        pass
 
 
 class GridMontage(object):
