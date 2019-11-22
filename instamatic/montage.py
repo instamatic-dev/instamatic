@@ -4,6 +4,7 @@ from instamatic.imreg import translation
 from skimage.feature import register_translation
 from scipy import ndimage
 import lmfit
+from instamatic.tools import bin_ndarray
 
 
 def sorted_grid_indices(grid):
@@ -609,7 +610,7 @@ class Montage(object):
 
         return coords
    
-    def stitch(self, coords: "np.array[-1, 2]", method: str=None, plot: bool=False):
+    def stitch(self, coords: "np.array[-1, 2]", method: str=None, binning: int=1, plot: bool=False):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -617,6 +618,8 @@ class Montage(object):
         ----------
         coords : np.array[-1, 2]
             List of x/y pixel coordinates
+        binning : int
+            Bin the Montage image by this factor
         plot : bool
             Plot the stitched image
 
@@ -637,8 +640,7 @@ class Montage(object):
         stitched_x += res_x
         stitched_y += res_y
 
-        stitched = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
-        indexmap = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
+        stitched = np.zeros((int(stitched_x / binning), int(stitched_y / binning)), dtype=np.int32)
 
         if method in ("average", "weighted"):
             n_images = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
@@ -650,11 +652,12 @@ class Montage(object):
             fig, ax = plt.subplots(figsize=(10, 10))
 
         for i, idx in enumerate(sorted_grid_indices(grid)):
-            im = images[i]
+            new_shape = int(res_x / binning), int(res_y / binning)
+            im = bin_ndarray(images[i], new_shape)
 
             x0, y0 = c[i]
-            x0 = int(x0)
-            y0 = int(y0)
+            x0 = int(x0 / binning)
+            y0 = int(y0 / binning)
 
             x1 = x0 + im.shape[0]
             y1 = y0 + im.shape[1]
@@ -663,15 +666,12 @@ class Montage(object):
 
             if method == "average":
                 stitched[x0:x1, y0:y1] += im
-                indexmap[x0:x1, y0:y1] += i
                 n_images[x0:x1, y0:y1] += 1
             if method == "weighted":
                 stitched[x0:x1, y0:y1] += im * weight
-                indexmap[x0:x1, y0:y1] += i * weight
                 n_images[x0:x1, y0:y1] += weight
             else:
                 stitched[x0:x1, y0:y1] = im
-                indexmap[x0:x1, y0:y1] = i
 
             if plot:
                 txt = f"{i}\n{idx}"
@@ -680,16 +680,15 @@ class Montage(object):
         if method in ("average", "weighted"):
             n_images = np.where(n_images == 0, 1, n_images)
             stitched /= n_images
-            indexmap /= n_images
 
         if plot:
             ax.imshow(stitched)
             plt.show()
 
         self.stitched = stitched
-        self.indexmap = indexmap
         self.centers = coords + np.array((res_x, res_y)) / 2
         self.coords = coords
+        self.stitched_binning = binning
 
         return stitched
 
@@ -708,16 +707,23 @@ class Montage(object):
         """Takes a pixel coordinate and transforms it into a stage coordinate"""
         # m.stagematrix = np.array([8.797544, 0.052175, 0.239726, 8.460119]).reshape(2,2) / (2*1000)
         mati = np.linalg.inv(self.stagematrix)
+
+        px_coord = np.array(px_coord)
         
+        px_coord = self.stitched_binning * px_coord
         centers = self.centers
         
         diffs = np.linalg.norm((centers - px_coord), axis=1)
         j = np.argmin(diffs)
+        print(j)  # ok
+
         coord = self.coords[j]
 
         stage_coord = self.stagecoords[j]
         stage_shift = np.dot(px_coord - coord, mati)
-            
+        
+        print(stage_coord)
+
         new_stagecoord = stage_coord + stage_shift
 
         return new_stagecoord
