@@ -58,12 +58,12 @@ def weight_map(shape, method="block", plot=False):
     return d
 
 
-def make_grid(shape: tuple, direction: str="updown", zigzag: bool=True) -> "np.array":
+def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True) -> "np.array":
     """Defines the grid montage collection scheme
     
     Parameters
     ----------
-    shape : tuple(int, int)
+    gridshape : tuple(int, int)
         Defines the shape of the grid
     direction : str
         Defines the direction of data collection
@@ -74,8 +74,8 @@ def make_grid(shape: tuple, direction: str="updown", zigzag: bool=True) -> "np.a
     -------
     np.array
     """
-    nx, ny = shape
-    grid = np.arange(nx * ny).reshape(shape)
+    nx, ny = gridshape
+    grid = np.arange(nx * ny).reshape(gridshape)
 
     if zigzag:
         grid[1::2] = np.fliplr(grid[1::2])
@@ -161,7 +161,7 @@ def define_directions(pairs: list):
                 side0, side1 = "right", "left"
             else:
                 side0, side1 = "left", "right"
-        
+
         # print(i0, j0, i1, j1, side0, side1)
         
         pair["side0"] = side0
@@ -360,7 +360,7 @@ class Montage(object):
         assert len(mdoc) == len(images)
         
         gridspec = {
-            "shape": gridshape,
+            "gridshape": gridshape,
             "direction": direction,
             "zigzag": zigzag
         }
@@ -378,10 +378,26 @@ class Montage(object):
 
         return m
 
-    def from_tiffs(self, filename: str):
+    @classmethod
+    def from_montage_yaml(cls, filename: str):
         """Load montage from a series of tiff files + `montage.yaml`)
         """
-        raise NotImplementedError
+        import yaml
+        from instamatic.formats import read_tiff
+        
+        d = yaml.safe_load(open("montage.yaml", "r"))
+        fns = d["filenames"]
+        overlap = d["overlap"]
+
+        images = [read_tiff(fn)[0] for fn in fns]
+
+        gridspec = {k:v for k,v in d.items() if k in ("gridshape", "direction", "zigzag")}
+
+        m = cls(images=images, gridspec=gridspec, overlap=overlap)
+        m.stagecoords = np.array(d["stagecoords"])
+        m.stagematrix = np.array(d["stagematrix"])
+
+        return m
 
     def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose: bool=False):
         """Calculate the pixel distance between 2 images using the calculate
@@ -747,7 +763,7 @@ class GridMontage(object):
     @property
     def gridspec(self):
         gridspec = {
-            "shape": (self.nx, self.ny),
+            "gridshape": (self.nx, self.ny),
             "direction": self.direction,
             "zigzag": self.zigzag,
         }
