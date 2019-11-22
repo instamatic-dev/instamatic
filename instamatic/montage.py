@@ -329,18 +329,6 @@ class Montage(object):
         self.overlap_x = overlap_x = int(res_x * overlap)
         self.overlap_y = overlap_y = int(res_y * overlap)
 
-    @property
-    def stage_centers(self):
-        try:
-            return self._stage_centers
-        except AttributeError:
-            # calculate the position of the stage at the center of each image
-            mati = np.linalg.inv(self.stagematrix)
-            res_x, res_y = self.image_shape
-            center_offset = np.array((res_x, res_y)) / 2
-            self._stage_centers = self.stagecoords + np.dot(center_offset, mati)
-            return self._stage_centers
-
     @classmethod
     def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="leftright", zigzag: bool=True):
         """Load a montage object from a SerialEM file image stack
@@ -738,24 +726,27 @@ class Montage(object):
         mati = np.linalg.inv(self.stagematrix)
 
         px_coord = np.array(px_coord) * self.stitched_binning
-        
+        center_offset = np.dot(np.array(self.image_shape) / 2, mati)
+
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
 
         image_pixel_coord = self.coords[j]
         image_stage_coord = self.stagecoords[j]
 
-        stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord
+        stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord - center_offset
 
         return stage_coord
 
     def stage_to_pixelcoord(self, stage_coord: tuple) -> tuple:
         """Takes a stage coordinate and transforms it into a pixel coordinate"""
         mat = self.stagematrix
+        mati = np.linalg.inv(self.stagematrix)
 
-        stage_coord = np.array(stage_coord)
+        center_offset = np.dot(np.array(self.image_shape) / 2, mati)
+        stage_coord = np.array(stage_coord) + center_offset
 
-        diffs = np.linalg.norm((self.stage_centers - stage_coord), axis=1)
+        diffs = np.linalg.norm((self.stagecoords - stage_coord), axis=1)
         j = np.argmin(diffs)
 
         image_stage_coord = self.stagecoords[j]
