@@ -5,6 +5,7 @@ from skimage.feature import register_translation
 from scipy import ndimage
 import lmfit
 from instamatic.tools import bin_ndarray
+import matplotlib.patches as patches
 
 
 def sorted_grid_indices(grid):
@@ -265,9 +266,7 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     plt.show()
 
 
-def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):
-    import matplotlib.patches as patches
-    
+def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):  
     blank = np.zeros((res_x*2, res_y*2), dtype=np.int32)
 
     center = np.array(blank.shape) // 2
@@ -704,6 +703,9 @@ class Montage(object):
             if plot:
                 txt = f"{i}\n{idx}"
                 ax.text((x0 + x1) / 2, (y0 + y1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
+
+                rect = patches.Rectangle([x0, y0], res_x/binning, res_y/binning, linewidth=0.5, edgecolor='r', facecolor='none')
+                ax.add_patch(rect)
 
         if method in ("average", "weighted"):
             n_images = np.where(n_images == 0, 1, n_images)
