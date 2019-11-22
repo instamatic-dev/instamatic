@@ -329,7 +329,19 @@ class Montage(object):
         res_x, res_y = self.image_shape
         self.overlap_x = overlap_x = int(res_x * overlap)
         self.overlap_y = overlap_y = int(res_y * overlap)
-        
+
+    @property
+    def stage_centers(self):
+        try:
+            return self._stage_centers
+        except AttributeError:
+            # calculate the position of the stage at the center of each image
+            mati = np.linalg.inv(self.stagematrix)
+            res_x, res_y = self.image_shape
+            center_offset = np.array((res_x, res_y)) / 2
+            self._stage_centers = self.stagecoords + np.dot(center_offset, mati)
+            return self._stage_centers
+
     @classmethod
     def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="leftright", zigzag: bool=True):
         """Load a montage object from a SerialEM file image stack
@@ -721,35 +733,36 @@ class Montage(object):
 
     def pixel_to_stagecoord(self, px_coord: tuple) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage coordinate"""
-        # m.stagematrix = np.array([8.797544, 0.052175, 0.239726, 8.460119]).reshape(2,2) / (2*1000)
         mati = np.linalg.inv(self.stagematrix)
 
-        px_coord = np.array(px_coord)
+        px_coord = np.array(px_coord) * self.stitched_binning
         
-        px_coord = self.stitched_binning * px_coord
-        centers = self.centers
-        
-        diffs = np.linalg.norm((centers - px_coord), axis=1)
+        diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
-        print(j)  # ok
 
-        coord = self.coords[j]
+        image_pixel_coord = self.coords[j]
+        image_stage_coord = self.stagecoords[j]
 
-        stage_coord = self.stagecoords[j]
-        stage_shift = np.dot(px_coord - coord, mati)
-        
-        print(stage_coord)
+        stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord
 
-        new_stagecoord = stage_coord + stage_shift
+        return stage_coord
 
-        return new_stagecoord
-
-    def stage_to_pixelcoord(self, coord: tuple) -> tuple:
+    def stage_to_pixelcoord(self, stage_coord: tuple) -> tuple:
         """Takes a stage coordinate and transforms it into a pixel coordinate"""
         mat = self.stagematrix
 
-        raise NotImplementedError
-        return px_coord
+        stage_coord = np.array(stage_coord)
+
+        diffs = np.linalg.norm((self.stage_centers - stage_coord), axis=1)
+        j = np.argmin(diffs)
+
+        image_stage_coord = self.stagecoords[j]
+        image_pixel_coord = self.coords[j]
+
+        px_coord = np.dot(stage_coord - image_stage_coord, mat) + image_pixel_coord
+        px_coord /= self.stitched_binning
+
+        return px_coord.astype(int)
 
 
 class GridMontage(object):
