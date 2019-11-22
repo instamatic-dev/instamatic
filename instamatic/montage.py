@@ -395,6 +395,8 @@ class Montage(object):
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
         m.stagecoords = np.array(d["stagecoords"])
         m.stagematrix = np.array(d["stagematrix"])
+        m.mode = d["mode"]
+        m.magnification = d["magnification"]
 
         return m
 
@@ -756,6 +758,61 @@ class Montage(object):
         px_coord /= self.stitched_binning
 
         return px_coord.astype(int)
+
+    def find_holes(self, stitched, diameter: float=40e3, tolerance : float=0.1, plot=False):
+        """Find grid holes in the montage image
+
+        Parameters
+        ----------
+        diameter : float
+            In nm, approximate diameter of squares/grid holes
+        tolerance : float
+            Tolerance in % how far the calculate diameter can be off
+
+        Returns
+        -------
+        stagecoords : np.array, imagecoords : np.array
+            Return both he stage and imagecoords as numpy arrays
+        """
+        from skimage import feature, filters
+        from skimage import morphology
+        from skimage.measure import regionprops
+
+        thresh = filters.threshold_otsu(stitched)
+        selem = morphology.disk(10)
+        seg = morphology.binary_closing(stitched > thresh, selem=selem)
+        
+        fit, (ax0, ax1) = plt.subplots(ncols=2)
+
+        ax0.imshow(seg)
+        
+        labeled, _ = ndimage.label(seg)
+        props = regionprops(labeled)
+
+        binning = self.stitched_binning
+
+        from instamatic import config
+        px = getattr(config.calibration, f"pixelsize_{self.mode}")[self.magnification] * binning
+
+        ax1.imshow(stitched)
+
+        max_val = tolerance * diameter
+
+        stagecoords = []
+        imagecoords = []
+
+        for prop in props:
+            x, y = prop.centroid
+            
+            d = (prop.area ** 0.5) * px
+            
+            if abs(d - diameter) < max_val:
+                ax1.scatter(y, x, marker="+")
+                stagecoord = self.pixel_to_stagecoord((x,y))
+                stagecoords.append(stagecoord)
+                imagecoords.append((x, y))
+
+        return np.array(stagecoords), np.array(imagecoords)
 
 
 class GridMontage(object):
