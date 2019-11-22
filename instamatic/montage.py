@@ -591,8 +591,8 @@ class Montage(object):
             else:  # Fix coordinates with no observed neighbours
                 vary = True
             vary = (i != middle_i)
-            params.add(f"C{i}{0}", value=row[0], vary=vary)
-            params.add(f"C{i}{1}", value=row[1], vary=vary)
+            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0]-res_x/2, max=row[0]+res_x/2)
+            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1]-res_y/2, max=row[1]+res_y/2)
 
         def obj_func(params, diff_vects):
             V = np.array([p.value for p in params.values()]).reshape(-1,2)
