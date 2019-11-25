@@ -1,11 +1,12 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from instamatic.imreg import translation
-from skimage.feature import register_translation
-from scipy import ndimage
-import lmfit
 from instamatic.tools import bin_ndarray
+from scipy import ndimage
+from skimage import filters
+from skimage.feature import register_translation
+import lmfit
 import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def sorted_grid_indices(grid):
@@ -257,7 +258,7 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     ax0.set_title(f"{side0}")
     ax1.imshow(strip1, interpolation="nearest")
     ax1.set_title(f"{side1}")
-    ax2.imshow(strip1_offset - strip0, interpolation="nearest")
+    ax2.imshow(strip1_offset - strip0.astype(float), interpolation="nearest")
     ax2.set_title("Abs(Difference)")
     ax3.imshow(fft, vmin=np.percentile(fft, 50.00), vmax=np.percentile(fft, 99.99))
     ax3.set_title(f"Cross correlation (max={fft.max():.4f})")
@@ -436,7 +437,9 @@ class Montage(object):
 
         return difference_vector
     
-    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, method: str="skimage", plot : bool=False, verbose : bool=True):
+    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, 
+                               method: str="imreg", segment: bool=False,
+                               plot : bool=False, verbose : bool=True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -451,8 +454,12 @@ class Montage(object):
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
             strips used for cross correlation to 75 pixels.
+        segment : bool
+            Segment the image using otsu's method before cross correlation. This improves
+            the contrast for registration.
         method : str
-            Which cross correlation function to use `skimage`/`imreg`
+            Which cross correlation function to use `skimage`/`imreg`. `imreg` seems
+            to perform slightly better in this scenario.
 
         Returns
         -------
@@ -480,6 +487,14 @@ class Montage(object):
         for i, pair in enumerate(pairs):
             seq0 = pair["seq0"]
             seq1 = pair["seq1"]
+
+            if (seq1, seq0) in difference_vectors:
+                difference_vector = -difference_vectors[seq1, seq0]
+                if verbose:
+                    print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> Copy from {seq1} - {seq0} -> Vector: {difference_vector}")
+                difference_vectors[seq0, seq1] = difference_vector
+                continue
+
             side0 = pair["side0"]
             side1 = pair["side1"]
             idx0 = pair["idx0"]
@@ -492,6 +507,13 @@ class Montage(object):
 
             strip0 = im0[slices[side0]]
             strip1 = im1[slices[side1]]
+
+            if segment:
+                t0 = filters.threshold_otsu(strip0)
+                t1 = filters.threshold_otsu(strip1)
+                strip0 = strip0 > t0
+                strip1 = strip1 > t1
+                # print(f"Thresholds: {t1} {t1}")
 
             if method == "imreg":
                 shift, fft = translation(strip0, strip1, return_fft=True)
