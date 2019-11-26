@@ -1014,6 +1014,11 @@ class TEMController(object):
 
         return z0
 
+    def montage(self):
+        from instamatic.montage import GridMontage
+        gm = GridMontage(self)
+        return gm
+
     def to_dict(self, *keys) -> dict:
         """
         Store microscope parameters to dict
