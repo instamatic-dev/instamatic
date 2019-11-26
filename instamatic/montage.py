@@ -771,7 +771,7 @@ class Montage(object):
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
 
-        image_pixel_coord = self.coords[j][::-1]
+        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
         image_stage_coord = self.stagecoords[j]
 
         stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord - center_offset
@@ -793,7 +793,7 @@ class Montage(object):
         j = np.argmin(diffs)
 
         image_stage_coord = self.stagecoords[j]
-        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped?
+        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
 
         vect = stage_coord - image_stage_coord
 
@@ -805,7 +805,8 @@ class Montage(object):
 
         return px_coord.astype(int)
 
-    def find_holes(self, stitched, diameter: float=40e3, tolerance : float=0.1, plot=False):
+    def find_holes(self, stitched, diameter: float=40e3, tolerance : float=0.1, 
+                    pixelsize: float=None, plot: bool=False) -> tuple:
         """Find grid holes in the montage image
 
         Parameters
@@ -814,6 +815,8 @@ class Montage(object):
             In nm, approximate diameter of squares/grid holes
         tolerance : float
             Tolerance in % how far the calculate diameter can be off
+        pixelsize : float
+            Unbinned tile pixelsize in nanometers
 
         Returns
         -------
@@ -837,8 +840,12 @@ class Montage(object):
 
         binning = self.stitched_binning
 
-        from instamatic import config
-        px = getattr(config.calibration, f"pixelsize_{self.mode}")[self.magnification] * binning
+        if not pixelsize:
+            # attempt to get pixelsize from config
+            from instamatic import config
+            pixelsize = getattr(config.calibration, f"pixelsize_{self.mode}")[self.magnification] * binning
+        else:
+            pixelsize *= binning
 
         ax1.imshow(stitched)
 
@@ -850,7 +857,7 @@ class Montage(object):
         for prop in props:
             x, y = prop.centroid
             
-            d = (prop.area ** 0.5) * px
+            d = (prop.area ** 0.5) * pixelsize
             
             if abs(d - diameter) < max_val:
                 ax1.scatter(y, x, marker="+")
