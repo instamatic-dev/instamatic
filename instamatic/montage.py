@@ -369,12 +369,21 @@ class Montage(object):
         m.mdoc = mdoc
         m.filename = filename
         m.stagecoords = np.array([d["StagePosition"] for d in m.mdoc]) * 1000  # um->nm
-        m.piececoords = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
-        m.alignedpiececoords = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
+        c1 = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
+        m.piececoords = c1[:,::-1]  # flip coordinates
+        c2 = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
+        c2 = c2[:,::-1]  # flip coordinates
+        c2 -= c2.min(axis=0)  # set minval to 0 
+        m.alignedpiececoords = c2 
+
         try:
-            m.alignedpiececoordsvs = np.array([d["AlignedPieceCoordsVS"][0:2] for d in m.mdoc])
+            c3 = np.array([d["AlignedPieceCoordsVS"][0:2] for d in m.mdoc])
         except KeyError:
             pass
+        else:
+            c3 = c3[:,::-1]  # flip coordinates
+            c3 -= c3.min(axis=0)  # set minval to 0 
+            m.alignedpiececoordsvs = c3
 
         return m
 
@@ -713,6 +722,7 @@ class Montage(object):
                 stitched[x0:x1, y0:y1] = im
 
             if plot:
+                j = self.grid.flatten()[i]
                 txt = f"{i}\n{idx}"
                 ax.text((x0 + x1) / 2, (y0 + y1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
 
@@ -745,9 +755,12 @@ class Montage(object):
         """
         self.stitch(coords, plot=True)
 
-    def pixel_to_stagecoord(self, px_coord: tuple) -> tuple:
+    def pixel_to_stagecoord(self, px_coord: tuple, stagematrix=None) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage coordinate"""
-        mati = np.linalg.inv(self.stagematrix)
+        if stagematrix is None:
+            stagematrix = self.stagematrix
+
+        mati = np.linalg.inv(stagematrix)
 
         px_coord = np.array(px_coord) * self.stitched_binning
         center_offset = np.dot(np.array(self.image_shape) / 2, mati)
@@ -755,28 +768,36 @@ class Montage(object):
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
 
-        image_pixel_coord = self.coords[j]
+        image_pixel_coord = self.coords[j][::-1]
         image_stage_coord = self.stagecoords[j]
 
         stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord - center_offset
 
         return stage_coord
 
-    def stage_to_pixelcoord(self, stage_coord: tuple) -> tuple:
+    def stage_to_pixelcoord(self, stage_coord: tuple, stagematrix=None) -> tuple:
         """Takes a stage coordinate and transforms it into a pixel coordinate"""
-        mat = self.stagematrix
-        mati = np.linalg.inv(self.stagematrix)
+        if stagematrix is None:
+            stagematrix = self.stagematrix
+        
+        mat = stagematrix
+        mati = np.linalg.inv(stagematrix)
 
         center_offset = np.dot(np.array(self.image_shape) / 2, mati)
-        stage_coord = np.array(stage_coord) + center_offset
+        stage_coord = np.array(stage_coord)
 
         diffs = np.linalg.norm((self.stagecoords - stage_coord), axis=1)
         j = np.argmin(diffs)
 
         image_stage_coord = self.stagecoords[j]
-        image_pixel_coord = self.coords[j]
+        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped?
 
-        px_coord = np.dot(stage_coord - image_stage_coord, mat) + image_pixel_coord
+        vect = stage_coord - image_stage_coord
+
+        # The image pixel coordinate `image_pixel_coord` cooresponds to the corner, 
+        # but the stage coord `image_stage_coord` at the center of the image.
+        # `px_coord` is the relative offset added to the corner pixel coordiante of the image
+        px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
         px_coord /= self.stitched_binning
 
         return px_coord.astype(int)
@@ -893,7 +914,6 @@ class GridMontage(object):
         px_coords = grid_indices * vect
 
         px_center = vect * (np.array(grid.shape) / np.array((nx/2, ny/2)))
-
 
         stagematrix = self.ctrl.get_stagematrix(binning=binning)
 
