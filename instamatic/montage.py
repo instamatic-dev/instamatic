@@ -511,7 +511,7 @@ class Montage(object):
             im0 = images[seq0]
             im1 = images[seq1]
             
-            if plot:
+            if plot and False:
                 plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1)
 
             strip0 = im0[slices[side0]]
@@ -658,7 +658,7 @@ class Montage(object):
 
         return coords
    
-    def stitch(self, coords: "np.array[-1, 2]", method: str=None, binning: int=1, plot: bool=False):
+    def stitch(self, coords: "np.array[-1, 2]", method: str=None, binning: int=1, plot: bool=False, ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -670,6 +670,8 @@ class Montage(object):
             Bin the Montage image by this factor
         plot : bool
             Plot the stitched image
+        ax : matplotlib.Axis
+            Matplotlib axis to plot on.
 
         Return
         ------
@@ -696,7 +698,7 @@ class Montage(object):
             if method == "weighted":
                 weight = weight_map(self.image_shape, method="circle")
 
-        if plot:
+        if plot and not ax:
             fig, ax = plt.subplots(figsize=(10, 10))
 
         for i, idx in enumerate(sorted_grid_indices(grid)):
@@ -735,7 +737,8 @@ class Montage(object):
 
         if plot:
             ax.imshow(stitched)
-            plt.show()
+            if not ax:
+                plt.show()
 
         self.stitched = stitched
         self.centers = coords + np.array((res_x, res_y)) / 2
@@ -744,7 +747,7 @@ class Montage(object):
 
         return stitched
 
-    def plot(self, coords: "np.array[-1, 2]"):
+    def plot(self, coords: "np.array[-1, 2]", ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -753,7 +756,7 @@ class Montage(object):
         coords : np.array[-1, 2]
             List of x/y pixel coordinates
         """
-        self.stitch(coords, plot=True)
+        self.stitch(coords, plot=True, ax=ax)
 
     def pixel_to_stagecoord(self, px_coord: tuple, stagematrix=None) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage coordinate"""

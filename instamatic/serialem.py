@@ -158,6 +158,11 @@ class MapItem(NavItem):
         MontBinning = self.MontBinning
         return (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
 
+    @property
+    def stagematrix(self) -> "np.array":
+        """Alias for map_scale_matrix"""
+        return self.map_scale_matrix
+
     def pixel_to_stagecoords(self, coords: list) -> "np.array":
         """Convert from pixel coordinates to stage coordinates"""
         coords = np.array(coords)
