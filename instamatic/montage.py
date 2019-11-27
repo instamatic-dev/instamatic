@@ -7,6 +7,7 @@ import lmfit
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 
 def sorted_grid_indices(grid):
@@ -60,7 +61,7 @@ def weight_map(shape, method="block", plot=False):
     return d
 
 
-def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True) -> "np.array":
+def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True, flip: bool=False) -> "np.array":
     """Defines the grid montage collection scheme
     
     Parameters
@@ -68,9 +69,13 @@ def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True) -> "
     gridshape : tuple(int, int)
         Defines the shape of the grid
     direction : str
-        Defines the direction of data collection
+        Defines the direction of data collection starting from the top (lr, rl) or left-hand (ud, du) side
+        `updown`, `downup`, `leftright`, `rightleft`
     zigzag : bool
         Defines if the data has been collected in a zigzag manner
+    flip : bool
+        Flip around the vertical (lr, rl) or horizontal (ud, du) axis, i.e. start from the
+        botton (lr, rl) or right-hand (ud, du) side.
     
     Returns
     -------
@@ -84,13 +89,21 @@ def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True) -> "
 
     if direction == "updown":
         pass
+        if flip:
+            grid = np.fliplr(grid)
     elif direction == "downup":
         grid = np.flipud(grid)
+        if flip:
+            grid = np.fliplr(grid)
     elif direction == "rightleft":
         grid = grid.T
         grid = np.fliplr(grid)
+        if flip:
+            grid = np.flipud(grid)
     elif direction == "leftright":
         grid = grid.T
+        if flip:
+            grid = np.flipud(grid)
     else:
         raise ValueError(f"Invalid direction: {direction}")
 
@@ -362,7 +375,8 @@ class Montage(object):
         gridspec = {
             "gridshape": gridshape,
             "direction": direction,
-            "zigzag": zigzag
+            "zigzag": zigzag,
+            "flip" : False
         }
         
         m = cls(images=images, gridspec=gridspec)
@@ -387,22 +401,32 @@ class Montage(object):
 
         return m
 
+    def update_gridspec(self, **gridspec):
+        """Update the grid specification"""
+        self.gridspec.update(gridspec)
+        self.grid = make_grid(**self.gridspec)
+
     @classmethod
-    def from_montage_yaml(cls, filename: str):
+    def from_montage_yaml(cls, filename: str="montage.yaml"):
         """Load montage from a series of tiff files + `montage.yaml`)
         """
         import yaml
         from instamatic.formats import read_tiff
+
+        p = Path(filename)
+        drc = p.parent
         
-        d = yaml.safe_load(open("montage.yaml", "r"))
-        fns = d["filenames"]
+        d = yaml.safe_load(open(p, "r"))
+        fns = (drc / fn for fn in d["filenames"])
         overlap = d["overlap"]
 
         images = [read_tiff(fn)[0] for fn in fns]
 
-        gridspec = {k:v for k,v in d.items() if k in ("gridshape", "direction", "zigzag")}
+        gridspec = {k:v for k,v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
 
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
+        m.update_gridspec(flip=not d["flip"])  # BUG: Work-around for gridspec madness
+                                               # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = np.array(d["stagecoords"])
         m.stagematrix = np.array(d["stagematrix"])
         m.mode = d["mode"]
