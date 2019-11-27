@@ -228,6 +228,29 @@ def define_pairs(grid: "np.ndarray"):
     return pairs
 
 
+def disambiguate_shift(strip0, strip1, shift):
+    """Disambiguate the shifts obtained from cross correlation"""
+    shift_x, shift_y = shift
+
+    best_sum = np.inf
+    best_shift = shift
+
+    for i in (-1, 1):
+        for j in (-1, 1):
+            new_shift = (i*shift_x, j*shift_y)
+            strip1_offset = ndimage.shift(strip1, new_shift)
+            offset = strip1_offset - strip0.astype(float)
+            sum_score = np.abs(offset).sum()
+            print(f"{i:2d} {j:2d} -> {sum_score:10.0f}  {new_shift}")
+            if sum_score < best_sum:
+                best_sum = sum_score
+                best_shift = new_shift
+    
+    print("Disambiguated shift:", best_shift)
+
+    return best_shift
+
+
 def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
     fig, axes = plt.subplots(ncols=2, figsize=(6,3))
     ax0, ax1 = axes.flatten()
@@ -259,9 +282,10 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
         shift_y, shift_x = shift
     else:
         shift_x, shift_y = shift
-    
+       
     # Show difference              
-    strip1_offset = ndimage.shift(strip1, (shift_x, shift_y))
+    strip1_shifted = ndimage.shift(strip1, (shift_x, shift_y))
+    difference = strip1_shifted - strip0.astype(float)
     
     # Show shift in fourier space
     image_product = np.fft.fft2(strip0) * np.fft.fft2(strip1).conj()
@@ -271,11 +295,11 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     ax0.set_title(f"{side0}")
     ax1.imshow(strip1, interpolation="nearest")
     ax1.set_title(f"{side1}")
-    ax2.imshow(strip1_offset - strip0.astype(float), interpolation="nearest")
+    ax2.imshow(difference, interpolation="nearest")
     ax2.set_title("Abs(Difference)")
     ax3.imshow(fft, vmin=np.percentile(fft, 50.00), vmax=np.percentile(fft, 99.99))
     ax3.set_title(f"Cross correlation (max={fft.max():.4f})")
-    
+   
     plt.subplots_adjust(hspace=0.0)
     plt.show()
 
@@ -518,13 +542,14 @@ class Montage(object):
 
         difference_vectors = {}
         for i, pair in enumerate(pairs):
+            print("---")
             seq0 = pair["seq0"]
             seq1 = pair["seq1"]
 
             if (seq1, seq0) in difference_vectors:
                 difference_vector = -difference_vectors[seq1, seq0]
                 if verbose:
-                    print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> Copy from {seq1} - {seq0} -> Vector: {difference_vector}")
+                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}")
                 difference_vectors[seq0, seq1] = difference_vector
                 continue
 
@@ -556,16 +581,18 @@ class Montage(object):
                 fft = np.ones_like(strip0)
                 score = 1-error
 
+            shift = disambiguate_shift(strip0, strip1, shift)
+
             if plot:
                 plot_fft(strip0, strip1, shift, fft, side0, side1)
 
             if score < threshold:
                 if verbose:
-                    print("Score below threshold")
+                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!")
                 shift = np.array((0,0))
                 continue
             if verbose:
-                print(f"Pair {i} -> {seq0}:{idx0} - {seq1}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
+                print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
 
             # pairwise difference vector
             difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
@@ -640,13 +667,10 @@ class Montage(object):
 
         middle_i = int(n_gridpoints / 2 )  # Find index of middlemost item
         for i, row in enumerate(vects):
-            if i == middle_i:   # anchor on middle frame
+            if i not in has_neighbours:
                 vary = False
-            if i in has_neighbours:
-                vary = True
-            else:  # Fix coordinates with no observed neighbours
-                vary = True
-            vary = (i != middle_i)
+            else:
+                vary = (i != middle_i)  # anchor on middle frame
             params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0]-res_x/2, max=row[0]+res_x/2)
             params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1]-res_y/2, max=row[1]+res_y/2)
 
