@@ -99,6 +99,7 @@ class AcquireAtItems(object):
         print(f"\nAcquiring on {ntot} items.")
         print("Press <Q> to interrupt.\n")
 
+        self.move_to_item(nav_items[0])  # pre-move
         self.pre_acquire(ctrl)
 
         t0 = t_last = time.perf_counter()
