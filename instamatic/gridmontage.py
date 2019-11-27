@@ -98,7 +98,7 @@ class GridMontage(object):
 
         def pre_acquire(ctrl):
             print("Attempt to eliminate backlash.")
-            ctrl.eliminate_backlash_xy()
+            ctrl.stage.eliminate_backlash_xy()
 
         def acquire(ctrl):
             img, h = ctrl.getImage()
@@ -121,7 +121,7 @@ class GridMontage(object):
         """Convert the experimental data to a `Montage` object."""
         images = [im for im,h in self.buffer]
         m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
-        m.update_gridspec(flip=not m.flip)  # BUG: Work-around for gridspec madness
+        m.update_gridspec(flip=not self.flip)  # BUG: Work-around for gridspec madness
                                             # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = self.stagecoords
         m.stagematrix = self.stagematrix

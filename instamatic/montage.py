@@ -228,7 +228,7 @@ def define_pairs(grid: "np.ndarray"):
     return pairs
 
 
-def disambiguate_shift(strip0, strip1, shift):
+def disambiguate_shift(strip0, strip1, shift, verbose: bool=False):
     """Disambiguate the shifts obtained from cross correlation"""
     shift_x, shift_y = shift
 
@@ -241,12 +241,14 @@ def disambiguate_shift(strip0, strip1, shift):
             strip1_offset = ndimage.shift(strip1, new_shift)
             offset = strip1_offset - strip0.astype(float)
             sum_score = np.abs(offset).sum()
-            print(f"{i:2d} {j:2d} -> {sum_score:10.0f}  {new_shift}")
+            if verbose:
+                print(f"{i:2d} {j:2d} -> {sum_score:10.0f}  {new_shift}")
             if sum_score < best_sum:
                 best_sum = sum_score
                 best_shift = new_shift
     
-    print("Disambiguated shift:", best_shift)
+    if verbose:
+        print("Disambiguated shift:", best_shift)
 
     return best_shift
 
@@ -542,7 +544,9 @@ class Montage(object):
 
         difference_vectors = {}
         for i, pair in enumerate(pairs):
-            print("---")
+            if verbose:
+                print("---")
+                
             seq0 = pair["seq0"]
             seq1 = pair["seq1"]
 
@@ -581,7 +585,7 @@ class Montage(object):
                 fft = np.ones_like(strip0)
                 score = 1-error
 
-            shift = disambiguate_shift(strip0, strip1, shift)
+            shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
 
             if plot:
                 plot_fft(strip0, strip1, shift, fft, side0, side1)
@@ -774,9 +778,10 @@ class Montage(object):
             if plot:
                 j = self.grid.flatten()[i]
                 txt = f"{i}\n{idx}"
-                ax.text((x0 + x1) / 2, (y0 + y1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
 
-                rect = patches.Rectangle([x0, y0], res_x/binning, res_y/binning, linewidth=0.5, edgecolor='r', facecolor='none')
+                # NOTE that y/x are flipped for display in matplotlib ONLY
+                ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
+                rect = patches.Rectangle([y0, x0], res_x/binning, res_y/binning, linewidth=0.5, edgecolor='r', facecolor='none')
                 ax.add_patch(rect)
 
         if method in ("average", "weighted"):

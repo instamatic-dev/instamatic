@@ -1015,7 +1015,7 @@ class TEMController(object):
         return z0
 
     def montage(self):
-        from instamatic.montage import GridMontage
+        from instamatic.gridmontage import GridMontage
         gm = GridMontage(self)
         return gm
 
