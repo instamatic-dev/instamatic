@@ -77,7 +77,13 @@ class JeolMicroscope(object):
         self.goniotool_available = config.cfg.use_goniotool
         if self.goniotool_available:
             from instamatic.goniotool import GonioToolClient
-            self.goniotool = GonioToolClient()
+            try:
+                self.goniotool = GonioToolClient()
+            except Exception as e:
+                print("GonioToolClient:", e)
+                print("Could not connect to GonioToolServer, goniotool unavailable!")
+                self.goniotool_available = False
+                config.cfg.use_goniotool = False
 
         ## faster stage readout using gonio2
         # self.gonio2.GetPosition() -> get stage position, 78 ms

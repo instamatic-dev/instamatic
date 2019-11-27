@@ -15,7 +15,14 @@ import msvcrt
 class SerialExperiment(object):
     """docstring for SerialExperiment"""
 
-    def __init__(self, ctrl, path: str=None, log=None, instruction_file: str=None, exposure: float=400, mode: str="diff", target_angle: float=40):
+    def __init__(self, ctrl, 
+                       path: str=None, 
+                       log=None, 
+                       instruction_file: str=None, 
+                       exposure: float=400, 
+                       mode: str="diff", 
+                       target_angle: float=40, 
+                       rotation_speed=None):
         super().__init__()
 
         self.instruction_file = Path(instruction_file)
@@ -35,6 +42,7 @@ class SerialExperiment(object):
         self.ctrl = ctrl
         self.exposure = exposure
         self.mode = mode
+        self.rotation_speed = rotation_speed
 
     def run(self):
         raise RuntimeError(f"`{self.__class__.__name__}` has not been initialized.")
@@ -47,6 +55,9 @@ class SerialExperiment(object):
         mode = self.mode
         log = self.log
         exposure = self.exposure
+
+        if self.rotation_speed:
+            ctrl.stage.set_rotation_speed(rotation_speed)
 
         def pre_acquire(ctrl):
             ctrl.stage.set(a=start_angle)
@@ -78,6 +89,9 @@ class SerialExperiment(object):
                                    acquire=acquire, 
                                    pre_acquire=pre_acquire, 
                                    post_acquire=post_acquire)
+
+        if self.rotation_speed:
+            ctrl.stage.set_rotation_speed(12)
 
 
     def run_from_tracking_file(self):
@@ -142,7 +156,13 @@ class Experiment(object):
         Exposure time in ms
     mode: str
     """
-    def __init__(self, ctrl, path: str=None, log=None, track: str=None, exposure: float=400, mode: str="diff"):
+    def __init__(self, ctrl, 
+                 path: str=None, 
+                 log=None, 
+                 track: str=None, 
+                 exposure: float=400, 
+                 mode: str="diff", 
+                 rotation_speed: int=None):
         super().__init__()
 
         self.ctrl = ctrl
@@ -154,6 +174,8 @@ class Experiment(object):
 
         self.logger = log
         self.mode = mode
+
+        self.rotation_speed = rotation_speed
         
         if track:
             self.load_tracking_file(track)
@@ -309,16 +331,18 @@ class Experiment(object):
         if manual_control:
             start_angle = self.manual_activation()
             last_angle = 999
+        elif self.rotation_speed:
+            self.ctrl.stage.set_a_with_speed(a=target_angle, speed=self.rotation_speed, wait=False)
         else:
             self.ctrl.stage.set(a=target_angle, wait=False)
-            
+
         self.emmenu.start_record()  # start recording
 
         t0 = time.perf_counter()
         t_delta = t0       
 
         n = 0
-        
+
         print("Acquiring data...")
 
         while True:
@@ -400,8 +424,7 @@ class Experiment(object):
             print(f"Timestamps from {start_index} to {end_index}")
             timestamps = [1,2,3,4,5]  # just to make it work
 
-        acq_out = self.path
-        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=acq_out)
+        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=self.path)
 
         self.log_end_status()
         self.log_stage_positions()

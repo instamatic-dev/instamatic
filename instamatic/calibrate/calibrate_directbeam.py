@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
 from .filenames import *
@@ -239,7 +239,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         readout = np.array(h[key])
         readouts.append(readout)
@@ -288,7 +288,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
         print("Image:", fn)
         print("{}: dx={} | dy={}".format(key, *readout))
         
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         readouts.append(readout)
         shifts.append(shift)

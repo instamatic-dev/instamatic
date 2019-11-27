@@ -5,7 +5,7 @@ import numpy as np
 
 from instamatic.tools import *
 from instamatic.io import get_new_work_subdirectory 
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
 from .filenames import *
@@ -137,7 +137,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
             
             img = imgscale(img, scale)
 
-            shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+            shift = register_translation(img_cent, img, upsample_factor=10)
 
             xobs = stage.x
             yobs = stage.y        
@@ -250,7 +250,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
         print("Image:", fn)
         print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
         
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         print("Shift:", shift)
         print()
         

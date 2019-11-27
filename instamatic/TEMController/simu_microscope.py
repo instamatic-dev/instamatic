@@ -114,8 +114,8 @@ class SimuMicroscope(object):
         self._StagePosition_x = random.randint(-100000, 100000)
         self._StagePosition_y = random.randint(-100000, 100000)
         self._StagePosition_z = random.randint(-10000,  10000)
-        self._StagePosition_a = random.randint(-40, 40)
-        self._StagePosition_b = random.randint(-40, 40)
+        self._StagePosition_a = 0.0  # random.randint(-40, 40)
+        self._StagePosition_b = 0.0  # random.randint(-40, 40)
 
         self._stage_dict = {}
         for key in ("a", "b", "x", "y", "z"):
@@ -133,6 +133,7 @@ class SimuMicroscope(object):
                 "current": current,
                 "is_moving": False,
                 "speed": speed,
+                "speed_setting": 12,
                 "direction": +1,
                 "start": 0.0,
                 "end": 0.0,
@@ -404,9 +405,10 @@ class SimuMicroscope(object):
                 self.setStageY(y, wait=wait)
 
     def getRotationSpeed(self) -> int:
-        return self._stage_dict["a"]["speed"]
+        return self._stage_dict["a"]["speed_setting"]
 
     def setRotationSpeed(self, value: int):
+        self._stage_dict["a"]["speed_setting"] = value
         self._stage_dict["a"]["speed"] = 10.0 * (value / 12)
 
     def getFunctionMode(self) -> str:

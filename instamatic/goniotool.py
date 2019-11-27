@@ -44,8 +44,11 @@ class GonioToolClient(object):
 
         try:
             self.connect()
-        except ConnectionRefusedError:
-            start_server_in_subprocess()
+        except ConnectionRefusedError as e:
+            try:
+                start_server_in_subprocess()
+            except FileNotFoundError:
+                raise e
 
             for t in range(30):
                 try:

@@ -28,6 +28,12 @@ class CameraSimu(object):
 
         atexit.register(self.releaseConnection)
 
+        # EMMENU variables
+        self._image_index = 0
+        self._exposure = self.default_exposure
+        self._autoincrement = True
+        self._start_record_time = -1
+
     def load_defaults(self):
         if self.name != config.cfg.camera:
             config.load(camera_name=self.name)
@@ -98,34 +104,43 @@ class CameraSimu(object):
         return "SimuCfg"
 
     def set_autoincrement(self, value):
-        pass
+        self._autoincrement = value
 
     def get_autoincrement(self):
-        return True
+        return self._autoincrement
 
     def set_image_index(self, value):
-        pass
+        self._image_index = value
 
     def get_image_index(self):
-        return 0
+        return self._image_index
 
     def stop_record(self) -> None:
-        pass
+        t1 = self._start_record_time
+        if t1 >= 0:
+            t2 = time.clock()
+            n_images = int((t2 - t1) / self._exposure)
+            new_index = self.get_image_index() + n_images
+            self.set_image_index(new_index)
+            print("stop_record", t1, t2, self._exposure, new_index)
+            self._start_record_time = -1
+        else:
+            pass
 
     def start_record(self) -> None:
-        pass
+        self._start_record_time = time.clock()
 
     def stop_liveview(self) -> None:
-        pass
+        self.stop_record()
 
     def start_liveview(self, delay=3.0) -> None:
         pass
 
     def set_exposure(self, exposure_time: int) -> None:
-        pass
+        self._exposure = exposure_time / 1000
 
     def get_exposure(self) -> int:
-        return 400
+        return self._exposure
 
     def get_timestamps(self, start_index, end_index):
         return list(range(20))

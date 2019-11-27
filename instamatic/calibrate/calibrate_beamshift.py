@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from instamatic.tools import *
-from instamatic.processing.cross_correlate import cross_correlate
+from skimage.feature import register_translation
 from instamatic.TEMController import initialize
 from .fit import fit_affine_transformation
 from .filenames import *
@@ -179,7 +179,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="BeamShift")
         img = imgscale(img, scale)
 
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         beamshift = np.array(h["BeamShift"])
         beampos.append(beamshift)
@@ -245,7 +245,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         print("Image:", fn)
         print("Beamshift: x={} | y={}".format(*beamshift))
         
-        shift = cross_correlate(img_cent, img, upsample_factor=10, verbose=False)
+        shift = register_translation(img_cent, img, upsample_factor=10)
         
         beampos.append(beamshift)
         shifts.append(shift)

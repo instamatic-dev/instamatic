@@ -349,9 +349,8 @@ class Stage(object):
         """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
         
-    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0) -> None:
+    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, speed: float=1.0) -> None:
         """
-        wait: bool, block until stage movement is complete (JEOL only)
         speed: float, set stage rotation with specified speed (FEI only)
         """
         self._setter(x, y, z, a, b, wait=wait, speed=speed)
@@ -359,6 +358,16 @@ class Stage(object):
     def set_rotation_speed(self, speed=1) -> None:
         """Sets the stage (rotation) movement speed on the TEM"""
         self._tem.setRotationSpeed(value=speed)
+
+    def set_a_with_speed(self, a: float, speed: int, wait: bool=False):
+        """Rotate to angle `a` with speed (JEOL only).
+        wait: bool, block until stage movement is complete.
+        """
+        with self.rotating_speed(speed):
+            self.set(a=a, wait=False)
+        # Do not wait on `set` to return to normal rotation speed quickly
+        if wait:
+            self.wait_for_stage()
 
     @contextmanager
     def rotating_speed(self, speed: int):
@@ -370,9 +379,12 @@ class Stage(object):
                 ctrl.stage.a = 40.0
         """
         current_speed = self._tem.getRotationSpeed()
-        self.set_rotation_speed(speed)
-        yield
-        self.set_rotation_speed(current_speed)
+        if current_speed != speed:
+            self.set_rotation_speed(speed)
+            yield
+            self.set_rotation_speed(current_speed)
+        else:
+            yield
 
     def get(self) -> Tuple[int, int, int, int, int]:
         """Get stage positions; x, y, z, and status of the rotation axes; a, b"""
@@ -589,7 +601,7 @@ class Stage(object):
         if settle_delay:
             time.sleep(settle_delay)
 
-    def eliminate_backlash_xy(self, step: float=5000, settle_delay: float=0.200) -> None:
+    def eliminate_backlash_xy(self, step: float=10000, settle_delay: float=0.200) -> None:
         """
         Eliminate backlash by in XY by moving the stage away from the current position, and
         approaching it from the common direction. Uses `set_xy_with_backlash_correction`
@@ -872,8 +884,7 @@ class TEMController(object):
         return stagematrix
 
     def align_to(self, ref_img: "np.array", 
-                       apply: bool= True,
-                       verbose: bool=True) -> list:
+                       apply: bool= True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
         (in the reference image) is at the center of the view.
@@ -884,8 +895,6 @@ class TEMController(object):
             Reference image that the microscope will be aligned to
         apply: bool
             Toggle to translate the stage to center the image
-        verbose: bool
-            Be more verbose
         
         Returns
         -------
@@ -893,7 +902,7 @@ class TEMController(object):
             The stage shift vector determined from cross correlation
             
         """
-        from instamatic.processing.cross_correlate import cross_correlate
+        from skimage.feature import register_translation
 
         current_x, current_y = self.stage.xy
         print(f"Current stage position: {current_x:.0f} {current_y:.0f}")
@@ -902,7 +911,7 @@ class TEMController(object):
 
         img = self.getRawImage()
 
-        pixel_shift = cross_correlate(ref_img, img, upsample_factor=10, verbose=verbose)
+        pixel_shift = register_translation(ref_img, img, upsample_factor=10)
 
         stage_shift = np.dot(pixel_shift, mati)
 
@@ -951,7 +960,7 @@ class TEMController(object):
         z: float
             Optimized Z value for eucentric tilting
         """
-        from instamatic.processing.cross_correlate import cross_correlate
+        from skimage.feature import register_translation
 
         def one_cycle(tilt: float=5, sign=1) -> list:
             angle1 = -tilt*sign
@@ -965,7 +974,7 @@ class TEMController(object):
             if sign < 1:
                 img2, img1 = img1, img2
 
-            shift = cross_correlate(img1, img2, upsample_factor=10, verbose=verbose)
+            shift = register_translation(img1, img2, upsample_factor=10)
 
             return shift
 
@@ -1004,6 +1013,11 @@ class TEMController(object):
             self.stage.set(a=0, z=z0)
 
         return z0
+
+    def montage(self):
+        from instamatic.montage import GridMontage
+        gm = GridMontage(self)
+        return gm
 
     def to_dict(self, *keys) -> dict:
         """
