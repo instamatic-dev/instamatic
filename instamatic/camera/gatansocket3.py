@@ -90,7 +90,6 @@ class Message(object):
     Initialize with the sequences of args (longs, bools, doubles)
     and optional long array.
     """
-
     def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
         # Strings are packaged as long array using np.frombuffer(buffer,np.int_)
         # and can be converted back with longarray.tostring()
@@ -178,7 +177,7 @@ class GatanSocket(object):
         self.num_grab_sum = 0
         self.connect()
 
-        self.script_functions = [
+        self.script_functions = [ 
             ('AFGetSlitState', 'GetEnergyFilter'),
             ('AFSetSlitState', 'SetEnergyFilter'),
             ('AFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -202,7 +201,6 @@ class GatanSocket(object):
             hasScriptFunction = self.hasScriptFunction(name)
             if self.hasScriptFunction(name):
                 self.filter_functions[method_name] = name
-
             if self.debug:
                 print(name, method_name, hasScriptFunction)
         if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
