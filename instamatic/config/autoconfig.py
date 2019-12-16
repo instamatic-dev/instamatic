@@ -46,23 +46,26 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 def choice_prompt(choices: list=[], default=None, question: str="Which one?"):
     """Simple cli to prompt for a list of choices"""
     print()
-    choices = "jeol fei simulate".split()
 
-    if default:
+    try:
         default_choice = choices.index(default)
         suffix = f" [{default}]"
-    else:
-        suffix = ""
+    except ValueError:
+        default_choice = 0
+        suffix = f""
 
     for i, choice in enumerate(choices):
         print(f"{i+1: 2d}: {choice}")
 
-    q = input(f"\nWhich microscope can I connect to?{suffix} >> ")
+    q = input(f"\n{question}{suffix} >> ")
     if not q:
-        picked = default_choice
+        q = default_choice
     else:
         q = int(q) - 1
-        picked = choices[q]
+    
+    picked = choices[q]
+
+    print(choices, picked)
 
     return picked
 
