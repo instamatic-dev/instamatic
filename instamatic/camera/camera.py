@@ -18,6 +18,8 @@ def get_cam(name: str = None):
         from .camera_gatan import CameraDLL as cam
     elif name in ("orius", "gatan"):
         from .camera_gatan import CameraDLL as cam
+    elif name in ("gatansocket"):
+        from .camera_gatan2 import CameraGatan2 as cam
     elif name in ("timepix", "pytimepix"):
         from . import camera_timepix as cam
     elif name in ("emmenu", "tvips"):
