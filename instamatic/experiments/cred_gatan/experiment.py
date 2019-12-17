@@ -252,8 +252,14 @@ class Experiment(object):
         self.t_start = t0
         self.t_end = t1
         self.total_time = t1 - t0
+
+        print("Waiting for DM to finish...")
+        while not self.cam.get_tag("finish_acquire"):
+            time.sleep(0.2)
+
+        self.gatan_readout = self.cam.readout()
         
-        self.nframes = nframes = end_index - start_index + 1
+        self.nframes = nframes = self.gatan_readout["nframes"]
         if nframes < 1:
             print("No frames measured??")
             return
@@ -289,7 +295,7 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
 
-        print(f"Wrote {nframes} images (#{start_index}->#{end_index}) to {path_data}")
+        print(f"Wrote {nframes} images to {path_data}")
         
         if self.track:
             print(f"Done with this crystal (number #{self.crystal_number})!")
@@ -306,10 +312,12 @@ class Experiment(object):
             pixelsize = 1.0
 
         physical_pixelsize = config.camera.physical_pixelsize # mm
+
+        d = self.gatan_readout
         
-        bin_x, bin_y = self.cam.getBinning()
-        image_dimensions_x, image_dimensions_y = self.cam.getImageDimensions()
-        camera_dimensions_x, camera_dimensions_y = self.cam.getCameraDimensions()
+        bin_x, bin_y = d["bin_x"], d["bin_y"]
+        image_dimensions_x, image_dimensions_y = d["image_res_x"], d["image_res_y"]
+        camera_dimensions_x, camera_dimensions_y = d["cam_res_x"], d["cam_res_y"]
 
         pixelsize *= bin_x
         physical_pixelsize *= bin_x
@@ -325,8 +333,7 @@ class Experiment(object):
             print(f"Program: {version.__long_title__} + GMS {self.cam.getDMVersion()}", file=f)
             print(f"Camera: {config.camera.name}", file=f)
             print(f"Microscope: {config.microscope.name}", file=f)
-            print(f"Camera type: {self.cam.getCameraType()}", file=f)
-            print(f"Camera config: {self.cam.getCurrentConfigName()}", file=f)
+            # print(f"Camera type: {self.cam.getCameraType()}", file=f)
             print(f"Mode: {self.mode}", file=f)
             print(f"Data Collection Time: {self.now}", file=f)
             print(f"Time Period Start: {self.t_start}", file=f)
@@ -353,7 +360,8 @@ class Experiment(object):
             print(f"Rotation axis: {self.rotation_axis} radians", file=f)
             print(f"Oscillation angle: {self.osc_angle:.4f} degrees", file=f)
             print("Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.start_position), file=f)
-            print("Beam stopper: yes", file=f)
+            print("Stage end: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}".format(*self.end_position), file=f)
+            # print("Beam stopper: yes", file=f)
 
             if self.track:
                 print()
@@ -404,7 +412,21 @@ class Experiment(object):
 
 
 if __name__ == '__main__':
-    expdir = controller.module_io.get_new_experiment_directory()
+    from instamatic import TEMController
+    from instamatic.io import get_new_work_subdirectory
+
+    print("Usage:")
+    print(" 1. Start `insteadmatic_module.s` in DM")
+    print(" 2. Run this script.")
+
+    ctrl = TEMController.initialize()
+
+    import time
+    time.sleep(1)
+
+    expdir = get_new_work_subdirectory()
     expdir.mkdir(exist_ok=True, parents=True)
     
-    start_experiment(ctrl=ctrl, path=expdir)
+    exp = Experiment(ctrl=ctrl, path=expdir)
+    exp.get_ready()
+    exp.start_collection(100)

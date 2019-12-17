@@ -44,8 +44,7 @@ class CameraGatan2(object):
 
     def getCameraType(self) -> str:
         """Get the name of the camera currently in use"""
-        cfg = self.getCurrentConfig(as_dict=False)
-        return cfg.CameraType
+        raise NotImplementedError
 
     def getDMVersion(self) -> str:
         """Get the version number of DM"""
@@ -110,9 +109,10 @@ class CameraGatan2(object):
 
     def reset_record_vars(self):
         self.set_tag("start_acquire", 0)
-        self.set_tag("stop_acquire", 1)
+        self.set_tag("stop_acquire", 0)
         self.set_tag("ready_for_acquire", 0)
         self.set_tag("prepare_acquire", 1)
+        self.set_tag("finish_acquire", 0)
 
     def start_record(self) -> None:
         cmd = 'SetPersistentNumberNote("start_acquire", 1)'
@@ -138,23 +138,46 @@ class CameraGatan2(object):
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera"""
-        self.stop_liveview()
-
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
         # print(msg)
         logger.info(msg)
 
     def set_tag(self, key: str, value: float) -> None:
-        set_tag = f'SetPersistentNumberNote("{key}", {value})'
+        """Set the tag `key` in the DM persistent parameters"""
+        if isinstance(value, str):
+            value = value.replace('\\', '\\\\')
+            set_tag = f'SetPersistentStringNote("{key}", "{value}")'
+        else:
+            set_tag = f'SetPersistentNumberNote("{key}", {value})'
         self.g.ExecuteScript(set_tag)
         
-    def get_tag(self, key: str) -> float:
+    def get_tag(self, key: str, delete: bool=False) -> float:
+        """Get the tag given by `key`. Clear the tag if `delete` is specfified`
         get_tag = f'number value\nGetPersistentNumberNote("{key}", value)\nExit(value)'
-        return self.g.ExecuteGetDoubleScript(get_tag)
+        value = self.g.ExecuteGetDoubleScript(get_tag)
+
+        if delete:
+            self.delete_tag(key)
+
+        return value
 
     def delete_tag(self, key: str) -> None:
+        """Delete the tag `key` in DM"""
         delete_tag = f'DeletePersistentNote("{key}")'
         self.g.ExecuteScript(delete_tag)
+
+    def readout(self) -> dict:
+        """Readout tag structure with metadata from last cRED experiment"""
+        d = {}
+    
+        keys = ("nframes", "bin_x", "bin_y", "cam_res_x", "cam_res_y", "image_res_x", "image_res_y", "pixelsize_x", "pixelsize_y", 
+               "phys_pixelsize_x", "phys_pixelsize_y", "total_time", "exposure")
+    
+        for key in keys:
+            value = self.get_tag(key, delete=True)
+            d[key] = value
+    
+        return d
 
 
 if __name__ == '__main__':
