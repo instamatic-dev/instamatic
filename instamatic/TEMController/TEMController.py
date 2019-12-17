@@ -349,7 +349,7 @@ class Stage(object):
         """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
         
-    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, speed: float=1.0) -> None:
+    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0) -> None:
         """
         speed: float, set stage rotation with specified speed (FEI only)
         """
