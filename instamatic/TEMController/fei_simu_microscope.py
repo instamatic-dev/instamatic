@@ -112,7 +112,10 @@ class FEISimuMicroscope(object):
             self.proj.MagnificationIndex = value
         except ValueError:
             pass
-        
+
+    def getMagnificationRanges(self) -> dict:
+        raise NotImplementedError
+
     def getStagePosition(self):
         return self.stage.Position.X, self.stage.Position.Y, self.stage.Position.Z, self.stage.Position.A, self.stage.Position.B
     

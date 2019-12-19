@@ -206,7 +206,10 @@ class FEIMicroscope(object):
         else:
             ind = [key for key, v in CameraLengthMapping.items() if v == value][0]
             self.tom.Projection.CameraLengthIndex = ind
-        
+
+    def getMagnificationRanges(self) -> dict:
+        raise NotImplementedError
+  
     def setStageSpeed(self, value):
         """Value be 0 - 1"""
         if value > 1 or value < 0:
@@ -221,7 +224,7 @@ class FEIMicroscope(object):
         """return numbers in microns, angles in degs."""
         return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
     
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait = True, speed = 1):
+    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """x, y, z in the system are in unit of meters, angles in radians"""
         pos = self.stage.Position
         axis = 0

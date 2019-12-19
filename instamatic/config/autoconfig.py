@@ -109,7 +109,11 @@ def main():
     tem = get_tem(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)
-    ranges = ctrl.magnification.get_ranges()
+    try:
+        ranges = ctrl.magnification.get_ranges()
+    except:
+        print("Warning: Cannot access magnification ranges")
+        ranges = {}
 
     ht = ctrl.high_tension  # in V
 
