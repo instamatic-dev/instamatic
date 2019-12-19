@@ -6,47 +6,84 @@ from collections import defaultdict
 
 
 # int
-int_map = ("Color",        "NumPts",       "Draw",         "Regis", 
+INTEGER = ("Color",        "NumPts",       "Draw",         "Regis", 
            "MapMontage",   "MapSection",   "MapBinning",   "MapMagInd", 
-           "MapCamera",    "MapSettling",  "ShutterMode",  "MapSpotSize", 
-           "MapSlitIn",    "MapSlitWidth", "ImageType",    "MontUseStage", 
-           "MapProbeMode", "MapLDConSet",  "Type",         "GroupID",
-           "MapID",        "PieceOn",      "Acquire",      "DrawnID",
+           "MapCamera",    "ShutterMode",  "MapSpotSize", 
+           "MapSlitIn",    "ImageType",    "MontUseStage", 
+           "MapProbeMode", "MapLDConSet",  "Type",           "GroupID",
+           "MapID",        "PieceOn",      "Acquire",        "DrawnID",
            "MontBinning",  "SamePosId",    "OrigReg" ,
            # mdoc
-           "Intensity",     "ExposureDose", "SpotSize",
-           "Binning",       "CameraIndex",  "DividedBy2",   "MagIndex", 
+           "SpotSize",
+           "Binning",       "CameraIndex",  "DividedBy2",    "MagIndex", 
            "Magnification", "ProbeMode",    "MoveStage",
-           "Alpha" )
+           "Alpha",         "ImageSize",    "DataMode",      "Montage", 
+           "ImageSeries",   "UsingCDS",     "LowDoseConSet", "NumSubFrames",
+           # other
+           "Corner",        "Imported",     "K2ReadMode",     "MapAlpha",
+           "PolyID",        "RealignReg",   "RealignedID",    "RegPt",
+           "RegisteredToID","RotOnLoad",
+           # DE-12
+           "DE12-TotalNumberOfFrames",
+           "DE12-FramesPerSecond",
+           "DE12-CameraPosition",
+           "DE12-ProtectionCoverMode",
+           "DE12-ProtectionCoverOpenDelay(ms)",
+           "DE12-TemperatureDetector(C)",
+           "DE12-SensorModuleSerialNumber",
+           "DE12-SensorReadoutDelay(ms)",
+           "DE12-IgnoredFramesInSummedImage",
+          )
 
 # float
-float_map = ("MapExposure",       "MapIntensity",  "MapTiltAngle",
-             # .mdoc 
-             "StageZ",            "PixelSpacing",  "Defocus",     "RotationAngle",
-             "CountsPerElectron", "TargetDefocus", "TiltAngle",   "ExposureTime",
-             "DriftSettling" )
+FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",  
+         # .mdoc 
+         "StageZ",            "PixelSpacing",  "Defocus",      "RotationAngle",
+         "CountsPerElectron", "TargetDefocus", "TiltAngle",    "ExposureTime",
+         "DriftSettling",     "Intensity",     "ExposureDose", "PriorRecordDose",
+         # other
+         "DefocusOffset",     "FocusAxisPos",  "MapSlitWidth",
+         # DE-12
+         "DE12-ServerSoftwareVersion",
+         "DE12-PreexposureTime(s)",
+         "DE12-FaradayPlatePeakReading(pA/cm2)",
+        )
+      
 # str
-str_map = ("MapFile", "Note",
-           # .mdoc
-           "DateTime")
+STRING = ("MapFile",  "Note",
+          # .mdoc
+          "DateTime",     "ImageFile",   "NavigatorLabel", 
+          "SubFramePath", "ChannelName",
+         )
 
 # list, float
-list_float_map = ("StageXYZ",      "RawStageXY", "MapScaleMat", "XYinPc",
-                  "PtsX",          "PtsY",       "StageXYZ",    "MapMinMaxScale",
-                  # .mdoc
-                  "StagePosition", "MinMaxMean", "XedgeDxyVS",  "YedgeDxyVS",
-                  "XedgeDxy",      "YedgeDxy",   "ImageShift",  "BufISXY" )
+FLOAT_LIST = ("StageXYZ",         "RawStageXY",      "MapScaleMat",       "XYinPc",
+              "PtsX",             "PtsY",            "StageXYZ",          "MapMinMaxScale",
+              # .mdoc
+              "StagePosition",    "MinMaxMean",      "XedgeDxyVS",        "YedgeDxyVS",
+              "XedgeDxy",         "YedgeDxy",        "ImageShift",        "BufISXY",
+              # other
+              "BklshXY",          "FocusOffsets",    "LocalErrXY",        "NetViewShiftXY",
+              "RealignErrXY",     "ViewBeamShiftXY", "ViewBeamTiltXY", 
+              "SuperMontCoords",  "StageOffsets",    "FrameDosesAndNumbers", 
+              "FilterSlitAndLoss",
+              # external
+              "CoordsInMap",      "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
+             )
 
 # list, int
-list_int_map = ("BklshXY",           "MapWidthHeight", "MapFramesXY",
+INTEGER_LIST = ("MapWidthHeight",     "MapFramesXY",
                 # .mdoc
                 "PieceCoordinates",   "AlignedPieceCoordsVS", 
                 "AlignedPieceCoords", "MontBacklash", 
                 "ValidBacklash",      "CameraModes",   "FilterState",
-                "ConSetUsed" )
+                "ConSetUsed",         "MultishotHoleAndPosition",
+                # other
+                "HoleArray",          "LDAxisAngle",   "SkipHoles", 
+                "SuperMontXY",
+               )
 
-
-unknown_map = ()
+UNDEFINED = ()
 
 
 class NavItem(object):
@@ -112,13 +149,13 @@ class NavItem(object):
             val = d[key]
 
             try:
-                if key in int_map:
+                if key in INTEGER:
                     val = str(val)
-                elif key in float_map:
+                elif key in FLOAT:
                     val = str(val)
-                elif key in list_float_map:
+                elif key in FLOAT_LIST:
                     val = " ".join([str(x) for x in val])
-                elif key in list_int_map:
+                elif key in INTEGER_LIST:
                     val = " ".join([str(x) for x in val])
             except TypeError as e:
                 print(e)
@@ -301,17 +338,17 @@ def block2dict(block: list, kind: str=None, sequence: int=-1) -> dict:
         key, value = re.split(patt_split, item)
 
         try:
-            if key in int_map:
+            if key in INTEGER:
                 value = int(value)
-            elif key in float_map:
+            elif key in FLOAT:
                 value = float(value)
-            elif key in str_map:
+            elif key in STRING:
                 value = str(value)
-            elif key in list_float_map:
+            elif key in FLOAT_LIST:
                 value = [float(val) for val in value.split()]
-            elif key in list_int_map:
+            elif key in INTEGER_LIST:
                 value = [int(val) for val in value.split()]
-            elif key in unknown_map:
+            elif key in UNDEFINED:
                 print(item)
             else:
                 print("Unknown item:", item)
