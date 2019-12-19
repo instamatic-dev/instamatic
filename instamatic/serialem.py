@@ -193,7 +193,8 @@ class MapItem(NavItem):
     def map_scale_matrix(self) -> "np.array":
         MapBinning = self.MapBinning
         MontBinning = self.MontBinning
-        return (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
+        mat = (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
+        return mat.T
 
     @property
     def stagematrix(self) -> "np.array":
