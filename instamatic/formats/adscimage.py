@@ -13,13 +13,13 @@ def swap_needed(header: dict) -> bool:
         return False
     elif "big" in BYTE_ORDER and not np.little_endian:
         return False
-    elif  "little" in BYTE_ORDER and not np.little_endian:
+    elif "little" in BYTE_ORDER and not np.little_endian:
         return True
-    elif  "big" in BYTE_ORDER and np.little_endian:
+    elif "big" in BYTE_ORDER and np.little_endian:
         return True
 
 
-def write_adsc(fname: str, data: np.array, header: dict={}):
+def write_adsc(fname: str, data: np.array, header: dict = {}):
     """
     Write adsc format
     """
@@ -29,12 +29,12 @@ def write_adsc(fname: str, data: np.array, header: dict={}):
     if "HEADER_BYTES" in header:
         pad = int(header["HEADER_BYTES"]) - len(out) - 2
     else:
-#         hsize = ((len(out) + 23) // 512 + 1) * 512
+        #         hsize = ((len(out) + 23) // 512 + 1) * 512
         hsize = (len(out) + 533) & ~(512 - 1)
         out += "HEADER_BYTES={:d};\n".format(hsize).encode()
         pad = hsize - len(out) - 2
-    out +=  b"}" + (pad+1) * b'\x00' 
-    assert len(out) % 512 == 0 , "Header is not multiple of 512"
+    out += b"}" + (pad + 1) * b'\x00'
+    assert len(out) % 512 == 0, "Header is not multiple of 512"
 
     # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
     dtype = np.uint16
@@ -69,7 +69,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     with open(fname, "rb", buffering=0) as infile:
         try:
             header = readheader(infile)
-        except:
+        except BaseException:
             raise Exception("Error processing adsc header")
         # banned by bzip/gzip???
         try:
@@ -92,9 +92,8 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-            raise IOError('Size spec in ADSC-header does not match ' + \
-                          'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
-    
+        raise IOError(f"Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}")
+
     return data, header
 
 
@@ -105,15 +104,15 @@ if __name__ == '__main__':
     header = {}
     header['SIZE1'] = 512
     header['SIZE2'] = 512
-    
+
     write_adsc(fn, img, header=header)
     print("writing:", img.shape)
     print("header:", header)
     print()
 
-    arr,h = read_adsc(fn)
+    arr, h = read_adsc(fn)
     print("reading", arr.shape)
     print("header", h)
-    
+
     print()
     print("allclose:", np.allclose(img, arr))

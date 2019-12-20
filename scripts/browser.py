@@ -1,7 +1,9 @@
 import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *
-import os, sys, glob
+import os
+import sys
+import glob
 import numpy as np
 from pathlib import Path
 
@@ -12,12 +14,13 @@ import tqdm
 
 from instamatic import neural_network
 
-CMAP = "gray" # "viridis", "gray"
+CMAP = "gray"  # "viridis", "gray"
 
-ANGLE = -0.88 + np.pi/2
+ANGLE = -0.88 + np.pi / 2
 R = np.array([
-            [ np.cos(ANGLE), -np.sin(ANGLE)],
-            [ np.sin(ANGLE),  np.cos(ANGLE)]])
+    [np.cos(ANGLE), -np.sin(ANGLE)],
+    [np.sin(ANGLE), np.cos(ANGLE)]])
+
 
 def get_stage_coords(fns, return_ims=False):
     coords = []
@@ -55,8 +58,8 @@ def lst2colormap(lst):
 
 
 def run(filepat="images/image_*.tiff", results=None, stitch=False):
-     # use relpath to normalizes path
-    fns = [Path(fn).absolute() for fn in  glob.glob(filepat)]
+    # use relpath to normalizes path
+    fns = [Path(fn).absolute() for fn in glob.glob(filepat)]
 
     if len(fns) == 0:
         sys.exit()
@@ -79,25 +82,24 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
     coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
 
-
     fn = fns[0]
     img, h = read_image(fn)
     imdim_x, imdim_y = np.array(h["ImageDimensions"]) / 2
 
     fig = plt.figure()
     fig.canvas.set_window_title('instamatic.browser')
-    
+
     ax1 = plt.subplot(131, title="Stage map", aspect="equal")
     # plt_coords, = ax1.plot(coords[:,0], coords[:,1], marker="+", picker=8, c=has_crystals)
-    
+
     coords = np.dot(coords, R)
 
     if stitch:
         for mini_img, coord in zip(imgs, coords):
             sx, sy = coord
-            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx-imdim_x, sx+imdim_x, sy-imdim_y, sy+imdim_y], cmap=CMAP)
-    
-    ax1.scatter(coords[has_crystals==True, 0], coords[has_crystals==True, 1], marker="o", facecolor=coord_color)
+            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx - imdim_x, sx + imdim_x, sy - imdim_y, sy + imdim_y], cmap=CMAP)
+
+    ax1.scatter(coords[has_crystals, 0], coords[has_crystals, 1], marker="o", facecolor=coord_color)
     ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color=coord_color, picker=8)
     highlight1, = ax1.plot([], [], marker="o", color=picked_color)
 
@@ -106,18 +108,17 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
     ax2 = plt.subplot(132, title=f"{fn}\nx={0}, y={0}")
     im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
-    plt_crystals, = ax2.plot([], [], marker="+", color="red",  mew=2, picker=8, lw=0)
-    highlight2,   = ax2.plot([], [], marker="+", color="blue", mew=2)
+    plt_crystals, = ax2.plot([], [], marker="+", color="red", mew=2, picker=8, lw=0)
+    highlight2, = ax2.plot([], [], marker="+", color="blue", mew=2)
 
     ax3 = plt.subplot(133, title="Diffraction pattern")
     im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
-    
+
     class plt_diff(object):
         center, = ax3.plot([], [], "o", color="red", lw=0)
         data = None
 
     def onclick(event):
-        click = event.mouseevent.button
         axes = event.artist.axes
         ind = event.ind[0]
 
@@ -142,8 +143,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
                     try:
                         phase, score = df.ix[crystal_fn, "phase"], df.ix[crystal_fn, "score"]
-                        
-                    except KeyError: # if crystal_fn not in df.index
+
+                    except KeyError:  # if crystal_fn not in df.index
                         pass
                     else:
                         if score > 10:
@@ -151,8 +152,8 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                             ax2.text(coord[1], coord[0], text)
 
             if len(crystal_coords) > 0:
-                plt_crystals.set_xdata(crystal_coords[:,1])
-                plt_crystals.set_ydata(crystal_coords[:,0])
+                plt_crystals.set_xdata(crystal_coords[:, 1])
+                plt_crystals.set_ydata(crystal_coords[:, 0])
             else:
                 plt_crystals.set_xdata([])
                 plt_crystals.set_ydata([])
@@ -199,10 +200,10 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                     print()
                     print(r)
                     proj = indexer.get_projection(r)
-                    pks = proj[:,3:5]
+                    pks = proj[:, 3:5]
 
                     i, j, proj = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj)
-                    shape_vector = proj[:,5]
+                    shape_vector = proj[:, 5]
 
                     plt_diff.center.set_xdata(r.center_y)
                     plt_diff.center.set_ydata(r.center_x)
@@ -211,7 +212,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
         if axes == ax3:
             pass
-        
+
         fig.canvas.draw()
 
     fig.canvas.mpl_connect("pick_event", onclick)
@@ -220,30 +221,29 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
 
 def main():
-    usage = """instamatic.browser images/*.tiff -r results.csv"""
-
     description = """
 Program for indexing electron diffraction images.
 
-""" 
-    
-    parser = argparse.ArgumentParser(#usage=usage,
-                                    description=description,
-                                    formatter_class=argparse.RawDescriptionHelpFormatter
-                                    )
-    
-    parser.add_argument("args", 
+Usage: instamatic.browser images/*.tiff -r results.csv
+"""
+
+    parser = argparse.ArgumentParser(  # usage=usage,
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument("args",
                         type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files")
 
     parser.add_argument("-s", "--stitch",
                         action="store_true", dest="stitch",
                         help="Stitch images together.")
-    
+
     parser.set_defaults(results=None,
                         stitch=False
                         )
-    
+
     options = parser.parse_args()
     arg = options.args
 

@@ -8,6 +8,7 @@ from tkinter.ttk import *
 
 class ShowMatplotlibFig(Toplevel):
     """docstring for ShowMatplotlibFig"""
+
     def __init__(self, parent, fig, title="figure"):
         Toplevel.__init__(self, parent)
         self.grab_set()
@@ -21,10 +22,10 @@ class ShowMatplotlibFig(Toplevel):
         self.wm_protocol("WM_DELETE_WINDOW", self.close)
         self.focus_set()
         self.wait_window(self)
-        
+
     def close(self, event=None):
         self.canvas.get_tk_widget().destroy()
         self.destroy()    # this is necessary on Windows to prevent
-                          # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
         plt.clf()
         plt.close("all")

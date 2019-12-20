@@ -1,11 +1,9 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
-import os, sys
-import glob
 from instamatic import config
 from pathlib import Path
-from collections import namedtuple
 
 scripts_drc = config.scripts_drc
 
@@ -17,6 +15,7 @@ BUFSIZE = 1024
 
 class DebugFrame(LabelFrame):
     """docstring for DebugFrame"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="For debugging, be careful!")
         self.parent = parent
@@ -33,10 +32,10 @@ class DebugFrame(LabelFrame):
 
         self.BrowseButton = Button(frame, text="Browse..", command=self.browse)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
-        
+
         self.RunButton = Button(frame, text="Run", command=self.run_script)
         self.RunButton.grid(row=2, column=3, sticky="EW")
-        
+
         Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky="ew", pady=10)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -47,10 +46,10 @@ class DebugFrame(LabelFrame):
 
         self.BrowseButton = Button(frame, text="Start", command=self.start_server)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
-        
+
         self.RunButton = Button(frame, text="Register", command=self.register_server)
         self.RunButton.grid(row=2, column=3, sticky="EW")
-  
+
         self.RunButton = Button(frame, text="Kill", command=self.kill_server)
         self.RunButton.grid(row=2, column=4, sticky="EW")
 
@@ -68,10 +67,10 @@ class DebugFrame(LabelFrame):
 
         self.ff_darkfield = Checkbutton(frame, text="Darkfield", variable=self.var_ff_darkfield)
         self.ff_darkfield.grid(row=2, column=3, sticky="EW", padx=5)
-        
+
         self.RunFlatfield = Button(frame, text="Run", command=self.run_flatfield_collection)
         self.RunFlatfield.grid(row=2, column=4, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -91,7 +90,7 @@ class DebugFrame(LabelFrame):
 
         self.resetTriggers = Button(frame, text="Empty queue", command=self.empty_queue)
         self.resetTriggers.grid(row=2, column=0, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
 
@@ -106,15 +105,15 @@ class DebugFrame(LabelFrame):
         self.var_ff_darkfield = BooleanVar(value=False)
 
     def kill_server(self):
-        self.q.put(("autoindex", { "task": "kill_server" } ))
+        self.q.put(("autoindex", {"task": "kill_server"}))
         self.triggerEvent.set()
 
     def start_server(self):
-        self.q.put(("autoindex", { "task": "start_server" } ))
+        self.q.put(("autoindex", {"task": "start_server"}))
         self.triggerEvent.set()
 
     def register_server(self):
-        self.q.put(("autoindex", { "task": "register_server" } ))
+        self.q.put(("autoindex", {"task": "register_server"}))
         self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
@@ -141,11 +140,11 @@ class DebugFrame(LabelFrame):
             print(f"Flushed job: {job}->{kwargs}")
 
     def open_ipython(self):
-        self.q.put(("debug", { "task": "open_ipython" } ))
+        self.q.put(("debug", {"task": "open_ipython"}))
         self.triggerEvent.set()
 
     def report_status(self):
-        self.q.put(("debug", { "task": "report_status" } ))
+        self.q.put(("debug", {"task": "report_status"}))
         self.triggerEvent.set()
 
     def close_down(self):
@@ -153,7 +152,7 @@ class DebugFrame(LabelFrame):
         # print(script, script.exists())
         if not script.exists():
             return IOError(f"No such script: {script}")
-        self.q.put(("debug", { "task": "run_script", "script": script } ))
+        self.q.put(("debug", {"task": "run_script", "script": script}))
         self.triggerEvent.set()
 
     def browse(self):
@@ -169,11 +168,11 @@ class DebugFrame(LabelFrame):
         script = self.script_file.get()
         if script in self.scripts:
             script = self.scripts[script]
-        self.q.put(("debug", { "task": "run_script", "script": script } ))
+        self.q.put(("debug", {"task": "run_script", "script": script}))
         self.triggerEvent.set()
 
     def run_flatfield_collection(self):
-        self.q.put(("flatfield", { "task": "collect", "frames": self.var_ff_frames.get(), "collect_darkfield": self.var_ff_darkfield.get() } ))
+        self.q.put(("flatfield", {"task": "collect", "frames": self.var_ff_frames.get(), "collect_darkfield": self.var_ff_darkfield.get()}))
         self.triggerEvent.set()
 
 
@@ -215,7 +214,7 @@ def autoindex(controller, **kwargs):
 
     elif task == "kill_server":
         payload = b"kill"
-    
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print("Sending job to server...", end=" ")
         s.connect((HOST, PORT))
@@ -239,16 +238,14 @@ def collect_flatfield(controller, **kwargs):
     flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
 
 
-from .base_module import BaseModule
 module = BaseModule("debug", "advanced", True, DebugFrame, commands={
     "debug": debug,
     "autoindex": autoindex,
     "flatfield": collect_flatfield
-    })
+})
 
 
 if __name__ == '__main__':
     root = Tk()
     DebugFrame(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

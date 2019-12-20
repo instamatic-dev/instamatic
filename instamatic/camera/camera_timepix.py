@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import ctypes
 from ctypes import *
 from pathlib import Path
@@ -25,11 +26,11 @@ class LockingError(RuntimeError):
 
 def arrangeData(raw, out=None):
     """10000 loops, best of 3: 81.3 s per loop"""
-    s  = 256*256
-    q1 = raw[0  :s  ].reshape(256, 256)
-    q2 = raw[s  :2*s].reshape(256, 256)
-    q3 = raw[2*s:3*s][::-1].reshape(256, 256)
-    q4 = raw[3*s:4*s][::-1].reshape(256, 256)
+    s = 256 * 256
+    q1 = raw[0:s].reshape(256, 256)
+    q2 = raw[s:2 * s].reshape(256, 256)
+    q3 = raw[2 * s:3 * s][::-1].reshape(256, 256)
+    q4 = raw[3 * s:4 * s][::-1].reshape(256, 256)
 
     if out is None:
         out = np.empty((516, 516), dtype=raw.dtype)
@@ -44,10 +45,10 @@ def arrangeData(raw, out=None):
 def correctCross(raw, factor=2.15):
     """100000 loops, best of 3: 18 us per loop"""
     raw[255:258] = raw[255] / factor
-    raw[:,255:258] = raw[:,255:256] / factor
+    raw[:, 255:258] = raw[:, 255:256] / factor
 
     raw[258:261] = raw[260] / factor
-    raw[:,258:261] = raw[:,260:261] / factor
+    raw[:, 258:261] = raw[:, 260:261] / factor
 
 
 class CameraTPX(object):
@@ -56,14 +57,14 @@ class CameraTPX(object):
 
         self.lockfile = libdrc / "timepix.lockfile"
         self.acquire_lock()
-        
+
         libpath = libdrc / "EMCameraObj.dll"
         curdir = Path.cwd()
 
         os.chdir(libdrc)
         self.lib = ctypes.cdll.LoadLibrary(str(libpath))
         os.chdir(curdir)
-        
+
         # self.lib.EMCameraObj_readHwDacs.argtypes = [c_char]
         self.lib.EMCameraObj_Connect.restype = c_bool
         self.lib.EMCameraObj_Disconnect.restype = c_bool
@@ -129,10 +130,10 @@ class CameraTPX(object):
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
         # print buffer.value, len(buffer), buffer
-        
+
         try:
             self.lib.EMCameraObj_readRealDacs(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -148,7 +149,7 @@ class CameraTPX(object):
 
         try:
             self.lib.EMCameraObj_readHwDacs(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -165,7 +166,7 @@ class CameraTPX(object):
 
         try:
             self.lib.EMCameraObj_readPixelsCfg(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -182,7 +183,7 @@ class CameraTPX(object):
         value = create_unicode_buffer(20)
 
         self.lib.EMCameraObj_processRealDac(self.obj, byref(chipnr), byref(index), key, value)
-    
+
     def processHwDac(self, key, value):
         "std::string *key"
         "std::string *value"
@@ -190,36 +191,36 @@ class CameraTPX(object):
         key = create_unicode_buffer(20)
         value = create_unicode_buffer(20)
         self.lib.EMCameraObj_processHwDac(self.obj, byref(key), byref(value))
-    
+
     def startAcquisition(self):
         """Equivalent to openShutteR?"""
         self.lib.EMCameraObj_startAcquisition(self.obj)
-    
+
     def stopAcquisition(self):
-        """Equivalent to closeShutter?"""       
+        """Equivalent to closeShutter?"""
         self.lib.EMCameraObj_stopAcquisition(self.obj)
-    
+
     def openShutter(self):
         """Opens the Relaxd shutter under software control. Note
         that opening and closing the shutter under software control does
         not give a good control over the timing and should only be used
         for debugging or very long exposures where timing is less important."""
         self.lib.EMCameraObj_openShutter(self.obj)
-    
+
     def closeShutter(self):
         """Closes shutter under software control."""
         self.lib.EMCameraObj_closeShutter(self.obj)
-    
-    def readMatrix(self, arr=None, sz=512*512):
+
+    def readMatrix(self, arr=None, sz=512 * 512):
         """Reads a frame from all connected devices, decodes the data
         and stores the pixel counts in array data.
-        
+
         i16 *data # data storage array
         u32 sz    # size of array"""
 
         if arr is None:
             arr = np.empty(sz, dtype=np.int16)
-    
+
         ref = np.ctypeslib.as_ctypes(arr)
         sz = ctypes.c_uint32(sz)
 
@@ -228,7 +229,7 @@ class CameraTPX(object):
         self.lib.EMCameraObj_readMatrix(self.obj, byref(ref), sz)
 
         return arr
-    
+
     def enableTimer(self, enable, us):
         """Disables (enable is false) or enables the timer and sets the timer time-out
         to us microseconds. Note that the timer resolution is 10 us. After the Relaxd
@@ -242,20 +243,20 @@ class CameraTPX(object):
         us = c_int(us)
 
         self.lib.EMCameraObj_enableTimer(self.obj, enable, us)
-    
+
     def resetMatrix(self):
         self.lib.EMCameraObj_resetMatrix(self.obj)
 
     def timerExpired(self):
         return self.lib.EMCameraObj_timerExpired(self.obj)
-    
+
     def setAcqPars(self, pars):
         "AcqParams *pars"
 
         raise NotImplementedError
         pars = AcqParams
         self.lib.EMCameraObj_setAcqPars(self.obj, byref(pars))
-    
+
     def isBusy(self, busy):
         "bool *busy"
 
@@ -275,9 +276,9 @@ class CameraTPX(object):
 
         while not self.timerExpired():
             pass
-            
+
         # self.closeShutter()
-        
+
         arr = self.readMatrix()
 
         out = arrangeData(arr)
@@ -309,7 +310,7 @@ def initialize(config):
     from pathlib import Path
 
     base = Path(config).parent
-    
+
     # read config.txt
     with open(config, "r") as f:
         for line in f:
@@ -324,8 +325,8 @@ def initialize(config):
                 pixelsCfg = base / inp[1]
 
     cam = CameraTPX()
-    isConnected = cam.connect(hwId)
-    
+    cam.connect(hwId)
+
     cam.init()
 
     cam.readHwDacs(hwDacs)
@@ -351,10 +352,10 @@ if __name__ == '__main__':
     print(base)
     print()
 
-    config = base / "config.txt"
-    
-    cam = initialize(config)
-       
+    tpx_config_file = base / "config.txt"
+
+    cam = initialize(tpx_config_file)
+
     if True:
         t = 0.01
         n = 100
@@ -366,7 +367,7 @@ if __name__ == '__main__':
             cam.acquireData(t)
         dt = time.perf_counter() - t0
         print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
-    
+
     embed(banner1='')
-    
+
     isDisconnected = cam.disconnect()

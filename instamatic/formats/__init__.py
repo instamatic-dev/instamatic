@@ -1,4 +1,6 @@
-import time
+from .xdscbf import write as write_cbf
+from .mrc import write_image as write_mrc
+from .mrc import read_image as read_mrc
 import os
 import yaml
 import numpy as np
@@ -16,11 +18,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
-from .mrc import read_image as read_mrc
-from .mrc import write_image as write_mrc
-
-from .xdscbf import write as write_cbf
-
 
 def read_image(fname: str) -> (np.array, dict):
     """Guess filetype by extension"""
@@ -35,10 +32,10 @@ def read_image(fname: str) -> (np.array, dict):
         img, h = read_mrc(fname)
     else:
         raise IOError(f"Cannot open file {fname}, unknown extension: {ext}")
-    return img, h 
+    return img, h
 
 
-def write_tiff(fname: str, data, header: dict=None):
+def write_tiff(fname: str, data, header: dict = None):
     """Simple function to write a tiff file
 
     fname: str,
@@ -85,7 +82,7 @@ def read_tiff(fname: str) -> (np.array, dict):
     return img, header
 
 
-def write_hdf5(fname: str, data, header: dict=None):
+def write_hdf5(fname: str, data, header: dict = None):
     """Simple function to write data to hdf5 format using h5py
 
     fname: str,
@@ -103,11 +100,11 @@ def write_hdf5(fname: str, data, header: dict=None):
     if header:
         h5data.attrs.update(header)
     f.close()
- 
+
 
 def read_hdf5(fname: str) -> (np.array, dict):
     """Simple function to read a hdf5 file written by Instamatic
-    
+
     fname: str,
         path or filename to image which should be opened
 
@@ -117,7 +114,7 @@ def read_hdf5(fname: str) -> (np.array, dict):
     """
     if not os.path.exists(fname):
         raise FileNotFoundError(f"No such file: '{fname}'")
-        
+
     f = h5py.File(fname)
     return np.array(f["data"]), dict(f["data"].attrs)
 

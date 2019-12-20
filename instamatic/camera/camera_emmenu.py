@@ -1,17 +1,12 @@
+import comtypes.client
+from instamatic import config
+import atexit
 from pathlib import Path
 
 import time
 import numpy as np
 import logging
 logger = logging.getLogger(__name__)
-
-import atexit
-
-from instamatic import config
-
-import comtypes.client
-
-import sys
 
 
 type_dict = {
@@ -23,10 +18,10 @@ type_dict = {
     6: "GetDataDouble",
     7: "GetDataComplex",
     8: "IMG_STRING",  # no method on EMImage
-    8: "GEtDataBinary",
-    9: "GetDataRGB8",
-    10: "GetDataRGB16",
-    11: "IMG_EMVECTOR"  # no method on EMImage
+    9: "GetDataBinary",
+    10: "GetDataRGB8",
+    11: "GetDataRGB16",
+    12: "IMG_EMVECTOR"  # no method on EMImage
 }
 
 
@@ -54,7 +49,7 @@ def EMVector2dict(vec):
 class CameraEMMENU(object):
     """docstring for CameraEMMENU"""
 
-    def __init__(self, drc_name: str="Diffraction", interface: str="emmenu"):
+    def __init__(self, drc_name: str = "Diffraction", interface: str = "emmenu"):
         """Initialize camera module """
         super().__init__()
 
@@ -78,10 +73,10 @@ class CameraEMMENU(object):
         self._vp.FlapState = 2  # pull out the flap, because we can :-) [0, 1, 2]
 
         self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
-                                                       # other choices: DeleteBufferOnDeleteImage / Default
-        
+        # other choices: DeleteBufferOnDeleteImage / Default
+
         # Image manager for managing image buffers (left panel)
-        self._immgr = self._obj.ImageManager 
+        self._immgr = self._obj.ImageManager
 
         # for writing tiff files
         self._emf = self._obj.EMFile
@@ -90,7 +85,7 @@ class CameraEMMENU(object):
         self._emi = self._obj.EMImages
 
         # set up instamatic data directory
-        self.top_drc_index = self._immgr.TopDirectory 
+        self.top_drc_index = self._immgr.TopDirectory
         self.top_drc_name = self._immgr.DirectoryName(self.top_drc_index)
 
         # check if exists
@@ -104,7 +99,7 @@ class CameraEMMENU(object):
 
         self.drc_name = drc_name
         self.drc_index = self._immgr.DirectoryHandleFromName(drc_name)
-        
+
         self._vp.DirectoryHandle = self.drc_index  # set current directory
 
         self.load_defaults()
@@ -143,11 +138,11 @@ class CameraEMMENU(object):
         cfg = self.getCurrentConfig(as_dict=False)
         return cfg.Name
 
-    def getCurrentConfig(self, as_dict: bool=True) -> dict:
+    def getCurrentConfig(self, as_dict: bool = True) -> dict:
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
         count = self._obj.CameraConfigurations.Count
-        for j in range(1, count+1):
+        for j in range(1, count + 1):
             cfg = self._obj.CameraConfigurations.Item(j)
             if cfg.Name == vp_cfg_name:
                 break
@@ -221,9 +216,9 @@ class CameraEMMENU(object):
         d["MaximumSizeX"] = cam.MaximumSizeX  # int
         d["MaximumSizeY"] = cam.MaximumSizeY  # int
         d["NumberOfGains"] = cam.NumberOfGains  # int
-        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains+1)]
+        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains + 1)]
         d["NumberOfSpeeds"] = cam.NumberOfSpeeds  # int
-        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds+1)]
+        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds + 1)]
         d["PixelSizeX"] = cam.PixelSizeX  # int
         d["PixelSizeY"] = cam.PixelSizeY  # int
         d["Dynamic"] = cam.Dynamic  # int
@@ -272,7 +267,7 @@ class CameraEMMENU(object):
 
         return d
 
-    def getEMVectorByIndex(self, img_index: int, drc_index: int=None) -> dict:
+    def getEMVectorByIndex(self, img_index: int, drc_index: int = None) -> dict:
         """Returns the EMVector by index as a python dictionary"""
         p = self.getImageByIndex(img_index, drc_index)
         v = p.EMVector
@@ -284,16 +279,16 @@ class CameraEMMENU(object):
         for i, p in enumerate(self._emi):
             try:
                 self._emi.DeleteImage(p)
-            except:
+            except BaseException:
                 # sometimes EMMenu also loses track of image pointers...
                 print(f"Failed to delete buffer {i} ({p})")
 
-    def deleteImageByIndex(self, img_index: int, drc_index: int=None) -> int:
+    def deleteImageByIndex(self, img_index: int, drc_index: int = None) -> int:
         """Delete the image from EMMENU by its index"""
         p = self.getImageByIndex(img_index, drc_index)
         self._emi.DeleteImage(p)  # alternative: self._emi.Remove(p.ImgHandle)
 
-    def getImageByIndex(self, img_index: int, drc_index: int=None) -> int:
+    def getImageByIndex(self, img_index: int, drc_index: int = None) -> int:
         """Grab data from the image manager by index. Return image pointer (COM).
 
         Not accessible through server."""
@@ -304,7 +299,7 @@ class CameraEMMENU(object):
 
         return p
 
-    def getImageDataByIndex(self, img_index: int, drc_index: int=None) -> "np.array":
+    def getImageDataByIndex(self, img_index: int, drc_index: int = None) -> "np.array":
         """Grab data from the image manager by index. Return numpy 2D array"""
         p = self.getImageByIndex(img_index, drc_index)
 
@@ -313,7 +308,7 @@ class CameraEMMENU(object):
 
         f = getattr(p, method)
         arr = f()  # -> tuple of tuples
-        
+
         return np.array(arr)
 
     def getDimensions(self) -> (int, int):
@@ -360,8 +355,8 @@ class CameraEMMENU(object):
 
         self.writeTiffFromPointer(p, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool=False) -> None:
-        """Write a series of data in tiff format and writes them to 
+    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
+        """Write a series of data in tiff format and writes them to
         the given `path` using EMMENU machinery"""
         path = Path(path)
         drc_index = self.drc_index
@@ -369,12 +364,12 @@ class CameraEMMENU(object):
         if stop_index <= start_index:
             raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
 
-        for i, image_index in enumerate(range(start_index, stop_index+1)):
+        for i, image_index in enumerate(range(start_index, stop_index + 1)):
             p = self.getImageByIndex(image_index, drc_index)
 
             fn = str(path / f"{i:04d}.tiff")
             print(f"Image #{image_index} -> {fn}")
-            
+
             # TODO: wrap writeTiff in try/except
             # writeTiff causes vague error if image does not exist
 
@@ -411,7 +406,7 @@ class CameraEMMENU(object):
         """Get the next empty buffer in the image manager, 0-indexed"""
         i = self.get_image_index()
         while not self._immgr.ImageEmpty(self.drc_index, i):
-            i += 1        
+            i += 1
         return i
 
     def stop_record(self) -> int:
@@ -435,7 +430,7 @@ class CameraEMMENU(object):
         # StopRecorder normally defaults to top directory
         self._vp.DirectoryHandle = self.drc_index
 
-    def start_liveview(self, delay: float=3.0) -> None:
+    def start_liveview(self, delay: float = 3.0) -> None:
         print("Start live view")
         try:
             self._vp.StartContinuous()
@@ -464,7 +459,7 @@ class CameraEMMENU(object):
         """Get timestamps in seconds for given image index range"""
         drc_index = self.drc_index
         timestamps = []
-        for i, image_index in enumerate(range(start_index, end_index+1)):
+        for i, image_index in enumerate(range(start_index, end_index + 1)):
             p = self.getImageByIndex(image_index, drc_index)
             t = p.EMVector.lImgCreationTime
             timestamps.append(t)
@@ -479,7 +474,7 @@ class CameraEMMENU(object):
         self.set_image_index(0)
         # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
 
-        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
+        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released"
         # print(msg)
         logger.info(msg)
 
@@ -491,4 +486,3 @@ if __name__ == '__main__':
 
     from IPython import embed
     embed()
-

@@ -1,35 +1,30 @@
-import numpy as np
-
-from pathlib import Path
-
-from skimage.filters import threshold_local
-from skimage.measure import find_contours
-from skimage import morphology
-
 from instamatic.formats import read_tiff
 from instamatic.tools import find_beam_center_with_beamstop
+from pathlib import Path
+from skimage import morphology
+from skimage.measure import find_contours
+import numpy as np
 
 
 def minimum_bounding_rectangle(points):
     """
     # From https://stackoverflow.com/a/33619018
-    
+
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
 
     :param points: an nx2 matrix of coordinates
     :rval: an nx2 matrix of coordinates
     """
-    from scipy.ndimage.interpolation import rotate
     from scipy.spatial import ConvexHull
-    
-    pi2 = np.pi/2.0
+
+    pi2 = np.pi / 2.0
 
     # get the convex hull for the points
     hull_points = points[ConvexHull(points).vertices]
 
     # calculate edge angles
-    edges = np.zeros((len(hull_points)-1, 2))
+    edges = np.zeros((len(hull_points) - 1, 2))
     edges = hull_points[1:] - hull_points[:-1]
 
     angles = np.zeros((len(edges)))
@@ -41,8 +36,8 @@ def minimum_bounding_rectangle(points):
     # find rotation matrices
     rotations = np.vstack([
         np.cos(angles),
-        np.cos(angles-pi2),
-        np.cos(angles+pi2),
+        np.cos(angles - pi2),
+        np.cos(angles + pi2),
         np.cos(angles)]).T
 
     rotations = rotations.reshape((-1, 2, 2))
@@ -109,13 +104,13 @@ def radial_average(z, center, as_radial_map=False):
 
 def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc="."):
     """Find rectangle fitting the beamstop
-    
+
     1. Radially scale the image (divide each point in the image by the radial average)
     2. Segment the image via thresholding. The beamstop is identified by the area where the image < radially scaled image
     3. Contour the segmented image.
     4. Find minimum bounding rectangle for points that define the contours
     5. The contour closest to the beam center is then taken as beamstop
-    
+
     input:
         image, nxn 2D np.array defining the image. The average of the image stack works well
         center, 2x1 np.array defining the center of the image. If omitted, will be find automatically
@@ -142,7 +137,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     seg = morphology.remove_small_objects(seg, 64)
     seg = morphology.remove_small_holes(seg, 64)
-    
+
     # pad the beamstop to make the outline a big bigger
     if pad:
         seg = morphology.binary_dilation(seg, selem=morphology.disk(pad))
@@ -151,17 +146,17 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     if len(arr) > 1:
         rects = [minimum_bounding_rectangle(a) for a in arr if len(a) > minsize]
-    
+
         a = [np.mean(rect, axis=0) for rect in rects]
         dists = [np.linalg.norm(b - center) for b in a]
         i = np.argmin(dists)
-    
+
         rect = rects[i]
     else:
         a = arr[0]
         rect = minimum_bounding_rectangle(a)
 
-    ## This is not robust if there are other shaded areas
+    # This is not robust if there are other shaded areas
     # rect = sorted(arr, key=lambda x: len(x), reverse=True)[0]
     # rect = minimum_bounding_rectangle(beamstop)
 
@@ -201,18 +196,17 @@ if __name__ == '__main__':
     fns = list(Path(drc).glob("raw/*.tif"))
 
     print(len(fns))
-    
+
     imgs, hs = zip(*(read_tiff(fn) for fn in fns))
-    
+
     stack_mean = np.mean(imgs, axis=0)
 
     center = find_beam_center_with_beamstop(stack_mean, z=99)
 
     beamstop_rect = find_beamstop_rect(stack_mean, center, pad=1, plot=True)
-    
+
     from instamatic.tools import to_xds_untrusted_area
 
     xds_quad = to_xds_untrusted_area("quadrilateral", beamstop_rect)
 
     print(xds_quad)
-

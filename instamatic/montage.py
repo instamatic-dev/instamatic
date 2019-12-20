@@ -21,14 +21,14 @@ def sorted_grid_indices(grid):
 
 def weight_map(shape, method="block", plot=False):
     """Generate a weighting map for the given shape
-    
+
     shape : tuple
         Shape defines the 2 integers defining the shape of the image
     method : str
         Method to use `circle`/`block`
     plot : bool
         Plot the image
-    
+
     Returns
     -------
     weight : np.array
@@ -37,33 +37,33 @@ def weight_map(shape, method="block", plot=False):
     res_x, res_y = shape
     c_x = int(res_x / 2) - 0.5
     c_y = int(res_y / 2) - 0.5
-    
+
     corner = (c_x**2 + c_y**2)**0.5
-    
-    a, b = np.meshgrid(np.arange(-c_x, c_x+1), np.arange(-c_y, c_y+1))
-    
+
+    a, b = np.meshgrid(np.arange(-c_x, c_x + 1), np.arange(-c_y, c_y + 1))
+
     if method == "block":
         a2 = c_x - np.abs(a)
         b2 = c_y - np.abs(b)
-        
+
         d = np.min(np.stack((a2, b2)), axis=0)
     elif method == "circle":
-        d = corner - np.sqrt(a**2+b**2)
+        d = corner - np.sqrt(a**2 + b**2)
     else:
         raise ValueError(f"No such method: `{method}`")
-    
+
     # scale to 1
     d = d / d.max()
 
     if plot:
         plt.imshow(d)
-    
+
     return d
 
 
-def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True, flip: bool=False) -> "np.array":
+def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, flip: bool = False) -> "np.array":
     """Defines the grid montage collection scheme
-    
+
     Parameters
     ----------
     gridshape : tuple(int, int)
@@ -76,7 +76,7 @@ def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True, flip
     flip : bool
         Flip around the vertical (lr, rl) or horizontal (ud, du) axis, i.e. start from the
         botton (lr, rl) or right-hand (ud, du) side.
-    
+
     Returns
     -------
     np.array
@@ -110,9 +110,9 @@ def make_grid(gridshape: tuple, direction: str="updown", zigzag: bool=True, flip
     return grid
 
 
-def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool=False) -> dict:
+def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = False) -> dict:
     """Make slices for left/right/top/bottom image
-    
+
     Parameters
     ----------
     overlap_x/overlap_y : int
@@ -122,25 +122,25 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool=Fal
         Define the shape of the image (only for plotting)
     plot : bool
         Plot the boundaries on blank images
-    
+
     Returns
     -------
     Dictionary with the slices for each side
     """
     d = {}
-    
+
     s_right = np.s_[:, -overlap_x:]
     s_left = np.s_[:, :overlap_x]
     s_top = np.s_[:overlap_y]
-    s_bottom  = np.s_[-overlap_y:]
+    s_bottom = np.s_[-overlap_y:]
 
     slices = (s_right, s_left, s_top, s_bottom)
     labels = ("right", "left", "top", "bottom")
 
     d = dict(zip(labels, slices))
-    
+
     if plot:
-        fig, axes = plt.subplots(2,2, sharex=True, sharey=True)
+        fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
         axes = axes.flatten()
 
         for ax, s_, label in zip(axes, slices, labels):
@@ -150,7 +150,7 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool=Fal
             ax.set_title(label)
 
         plt.show()
-    
+
     return d
 
 
@@ -164,7 +164,7 @@ def define_directions(pairs: list):
     for pair in pairs:
         i0, j0 = pair["idx0"]
         i1, j1 = pair["idx1"]
-        
+
         # checked 21-11-2019 for 'leftright' config
         if j0 == j1:
             if i1 > i0:
@@ -178,37 +178,37 @@ def define_directions(pairs: list):
                 side0, side1 = "left", "right"
 
         # print(i0, j0, i1, j1, side0, side1)
-        
+
         pair["side0"] = side0
         pair["side1"] = side1
-    
+
     return pairs
 
 
 def define_pairs(grid: "np.ndarray"):
     """Take a sequence grid and return all pairs of neighbours
 
-    Returns a list of dictionaries containing the indices of the pairs 
+    Returns a list of dictionaries containing the indices of the pairs
     (neighbouring only), and the corresponding sequence numbers (corresponding to the image array)
     """
     nx, ny = grid.shape
 
-    footprint = np.array([[0,1,0],
-                          [1,0,1],
-                          [0,1,0]])
+    footprint = np.array([[0, 1, 0],
+                          [1, 0, 1],
+                          [0, 1, 0]])
 
     shape = np.array(footprint.shape)
     assert shape[0] == shape[1], "Axes must be equal"
-    assert shape[0] % 2 == 1,    "Axis length must be odd"
+    assert shape[0] % 2 == 1, "Axis length must be odd"
     center = shape // 2
-    
+
     connected = np.argwhere(footprint == 1) - center
-    
+
     pairs = []
-    
+
     for idx0, i0 in np.ndenumerate(grid):
         neighbours = connected + idx0
-        
+
         for neighbour in neighbours:
             neighbour = tuple(neighbour)
             if neighbour[0] < 0 or neighbour[0] >= nx:
@@ -218,17 +218,17 @@ def define_pairs(grid: "np.ndarray"):
             else:
                 assert i0 == grid[idx0]
                 d = dict(
-                    seq0 = grid[idx0],
-                    seq1 = grid[neighbour],
-                    idx0 = idx0,
-                    idx1 = neighbour
+                    seq0=grid[idx0],
+                    seq1=grid[neighbour],
+                    idx0=idx0,
+                    idx1=neighbour
                 )
                 pairs.append(d)
-    
+
     return pairs
 
 
-def disambiguate_shift(strip0, strip1, shift, verbose: bool=False):
+def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
     """Disambiguate the shifts obtained from cross correlation"""
     shift_x, shift_y = shift
 
@@ -237,7 +237,7 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool=False):
 
     for i in (-1, 1):
         for j in (-1, 1):
-            new_shift = (i*shift_x, j*shift_y)
+            new_shift = (i * shift_x, j * shift_y)
             strip1_offset = ndimage.shift(strip1, new_shift)
             offset = strip1_offset - strip0.astype(float)
             sum_score = np.abs(offset).sum()
@@ -246,7 +246,7 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool=False):
             if sum_score < best_sum:
                 best_sum = sum_score
                 best_shift = new_shift
-    
+
     if verbose:
         print("Disambiguated shift:", best_shift)
 
@@ -254,9 +254,9 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool=False):
 
 
 def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
-    fig, axes = plt.subplots(ncols=2, figsize=(6,3))
+    fig, axes = plt.subplots(ncols=2, figsize=(6, 3))
     ax0, ax1 = axes.flatten()
-    
+
     ax0.imshow(im0)
     ax0.set_title(f"{seq0} {idx0} {side0}")
     ax0.set_axis_off()
@@ -268,12 +268,12 @@ def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
 
 
 def plot_fft(strip0, strip1, shift, fft, side0, side1):
-    fig, axes = plt.subplots(nrows=4, figsize=(8,5))
+    fig, axes = plt.subplots(nrows=4, figsize=(8, 5))
     axes = axes.flatten()
     for ax in axes:
         ax.set_axis_off()
     ax0, ax1, ax2, ax3 = axes
-    
+
     shape0 = strip0.shape
     shape1 = strip1.shape
 
@@ -284,15 +284,14 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
         shift_y, shift_x = shift
     else:
         shift_x, shift_y = shift
-       
-    # Show difference              
+
+    # Show difference
     strip1_shifted = ndimage.shift(strip1, (shift_x, shift_y))
     difference = strip1_shifted - strip0.astype(float)
-    
+
     # Show shift in fourier space
     image_product = np.fft.fft2(strip0) * np.fft.fft2(strip1).conj()
-    cc_image = np.fft.fftshift(np.fft.ifft2(image_product))
-        
+
     ax0.imshow(strip0, interpolation="nearest")
     ax0.set_title(f"{side0}")
     ax1.imshow(strip1, interpolation="nearest")
@@ -301,32 +300,32 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     ax2.set_title("Abs(Difference)")
     ax3.imshow(fft, vmin=np.percentile(fft, 50.00), vmax=np.percentile(fft, 99.99))
     ax3.set_title(f"Cross correlation (max={fft.max():.4f})")
-   
+
     plt.subplots_adjust(hspace=0.0)
     plt.show()
 
 
-def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):  
-    blank = np.zeros((res_x*2, res_y*2), dtype=np.int32)
+def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):
+    blank = np.zeros((res_x * 2, res_y * 2), dtype=np.int32)
 
     center = np.array(blank.shape) // 2
     origin = np.array((res_x, res_y)) // 2
 
-    coord0 = (center - difference_vector/2 - origin).astype(int)
-    coord1 = (center + difference_vector/2 - origin).astype(int)
-    
+    coord0 = (center - difference_vector / 2 - origin).astype(int)
+    coord1 = (center + difference_vector / 2 - origin).astype(int)
+
     print(f"Coord0: {coord0} | Coord1: {coord1}")
-    
+
     txt = f"Difference vector\n#{seq0}:{idx0} -> #{seq1}:{idx1} = {difference_vector}"
 
-    blank[coord0[0]: coord0[0]+res_x, coord0[1]: coord0[1] + res_y] += im0
-    blank[coord1[0]: coord1[0]+res_x, coord1[1]: coord1[1] + res_y] += im1
+    blank[coord0[0]: coord0[0] + res_x, coord0[1]: coord0[1] + res_y] += im0
+    blank[coord1[0]: coord1[0] + res_x, coord1[1]: coord1[1] + res_y] += im1
 
     # Create a Rectangle patch
     rect0 = patches.Rectangle(coord0[::-1], res_x, res_y, linewidth=1, edgecolor='r', facecolor='none')
     rect1 = patches.Rectangle(coord1[::-1], res_x, res_y, linewidth=1, edgecolor='r', facecolor='none')
 
-    fig, ax = plt.subplots(1, figsize=(8,8))
+    fig, ax = plt.subplots(1, figsize=(8, 8))
 
     # Add the patch to the Axes
     ax.add_patch(rect0)
@@ -353,26 +352,27 @@ class Montage(object):
     Based on Preibisch et al. (2009), Bioinformatics, 25(11):1463-1465
              http://dx.doi.org/10.1093/bioinformatics/btp184
     """
-    def __init__(self, 
+
+    def __init__(self,
                  images: list,
                  gridspec: dict,
                  overlap=0.1
                  ):
         super().__init__()
-        
+
         self.images = images
         self.image_shape = images[0].shape
         self.gridspec = gridspec
         self.grid = make_grid(**gridspec)
-        
+
         res_x, res_y = self.image_shape
-        self.overlap_x = overlap_x = int(res_x * overlap)
-        self.overlap_y = overlap_y = int(res_y * overlap)
+        self.overlap_x = int(res_x * overlap)
+        self.overlap_y = int(res_y * overlap)
 
     @classmethod
-    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str="leftright", zigzag: bool=True):
+    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = "leftright", zigzag: bool = True):
         """Load a montage object from a SerialEM file image stack
-        
+
         Parameters
         ----------
         filename : str
@@ -387,42 +387,42 @@ class Montage(object):
         Returns
         -------
         Montage object constructed from the given images
-            
+
         """
         import mrcfile
         from instamatic.serialem import read_mdoc_file
         gm = mrcfile.open(filename)
         images = gm.data
-    
+
         # is the mdoc needed?
         mdoc = read_mdoc_file(filename + ".mdoc", only_kind="zvalue")
         assert len(mdoc) == len(images)
-        
+
         gridspec = {
             "gridshape": gridshape,
             "direction": direction,
             "zigzag": zigzag,
-            "flip" : False
+            "flip": False
         }
-        
+
         m = cls(images=images, gridspec=gridspec)
         m.mdoc = mdoc
         m.filename = filename
         m.stagecoords = np.array([d["StagePosition"] for d in m.mdoc]) * 1000  # um->nm
         c1 = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
-        m.piececoords = c1[:,::-1]  # flip coordinates
+        m.piececoords = c1[:, ::-1]  # flip coordinates
         c2 = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
-        c2 = c2[:,::-1]  # flip coordinates
-        c2 -= c2.min(axis=0)  # set minval to 0 
-        m.alignedpiececoords = c2 
+        c2 = c2[:, ::-1]  # flip coordinates
+        c2 -= c2.min(axis=0)  # set minval to 0
+        m.alignedpiececoords = c2
 
         try:
             c3 = np.array([d["AlignedPieceCoordsVS"][0:2] for d in m.mdoc])
         except KeyError:
             pass
         else:
-            c3 = c3[:,::-1]  # flip coordinates
-            c3 -= c3.min(axis=0)  # set minval to 0 
+            c3 = c3[:, ::-1]  # flip coordinates
+            c3 -= c3.min(axis=0)  # set minval to 0
             m.alignedpiececoordsvs = c3
 
         return m
@@ -433,7 +433,7 @@ class Montage(object):
         self.grid = make_grid(**self.gridspec)
 
     @classmethod
-    def from_montage_yaml(cls, filename: str="montage.yaml"):
+    def from_montage_yaml(cls, filename: str = "montage.yaml"):
         """Load montage from a series of tiff files + `montage.yaml`)
         """
         import yaml
@@ -441,18 +441,18 @@ class Montage(object):
 
         p = Path(filename)
         drc = p.parent
-        
+
         d = yaml.safe_load(open(p, "r"))
         fns = (drc / fn for fn in d["filenames"])
         overlap = d["overlap"]
 
         images = [read_tiff(fn)[0] for fn in fns]
 
-        gridspec = {k:v for k,v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
+        gridspec = {k: v for k, v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
 
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
         m.update_gridspec(flip=not d["flip"])  # BUG: Work-around for gridspec madness
-                                               # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
+        # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = np.array(d["stagecoords"])
         m.stagematrix = np.array(d["stagematrix"])
         m.mode = d["mode"]
@@ -460,10 +460,10 @@ class Montage(object):
 
         return m
 
-    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float=1.0, verbose: bool=False):
+    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float = 1.0, verbose: bool = False):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation
-        
+
         Parameters
         ----------
         idx0, idx1 : int
@@ -474,7 +474,7 @@ class Montage(object):
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
             strips used for cross correlation to 75 pixels.
-        
+
         Returns
         -------
         difference_vector : np.array[1,2]
@@ -483,7 +483,7 @@ class Montage(object):
         res_x, res_y = self.image_shape
         overlap_x = int(self.overlap_x * overlap_k)
         overlap_y = int(self.overlap_y * overlap_k)
-        
+
         vect = np.array(idx1) - np.array(idx0)
         vect = vect * np.array((res_x - overlap_x, res_y - overlap_y))
 
@@ -495,15 +495,15 @@ class Montage(object):
             print(f"Difference vector: {difference_vector}")
 
         return difference_vector
-    
-    def get_difference_vectors(self, threshold: float=0.02, overlap_k: float=1.0, 
-                               method: str="imreg", segment: bool=False,
-                               plot : bool=False, verbose : bool=True):
+
+    def get_difference_vectors(self, threshold: float = 0.02, overlap_k: float = 1.0,
+                               method: str = "imreg", segment: bool = False,
+                               plot: bool = False, verbose: bool = True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
         shift offset between the images.
-        
+
         Parameters
         ----------
         threshold : float
@@ -529,10 +529,10 @@ class Montage(object):
         grid = self.grid
         res_x, res_y = self.image_shape
         images = self.images
-        
+
         overlap_x = int(self.overlap_x * overlap_k)
         overlap_y = int(self.overlap_y * overlap_k)
-        
+
         pairs = define_pairs(grid)
         pairs = define_directions(pairs)
 
@@ -546,9 +546,16 @@ class Montage(object):
         for i, pair in enumerate(pairs):
             if verbose:
                 print("---")
-                
+
             seq0 = pair["seq0"]
             seq1 = pair["seq1"]
+
+            side0 = pair["side0"]
+            side1 = pair["side1"]
+            idx0 = pair["idx0"]
+            idx1 = pair["idx1"]
+            im0 = images[seq0]
+            im1 = images[seq1]
 
             if (seq1, seq0) in difference_vectors:
                 difference_vector = -difference_vectors[seq1, seq0]
@@ -557,13 +564,6 @@ class Montage(object):
                 difference_vectors[seq0, seq1] = difference_vector
                 continue
 
-            side0 = pair["side0"]
-            side1 = pair["side1"]
-            idx0 = pair["idx0"]
-            idx1 = pair["idx1"]
-            im0 = images[seq0]
-            im1 = images[seq1]
-            
             if plot and False:
                 plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1)
 
@@ -583,7 +583,7 @@ class Montage(object):
             else:  # method = skimage.feature.register_translation
                 shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
                 fft = np.ones_like(strip0)
-                score = 1-error
+                score = 1 - error
 
             shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
 
@@ -593,7 +593,7 @@ class Montage(object):
             if score < threshold:
                 if verbose:
                     print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!")
-                shift = np.array((0,0))
+                shift = np.array((0, 0))
                 continue
             if verbose:
                 print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
@@ -609,10 +609,10 @@ class Montage(object):
 
         self.difference_vectors = difference_vectors
         return difference_vectors
-    
+
     def get_montage_coords(self):
         """Get the coordinates for each section based on the gridspec only (not optimized)
-               
+
         Returns
         -------
         coords : np.array[-1, 2]
@@ -621,10 +621,10 @@ class Montage(object):
 
         res_x, res_y = self.image_shape
         grid = self.grid
-        
+
         overlap_x = self.overlap_x
         overlap_y = self.overlap_y
-        
+
         # make starting values
         vect = np.array((res_x - overlap_x, res_y - overlap_y))
         vects = []
@@ -634,20 +634,20 @@ class Montage(object):
             vects.append((x0, y0))
 
         vects = np.array(vects)
-        
+
         return vects
 
-    def get_optimized_montage_coords(self, difference_vectors, method: str="leastsq", verbose: bool=False):
+    def get_optimized_montage_coords(self, difference_vectors, method: str = "leastsq", verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares minimization
-        
+
         Parameters
         ----------
         difference_vectors : dict
             dict containing the pairwise difference vectors between each image
         method : str
             Least-squares minimization method to use (lmfit)
-        
+
         Returns
         -------
         coords : np.array[-1, 2]
@@ -657,10 +657,7 @@ class Montage(object):
         grid = self.grid
         grid_x, grid_y = grid.shape
         n_gridpoints = grid_x * grid_y
-        
-        overlap_x = self.overlap_x
-        overlap_y = self.overlap_y
-        
+
         vects = self.get_montage_coords()
 
         # determine which frames items have neighbours
@@ -669,17 +666,17 @@ class Montage(object):
         # setup parameters
         params = lmfit.Parameters()
 
-        middle_i = int(n_gridpoints / 2 )  # Find index of middlemost item
+        middle_i = int(n_gridpoints / 2)  # Find index of middlemost item
         for i, row in enumerate(vects):
             if i not in has_neighbours:
                 vary = False
             else:
                 vary = (i != middle_i)  # anchor on middle frame
-            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0]-res_x/2, max=row[0]+res_x/2)
-            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1]-res_y/2, max=row[1]+res_y/2)
+            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0] - res_x / 2, max=row[0] + res_x / 2)
+            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1] - res_y / 2, max=row[1] + res_y / 2)
 
         def obj_func(params, diff_vects):
-            V = np.array([p.value for p in params.values()]).reshape(-1,2)
+            V = np.array([p.value for p in params.values()]).reshape(-1, 2)
             n = len(V)
 
             # Minimization function from 2.2
@@ -704,13 +701,13 @@ class Montage(object):
 
         lmfit.report_fit(res, show_correl=verbose, min_correl=0.8)
 
-        Vn = np.array([p.value for p in res.params.values()]).reshape(-1,2)
-        offset = min(Vn[:,0]), min(Vn[:,1])
+        Vn = np.array([p.value for p in res.params.values()]).reshape(-1, 2)
+        offset = min(Vn[:, 0]), min(Vn[:, 1])
         coords = Vn - offset
 
         return coords
-   
-    def stitch(self, coords: "np.array[-1, 2]", method: str=None, binning: int=1, plot: bool=False, ax=None):
+
+    def stitch(self, coords: "np.array[-1, 2]", method: str = None, binning: int = 1, plot: bool = False, ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section
 
@@ -735,7 +732,6 @@ class Montage(object):
         images = self.images
         nx, ny = grid.shape
         res_x, res_y = self.image_shape
-        overlap_x, overlap_y = self.overlap_x, self.overlap_y
 
         c = coords.astype(int)
         stitched_x, stitched_y = c.max(axis=0) - c.min(axis=0)
@@ -776,12 +772,11 @@ class Montage(object):
                 stitched[x0:x1, y0:y1] = im
 
             if plot:
-                j = self.grid.flatten()[i]
                 txt = f"{i}\n{idx}"
 
                 # NOTE that y/x are flipped for display in matplotlib ONLY
                 ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
-                rect = patches.Rectangle([y0, x0], res_x/binning, res_y/binning, linewidth=0.5, edgecolor='r', facecolor='none')
+                rect = patches.Rectangle([y0, x0], res_x / binning, res_y / binning, linewidth=0.5, edgecolor='r', facecolor='none')
                 ax.add_patch(rect)
 
         if method in ("average", "weighted"):
@@ -835,7 +830,7 @@ class Montage(object):
         """Takes a stage coordinate and transforms it into a pixel coordinate"""
         if stagematrix is None:
             stagematrix = self.stagematrix
-        
+
         mat = stagematrix
         mati = np.linalg.inv(stagematrix)
 
@@ -848,9 +843,7 @@ class Montage(object):
         image_stage_coord = self.stagecoords[j]
         image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
 
-        vect = stage_coord - image_stage_coord
-
-        # The image pixel coordinate `image_pixel_coord` cooresponds to the corner, 
+        # The image pixel coordinate `image_pixel_coord` cooresponds to the corner,
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
         px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
@@ -858,8 +851,8 @@ class Montage(object):
 
         return px_coord.astype(int)
 
-    def find_holes(self, stitched, diameter: float=40e3, tolerance : float=0.1, 
-                    pixelsize: float=None, plot: bool=False) -> tuple:
+    def find_holes(self, stitched, diameter: float = 40e3, tolerance: float = 0.1,
+                   pixelsize: float = None, plot: bool = False) -> tuple:
         """Find grid holes in the montage image
 
         Parameters
@@ -876,18 +869,18 @@ class Montage(object):
         stagecoords : np.array, imagecoords : np.array
             Return both he stage and imagecoords as numpy arrays
         """
-        from skimage import feature, filters
+        from skimage import filters
         from skimage import morphology
         from skimage.measure import regionprops
 
         thresh = filters.threshold_otsu(stitched)
         selem = morphology.disk(10)
         seg = morphology.binary_closing(stitched > thresh, selem=selem)
-        
+
         fit, (ax0, ax1) = plt.subplots(ncols=2)
 
         ax0.imshow(seg)
-        
+
         labeled, _ = ndimage.label(seg)
         props = regionprops(labeled)
 
@@ -909,12 +902,12 @@ class Montage(object):
 
         for prop in props:
             x, y = prop.centroid
-            
+
             d = (prop.area ** 0.5) * pixelsize
-            
+
             if abs(d - diameter) < max_val:
                 ax1.scatter(y, x, marker="+")
-                stagecoord = self.pixel_to_stagecoord((x,y))
+                stagecoord = self.pixel_to_stagecoord((x, y))
                 stagecoords.append(stagecoord)
                 imagecoords.append((x, y))
 

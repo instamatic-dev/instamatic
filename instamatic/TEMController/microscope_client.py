@@ -24,14 +24,14 @@ class ServerError(Exception):
 
 def kill_server(p):
     # p.kill is not adequate
-    sp.call(['taskkill', '/F', '/T', '/PID',  str(p.pid)])
+    sp.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
 
 
 def start_server_in_subprocess():
-   cmd = "instamatic.temserver.exe"
-   p = sp.Popen(cmd, stdout=sp.DEVNULL)
-   print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
-   atexit.register(kill_server, p)
+    cmd = "instamatic.temserver.exe"
+    p = sp.Popen(cmd, stdout=sp.DEVNULL)
+    print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
+    atexit.register(kill_server, p)
 
 
 class MicroscopeClient(object):
@@ -39,9 +39,10 @@ class MicroscopeClient(object):
     Simulates a Microscope object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the microscope API.
     """
+
     def __init__(self, name):
         super().__init__()
-        
+
         self.name = name
         self._bufsize = BUFSIZE
 
@@ -65,7 +66,7 @@ class MicroscopeClient(object):
         self._init_dict()
 
         atexit.register(self.s.close)
-    
+
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
@@ -81,8 +82,8 @@ class MicroscopeClient(object):
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
             dct = {"func_name": func_name,
-               "args": args,
-               "kwargs": kwargs}
+                   "args": args,
+                   "kwargs": kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -109,7 +110,7 @@ class MicroscopeClient(object):
         from instamatic.TEMController.microscope import get_tem
         tem = get_tem(self.name)
 
-        self._dct = {key:value for key, value in  tem.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith("_")}
 
     def __dir__(self):
         return self._dct.keys()
@@ -117,6 +118,7 @@ class MicroscopeClient(object):
 
 class TraceVariable(object):
     """docstring for Tracer"""
+
     def __init__(self, func, interval=1.0, name="variable", verbose=False):
         super().__init__()
         self.name = name
@@ -139,13 +141,13 @@ class TraceVariable(object):
 
     def update(self):
         ret = self.func()
-        
+
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    
+
         if self.verbose:
             print(f"{now} | Trace {self.name}: {ret}")
-    
+
         self._traced.append((now, ret))
-        
+
         self._timer = threading.Timer(self.interval, self.update)
         self._timer.start()

@@ -5,20 +5,20 @@ import random
 
 
 NTRLMAPPING = {
-   "GUN1" : 0,
-   "GUN2" : 1,
-   "CLA1" : 2,
-   "CLA2" : 3,
-   "SHIFT" : 4,
-   "TILT" : 5,
-   "ANGLE" : 6,
-   "CLS" : 7,
-   "IS1" : 8,
-   "IS2" : 9,
-   "SPOT" : 10,
-   "PLA" : 11,
-   "OLS" : 12,
-   "ILS" : 13
+    "GUN1": 0,
+    "GUN2": 1,
+    "CLA1": 2,
+    "CLA2": 3,
+    "SHIFT": 4,
+    "TILT": 5,
+    "ANGLE": 6,
+    "CLS": 7,
+    "IS1": 8,
+    "IS2": 9,
+    "SPOT": 10,
+    "PLA": 11,
+    "OLS": 12,
+    "ILS": 13
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
@@ -31,9 +31,10 @@ MIN = 0
 
 class SimuMicroscope(object):
     """docstring for microscope"""
-    def __init__(self, name: str="simulate"):
+
+    def __init__(self, name: str = "simulate"):
         super(SimuMicroscope, self).__init__()
-        
+
         self.CurrentDensity_value = 100_000.0
 
         self.Brightness_value = random.randint(MIN, MAX)
@@ -52,7 +53,7 @@ class SimuMicroscope(object):
 
         self.ImageShift1_x = random.randint(MIN, MAX)
         self.ImageShift1_y = random.randint(MIN, MAX)
-        
+
         self.ImageShift2_x = random.randint(MIN, MAX)
         self.ImageShift2_y = random.randint(MIN, MAX)
 
@@ -113,7 +114,7 @@ class SimuMicroscope(object):
 
         self._StagePosition_x = random.randint(-100000, 100000)
         self._StagePosition_y = random.randint(-100000, 100000)
-        self._StagePosition_z = random.randint(-10000,  10000)
+        self._StagePosition_z = random.randint(-10000, 10000)
         self._StagePosition_a = 0.0  # random.randint(-40, 40)
         self._StagePosition_b = 0.0  # random.randint(-40, 40)
 
@@ -145,7 +146,7 @@ class SimuMicroscope(object):
         d = self._stage_dict[var]
         current = d["current"]
         direction = +1 if (val > current) else -1
-        
+
         d["is_moving"] = True
         d["start"] = current
         d["end"] = val
@@ -173,8 +174,8 @@ class SimuMicroscope(object):
         else:
             ret = d["current"]
 
-        return ret  
-    
+        return ret
+
     @property
     def StagePosition_a(self):
         return self._StagePositionGetter("a")
@@ -182,7 +183,7 @@ class SimuMicroscope(object):
     @StagePosition_a.setter
     def StagePosition_a(self, value):
         self._StagePositionSetter("a", value)
-        
+
     @property
     def StagePosition_b(self):
         return self._StagePositionGetter("b")
@@ -190,7 +191,7 @@ class SimuMicroscope(object):
     @StagePosition_b.setter
     def StagePosition_b(self, value):
         self._StagePositionSetter("b", value)
-        
+
     @property
     def StagePosition_x(self):
         return self._StagePositionGetter("x")
@@ -198,7 +199,7 @@ class SimuMicroscope(object):
     @StagePosition_x.setter
     def StagePosition_x(self, value):
         self._StagePositionSetter("x", value)
-        
+
     @property
     def StagePosition_y(self):
         return self._StagePositionGetter("y")
@@ -223,7 +224,7 @@ class SimuMicroscope(object):
         return self._HT
 
     def getCurrentDensity(self) -> float:
-        rand_val = (random.random()-0.5) * 10000
+        rand_val = (random.random() - 0.5) * 10000
         return self.CurrentDensity_value + rand_val
 
     def getBrightness(self) -> int:
@@ -247,16 +248,16 @@ class SimuMicroscope(object):
     def getMagnificationIndex(self) -> int:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
-        
-        if current_mode =="diff":
+
+        if current_mode == "diff":
             selector = self.range_diff.index(value)
-        elif current_mode =="lowmag":
+        elif current_mode == "lowmag":
             selector = self.range_lowmag.index(value)
-        elif current_mode =="samag":
+        elif current_mode == "samag":
             selector = self.range_samag.index(value)
-        elif current_mode =="mag1":
+        elif current_mode == "mag1":
             selector = self.range_mag1.index(value)
-        elif current_mode =="mag2":
+        elif current_mode == "mag2":
             selector = self.range_mag2.index(value)
 
         return selector
@@ -267,27 +268,27 @@ class SimuMicroscope(object):
         if index < 0:
             raise ValueError(f"Cannot lower magnification (index={index})")
 
-        if current_mode =="diff":
+        if current_mode == "diff":
             value = self.range_diff[index]
-        elif current_mode =="lowmag":
+        elif current_mode == "lowmag":
             value = self.range_lowmag[index]
-        elif current_mode =="samag":
+        elif current_mode == "samag":
             value = self.range_samag[index]
-        elif current_mode =="mag1":
+        elif current_mode == "mag1":
             value = self.range_mag1[index]
-        elif current_mode =="mag2":
+        elif current_mode == "mag2":
             value = self.range_mag2[index]
 
         self.setMagnification(value)
 
     def increaseMagnificationIndex(self) -> int:
         idx = self.getMagnificationIndex
-        self.setMagnificationIndex(idx+1)
+        self.setMagnificationIndex(idx + 1)
         return 1
 
     def decreaseMagnificationIndex(self) -> int:
         idx = self.getMagnificationIndex
-        self.setMagnificationIndex(idx-1)
+        self.setMagnificationIndex(idx - 1)
         return 1
 
     def getMagnificationRanges(self) -> dict:
@@ -298,7 +299,7 @@ class SimuMicroscope(object):
             except AttributeError:
                 pass
 
-        return mag_ranges     
+        return mag_ranges
 
     def getGunShift(self) -> Tuple[int, int]:
         return self.GunShift_x, self.GunShift_y
@@ -306,10 +307,10 @@ class SimuMicroscope(object):
     def setGunShift(self, x: int, y: int):
         self.GunShift_x = x
         self.GunShift_y = y
-    
+
     def getGunTilt(self) -> Tuple[int, int]:
-        return self.GunTilt_x, self.GunTilt_y 
-    
+        return self.GunTilt_x, self.GunTilt_y
+
     def setGunTilt(self, x: int, y: int):
         self.GunTilt_x = x
         self.GunTilt_y = y
@@ -323,7 +324,7 @@ class SimuMicroscope(object):
 
     def getBeamTilt(self) -> Tuple[int, int]:
         return self.BeamTilt_x, self.BeamTilt_y
-    
+
     def setBeamTilt(self, x: int, y: int):
         self.BeamTilt_x = x
         self.BeamTilt_y = y
@@ -346,40 +347,40 @@ class SimuMicroscope(object):
         return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
 
     def isStageMoving(self) -> bool:
-        res = self.getStagePosition()  # trigger update of self._is_moving
+        self.getStagePosition()  # trigger update of self._is_moving
         # print(res, self._is_moving)
         return self._is_moving
 
-    def waitForStage(self, delay: float=0.1):
+    def waitForStage(self, delay: float = 0.1):
         while self.isStageMoving():
             time.sleep(delay)
 
-    def setStageX(self, value: int, wait: bool=True):
+    def setStageX(self, value: int, wait: bool = True):
         self.StagePosition_x = value
         if wait:
             self.waitForStage()
 
-    def setStageY(self, value: int, wait: bool=True):
+    def setStageY(self, value: int, wait: bool = True):
         self.StagePosition_y = value
         if wait:
             self.waitForStage()
 
-    def setStageZ(self, value: int, wait: bool=True):
+    def setStageZ(self, value: int, wait: bool = True):
         self.StagePosition_z = value
         if wait:
             self.waitForStage()
 
-    def setStageA(self, value: int, wait: bool=True):
+    def setStageA(self, value: int, wait: bool = True):
         self.StagePosition_a = value
         if wait:
             self.waitForStage()
 
-    def setStageB(self, value: int, wait: bool=True):
+    def setStageB(self, value: int, wait: bool = True):
         self.StagePosition_b = value
         if wait:
             self.waitForStage()
 
-    def setStageXY(self, x: int, y: int, wait: bool=True):
+    def setStageXY(self, x: int, y: int, wait: bool = True):
         self.StagePosition_x = x
         self.StagePosition_y = y
         if wait:
@@ -388,7 +389,7 @@ class SimuMicroscope(object):
     def stopStage(self):
         pass
 
-    def setStagePosition(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, speed: float= -1, wait: bool=True):
+    def setStagePosition(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, speed: float = -1, wait: bool = True):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:
@@ -400,7 +401,7 @@ class SimuMicroscope(object):
             self.setStageXY(x=x, y=y, wait=wait)
         else:
             if x is not None:
-                self.setStageX(x, wait=wait)     
+                self.setStageX(x, wait=wait)
             if y is not None:
                 self.setStageY(y, wait=wait)
 
@@ -425,12 +426,12 @@ class SimuMicroscope(object):
                 raise ValueError(f"Unrecognized function mode: {value}")
         self.FunctionMode_value = value
 
-    def getDiffFocus(self, confirm_mode: bool=True) -> int:
+    def getDiffFocus(self, confirm_mode: bool = True) -> int:
         if not self.getFunctionMode() == "diff":
             raise ValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
-    def setDiffFocus(self, value: int, confirm_mode: bool=True):
+    def setDiffFocus(self, value: int, confirm_mode: bool = True):
         """IL1"""
         if not self.getFunctionMode() == "diff":
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
@@ -467,7 +468,7 @@ class SimuMicroscope(object):
     def setCondensorLensStigmator(self, x: int, y: int):
         self.condensorlensstigmator_x = x
         self.condensorlensstigmator_y = y
-        
+
     def getIntermediateLensStigmator(self) -> Tuple[int, int]:
         return self.intermediatelensstigmator_x, self.intermediatelensstigmator_y
 
@@ -510,6 +511,6 @@ class SimuMicroscope(object):
 
     def getObjectiveLenseFine(self) -> int:
         return self.objectivelensefine_value
-    
+
     def getObjectiveMiniLens(self) -> int:
         return self.objectiveminilens_value

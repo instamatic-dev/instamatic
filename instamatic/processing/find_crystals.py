@@ -23,10 +23,10 @@ def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
     Uses a histogram to determine if an edge is detected. If the lowest bin is the dominant one,
     assume black area is measured (the edge)"""
-    if  (prop._slice[0].start == 0) or \
+    if (prop._slice[0].start == 0) or \
         (prop._slice[1].start == 0) or \
         (prop._slice[0].stop == prop._intensity_image.shape[0]) or \
-        (prop._slice[1].stop == prop._intensity_image.shape[1]):
+            (prop._slice[1].stop == prop._intensity_image.shape[1]):
 
         hist, edges = np.histogram(prop.intensity_image[prop.image])
         if np.sum(hist) // hist[0] < 2:
@@ -63,36 +63,36 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     offset = offset / 255.0
 
     # normalize
-    img = img * (1.0/img.max())
-    
+    img = img * (1.0 / img.max())
+
     # adaptive thresholding, because contrast is not equal over image
     arr = img > filters.threshold_local(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
 
-    arr = morphology.remove_small_objects(arr, min_size=4*4, connectivity=0) # remove noise
+    arr = morphology.remove_small_objects(arr, min_size=4 * 4, connectivity=0)  # remove noise
 
     # magic
-    arr = morphology.binary_closing(arr, morphology.disk(footprint)) # dilation + erosion
-    arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion
-    
+    arr = morphology.binary_closing(arr, morphology.disk(footprint))  # dilation + erosion
+    arr = morphology.binary_erosion(arr, morphology.disk(footprint))  # erosion
+
     # remove carbon lines
     if remove_carbon_lacing:
-        arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
-        arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
-    arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
-    
+        arr = morphology.remove_small_objects(arr, min_size=8 * 8, connectivity=0)
+        arr = morphology.remove_small_holes(arr, min_size=32 * 32, connectivity=0)
+    arr = morphology.binary_dilation(arr, morphology.disk(footprint))  # dilation
+
     # get background pixels
-    bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint*2)) | arr)
+    bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint * 2)) | arr)
 
     # 2: features
     # 1: background
     # 0: unlabeled
-    markers = arr*2 + bkg
-    
+    markers = arr * 2 + bkg
+
     # segment using random_walker
-    segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5,5), mode='bf')
-    segmented = segmented.astype(int) -1
+    segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5, 5), mode='bf')
+    segmented = segmented.astype(int) - 1
 
     return arr, segmented
 
@@ -104,15 +104,15 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     # 'offset' determines sensitivity of thresholding
     #   higher = less sensitive to noise
     #   lower = more sensitive to noise
-    offset = kwargs.get("offset", 15) 
+    offset = kwargs.get("offset", 15)
     footprint = kwargs.get("footprint", 3)
-    
-    return find_crystals(img=img, 
-                         magnification=magnification, 
-                         spread=spread, 
-                         plot=plot, 
-                         footprint=footprint, 
-                         offset=offset, 
+
+    return find_crystals(img=img,
+                         magnification=magnification,
+                         spread=spread,
+                         plot=plot,
+                         footprint=footprint,
+                         offset=offset,
                          r=r,
                          remove_carbon_lacing=False)
 
@@ -122,7 +122,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     Used adaptive thresholds to find local features.
     Edges are detected, and rejected, on the basis of a histogram.
     Kmeans clustering is used to spread points over the segmented area.
-    
+
     img: 2d np.ndarray
         Input image to locate crystals on
     magnification: float
@@ -135,37 +135,37 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     keywords to pass to segment_crystals
     """
     img, scale = autoscale(img, maxdim=256)  # scale down for faster
-    
+
     # segment the image, and find objects
     arr, seg = segment_crystals(img, **kwargs)
-    
+
     labels, numlabels = ndimage.label(seg)
     props = measure.regionprops(labels, img)
-    
+
     # calculate the pixel dimensions in micrometer
     px, py = calibration.pixelsize_mag1[magnification] / 1000  # nm -> um
-    
+
     iters = 20
-    
+
     crystals = []
     for prop in props:
-        area = prop.area*px*py
+        area = prop.area * px * py
         bbox = np.array(prop.bbox)
-        
+
         # origin of the prop
         origin = bbox[0:2]
-        
+
         # edge detection
         if isedge(prop):
             continue
 
         # number of centroids for kmeans clustering
         nclust = int(area // spread) + 1
-            
+
         if nclust > 1:
             # use skmeans clustering to segment large blobs
             coordinates = np.argwhere(prop.image)
-            
+
             # kmeans needs normalized data (w), store std to calculate coordinates after
             w, std = whiten(coordinates)
 
@@ -173,18 +173,18 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
             cluster_centroids, closest_centroids = kmeans2(w, nclust, iter=iters, minit='points')
 
             # convert to image coordinates
-            xy = (cluster_centroids*std + origin[0:2]) / scale
+            xy = (cluster_centroids * std + origin[0:2]) / scale
             crystals.extend([CrystalPosition(x, y, False, nclust, area, prop.area) for x, y in xy])
         else:
             x, y = prop.centroid
-            crystals.append(CrystalPosition(x/scale, y/scale, True, nclust, area, prop.area))
-    
+            crystals.append(CrystalPosition(x / scale, y / scale, True, nclust, area, prop.area))
+
     if plot:
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
         if len(crystals) > 0:
-            x,y = np.array([(crystal.x*scale, crystal.y*scale) for crystal in crystals]).T
-            plt.scatter(y,x, color="red")
+            x, y = np.array([(crystal.x * scale, crystal.y * scale) for crystal in crystals]).T
+            plt.scatter(y, x, color="red")
         ax = plt.axes()
         ax.set_axis_off()
         plt.show()
@@ -199,9 +199,9 @@ def main_entry():
 
     for fn in sys.argv[1:]:
         img, h = read_image(fn)
-        
+
         crystals = find_crystals_timepix(img, h["exp_magnification"], plot=True)
-    
+
         for crystal in crystals:
             print(crystal)
 

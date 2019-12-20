@@ -5,10 +5,13 @@ import os
 
 packages = find_packages(exclude=["scripts"])
 
-exec(open('instamatic/version.py').read())  # grab __version__, __author__, etc.
+# grab __version__, __author__, etc.
+exec(open('instamatic/version.py').read())
+
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname), encoding = 'utf-8').read()
+    return open(os.path.join(os.path.dirname(__file__), fname), encoding='utf-8').read()
+
 
 try:
     long_description = read('README.rst')
@@ -40,17 +43,17 @@ setup(
 
     packages=packages,
 
-    install_requires=['comtypes', 
-                      'lmfit', 
-                      'matplotlib', 
-                      'numpy', 
-                      'pandas', 
-                      'Pillow', 
-                      'scipy', 
-                      'scikit-image', 
-                      'tqdm', 
-                      'pyyaml', 
-                      'h5py', 
+    install_requires=['comtypes',
+                      'lmfit',
+                      'matplotlib',
+                      'numpy',
+                      'pandas',
+                      'Pillow',
+                      'scipy',
+                      'scikit-image',
+                      'tqdm',
+                      'pyyaml',
+                      'h5py',
                       'tifffile',
                       'IPython',
                       'pywinauto'],
@@ -92,4 +95,3 @@ setup(
         ]
     }
 )
-

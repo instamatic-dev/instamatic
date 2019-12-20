@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 
 import subprocess as sp
 import glob
@@ -10,13 +11,13 @@ import numpy as np
 
 def printer(data):
     """Print things to stdout on one line dynamically"""
-    sys.stdout.write("\r\x1b[K"+data.__str__())
+    sys.stdout.write("\r\x1b[K" + data.__str__())
     sys.stdout.flush()
 
 
 def tiff2png(interval=10, drc="movie"):
-    fns1 = glob.glob("tiff\*.tif?")
-    fns2 = glob.glob("tiff_image\*.tif?")
+    fns1 = glob.glob(r"tiff\*.tif?")
+    fns2 = glob.glob(r"tiff_image\*.tif?")
 
     if not os.path.exists(drc):
         os.mkdir(drc)
@@ -37,7 +38,7 @@ def tiff2png(interval=10, drc="movie"):
 
         im1, h1 = read_tiff(fn1)
 
-        fig, (ax1, ax2) = plt.subplots(1,2)
+        fig, (ax1, ax2) = plt.subplots(1, 2)
 
         ax1.imshow(im1, vmax=np.percentile(im1, 99.0), cmap="gray")
         ax2.imshow(im2, vmax=np.percentile(im1, 99.5), cmap="gray")
@@ -68,10 +69,11 @@ def main():
 
     sp.call(cmd)
     try:
-        os.startfile(out) # windows
+        os.startfile(out)  # windows
     except AttributeError:
-        sp.call(['open', out]) # macos
+        sp.call(['open', out])  # macos
         # subprocess.call(['xdg-open', out]) # linux
+
 
 if __name__ == '__main__':
     main()

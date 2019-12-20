@@ -1,27 +1,27 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.messagebox
-import os, sys
 from pathlib import Path
 import json
 
 # import matplotlib
 # matplotlib.use('TkAgg')
-from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
+from instamatic.calibrate import CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
 
 
-PARAMS = { 
- "flatfield": "C:/instamatic/flatfield.tiff",
- "diff_binsize": 1,
- "diff_brightness": 39422,
- "diff_exposure": 0.1,
- "diff_spotsize": 4,
- "image_binsize": 1,
- "image_exposure": 0.5,
- "image_spotsize": 4,
- "image_threshold": 10,
- "crystal_spread": 0.6
+PARAMS = {
+    "flatfield": "C:/instamatic/flatfield.tiff",
+    "diff_binsize": 1,
+    "diff_brightness": 39422,
+    "diff_exposure": 0.1,
+    "diff_spotsize": 4,
+    "image_binsize": 1,
+    "image_exposure": 0.5,
+    "image_spotsize": 4,
+    "image_threshold": 10,
+    "crystal_spread": 0.6
 }
 
 
@@ -29,14 +29,14 @@ message1 = """
  1. Go to diffraction mode and select desired camera length (CAM L)
  2. Center the beam with diffraction shift (PLA)
  3. Focus the diffraction pattern (DIFF FOCUS)
-    
+
 Press <OK> to start"""
 
 message2 = """
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
-    
+
 Press <OK> to start"""
 
 message3 = """
@@ -48,6 +48,7 @@ Press <OK> to start"""
 
 class ExperimentalSED(LabelFrame):
     """docstring for ExperimentalSED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial electron diffraction")
         self.parent = parent
@@ -82,7 +83,7 @@ class ExperimentalSED(LabelFrame):
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
-        frame = Frame(self)        
+        frame = Frame(self)
         self.ShowCalibBeamshift = Button(frame, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=1, column=0, sticky="EW")
 
@@ -152,12 +153,12 @@ class ExperimentalSED(LabelFrame):
             c.plot("BeamShift")
 
     def get_params(self):
-        params = { "image_exposure": self.var_image_exposure.get(),
-                   "image_spotsize": self.var_image_spotsize.get(),
-                   "diff_exposure": self.var_diff_exposure.get(),
-                   "diff_spotsize": self.var_image_spotsize.get(),
-                   "diff_brightness": self.var_diff_brightness.get(),
-                   "scan_radius": self.var_scan_radius.get() }
+        params = {"image_exposure": self.var_image_exposure.get(),
+                  "image_spotsize": self.var_image_spotsize.get(),
+                  "diff_exposure": self.var_diff_exposure.get(),
+                  "diff_spotsize": self.var_image_spotsize.get(),
+                  "diff_brightness": self.var_diff_brightness.get(),
+                  "scan_radius": self.var_scan_radius.get()}
         return params
 
 
@@ -171,10 +172,10 @@ def acquire_data_SED(controller, **kwargs):
 
     params = workdir / "params.json"
     try:
-        params = json.load(open(params,"r"))
+        params = json.load(open(params, "r"))
     except IOError:
         params = PARAMS
-    
+
     params.update(kwargs)
     params["flatfield"] = controller.module_io.get_flatfield()
 
@@ -182,22 +183,20 @@ def acquire_data_SED(controller, **kwargs):
 
     controller.app.get_module("sed").calib_path = expdir / "calib"
 
-    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log, 
-        scan_radius=scan_radius, begin_here=True)
+    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log,
+                              scan_radius=scan_radius, begin_here=True)
     exp.report_status()
     exp.run()
 
     controller.log.info("Finish serialED experiment")
 
 
-from .base_module import BaseModule
 module = BaseModule("sed", "serialED", True, ExperimentalSED, commands={
     "sed": acquire_data_SED
-    })
+})
 
 
 if __name__ == '__main__':
     root = Tk()
     ExperimentalSED(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

@@ -1,20 +1,17 @@
-import sys
-import subprocess as sp
-from socket import *
-import datetime
-
 from instamatic import config
-import logging
-import threading
 from pathlib import Path
-
-import pickle
+from socket import *
 import ast
+import datetime
+import logging
+import subprocess as sp
+import sys
+import threading
 
 
 try:
     EXE = Path(sys.argv[1])
-except:
+except BaseException:
     EXE = Path(config.cfg.dials_script)
 
 CWD = EXE.parent
@@ -24,18 +21,18 @@ PORT = config.cfg.indexing_server_port
 BUFF = 1024
 
 
-def parse_dials_index_log(fn="dials.index.log"):
-    with open(fn, "r") as f:
-        print("Unit cell = ...")
-
-
 def run_dials_indexing(data):
-    cmd = [str(EXE), data["path"]]
+    path = data["path"]
+    rotrange = data["rotrange"]
+    nframes = data["nframes"]
+    osc = data["osc"]
+
+    cmd = [str(EXE), path]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
     unitcelloutput = []
 
-    p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
+    p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
     for line in p.stdout:
         if b'Unit cell:' in line:
             print(line.decode('utf-8'))
@@ -43,13 +40,13 @@ def run_dials_indexing(data):
 
     if unitcelloutput:
         with open(fn, "a") as f:
-            f.write(f"\nData Path: {data["path"]}\n")
+            f.write(f"\nData Path: {path}\n")
             f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
-            f.write(f"Rotation range: {data["rotrange"]} degrees\n")
-            f.write(f"Number of frames: {data["nframes"]}\n")
-            f.write(f"Oscillation angle: {data["osc"]} deg\n\n\n\n")
-            print(f"Indexing result written to dials indexing log file; path: {data["path"]}")
-    
+            f.write(f"Rotation range: {rotrange} degrees\n")
+            f.write(f"Number of frames: {nframes}\n")
+            f.write(f"Oscillation angle: {osc} deg\n\n\n\n")
+            print(f"Indexing result written to dials indexing log file; path: {path}")
+
     p.wait()
     unitcelloutput = []
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
@@ -67,7 +64,7 @@ def handle(conn):
 
         if not data:
             break
-    
+
         print(f"{now} | {data}")
         if data == "close":
             print(f"{now} | Closing connection")
@@ -92,14 +89,14 @@ def handle(conn):
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
     s = socket(AF_INET, SOCK_STREAM)
-    s.bind((HOST,PORT))
+    s.bind((HOST, PORT))
     s.listen(5)
 
     log.info(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
@@ -114,6 +111,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn,)).start()
 
-    
+
 if __name__ == '__main__':
     main()

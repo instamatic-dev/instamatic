@@ -1,9 +1,9 @@
 import importlib
 from instamatic import config
 
-all_modules = ( 'cred', 'cred_tvips', 'cred_fei', 'sed', 
-                'autocred', 'red', 'machine_learning', 
-                'ctrl', 'debug', 'about', 'io' )
+all_modules = ('cred', 'cred_tvips', 'cred_fei', 'sed',
+               'autocred', 'red', 'machine_learning',
+               'ctrl', 'debug', 'about', 'io')
 
 try:
     modules = config.cfg.modules

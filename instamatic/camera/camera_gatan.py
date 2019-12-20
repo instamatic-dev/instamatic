@@ -1,3 +1,6 @@
+from instamatic import config
+import time
+import atexit
 import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
@@ -9,54 +12,50 @@ import platform
 import logging
 logger = logging.getLogger(__name__)
 
-import atexit
-import time
-
-from instamatic import config
 
 SYMBOLS = {}
 
 if platform.architecture()[0] == '32bit':
-    DLLPATH_SIMU    = "CCDCOM2_x86_simulation.dll"
-    DLLPATH_GATAN   = "CCDCOM2_x86_gatan.dll"
+    DLLPATH_SIMU = "CCDCOM2_x86_simulation.dll"
+    DLLPATH_GATAN = "CCDCOM2_x86_gatan.dll"
 
     SYMBOLS["actual"] = {
-        'acquireImageNewFloat' : 'acquireImageNewFloat',
-        'acquireImageNewInt' : 'acquireImageNewInt',
-        'cameraCount' : None,
-        'cameraDimensions' : 'cameraDimensions',
-        'cameraName' : 'cameraName',
-        'CCDCOM2_release' : 'CCDCOM2_release',
-        'initCCDCOM' : 'initCCDCOM',
-        'isCameraInfoAvailable' : 'isCameraInfoAvailable',
-        'releaseCCDCOM' : 'releaseCCDCOM'
-        }
+        'acquireImageNewFloat': 'acquireImageNewFloat',
+        'acquireImageNewInt': 'acquireImageNewInt',
+        'cameraCount': None,
+        'cameraDimensions': 'cameraDimensions',
+        'cameraName': 'cameraName',
+        'CCDCOM2_release': 'CCDCOM2_release',
+        'initCCDCOM': 'initCCDCOM',
+        'isCameraInfoAvailable': 'isCameraInfoAvailable',
+        'releaseCCDCOM': 'releaseCCDCOM'
+    }
     SYMBOLS["simu"] = {
-        'acquireImageNewFloat' : '?acquireImageNewFloat@@YAHHHHHHN_NPAPAMPAH2@Z',
-        'acquireImageNewInt' : '?acquireImageNewInt@@YAHHHHHPAH00HN_N@Z',
-        'cameraCount' : '?cameraCount@@YAHXZ',
-        'cameraDimensions' : '?cameraDimensions@@YA_NPAH0@Z',
-        'cameraName' : '?cameraName@@YA_NPA_WH@Z',
-        'CCDCOM2_release' : '?CCDCOM2_release@@YAXPAM@Z',
-        'initCCDCOM' : '?initCCDCOM@@YAHH@Z',
-        'isCameraInfoAvailable' : '?isCameraInfoAvailable@@YA_NXZ',
-        'releaseCCDCOM' : '?releaseCCDCOM@@YAXXZ'
-        }
+        'acquireImageNewFloat': '?acquireImageNewFloat@@YAHHHHHHN_NPAPAMPAH2@Z',
+        'acquireImageNewInt': '?acquireImageNewInt@@YAHHHHHPAH00HN_N@Z',
+        'cameraCount': '?cameraCount@@YAHXZ',
+        'cameraDimensions': '?cameraDimensions@@YA_NPAH0@Z',
+        'cameraName': '?cameraName@@YA_NPA_WH@Z',
+        'CCDCOM2_release': '?CCDCOM2_release@@YAXPAM@Z',
+        'initCCDCOM': '?initCCDCOM@@YAHH@Z',
+        'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
+        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
+    }
 else:
-    DLLPATH_SIMU    = "CCDCOM2_x64_simulation.dll"
-    DLLPATH_GATAN   = "CCDCOM2_x64_gatan.dll"
+    DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
+    DLLPATH_GATAN = "CCDCOM2_x64_gatan.dll"
 
     SYMBOLS["actual"] = {
-        'acquireImageNewFloat' : '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z',
-        'acquireImageNewInt' : '?acquireImageNewInt@@YAHHHHHPEAH00HN_N@Z',
-        'cameraCount' : '?cameraCount@@YAHXZ',
-        'cameraDimensions' : '?cameraDimensions@@YA_NPEAH0@Z',
-        'cameraName' : '?cameraName@@YA_NPEA_WH@Z',
-        'CCDCOM2_release' : '?CCDCOM2_release@@YAXPEAM@Z',
-        'initCCDCOM' : '?initCCDCOM@@YAHH@Z',
-        'isCameraInfoAvailable' : '?isCameraInfoAvailable@@YA_NXZ',
-        'releaseCCDCOM' : '?releaseCCDCOM@@YAXXZ'
-        }
+        'acquireImageNewFloat': '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z',
+        'acquireImageNewInt': '?acquireImageNewInt@@YAHHHHHPEAH00HN_N@Z',
+        'cameraCount': '?cameraCount@@YAHXZ',
+        'cameraDimensions': '?cameraDimensions@@YA_NPEAH0@Z',
+        'cameraName': '?cameraName@@YA_NPEA_WH@Z',
+        'CCDCOM2_release': '?CCDCOM2_release@@YAXPEAM@Z',
+        'initCCDCOM': '?initCCDCOM@@YAHH@Z',
+        'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
+        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
+    }
 
     SYMBOLS["simu"] = SYMBOLS["actual"]
 

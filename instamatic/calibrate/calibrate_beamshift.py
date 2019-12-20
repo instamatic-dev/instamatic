@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-
-import sys, os
+import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,13 +23,14 @@ logger = logging.getLogger(__name__)
 class CalibBeamShift(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
+
     def __init__(self, transform, reference_shift, reference_pixel):
         super(CalibBeamShift, self).__init__()
         self.transform = transform
         self.reference_shift = reference_shift
         self.reference_pixel = reference_pixel
         self.has_data = False
-   
+
     def __repr__(self):
         return f"CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})"
 
@@ -39,7 +39,7 @@ class CalibBeamShift(object):
         r_i = np.linalg.inv(self.transform)
         pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
         return pixelcoord
-        
+
     def pixelcoord_to_beamshift(self, pixelcoord):
         """Converts from pixel coordinates to beamshift x,y"""
         r = self.transform
@@ -55,7 +55,7 @@ class CalibBeamShift(object):
         c.data_beampos = beampos
         c.has_data = True
         c.header = header
-    
+
         return c
 
     @classmethod
@@ -84,7 +84,7 @@ class CalibBeamShift(object):
         if not self.has_data:
             return
 
-        if to_file == True:
+        if to_file:
             to_file = f"calib_{beamshift}.png"
 
         beampos = self.data_beampos
@@ -105,7 +105,7 @@ class CalibBeamShift(object):
 
     def center(self, ctrl):
         """Return beamshift values to center the beam in the frame"""
-        pixel_center = [val/2.0 for val in ctrl.cam.dimensions]
+        pixel_center = [val / 2.0 for val in ctrl.cam.dimensions]
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
@@ -147,31 +147,31 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
 
     magnification = h_cent["Magnification"]
-    stepsize = 2500.0/magnification * stepsize
+    stepsize = 2500.0 / magnification * stepsize
 
     print(f"Gridsize: {gridsize} | Stepsize: {stepsize:.2f}")
 
     img_cent, scale = autoscale(img_cent)
-    
+
     outfile = os.path.join(outdir, "calib_beamcenter") if save_images else None
-    
+
     pixel_cent = find_beam_center(img_cent) * binsize / scale
 
     print("Beamshift: x={} | y={}".format(*beamshift_cent))
     print("Pixel: x={} | y={}".format(*pixel_cent))
-        
+
     shifts = []
     beampos = []
-    
+
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
 
     i = 0
-    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
-        ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
+    for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
+        ctrl.beamshift.set(x=x_cent + dx, y=y_cent + dy)
 
-        printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))
+        printer("Position: {}/{}: {}".format(i + 1, tot, ctrl.beamshift))
 
         outfile = os.path.join(outdir, "calib_beamshift_{i:04d}") if save_images else None
 
@@ -180,24 +180,24 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         img = imgscale(img, scale)
 
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         beamshift = np.array(h["BeamShift"])
         beampos.append(beamshift)
         shifts.append(shift)
 
         i += 1
-    
+
     print("")
     # print "\nReset to center"
-    
+
     ctrl.beamshift.set(*beamshift_cent)
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - np.array((beamshift_cent))
-    
+
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
-    
+
     # Calling c.plot with videostream crashes program
     # if not hasattr(ctrl.cam, "VideoLoop"):
     #     c.plot()
@@ -219,41 +219,41 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     """
     print()
     print("Center:", center_fn)
-    
+
     img_cent, h_cent = load_img(center_fn)
     beamshift_cent = np.array(h_cent["BeamShift"])
-    
+
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
     binsize = h_cent["ImageBinSize"]
 
     holes = find_holes(img_cent, plot=False, verbose=False, max_eccentricity=0.8)
     pixel_cent = np.array(holes[0].centroid) * binsize / scale
-    
+
     print("Beamshift: x={} | y={}".format(*beamshift_cent))
     print("Pixel: x={:.2f} | y={:.2f}".format(*pixel_cent))
-    
+
     shifts = []
     beampos = []
-    
+
     for fn in other_fn:
         img, h = load_img(fn)
         img = imgscale(img, scale)
-        
+
         beamshift = np.array((h["BeamShift"]))
         print()
         print("Image:", fn)
         print("Beamshift: x={} | y={}".format(*beamshift))
-        
+
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         beampos.append(beamshift)
         shifts.append(shift)
-        
+
     # correct for binsize, store as binsize=1
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - beamshift_cent
-    
+
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
     c.plot()
 
@@ -271,7 +271,7 @@ Calibrate beamshift
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
-    
+
  >> Press <ENTER> to start >> \n""")
                 if inp == "x":
                     ctrl.restore()
@@ -300,7 +300,7 @@ def main_entry():
         print("""
 Program to calibrate beamshift of microscope
 
-Usage: 
+Usage:
     instamatic.calibrate_beamshift
         To start live calibration routine on the microscope
 

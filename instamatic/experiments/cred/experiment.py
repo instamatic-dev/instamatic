@@ -1,6 +1,4 @@
-import os
 import datetime
-from tkinter import *
 import numpy as np
 import time
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
@@ -48,25 +46,26 @@ class Experiment(object):
     stop_event:
         Instance of `threading.Event()` that signals the experiment to be terminated.
     """
-    def __init__(self, ctrl, 
-        path: str=None, 
-        log=None, 
-        flatfield: str=None,
-        exposure_time: float=0.5,
-        unblank_beam: bool=False,
-        mode: str=None,
-        footfree_rotate_to: float=60.0,
-        enable_image_interval: bool=False,
-        image_interval: int=99999,
-        diff_defocus: int=0,
-        exposure_time_image: float=0.01,
-        write_tiff: bool=True,
-        write_xds: bool=True,
-        write_dials: bool=True,
-        write_red: bool=True,
-        stop_event=None,
-        ):
-        super(Experiment,self).__init__()
+
+    def __init__(self, ctrl,
+                 path: str = None,
+                 log=None,
+                 flatfield: str = None,
+                 exposure_time: float = 0.5,
+                 unblank_beam: bool = False,
+                 mode: str = None,
+                 footfree_rotate_to: float = 60.0,
+                 enable_image_interval: bool = False,
+                 image_interval: int = 99999,
+                 diff_defocus: int = 0,
+                 exposure_time_image: float = 0.01,
+                 write_tiff: bool = True,
+                 write_xds: bool = True,
+                 write_dials: bool = True,
+                 write_red: bool = True,
+                 stop_event=None,
+                 ):
+        super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
         self.exposure = exposure_time
@@ -114,7 +113,8 @@ class Experiment(object):
         end_xy = np.array(self.end_position[0:2])
 
         print_and_log(f"Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
-        fmt = lambda arr: f"[{arr[0]:.0f} {arr[1]:.0f}]"
+        def fmt(arr):
+            return f"[{arr[0]:.0f} {arr[1]:.0f}]"
         print_and_log(f"Stage moved from {fmt(start_xy)} to {fmt(end_xy)}, drift: {fmt(start_xy - end_xy)}", logger=self.logger)
         self.logger.info(f"Start stage position: {self.start_position}")
         self.logger.info(f"End stage position: {self.end_position}")
@@ -160,12 +160,12 @@ class Experiment(object):
         """Set up the paths for saving the data to"""
         print(f"\nOutput directory: {self.path}")
         self.tiff_path = self.path / "tiff" if self.write_tiff else None
-        self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
-        self.mrc_path  = self.path / "RED"  if self.write_red else None
+        self.smv_path = self.path / "SMV" if (self.write_xds or self.write_dials) else None
+        self.mrc_path = self.path / "RED" if self.write_red else None
 
     def start_rotation(self) -> float:
         """Controls the starting of the rotation of the experiment
-        
+
         In the default mode, wait for rotation to start (i.e. controlled via the pedals)
         In `footfree` mode, initialize rotation from current angle to target angle.
         In `simulate` mode, simulate the start condition.
@@ -178,20 +178,20 @@ class Experiment(object):
         if self.mode == "simulate":
             start_angle = a
             print("Data Recording started.")
-        
+
         elif self.mode == "footfree":
             rotate_to = self.footfree_rotate_to
 
             start_angle = self.ctrl.stage.a
             self.ctrl.stage.set(a=rotate_to, wait=False)
-        
+
         else:
             print("Waiting for rotation to start...", end=' ')
             a0 = a
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 if self.stopEvent.is_set():
                     break
-                
+
                 a = self.ctrl.stage.a
 
             print("Data Recording started.")
@@ -199,11 +199,11 @@ class Experiment(object):
 
         if self.unblank_beam:
             print("Unblanking beam")
-            self.ctrl.beamblank = False        
+            self.ctrl.beamblank = False
 
         return start_angle
 
-    def relax_beam(self, n_cycles: int=5):
+    def relax_beam(self, n_cycles: int = 5):
         """Relax the beam prior to the experiment by toggling between the defocused/focused states."""
         print(f"Relaxing beam ({n_cycles} cycles)", end='')
 
@@ -223,7 +223,7 @@ class Experiment(object):
         """
         self.setup_paths()
         self.log_start_status()
-        
+
         buffer = []
         image_buffer = []
 
@@ -247,7 +247,7 @@ class Experiment(object):
         while not self.stopEvent.is_set():
             if i % self.image_interval == 0:
                 t_start = time.perf_counter()
-                acquisition_time = (t_start - t0) / (i-1)
+                acquisition_time = (t_start - t0) / (i - 1)
 
                 self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
                 img, h = self.ctrl.getImage(exposure_image, header_keys=None)
@@ -263,7 +263,7 @@ class Experiment(object):
                     i += 1
                     # print(f"{i} "SKIP!  {next_interval-t_start:.3f} {acquisition_time:.3f}")
 
-                diff = next_interval - time.perf_counter() # seconds
+                diff = next_interval - time.perf_counter()  # seconds
 
                 if self.track_stage_position and diff > 0.1:
                     self.stage_positions.append((i, self.ctrl.stage.get()))
@@ -311,7 +311,7 @@ class Experiment(object):
             return False
 
         self.spotsize = self.ctrl.spotsize
-        self.nframes = i-1 # len(buffer) can lie in case of frame skipping
+        self.nframes = i - 1  # len(buffer) can lie in case of frame skipping
         self.osc_angle = abs(self.end_angle - self.start_angle) / self.nframes
         self.t_start = t0
         self.t_end = t1
@@ -320,11 +320,11 @@ class Experiment(object):
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
-        self.physical_pixelsize = config.camera.physical_pixelsize # mm
-        self.wavelength = config.microscope.wavelength # angstrom
-        self.stretch_azimuth = config.camera.stretch_azimuth # deg
-        self.stretch_amplitude = config.camera.stretch_amplitude # %
+        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
+        self.stretch_azimuth = config.camera.stretch_azimuth  # deg
+        self.stretch_amplitude = config.camera.stretch_amplitude  # %
 
         self.nframes_diff = len(buffer)
         self.nframes_image = len(image_buffer)
@@ -346,29 +346,29 @@ class Experiment(object):
 
         The image buffer is passed as a list of tuples, where each tuple contains the
         index (int), image data (2D numpy array), metadata/header (dict).
-        
+
         The buffer index must start at 1."""
 
-        img_conv = ImgConversion(buffer=buffer, 
-                 osc_angle=self.osc_angle,
-                 start_angle=self.start_angle,
-                 end_angle=self.end_angle,
-                 rotation_axis=self.rotation_axis,
-                 acquisition_time=self.acquisition_time,
-                 flatfield=self.flatfield,
-                 pixelsize=self.pixelsize,
-                 physical_pixelsize=self.physical_pixelsize,
-                 wavelength=self.wavelength,
-                 stretch_amplitude=self.stretch_amplitude,
-                 stretch_azimuth=self.stretch_azimuth
-                 )
-        
+        img_conv = ImgConversion(buffer=buffer,
+                                 osc_angle=self.osc_angle,
+                                 start_angle=self.start_angle,
+                                 end_angle=self.end_angle,
+                                 rotation_axis=self.rotation_axis,
+                                 acquisition_time=self.acquisition_time,
+                                 flatfield=self.flatfield,
+                                 pixelsize=self.pixelsize,
+                                 physical_pixelsize=self.physical_pixelsize,
+                                 wavelength=self.wavelength,
+                                 stretch_amplitude=self.stretch_amplitude,
+                                 stretch_azimuth=self.stretch_azimuth
+                                 )
+
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,
                                   mrc_path=self.mrc_path,
                                   smv_path=self.smv_path,
                                   workers=8)
-        
+
         print("Writing input files...")
         if self.write_dials:
             img_conv.to_dials(self.smv_path)

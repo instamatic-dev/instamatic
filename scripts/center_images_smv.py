@@ -12,16 +12,16 @@ import matplotlib.pyplot as plt
 directory = "./smv"
 pattern = "*.img"
 binning = 2
-scale = 1/binning
+scale = 1 / binning
 
-# Load data 
+# Load data
 
 fns = list(Path(directory).glob(pattern))
 n = len(fns)
 print(n)
 
 
-def find_beam_center_blur(z: np.ndarray, sigma: int=30) -> np.ndarray:
+def find_beam_center_blur(z: np.ndarray, sigma: int = 30) -> np.ndarray:
     """Estimate direct beam position by blurring the image with a large
     Gaussian kernel and finding the maximum.
     Parameters
@@ -48,13 +48,13 @@ for i, fn in enumerate(fns):
 
     beam_x, beam_y = find_beam_center_blur(img)
     centers.append((beam_x, beam_y))
-    
+
     # get image center
     center_x, center_y = (np.array(img.shape) / 2).astype(int)
-    
+
     shift_x = center_x - beam_x
     shift_y = center_y - beam_y
-    
+
     # shift the beam to the center of the image
     shifted = ndi.shift(img, (shift_x, shift_y))
 

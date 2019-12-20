@@ -13,6 +13,7 @@ from instamatic.processing.flatfield import apply_flatfield_correction
 
 class VideoStreamFrame(Frame):
     """docstring for VideoStreamFrame"""
+
     def __init__(self, parent, stream, app=None):
         super().__init__()
 
@@ -40,19 +41,19 @@ class VideoStreamFrame(Frame):
         self._atexit_funcs = []
 
         #######################
-        
+
         self.parent = parent
 
         self.init_vars()
         self.buttonbox(self.parent)
         self.header(self.parent)
         self.makepanel(self.parent)
-    
+
         self.parent.wm_title("Video stream")
         self.parent.wm_protocol("WM_DELETE_WINDOW", self.close)
-    
+
         self.parent.bind('<Escape>', self.close)
-    
+
         self.start_stream()
 
     def init_vars(self):
@@ -66,19 +67,19 @@ class VideoStreamFrame(Frame):
 
         self.var_brightness = DoubleVar(value=self.brightness)
         self.var_brightness.trace_add("write", self.update_brightness)
-        
+
         self.var_display_range = DoubleVar(value=self.display_range_default)
-        self.var_display_range.trace_add("write",self.update_display_range)
+        self.var_display_range.trace_add("write", self.update_display_range)
 
         self.var_resize_image = BooleanVar(value=self.resize_image)
-        self.var_resize_image.trace_add("write",self.update_resize_image)
+        self.var_resize_image.trace_add("write", self.update_resize_image)
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
-        self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
+        self.var_auto_contrast.trace_add("write", self.update_auto_contrast)
 
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
-            command=self.saveImage)
+                     command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def header(self, master):
@@ -93,38 +94,38 @@ class VideoStreamFrame(Frame):
         self.cb_contrast = Checkbutton(frame, text="Auto contrast", variable=self.var_auto_contrast)
         self.cb_contrast.grid(row=1, column=5)
 
-        self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
+        self.e_fps = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
-        
+
         Label(frame, width=lwidth, text="fps:").grid(row=1, column=0)
         self.e_fps.grid(row=1, column=1, sticky='we')
         Label(frame, width=lwidth, text="interval (ms):").grid(row=1, column=2)
         self.e_interval.grid(row=1, column=3, sticky='we')
         # Label(frame, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
         # self.e_overhead.grid(row=1, column=5)
-        
+
         frame.pack()
 
         frame = Frame(master)
-        
+
         self.e_frametime = Spinbox(frame, width=ewidth, textvariable=self.var_frametime, from_=0.0, to=1.0, increment=0.01)
-        
+
         Label(frame, width=lwidth, text="exposure (s)").grid(row=1, column=0)
         self.e_frametime.grid(row=1, column=1)
 
         self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
-        
+
         Label(frame, width=lwidth, text="Brightness").grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
-        
+
         Label(frame, width=lwidth, text="DisplayRange").grid(row=1, column=4)
         self.e_display_range = Spinbox(frame, width=ewidth, textvariable=self.var_display_range, from_=1, to=self.display_range_default, increment=1000)
         self.e_display_range.grid(row=1, column=5)
-        
+
         frame.pack()
 
-    def makepanel(self, master, resolution=(512,512)):
+    def makepanel(self, master, resolution=(512, 512)):
         if self.panel is None:
             image = Image.fromarray(np.zeros(resolution))
             image = ImageTk.PhotoImage(image)
@@ -140,21 +141,21 @@ class VideoStreamFrame(Frame):
         # print name, index, mode
         try:
             self.resize_image = self.var_resize_image.get()
-        except:
+        except BaseException:
             pass
 
     def update_auto_contrast(self, name, index, mode):
         # print name, index, mode
         try:
             self.auto_contrast = self.var_auto_contrast.get()
-        except:
+        except BaseException:
             pass
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode
         try:
             self.frametime = self.var_frametime.get()
-        except:
+        except BaseException:
             pass
         else:
             self.stream.update_frametime(self.frametime)
@@ -163,20 +164,20 @@ class VideoStreamFrame(Frame):
         # print name, index, mode
         try:
             self.brightness = self.var_brightness.get()
-        except:
+        except BaseException:
             pass
-        
+
     def update_display_range(self, name, index, mode):
         try:
             val = self.var_display_range.get()
             self.display_range = max(1, val)
-        except:
+        except BaseException:
             pass
 
     def saveImage(self):
         """Dump the current frame to a file"""
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
- 
+
         if self.app:
             module_io = self.app.get_module("io")
 
@@ -188,7 +189,7 @@ class VideoStreamFrame(Frame):
             try:
                 flatfield, h = read_tiff(module_io.get_flatfield())
                 frame = apply_flatfield_correction(self.frame, flatfield)
-            except:
+            except BaseException:
                 frame = self.frame
                 h = {}
         else:
@@ -202,7 +203,7 @@ class VideoStreamFrame(Frame):
         self.stream.close()
         self.parent.quit()
         # for func in self._atexit_funcs:
-            # func()
+        # func()
 
     def start_stream(self):
         self.stream.update_frametime(self.frametime)
@@ -215,20 +216,20 @@ class VideoStreamFrame(Frame):
 
         # the display range in ImageTk is from 0 to 256
         if self.auto_contrast:
-            frame = frame * (256.0 / (1 + np.percentile(frame[::4,::4], 99.5)))  # use 128x128 array for faster calculation
-                                                                                 
+            frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
+
             image = Image.fromarray(frame)
         elif self.display_range != self.display_range_default:
             image = np.clip(frame, 0, self.display_range)
-            image = (256.0 / self.display_range)*image
+            image = (256.0 / self.display_range) * image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
-            
+
         if self.brightness != 1:
             image = ImageEnhance.Brightness(image.convert("L")).enhance(self.brightness)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
-        
+
         if self.resize_image:
             image = image.resize((950, 950))
 
@@ -248,15 +249,15 @@ class VideoStreamFrame(Frame):
         delta = self.current - self.last
 
         if delta > self.update_frequency:
-            interval = delta/self.nframes
+            interval = delta / self.nframes
 
             interval = (interval * 0.5) + (self.last_interval * 0.5)
 
-            fps = 1.0/interval
+            fps = 1.0 / interval
             # overhead = interval - self.stream.frametime
 
             self.var_fps.set(round(fps, 2))
-            self.var_interval.set(round(interval*1000, 2))
+            self.var_interval.set(round(interval * 1000, 2))
             # self.var_overhead.set(round(overhead*1000, 2))
             self.last = self.current
             self.nframes = 1
@@ -287,7 +288,7 @@ if __name__ == '__main__':
     from instamatic.camera import VideoStream
 
     stream = VideoStream(cam=config.camera.name)
-    
+
     if False:
         threading.Thread(target=ipy_embed).start()
         start_gui()
@@ -297,5 +298,3 @@ if __name__ == '__main__':
 
         import IPython
         IPython.embed()
-
-

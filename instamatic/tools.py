@@ -1,5 +1,5 @@
-from instamatic.formats import read_tiff, write_tiff
-import sys, os
+import sys
+import os
 import numpy as np
 import glob
 from skimage import exposure
@@ -8,45 +8,7 @@ from scipy import ndimage, interpolate
 from pathlib import Path
 
 
-def bin_ndarray(ndarray, new_shape, operation='sum'):
-    """
-    Bins an ndarray in all axes based on the target shape, by summing or
-        averaging.
-
-    Number of output dimensions must match number of input dimensions and 
-        new axes must divide old ones.
-
-    Example
-    -------
-    >>> m = np.arange(0,100,1).reshape((10,10))
-    >>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
-    >>> print(n)
-
-    [[ 22  30  38  46  54]
-     [102 110 118 126 134]
-     [182 190 198 206 214]
-     [262 270 278 286 294]
-     [342 350 358 366 374]]
-
-    https://stackoverflow.com/a/29042041
-    """
-    operation = operation.lower()
-    if not operation in ['sum', 'mean']:
-        raise ValueError("Operation not supported.")
-    if ndarray.ndim != len(new_shape):
-        raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
-                                                           new_shape))
-    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
-                                                  ndarray.shape)]
-    flattened = [l for p in compression_pairs for l in p]
-    ndarray = ndarray.reshape(flattened)
-    for i in range(len(new_shape)):
-        op = getattr(ndarray, operation)
-        ndarray = op(-1*(i+1))
-    return ndarray
-
-
-def find_script(script: str) -> "pathlib.Path":
+def find_script(script: str):
     """Resolves the script name
     Looks in the local directory, absolute directory and in the scripts directory
     """
@@ -65,26 +27,26 @@ def find_script(script: str) -> "pathlib.Path":
     return script
 
 
-def prepare_grid_coordinates(nx: int, ny: int, stepsize: float=1.0) -> "np.array":
+def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.array":
     """
     Prepare a list of grid coordinates nx by ny in size.
     The grid is centered at the center of the grid
-    
+
     nx, ny: int,
         Defines the grid in x and y direction.
         The number of steps is defined by nx * ny
     stepsize:
         Distance between each grid point in x/y
-    
+
     returns:
         list of coordinates
     """
-    cx = (nx-1) * stepsize / 2
-    cy = (ny-1) * stepsize / 2
+    cx = (nx - 1) * stepsize / 2
+    cy = (ny - 1) * stepsize / 2
     center = np.array((cx, cy))
-    
+
     x_grid, y_grid = np.meshgrid(np.arange(nx) * stepsize, np.arange(ny) * stepsize)
-    return np.stack([x_grid, y_grid]).reshape(2,-1).T - center
+    return np.stack([x_grid, y_grid]).reshape(2, -1).T - center
 
 
 def to_xds_untrusted_area(kind: str, coords: list) -> str:
@@ -100,9 +62,9 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
     if kind == "quadrilateral":
         coords = np.round(coords).astype(int)
         s = "UNTRUSTED_QUADRILATERAL="
-        for x, y in coords:   
+        for x, y in coords:
             s += f" {y} {x}"  # coords are flipped in XDS
-        
+
         return s
 
     elif kind == "rectangle":
@@ -110,7 +72,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         s = "UNTRUSTED_RECTANGLE="
         (x1, y1), (x2, y2) = coords
         s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
-        
+
         return s
 
     elif kind == "ellipse":
@@ -118,7 +80,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         s = "UNTRUSTED_ELLIPSE="
         (x1, y1), (x2, y2) = coords
         s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
-        
+
         return s
 
     else:
@@ -126,7 +88,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
 
 
 def find_subranges(lst: list) -> (int, int):
-    """Takes a range of sequential numbers (possibly with gaps) and 
+    """Takes a range of sequential numbers (possibly with gaps) and
     splits them in sequential sub-ranges defined by the minimum and maximum value.
     """
     from operator import itemgetter
@@ -137,7 +99,7 @@ def find_subranges(lst: list) -> (int, int):
         yield min(group), max(group)
 
 
-def autoscale(img: np.ndarray, maxdim: int=512) -> (np.ndarray, float):
+def autoscale(img: np.ndarray, maxdim: int = 512) -> (np.ndarray, float):
     """Scale the image to fit the maximum dimension given by `maxdim`
     Returns the scaled image, and the image scale"""
     if maxdim:
@@ -153,7 +115,7 @@ def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
     return ndimage.zoom(img, scale, order=1)
 
 
-def denoise(img: np.ndarray, sigma: int=3, method: str="median") -> np.ndarray:
+def denoise(img: np.ndarray, sigma: int = 3, method: str = "median") -> np.ndarray:
     """Denoises the image using a gaussian or median filter.
     median filter is better at preserving edges"""
     if method == "gaussian":
@@ -167,7 +129,7 @@ def enhance_contrast(img: np.ndarray) -> np.ndarray:
     return exposure.equalize_hist(img)
 
 
-def find_peak_max(arr: np.ndarray, sigma: int, m: int=50, w: int=10, kind: int=3) -> (float, float):
+def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3) -> (float, float):
     """Find the index of the pixel corresponding to peak maximum in 1D pattern `arr`
     First, the pattern is smoothed using a gaussian filter with standard deviation `sigma`
     The initial guess takes the position corresponding to the largest value in the resulting pattern
@@ -176,37 +138,37 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int=50, w: int=10, kind: int=3
     y1 = ndimage.filters.gaussian_filter1d(arr, sigma)
     c1 = np.argmax(y1)  # initial guess for beam center
 
-    win_len = 2*w+1
-    
+    win_len = 2 * w + 1
+
     try:
-        r1 = np.linspace(c1-w, c1+w, win_len)
-        f  = interpolate.interp1d(r1, y1[c1-w: c1+w+1], kind=kind)
-        r2 = np.linspace(c1-w, c1+w, win_len*m)  # extrapolate for subpixel accuracy
+        r1 = np.linspace(c1 - w, c1 + w, win_len)
+        f = interpolate.interp1d(r1, y1[c1 - w: c1 + w + 1], kind=kind)
+        r2 = np.linspace(c1 - w, c1 + w, win_len * m)  # extrapolate for subpixel accuracy
         y2 = f(r2)
         c2 = np.argmax(y2) / m  # find beam center with `m` precision
-    except ValueError as e:  # if c1 is too close to the edges, return initial guess
+    except ValueError:  # if c1 is too close to the edges, return initial guess
         return c1
 
     return c2 + c1 - w
 
 
-def find_beam_center(img: np.ndarray, sigma: int=30, m: int=100, kind: int=3) -> (float, float):
+def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int = 3) -> (float, float):
     """Find the center of the primary beam in the image `img`
     The position is determined by summing along X/Y directions and finding the position along the two
     directions independently. Uses interpolation by factor `m` to find the coordinates of the pimary
     beam with subpixel accuracy."""
     xx = np.sum(img, axis=1)
     yy = np.sum(img, axis=0)
-    
-    cx = find_peak_max(xx, sigma, m=m, kind=kind) 
-    cy = find_peak_max(yy, sigma, m=m, kind=kind) 
+
+    cx = find_peak_max(xx, sigma, m=m, kind=kind)
+    cy = find_peak_max(yy, sigma, m=m, kind=kind)
 
     center = np.array([cx, cy])
     return center
 
 
-def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False) -> (float, float):
-    """Find the beam center when a beam stop is present. 
+def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=False) -> (float, float):
+    """Find the beam center when a beam stop is present.
 
     methods: gauss, thresh
 
@@ -214,24 +176,24 @@ def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False
     primary beam. The center of the bounding box of the blob defines the beam center.
 
     `gauss` applies a gaussian filter with a very large standard deviation in an attempt
-    to smooth out the beam stop. The position of the largest pixel corresponds to the 
+    to smooth out the beam stop. The position of the largest pixel corresponds to the
     beam center.
 
     z = thresh: percentile to segment the image at (99)
         gauss: standard deviation for the gaussian blurring (50)"""
-    
+
     if method == "gauss":
         if not z:
             z = 50
         blurred = ndimage.filters.gaussian_filter(img, z)
         cx, cy = np.unravel_index(blurred.argmax(), blurred.shape)
-    
+
     elif method == "thresh":
         if not z:
             z = 99
         seg = img > np.percentile(img, z)
         labeled, _ = ndimage.label(seg)
-        
+
         props = regionprops(labeled)
         props.sort(key=lambda x: x.area, reverse=True)
         prop = props[0]
@@ -257,9 +219,9 @@ def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False
 
             rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr, fill=False, edgecolor='red', linewidth=2)
             ax2.add_patch(rect)
-            
+
             plt.show()
-    
+
     return np.array((dx, dy))
 
 
@@ -268,7 +230,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
     Bins an ndarray in all axes based on the target shape, by summing or
         averaging.
 
-    Number of output dimensions must match number of input dimensions and 
+    Number of output dimensions must match number of input dimensions and
         new axes must divide old ones.
 
     Example
@@ -285,17 +247,17 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
 
     """
     operation = operation.lower()
-    if not operation in ['sum', 'mean']:
+    if operation not in ['sum', 'mean']:
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
         raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
-    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
-                                                  ndarray.shape)]
+    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
+                                                     ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
         op = getattr(ndarray, operation)
-        ndarray = op(-1*(i+1))
+        ndarray = op(-1 * (i + 1))
     return ndarray
 
 
@@ -321,29 +283,29 @@ def get_files(file_pat: str) -> list:
 
 def printer(data) -> None:
     """Print things to stdout on one line dynamically"""
-    sys.stdout.write("\r\x1b[K"+data.__str__())
+    sys.stdout.write("\r\x1b[K" + data.__str__())
     sys.stdout.flush()
 
 
-def find_defocused_image_center(image: np.ndarray, treshold: int=1):
+def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
     """Find the center of a defocused diffraction pattern"""
     X = np.mean(image, axis=0)
     Y = np.mean(image, axis=1)
     im_mean = np.mean(X)
     rads = np.zeros(2)
     center = np.zeros(2)
-    for n, XY in enumerate([X,Y]):
-        over = np.where(XY>(im_mean*treshold))[0]
-        rads[n] = (over[-1] - over[0])/2
+    for n, XY in enumerate([X, Y]):
+        over = np.where(XY > (im_mean * treshold))[0]
+        rads[n] = (over[-1] - over[0]) / 2
         center[n] = over[0] + rads[n]
     return center, rads
 
 
-def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True, drc: str=None) -> object:
+def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None) -> object:
     """take a list of timestamps and return the acquisition time and overhead
 
     Parameters
-    ----------    
+    ----------
     timestamps : tuple
         List of timestamps
     exp_time : float
@@ -367,7 +329,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True,
     res = linregress(x, timestamps)
 
     y = x * res.slope + res.intercept
-    
+
     acq_time = res.slope * 1000
     overhead = acq_time - exp_time
 
@@ -384,22 +346,22 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True,
         plt.savefig(fn, dpi=150)
         plt.clf()
 
-    return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
+    return SimpleNamespace(acquisition_time=acq_time / 1000, exposure_time=exp_time / 1000, overhead=overhead / 1000, units="s")
 
 
-def relativistic_wavelength(voltage: float=200_000) -> float:
+def relativistic_wavelength(voltage: float = 200_000) -> float:
     """
     Calculate the relativistic wavelength of electrons from the accelarating voltage
-    
+
     Input: Voltage in V
     Output: Wavelength in Angstrom
     """
 
     h = 6.626070150e-34  # planck constant J.s
     m = 9.10938356e-31   # electron rest mass kg
-    e = 1.6021766208e-19 # elementary charge C
+    e = 1.6021766208e-19  # elementary charge C
     c = 299792458        # speed of light m/s
 
-    wl = h/((2*m*voltage*e*(1+(e*voltage)/(2*m*c**2))))**0.5
+    wl = h / ((2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))))**0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom

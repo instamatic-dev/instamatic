@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-
-import sys, os
+import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -33,19 +32,19 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
         best_score = np.inf
         best_delta = 0
-    
-        for delta in np.arange(-5, 6)*step:
+
+        for delta in np.arange(-5, 6) * step:
             ctrl.difffocus.set(current + delta)
-    
+
             img, h = ctrl.getImage(header_keys=None)
-    
-            score = np.sum(img > img.max()/2)**2
-    
+
+            score = np.sum(img > img.max() / 2)**2
+
             if score < best_score:
                 best_score = score
                 best_delta = delta
 
-        newval = current+best_delta
+        newval = current + best_delta
         ctrl.difffocus.set(newval)
         logger.info("Best diff_focus (step=%d): %d, score: %d", step, best_score, newval)
 
@@ -54,10 +53,11 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
 class CalibDirectBeam(object):
     """docstring for CalibDirectBeam"""
+
     def __init__(self, dct={}):
         super(CalibDirectBeam, self).__init__()
         self._dct = dct
-    
+
     def __repr__(self):
         ret = "CalibDirectBeam("
         for key in self._dct.keys():
@@ -125,7 +125,7 @@ class CalibDirectBeam(object):
             "t": t
         }
 
-        return cls({key:d})
+        return cls({key: d})
 
     @classmethod
     def from_file(cls, fn=CALIB_DIRECTBEAM):
@@ -157,9 +157,9 @@ class CalibDirectBeam(object):
 
     def plot(self, key, to_file=None, outdir=""):
         data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
-        data_readout = self._dct[key]["data_readout"] # microscope readout
+        data_readout = self._dct[key]["data_readout"]  # microscope readout
 
-        if to_file == True:
+        if to_file:
             to_file = f"calib_db_{key}.png"
 
         shifts_ = self.any2pixelshift(shift=data_readout, key=key)
@@ -191,7 +191,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         exposure time
     binsize: `int` or None
 
-    In case paramers are not defined, camera specific default parameters are 
+    In case paramers are not defined, camera specific default parameters are
 
     return:
         instance of Calibration class with conversion methods
@@ -218,21 +218,21 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     img_cent, scale = autoscale(img_cent)
 
     print("{}: x={} | y={}".format(key, *readout_cent))
-            
+
     shifts = []
     readouts = []
-    
-    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
 
-    for i, (dx,dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2,-1).T):
+    n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
+
+    for i, (dx, dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2, -1).T):
         i += 1
 
-        attr.set(x=x_cent+dx, y=y_cent+dy)
+        attr.set(x=x_cent + dx, y=y_cent + dy)
 
         printer("Position: {}/{}: {}".format(i, tot, attr))
-        
+
         outfile = os.path.join(outdir, f"calib_db_{key}_{i:04d}") if save_images else None
 
         comment = f"Calib image {i}: dx={dx} - dy={dy}"
@@ -240,11 +240,11 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         img = imgscale(img, scale)
 
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         readout = np.array(h[key])
         readouts.append(readout)
         shifts.append(shift)
-    
+
     print("")
     # print "\nReset to center"
     attr.set(*readout_cent)
@@ -252,9 +252,9 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
     readouts = np.array(readouts) - np.array((readout_cent))
-    
+
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
-    
+
     # Calling c.plot with videostream crashes program
     # if not hasattr(ctrl.cam, "VideoLoop"):
     #     c.plot(key)
@@ -265,7 +265,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     print()
     print("Center:", center_fn)
-    
+
     img_cent, h_cent = load_img(center_fn)
     readout_cent = np.array(h_cent[key])
 
@@ -274,7 +274,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     binsize = h_cent["ImageBinSize"]
 
     print("{}: x={} | y={}".format(key, *readout_cent))
-    
+
     shifts = []
     readouts = []
 
@@ -282,17 +282,17 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
         print(fn)
         img, h = load_img(fn)
         img = imgscale(img, scale)
-        
+
         readout = np.array((h[key]))
         print()
         print("Image:", fn)
         print("{}: dx={} | dy={}".format(key, *readout))
-        
+
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         readouts.append(readout)
         shifts.append(shift)
-        
+
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
     readouts = np.array(readouts) - np.array((readout_cent))
@@ -313,7 +313,7 @@ Calibrate direct beam position
  1. Go to diffraction mode and select desired camera length (CAM L)
  2. Center the beam with diffraction shift (PLA)
  3. Focus the diffraction pattern (DIFF FOCUS)
-    
+
  >> Press <ENTER> to start\n"""):
             return
         else:
@@ -322,7 +322,7 @@ Calibrate direct beam position
                 current_difffocus = ctrl.difffocus.value
                 difffocus = optimize_diffraction_focus(ctrl)
                 logger.info("Optimized diffraction focus from %s to %s", current_difffocus, difffocus)
-            
+
             cs = []
             for key in keys:
                 c = calibrate_directbeam_live(ctrl, save_images=save_images, outdir=outdir, key=key)
@@ -354,10 +354,10 @@ def main_entry():
         print("""
 Program to calibrate PLA to compensate for beamshift movements
 
-Usage: 
+Usage:
     instamatic.calibrate_directbeam
         To start live calibration routine on the microscope
-    
+
     instamatic.calibrate_directbeam (DiffShift:pattern.tiff) (BeamShift:pattern.tiff)
         To perform calibration from saved images
 """)
@@ -367,6 +367,7 @@ Usage:
     else:
         ctrl = initialize()
         calibrate_directbeam(ctrl=ctrl)
+
 
 if __name__ == '__main__':
     main_entry()

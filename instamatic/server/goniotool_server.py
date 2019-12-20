@@ -30,6 +30,7 @@ class GonioToolServer(threading.Thread):
     Start the server using `GonioToolServer.run` which will wait for items to appear on `q` and
     execute them on the specified microscope instance.
     """
+
     def __init__(self, log=None, q=None, name=None):
         super().__init__()
 
@@ -38,7 +39,7 @@ class GonioToolServer(threading.Thread):
 
         # self.name is a reserved parameter for threads
         self._name = name
-    
+
     def run(self):
         """Start the server thread"""
         self.goniotool = GonioToolWrapper(barrier=barrier)
@@ -46,14 +47,14 @@ class GonioToolServer(threading.Thread):
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-            
+
             cmd = self.q.get()
 
             with condition:
                 func_name = cmd["func_name"]
                 args = cmd.get("args", ())
                 kwargs = cmd.get("kwargs", {})
-    
+
                 try:
                     ret = self.evaluate(func_name, args, kwargs)
                     status = 200
@@ -63,7 +64,7 @@ class GonioToolServer(threading.Thread):
                         self.log.exception(e)
                     ret = e
                     status = 500
-    
+
                 box.append((status, ret))
                 condition.notify()
                 print(f"{now} | {status} {func_name}: {ret}")
@@ -94,7 +95,7 @@ def handle(conn, q):
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
-    
+
             with condition:
                 q.put(data)
                 condition.wait()
@@ -105,8 +106,8 @@ def handle(conn, q):
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_goniotool_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
@@ -115,11 +116,11 @@ def main():
 
     goniotool_server = GonioToolServer(log=log, q=q)
     goniotool_server.start()
-    
+
     barrier.wait()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST,PORT))
+    s.bind((HOST, PORT))
     s.listen(5)
 
     log.info(f"Server listening on {HOST}:{PORT}")
@@ -132,6 +133,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn, q)).start()
 
-    
+
 if __name__ == '__main__':
     main()

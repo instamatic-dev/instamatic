@@ -10,17 +10,17 @@ class ImgConversionDM(ImgConversion):
     The buffer index must start at 1.
     """
 
-    def __init__(self, 
-                 buffer: list,                   # image buffer, list of (index [int], image data [2D numpy array], header [dict])
-                 osc_angle: float,               # degrees, oscillation angle of the rotation
-                 start_angle: float,             # degrees, start angle of the rotation
-                 end_angle: float,               # degrees, end angle of the rotation
-                 rotation_axis: float,           # radians, specifies the position of the rotation axis
-                 acquisition_time: float,        # seconds, acquisition time (exposure time + overhead)
-                 flatfield: str='flatfield.tiff',
-                 pixelsize: float=None,          # p/Angstrom, size of the pixels (overrides camera_length)
-                 physical_pixelsize: float=None, # mm, physical size of the pixels (overrides camera length)
-                 wavelength: float=None,         # Angstrom, relativistic wavelength of the electron beam
+    def __init__(self,
+                 buffer: list,                     # image buffer, list of (index [int], image data [2D numpy array], header [dict])
+                 osc_angle: float,                 # degrees, oscillation angle of the rotation
+                 start_angle: float,               # degrees, start angle of the rotation
+                 end_angle: float,                 # degrees, end angle of the rotation
+                 rotation_axis: float,             # radians, specifies the position of the rotation axis
+                 acquisition_time: float,          # seconds, acquisition time (exposure time + overhead)
+                 flatfield: str = 'flatfield.tiff',
+                 pixelsize: float = None,          # p/Angstrom, size of the pixels (overrides camera_length)
+                 physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
+                 wavelength: float = None,         # Angstrom, relativistic wavelength of the electron beam
                  ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -54,12 +54,12 @@ class ImgConversionDM(ImgConversion):
         self.use_beamstop = False
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
 
-        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
+        self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.rotation_axis = rotation_axis
-        
+
         self.acquisition_time = acquisition_time
         self.rotation_speed = 0  # n/a
 

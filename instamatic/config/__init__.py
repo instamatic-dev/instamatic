@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import yaml
 from pathlib import Path
 import shutil
@@ -22,7 +23,7 @@ def initialize_in_appData():
         shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
     shutil.copy(src / "global.yaml", config_drc / "global.yaml")
-    
+
     os.mkdir(dst / "logs")
 
     for sub_drc in ("scripts", "alignments"):
@@ -62,6 +63,7 @@ def get_alignments() -> dict:
 
 class ConfigObject(object):
     """Namespace for configuration (maps dict items to attributes"""
+
     def __init__(self, d):
         super(ConfigObject, self).__init__()
         self.d = d
@@ -80,9 +82,9 @@ class ConfigObject(object):
 
 def load(microscope_name=None, calibration_name=None, camera_name=None):
     """Load the global.yaml file and microscope/calib/camera configs
-    The config files to load can be overridden by specifying 
+    The config files to load can be overridden by specifying
         microscope_name/calibration_name/camera_name"""
-        
+
     global microscope
     global calibration
     global camera

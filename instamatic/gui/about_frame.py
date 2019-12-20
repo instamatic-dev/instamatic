@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import Label as tkLabel
@@ -10,7 +11,7 @@ def get_background_of_widget(widget):
     try:
         # We assume first tk widget
         background = widget.cget("background")
-    except:
+    except BaseException:
         # Otherwise this is a ttk widget
         style = widget.cget("style")
 
@@ -19,16 +20,17 @@ def get_background_of_widget(widget):
             style = widget.winfo_class()
 
         background = Style().lookup(style, 'background')
-    
+
     return background
 
 
 class Link_Button(tkLabel, object):
     """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-button/"""
-    def __init__(self, master, text, background=None, font=None, familiy=None, size=None, underline=True, visited_fg = "#551A8B", normal_fg = "#0000EE", visited=False, action=None):
+
+    def __init__(self, master, text, background=None, font=None, familiy=None, size=None, underline=True, visited_fg="#551A8B", normal_fg="#0000EE", visited=False, action=None):
         self._visited_fg = visited_fg
         self._normal_fg = normal_fg
-        
+
         if visited:
             fg = self._visited_fg
         else:
@@ -58,7 +60,7 @@ class Link_Button(tkLabel, object):
     @property
     def visited(self):
         return self._visited
-        
+
     @visited.setter
     def visited(self, is_visited):
         if is_visited:
@@ -80,12 +82,13 @@ class Link_Button(tkLabel, object):
 
 class About(LabelFrame):
     """docstring for About"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="About instamatic")
         self.parent = parent
 
         frame = Frame(self)
-        
+
         Label(frame, text="").grid(row=0, column=0, sticky="W")
         Label(frame, text="Author:").grid(row=1, column=0, sticky="W", padx=10)
         Label(frame, text="Stef Smeets (stef.smeets@tudelft.nl)").grid(row=1, column=1, sticky="W")
@@ -123,7 +126,6 @@ class About(LabelFrame):
         webbrowser.open_new(version.__url__)
 
 
-from .base_module import BaseModule
 module = BaseModule("about", "about", True, About, commands={})
 
 
@@ -131,4 +133,3 @@ if __name__ == '__main__':
     root = Tk()
     About(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

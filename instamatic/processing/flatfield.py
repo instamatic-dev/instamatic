@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-import sys, os
+import os
 import numpy as np
 import time
 from instamatic.formats import *
@@ -24,9 +22,9 @@ def apply_corrections(img, deadpixels=None):
 def remove_deadpixels(img, deadpixels, d=1):
     """Remove dead pixels from the images by replacing them with the average of neighbouring pixels"""
     d = 1
-    for (i,j) in deadpixels:
-        neighbours = img[i-d:i+d+1, j-d:j+d+1].flatten()
-        img[i,j] = np.mean(neighbours)
+    for (i, j) in deadpixels:
+        neighbours = img[i - d:i + d + 1, j - d:j + d + 1].flatten()
+        img[i, j] = np.mean(neighbours)
     return img
 
 
@@ -37,19 +35,19 @@ def get_deadpixels(img):
 
 def apply_center_pixel_correction(img, k=1.19870594245):
     """Correct the intensity of the center pixels"""
-    img[255:261,255:261] = img[255:261,255:261] * k
+    img[255:261, 255:261] = img[255:261, 255:261] * k
     return img
 
 
 def get_center_pixel_correction(img):
     """Get the correction factor for the center pixels"""
-    center = np.sum(img[255:261,255:261])
-    edge = np.sum(img[254:262,254:262]) - center
+    center = np.sum(img[255:261, 255:261])
+    edge = np.sum(img[254:262, 254:262]) - center
 
-    avg1 = center/36.0
-    avg2 = edge/28.0
-    k = avg2/avg1
-    
+    avg1 = center / 36.0
+    avg2 = edge / 28.0
+    k = avg2 / avg1
+
     print("timepix central pixel correction factor:", k)
     return k
 
@@ -77,7 +75,7 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
 def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc=".", **kwargs):
     """Routine to collect flatfield correction files.
-    
+
     Spread the beam and focus on an a vacuum area
     The routine will collect a number of images and average them for the flatfield correction images
     The optimal exposure time for each image is calculated automatically so that the response is at approximately
@@ -89,19 +87,19 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     `drc`: output directory
     """
     exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
-    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)    
+    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
     confirm = kwargs.get("confirm", True)
     date = time.strftime("%Y-%m-%d")
 
     drc = Path(drc).absolute()
-    
+
     # ctrl.brightness.max()
     if confirm:
         input(f"\n >> Press <ENTER> to continue to collect {frames} flat field images")
-    
+
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
-    exposure = exposure * (config.camera.dynamic_range / 10.0) / img.mean() 
+    exposure = exposure * (config.camera.dynamic_range / 10.0) / img.mean()
     print("exposure:", exposure)
 
     ctrl.cam.block()
@@ -111,9 +109,9 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
-        img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
         buffer.append(img)
-    
+
     f = np.mean(buffer, axis=0)
     deadpixels = get_deadpixels(f)
     get_center_pixel_correction(f)
@@ -126,20 +124,20 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
     if collect_darkfield:
         ctrl.beamblank = True
-    
+
         buffer = []
-    
+
         print("\nCollecting darkfield images")
         for n in tqdm(range(frames)):
             outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
-            img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
+            img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
             buffer.append(img)
-        
+
         d = np.mean(buffer, axis=0)
         d = remove_deadpixels(d, deadpixels=deadpixels)
-    
+
         ctrl.beamblank = False
-    
+
         fd = drc / f"darkfield_{ctrl.cam.name}_{date}.tiff"
         write_tiff(fd, d, header={"deadpixels": deadpixels})
 
@@ -176,7 +174,6 @@ def main_entry():
                         action="store_true", dest="collect",
                         help="""Collect flatfield/darkfield images on microscope""")
 
-    
     parser.set_defaults(
         flatfield=None,
         darkfield=None,
@@ -194,14 +191,14 @@ def main_entry():
         exit()
 
     if options.flatfield:
-        flatfield,h = read_tiff(options.flatfield)
+        flatfield, h = read_tiff(options.flatfield)
         deadpixels = h["deadpixels"]
     else:
         print("No flatfield file specified")
         exit()
 
     if options.darkfield:
-        darkfield,h = read_tiff(options.darkfield)
+        darkfield, h = read_tiff(options.darkfield)
     else:
         darkfield = np.zeros_like(flatfield)
 
@@ -214,14 +211,14 @@ def main_entry():
     drc.mkdir(exist_ok=True, parents=True)
 
     for f in args:
-        img,h = read_tiff(f)
+        img, h = read_tiff(f)
 
         img = apply_corrections(img, deadpixels=deadpixels)
         img = apply_flatfield_correction(img, flatfield, darkfield=darkfield)
 
         name = Path(f).name
         fout = drc / name
-        
+
         print(name, "->", fout)
         write_tiff(fout, img, header=h)
 

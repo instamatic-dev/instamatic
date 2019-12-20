@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
@@ -12,10 +13,10 @@ from pathlib import Path
 
 def treeview_sort_column(tv, col, reverse):
     """https://stackoverflow.com/a/22032582"""
-    l = [(tv.set(k, col), k) for k in tv.get_children('')]
-    l.sort(key=lambda t: float(t[0]), reverse=reverse)
+    lst = [(tv.set(k, col), k) for k in tv.get_children('')]
+    lst.sort(key=lambda t: float(t[0]), reverse=reverse)
 
-    for index, (val, k) in enumerate(l):
+    for index, (val, k) in enumerate(lst):
         tv.move(k, '', index)
 
     tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
@@ -23,6 +24,7 @@ def treeview_sort_column(tv, col, reverse):
 
 class MachineLearningFrame(LabelFrame):
     """docstring for MachineLearningFrame"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Neural Network")
         self.parent = parent
@@ -47,9 +49,9 @@ class MachineLearningFrame(LabelFrame):
         tv.heading('y', text='Y', command=lambda: treeview_sort_column(tv, 'y', False))
         tv.column('y', anchor='center', width=15)
 
-        tv.grid(sticky = (N,S,W,E))
-        frame.grid_rowconfigure(0, weight = 1)
-        frame.grid_columnconfigure(0, weight = 1)
+        tv.grid(sticky=(N, S, W, E))
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
         frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
 
         frame = Frame(self)
@@ -62,12 +64,11 @@ class MachineLearningFrame(LabelFrame):
 
         self.GoButton = Button(frame, text="Go to crystal", command=self.go_to_crystal)
         self.GoButton.grid(row=1, column=2, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
-
 
     def init_vars(self):
         self.fns = {}
@@ -104,9 +105,9 @@ class MachineLearningFrame(LabelFrame):
             print("No row selected")
             return
 
-        self.q.put(("ctrl", { "task": "stage.set", 
-                              "x": float(stage_x),
-                              "y": float(stage_y) } ))
+        self.q.put(("ctrl", {"task": "stage.set",
+                             "x": float(stage_x),
+                             "y": float(stage_y)}))
         self.triggerEvent.set()
 
     def show_image(self):
@@ -139,24 +140,23 @@ class MachineLearningFrame(LabelFrame):
         fig = plt.figure()
         ax1 = plt.subplot(121, title=f"Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})", aspect="equal")
         ax2 = plt.subplot(122, title=f"Diffraction pattern\nprediction={prediction}", aspect="equal")
-        
+
         # img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates
 
         coords = img_h["exp_crystal_coords"]
         for c_x, c_y in coords:
             c_y, c_x = img.shape[0] - c_x, c_y
-            ax1.plot(c_y, c_x, marker="+", color="blue",  mew=2)
-        
+            ax1.plot(c_y, c_x, marker="+", color="blue", mew=2)
+
         ax1.imshow(img, vmax=np.percentile(img, 99.5))
-        ax1.plot(cryst_y, cryst_x, marker="+", color="red",  mew=2)
+        ax1.plot(cryst_y, cryst_x, marker="+", color="red", mew=2)
 
         ax2.imshow(data, vmax=np.percentile(data, 99.5))
 
         ShowMatplotlibFig(self, fig, title=fn)
 
 
-from .base_module import BaseModule
 module = BaseModule("learning", "learning", True, MachineLearningFrame, commands={})
 
 
@@ -164,4 +164,3 @@ if __name__ == '__main__':
     root = Tk()
     MachineLearningFrame(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

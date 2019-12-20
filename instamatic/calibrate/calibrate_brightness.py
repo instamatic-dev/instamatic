@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-import sys, os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class CalibBrightness(object):
     """docstring for calib_brightness"""
+
     def __init__(self, slope, intercept):
         self.slope = slope
         self.intercept = intercept
@@ -27,7 +26,7 @@ class CalibBrightness(object):
         return f"CalibBrightness(slope={self.slope}, intercept={self.intercept})"
 
     def brightness_to_pixelsize(self, val):
-        return self.slope*val + self.intercept
+        return self.slope * val + self.intercept
 
     def pixelsize_to_brightness(self, val):
         return int((val - self.intercept) / self.slope)
@@ -64,10 +63,10 @@ class CalibBrightness(object):
 
         mn = self.data_brightness.min()
         mx = self.data_brightness.max()
-        extend = abs(mx - mn)*0.1
+        extend = abs(mx - mn) * 0.1
         x = np.linspace(mn - extend, mx + extend)
         y = self.brightness_to_pixelsize(x)
-    
+
         plt.plot(x, y, "r-", label="linear regression")
         plt.scatter(self.data_brightness, self.data_pixeldiameter)
         plt.title("Fit brightness")
@@ -102,20 +101,20 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
     start = ctrl.brightness.value
 
     for i in range(10):
-        target = start + i*step
+        target = start + i * step
         ctrl.brightness.value = int(target)
 
         outfile = f"calib_brightness_{i:04d}" if save_images else None
 
         comment = f"Calib image {i}: brightness={target}"
         img, h = ctrl.getImage(exposure=exposure, out=outfile, comment=comment, header_keys="Brightness")
-        
+
         img, scale = autoscale(img)
 
         brightness = float(h["Brightness"])
-        
+
         holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
-        
+
         if len(holes) == 0:
             print(" >> No holes found, continuing...")
             continue
@@ -127,11 +126,11 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
 
     values = np.array(values)
     c = CalibBrightness.from_data(*values.T)
-    
+
     # Calling c.plot with videostream crashes program
     if not hasattr(ctrl.cam, "VideoLoop"):
         c.plot()
-    
+
     return c
 
 
@@ -158,7 +157,7 @@ def calibrate_brightness_from_image_fn(fns):
         img, scale = autoscale(img)
 
         holes = find_holes(img, plot=False, fname=None, verbose=False, max_eccentricity=0.8)
-        
+
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
         print(f"Brightness: {brightness:.0f}, equivalent diameter: {size:.1f}px")
@@ -190,7 +189,7 @@ def main_entry():
         print("""
 Program to calibrate brightness of microscope
 
-Usage: 
+Usage:
 prepare
     instamatic.calibrate_brightness
         To start live calibration routine on the microscope
@@ -206,6 +205,6 @@ prepare
         fns = sys.argv[1:]
         calibrate_brightness(fns)
 
+
 if __name__ == '__main__':
     main_entry()
-

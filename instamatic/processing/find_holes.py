@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os
+from instamatic.tools import *
+from instamatic.config import calibration
 import sys
 
 import matplotlib.pyplot as plt
@@ -8,19 +9,13 @@ import numpy as np
 
 from scipy import ndimage
 
-from skimage import data
 from skimage import color
 from skimage import filters
 from skimage import morphology
 from skimage import segmentation
-from skimage import exposure
 from skimage import measure
-import json
 
 plt.rcParams['image.cmap'] = 'gray'
-
-from instamatic.config import calibration
-from instamatic.tools import *
 
 
 def plot_features(img, segmented):
@@ -56,8 +51,8 @@ def plot_props(img, props, fname=None, scale=1):
     ax = fig.add_subplot(111)
     plt.imshow(img, interpolation="none")
 
-    for i,prop in enumerate(props):
-        y1, x1, y2, x2 = [x*scale for x in prop.bbox]
+    for i, prop in enumerate(props):
+        y1, x1, y2, x2 = [x * scale for x in prop.bbox]
 
         color = "red"
 
@@ -65,7 +60,7 @@ def plot_props(img, props, fname=None, scale=1):
                          y2 - y1 + 1, fc='none', ec=color, lw=2)
         ax.add_patch(rect)
 
-        cy, cx = prop.weighted_centroid*scale
+        cy, cx = prop.weighted_centroid * scale
         plt.scatter([cx], [cy], c=color, s=10, edgecolor='none')
 
         s = f" {i}:\n {cx:d}\n {cy:d}"
@@ -88,18 +83,18 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
     """Get markers using simple thresholds"""
     background = 1
     features = 2
-    
+
     markers = np.zeros_like(img)
     if verbose:
         print("\nbounds:", lower, upper)
 
     if dark_on_bright:
         markers[img < lower] = features
-        markers[img > upper] = background  
+        markers[img > upper] = background
     else:
         markers[img < lower] = background
         markers[img > upper] = features
-    
+
     if verbose:
         print(f"\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}")
         print(f"background {1.0*np.sum(markers == background) / markers.size:6.2%}")
@@ -119,7 +114,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
         If the image has been scaled down, the scale can be given here to accurately calculate the hole area in pixels
     binsize: int,
         binning used for the data collection (1, 2, or 4)
-    
+
     Returns:
         area: float,
             apprximate feature size in pixels
@@ -128,7 +123,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
     px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
     px *= (binsize / img_scale)
     py *= (binsize / img_scale)
-    hole_area = (np.pi*(diameter/2.0)**2) / (px * py)
+    hole_area = (np.pi * (diameter / 2.0)**2) / (px * py)
     return hole_area
 
 
@@ -153,13 +148,13 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     """
     otsu = filters.threshold_otsu(img)
     n = 0.25
-    l = otsu - (otsu - np.min(img))*n
-    u = otsu + (np.max(img) - otsu)*n
+    lower = otsu - (otsu - np.min(img)) * n
+    upper = otsu + (np.max(img) - otsu) * n
     if verbose:
         print(f"img range: {img.min()} - {img.max()}")
-        print(f"otsu: {otsu:.0f} ({l:.0f} - {i:.0f})")
-    
-    markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
+        print(f"otsu: {otsu:.0f} ({lower:.0f} - {i:.0f})")
+
+    markers = get_markers_bounds(img, lower=lower, upper=upper, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
 
     disk = morphology.disk(4)
@@ -178,13 +173,13 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
         if prop.eccentricity > max_eccentricity:
             continue
         # FIXME .convex_area crashes here with skimage-0.12.3, use .area instead
-        if prop.area < area*0.75:  
+        if prop.area < area * 0.75:
             continue
 
         newprops.append(prop)
-    
+
     print(f" >> {len(newprops)} holes found in {numlabels} objects.")
-    
+
     if plot:
         plot_props(img, newprops)
     if fname:
@@ -200,7 +195,7 @@ def find_holes_entry():
         img, h = read_image(fn)
 
         img_zoomed, scale = autoscale(img, maxdim=512)
-        
+
         binsize = h["ImageBinSize"]
         magnification = h["Magnification"]
         d = 150
@@ -210,10 +205,10 @@ def find_holes_entry():
 
         print()
         for hole in holes:
-            x,y = hole.centroid
+            x, y = hole.centroid
             px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
-            area = hole.area*px*py / scale**2
-            d = 2*(area/np.pi)**0.5
+            area = hole.area * px * py / scale**2
+            d = 2 * (area / np.pi)**0.5
             print(f"x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um")
 
 

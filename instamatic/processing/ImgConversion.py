@@ -7,8 +7,7 @@ from instamatic.processing.stretch_correction import affine_transform_ellipse_to
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from instamatic.tools import find_beam_center_with_beamstop, to_xds_untrusted_area
-from pathlib import Path
-from math import cos, pi
+from math import cos
 import collections
 import logging
 logger = logging.getLogger(__name__)
@@ -40,18 +39,16 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
     `sequence` is a tuple of sequence numbers of the data frames
     `missing `is a tuple of sequence numbers of the missing frames
     """
-    import io
-
     scanranges = find_subranges(sequence)
-    
+
     scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
     excludeimages = ",".join((str(n) for n in missing))
 
     if rotation_xyz:
         rot_x, rot_y, rot_z = rotation_xyz
-    
+
     # newline='\n' to have unix line endings
-    with open(path / "dials_variables.sh", "w",  newline='\n') as f:
+    with open(path / "dials_variables.sh", "w", newline='\n') as f:
         print(f"#!/usr/bin/env bash", file=f)
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
@@ -84,12 +81,12 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
 
 
 def get_calibrated_rotation_speed(val):
-    """Correct for the overestimation of the oscillation angle if the rotation 
-    was stopped before interrupting the data collection. It uses calibrated values for the 
+    """Correct for the overestimation of the oscillation angle if the rotation
+    was stopped before interrupting the data collection. It uses calibrated values for the
     rotation speeds of the microscope, and matches them to the observed one"""
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
-    calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
+    calibrated_value = min(rotation_speeds, key=lambda x: abs(x - val))
     logger.info(f"Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}")
     return calibrated_value
 
@@ -103,7 +100,7 @@ class ImgConversion(object):
     The buffer index must start at 1.
     """
 
-    def __init__(self, 
+    def __init__(self,
                  buffer: list,                   # image buffer, list of (index [int], image data [2D numpy array], header [dict])
                  camera_length: float,           # virtual camera length read from the microscope
                  osc_angle: float,               # degrees, oscillation angle of the rotation
@@ -111,7 +108,7 @@ class ImgConversion(object):
                  end_angle: float,               # degrees, end angle of the rotation
                  rotation_axis: float,           # radians, specifies the position of the rotation axis
                  acquisition_time: float,        # seconds, acquisition time (exposure time + overhead)
-                 flatfield: str='flatfield.tiff'  
+                 flatfield: str = 'flatfield.tiff'
                  ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -140,27 +137,27 @@ class ImgConversion(object):
 
         self.data_shape = img.shape
         try:
-            self.pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
+            self.pixelsize = config.calibration.pixelsize_diff[camera_length]  # px / Angstrom
         except KeyError:
             self.pixelsize = 1
             print(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
             logger.warning(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
 
-        self.physical_pixelsize = config.camera.physical_pixelsize # mm
-        self.wavelength = config.microscope.wavelength # angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
         # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
         self.do_stretch_correction = True
         self.stretch_azimuth = config.camera.stretch_azimuth
         self.stretch_amplitude = config.camera.stretch_amplitude
 
-        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
+        self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.rotation_axis = rotation_axis
-        
+
         self.acquisition_time = acquisition_time
-        #self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time) 
+        # self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time)
 
         self.name = "Instamatic"
 
@@ -174,7 +171,7 @@ class ImgConversion(object):
 
     def check_settings(self) -> None:
         """
-        Check for the presence of all required attributes. 
+        Check for the presence of all required attributes.
         If possible, optional missing attributes are set to their defaults.
         """
 
@@ -192,23 +189,23 @@ class ImgConversion(object):
                 setattr(self, attr, default)
 
         attrs = [
-        # "rotation_speed",
-        "acquisition_time",
-        "start_angle",
-        "end_angle",
-        "osc_angle",
-        "distance",
-        "mean_beam_center",
-        "wavelength",
-        "physical_pixelsize",
-        "pixelsize",
-        "data_shape",
-        "missing_range",
-        "complete_range",
-        "observed_range",
-        "headers",
-        "data",
-        "XDS_template"
+            # "rotation_speed",
+            "acquisition_time",
+            "start_angle",
+            "end_angle",
+            "osc_angle",
+            "distance",
+            "mean_beam_center",
+            "wavelength",
+            "physical_pixelsize",
+            "pixelsize",
+            "data_shape",
+            "missing_range",
+            "complete_range",
+            "observed_range",
+            "headers",
+            "data",
+            "XDS_template"
         ]
 
         for attr in attrs:
@@ -220,8 +217,7 @@ class ImgConversion(object):
             if not all(hasattr(self, attr) for attr in stretch_attrs):
                 raise AttributeError(f"`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`")
 
-
-    def get_beam_centers(self, invert_x: bool=False, invert_y: bool=False) -> (float, float):
+    def get_beam_centers(self, invert_x: bool = False, invert_y: bool = False) -> (float, float):
         """Obtain beam centers from the diffraction data
         Returns a tuple with the median beam center and its standard deviation
         """
@@ -252,7 +248,7 @@ class ImgConversion(object):
     def write_geometric_correction_files(self, path) -> None:
         """Make geometric correction images for XDS
         Writes files XCORR.cbf and YCORR.cbf to `path`
-        
+
         To use:
             DETECTOR= PILATUS     ! fake being a PILATUS detector
             X-GEO_CORR= XCORR.cbf
@@ -263,35 +259,35 @@ class ImgConversion(object):
         from instamatic.formats import write_cbf
 
         center = np.array(self.mean_beam_center)
-        
-        amplitude_pc = self.stretch_amplitude / (2*100)
-        
+
+        amplitude_pc = self.stretch_amplitude / (2 * 100)
+
         # To create the correct corrections the azimuth is mirrored
-        azimuth_rad  = np.radians(180 - self.stretch_azimuth)
+        azimuth_rad = np.radians(180 - self.stretch_azimuth)
 
         shape = self.data_shape
 
         xi, yi = np.mgrid[0:shape[0], 0:shape[1]]
         coords = np.stack([xi.flatten(), yi.flatten()], axis=1) - center
-        
+
         s = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
-        
+
         new = np.dot(coords, s)
 
-        xcorr = (new[:,0].reshape(shape) + center[0]) - xi
-        ycorr = (new[:,1].reshape(shape) + center[1]) - yi
+        xcorr = (new[:, 0].reshape(shape) + center[0]) - xi
+        ycorr = (new[:, 1].reshape(shape) + center[1]) - yi
 
         # reverse XY coordinates for XDS
         xcorr, ycorr = ycorr, xcorr
 
-        # In XDS, the geometrically corrected coordinates of a pixel at IX,IY 
+        # In XDS, the geometrically corrected coordinates of a pixel at IX,IY
         # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
         write_cbf(path / "XCORR.cbf", np.int32((xcorr * 100)))
         write_cbf(path / "YCORR.cbf", np.int32((ycorr * 100)))
 
     def tiff_writer(self, path: str) -> None:
         """Write all data as tiff files to given `path`"""
-        print ("\033[k", "Writing TIFF files......", end="\r")
+        print("\033[k", "Writing TIFF files......", end="\r")
 
         path.mkdir(exist_ok=True)
 
@@ -302,19 +298,19 @@ class ImgConversion(object):
 
     def smv_writer(self, path: str) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
-        print ("\033[k", "Writing SMV files......", end="\r")
+        print("\033[k", "Writing SMV files......", end="\r")
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
-    
+
         for i in self.observed_range:
             self.write_smv(path, i)
-               
+
         logger.debug(f"SMV files saved in folder: {path}")
-     
+
     def mrc_writer(self, path: str) -> None:
         """Write all data as mrc files to `path`"""
-        print ("\033[k", "Writing MRC files......", end="\r")
+        print("\033[k", "Writing MRC files......", end="\r")
 
         path.mkdir(exist_ok=True)
 
@@ -323,14 +319,14 @@ class ImgConversion(object):
 
         logger.debug(f"MRC files created in folder: {path}")
 
-    def threadpoolwriter(self, tiff_path: str=None, smv_path: str=None, mrc_path: str=None, workers: int=8) -> None:
-        """Efficiently write all data to the specified formats using a threadpool. 
-        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF 
+    def threadpoolwriter(self, tiff_path: str = None, smv_path: str = None, mrc_path: str = None, workers: int = 8) -> None:
+        """Efficiently write all data to the specified formats using a threadpool.
+        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF
         files are written to that path.
         """
         write_tiff = tiff_path is not None
-        write_smv  = smv_path  is not None
-        write_mrc  = mrc_path  is not None
+        write_smv = smv_path is not None
+        write_mrc = mrc_path is not None
 
         if write_smv:
             smv_path = smv_path / self.smv_subdrc
@@ -349,7 +345,7 @@ class ImgConversion(object):
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
             for i in self.observed_range:
-                
+
                 if write_tiff:
                     futures.append(executor.submit(self.write_tiff, tiff_path, i))
                 if write_mrc:
@@ -414,16 +410,16 @@ class ImgConversion(object):
 
         img = np.ushort(img)
         shape_x, shape_y = img.shape
-        
-        phi = self.start_angle + self.osc_angle * (i-1)
+
+        phi = self.start_angle + self.osc_angle * (i - 1)
 
         # TODO: Dials reads the beam_center from the first image and uses that for the whole range
         # For now, use the average beam center and consider it stationary, remove this line later
         mean_beam_center = self.mean_beam_center
-        
+
         try:
             date = str(datetime.fromtimestamp(h["ImageGetTime"]))
-        except:
+        except BaseException:
             date = "0"
 
         header = collections.OrderedDict()
@@ -470,13 +466,13 @@ class ImgConversion(object):
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
             maxval = np.iinfo(dtype).max
-            img = (img / dynamic_range)*maxval
-        
+            img = (img / dynamic_range) * maxval
+
         img = np.round(img, 0).astype(dtype)
 
         # flip up/down because RED reads images from the bottom left corner
         img = np.flipud(img)
-        
+
         write_mrc(fn, img)
 
         return fn
@@ -492,7 +488,7 @@ class ImgConversion(object):
             omega += 360
         elif omega > 180:
             omega -= 360
-    
+
         if self.start_angle > self.end_angle:
             sign = -1
         else:
@@ -509,16 +505,16 @@ class ImgConversion(object):
             print(f"STRETCHINGAZIMUTH    0.0", file=f)
             print(f"", file=f)
             print(f"FILELIST", file=f)
-        
+
             for i in self.observed_range:
                 fn = f"{i:05d}.mrc"
-                angle = self.start_angle+sign*self.osc_angle*i
+                angle = self.start_angle + sign * self.osc_angle * i
                 print(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}", file=f)
-            
+
             print(f"ENDFILELIST", file=f)
 
         logger.debug(f"ED3D file created in path: {path}")
-        
+
     def write_xds_inp(self, path: str) -> None:
         """Write XDS.INP input file for XDS in directory `path`"""
 
@@ -535,7 +531,7 @@ class ImgConversion(object):
             self.write_geometric_correction_files(path)
             stretch_correction = "DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections\nX-GEO_CORR= XCORR.cbf  ! X stretch correction\nY-GEO_CORR= YCORR.cbf  ! Y stretch correction\n"
         else:
-            stretch_correction=""
+            stretch_correction = ""
 
         if self.missing_range:
             exclude = "\n".join([f"EXCLUDE_DATA_RANGE={i} {j}" for i, j in find_subranges(self.missing_range)])
@@ -570,24 +566,24 @@ class ImgConversion(object):
             rot_x=rot_x,
             rot_y=rot_y,
             rot_z=rot_z
-            )
-       
-        with open(path / 'XDS.INP','w') as f:
+        )
+
+        with open(path / 'XDS.INP', 'w') as f:
             print(s, file=f)
-        
+
         logger.info("XDS INP file created.")
 
     def write_beam_centers(self, path: str) -> None:
         """Write list of beam centers to file `beam_centers.txt` in `path`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
         for i, h in self.headers.items():
-            centers[i-1] = h["beam_center"]
+            centers[i - 1] = h["beam_center"]
         for i in self.missing_range:
-            centers[i-1] = [np.NaN, np.NaN]
+            centers[i - 1] = [np.NaN, np.NaN]
 
         np.savetxt(path / "beam_centers.txt", centers, fmt="%10.4f")
 
-    def write_pets_inp(self, path: str, tiff_path: str="tiff") -> None:
+    def write_pets_inp(self, path: str, tiff_path: str = "tiff") -> None:
         """Write PETS input file `pets.pts` in directory `path`"""
         if self.start_angle > self.end_angle:
             sign = -1
@@ -600,13 +596,13 @@ class ImgConversion(object):
         if omega < 0:
             omega += 360
         elif omega > 360:
-            omega -= 360 
+            omega -= 360
 
         with open(path / "pets.pts", "w") as f:
             date = str(time.ctime())
             print("# PETS input file for Rotation Electron Diffraction generated by `instamatic`", file=f)
             print(f"# {date}", file=f)
-            print("# For definitions of input parameters, see:", file=f) 
+            print("# For definitions of input parameters, see:", file=f)
             print("# http://pets.fzu.cz/ ", file=f)
             print("", file=f)
             print(f"lambda {self.wavelength}", file=f)
@@ -626,10 +622,10 @@ class ImgConversion(object):
             print("imagelist", file=f)
             for i in self.observed_range:
                 fn = f"{i:05d}.tiff"
-                angle = self.start_angle+sign*self.osc_angle*i
+                angle = self.start_angle + sign * self.osc_angle * i
                 print(f"{tiff_path}/{fn} {angle:10.4f} 0.00", file=f)
             print("endimagelist", file=f)
-      
+
     def write_REDp_shiftcorrection(self, path: str) -> None:
         """Write .sc (shift correction) file for REDp in directory `path`"""
         path.mkdir(exist_ok=True)

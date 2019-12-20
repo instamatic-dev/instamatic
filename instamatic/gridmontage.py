@@ -1,11 +1,10 @@
-from instamatic.tools import bin_ndarray
 import numpy as np
-from pathlib import Path
 from .montage import *
 
 
 class GridMontage(object):
     """Set up an automated montage map"""
+
     def __init__(self, ctrl):
         super().__init__()
         self.ctrl = ctrl
@@ -23,13 +22,13 @@ class GridMontage(object):
         }
         return gridspec
 
-    def setup(self, 
-              nx: int, ny: int, 
-              overlap: float=0.1, 
-              stage_shift: tuple=(0.0, 0.0), 
-              binning: int=None) -> "np.array":
+    def setup(self,
+              nx: int, ny: int,
+              overlap: float = 0.1,
+              stage_shift: tuple = (0.0, 0.0),
+              binning: int = None) -> "np.array":
         """Set up the experiment, run `GridMontage.start` to acquire data.
-        
+
         Parameters
         ----------
         nx, ny : int
@@ -40,7 +39,7 @@ class GridMontage(object):
             Apply a shift to the calculated stage coordinates.
         binning : int
             Binning for the images.
-        
+
         Returns
         -------
         coords : np.array
@@ -61,7 +60,7 @@ class GridMontage(object):
         grid_indices = sorted_grid_indices(grid)
         px_coords = grid_indices * vect
 
-        px_center = vect * (np.array(grid.shape) / np.array((nx/2, ny/2)))
+        px_center = vect * (np.array(grid.shape) / np.array((nx / 2, ny / 2)))
 
         stagematrix = self.ctrl.get_stagematrix(binning=binning)
 
@@ -89,7 +88,7 @@ class GridMontage(object):
         print("  Spot size:", self.spotsize)
 
         # return coords
-    
+
     def start(self):
         """Start the experiment."""
         ctrl = self.ctrl
@@ -107,10 +106,10 @@ class GridMontage(object):
         def post_acquire(ctrl):
             print("Post-acquire: done!")
 
-        self.ctrl.acquire_at_items(self.stagecoords, 
-                                   acquire=acquire, 
-                                   pre_acquire=pre_acquire, 
-                                   post_acquire=post_acquire)
+        ctrl.acquire_at_items(self.stagecoords,
+                              acquire=acquire,
+                              pre_acquire=pre_acquire,
+                              post_acquire=post_acquire)
 
         self.stagematrix = self.ctrl.get_stagematrix()
         self.buffer = buffer
@@ -119,16 +118,16 @@ class GridMontage(object):
 
     def to_montage(self):
         """Convert the experimental data to a `Montage` object."""
-        images = [im for im,h in self.buffer]
+        images = [im for im, h in self.buffer]
         m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
         m.update_gridspec(flip=not self.flip)  # BUG: Work-around for gridspec madness
-                                            # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
+        # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = self.stagecoords
         m.stagematrix = self.stagematrix
         return m
 
-    def save(self, drc: str=None):
-        """Save the data to the given directory, 
+    def save(self, drc: str = None):
+        """Save the data to the given directory,
         defaults to the instamatic data directory defined in the config
         """
         from instamatic.formats import write_tiff
@@ -158,6 +157,7 @@ class GridMontage(object):
         import yaml
         yaml.dump(d, stream=open(drc / "montage.yaml", "w"))
         print(f" >> Wrote {len(self.stagecoords)} montage images to {drc}")
+
 
 if __name__ == '__main__':
     from instamatic import TEMController

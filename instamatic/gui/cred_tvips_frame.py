@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import *
@@ -5,8 +6,10 @@ from instamatic.utils.spinbox import Spinbox
 from pathlib import Path
 from instamatic import config
 
+
 class ExperimentalTVIPS(LabelFrame):
     """docstring for ExperimentalRED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction (TVIPS)")
         self.parent = parent
@@ -19,7 +22,7 @@ class ExperimentalTVIPS(LabelFrame):
         Label(frame, text="Target angle (degrees):").grid(row=4, column=0, sticky="W")
         self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=NORMAL)
         self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
-        
+
         self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
         self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
 
@@ -204,13 +207,13 @@ class ExperimentalTVIPS(LabelFrame):
         return fn
 
     def get_params(self, task=None):
-        params = { "target_angle": self.var_target_angle.get(),
-                   "instruction_file": self.var_instruction_file.get(),
-                   "exposure": self.var_exposure.get(),
-                   "mode": self.var_mode.get(),
-                   "rotation_speed": self.var_goniotool_tx.get(),
-                   "manual_control": self.var_toggle_manual_control.get(),
-                   "task": task }
+        params = {"target_angle": self.var_target_angle.get(),
+                  "instruction_file": self.var_instruction_file.get(),
+                  "exposure": self.var_exposure.get(),
+                  "mode": self.var_mode.get(),
+                  "rotation_speed": self.var_goniotool_tx.get(),
+                  "manual_control": self.var_toggle_manual_control.get(),
+                  "task": task}
         return params
 
     def toggle_manual_control(self):
@@ -253,7 +256,7 @@ class ExperimentalTVIPS(LabelFrame):
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
-        
+
         if toggle:
             offset = self.var_diff_defocus.get()
             self.ctrl.difffocus.defocus(offset=offset)
@@ -292,20 +295,20 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
     if task == "get_ready":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
-    
-        controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir, 
+
+        controller.cred_tvips_exp = cRED_tvips.Experiment(ctrl=controller.ctrl, path=expdir,
                                                           log=controller.log, mode=mode,
                                                           track=instruction_file, exposure=exposure,
                                                           rotation_speed=rotation_speed)
         controller.cred_tvips_exp.get_ready()
     elif task == "acquire":
-        controller.cred_tvips_exp.start_collection(target_angle=target_angle, 
+        controller.cred_tvips_exp.start_collection(target_angle=target_angle,
                                                    manual_control=manual_control)
     elif task == "serial":
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
 
-        cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir, 
+        cred_tvips_exp = cRED_tvips.SerialExperiment(ctrl=controller.ctrl, path=expdir,
                                                      log=controller.log, mode=mode,
                                                      instruction_file=instruction_file, exposure=exposure,
                                                      target_angle=target_angle, rotation_speed=rotation_speed)
@@ -314,14 +317,12 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         pass
 
 
-from .base_module import BaseModule
 module = BaseModule("tvips", "TVIPS", True, ExperimentalTVIPS, commands={
     "cred_tvips": acquire_data_CRED_TVIPS,
-    })
+})
 
 
 if __name__ == '__main__':
     root = Tk()
     ExperimentalTVIPS(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-
