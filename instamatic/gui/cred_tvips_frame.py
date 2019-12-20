@@ -208,12 +208,12 @@ class ExperimentalTVIPS(LabelFrame):
 
     def get_params(self, task=None):
         params = {"target_angle": self.var_target_angle.get(),
-                   "instruction_file": self.var_instruction_file.get(),
-                   "exposure": self.var_exposure.get(),
-                   "mode": self.var_mode.get(),
-                   "rotation_speed": self.var_goniotool_tx.get(),
-                   "manual_control": self.var_toggle_manual_control.get(),
-                   "task": task}
+                  "instruction_file": self.var_instruction_file.get(),
+                  "exposure": self.var_exposure.get(),
+                  "mode": self.var_mode.get(),
+                  "rotation_speed": self.var_goniotool_tx.get(),
+                  "manual_control": self.var_toggle_manual_control.get(),
+                  "task": task}
         return params
 
     def toggle_manual_control(self):
@@ -319,7 +319,7 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
 
 module = BaseModule("tvips", "TVIPS", True, ExperimentalTVIPS, commands={
     "cred_tvips": acquire_data_CRED_TVIPS,
-    })
+})
 
 
 if __name__ == '__main__':

@@ -106,8 +106,8 @@ class MachineLearningFrame(LabelFrame):
             return
 
         self.q.put(("ctrl", {"task": "stage.set",
-                              "x": float(stage_x),
-                              "y": float(stage_y)}))
+                             "x": float(stage_x),
+                             "y": float(stage_y)}))
         self.triggerEvent.set()
 
     def show_image(self):

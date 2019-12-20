@@ -21,14 +21,14 @@ def sorted_grid_indices(grid):
 
 def weight_map(shape, method="block", plot=False):
     """Generate a weighting map for the given shape
-    
+
     shape : tuple
         Shape defines the 2 integers defining the shape of the image
     method : str
         Method to use `circle`/`block`
     plot : bool
         Plot the image
-    
+
     Returns
     -------
     weight : np.array
@@ -63,7 +63,7 @@ def weight_map(shape, method="block", plot=False):
 
 def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, flip: bool = False) -> "np.array":
     """Defines the grid montage collection scheme
-    
+
     Parameters
     ----------
     gridshape : tuple(int, int)
@@ -76,7 +76,7 @@ def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, 
     flip : bool
         Flip around the vertical (lr, rl) or horizontal (ud, du) axis, i.e. start from the
         botton (lr, rl) or right-hand (ud, du) side.
-    
+
     Returns
     -------
     np.array
@@ -112,7 +112,7 @@ def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, 
 
 def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = False) -> dict:
     """Make slices for left/right/top/bottom image
-    
+
     Parameters
     ----------
     overlap_x/overlap_y : int
@@ -122,7 +122,7 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = F
         Define the shape of the image (only for plotting)
     plot : bool
         Plot the boundaries on blank images
-    
+
     Returns
     -------
     Dictionary with the slices for each side
@@ -373,7 +373,7 @@ class Montage(object):
     @classmethod
     def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = "leftright", zigzag: bool = True):
         """Load a montage object from a SerialEM file image stack
-        
+
         Parameters
         ----------
         filename : str
@@ -388,7 +388,7 @@ class Montage(object):
         Returns
         -------
         Montage object constructed from the given images
-            
+
         """
         import mrcfile
         from instamatic.serialem import read_mdoc_file
@@ -453,7 +453,7 @@ class Montage(object):
 
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
         m.update_gridspec(flip=not d["flip"])  # BUG: Work-around for gridspec madness
-                                               # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
+        # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = np.array(d["stagecoords"])
         m.stagematrix = np.array(d["stagematrix"])
         m.mode = d["mode"]
@@ -464,7 +464,7 @@ class Montage(object):
     def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float = 1.0, verbose: bool = False):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation
-        
+
         Parameters
         ----------
         idx0, idx1 : int
@@ -475,7 +475,7 @@ class Montage(object):
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
             strips used for cross correlation to 75 pixels.
-        
+
         Returns
         -------
         difference_vector : np.array[1,2]
@@ -504,7 +504,7 @@ class Montage(object):
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
         shift offset between the images.
-        
+
         Parameters
         ----------
         threshold : float
@@ -613,7 +613,7 @@ class Montage(object):
 
     def get_montage_coords(self):
         """Get the coordinates for each section based on the gridspec only (not optimized)
-               
+
         Returns
         -------
         coords : np.array[-1, 2]
@@ -641,14 +641,14 @@ class Montage(object):
     def get_optimized_montage_coords(self, difference_vectors, method: str = "leastsq", verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares minimization
-        
+
         Parameters
         ----------
         difference_vectors : dict
             dict containing the pairwise difference vectors between each image
         method : str
             Least-squares minimization method to use (lmfit)
-        
+
         Returns
         -------
         coords : np.array[-1, 2]
@@ -860,7 +860,7 @@ class Montage(object):
         return px_coord.astype(int)
 
     def find_holes(self, stitched, diameter: float = 40e3, tolerance: float = 0.1,
-                    pixelsize: float = None, plot: bool = False) -> tuple:
+                   pixelsize: float = None, plot: bool = False) -> tuple:
         """Find grid holes in the montage image
 
         Parameters

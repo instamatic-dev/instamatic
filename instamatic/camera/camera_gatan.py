@@ -29,7 +29,7 @@ if platform.architecture()[0] == '32bit':
         'initCCDCOM': 'initCCDCOM',
         'isCameraInfoAvailable': 'isCameraInfoAvailable',
         'releaseCCDCOM': 'releaseCCDCOM'
-        }
+    }
     SYMBOLS["simu"] = {
         'acquireImageNewFloat': '?acquireImageNewFloat@@YAHHHHHHN_NPAPAMPAH2@Z',
         'acquireImageNewInt': '?acquireImageNewInt@@YAHHHHHPAH00HN_N@Z',
@@ -40,7 +40,7 @@ if platform.architecture()[0] == '32bit':
         'initCCDCOM': '?initCCDCOM@@YAHH@Z',
         'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
         'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
-        }
+    }
 else:
     DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
     DLLPATH_GATAN = "CCDCOM2_x64_gatan.dll"
@@ -55,7 +55,7 @@ else:
         'initCCDCOM': '?initCCDCOM@@YAHH@Z',
         'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
         'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
-        }
+    }
 
     SYMBOLS["simu"] = SYMBOLS["actual"]
 

@@ -34,16 +34,16 @@ def fromfile(fin, dtype, count, sep=''):
 
 def uopen(filename, mode):
     ''' Open a stream to filename
-    
+
     :Parameters:
-    
+
     filename : str
                Name of the file
     mode : str
            Mode to open file
-             
+
     :Returns:
-        
+
     fd : File
          File descriptor
     '''
@@ -66,7 +66,7 @@ def uopen(filename, mode):
 
 def close(filename, fd):
     ''' Close the file descriptor (if it was opened by caller)
-    
+
     filename : str
                Name of the file
     fd : File
@@ -78,9 +78,9 @@ def close(filename, fd):
 
 def update_header(dest, source, header_map, tag=None):
     ''' Map values from or to the format and the internal header
-    
+
     :Parameters:
-    
+
     dest : array or dict
            Destination of the header values
     source : array or dict
@@ -89,9 +89,9 @@ def update_header(dest, source, header_map, tag=None):
                  Map from destination to source
     tag : str
           Format specific attribute tag
-                 
+
     :Returns:
-    
+
     dest : array or dict
            Destination of the header values
     '''
@@ -111,9 +111,9 @@ def update_header(dest, source, header_map, tag=None):
 
 def read_image(f, header, dtype, dlen, shape, swap, order='C'):
     ''' Read an image from a file using random file acess
-    
+
     :Parameters:
-    
+
     f : stream
         Input file stream
     header : dict
@@ -128,9 +128,9 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
            Swap the byte order
     order : str
             Layout of a 2 or 3D array
-    
+
     :Returns:
-    
+
     out : ndarray
           Array of image data
     '''

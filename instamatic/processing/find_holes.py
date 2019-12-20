@@ -118,7 +118,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
         If the image has been scaled down, the scale can be given here to accurately calculate the hole area in pixels
     binsize: int,
         binning used for the data collection (1, 2, or 4)
-    
+
     Returns:
         area: float,
             apprximate feature size in pixels

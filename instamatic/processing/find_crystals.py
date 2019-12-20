@@ -26,7 +26,7 @@ def isedge(prop):
     if (prop._slice[0].start == 0) or \
         (prop._slice[1].start == 0) or \
         (prop._slice[0].stop == prop._intensity_image.shape[0]) or \
-        (prop._slice[1].stop == prop._intensity_image.shape[1]):
+            (prop._slice[1].stop == prop._intensity_image.shape[1]):
 
         hist, edges = np.histogram(prop.intensity_image[prop.image])
         if np.sum(hist) // hist[0] < 2:
@@ -122,7 +122,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     Used adaptive thresholds to find local features.
     Edges are detected, and rejected, on the basis of a histogram.
     Kmeans clustering is used to spread points over the segmented area.
-    
+
     img: 2d np.ndarray
         Input image to locate crystals on
     magnification: float

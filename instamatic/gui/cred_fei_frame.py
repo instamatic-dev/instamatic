@@ -88,9 +88,9 @@ class ExperimentalcRED_FEI(LabelFrame):
 
     def get_params(self, task=None):
         params = {"exposure_time": self.var_exposure_time.get(),
-                   "endangle": self.var_endangle.get(),
-                   "rotspeed": self.var_rotspeed.get(),
-                   "task": task}
+                  "endangle": self.var_endangle.get(),
+                  "rotspeed": self.var_rotspeed.get(),
+                  "task": task}
         return params
 
 
@@ -108,7 +108,7 @@ def acquire_data_cREDfei(controller, **kwargs):
 
 module = BaseModule("credfei", "cRED_FEI", True, ExperimentalcRED_FEI, commands={
     "credfei": acquire_data_cREDfei
-    })
+})
 
 
 if __name__ == '__main__':

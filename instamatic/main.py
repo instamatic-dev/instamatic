@@ -8,13 +8,13 @@ from instamatic import config
 
 def locate(name, open=False):
     """Locate the directory given by `name`
-    
+
     Parameters
     ----------
     name : str
     open : bool
         Open the directory in `File Explorer`
-    
+
     Returns
     -------
     drc : pathlib.Path

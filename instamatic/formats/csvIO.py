@@ -40,7 +40,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     """
     Maintain order when reading yaml file
     http://stackoverflow.com/a/21912744
-    
+
     f: file-like object or str path to file
     """
     if isinstance(f, str):
@@ -77,7 +77,7 @@ def read_ycsv(f):
     """
     read file in ycsv format:
     https://blog.datacite.org/using-yaml-frontmatter-with-csv/
-    
+
     format:
         ---
         $YAML_BLOCK
@@ -126,7 +126,7 @@ def write_ycsv(f, data, metadata):
     """
     write file in ycsv format:
     https://blog.datacite.org/using-yaml-frontmatter-with-csv/
-    
+
     format:
         ---
         $YAML_BLOCK

@@ -214,7 +214,7 @@ class CameraTPX(object):
     def readMatrix(self, arr=None, sz=512 * 512):
         """Reads a frame from all connected devices, decodes the data
         and stores the pixel counts in array data.
-        
+
         i16 *data # data storage array
         u32 sz    # size of array"""
 

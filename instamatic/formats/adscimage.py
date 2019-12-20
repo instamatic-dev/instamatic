@@ -29,7 +29,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
     if "HEADER_BYTES" in header:
         pad = int(header["HEADER_BYTES"]) - len(out) - 2
     else:
-#         hsize = ((len(out) + 23) // 512 + 1) * 512
+        #         hsize = ((len(out) + 23) // 512 + 1) * 512
         hsize = (len(out) + 533) & ~(512 - 1)
         out += "HEADER_BYTES={:d};\n".format(hsize).encode()
         pad = hsize - len(out) - 2
@@ -92,8 +92,8 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-            raise IOError('Size spec in ADSC-header does not match ' + \
-                          'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
+        raise IOError('Size spec in ADSC-header does not match ' + \
+                      'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
 
     return data, header
 

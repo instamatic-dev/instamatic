@@ -246,7 +246,7 @@ module = BaseModule("debug", "advanced", True, DebugFrame, commands={
     "debug": debug,
     "autoindex": autoindex,
     "flatfield": collect_flatfield
-    })
+})
 
 
 if __name__ == '__main__':

@@ -26,6 +26,6 @@ class ShowMatplotlibFig(Toplevel):
     def close(self, event=None):
         self.canvas.get_tk_widget().destroy()
         self.destroy()    # this is necessary on Windows to prevent
-                          # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
         plt.clf()
         plt.close("all")

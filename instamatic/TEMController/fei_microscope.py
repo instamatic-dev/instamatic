@@ -355,7 +355,7 @@ class FEIMicroscope(object):
             bt.X = x
         if y is not None:
             if abs(y) > 1:
-               raise ValueError(f"BeamTilt y must be a floating number between -1 an 1. Input: y={y}")
+                raise ValueError(f"BeamTilt y must be a floating number between -1 an 1. Input: y={y}")
             bt.Y = y
         self.tom.Illumination.BeamAlignmentTilt = bt
 
@@ -441,12 +441,12 @@ class FEIMicroscope(object):
         self.tom.Projection.Focus = value
 
     def getApertureSize(self, aperture):
-         if aperture == 'C1':
-             return self.tom.Illumination.C1ApertureSize * 1e3
-         elif aperture == 'C2':
-             return self.tom.Illumination.C2ApertureSize * 1e3
-         else:
-             raise ValueError("aperture must be specified as 'C1' or 'C2'.")
+        if aperture == 'C1':
+            return self.tom.Illumination.C1ApertureSize * 1e3
+        elif aperture == 'C2':
+            return self.tom.Illumination.C2ApertureSize * 1e3
+        else:
+            raise ValueError("aperture must be specified as 'C1' or 'C2'.")
 
     def getDarkFieldTilt(self):
         return self.tom.Illumination.DarkfieldTilt.X, self.tom.Illumination.DarkfieldTilt.Y

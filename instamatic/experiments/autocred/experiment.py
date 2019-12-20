@@ -121,29 +121,29 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
 
 class Experiment(object):
     def __init__(self, ctrl,
-                       exposure_time,
-                       exposure_time_image,
-                       stop_event,
-                       stop_event_experiment,
-                       enable_image_interval,
-                       enable_autotrack,
-                       enable_fullacred,
-                       enable_fullacred_crystalfinder,
-                       scan_area,
-                       zheight,
-                       autocenterDP,
-                       angle_activation,
-                       spread,
-                       offset,
-                       rotrange,
-                       backlash_killer,
-                       rotation_speed,
-                       unblank_beam=False,
-                       path=None,
-                       log=None,
-                       flatfield=None,
-                       image_interval=99999,
-                       diff_defocus=0):
+                 exposure_time,
+                 exposure_time_image,
+                 stop_event,
+                 stop_event_experiment,
+                 enable_image_interval,
+                 enable_autotrack,
+                 enable_fullacred,
+                 enable_fullacred_crystalfinder,
+                 scan_area,
+                 zheight,
+                 autocenterDP,
+                 angle_activation,
+                 spread,
+                 offset,
+                 rotrange,
+                 backlash_killer,
+                 rotation_speed,
+                 unblank_beam=False,
+                 path=None,
+                 log=None,
+                 flatfield=None,
+                 image_interval=99999,
+                 diff_defocus=0):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = path
@@ -443,7 +443,7 @@ class Experiment(object):
         center = (window_size / 2, window_size / 2)
 
         # if len(crystalpositions) == 1:
-            #crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
+        #crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
         shift = np.subtract(center, crystalposition)
         # elif len(crystalpositions) > 1:
         #    areas = [crystal.area_pixel for crystal in crystalpositions]
@@ -509,8 +509,8 @@ class Experiment(object):
         trackmethod = "p"
 
         for paths in (path, pathtiff, pathsmv, pathred):
-                if not os.path.exists(paths):
-                    os.makedirs(paths)
+            if not os.path.exists(paths):
+                os.makedirs(paths)
 
         a = a0 = self.ctrl.stage.a
         spotsize = self.ctrl.spotsize
@@ -859,18 +859,18 @@ class Experiment(object):
             f.write("{}\t{}\t{}\t{}\n".format(stageposx, stageposy, stageposz, rotrange))
 
         img_conv = ImgConversion(buffer=buffer,
-                 osc_angle=osangle,
-                 start_angle=self.startangle,
-                 end_angle=self.endangle,
-                 rotation_axis=rotation_angle,
-                 acquisition_time=acquisition_time,
-                 flatfield=self.flatfield,
-                 pixelsize=self.pixelsize,
-                 physical_pixelsize=self.physical_pixelsize,
-                 wavelength=self.wavelength,
-                 stretch_amplitude=self.stretch_amplitude,
-                 stretch_azimuth=self.stretch_azimuth
-                 )
+                                 osc_angle=osangle,
+                                 start_angle=self.startangle,
+                                 end_angle=self.endangle,
+                                 rotation_axis=rotation_angle,
+                                 acquisition_time=acquisition_time,
+                                 flatfield=self.flatfield,
+                                 pixelsize=self.pixelsize,
+                                 physical_pixelsize=self.physical_pixelsize,
+                                 wavelength=self.wavelength,
+                                 stretch_amplitude=self.stretch_amplitude,
+                                 stretch_azimuth=self.stretch_azimuth
+                                 )
 
         img_conv.tiff_writer(pathtiff)
         img_conv.smv_writer(pathsmv)

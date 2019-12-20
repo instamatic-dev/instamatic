@@ -145,7 +145,7 @@ class xds_parser(object):
         dmax, dmin = d["res_range"]
 
         s += "{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}".format(
-        k=k, dmax=dmax, dmin=dmin, **d["total"], **d)
+            k=k, dmax=dmax, dmin=dmin, **d["total"], **d)
 
         if filename:
             s += f"  # {d['fn']}\n"

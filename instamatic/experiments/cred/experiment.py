@@ -50,23 +50,23 @@ class Experiment(object):
     """
 
     def __init__(self, ctrl,
-        path: str = None,
-        log=None,
-        flatfield: str = None,
-        exposure_time: float = 0.5,
-        unblank_beam: bool = False,
-        mode: str = None,
-        footfree_rotate_to: float = 60.0,
-        enable_image_interval: bool = False,
-        image_interval: int = 99999,
-        diff_defocus: int = 0,
-        exposure_time_image: float = 0.01,
-        write_tiff: bool = True,
-        write_xds: bool = True,
-        write_dials: bool = True,
-        write_red: bool = True,
-        stop_event=None,
-        ):
+                 path: str = None,
+                 log=None,
+                 flatfield: str = None,
+                 exposure_time: float = 0.5,
+                 unblank_beam: bool = False,
+                 mode: str = None,
+                 footfree_rotate_to: float = 60.0,
+                 enable_image_interval: bool = False,
+                 image_interval: int = 99999,
+                 diff_defocus: int = 0,
+                 exposure_time_image: float = 0.01,
+                 write_tiff: bool = True,
+                 write_xds: bool = True,
+                 write_dials: bool = True,
+                 write_red: bool = True,
+                 stop_event=None,
+                 ):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
@@ -166,7 +166,7 @@ class Experiment(object):
 
     def start_rotation(self) -> float:
         """Controls the starting of the rotation of the experiment
-        
+
         In the default mode, wait for rotation to start (i.e. controlled via the pedals)
         In `footfree` mode, initialize rotation from current angle to target angle.
         In `simulate` mode, simulate the start condition.
@@ -347,22 +347,22 @@ class Experiment(object):
 
         The image buffer is passed as a list of tuples, where each tuple contains the
         index (int), image data (2D numpy array), metadata/header (dict).
-        
+
         The buffer index must start at 1."""
 
         img_conv = ImgConversion(buffer=buffer,
-                 osc_angle=self.osc_angle,
-                 start_angle=self.start_angle,
-                 end_angle=self.end_angle,
-                 rotation_axis=self.rotation_axis,
-                 acquisition_time=self.acquisition_time,
-                 flatfield=self.flatfield,
-                 pixelsize=self.pixelsize,
-                 physical_pixelsize=self.physical_pixelsize,
-                 wavelength=self.wavelength,
-                 stretch_amplitude=self.stretch_amplitude,
-                 stretch_azimuth=self.stretch_azimuth
-                 )
+                                 osc_angle=self.osc_angle,
+                                 start_angle=self.start_angle,
+                                 end_angle=self.end_angle,
+                                 rotation_axis=self.rotation_axis,
+                                 acquisition_time=self.acquisition_time,
+                                 flatfield=self.flatfield,
+                                 pixelsize=self.pixelsize,
+                                 physical_pixelsize=self.physical_pixelsize,
+                                 wavelength=self.wavelength,
+                                 stretch_amplitude=self.stretch_amplitude,
+                                 stretch_azimuth=self.stretch_azimuth
+                                 )
 
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,
