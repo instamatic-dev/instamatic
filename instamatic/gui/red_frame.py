@@ -95,10 +95,10 @@ class ExperimentalRED(LabelFrame):
         self.triggerEvent.set()
 
     def get_params(self, task=None):
-        params = { "exposure_time": self.var_exposure_time.get(),
+        params = {"exposure_time": self.var_exposure_time.get(),
                    "tilt_range": self.var_tilt_range.get(),
                    "stepsize": self.var_stepsize.get(),
-                   "task": task }
+                   "task": task}
         return params
 
 

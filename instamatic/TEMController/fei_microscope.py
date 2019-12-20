@@ -93,18 +93,18 @@ MagnificationMapping = {
     59: 21000,
     60: 8300,
     61: 6200,
-    62: 3100 }
+    62: 3100}
 
 CameraLengthMapping = {
-    1:  34,
-    2:  42,
-    3:  53,
-    4:  68,
-    5:  90,
-    6:  115,
-    7:  140,
-    8:  175,
-    9:  215,
+    1: 34,
+    2: 42,
+    3: 53,
+    4: 68,
+    5: 90,
+    6: 115,
+    7: 140,
+    8: 175,
+    9: 215,
     10: 265,
     11: 330,
     12: 420,
@@ -131,14 +131,14 @@ class FEIMicroscope(object):
             comtypes.CoInitialize()
 
         print("FEI Themis Z initializing...")
-        ## tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
+        # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
         self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
-        ## tecnai does similar things as tem; the difference is not clear for now
+        # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
-        ## tom interfaces the Instrument, Projection objects
+        # tom interfaces the Instrument, Projection objects
         self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
 
-        ### TEM Status constants
+        # TEM Status constants
         self.tem_constant = comtypes.client.Constants(self.tem)
 
         self.stage = self.tem.Stage
@@ -464,7 +464,7 @@ class FEIMicroscope(object):
 
     def getDiffShift(self):
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough"""
-        return 180/pi*self.tem.Projection.DiffractionShift.X, 180/pi*self.tem.Projection.DiffractionShift.Y
+        return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
 
     def setDiffShift(self, x, y):
         ds1 = self.tem.Projection.DiffractionShift
@@ -473,9 +473,9 @@ class FEIMicroscope(object):
             return
 
         if x is not None:
-            ds1.X = x/180*pi
+            ds1.X = x / 180 * pi
         if y is not None:
-            ds1.Y = y/180*pi
+            ds1.Y = y / 180 * pi
 
         self.tem.Projection.DiffractionShift = ds1
 

@@ -172,14 +172,14 @@ class ExperimentalautocRED(LabelFrame):
 
         self.CollectionStopButton.config(state=DISABLED)
         self.CollectionButton.config(state=NORMAL)
-        #self.lb_coll1.config(text="")
-        #self.lb_coll2.config(text="")
+        # self.lb_coll1.config(text="")
+        # self.lb_coll2.config(text="")
 
     def stop_collection_acred(self, event=None):
         self.stopEvent.set()
 
     def get_params(self):
-        params = { "exposure_time": self.var_exposure_time.get(),
+        params = {"exposure_time": self.var_exposure_time.get(),
                    "exposure_time_image": self.var_exposure_time_image.get(),
                    "unblank_beam": self.var_unblank_beam.get(),
                    "enable_image_interval": self.var_enable_image_interval.get(),
@@ -198,7 +198,7 @@ class ExperimentalautocRED(LabelFrame):
                    "offset": self.var_offset.get(),
                    "rotrange": self.var_rotrange.get(),
                    "backlash_killer": self.var_backlash.get(),
-                   "rotation_speed": self.var_rotspeed.get() }
+                   "rotation_speed": self.var_rotspeed.get()}
         return params
 
     def toggle_interval_buttons(self):
@@ -248,7 +248,7 @@ class ExperimentalautocRED(LabelFrame):
         toggle = self.var_toggle_diff_defocus.get()
         difffocus = self.var_diff_defocus.get()
 
-        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
+        self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle}))
         self.triggerEvent.set()
 
     def show_calib_beamshift(self):
@@ -325,13 +325,13 @@ def acquire_data_autocRED(controller, **kwargs):
     enable_fullacred = kwargs["enable_fullacred"]
     enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
     image_interval = kwargs["image_interval"]
-    scan_area=kwargs["scan_area"]
-    auto_zheight=kwargs["zheight"]
-    auto_centerDP=kwargs["autocenterDP"]
+    scan_area = kwargs["scan_area"]
+    auto_zheight = kwargs["zheight"]
+    auto_centerDP = kwargs["autocenterDP"]
 
-    angle_threshold=kwargs["angle_activation"]
-    spread=kwargs["spread"]
-    offset=kwargs["offset"]
+    angle_threshold = kwargs["angle_activation"]
+    spread = kwargs["spread"]
+    offset = kwargs["offset"]
 
     try:
         diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]

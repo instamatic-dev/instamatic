@@ -34,9 +34,9 @@ import socket
 import numpy as np
 import time
 
-## set this to a file name to log some socket debug messages.
-## Set to None to avoid saving a log.
-## for example:
+# set this to a file name to log some socket debug messages.
+# Set to None to avoid saving a log.
+# for example:
 debug_log = None
 #debug_log = 'gatansocket.log'
 
@@ -80,7 +80,7 @@ enum_gs = [
 # lookup table of function name to function code, starting with 1
 enum_gs = dict([(x, y) for (y, x) in enumerate(enum_gs, 1)])
 
-## C "long" -> numpy "int_"
+# C "long" -> numpy "int_"
 ARGS_BUFFER_SIZE = 1024
 MAX_LONG_ARGS = 16
 MAX_DBL_ARGS = 8
@@ -257,7 +257,7 @@ class GatanSocket(object):
 			total_recv += len(new_recv)
 		buf = b''.join(parts)
 		message_recv.unpack(buf)
-		## log the error code from received message
+		# log the error code from received message
 		sendargs = message_send.array['longargs']
 		recvargs = message_recv.array['longargs']
 		log('Func: %d, Code: %d' % (sendargs[0], recvargs[0]))
@@ -348,7 +348,7 @@ class GatanSocket(object):
 		]
 
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray)
-		message_recv = Message(longargs=(0,)) # just return code
+		message_recv = Message(longargs=(0,))  # just return code
 		self.ExchangeMessages(message_send, message_recv)
 
 	def setNumGrabSum(self, earlyReturnFrameCount, earlyReturnRamGrabs):
@@ -364,7 +364,7 @@ class GatanSocket(object):
 		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
 		if self.save_frames and (doEarlyReturn or lzwtiff):
 			# early return flag
-			flag = 128*int(doEarlyReturn) + 8*int(lzwtiff)
+			flag = 128 * int(doEarlyReturn) + 8 * int(lzwtiff)
 			numGrabSum = self.getNumGrabSum()
 			# set values to pass
 			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag, ]
@@ -493,8 +493,8 @@ class GatanSocket(object):
 		message_recv = Message(longargs=(0, 0, 0, 0, 0))
 
 		# attempt to solve UCLA problem by reconnecting
-		#if self.save_frames:
-			#self.reconnect()
+		# if self.save_frames:
+			# self.reconnect()
 
 		self.ExchangeMessages(message_send, message_recv)
 
@@ -522,7 +522,7 @@ class GatanSocket(object):
 			while chunkRemain:
 				new_recv = self.recv_data(chunkRemain)
 				len_recv = len(new_recv)
-				imArray.data[received:received+len_recv] = new_recv
+				imArray.data[received:received + len_recv] = new_recv
 				chunkReceived += len_recv
 				chunkRemain -= len_recv
 				remain -= len_recv

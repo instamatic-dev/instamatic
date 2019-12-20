@@ -24,7 +24,7 @@ class ServerError(Exception):
 
 def kill_server(p):
     # p.kill is not adequate
-    sp.call(['taskkill', '/F', '/T', '/PID',  str(p.pid)])
+    sp.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
 
 
 def start_server_in_subprocess():
@@ -110,7 +110,7 @@ class MicroscopeClient(object):
         from instamatic.TEMController.microscope import get_tem
         tem = get_tem(self.name)
 
-        self._dct = {key: value for key, value in  tem.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith("_")}
 
     def __dir__(self):
         return self._dct.keys()

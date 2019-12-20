@@ -51,7 +51,7 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
         rot_x, rot_y, rot_z = rotation_xyz
 
     # newline='\n' to have unix line endings
-    with open(path / "dials_variables.sh", "w",  newline='\n') as f:
+    with open(path / "dials_variables.sh", "w", newline='\n') as f:
         print(f"#!/usr/bin/env bash", file=f)
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
@@ -89,7 +89,7 @@ def get_calibrated_rotation_speed(val):
     rotation speeds of the microscope, and matches them to the observed one"""
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
-    calibrated_value = min(rotation_speeds, key=lambda x: abs(x-val))
+    calibrated_value = min(rotation_speeds, key=lambda x: abs(x - val))
     logger.info(f"Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}")
     return calibrated_value
 
@@ -140,20 +140,20 @@ class ImgConversion(object):
 
         self.data_shape = img.shape
         try:
-            self.pixelsize = config.calibration.pixelsize_diff[camera_length] # px / Angstrom
+            self.pixelsize = config.calibration.pixelsize_diff[camera_length]  # px / Angstrom
         except KeyError:
             self.pixelsize = 1
             print(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
             logger.warning(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
 
-        self.physical_pixelsize = config.camera.physical_pixelsize # mm
-        self.wavelength = config.microscope.wavelength # angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
         # NOTE: Stretch correction - not sure if the azimuth and amplitude are correct anymore.
         self.do_stretch_correction = True
         self.stretch_azimuth = config.camera.stretch_azimuth
         self.stretch_amplitude = config.camera.stretch_amplitude
 
-        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
+        self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle
@@ -263,10 +263,10 @@ class ImgConversion(object):
 
         center = np.array(self.mean_beam_center)
 
-        amplitude_pc = self.stretch_amplitude / (2*100)
+        amplitude_pc = self.stretch_amplitude / (2 * 100)
 
         # To create the correct corrections the azimuth is mirrored
-        azimuth_rad  = np.radians(180 - self.stretch_azimuth)
+        azimuth_rad = np.radians(180 - self.stretch_azimuth)
 
         shape = self.data_shape
 
@@ -290,7 +290,7 @@ class ImgConversion(object):
 
     def tiff_writer(self, path: str) -> None:
         """Write all data as tiff files to given `path`"""
-        print ("\033[k", "Writing TIFF files......", end="\r")
+        print("\033[k", "Writing TIFF files......", end="\r")
 
         path.mkdir(exist_ok=True)
 
@@ -301,7 +301,7 @@ class ImgConversion(object):
 
     def smv_writer(self, path: str) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
-        print ("\033[k", "Writing SMV files......", end="\r")
+        print("\033[k", "Writing SMV files......", end="\r")
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
@@ -313,7 +313,7 @@ class ImgConversion(object):
 
     def mrc_writer(self, path: str) -> None:
         """Write all data as mrc files to `path`"""
-        print ("\033[k", "Writing MRC files......", end="\r")
+        print("\033[k", "Writing MRC files......", end="\r")
 
         path.mkdir(exist_ok=True)
 
@@ -328,8 +328,8 @@ class ImgConversion(object):
         files are written to that path.
         """
         write_tiff = tiff_path is not None
-        write_smv  = smv_path  is not None
-        write_mrc  = mrc_path  is not None
+        write_smv = smv_path is not None
+        write_mrc = mrc_path is not None
 
         if write_smv:
             smv_path = smv_path / self.smv_subdrc
@@ -414,7 +414,7 @@ class ImgConversion(object):
         img = np.ushort(img)
         shape_x, shape_y = img.shape
 
-        phi = self.start_angle + self.osc_angle * (i-1)
+        phi = self.start_angle + self.osc_angle * (i - 1)
 
         # TODO: Dials reads the beam_center from the first image and uses that for the whole range
         # For now, use the average beam center and consider it stationary, remove this line later
@@ -469,7 +469,7 @@ class ImgConversion(object):
             # Use maximum range available in data type for extra precision when converting from FLOAT to INT
             dynamic_range = 11900  # a little bit higher just in case
             maxval = np.iinfo(dtype).max
-            img = (img / dynamic_range)*maxval
+            img = (img / dynamic_range) * maxval
 
         img = np.round(img, 0).astype(dtype)
 
@@ -511,7 +511,7 @@ class ImgConversion(object):
 
             for i in self.observed_range:
                 fn = f"{i:05d}.mrc"
-                angle = self.start_angle+sign*self.osc_angle*i
+                angle = self.start_angle + sign * self.osc_angle * i
                 print(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}", file=f)
 
             print(f"ENDFILELIST", file=f)
@@ -534,7 +534,7 @@ class ImgConversion(object):
             self.write_geometric_correction_files(path)
             stretch_correction = "DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections\nX-GEO_CORR= XCORR.cbf  ! X stretch correction\nY-GEO_CORR= YCORR.cbf  ! Y stretch correction\n"
         else:
-            stretch_correction=""
+            stretch_correction = ""
 
         if self.missing_range:
             exclude = "\n".join([f"EXCLUDE_DATA_RANGE={i} {j}" for i, j in find_subranges(self.missing_range)])
@@ -580,9 +580,9 @@ class ImgConversion(object):
         """Write list of beam centers to file `beam_centers.txt` in `path`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
         for i, h in self.headers.items():
-            centers[i-1] = h["beam_center"]
+            centers[i - 1] = h["beam_center"]
         for i in self.missing_range:
-            centers[i-1] = [np.NaN, np.NaN]
+            centers[i - 1] = [np.NaN, np.NaN]
 
         np.savetxt(path / "beam_centers.txt", centers, fmt="%10.4f")
 
@@ -625,7 +625,7 @@ class ImgConversion(object):
             print("imagelist", file=f)
             for i in self.observed_range:
                 fn = f"{i:05d}.tiff"
-                angle = self.start_angle+sign*self.osc_angle*i
+                angle = self.start_angle + sign * self.osc_angle * i
                 print(f"{tiff_path}/{fn} {angle:10.4f} 0.00", file=f)
             print("endimagelist", file=f)
 

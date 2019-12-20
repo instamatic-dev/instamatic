@@ -87,10 +87,10 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.triggerEvent.set()
 
     def get_params(self, task=None):
-        params = { "exposure_time": self.var_exposure_time.get(),
+        params = {"exposure_time": self.var_exposure_time.get(),
                    "endangle": self.var_endangle.get(),
                    "rotspeed": self.var_rotspeed.get(),
-                   "task": task }
+                   "task": task}
         return params
 
 

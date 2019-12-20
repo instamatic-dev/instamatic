@@ -56,7 +56,7 @@ def plot_props(img, props, fname=None, scale=1):
     plt.imshow(img, interpolation="none")
 
     for i, prop in enumerate(props):
-        y1, x1, y2, x2 = [x*scale for x in prop.bbox]
+        y1, x1, y2, x2 = [x * scale for x in prop.bbox]
 
         color = "red"
 
@@ -64,7 +64,7 @@ def plot_props(img, props, fname=None, scale=1):
                          y2 - y1 + 1, fc='none', ec=color, lw=2)
         ax.add_patch(rect)
 
-        cy, cx = prop.weighted_centroid*scale
+        cy, cx = prop.weighted_centroid * scale
         plt.scatter([cx], [cy], c=color, s=10, edgecolor='none')
 
         s = f" {i}:\n {cx:d}\n {cy:d}"
@@ -127,7 +127,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
     px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
     px *= (binsize / img_scale)
     py *= (binsize / img_scale)
-    hole_area = (np.pi*(diameter/2.0)**2) / (px * py)
+    hole_area = (np.pi * (diameter / 2.0)**2) / (px * py)
     return hole_area
 
 
@@ -152,8 +152,8 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     """
     otsu = filters.threshold_otsu(img)
     n = 0.25
-    l = otsu - (otsu - np.min(img))*n
-    u = otsu + (np.max(img) - otsu)*n
+    l = otsu - (otsu - np.min(img)) * n
+    u = otsu + (np.max(img) - otsu) * n
     if verbose:
         print(f"img range: {img.min()} - {img.max()}")
         print(f"otsu: {otsu:.0f} ({l:.0f} - {i:.0f})")
@@ -177,7 +177,7 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
         if prop.eccentricity > max_eccentricity:
             continue
         # FIXME .convex_area crashes here with skimage-0.12.3, use .area instead
-        if prop.area < area*0.75:
+        if prop.area < area * 0.75:
             continue
 
         newprops.append(prop)
@@ -211,8 +211,8 @@ def find_holes_entry():
         for hole in holes:
             x, y = hole.centroid
             px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
-            area = hole.area*px*py / scale**2
-            d = 2*(area/np.pi)**0.5
+            area = hole.area * px * py / scale**2
+            d = 2 * (area / np.pi)**0.5
             print(f"x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um")
 
 

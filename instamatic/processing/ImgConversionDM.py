@@ -19,7 +19,7 @@ class ImgConversionDM(ImgConversion):
                  acquisition_time: float,          # seconds, acquisition time (exposure time + overhead)
                  flatfield: str = 'flatfield.tiff',
                  pixelsize: float = None,          # p/Angstrom, size of the pixels (overrides camera_length)
-                 physical_pixelsize: float = None, # mm, physical size of the pixels (overrides camera length)
+                 physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
                  wavelength: float = None,         # Angstrom, relativistic wavelength of the electron beam
                  ):
         if flatfield is not None:
@@ -54,7 +54,7 @@ class ImgConversionDM(ImgConversion):
         self.use_beamstop = False
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
 
-        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
+        self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle

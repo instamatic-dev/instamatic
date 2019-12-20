@@ -161,8 +161,8 @@ class Experiment(object):
         """Set up the paths for saving the data to"""
         print(f"\nOutput directory: {self.path}")
         self.tiff_path = self.path / "tiff" if self.write_tiff else None
-        self.smv_path  = self.path / "SMV"  if (self.write_xds or self.write_dials) else None
-        self.mrc_path  = self.path / "RED"  if self.write_red else None
+        self.smv_path = self.path / "SMV" if (self.write_xds or self.write_dials) else None
+        self.mrc_path = self.path / "RED" if self.write_red else None
 
     def start_rotation(self) -> float:
         """Controls the starting of the rotation of the experiment
@@ -248,7 +248,7 @@ class Experiment(object):
         while not self.stopEvent.is_set():
             if i % self.image_interval == 0:
                 t_start = time.perf_counter()
-                acquisition_time = (t_start - t0) / (i-1)
+                acquisition_time = (t_start - t0) / (i - 1)
 
                 self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
                 img, h = self.ctrl.getImage(exposure_image, header_keys=None)
@@ -264,7 +264,7 @@ class Experiment(object):
                     i += 1
                     # print(f"{i} "SKIP!  {next_interval-t_start:.3f} {acquisition_time:.3f}")
 
-                diff = next_interval - time.perf_counter() # seconds
+                diff = next_interval - time.perf_counter()  # seconds
 
                 if self.track_stage_position and diff > 0.1:
                     self.stage_positions.append((i, self.ctrl.stage.get()))
@@ -312,7 +312,7 @@ class Experiment(object):
             return False
 
         self.spotsize = self.ctrl.spotsize
-        self.nframes = i-1 # len(buffer) can lie in case of frame skipping
+        self.nframes = i - 1  # len(buffer) can lie in case of frame skipping
         self.osc_angle = abs(self.end_angle - self.start_angle) / self.nframes
         self.t_start = t0
         self.t_end = t1
@@ -321,11 +321,11 @@ class Experiment(object):
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
-        self.physical_pixelsize = config.camera.physical_pixelsize # mm
-        self.wavelength = config.microscope.wavelength # angstrom
-        self.stretch_azimuth = config.camera.stretch_azimuth # deg
-        self.stretch_amplitude = config.camera.stretch_amplitude # %
+        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
+        self.stretch_azimuth = config.camera.stretch_azimuth  # deg
+        self.stretch_amplitude = config.camera.stretch_amplitude  # %
 
         self.nframes_diff = len(buffer)
         self.nframes_image = len(image_buffer)

@@ -164,8 +164,8 @@ class CalibStage(object):
     def pixelshift_to_stageshift(self, pixelshift, binsize=1):
         """Convert from a pixel distance to a stage shift"""
         dx, dy = pixelshift
-        dx = (dx*binsize) + self.center_pixel[0]
-        dy = (dy*binsize) + self.center_pixel[1]
+        dx = (dx * binsize) + self.center_pixel[0]
+        dy = (dy * binsize) + self.center_pixel[1]
         return self.pixelcoord_to_stagepos((dx, dy), image_pos=(0, 0))
 
     @classmethod
@@ -212,7 +212,7 @@ class CalibStage(object):
         plt.scatter(*stagepos_.T, label="Positions in pixel coords")
 
         for i, (x, y) in enumerate(shifts):
-            plt.text(x+5, y+5, str(i), size=14)
+            plt.text(x + 5, y + 5, str(i), size=14)
 
         plt.legend()
         plt.show()
@@ -253,16 +253,16 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     stagepos = []
     shifts = []
 
-    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
+    n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
 
     i = 0
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         print()
         print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
 
-        ctrl.stage.set(x=x_cent+dx, y=y_cent+dy)
+        ctrl.stage.set(x=x_cent + dx, y=y_cent + dy)
         print(ctrl.stage)
 
         outfile = f"calib_{i:04d}" if save_images else None

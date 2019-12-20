@@ -227,7 +227,7 @@ class Experiment(object):
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset, step=10000)
+            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x + x_offset, y=self.start_y + y_offset, step=10000)
             self.ctrl.stage.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
@@ -305,14 +305,14 @@ class Experiment(object):
         start_angle = self.start_position.a
 
         if self.track:
-            ### Center crystal position
+            # Center crystal position
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
 
             input("Move SAED aperture to crystal and press <ENTER> to measure! ")
 
-            ## cannot do this while lieview is running
+            # cannot do this while lieview is running
             # img1 = self.ctrl.getRawImage()
             # write_tiff(self.path / "image_before.tiff", img1)
 
@@ -411,7 +411,7 @@ class Experiment(object):
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
         self.camera_length = int(self.ctrl.magnification.get())
         self.spotsize = self.ctrl.spotsize
-        self.rotation_speed = (end_angle-start_angle) / self.total_time
+        self.rotation_speed = (end_angle - start_angle) / self.total_time
         self.exposure_time = self.emmenu.get_exposure()
         self.start_angle, self.end_angle = start_angle, end_angle
 
@@ -436,7 +436,7 @@ class Experiment(object):
         self.emmenu.writeTiffs(start_index, end_index, path=path_data)
 
         if self.track:
-            ### Center crystal position
+            # Center crystal position
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
@@ -459,12 +459,12 @@ class Experiment(object):
         wavelength = config.microscope.wavelength
 
         try:
-            pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
+            pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
         except KeyError:
             print(f"Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0")
             pixelsize = 1.0
 
-        physical_pixelsize = config.camera.physical_pixelsize # mm
+        physical_pixelsize = config.camera.physical_pixelsize  # mm
 
         bin_x, bin_y = self.emmenu.getBinning()
         image_dimensions_x, image_dimensions_y = self.emmenu.getImageDimensions()
@@ -542,7 +542,7 @@ class Experiment(object):
                 x_center = pos[:, 0].mean()
                 y_center = pos[idx, 1]
                 z_pos = pos[0:, 2].mean()
-                f = interp1d(pos[:, 3], pos[:, 1]-y_center, fill_value="extrapolate", kind="quadratic")
+                f = interp1d(pos[:, 3], pos[:, 1] - y_center, fill_value="extrapolate", kind="quadratic")
 
                 d = {}
                 d["y_offset"] = f

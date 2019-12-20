@@ -105,9 +105,9 @@ class MachineLearningFrame(LabelFrame):
             print("No row selected")
             return
 
-        self.q.put(("ctrl", { "task": "stage.set",
+        self.q.put(("ctrl", {"task": "stage.set",
                               "x": float(stage_x),
-                              "y": float(stage_y) } ))
+                              "y": float(stage_y)}))
         self.triggerEvent.set()
 
     def show_image(self):
@@ -147,10 +147,10 @@ class MachineLearningFrame(LabelFrame):
         coords = img_h["exp_crystal_coords"]
         for c_x, c_y in coords:
             c_y, c_x = img.shape[0] - c_x, c_y
-            ax1.plot(c_y, c_x, marker="+", color="blue",  mew=2)
+            ax1.plot(c_y, c_x, marker="+", color="blue", mew=2)
 
         ax1.imshow(img, vmax=np.percentile(img, 99.5))
-        ax1.plot(cryst_y, cryst_x, marker="+", color="red",  mew=2)
+        ax1.plot(cryst_y, cryst_x, marker="+", color="red", mew=2)
 
         ax2.imshow(data, vmax=np.percentile(data, 99.5))
 

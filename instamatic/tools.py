@@ -37,13 +37,13 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
     if ndarray.ndim != len(new_shape):
         raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
                                                            new_shape))
-    compression_pairs = [(d, c//d) for d, c in zip(new_shape,
+    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
                                                   ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
         op = getattr(ndarray, operation)
-        ndarray = op(-1*(i+1))
+        ndarray = op(-1 * (i + 1))
     return ndarray
 
 
@@ -80,8 +80,8 @@ def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.arr
     returns:
         list of coordinates
     """
-    cx = (nx-1) * stepsize / 2
-    cy = (ny-1) * stepsize / 2
+    cx = (nx - 1) * stepsize / 2
+    cy = (ny - 1) * stepsize / 2
     center = np.array((cx, cy))
 
     x_grid, y_grid = np.meshgrid(np.arange(nx) * stepsize, np.arange(ny) * stepsize)
@@ -177,12 +177,12 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: i
     y1 = ndimage.filters.gaussian_filter1d(arr, sigma)
     c1 = np.argmax(y1)  # initial guess for beam center
 
-    win_len = 2*w+1
+    win_len = 2 * w + 1
 
     try:
-        r1 = np.linspace(c1-w, c1+w, win_len)
-        f  = interpolate.interp1d(r1, y1[c1-w: c1+w+1], kind=kind)
-        r2 = np.linspace(c1-w, c1+w, win_len*m)  # extrapolate for subpixel accuracy
+        r1 = np.linspace(c1 - w, c1 + w, win_len)
+        f = interpolate.interp1d(r1, y1[c1 - w: c1 + w + 1], kind=kind)
+        r2 = np.linspace(c1 - w, c1 + w, win_len * m)  # extrapolate for subpixel accuracy
         y2 = f(r2)
         c2 = np.argmax(y2) / m  # find beam center with `m` precision
     except ValueError as e:  # if c1 is too close to the edges, return initial guess
@@ -290,13 +290,13 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
         raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
-    compression_pairs = [(d, c//d) for d, c in zip(new_shape,
+    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
                                                   ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
         op = getattr(ndarray, operation)
-        ndarray = op(-1*(i+1))
+        ndarray = op(-1 * (i + 1))
     return ndarray
 
 
@@ -322,7 +322,7 @@ def get_files(file_pat: str) -> list:
 
 def printer(data) -> None:
     """Print things to stdout on one line dynamically"""
-    sys.stdout.write("\r\x1b[K"+data.__str__())
+    sys.stdout.write("\r\x1b[K" + data.__str__())
     sys.stdout.flush()
 
 
@@ -334,8 +334,8 @@ def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
     rads = np.zeros(2)
     center = np.zeros(2)
     for n, XY in enumerate([X, Y]):
-        over = np.where(XY>(im_mean*treshold))[0]
-        rads[n] = (over[-1] - over[0])/2
+        over = np.where(XY > (im_mean * treshold))[0]
+        rads[n] = (over[-1] - over[0]) / 2
         center[n] = over[0] + rads[n]
     return center, rads
 
@@ -385,7 +385,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
         plt.savefig(fn, dpi=150)
         plt.clf()
 
-    return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
+    return SimpleNamespace(acquisition_time=acq_time / 1000, exposure_time=exp_time / 1000, overhead=overhead / 1000, units="s")
 
 
 def relativistic_wavelength(voltage: float = 200_000) -> float:
@@ -398,9 +398,9 @@ def relativistic_wavelength(voltage: float = 200_000) -> float:
 
     h = 6.626070150e-34  # planck constant J.s
     m = 9.10938356e-31   # electron rest mass kg
-    e = 1.6021766208e-19 # elementary charge C
+    e = 1.6021766208e-19  # elementary charge C
     c = 299792458        # speed of light m/s
 
-    wl = h/((2*m*voltage*e*(1+(e*voltage)/(2*m*c**2))))**0.5
+    wl = h / ((2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))))**0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom

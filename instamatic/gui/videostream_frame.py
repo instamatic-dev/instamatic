@@ -94,7 +94,7 @@ class VideoStreamFrame(Frame):
         self.cb_contrast = Checkbutton(frame, text="Auto contrast", variable=self.var_auto_contrast)
         self.cb_contrast.grid(row=1, column=5)
 
-        self.e_fps      = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
+        self.e_fps = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
 
@@ -221,7 +221,7 @@ class VideoStreamFrame(Frame):
             image = Image.fromarray(frame)
         elif self.display_range != self.display_range_default:
             image = np.clip(frame, 0, self.display_range)
-            image = (256.0 / self.display_range)*image
+            image = (256.0 / self.display_range) * image
             image = Image.fromarray(image)
         else:
             image = Image.fromarray(frame)
@@ -249,15 +249,15 @@ class VideoStreamFrame(Frame):
         delta = self.current - self.last
 
         if delta > self.update_frequency:
-            interval = delta/self.nframes
+            interval = delta / self.nframes
 
             interval = (interval * 0.5) + (self.last_interval * 0.5)
 
-            fps = 1.0/interval
+            fps = 1.0 / interval
             # overhead = interval - self.stream.frametime
 
             self.var_fps.set(round(fps, 2))
-            self.var_interval.set(round(interval*1000, 2))
+            self.var_interval.set(round(interval * 1000, 2))
             # self.var_overhead.set(round(overhead*1000, 2))
             self.last = self.current
             self.nframes = 1

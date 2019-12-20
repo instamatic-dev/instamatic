@@ -26,11 +26,11 @@ class FEISimuMicroscope(object):
             comtypes.CoInitialize()
 
         print("BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU")
-        ## tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
+        # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
         self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
-        ## tecnai does similar things as tem; the difference is not clear for now
+        # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
-        ## tom interfaces the Instrument, Projection objects
+        # tom interfaces the Instrument, Projection objects
         self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
 
         self.stage = self.tem.Stage
@@ -111,7 +111,7 @@ class FEISimuMicroscope(object):
         return self.proj.Magnification
 
     def setMagnification(self, value):
-        ## Apparently they categorize magnification values into 1,2,3,...
+        # Apparently they categorize magnification values into 1,2,3,...
         try:
             self.proj.MagnificationIndex = value
         except ValueError:
@@ -129,7 +129,7 @@ class FEISimuMicroscope(object):
         return x, y
 
     def setGunShift(self, x, y):
-        ## Does not really work in this case
+        # Does not really work in this case
         self.tem.GUN.Shift.X = x
         self.tem.GUN.Shift.Y = y
 
@@ -152,13 +152,13 @@ class FEISimuMicroscope(object):
         self.tom.Illumination.BeamShiftPhysical.Y = y
 
     def getBeamTilt(self):
-        ## Not sure if beamalignmenttilt.x is the right thing to use
+        # Not sure if beamalignmenttilt.x is the right thing to use
         x = self.tom.Illumination.BeamAlignmentTilt.X
         y = self.tom.Illumination.BeamAlignmentTilt.Y
         return x, y
 
     def setBeamTilt(self, x, y):
-        ## Not sure if beamalignmenttilt.x is the right thing to use
+        # Not sure if beamalignmenttilt.x is the right thing to use
         self.tom.Illumination.BeamAlignmentTilt.X = x
         self.tom.Illumination.BeamAlignmentTilt.Y = y
 
@@ -169,7 +169,7 @@ class FEISimuMicroscope(object):
         self.tom.Projection.ImageBeamShift.X = x
         self.tom.Projection.ImageBeamShift.Y = y
 
-    ## FEI Does NOT have image shift 2?
+    # FEI Does NOT have image shift 2?
     def getImageShift2(self):
         return 0, 0
 
@@ -272,7 +272,7 @@ class FEISimuMicroscope(object):
         self.tom.Projection.Defocus = value
 
     def resetDiffFocus(self):
-        ## Will raise Attribute Error
+        # Will raise Attribute Error
         self.tom.Projection.ResetDefocus()
 
     def getDiffShift(self):
@@ -324,7 +324,7 @@ class FEISimuMicroscope(object):
         self.tom.Illumination.SpotsizeIndex = value
 
     def getScreenPosition(self):
-        ## TO BE CHECKED: does FEI tem have a screenposition object??
+        # TO BE CHECKED: does FEI tem have a screenposition object??
         return self.screenposition_value
 
     def setScreenPosition(self, value):
@@ -364,7 +364,7 @@ class FEISimuMicroscope(object):
             self.proj.CameraLengthIndex = index
 
     def getBrightness(self):
-        ## returned value is the DIAMETER of the illuminated area
+        # returned value is the DIAMETER of the illuminated area
         return self.tom.Illumination.IlluminatedAreaDiameter
 
     def setBrightness(self, value):

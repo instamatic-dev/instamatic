@@ -68,14 +68,14 @@ class Experiment(object):
         if stepsize < 0:
             tilt_range = -abs(tilt_range)
         else:
-            tilt_range =  abs(tilt_range)
+            tilt_range = abs(tilt_range)
 
         if self.current_angle is None:
             self.start_angle = start_angle = ctrl.stage.a
         else:
             start_angle = self.current_angle + stepsize
 
-        tilt_positions = np.arange(start_angle, start_angle+tilt_range, stepsize)
+        tilt_positions = np.arange(start_angle, start_angle + tilt_range, stepsize)
         print(f"\nStart_angle: {start_angle:.3f}")
         # print "Angles:", tilt_positions
 
@@ -131,9 +131,9 @@ class Experiment(object):
         self.logger.info(f"Data saving path: {self.path}")
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
-        self.physical_pixelsize = config.camera.physical_pixelsize # mm
-        self.wavelength = config.microscope.wavelength # angstrom
+        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth
         self.stretch_amplitude = config.camera.stretch_amplitude
 
@@ -208,7 +208,7 @@ def main():
 
     input("Press << Enter >> to start the experiment... ")
 
-    while not input(f"\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] ") :
+    while not input(f"\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] "):
         red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
 
     red_exp.finalize()

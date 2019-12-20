@@ -62,7 +62,7 @@ class GridMontage(object):
         grid_indices = sorted_grid_indices(grid)
         px_coords = grid_indices * vect
 
-        px_center = vect * (np.array(grid.shape) / np.array((nx/2, ny/2)))
+        px_center = vect * (np.array(grid.shape) / np.array((nx / 2, ny / 2)))
 
         stagematrix = self.ctrl.get_stagematrix(binning=binning)
 

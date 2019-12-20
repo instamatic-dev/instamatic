@@ -3,7 +3,7 @@ from skimage.transform import resize
 
 
 def preprocess(image, n_std=4):
-    x, y = np.where(image>np.max(image)*0.99)
+    x, y = np.where(image > np.max(image) * 0.99)
     c_x, c_y = int(np.mean(x)), int(np.mean(y))
     size = 200
     x_min = c_x - size
@@ -26,10 +26,10 @@ def preprocess(image, n_std=4):
     s_image = np.copy(image[x_min:x_max, y_min:y_max])
     mean = np.mean(s_image)
     std = np.std(s_image)
-    s_image[s_image>(mean+n_std*std)] = mean+n_std*std
-    div = (np.max(s_image)-np.min(s_image))
+    s_image[s_image > (mean + n_std * std)] = mean + n_std * std
+    div = (np.max(s_image) - np.min(s_image))
     if div == 0:
         div = 1
-    s_image = (s_image-np.min(s_image))/div
+    s_image = (s_image - np.min(s_image)) / div
     red_s_image = resize(s_image, [150, 150], mode="constant")
     return red_s_image.reshape((150, 150, 1))

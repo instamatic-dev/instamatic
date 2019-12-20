@@ -155,12 +155,12 @@ class ExperimentalSED(LabelFrame):
             c.plot("BeamShift")
 
     def get_params(self):
-        params = { "image_exposure": self.var_image_exposure.get(),
+        params = {"image_exposure": self.var_image_exposure.get(),
                    "image_spotsize": self.var_image_spotsize.get(),
                    "diff_exposure": self.var_diff_exposure.get(),
                    "diff_spotsize": self.var_image_spotsize.get(),
                    "diff_brightness": self.var_diff_brightness.get(),
-                   "scan_radius": self.var_scan_radius.get() }
+                   "scan_radius": self.var_scan_radius.get()}
         return params
 
 

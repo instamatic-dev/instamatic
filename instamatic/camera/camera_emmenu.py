@@ -143,7 +143,7 @@ class CameraEMMENU(object):
         """Get selected config object currently associated with the viewport"""
         vp_cfg_name = self._vp.Configuration
         count = self._obj.CameraConfigurations.Count
-        for j in range(1, count+1):
+        for j in range(1, count + 1):
             cfg = self._obj.CameraConfigurations.Item(j)
             if cfg.Name == vp_cfg_name:
                 break
@@ -217,9 +217,9 @@ class CameraEMMENU(object):
         d["MaximumSizeX"] = cam.MaximumSizeX  # int
         d["MaximumSizeY"] = cam.MaximumSizeY  # int
         d["NumberOfGains"] = cam.NumberOfGains  # int
-        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains+1)]
+        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains + 1)]
         d["NumberOfSpeeds"] = cam.NumberOfSpeeds  # int
-        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds+1)]
+        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds + 1)]
         d["PixelSizeX"] = cam.PixelSizeX  # int
         d["PixelSizeY"] = cam.PixelSizeY  # int
         d["Dynamic"] = cam.Dynamic  # int
@@ -365,7 +365,7 @@ class CameraEMMENU(object):
         if stop_index <= start_index:
             raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
 
-        for i, image_index in enumerate(range(start_index, stop_index+1)):
+        for i, image_index in enumerate(range(start_index, stop_index + 1)):
             p = self.getImageByIndex(image_index, drc_index)
 
             fn = str(path / f"{i:04d}.tiff")
@@ -460,7 +460,7 @@ class CameraEMMENU(object):
         """Get timestamps in seconds for given image index range"""
         drc_index = self.drc_index
         timestamps = []
-        for i, image_index in enumerate(range(start_index, end_index+1)):
+        for i, image_index in enumerate(range(start_index, end_index + 1)):
             p = self.getImageByIndex(image_index, drc_index)
             t = p.EMVector.lImgCreationTime
             timestamps.append(t)

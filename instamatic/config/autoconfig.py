@@ -36,7 +36,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         assert PixelSizeX == PixelSizeY, "Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})"
 
         if mode == "diff":
-            pixelsize = np.sin(PixelSizeX / 1_000_000) / wavelength  #  µrad/px -> rad/px -> px/Å
+            pixelsize = np.sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
         else:
             pixelsize = PixelSizeX
 
@@ -79,19 +79,19 @@ def main():
     and magnification ranges
     """
 
-    ### Connect to microscope
+    # Connect to microscope
 
     tem_name = choice_prompt(choices="jeol fei simulate".split(),
                              default="simulate",
                              question="Which microscope can I connect to?")
 
-    ### Connect to camera
+    # Connect to camera
 
     cam_name = choice_prompt(choices="None gatan tvips simulate".split(),
                              default="simulate",
                              question="Which camera can I connect to?")
 
-    ## Fetch camera config
+    # Fetch camera config
 
     drc = Path(__file__).parent
     choices = list(drc.glob("camera/*.yaml"))
@@ -101,7 +101,7 @@ def main():
                                default=None,
                                question="Which camera type do you want to use (select closest one and modify if needed)?")
 
-    ### Instantiate microscope / camera connection
+    # Instantiate microscope / camera connection
 
     from instamatic.TEMController.microscope import get_tem
     from instamatic.camera.camera import get_cam
@@ -126,25 +126,25 @@ def main():
     tem_config["wavelength"] = wavelength
 
     for mode, rng in ranges.items():
-        tem_config["range_"+mode] = rng
+        tem_config["range_" + mode] = rng
 
     calib_config = {}
     calib_config["name"] = tem_name
 
-    ### Find magnification ranges
+    # Find magnification ranges
 
     for mode, rng in ranges.items():
         if cam_name == "tvips":
             pixelsizes = get_tvips_calibs(ctrl=ctrl, rng=rng, mode=mode, wavelength=wavelength)
         else:
             pixelsizes = {r: 1.0 for r in rng}
-        calib_config["pixelsize_"+mode] = pixelsizes
+        calib_config["pixelsize_" + mode] = pixelsizes
 
         stagematrices = {r: [1, 0, 0, 1] for r in rng}
 
-        calib_config["stagematrix_"+mode] = stagematrices
+        calib_config["stagematrix_" + mode] = stagematrices
 
-    ### Write/copy configs
+    # Write/copy configs
 
     tem_config_fn = f"{tem_name}_tem.yaml"
     calib_config_fn = f"{tem_name}_calib.yaml"
@@ -169,8 +169,8 @@ def main():
         print(f"    camera: {cam_name}_cam")
     print()
     print(f"Todo: Check and update the pixelsizes in `{calib_config_fn}`")
-    print( "    In real space, pixelsize in nm")
-    print( "    In reciprocal space, pixelsize in px/Angstrom")
+    print("    In real space, pixelsize in nm")
+    print("    In reciprocal space, pixelsize in px/Angstrom")
 
 
 if __name__ == '__main__':

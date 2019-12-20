@@ -13,9 +13,9 @@ def swap_needed(header: dict) -> bool:
         return False
     elif "big" in BYTE_ORDER and not np.little_endian:
         return False
-    elif  "little" in BYTE_ORDER and not np.little_endian:
+    elif "little" in BYTE_ORDER and not np.little_endian:
         return True
-    elif  "big" in BYTE_ORDER and np.little_endian:
+    elif "big" in BYTE_ORDER and np.little_endian:
         return True
 
 
@@ -33,8 +33,8 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
         hsize = (len(out) + 533) & ~(512 - 1)
         out += "HEADER_BYTES={:d};\n".format(hsize).encode()
         pad = hsize - len(out) - 2
-    out +=  b"}" + (pad+1) * b'\x00'
-    assert len(out) % 512 == 0 , "Header is not multiple of 512"
+    out += b"}" + (pad + 1) * b'\x00'
+    assert len(out) % 512 == 0, "Header is not multiple of 512"
 
     # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
     dtype = np.uint16

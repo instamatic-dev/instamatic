@@ -19,7 +19,7 @@ class ImgConversionTPX(ImgConversion):
                  acquisition_time: float,          # seconds, acquisition time (exposure time + overhead)
                  flatfield: str = 'flatfield.tiff',
                  pixelsize: float = None,          # p/Angstrom, size of the pixels (overrides camera_length)
-                 physical_pixelsize: float = None, # mm, physical size of the pixels (overrides camera length)
+                 physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
                  wavelength: float = None,         # Angstrom, relativistic wavelength of the electron beam
                  stretch_amplitude=0.0,            # Stretch correction amplitude, %
                  stretch_azimuth=0.0               # Stretch correction azimuth, degrees
@@ -33,8 +33,8 @@ class ImgConversionTPX(ImgConversion):
 
         self.smv_subdrc = "data"
 
-        self.untrusted_areas = [ ("rectangle", ((0,   255), (517, 262)) ),
-                                 ("rectangle", ((255, 0  ), (262, 517)) ) ]
+        self.untrusted_areas = [("rectangle", ((0, 255), (517, 262))),
+                                 ("rectangle", ((255, 0), (262, 517)))]
 
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)
@@ -64,7 +64,7 @@ class ImgConversionTPX(ImgConversion):
         self.stretch_amplitude = config.camera.stretch_amplitude
         self.do_stretch_correction = self.stretch_amplitude != 0
 
-        self.distance = (1/self.wavelength) * (self.physical_pixelsize / self.pixelsize)
+        self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle
         self.start_angle = start_angle
         self.end_angle = end_angle

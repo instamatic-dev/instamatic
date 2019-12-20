@@ -26,11 +26,11 @@ class LockingError(RuntimeError):
 
 def arrangeData(raw, out=None):
     """10000 loops, best of 3: 81.3 s per loop"""
-    s  = 256*256
-    q1 = raw[0  :s  ].reshape(256, 256)
-    q2 = raw[s  :2*s].reshape(256, 256)
-    q3 = raw[2*s:3*s][::-1].reshape(256, 256)
-    q4 = raw[3*s:4*s][::-1].reshape(256, 256)
+    s = 256 * 256
+    q1 = raw[0:s].reshape(256, 256)
+    q2 = raw[s:2 * s].reshape(256, 256)
+    q3 = raw[2 * s:3 * s][::-1].reshape(256, 256)
+    q4 = raw[3 * s:4 * s][::-1].reshape(256, 256)
 
     if out is None:
         out = np.empty((516, 516), dtype=raw.dtype)
@@ -211,7 +211,7 @@ class CameraTPX(object):
         """Closes shutter under software control."""
         self.lib.EMCameraObj_closeShutter(self.obj)
 
-    def readMatrix(self, arr=None, sz=512*512):
+    def readMatrix(self, arr=None, sz=512 * 512):
         """Reads a frame from all connected devices, decodes the data
         and stores the pixel counts in array data.
         

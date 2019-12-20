@@ -26,7 +26,7 @@ def remove_deadpixels(img, deadpixels, d=1):
     """Remove dead pixels from the images by replacing them with the average of neighbouring pixels"""
     d = 1
     for (i, j) in deadpixels:
-        neighbours = img[i-d:i+d+1, j-d:j+d+1].flatten()
+        neighbours = img[i - d:i + d + 1, j - d:j + d + 1].flatten()
         img[i, j] = np.mean(neighbours)
     return img
 
@@ -47,9 +47,9 @@ def get_center_pixel_correction(img):
     center = np.sum(img[255:261, 255:261])
     edge = np.sum(img[254:262, 254:262]) - center
 
-    avg1 = center/36.0
-    avg2 = edge/28.0
-    k = avg2/avg1
+    avg1 = center / 36.0
+    avg2 = edge / 28.0
+    k = avg2 / avg1
 
     print("timepix central pixel correction factor:", k)
     return k
