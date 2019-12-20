@@ -207,13 +207,13 @@ class ExperimentalTVIPS(LabelFrame):
         return fn
 
     def get_params(self, task=None):
-        params = { "target_angle": self.var_target_angle.get(),
+        params = {"target_angle": self.var_target_angle.get(),
                    "instruction_file": self.var_instruction_file.get(),
                    "exposure": self.var_exposure.get(),
                    "mode": self.var_mode.get(),
                    "rotation_speed": self.var_goniotool_tx.get(),
                    "manual_control": self.var_toggle_manual_control.get(),
-                   "task": task }
+                   "task": task}
         return params
 
     def toggle_manual_control(self):

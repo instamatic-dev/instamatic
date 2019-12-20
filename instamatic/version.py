@@ -32,7 +32,7 @@ def register_thank_you_message():
     def message():
         msg = f"Thank you for using {__long_title__}. If you found this software useful, please consider citing it: {__citation__}"
 
-        h = "+"*74
+        h = "+" * 74
         lines = [f"+ {line:70} +" for line in textwrap.wrap(msg)]
 
         msg = textwrap.fill(msg)

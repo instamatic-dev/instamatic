@@ -20,7 +20,7 @@ def apply_transform_to_image(img, transform, center=None):
     """
 
     if center is None:
-        center = (np.array(img.shape)[::-1]-1)/2.0
+        center = (np.array(img.shape)[::-1] - 1) / 2.0
     # shift = (center - center.dot(transform)).dot(np.linalg.inv(transform))
 
     displacement = np.dot(transform, center)
@@ -43,13 +43,13 @@ def affine_transform_ellipse_to_circle(azimuth: float, amplitude: float, inverse
     """
     sin = np.sin(azimuth)
     cos = np.cos(azimuth)
-    sx    = 1 - amplitude
-    sy    = 1 + amplitude
+    sx = 1 - amplitude
+    sy = 1 + amplitude
 
     # apply in this order
-    rot1 = np.array((cos, -sin,  sin, cos)).reshape(2, 2)
+    rot1 = np.array((cos, -sin, sin, cos)).reshape(2, 2)
     scale = np.array((sx, 0, 0, sy)).reshape(2, 2)
-    rot2 = np.array((cos,  sin, -sin, cos)).reshape(2, 2)
+    rot2 = np.array((cos, sin, -sin, cos)).reshape(2, 2)
 
     composite = rot1.dot(scale).dot(rot2)
 
@@ -84,7 +84,7 @@ def apply_stretch_correction(z, center=None, azimuth: float = 0, amplitude: floa
         (N,N) ndarray
     """
     azimuth_rad = np.radians(azimuth)    # go to radians
-    amplitude_pc = amplitude / (2*100)   # as percentage
+    amplitude_pc = amplitude / (2 * 100)   # as percentage
     tr_mat = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
     z = apply_transform_to_image(z, tr_mat, center=center)
     return z
@@ -93,7 +93,7 @@ def apply_stretch_correction(z, center=None, azimuth: float = 0, amplitude: floa
 def make_title(prop):
     """Make the title for the plot"""
     azimuth = np.degrees(prop.orientation)
-    amplitude = -1 + prop.major_axis_length/prop.minor_axis_length
+    amplitude = -1 + prop.major_axis_length / prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
     s = f"Azimuth: {azimuth:.2f}, amplitude: {amplitude:.2%}\nmin/max length: {minlen:.1f}, {maxlen:.1f}"
     return s
@@ -116,11 +116,11 @@ def get_sigma_interactive(img, sigma=20):
     im2 = ax.imshow(edges, alpha=0.5, interpolation=None)
 
     axsigma = fig.add_axes([0.25, 0.10, 0.5, 0.03])
-    axvmax  = fig.add_axes([0.25, 0.15, 0.5, 0.03])
+    axvmax = fig.add_axes([0.25, 0.15, 0.5, 0.03])
 
     scaled_min, scaled_max = np.percentile(img, q=(0.2, 99.8))
-    slsigma = Slider(axsigma, 'Sigma',    0, 50,   valinit=sigma)
-    slvmax  = Slider(axvmax,  'Contrast', scaled_min, scaled_max, valinit=(scaled_min + scaled_max) / 2)
+    slsigma = Slider(axsigma, 'Sigma', 0, 50, valinit=sigma)
+    slvmax = Slider(axvmax, 'Contrast', scaled_min, scaled_max, valinit=(scaled_min + scaled_max) / 2)
 
     def update_vmax(val):
         im1.set_clim(vmax=slvmax.val)
@@ -179,7 +179,7 @@ def get_ring_props(edges):
     labeled = label(edges)
 
     props = []
-    for i in range(1, labeled.max()+1):
+    for i in range(1, labeled.max() + 1):
         obj = labeled == i
 
         # fill holes so that regionprops can calculate inertia tensor correctly

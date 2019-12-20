@@ -109,15 +109,15 @@ class DebugFrame(LabelFrame):
         self.var_ff_darkfield = BooleanVar(value=False)
 
     def kill_server(self):
-        self.q.put(("autoindex", { "task": "kill_server" } ))
+        self.q.put(("autoindex", {"task": "kill_server"}))
         self.triggerEvent.set()
 
     def start_server(self):
-        self.q.put(("autoindex", { "task": "start_server" } ))
+        self.q.put(("autoindex", {"task": "start_server"}))
         self.triggerEvent.set()
 
     def register_server(self):
-        self.q.put(("autoindex", { "task": "register_server" } ))
+        self.q.put(("autoindex", {"task": "register_server"}))
         self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
@@ -144,11 +144,11 @@ class DebugFrame(LabelFrame):
             print(f"Flushed job: {job}->{kwargs}")
 
     def open_ipython(self):
-        self.q.put(("debug", { "task": "open_ipython" } ))
+        self.q.put(("debug", {"task": "open_ipython"}))
         self.triggerEvent.set()
 
     def report_status(self):
-        self.q.put(("debug", { "task": "report_status" } ))
+        self.q.put(("debug", {"task": "report_status"}))
         self.triggerEvent.set()
 
     def close_down(self):
@@ -156,7 +156,7 @@ class DebugFrame(LabelFrame):
         # print(script, script.exists())
         if not script.exists():
             return IOError(f"No such script: {script}")
-        self.q.put(("debug", { "task": "run_script", "script": script } ))
+        self.q.put(("debug", {"task": "run_script", "script": script}))
         self.triggerEvent.set()
 
     def browse(self):
@@ -172,11 +172,11 @@ class DebugFrame(LabelFrame):
         script = self.script_file.get()
         if script in self.scripts:
             script = self.scripts[script]
-        self.q.put(("debug", { "task": "run_script", "script": script } ))
+        self.q.put(("debug", {"task": "run_script", "script": script}))
         self.triggerEvent.set()
 
     def run_flatfield_collection(self):
-        self.q.put(("flatfield", { "task": "collect", "frames": self.var_ff_frames.get(), "collect_darkfield": self.var_ff_darkfield.get() } ))
+        self.q.put(("flatfield", {"task": "collect", "frames": self.var_ff_frames.get(), "collect_darkfield": self.var_ff_darkfield.get()}))
         self.triggerEvent.set()
 
 

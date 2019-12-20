@@ -5,20 +5,20 @@ import random
 
 
 NTRLMAPPING = {
-   "GUN1" : 0,
-   "GUN2" : 1,
-   "CLA1" : 2,
-   "CLA2" : 3,
-   "SHIFT" : 4,
-   "TILT" : 5,
-   "ANGLE" : 6,
-   "CLS" : 7,
-   "IS1" : 8,
-   "IS2" : 9,
-   "SPOT" : 10,
-   "PLA" : 11,
-   "OLS" : 12,
-   "ILS" : 13
+   "GUN1": 0,
+   "GUN2": 1,
+   "CLA1": 2,
+   "CLA2": 3,
+   "SHIFT": 4,
+   "TILT": 5,
+   "ANGLE": 6,
+   "CLS": 7,
+   "IS1": 8,
+   "IS2": 9,
+   "SPOT": 10,
+   "PLA": 11,
+   "OLS": 12,
+   "ILS": 13
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
@@ -114,7 +114,7 @@ class SimuMicroscope(object):
 
         self._StagePosition_x = random.randint(-100000, 100000)
         self._StagePosition_y = random.randint(-100000, 100000)
-        self._StagePosition_z = random.randint(-10000,  10000)
+        self._StagePosition_z = random.randint(-10000, 10000)
         self._StagePosition_a = 0.0  # random.randint(-40, 40)
         self._StagePosition_b = 0.0  # random.randint(-40, 40)
 
@@ -224,7 +224,7 @@ class SimuMicroscope(object):
         return self._HT
 
     def getCurrentDensity(self) -> float:
-        rand_val = (random.random()-0.5) * 10000
+        rand_val = (random.random() - 0.5) * 10000
         return self.CurrentDensity_value + rand_val
 
     def getBrightness(self) -> int:
@@ -249,15 +249,15 @@ class SimuMicroscope(object):
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
 
-        if current_mode =="diff":
+        if current_mode == "diff":
             selector = self.range_diff.index(value)
-        elif current_mode =="lowmag":
+        elif current_mode == "lowmag":
             selector = self.range_lowmag.index(value)
-        elif current_mode =="samag":
+        elif current_mode == "samag":
             selector = self.range_samag.index(value)
-        elif current_mode =="mag1":
+        elif current_mode == "mag1":
             selector = self.range_mag1.index(value)
-        elif current_mode =="mag2":
+        elif current_mode == "mag2":
             selector = self.range_mag2.index(value)
 
         return selector
@@ -268,27 +268,27 @@ class SimuMicroscope(object):
         if index < 0:
             raise ValueError(f"Cannot lower magnification (index={index})")
 
-        if current_mode =="diff":
+        if current_mode == "diff":
             value = self.range_diff[index]
-        elif current_mode =="lowmag":
+        elif current_mode == "lowmag":
             value = self.range_lowmag[index]
-        elif current_mode =="samag":
+        elif current_mode == "samag":
             value = self.range_samag[index]
-        elif current_mode =="mag1":
+        elif current_mode == "mag1":
             value = self.range_mag1[index]
-        elif current_mode =="mag2":
+        elif current_mode == "mag2":
             value = self.range_mag2[index]
 
         self.setMagnification(value)
 
     def increaseMagnificationIndex(self) -> int:
         idx = self.getMagnificationIndex
-        self.setMagnificationIndex(idx+1)
+        self.setMagnificationIndex(idx + 1)
         return 1
 
     def decreaseMagnificationIndex(self) -> int:
         idx = self.getMagnificationIndex
-        self.setMagnificationIndex(idx-1)
+        self.setMagnificationIndex(idx - 1)
         return 1
 
     def getMagnificationRanges(self) -> dict:

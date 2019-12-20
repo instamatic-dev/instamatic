@@ -23,13 +23,13 @@ def minimum_bounding_rectangle(points):
     from scipy.ndimage.interpolation import rotate
     from scipy.spatial import ConvexHull
 
-    pi2 = np.pi/2.0
+    pi2 = np.pi / 2.0
 
     # get the convex hull for the points
     hull_points = points[ConvexHull(points).vertices]
 
     # calculate edge angles
-    edges = np.zeros((len(hull_points)-1, 2))
+    edges = np.zeros((len(hull_points) - 1, 2))
     edges = hull_points[1:] - hull_points[:-1]
 
     angles = np.zeros((len(edges)))
@@ -41,8 +41,8 @@ def minimum_bounding_rectangle(points):
     # find rotation matrices
     rotations = np.vstack([
         np.cos(angles),
-        np.cos(angles-pi2),
-        np.cos(angles+pi2),
+        np.cos(angles - pi2),
+        np.cos(angles + pi2),
         np.cos(angles)]).T
 
     rotations = rotations.reshape((-1, 2, 2))
@@ -161,7 +161,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
         a = arr[0]
         rect = minimum_bounding_rectangle(a)
 
-    ## This is not robust if there are other shaded areas
+    # This is not robust if there are other shaded areas
     # rect = sorted(arr, key=lambda x: len(x), reverse=True)[0]
     # rect = minimum_bounding_rectangle(beamstop)
 

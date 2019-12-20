@@ -6,22 +6,22 @@ from collections import defaultdict
 
 
 # int
-INTEGER = ("Color",        "NumPts",       "Draw",         "Regis",
-           "MapMontage",   "MapSection",   "MapBinning",   "MapMagInd",
-           "MapCamera",    "ShutterMode",  "MapSpotSize",
-           "MapSlitIn",    "ImageType",    "MontUseStage",
-           "MapProbeMode", "MapLDConSet",  "Type",           "GroupID",
-           "MapID",        "PieceOn",      "Acquire",        "DrawnID",
-           "MontBinning",  "SamePosId",    "OrigReg" ,
+INTEGER = ("Color", "NumPts", "Draw", "Regis",
+           "MapMontage", "MapSection", "MapBinning", "MapMagInd",
+           "MapCamera", "ShutterMode", "MapSpotSize",
+           "MapSlitIn", "ImageType", "MontUseStage",
+           "MapProbeMode", "MapLDConSet", "Type", "GroupID",
+           "MapID", "PieceOn", "Acquire", "DrawnID",
+           "MontBinning", "SamePosId", "OrigReg",
            # mdoc
            "SpotSize",
-           "Binning",       "CameraIndex",  "DividedBy2",    "MagIndex",
-           "Magnification", "ProbeMode",    "MoveStage",
-           "Alpha",         "ImageSize",    "DataMode",      "Montage",
-           "ImageSeries",   "UsingCDS",     "LowDoseConSet", "NumSubFrames",
+           "Binning", "CameraIndex", "DividedBy2", "MagIndex",
+           "Magnification", "ProbeMode", "MoveStage",
+           "Alpha", "ImageSize", "DataMode", "Montage",
+           "ImageSeries", "UsingCDS", "LowDoseConSet", "NumSubFrames",
            # other
-           "Corner",        "Imported",     "K2ReadMode",     "MapAlpha",
-           "PolyID",        "RealignReg",   "RealignedID",    "RegPt",
+           "Corner", "Imported", "K2ReadMode", "MapAlpha",
+           "PolyID", "RealignReg", "RealignedID", "RegPt",
            "RegisteredToID", "RotOnLoad",
            # DE-12
            "DE12-TotalNumberOfFrames",
@@ -36,13 +36,13 @@ INTEGER = ("Color",        "NumPts",       "Draw",         "Regis",
           )
 
 # float
-FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",
+FLOAT = ("MapExposure", "MapIntensity", "MapTiltAngle", "MapSettling",
          # .mdoc
-         "StageZ",            "PixelSpacing",  "Defocus",      "RotationAngle",
-         "CountsPerElectron", "TargetDefocus", "TiltAngle",    "ExposureTime",
-         "DriftSettling",     "Intensity",     "ExposureDose", "PriorRecordDose",
+         "StageZ", "PixelSpacing", "Defocus", "RotationAngle",
+         "CountsPerElectron", "TargetDefocus", "TiltAngle", "ExposureTime",
+         "DriftSettling", "Intensity", "ExposureDose", "PriorRecordDose",
          # other
-         "DefocusOffset",     "FocusAxisPos",  "MapSlitWidth",
+         "DefocusOffset", "FocusAxisPos", "MapSlitWidth",
          # DE-12
          "DE12-ServerSoftwareVersion",
          "DE12-PreexposureTime(s)",
@@ -50,36 +50,36 @@ FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",
         )
 
 # str
-STRING = ("MapFile",  "Note",
+STRING = ("MapFile", "Note",
           # .mdoc
-          "DateTime",     "ImageFile",   "NavigatorLabel",
+          "DateTime", "ImageFile", "NavigatorLabel",
           "SubFramePath", "ChannelName",
          )
 
 # list, float
-FLOAT_LIST = ("StageXYZ",         "RawStageXY",      "MapScaleMat",       "XYinPc",
-              "PtsX",             "PtsY",            "StageXYZ",          "MapMinMaxScale",
+FLOAT_LIST = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
+              "PtsX", "PtsY", "StageXYZ", "MapMinMaxScale",
               # .mdoc
-              "StagePosition",    "MinMaxMean",      "XedgeDxyVS",        "YedgeDxyVS",
-              "XedgeDxy",         "YedgeDxy",        "ImageShift",        "BufISXY",
+              "StagePosition", "MinMaxMean", "XedgeDxyVS", "YedgeDxyVS",
+              "XedgeDxy", "YedgeDxy", "ImageShift", "BufISXY",
               # other
-              "BklshXY",          "FocusOffsets",    "LocalErrXY",        "NetViewShiftXY",
-              "RealignErrXY",     "ViewBeamShiftXY", "ViewBeamTiltXY",
-              "SuperMontCoords",  "StageOffsets",    "FrameDosesAndNumbers",
+              "BklshXY", "FocusOffsets", "LocalErrXY", "NetViewShiftXY",
+              "RealignErrXY", "ViewBeamShiftXY", "ViewBeamTiltXY",
+              "SuperMontCoords", "StageOffsets", "FrameDosesAndNumbers",
               "FilterSlitAndLoss",
               # external
-              "CoordsInMap",      "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
+              "CoordsInMap", "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
              )
 
 # list, int
-INTEGER_LIST = ("MapWidthHeight",     "MapFramesXY",
+INTEGER_LIST = ("MapWidthHeight", "MapFramesXY",
                 # .mdoc
-                "PieceCoordinates",   "AlignedPieceCoordsVS",
+                "PieceCoordinates", "AlignedPieceCoordsVS",
                 "AlignedPieceCoords", "MontBacklash",
-                "ValidBacklash",      "CameraModes",   "FilterState",
-                "ConSetUsed",         "MultishotHoleAndPosition",
+                "ValidBacklash", "CameraModes", "FilterState",
+                "ConSetUsed", "MultishotHoleAndPosition",
                 # other
-                "HoleArray",          "LDAxisAngle",   "SkipHoles",
+                "HoleArray", "LDAxisAngle", "SkipHoles",
                 "SuperMontXY",
                )
 
@@ -281,7 +281,7 @@ class MapItem(NavItem):
         try:
             d["BklshXY"] = self.BklshXY
         except AttributeError:
-            d["BklshXY"] = 10 , -10
+            d["BklshXY"] = 10, -10
         d["Color"] = 0
         d["DrawnID"] = self.MapID
         d["GroupID"] = MapItem.GROUP_ID_ITERATOR

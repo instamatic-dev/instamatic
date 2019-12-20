@@ -23,7 +23,7 @@ def isedge(prop):
     """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
     Uses a histogram to determine if an edge is detected. If the lowest bin is the dominant one,
     assume black area is measured (the edge)"""
-    if  (prop._slice[0].start == 0) or \
+    if (prop._slice[0].start == 0) or \
         (prop._slice[1].start == 0) or \
         (prop._slice[0].stop == prop._intensity_image.shape[0]) or \
         (prop._slice[1].stop == prop._intensity_image.shape[1]):
@@ -63,36 +63,36 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     offset = offset / 255.0
 
     # normalize
-    img = img * (1.0/img.max())
+    img = img * (1.0 / img.max())
 
     # adaptive thresholding, because contrast is not equal over image
     arr = img > filters.threshold_local(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
 
-    arr = morphology.remove_small_objects(arr, min_size=4*4, connectivity=0) # remove noise
+    arr = morphology.remove_small_objects(arr, min_size=4 * 4, connectivity=0)  # remove noise
 
     # magic
-    arr = morphology.binary_closing(arr, morphology.disk(footprint)) # dilation + erosion
-    arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion
+    arr = morphology.binary_closing(arr, morphology.disk(footprint))  # dilation + erosion
+    arr = morphology.binary_erosion(arr, morphology.disk(footprint))  # erosion
 
     # remove carbon lines
     if remove_carbon_lacing:
-        arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
-        arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
-    arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
+        arr = morphology.remove_small_objects(arr, min_size=8 * 8, connectivity=0)
+        arr = morphology.remove_small_holes(arr, min_size=32 * 32, connectivity=0)
+    arr = morphology.binary_dilation(arr, morphology.disk(footprint))  # dilation
 
     # get background pixels
-    bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint*2)) | arr)
+    bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint * 2)) | arr)
 
     # 2: features
     # 1: background
     # 0: unlabeled
-    markers = arr*2 + bkg
+    markers = arr * 2 + bkg
 
     # segment using random_walker
     segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5, 5), mode='bf')
-    segmented = segmented.astype(int) -1
+    segmented = segmented.astype(int) - 1
 
     return arr, segmented
 
@@ -149,7 +149,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
 
     crystals = []
     for prop in props:
-        area = prop.area*px*py
+        area = prop.area * px * py
         bbox = np.array(prop.bbox)
 
         # origin of the prop
@@ -173,17 +173,17 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
             cluster_centroids, closest_centroids = kmeans2(w, nclust, iter=iters, minit='points')
 
             # convert to image coordinates
-            xy = (cluster_centroids*std + origin[0:2]) / scale
+            xy = (cluster_centroids * std + origin[0:2]) / scale
             crystals.extend([CrystalPosition(x, y, False, nclust, area, prop.area) for x, y in xy])
         else:
             x, y = prop.centroid
-            crystals.append(CrystalPosition(x/scale, y/scale, True, nclust, area, prop.area))
+            crystals.append(CrystalPosition(x / scale, y / scale, True, nclust, area, prop.area))
 
     if plot:
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
         if len(crystals) > 0:
-            x, y = np.array([(crystal.x*scale, crystal.y*scale) for crystal in crystals]).T
+            x, y = np.array([(crystal.x * scale, crystal.y * scale) for crystal in crystals]).T
             plt.scatter(y, x, color="red")
         ax = plt.axes()
         ax.set_axis_off()

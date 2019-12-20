@@ -20,7 +20,7 @@ from pathlib import Path
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
     """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
-    stepsize = np.array((0.016*512, 0.016*512))
+    stepsize = np.array((0.016 * 512, 0.016 * 512))
 
     x1, y1 = pos1 = np.array((0, 0))
     x2, y2 = pos2 = np.array((1000, 1000))
@@ -55,10 +55,10 @@ def get_gridpoints_in_circle(nx, ny=0, radius=1, borderwidth=0.8):
     # reverse order of every other row for more efficient pathing
     xgrid[1::2] = np.fliplr(xgrid[1::2])
 
-    sel = xgrid**2 + ygrid**2 < 1.0*(1-borderwidth)
+    sel = xgrid**2 + ygrid**2 < 1.0 * (1 - borderwidth)
     xvals = xgrid[sel].flatten()
     yvals = ygrid[sel].flatten()
-    return xvals*radius, yvals*radius
+    return xvals * radius, yvals * radius
 
 
 def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
@@ -76,15 +76,15 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         scaling factor for the borderwidth
     """
 
-    nx = 1 + int(2.0*radius / (box_x+padding))
+    nx = 1 + int(2.0 * radius / (box_x + padding))
     if box_y:
-        ny = 1 + int(2.0*radius / (box_y+padding))
-        diff = 0.5*(2*max(box_x, box_y)**2)**0.5
+        ny = 1 + int(2.0 * radius / (box_y + padding))
+        diff = 0.5 * (2 * max(box_x, box_y)**2)**0.5
     else:
-        diff = 0.5*(2*(box_x)**2)**0.5
+        diff = 0.5 * (2 * (box_x)**2)**0.5
         ny = 0
 
-    borderwidth = k*(1.0 - (radius - diff) / radius)
+    borderwidth = k * (1.0 - (radius - diff) / radius)
 
     x_offsets, y_offsets = get_gridpoints_in_circle(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
 
@@ -92,8 +92,8 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         sin = np.sin(angle)
         cos = np.cos(angle)
         r = np.array([
-                    [ cos, -sin],
-                    [ sin,  cos]])
+                    [cos, -sin],
+                    [sin, cos]])
         x_offsets, y_offsets = np.dot(np.vstack([x_offsets, y_offsets]).T, r).T
 
     if plot:
@@ -105,7 +105,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         print()
         print(textstr)
 
-        cx, cy = (box_x/2.0, box_y/2.0)
+        cx, cy = (box_x / 2.0, box_y / 2.0)
         if angle:
             cx, cy = np.dot((cx, cy), r)
 
@@ -116,7 +116,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
             plt.scatter(x_offsets, y_offsets, picker=8, marker="+")
             circle = plt.Circle((0, 0), radius, fill=False, color="blue")
             ax.add_artist(circle)
-            circle = plt.Circle((0, 0), radius*(1-borderwidth/2), fill=False, color="red")
+            circle = plt.Circle((0, 0), radius * (1 - borderwidth / 2), fill=False, color="red")
             ax.add_artist(circle)
 
             for dx, dy in zip(x_offsets, y_offsets):
@@ -190,11 +190,11 @@ class Experiment(object):
             self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
 
-        self.image_binsize   = kwargs.get("image_binsize",       self.ctrl.cam.default_binsize)
-        self.image_exposure  = kwargs.get("image_exposure",      self.ctrl.cam.default_exposure)
-        self.image_spotsize  = kwargs.get("image_spotsize",      4   )
+        self.image_binsize = kwargs.get("image_binsize", self.ctrl.cam.default_binsize)
+        self.image_exposure = kwargs.get("image_exposure", self.ctrl.cam.default_exposure)
+        self.image_spotsize = kwargs.get("image_spotsize", 4)
         # self.magnification   = kwargs["magnification"]
-        self.image_threshold = kwargs.get("image_threshold",     100)
+        self.image_threshold = kwargs.get("image_threshold", 100)
          # do not store brightness to self, as this is set later when calibrating the direct beam
         image_brightness = kwargs.get("diff_brightness", 38000)
 
@@ -216,9 +216,9 @@ class Experiment(object):
         self.image_dimensions = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
         self.log.info("Image dimensions %s", self.image_dimensions)
 
-        self.diff_binsize    = kwargs.get("diff_binsize",        self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
-        self.diff_exposure   = kwargs.get("diff_exposure",       self.ctrl.cam.default_exposure)
-        self.diff_spotsize   = kwargs.get("diff_spotsize",       4   )
+        self.diff_binsize = kwargs.get("diff_binsize", self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
+        self.diff_exposure = kwargs.get("diff_exposure", self.ctrl.cam.default_exposure)
+        self.diff_spotsize = kwargs.get("diff_spotsize", 4)
         # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
 
         try:
@@ -234,7 +234,7 @@ class Experiment(object):
             self.diff_difffocus = self.ctrl.difffocus.value
             self.diff_cameralength = self.ctrl.magnification.value
 
-        self.diff_pixelsize  = config.calibration.pixelsize_diff[self.diff_cameralength]
+        self.diff_pixelsize = config.calibration.pixelsize_diff[self.diff_cameralength]
         self.change_spotsize = self.diff_spotsize != self.image_spotsize
         self.crystal_spread = kwargs.get("crystal_spread", 0.6)
 
@@ -264,13 +264,13 @@ class Experiment(object):
         self.offsets = offsets * 1000
 
         # store kwargs to experiment drc
-        kwargs["diff_brightness"]   = self.diff_brightness
+        kwargs["diff_brightness"] = self.diff_brightness
         kwargs["diff_cameralength"] = self.diff_cameralength
-        kwargs["diff_difffocus"]    = self.diff_difffocus
-        kwargs["scan_radius"]       = self.scan_radius
-        kwargs["scan_centers"]      = self.scan_centers.tolist()
-        kwargs["stage_positions"]   = len(self.offsets)
-        kwargs["image_dimensions"]  = self.image_dimensions
+        kwargs["diff_difffocus"] = self.diff_difffocus
+        kwargs["scan_radius"] = self.scan_radius
+        kwargs["scan_centers"] = self.scan_centers.tolist()
+        kwargs["stage_positions"] = len(self.offsets)
+        kwargs["image_dimensions"] = self.image_dimensions
 
         self.log.info("params", kwargs)
 
@@ -319,7 +319,7 @@ class Experiment(object):
 
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.mode_diffraction()
-        self.ctrl.difffocus.value = self.diff_difffocus # difffocus must be set AFTER switching to diffraction mode
+        self.ctrl.difffocus.value = self.diff_difffocus  # difffocus must be set AFTER switching to diffraction mode
 
     def report_status(self):
         """Report experiment status"""
@@ -512,10 +512,10 @@ class Experiment(object):
                 for d in (d_diff, d_pos, d_cryst):
                     h.update(d)
 
-                h["crystal_is_isolated"]   = crystal_positions[k].isolated
-                h["crystal_clusters"]      = crystal_positions[k].n_clusters
+                h["crystal_is_isolated"] = crystal_positions[k].isolated
+                h["crystal_clusters"] = crystal_positions[k].n_clusters
                 h["total_area_micrometer"] = crystal_positions[k].area_micrometer
-                h["total_area_pixel"]      = crystal_positions[k].area_pixel
+                h["total_area_pixel"] = crystal_positions[k].area_pixel
 
                 # img_processed = neural_network.preprocess(img.astype(np.float))
                 # quality = neural_network.predict(img_processed)

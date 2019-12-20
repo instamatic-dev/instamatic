@@ -40,7 +40,7 @@ def weight_map(shape, method="block", plot=False):
 
     corner = (c_x**2 + c_y**2)**0.5
 
-    a, b = np.meshgrid(np.arange(-c_x, c_x+1), np.arange(-c_y, c_y+1))
+    a, b = np.meshgrid(np.arange(-c_x, c_x + 1), np.arange(-c_y, c_y + 1))
 
     if method == "block":
         a2 = c_x - np.abs(a)
@@ -48,7 +48,7 @@ def weight_map(shape, method="block", plot=False):
 
         d = np.min(np.stack((a2, b2)), axis=0)
     elif method == "circle":
-        d = corner - np.sqrt(a**2+b**2)
+        d = corner - np.sqrt(a**2 + b**2)
     else:
         raise ValueError(f"No such method: `{method}`")
 
@@ -132,7 +132,7 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = F
     s_right = np.s_[:, -overlap_x:]
     s_left = np.s_[:, :overlap_x]
     s_top = np.s_[:overlap_y]
-    s_bottom  = np.s_[-overlap_y:]
+    s_bottom = np.s_[-overlap_y:]
 
     slices = (s_right, s_left, s_top, s_bottom)
     labels = ("right", "left", "top", "bottom")
@@ -199,7 +199,7 @@ def define_pairs(grid: "np.ndarray"):
 
     shape = np.array(footprint.shape)
     assert shape[0] == shape[1], "Axes must be equal"
-    assert shape[0] % 2 == 1,    "Axis length must be odd"
+    assert shape[0] % 2 == 1, "Axis length must be odd"
     center = shape // 2
 
     connected = np.argwhere(footprint == 1) - center
@@ -237,7 +237,7 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
 
     for i in (-1, 1):
         for j in (-1, 1):
-            new_shift = (i*shift_x, j*shift_y)
+            new_shift = (i * shift_x, j * shift_y)
             strip1_offset = ndimage.shift(strip1, new_shift)
             offset = strip1_offset - strip0.astype(float)
             sum_score = np.abs(offset).sum()
@@ -307,20 +307,20 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
 
 
 def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y):
-    blank = np.zeros((res_x*2, res_y*2), dtype=np.int32)
+    blank = np.zeros((res_x * 2, res_y * 2), dtype=np.int32)
 
     center = np.array(blank.shape) // 2
     origin = np.array((res_x, res_y)) // 2
 
-    coord0 = (center - difference_vector/2 - origin).astype(int)
-    coord1 = (center + difference_vector/2 - origin).astype(int)
+    coord0 = (center - difference_vector / 2 - origin).astype(int)
+    coord1 = (center + difference_vector / 2 - origin).astype(int)
 
     print(f"Coord0: {coord0} | Coord1: {coord1}")
 
     txt = f"Difference vector\n#{seq0}:{idx0} -> #{seq1}:{idx1} = {difference_vector}"
 
-    blank[coord0[0]: coord0[0]+res_x, coord0[1]: coord0[1] + res_y] += im0
-    blank[coord1[0]: coord1[0]+res_x, coord1[1]: coord1[1] + res_y] += im1
+    blank[coord0[0]: coord0[0] + res_x, coord0[1]: coord0[1] + res_y] += im0
+    blank[coord1[0]: coord1[0] + res_x, coord1[1]: coord1[1] + res_y] += im1
 
     # Create a Rectangle patch
     rect0 = patches.Rectangle(coord0[::-1], res_x, res_y, linewidth=1, edgecolor='r', facecolor='none')
@@ -403,7 +403,7 @@ class Montage(object):
             "gridshape": gridshape,
             "direction": direction,
             "zigzag": zigzag,
-            "flip" : False
+            "flip": False
         }
 
         m = cls(images=images, gridspec=gridspec)
@@ -499,7 +499,7 @@ class Montage(object):
 
     def get_difference_vectors(self, threshold: float = 0.02, overlap_k: float = 1.0,
                                method: str = "imreg", segment: bool = False,
-                               plot : bool = False, verbose : bool = True):
+                               plot: bool = False, verbose: bool = True):
         """Get the difference vectors between the neighbouring images
         The images are overlapping by some amount defined using `overlap`.
         These strips are compared with cross correlation to calculate the
@@ -584,7 +584,7 @@ class Montage(object):
             else:  # method = skimage.feature.register_translation
                 shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
                 fft = np.ones_like(strip0)
-                score = 1-error
+                score = 1 - error
 
             shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
 
@@ -670,14 +670,14 @@ class Montage(object):
         # setup parameters
         params = lmfit.Parameters()
 
-        middle_i = int(n_gridpoints / 2 )  # Find index of middlemost item
+        middle_i = int(n_gridpoints / 2)  # Find index of middlemost item
         for i, row in enumerate(vects):
             if i not in has_neighbours:
                 vary = False
             else:
                 vary = (i != middle_i)  # anchor on middle frame
-            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0]-res_x/2, max=row[0]+res_x/2)
-            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1]-res_y/2, max=row[1]+res_y/2)
+            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0] - res_x / 2, max=row[0] + res_x / 2)
+            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1] - res_y / 2, max=row[1] + res_y / 2)
 
         def obj_func(params, diff_vects):
             V = np.array([p.value for p in params.values()]).reshape(-1, 2)
@@ -782,7 +782,7 @@ class Montage(object):
 
                 # NOTE that y/x are flipped for display in matplotlib ONLY
                 ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
-                rect = patches.Rectangle([y0, x0], res_x/binning, res_y/binning, linewidth=0.5, edgecolor='r', facecolor='none')
+                rect = patches.Rectangle([y0, x0], res_x / binning, res_y / binning, linewidth=0.5, edgecolor='r', facecolor='none')
                 ax.add_patch(rect)
 
         if method in ("average", "weighted"):
@@ -859,7 +859,7 @@ class Montage(object):
 
         return px_coord.astype(int)
 
-    def find_holes(self, stitched, diameter: float = 40e3, tolerance : float = 0.1,
+    def find_holes(self, stitched, diameter: float = 40e3, tolerance: float = 0.1,
                     pixelsize: float = None, plot: bool = False) -> tuple:
         """Find grid holes in the montage image
 

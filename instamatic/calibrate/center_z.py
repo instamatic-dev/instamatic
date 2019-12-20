@@ -10,17 +10,17 @@ def reject_outlier(data, m=2):
     m = 2
     u = np.mean(data)
     s = np.std(data)
-    filtered = [e for e in data if (u - m*s < e < u + m*s)]
+    filtered = [e for e in data if (u - m * s < e < u + m * s)]
     return filtered
 
 
 def eliminate_backlash_in_tiltx(ctrl):
     a_i = ctrl.stage.a
     if a_i < 0:
-        ctrl.stage.set(a=a_i + 0.5 , wait=True)
+        ctrl.stage.set(a=a_i + 0.5, wait=True)
         return 0
     else:
-        ctrl.stage.set(a=a_i - 0.5 , wait=True)
+        ctrl.stage.set(a=a_i - 0.5, wait=True)
         return 1
 
 
@@ -69,7 +69,7 @@ def center_z_height(ctrl, verbose=False):
     for e in d_f:
         z_f.append(z[d.index(e)])
     p = np.polyfit(z, d, 1)
-    z_center = -p[1]/p[0]
+    z_center = -p[1] / p[0]
     satisfied = input(f"Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.")
     if satisfied == "x":
         ctrl.stage.set(a=a0, z=z0)
@@ -77,10 +77,10 @@ def center_z_height(ctrl, verbose=False):
             print("Did not find proper eucentric height...")
     else:
         if z_center > ctrl.stage.z:
-            ctrl.stage.set(a=a0, z=z_center-2000)
+            ctrl.stage.set(a=a0, z=z_center - 2000)
             ctrl.stage.set(a=a0, z=z_center)
         else:
-            ctrl.stage.set(a=a0, z=z_center+2000)
+            ctrl.stage.set(a=a0, z=z_center + 2000)
             ctrl.stage.set(a=a0, z=z_center)
 
         print("\033[k", "Eucentric height set. Find the crystal again and start data collection!", end="\r")
@@ -138,19 +138,19 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
         try:
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread=spread, offset=offset)
 
-            if crystal_inter1/crystal_inter < 2 and crystal_inter1/crystal_inter > 0.5:
+            if crystal_inter1 / crystal_inter < 2 and crystal_inter1 / crystal_inter > 0.5:
                 #print(f"Feature Captured. Area: {crystal_inter1} pixels")
                 shift = np.subtract(crystal_inter_pos, crystal_inter1_pos)
                 #print(f"Shift: {shift}")
                 ctrl.stage.stop()
                 if shift[0] > 5:
-                    ctrl.stage.z = z0 - (rotation_dir - 0.5)*increment
-                    #print(f"Z height adjusted: - {rotation_dir - 0.5)*increment}.")
+                    ctrl.stage.z = z0 - (rotation_dir - 0.5) * increment
+                    # print(f"Z height adjusted: - {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
                 elif shift[0] < -5:
-                    ctrl.stage.z = z0 + (rotation_dir - 0.5)*increment
-                    #print(f"Z height adjusted: + {rotation_dir - 0.5)*increment}.")
+                    ctrl.stage.z = z0 + (rotation_dir - 0.5) * increment
+                    # print(f"Z height adjusted: + {rotation_dir - 0.5)*increment}.")
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos
 

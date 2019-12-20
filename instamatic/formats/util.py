@@ -29,7 +29,7 @@ def fromfile(fin, dtype, count, sep=''):
     if hasattr(fin, 'fileno'):
         return np.fromfile(fin, dtype, count, sep)
     else:
-        return np.frombuffer(fin.read(count*dtype.itemsize), dtype, count)
+        return np.frombuffer(fin.read(count * dtype.itemsize), dtype, count)
 
 
 def uopen(filename, mode):
@@ -53,13 +53,13 @@ def uopen(filename, mode):
     except:
         f = filename
     else:
-        if os.path.splitext(filename)[1]=='.bz2':
+        if os.path.splitext(filename)[1] == '.bz2':
             f = bz2.BZ2File(filename, mode)
         else:
             try:
                 f = open(filename, mode)
             except:
-                _logger.error("Mode: %s"%str(mode))
+                _logger.error("Mode: %s" % str(mode))
                 raise
     return f
 
@@ -104,7 +104,7 @@ def update_header(dest, source, header_map, tag=None):
             dest[key] = source[header_map.get(key, key)]
         except:
             if tag is not None:
-                try: dest[key] = source[tag+"_"+key]
+                try: dest[key] = source[tag + "_" + key]
                 except: pass
     return dest
 

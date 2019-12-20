@@ -20,7 +20,7 @@ class ServerError(Exception):
 
 def kill_server(p):
     # p.kill is not adequate
-    sp.call(['taskkill', '/F', '/T', '/PID',  str(p.pid)])
+    sp.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
 
 
 def start_server_in_subprocess():
@@ -67,7 +67,7 @@ class CamClient(object):
 
         xres, yres = self.getDimensions()
         bitdepth = 4
-        self.imagebufsize = bitdepth*xres*yres + self.bufsize
+        self.imagebufsize = bitdepth * xres * yres + self.bufsize
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,7 +122,7 @@ class CamClient(object):
         from instamatic.camera.camera import get_cam
         cam = get_cam(self.name)
 
-        self._dct = {key: value for key, value in  cam.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in cam.__dict__.items() if not key.startswith("_")}
         self._dct["get_attrs"] = None
 
     def _init_attr_dict(self):

@@ -29,7 +29,7 @@ class CalibBrightness(object):
         return f"CalibBrightness(slope={self.slope}, intercept={self.intercept})"
 
     def brightness_to_pixelsize(self, val):
-        return self.slope*val + self.intercept
+        return self.slope * val + self.intercept
 
     def pixelsize_to_brightness(self, val):
         return int((val - self.intercept) / self.slope)
@@ -66,7 +66,7 @@ class CalibBrightness(object):
 
         mn = self.data_brightness.min()
         mx = self.data_brightness.max()
-        extend = abs(mx - mn)*0.1
+        extend = abs(mx - mn) * 0.1
         x = np.linspace(mn - extend, mx + extend)
         y = self.brightness_to_pixelsize(x)
 
@@ -104,7 +104,7 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
     start = ctrl.brightness.value
 
     for i in range(10):
-        target = start + i*step
+        target = start + i * step
         ctrl.brightness.value = int(target)
 
         outfile = f"calib_brightness_{i:04d}" if save_images else None

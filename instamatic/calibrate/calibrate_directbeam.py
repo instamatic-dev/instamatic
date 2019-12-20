@@ -35,18 +35,18 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
         best_score = np.inf
         best_delta = 0
 
-        for delta in np.arange(-5, 6)*step:
+        for delta in np.arange(-5, 6) * step:
             ctrl.difffocus.set(current + delta)
 
             img, h = ctrl.getImage(header_keys=None)
 
-            score = np.sum(img > img.max()/2)**2
+            score = np.sum(img > img.max() / 2)**2
 
             if score < best_score:
                 best_score = score
                 best_delta = delta
 
-        newval = current+best_delta
+        newval = current + best_delta
         ctrl.difffocus.set(newval)
         logger.info("Best diff_focus (step=%d): %d, score: %d", step, best_score, newval)
 
@@ -159,7 +159,7 @@ class CalibDirectBeam(object):
 
     def plot(self, key, to_file=None, outdir=""):
         data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
-        data_readout = self._dct[key]["data_readout"] # microscope readout
+        data_readout = self._dct[key]["data_readout"]  # microscope readout
 
         if to_file == True:
             to_file = f"calib_db_{key}.png"
@@ -224,14 +224,14 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     shifts = []
     readouts = []
 
-    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
+    n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
 
     for i, (dx, dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2, -1).T):
         i += 1
 
-        attr.set(x=x_cent+dx, y=y_cent+dy)
+        attr.set(x=x_cent + dx, y=y_cent + dy)
 
         printer("Position: {}/{}: {}".format(i, tot, attr))
 

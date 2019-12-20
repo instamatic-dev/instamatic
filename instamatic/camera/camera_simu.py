@@ -90,7 +90,7 @@ class CameraSimu(object):
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
 
-    #### Mimic EMMENU API
+    # Mimic EMMENU API
 
     def getEMMenuVersion(self) -> str:
         return "simu"

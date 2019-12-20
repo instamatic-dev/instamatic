@@ -107,7 +107,7 @@ class CalibBeamShift(object):
 
     def center(self, ctrl):
         """Return beamshift values to center the beam in the frame"""
-        pixel_center = [val/2.0 for val in ctrl.cam.dimensions]
+        pixel_center = [val / 2.0 for val in ctrl.cam.dimensions]
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
@@ -149,7 +149,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     x_cent, y_cent = beamshift_cent = np.array(h_cent["BeamShift"])
 
     magnification = h_cent["Magnification"]
-    stepsize = 2500.0/magnification * stepsize
+    stepsize = 2500.0 / magnification * stepsize
 
     print(f"Gridsize: {gridsize} | Stepsize: {stepsize:.2f}")
 
@@ -166,14 +166,14 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     beampos = []
 
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
 
     i = 0
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
-        ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
+        ctrl.beamshift.set(x=x_cent + dx, y=y_cent + dy)
 
-        printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))
+        printer("Position: {}/{}: {}".format(i + 1, tot, ctrl.beamshift))
 
         outfile = os.path.join(outdir, "calib_beamshift_{i:04d}") if save_images else None
 

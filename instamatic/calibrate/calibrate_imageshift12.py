@@ -56,11 +56,11 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
     for i in tqdm(range(0, 5)):
         for j in range(0, 5):
-            deflector.set(x=x0 + (i-2)*stepsize, y=y0 + (j-2)*stepsize)
+            deflector.set(x=x0 + (i - 2) * stepsize, y=y0 + (j - 2) * stepsize)
             img, h = ctrl.getImage(exposure=0.01, comment="imageshifted image")
 
             shift = register_translation(img_cent, img, upsample_factor=10)
-            imgshift = np.array(((i-2)*stepsize, (j-2)*stepsize))
+            imgshift = np.array(((i - 2) * stepsize, (j - 2) * stepsize))
             imgpos.append(imgshift)
             shifts.append(shift)
 

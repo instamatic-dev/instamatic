@@ -147,7 +147,7 @@ class Lens(object):
         try:
             value = self.value
         except ValueError:
-            value="n/a"
+            value = "n/a"
         return f"{self.name}(value={value})"
 
     @property
@@ -561,7 +561,7 @@ class Stage(object):
             delay between movements in seconds to allow the stage to settle
         """
         wait = True
-        self.set(x=x-step, y=y-step)
+        self.set(x=x - step, y=y - step)
         if settle_delay:
             time.sleep(settle_delay)
 
@@ -658,7 +658,7 @@ class Stage(object):
         n_steps += 1
 
         for i in reversed(range(n_steps)):
-            self.a = current - s*i*step
+            self.a = current - s * i * step
             time.sleep(settle_delay)
 
 
@@ -977,11 +977,11 @@ class TEMController(object):
         from skimage.feature import register_translation
 
         def one_cycle(tilt: float = 5, sign=1) -> list:
-            angle1 = -tilt*sign
+            angle1 = -tilt * sign
             self.stage.a = angle1
             img1 = self.getRawImage()
 
-            angle2 = +tilt*sign
+            angle2 = +tilt * sign
             self.stage.a = angle2
             img2 = self.getRawImage()
 
@@ -1014,13 +1014,13 @@ class TEMController(object):
             sign *= -1
 
         mean_shift = shifts[-1] + shifts[0]
-        mean_shift = mean_shift/np.linalg.norm(mean_shift)
+        mean_shift = mean_shift / np.linalg.norm(mean_shift)
         ds = np.dot(shifts, mean_shift)
 
         p = np.polyfit(zs, ds, 1)  # linear fit
         alpha, beta = p
 
-        z0 = -beta/alpha
+        z0 = -beta / alpha
 
         print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
         if apply:
@@ -1043,7 +1043,7 @@ class TEMController(object):
         self.to_dict('all') or self.to_dict() will return all properties
         """
 
-        ## Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
+        # Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
         funcs = {
             'FunctionMode': self.tem.getFunctionMode,
             'GunShift': self.gunshift.get,

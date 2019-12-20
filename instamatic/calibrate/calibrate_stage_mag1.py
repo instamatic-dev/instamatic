@@ -25,19 +25,19 @@ logger = logging.getLogger(__name__)
 def plot_it(arr1, arr2, params):
     import matplotlib.pyplot as plt
     angle = params["angle"].value
-    sx    = params["sx"].value
-    sy    = params["sy"].value
-    tx    = params["tx"].value
-    ty    = params["ty"].value
-    k1    = params["k1"].value
-    k2    = params["k2"].value
+    sx = params["sx"].value
+    sy = params["sy"].value
+    tx = params["tx"].value
+    ty = params["ty"].value
+    k1 = params["k1"].value
+    k2 = params["k2"].value
 
     sin = np.sin(angle)
     cos = np.cos(angle)
 
     r = np.array([
-        [ sx*cos, -sy*k1*sin],
-        [ sx*k2*sin,  sy*cos]])
+        [sx * cos, -sy * k1 * sin],
+        [sx * k2 * sin, sy * cos]])
     t = np.array([tx, ty])
 
     fit = np.dot(arr1, r) + t
@@ -70,7 +70,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     work_drc = get_new_work_subdirectory(stem="calib_mag1")
 
-    settle_delay = 1.0 # seconds
+    settle_delay = 1.0  # seconds
 
     # make sure the angle == 0.0
     for _ in range(3):
@@ -105,26 +105,26 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     stagepos = []
     shifts = []
 
-    n = int((gridsize - 1) / 2) # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    tot = gridsize*gridsize
+    n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
+    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    tot = gridsize * gridsize
 
     i = 0
 
-    x_range = np.arange(-n, n+1) * stepsize
-    y_range = np.arange(-n, n+1) * stepsize
+    x_range = np.arange(-n, n + 1) * stepsize
+    y_range = np.arange(-n, n + 1) * stepsize
 
     if minimize_backlash:
         xtarget = x_cent + x_range[0]
         ytarget = y_cent + y_range[0]
-        ctrl.stage.set(x=xtarget-stepsize, y=ytarget-stepsize)
+        ctrl.stage.set(x=xtarget - stepsize, y=ytarget - stepsize)
         time.sleep(settle_delay)
 
         print("(minimize_backlash) Overshoot a bit in XY: ", ctrl.stage.xy)
 
     for dx in x_range:
         for dy in y_range:
-            ctrl.stage.set(x=x_cent+dx, y=y_cent+dy)
+            ctrl.stage.set(x=x_cent + dx, y=y_cent + dy)
             time.sleep(settle_delay)
             stage = ctrl.stage.get()
 
@@ -151,7 +151,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
         if minimize_backlash:
             ytarget = y_cent + y_range[0]
-            ctrl.stage.set(y=ytarget-stepsize)
+            ctrl.stage.set(y=ytarget - stepsize)
             time.sleep(settle_delay)
             print("(minimize_backlash) Overshoot a bit in Y: ", ctrl.stage.xy)
 
