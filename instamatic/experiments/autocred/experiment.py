@@ -1,41 +1,38 @@
-import os
-import datetime
-import logging
-import numpy as np
-import time
-from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic import config
-from instamatic.formats import write_tiff
-from skimage.feature import register_translation
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.calibrate_beamshift import calibrate_beamshift
 from instamatic.calibrate.calibrate_imageshift12 import Calibrate_Imageshift, Calibrate_Imageshift2, Calibrate_Beamshift_D, Calibrate_Beamshift_D_Defoc, Calibrate_Stage
-from instamatic.calibrate.center_z import center_z_height, center_z_height_HYMethod
-from instamatic.tools import find_defocused_image_center, find_beam_center
-from instamatic.processing.flatfield import apply_flatfield_correction
-from instamatic.neural_network import predict, preprocess
-import pickle
-import json
-from pathlib import Path
-from tqdm import tqdm
+from instamatic.calibrate.center_z import center_z_height_HYMethod
 from instamatic.calibrate.filenames import *
+from instamatic.formats import write_tiff
+from instamatic.neural_network import predict, preprocess
 from instamatic.processing.find_crystals import find_crystals_timepix
-import traceback
-import socket
-import datetime
-import shutil
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+from instamatic.tools import find_defocused_image_center, find_beam_center
+from pathlib import Path
 from scipy import ndimage
+from skimage.feature import register_translation
+from tqdm import tqdm
+import datetime
+import json
+import numpy as np
+import os
+import pickle
+import shutil
+import socket
+import time
+import traceback
 
-"""SerialRED:
-Currently only working if live view can be read directly from camera via Python API
-Extensively tested on a JEOL 2100 LaB6 TEM with a Timepix camera."""
+# SerialRED:
+#  Currently only working if live view can be read directly from camera via Python API
+#  Extensively tested on a JEOL 2100 LaB6 TEM with a Timepix camera.
+#  Imgvar can be compared with the first defocused image. 
+#  If other particles move in, the variance will be at least 50% different
 
-"""Imgvar can be compared with the first defocused image. If other particles move in, the variance will be at least 50% different"""
-
-"""spread, offset: parameters for find_crystals_timepix"""
-# spread = 2 # sometimes crystals still are not so isolated using number 0.6 as suggested.
-# offset = 15 # The number needs to be smaller when the contrast of the crystals is low.
-#imgvar_threshold = 600
+# spread, offset: parameters for find_crystals_timepix
+# spread = 2  # sometimes crystals still are not so isolated using number 0.6 as suggested.
+# offset = 15  # The number needs to be smaller when the contrast of the crystals is low.
+# imgvar_threshold = 600
 
 date = datetime.datetime.now().strftime("%Y-%m-%d")
 log_rotaterange = config.logs_drc / f"Rotrange_stagepos_{date}.log"
@@ -167,7 +164,7 @@ class Experiment(object):
         self.mode = 0
 
         self.diff_brightness = self.ctrl.brightness.value
-        #self.autocenterDP = autocenterDP
+        # self.autocenterDP = autocenterDP
         self.angle_activation = angle_activation
         self.spread = spread
         self.offset = offset
@@ -309,11 +306,11 @@ class Experiment(object):
         a_i = self.ctrl.stage.a
         if a_i < 0:
             self.ctrl.stage.set(a=a_i + self.backlash_killer, wait=True)
-            #print("Rotation positive!")
+            # print("Rotation positive!")
             return 0
         else:
             self.ctrl.stage.set(a=a_i - self.backlash_killer, wait=True)
-            #print("Rotation negative!")
+            # print("Rotation negative!")
             return 1
 
     def center_particle_ofinterest(self, pos_arr, transform_stagepos):
@@ -328,7 +325,7 @@ class Experiment(object):
             mag = self.ctrl.magnification.value
 
             s = config.calibration.pixelsize_mag1[mag] / 1000  # nm -> um
-            #print("scaling facor: {} um per px".format(s))
+            # print("scaling facor: {} um per px".format(s))
 
             mvmt = s * displacement
             mvmt_x, mvmt_y = np.dot(1000 * mvmt, transform_stagepos_)
@@ -351,7 +348,7 @@ class Experiment(object):
                 if crystal.isolated:
                     self.center_particle_ofinterest((crystal.x, crystal.y), transform_stagepos)
                     crystalsize = crystal.area_pixel
-                    #print("crystal size: {}".format(crystalsize))
+                    # print("crystal size: {}".format(crystalsize))
                     img, h = self.ctrl.getImage(exposure=self.expt, header_keys=None)
 
                     crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=self.spread, offset=self.offset)
@@ -363,7 +360,7 @@ class Experiment(object):
                         return (0, 0)
 
                     else:
-                        #print("Start looping.")
+                        # print("Start looping.")
                         for crystal in crystal_positions_new:
                             if crystal.isolated and crystalsize * 0.9 <= crystal.area_pixel <= crystalsize * 1.1:
                                 self.print_and_del("Crystal that has been centered is found at {}, {}.".format(crystal.x, crystal.y))
@@ -690,7 +687,7 @@ class Experiment(object):
 
                         if self.guess_crystmove and i >= self.nom_ii:
                             delta_beamshiftcoord1 = np.matmul(self.calib_beamshift.transform, cc)
-                            #print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
+                            # print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                             self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord1))
                             bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord1)
 
@@ -698,7 +695,7 @@ class Experiment(object):
 
                         else:
                             delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, cc)
-                            #print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
+                            # print("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                             self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
                             bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
 
@@ -802,7 +799,7 @@ class Experiment(object):
             camera_length = int(self.ctrl.magnification.get())
 
         if self.unblank_beam:
-            #print("Blanking beam")
+            # print("Blanking beam")
             self.ctrl.beamblank = True
 
         self.stopEvent.clear()
@@ -983,7 +980,7 @@ class Experiment(object):
             y = center_y + y_offset
 
             self.ctrl.stage.set(x=x, y=y)
-            #print("Stage position: x = {}, y = {}".format(x,y))
+            # print("Stage position: x = {}, y = {}".format(x,y))
             x_change = x - x_zheight
             y_change = y - y_zheight
             dist = np.linalg.norm((x_change, y_change))
@@ -1084,12 +1081,12 @@ class Experiment(object):
                 pickle.dump([self.imgvar_threshold, self.beam_size_avg], f)
 
         self.neutral_beamshift = bs
-        #print("Neutral beamshift: from beam_brightness.pkl {}".format(bs))
+        # print("Neutral beamshift: from beam_brightness.pkl {}".format(bs))
         self.neutral_diffshift = plastatus
 
         self.calib_beamshift.reference_pixel = self.update_referencepoint_bs(bs, img_brightness)
 
-        #print("Calib_beamshift_referenceshift: {}".format(self.calib_beamshift.reference_shift))
+        # print("Calib_beamshift_referenceshift: {}".format(self.calib_beamshift.reference_shift))
 
         transform_imgshift, c = load_IS_Calibrations(imageshift='IS1', ctrl=self.ctrl, diff_defocus=self.diff_defocus, logger=self.logger, mode='diff')
         transform_imgshift2, c = load_IS_Calibrations(imageshift='IS2', ctrl=self.ctrl, diff_defocus=self.diff_defocus, logger=self.logger, mode='diff')
@@ -1280,14 +1277,14 @@ class Experiment(object):
 
             if os.listdir(path) == ['Overall_view.tiff']:
                 shutil.rmtree(path)
-                #print("Path {} removed since no crystal rotation data was collected.".format(path))
+                # print("Path {} removed since no crystal rotation data was collected.".format(path))
 
             try:
                 if len(os.listdir(path)) == 0:
                     os.rmdir(path)
-                    #print("Path {} removed since it is empty.".format(path))
+                    # print("Path {} removed since it is empty.".format(path))
             except BaseException:
-                #print("Deletion error. Path might have already been deleted.")
+                # print("Deletion error. Path might have already been deleted.")
                 pass
 
         elif self.mode == 1 or self.mode == 2:
@@ -1307,7 +1304,7 @@ class Experiment(object):
     def start_collection(self):
         ready = input("Please make sure that you have adjusted Goniotool if you are using full autocRED!")
         if self.stopEvent_rasterScan.is_set():
-            #print("Raster scan stopper clearing..")
+            # print("Raster scan stopper clearing..")
             self.stopEvent_rasterScan.clear()
 
         if not self.auto_zheight:

@@ -1,13 +1,9 @@
-import glob
-from instamatic.formats import *
 from instamatic import neural_network
-import csv
-import os
-import sys
+from instamatic.formats import *
 from pathlib import Path
-
-import os
-
+import csv
+import glob
+import sys
 import tqdm
 
 

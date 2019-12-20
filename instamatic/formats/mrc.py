@@ -382,7 +382,7 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
 
     f = util.uopen(filename, 'rb')
     try:
-        #curr = f.tell()
+        # curr = f.tell()
         h = util.fromfile(f, dtype=header_image_dtype, count=1)
         if not is_readable(h, no_strict_mrc):
             h = h.newbyteorder()
@@ -457,7 +457,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
     try:
         h = read_mrc_header(f, no_strict_mrc)
         count = count_images(h)
-        #if header is not None:  util.update_header(header, h, mrc2ara, 'mrc')
+        # if header is not None:  util.update_header(header, h, mrc2ara, 'mrc')
         tmp = read_header(h)
         if header is not None:
             header.update(tmp)
@@ -544,7 +544,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
     f = util.uopen(filename, 'rb')
     try:
         h = read_mrc_header(f, no_strict_mrc)
-        #if header is not None: util.update_header(header, h, mrc2ara, 'mrc')
+        # if header is not None: util.update_header(header, h, mrc2ara, 'mrc')
         header = read_header(h, force_volume=force_volume)
         count = count_images(h)
         if idx >= count:
@@ -566,7 +566,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
     finally:
         util.close(filename, f)
     # assert(numpy.alltrue(numpy.logical_not(numpy.isnan(out))))
-    #if header_image_dtype.newbyteorder()==h.dtype:out = out.byteswap()
+    # if header_image_dtype.newbyteorder()==h.dtype:out = out.byteswap()
     return out, header
 
 
@@ -690,9 +690,9 @@ def write_image(filename, img, index=None, header=None, inplace=False):
         header['nlabels'] = 1
         header['label0'] = 'Created by Instamatic'
 
-        #header['byteorder'] = numpy.fromstring('\x44\x41\x00\x00', dtype=header['byteorder'].dtype)
+        # header['byteorder'] = numpy.fromstring('\x44\x41\x00\x00', dtype=header['byteorder'].dtype)
 
-        #header['rms'] = numpy.std(img)
+        # header['rms'] = numpy.std(img)
         if img.ndim == 3:
             header['nxstart'] = header['nx'] / -2
             header['nystart'] = header['ny'] / -2
@@ -702,7 +702,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
             header['nz'] = stack_count
             header['mz'] = stack_count
             header['zlen'] = stack_count
-            #header['zorigin'] = stack_count/2.0
+            # header['zorigin'] = stack_count/2.0
         else:
             index = 0
 

@@ -1,12 +1,8 @@
 from instamatic.processing.ImgConversionTVIPS import ImgConversionTVIPS as ImgConversion
-from instamatic.formats import read_tiff
-import glob
 import sys
 from pathlib import Path
-from PIL import Image
 import numpy as np
 import tifffile
-from operator import itemgetter
 from instamatic.tools import get_acquisition_time, relativistic_wavelength
 
 

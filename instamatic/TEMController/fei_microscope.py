@@ -2,8 +2,6 @@ from instamatic import config
 import comtypes.client
 import atexit
 import time
-import random
-import threading
 from numpy import pi
 
 import logging
@@ -405,7 +403,7 @@ class FEIMicroscope(object):
             return True
 
     def stopStage(self):
-        #self.stage.Status = self.goniostopped
+        # self.stage.Status = self.goniostopped
         raise NotImplementedError
 
     def getFunctionMode(self):
@@ -544,21 +542,3 @@ class FEIMicroscope(object):
 
     def setBrightness(self, value):
         self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-6
-
-    def getFunctionMode(self):
-        """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
-        mode = self.tom.Projection.Mode
-        if mode == 0:
-            return "LM"
-        elif mode == 1:
-            return "LAD"
-        else:
-            return "Unknown"
-
-    def setFunctionMode(self, m):
-        if m == "diff":
-            self.tom.Projection.Mode = 1
-            print("Set to diffraction.")
-        elif m == "mag1":
-            self.tom.Projection.Mode = 0
-            print("Set to imaging.")

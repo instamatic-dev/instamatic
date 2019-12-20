@@ -1,5 +1,3 @@
-import os
-import sys
 import numpy as np
 import json
 
@@ -10,7 +8,6 @@ from instamatic.processing.find_crystals import find_crystals, find_crystals_tim
 from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic import config
-from instamatic import neural_network
 
 import time
 import logging
@@ -364,8 +361,6 @@ class Experiment(object):
         Return
             dct: dict, contains information on positions
         """
-        noffsets = len(self.offsets)
-
         for i, scan_center in self.loop_centers():
             center_x, center_y = scan_center
 
@@ -382,7 +377,6 @@ class Experiment(object):
                     continue
                 else:
                     time.sleep(delay)
-                    # self.log.debug("Imaging: stage position %s/%s -> (x=%.1f, y=%.1f)", j, noffsets, x, y)
                     t.set_description(f"Stage(x={x:7.0f}, y={y:7.0f})")
 
                     dct = {"exp_scan_number": i, "exp_image_number": j, "exp_scan_offset": (x_offset, y_offset), "exp_scan_center": (center_x, center_y), "exp_stage_position": (x, y)}

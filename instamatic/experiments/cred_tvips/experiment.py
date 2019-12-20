@@ -1,15 +1,14 @@
-import datetime
-import time
 from instamatic import config, version
-from pathlib import Path
-from instamatic.tools import get_acquisition_time
-import time
-from instamatic.formats import write_tiff
-import numpy as np
-from scipy.interpolate import interp1d
-import pickle
 from instamatic import serialem
+from instamatic.formats import write_tiff
+from instamatic.tools import get_acquisition_time
+from pathlib import Path
+from scipy.interpolate import interp1d
+import datetime
 import msvcrt
+import numpy as np
+import pickle
+import time
 
 
 class SerialExperiment(object):
@@ -263,8 +262,6 @@ class Experiment(object):
 
         if self.mode == "diff":
             self.ctrl.difffocus.refocus()
-
-        spotsize = self.ctrl.spotsize
 
         self.emmenu.start_liveview()
 

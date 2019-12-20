@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-
-import numpy as np
+from instamatic.formats import read_image
 import matplotlib.pyplot as plt
 import sys
-
-from instamatic.formats import read_image
 
 
 def main():
@@ -16,16 +12,16 @@ def main():
 
     img, h = read_image(fn)
 
-    print("""Loading data: {}
-        size: {} kB
-       shape: {}
-       range: {}-{}
-       dtype: {}
-""".format(fn, img.nbytes / 1024, img.shape, img.min(), img.max(), img.dtype))
+    print(f"""Loading data: {fn}
+        size: {img.nbytes / 1024} kB
+       shape: {img.shape}
+       range: {img.min()}-{img.max()}
+       dtype: {img.dtype}
+""")
 
     max_len = max([len(s) for s in h.keys()])
 
-    fmt = "{{:{}s}} = {{}}".format(max_len)
+    fmt = f"{{:{max_len}s}} = {{}}"
     for key in sorted(h.keys()):
         print(fmt.format(key, h[key]))
 

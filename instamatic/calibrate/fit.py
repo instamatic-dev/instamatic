@@ -1,6 +1,5 @@
 import numpy as np
 import lmfit
-from instamatic.tools import *
 
 
 def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, verbose=False, **x0):

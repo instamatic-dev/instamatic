@@ -139,9 +139,9 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread=spread, offset=offset)
 
             if crystal_inter1 / crystal_inter < 2 and crystal_inter1 / crystal_inter > 0.5:
-                #print(f"Feature Captured. Area: {crystal_inter1} pixels")
+                # print(f"Feature Captured. Area: {crystal_inter1} pixels")
                 shift = np.subtract(crystal_inter_pos, crystal_inter1_pos)
-                #print(f"Shift: {shift}")
+                # print(f"Shift: {shift}")
                 ctrl.stage.stop()
                 if shift[0] > 5:
                     ctrl.stage.z = z0 - (rotation_dir - 0.5) * increment
@@ -155,7 +155,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
                     crystal_inter_pos = crystal_inter1_pos
 
             else:
-                #print(f"Feature lost. New feature captured: {crystal_inter1} pixels")
+                # print(f"Feature lost. New feature captured: {crystal_inter1} pixels")
                 if crystal_inter1:
                     crystal_inter = crystal_inter1
                     crystal_inter_pos = crystal_inter1_pos

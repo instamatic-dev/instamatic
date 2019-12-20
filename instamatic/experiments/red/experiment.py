@@ -108,7 +108,7 @@ class Experiment(object):
         if ctrl.cam.streamable:
             ctrl.cam.unblock()
 
-        self.camera_length = camera_length = int(self.ctrl.magnification.get())
+        self.camera_length = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
         self.exposure_time = exposure_time
 

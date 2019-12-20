@@ -1,15 +1,12 @@
-import sys
-import subprocess as sp
-from socket import *
-import datetime
-
 from instamatic import config
-import logging
-import threading
 from pathlib import Path
-
-import pickle
+from socket import *
 import ast
+import datetime
+import logging
+import subprocess as sp
+import sys
+import threading
 
 
 try:
@@ -22,11 +19,6 @@ CWD = EXE.parent
 HOST = config.cfg.indexing_server_host
 PORT = config.cfg.indexing_server_port
 BUFF = 1024
-
-
-def parse_dials_index_log(fn="dials.index.log"):
-    with open(fn, "r") as f:
-        print("Unit cell = ...")
 
 
 def run_dials_indexing(data):

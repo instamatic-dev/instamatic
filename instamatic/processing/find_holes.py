@@ -2,7 +2,6 @@
 
 from instamatic.tools import *
 from instamatic.config import calibration
-import os
 import sys
 
 import matplotlib.pyplot as plt
@@ -10,14 +9,11 @@ import numpy as np
 
 from scipy import ndimage
 
-from skimage import data
 from skimage import color
 from skimage import filters
 from skimage import morphology
 from skimage import segmentation
-from skimage import exposure
 from skimage import measure
-import json
 
 plt.rcParams['image.cmap'] = 'gray'
 
@@ -152,13 +148,13 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     """
     otsu = filters.threshold_otsu(img)
     n = 0.25
-    l = otsu - (otsu - np.min(img)) * n
-    u = otsu + (np.max(img) - otsu) * n
+    lower = otsu - (otsu - np.min(img)) * n
+    upper = otsu + (np.max(img) - otsu) * n
     if verbose:
         print(f"img range: {img.min()} - {img.max()}")
-        print(f"otsu: {otsu:.0f} ({l:.0f} - {i:.0f})")
+        print(f"otsu: {otsu:.0f} ({lower:.0f} - {i:.0f})")
 
-    markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
+    markers = get_markers_bounds(img, lower=lower, upper=upper, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
 
     disk = morphology.disk(4)

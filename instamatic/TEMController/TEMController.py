@@ -1,17 +1,12 @@
-#!/usr/bin/env python
-
-import time
-from instamatic.formats import write_tiff
-
+from .microscope import Microscope
+from collections import namedtuple
+from contextlib import contextmanager
 from instamatic import config
 from instamatic.camera import Camera
-from .microscope import Microscope
-
+from instamatic.formats import write_tiff
 from typing import Tuple
-from contextlib import contextmanager
-from collections import namedtuple
 import numpy as np
-
+import time
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 
@@ -825,11 +820,6 @@ class TEMController(object):
         acquire = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(acquire)
 
-        import time
-        import msvcrt
-
-        ctrl = self
-
         ntot = len(nav_items)
 
         print(f"Running script: {script} on {ntot} items.")
@@ -850,8 +840,6 @@ class TEMController(object):
         """
         from instamatic.tools import find_script
         script = find_script(script)
-
-        ctrl = self
 
         if verbose:
             print(f"Executing script: {script}\n")
@@ -1068,7 +1056,7 @@ class TEMController(object):
         for key in keys:
             try:
                 dct[key] = funcs[key]()
-            except ValueError as e:
+            except ValueError:
                 # print(f"No such key: `{key}`")
                 pass
 

@@ -1,7 +1,6 @@
 from .xdscbf import write as write_cbf
 from .mrc import write_image as write_mrc
 from .mrc import read_image as read_mrc
-import time
 import os
 import yaml
 import numpy as np

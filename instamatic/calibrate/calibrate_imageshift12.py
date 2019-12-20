@@ -2,8 +2,6 @@ from instamatic.calibrate.fit import fit_affine_transformation
 from skimage.feature import register_translation
 import numpy as np
 
-from matplotlib import pyplot as plt
-
 from tqdm import tqdm
 
 import logging
@@ -13,7 +11,7 @@ logger = logging.getLogger(__name__)
 def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
     if key != 'S':
-        inp = input(f"""Calibrate {key}
+        input(f"""Calibrate {key}
     -------------------
      1. Go to diffraction mode.
      2. Focus the diffraction spots.
@@ -21,7 +19,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
 
      >> Press <ENTER> to start >> \n""")
     else:
-        inp = input("""Calibrate stage vs camera
+        input("""Calibrate stage vs camera
         ------------------
         1. Go to mag1.
         2. Find area with particles.

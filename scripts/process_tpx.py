@@ -1,6 +1,5 @@
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic.formats import read_tiff
-import glob
 import sys
 from pathlib import Path
 import numpy as np

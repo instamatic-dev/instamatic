@@ -1,4 +1,3 @@
-from instamatic import TEMController
 import threading
 import queue
 import socket

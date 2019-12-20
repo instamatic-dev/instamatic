@@ -1,6 +1,5 @@
 from instamatic import config
 import atexit
-from pathlib import Path
 
 import time
 import numpy as np

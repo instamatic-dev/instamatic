@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-
 import sys
-import os
 import time
 import numpy as np
 
@@ -9,14 +6,11 @@ from instamatic.tools import *
 from instamatic.io import get_new_work_subdirectory
 from skimage.feature import register_translation
 from instamatic.TEMController import initialize
-from .fit import fit_affine_transformation
 from .filenames import *
 from .calibrate_stage_lowmag import CalibStage
 from instamatic.formats import read_image
 
 from instamatic import config
-
-import pickle
 
 import logging
 logger = logging.getLogger(__name__)

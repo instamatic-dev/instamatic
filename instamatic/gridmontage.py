@@ -1,6 +1,4 @@
-from instamatic.tools import bin_ndarray
 import numpy as np
-from pathlib import Path
 from .montage import *
 
 
@@ -108,10 +106,10 @@ class GridMontage(object):
         def post_acquire(ctrl):
             print("Post-acquire: done!")
 
-        self.ctrl.acquire_at_items(self.stagecoords,
-                                   acquire=acquire,
-                                   pre_acquire=pre_acquire,
-                                   post_acquire=post_acquire)
+        ctrl.acquire_at_items(self.stagecoords,
+                              acquire=acquire,
+                              pre_acquire=pre_acquire,
+                              post_acquire=post_acquire)
 
         self.stagematrix = self.ctrl.get_stagematrix()
         self.buffer = buffer

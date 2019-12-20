@@ -1,6 +1,4 @@
 from instamatic.formats import adscimage
-from scipy import ndimage, signal
-from scipy.interpolate import interp1d
 import sys
 import glob
 import numpy as np

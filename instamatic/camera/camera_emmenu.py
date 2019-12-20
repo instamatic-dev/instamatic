@@ -1,4 +1,3 @@
-import sys
 import comtypes.client
 from instamatic import config
 import atexit
@@ -19,10 +18,10 @@ type_dict = {
     6: "GetDataDouble",
     7: "GetDataComplex",
     8: "IMG_STRING",  # no method on EMImage
-    8: "GEtDataBinary",
-    9: "GetDataRGB8",
-    10: "GetDataRGB16",
-    11: "IMG_EMVECTOR"  # no method on EMImage
+    9: "GetDataBinary",
+    10: "GetDataRGB8",
+    11: "GetDataRGB16",
+    12: "IMG_EMVECTOR"  # no method on EMImage
 }
 
 

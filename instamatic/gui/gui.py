@@ -1,21 +1,13 @@
 from tkinter import *
 from tkinter.ttk import *
 
-import os
-import sys
-import traceback
 from instamatic.formats import *
-
-import time
-import logging
-
-import threading
-import queue
-
-import datetime
 import atexit
+import queue
+import sys
+import threading
+import traceback
 
-from instamatic.camera.videostream import VideoStream
 from .modules import MODULES
 
 job_dict = {}

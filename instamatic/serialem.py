@@ -333,7 +333,7 @@ class MapItem(NavItem):
 def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
     dictionary"""
-    patt_split = re.compile("\s?=\s?")
+    patt_split = re.compile(r"\s?=\s?")
     d = {}
 
     for item in block:
@@ -394,7 +394,7 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
     """
 
     # https://regex101.com/
-    patt_match = re.compile("\[Item\s?=\s?([a-zA-Z0-9_-]*)\]")
+    patt_match = re.compile(r"\[Item\s?=\s?([a-zA-Z0-9_-]*)\]")
 
     capture = False
     block = []
@@ -485,13 +485,13 @@ def read_mdoc_file(fn: str, only_kind: str = None) -> list:
     """
 
     # https://regex101.com/
-    patt_match = re.compile("\[([a-zA-Z]+)\s?=\s?([0-9]+)\]")
+    patt_match = re.compile(r"\[([a-zA-Z]+)\s?=\s?([0-9]+)\]")
 
     capture = False
     block = []
     items = []
-    tag = ""
     kind = None
+    sequence = 0
 
     f = open(fn, "r")
     for line in f:

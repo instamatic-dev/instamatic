@@ -1,13 +1,9 @@
-import numpy as np
-
-from pathlib import Path
-
-from skimage.filters import threshold_local
-from skimage.measure import find_contours
-from skimage import morphology
-
 from instamatic.formats import read_tiff
 from instamatic.tools import find_beam_center_with_beamstop
+from pathlib import Path
+from skimage import morphology
+from skimage.measure import find_contours
+import numpy as np
 
 
 def minimum_bounding_rectangle(points):
@@ -20,7 +16,6 @@ def minimum_bounding_rectangle(points):
     :param points: an nx2 matrix of coordinates
     :rval: an nx2 matrix of coordinates
     """
-    from scipy.ndimage.interpolation import rotate
     from scipy.spatial import ConvexHull
 
     pi2 = np.pi / 2.0

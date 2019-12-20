@@ -7,8 +7,7 @@ from instamatic.processing.stretch_correction import affine_transform_ellipse_to
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from instamatic.tools import find_beam_center_with_beamstop, to_xds_untrusted_area
-from pathlib import Path
-from math import cos, pi
+from math import cos
 import collections
 import logging
 logger = logging.getLogger(__name__)
@@ -40,8 +39,6 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
     `sequence` is a tuple of sequence numbers of the data frames
     `missing `is a tuple of sequence numbers of the missing frames
     """
-    import io
-
     scanranges = find_subranges(sequence)
 
     scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
@@ -160,7 +157,7 @@ class ImgConversion(object):
         self.rotation_axis = rotation_axis
 
         self.acquisition_time = acquisition_time
-        #self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time)
+        # self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time)
 
         self.name = "Instamatic"
 

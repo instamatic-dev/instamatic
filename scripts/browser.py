@@ -58,7 +58,7 @@ def lst2colormap(lst):
 
 
 def run(filepat="images/image_*.tiff", results=None, stitch=False):
-     # use relpath to normalizes path
+    # use relpath to normalizes path
     fns = [Path(fn).absolute() for fn in glob.glob(filepat)]
 
     if len(fns) == 0:
@@ -99,7 +99,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             sx, sy = coord
             ax1.imshow(mini_img, interpolation='bilinear', extent=[sx - imdim_x, sx + imdim_x, sy - imdim_y, sy + imdim_y], cmap=CMAP)
 
-    ax1.scatter(coords[has_crystals == True, 0], coords[has_crystals == True, 1], marker="o", facecolor=coord_color)
+    ax1.scatter(coords[has_crystals, 0], coords[has_crystals, 1], marker="o", facecolor=coord_color)
     ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color=coord_color, picker=8)
     highlight1, = ax1.plot([], [], marker="o", color=picked_color)
 
@@ -119,7 +119,6 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
         data = None
 
     def onclick(event):
-        click = event.mouseevent.button
         axes = event.artist.axes
         ind = event.ind[0]
 
@@ -222,11 +221,10 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
 
 def main():
-    usage = """instamatic.browser images/*.tiff -r results.csv"""
-
     description = """
 Program for indexing electron diffraction images.
 
+Usage: instamatic.browser images/*.tiff -r results.csv
 """
 
     parser = argparse.ArgumentParser(  # usage=usage,

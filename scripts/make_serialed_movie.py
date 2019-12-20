@@ -10,7 +10,7 @@ import numpy as np
 plt.rcParams["figure.figsize"] = 10, 10
 plt.rcParams["image.cmap"] = "gray"
 
-fns = get_files("images\image*.h5")
+fns = get_files(r"images\image*.h5")
 
 fontdict = {"fontsize": 30}
 vmax_im = 500
@@ -55,7 +55,7 @@ for i, fn in enumerate(tqdm.tqdm(fns)):
         plt.tight_layout()
 
         # out = dp.replace("h5", "png").replace("data\\","movie\\")
-        out = "movie\image_{:04d}.png".format(number)
+        out = f"movie\\image_{number:04d}.png"
         number += 1
 
         if save:

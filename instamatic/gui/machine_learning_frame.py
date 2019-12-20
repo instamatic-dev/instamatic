@@ -13,10 +13,10 @@ from pathlib import Path
 
 def treeview_sort_column(tv, col, reverse):
     """https://stackoverflow.com/a/22032582"""
-    l = [(tv.set(k, col), k) for k in tv.get_children('')]
-    l.sort(key=lambda t: float(t[0]), reverse=reverse)
+    lst = [(tv.set(k, col), k) for k in tv.get_children('')]
+    lst.sort(key=lambda t: float(t[0]), reverse=reverse)
 
-    for index, (val, k) in enumerate(l):
+    for index, (val, k) in enumerate(lst):
         tv.move(k, '', index)
 
     tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))

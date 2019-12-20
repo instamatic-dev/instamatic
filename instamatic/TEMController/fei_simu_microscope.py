@@ -369,21 +369,3 @@ class FEISimuMicroscope(object):
 
     def setBrightness(self, value):
         self.tom.Illumination.IlluminatedAreaDiameter = value
-
-    def getFunctionMode(self):
-        """{0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}"""
-        mode = self.tom.Projection.Mode
-        if mode == 0:
-            return "LM"
-        elif mode == 1:
-            return "LAD"
-        else:
-            return "Unknown"
-
-    def setFunctionMode(self, m):
-        if m == "diff":
-            self.tom.Projection.Mode = 1
-            print("Set to diffraction.")
-        elif m == "mag1":
-            self.tom.Projection.Mode = 0
-            print("Set to imaging.")

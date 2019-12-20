@@ -16,8 +16,8 @@ def printer(data):
 
 
 def tiff2png(interval=10, drc="movie"):
-    fns1 = glob.glob("tiff\*.tif?")
-    fns2 = glob.glob("tiff_image\*.tif?")
+    fns1 = glob.glob(r"tiff\*.tif?")
+    fns2 = glob.glob(r"tiff_image\*.tif?")
 
     if not os.path.exists(drc):
         os.mkdir(drc)

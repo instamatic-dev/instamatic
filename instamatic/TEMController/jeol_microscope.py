@@ -3,7 +3,6 @@ from instamatic import config
 import atexit
 import comtypes.client
 import time
-import os
 
 from typing import Tuple
 
@@ -228,8 +227,6 @@ class JeolMicroscope(object):
         return selector
 
     def setMagnificationIndex(self, index: int):
-        current_mode = self.getFunctionMode()
-
         if index < 0:
             raise ValueError(f"Cannot lower magnification (index={index})")
 

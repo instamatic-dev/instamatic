@@ -1,10 +1,8 @@
 from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
-import threading
 import os
 import pickle
-import socket
 from instamatic.calibrate.filenames import *
 from instamatic.calibrate import CalibBeamShift
 from pathlib import Path
@@ -155,8 +153,8 @@ class ExperimentalautocRED(LabelFrame):
     def start_collection(self):
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
-        #self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
-        #self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
+        # self.lb_coll1.config(text="Now you can start to rotate the goniometer at any time.")
+        # self.lb_coll2.config(text="Click STOP COLLECTION BEFORE removing your foot from the pedal!")
 
         self.parent.bind_all("<space>", self.stop_collection)
 
@@ -315,32 +313,18 @@ def acquire_data_autocRED(controller, **kwargs):
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
 
-    exposure_time = kwargs["exposure_time"]
-    exposure_time_image = kwargs["exposure_time_image"]
-    unblank_beam = kwargs["unblank_beam"]
-    stop_event = kwargs["stop_event"]
-    stop_event_experiment = kwargs["stop_event_experiment"]
-    enable_image_interval = kwargs["enable_image_interval"]
-    enable_autotrack = kwargs["enable_autotrack"]
-    enable_fullacred = kwargs["enable_fullacred"]
-    enable_fullacred_crystalfinder = kwargs["enable_fullacred_crystalfinder"]
-    image_interval = kwargs["image_interval"]
-    scan_area = kwargs["scan_area"]
-    auto_zheight = kwargs["zheight"]
-    auto_centerDP = kwargs["autocenterDP"]
-
-    angle_threshold = kwargs["angle_activation"]
-    spread = kwargs["spread"]
-    offset = kwargs["offset"]
-
     try:
         diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
     except BaseException:
         pass
 
-    #controller.stream.get_module("sed").calib_path = expdir / "calib"
+    # controller.stream.get_module("sed").calib_path = expdir / "calib"
 
-    cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+    cexp = autocRED.Experiment(ctrl=controller.ctrl, 
+                               path=expdir, 
+                               flatfield=controller.module_io.get_flatfield(), 
+                               log=controller.log, 
+                               **kwargs)
     cexp.start_collection()
 
     stop_event.clear()

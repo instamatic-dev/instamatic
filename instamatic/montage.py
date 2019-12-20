@@ -291,7 +291,6 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
 
     # Show shift in fourier space
     image_product = np.fft.fft2(strip0) * np.fft.fft2(strip1).conj()
-    cc_image = np.fft.fftshift(np.fft.ifft2(image_product))
 
     ax0.imshow(strip0, interpolation="nearest")
     ax0.set_title(f"{side0}")
@@ -367,8 +366,8 @@ class Montage(object):
         self.grid = make_grid(**gridspec)
 
         res_x, res_y = self.image_shape
-        self.overlap_x = overlap_x = int(res_x * overlap)
-        self.overlap_y = overlap_y = int(res_y * overlap)
+        self.overlap_x = int(res_x * overlap)
+        self.overlap_y = int(res_y * overlap)
 
     @classmethod
     def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = "leftright", zigzag: bool = True):
@@ -659,9 +658,6 @@ class Montage(object):
         grid_x, grid_y = grid.shape
         n_gridpoints = grid_x * grid_y
 
-        overlap_x = self.overlap_x
-        overlap_y = self.overlap_y
-
         vects = self.get_montage_coords()
 
         # determine which frames items have neighbours
@@ -736,7 +732,6 @@ class Montage(object):
         images = self.images
         nx, ny = grid.shape
         res_x, res_y = self.image_shape
-        overlap_x, overlap_y = self.overlap_x, self.overlap_y
 
         c = coords.astype(int)
         stitched_x, stitched_y = c.max(axis=0) - c.min(axis=0)
@@ -777,7 +772,6 @@ class Montage(object):
                 stitched[x0:x1, y0:y1] = im
 
             if plot:
-                j = self.grid.flatten()[i]
                 txt = f"{i}\n{idx}"
 
                 # NOTE that y/x are flipped for display in matplotlib ONLY
@@ -849,8 +843,6 @@ class Montage(object):
         image_stage_coord = self.stagecoords[j]
         image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
 
-        vect = stage_coord - image_stage_coord
-
         # The image pixel coordinate `image_pixel_coord` cooresponds to the corner,
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
@@ -877,7 +869,7 @@ class Montage(object):
         stagecoords : np.array, imagecoords : np.array
             Return both he stage and imagecoords as numpy arrays
         """
-        from skimage import feature, filters
+        from skimage import filters
         from skimage import morphology
         from skimage.measure import regionprops
 

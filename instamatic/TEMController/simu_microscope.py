@@ -347,7 +347,7 @@ class SimuMicroscope(object):
         return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
 
     def isStageMoving(self) -> bool:
-        res = self.getStagePosition()  # trigger update of self._is_moving
+        self.getStagePosition()  # trigger update of self._is_moving
         # print(res, self._is_moving)
         return self._is_moving
 

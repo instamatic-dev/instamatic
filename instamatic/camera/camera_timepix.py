@@ -133,7 +133,7 @@ class CameraTPX(object):
 
         try:
             self.lib.EMCameraObj_readRealDacs(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -149,7 +149,7 @@ class CameraTPX(object):
 
         try:
             self.lib.EMCameraObj_readHwDacs(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -166,7 +166,7 @@ class CameraTPX(object):
 
         try:
             self.lib.EMCameraObj_readPixelsCfg(self.obj, buffer)
-        except Exception as e:
+        except BaseException:
             traceback.print_exc()
             self.disconnect()
             sys.exit()
@@ -325,7 +325,7 @@ def initialize(config):
                 pixelsCfg = base / inp[1]
 
     cam = CameraTPX()
-    isConnected = cam.connect(hwId)
+    cam.connect(hwId)
 
     cam.init()
 
@@ -352,9 +352,9 @@ if __name__ == '__main__':
     print(base)
     print()
 
-    config = base / "config.txt"
+    tpx_config_file = base / "config.txt"
 
-    cam = initialize(config)
+    cam = initialize(tpx_config_file)
 
     if True:
         t = 0.01

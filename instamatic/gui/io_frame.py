@@ -3,7 +3,6 @@ from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
 import os
-import sys
 import datetime
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
@@ -95,7 +94,7 @@ class IOFrame(LabelFrame):
         return number
 
     def get_new_experiment_directory(self):
-        number = self.update_experiment_number()
+        self.update_experiment_number()
         return self.get_experiment_directory()
 
     def get_experiment_directory(self):

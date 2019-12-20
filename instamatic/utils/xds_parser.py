@@ -13,8 +13,7 @@ def volume(cell):
     be = radians(be)
     ga = radians(ga)
     vol = a * b * c * \
-        ((1 + 2 * cos(al) * cos(be) * cos(ga) - cos(al)**2 - cos(be)**2 - cos(ga)**2)
-         ** .5)
+        ((1 + 2 * cos(al) * cos(be) * cos(ga) - cos(al)**2 - cos(be)**2 - cos(ga)**2) ** .5)
     return vol
 
 

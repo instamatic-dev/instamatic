@@ -92,8 +92,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-        raise IOError('Size spec in ADSC-header does not match ' +
-                      'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
+        raise IOError(f"Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}")
 
     return data, header
 

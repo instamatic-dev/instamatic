@@ -2,12 +2,8 @@ from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
-import os
-import sys
-import glob
 from instamatic import config
 from pathlib import Path
-from collections import namedtuple
 
 scripts_drc = config.scripts_drc
 
