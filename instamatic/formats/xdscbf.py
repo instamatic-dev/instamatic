@@ -119,4 +119,3 @@ if __name__ == '__main__':
     arr = np.arange(128 * 128).reshape(128, 128)
     write("a.cbf", arr)
     print("run `xdsviewer a.cbf`")
-

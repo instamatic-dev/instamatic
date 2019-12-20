@@ -355,4 +355,3 @@ if __name__ == '__main__':
     root = Tk()
     ExperimentalautocRED(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

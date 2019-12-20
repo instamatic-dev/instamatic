@@ -215,4 +215,3 @@ if __name__ == '__main__':
     xds_quad = to_xds_untrusted_area("quadrilateral", beamstop_rect)
 
     print(xds_quad)
-

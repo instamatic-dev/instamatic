@@ -14,7 +14,7 @@ pattern = "*.img"
 binning = 2
 scale = 1 / binning
 
-# Load data 
+# Load data
 
 fns = list(Path(directory).glob(pattern))
 n = len(fns)

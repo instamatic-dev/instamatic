@@ -137,7 +137,7 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path="SMV_reprocessed"
         img, h = read_tiff(fn)
         buffer.append((j, img, h))
 
-    img_conv = ImgConversion(buffer=buffer, 
+    img_conv = ImgConversion(buffer=buffer,
                              osc_angle=osc_angle,
                              start_angle=start_angle,
                              end_angle=end_angle,

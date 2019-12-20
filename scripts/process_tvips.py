@@ -176,7 +176,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
                              osc_angle=osc_angle,
                              start_angle=start_angle,
                              end_angle=end_angle,
-                             rotation_axis=rotation_axis,            
+                             rotation_axis=rotation_axis,
                              acquisition_time=acquisition_time,
                              flatfield=None,
                              pixelsize=pixelsize,

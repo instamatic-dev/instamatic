@@ -562,4 +562,3 @@ class FEIMicroscope(object):
         elif m == "mag1":
             self.tom.Projection.Mode = 0
             print("Set to imaging.")
-

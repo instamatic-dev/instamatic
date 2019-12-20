@@ -62,4 +62,3 @@ def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=Fal
         return res.params
     else:
         return r, t
-

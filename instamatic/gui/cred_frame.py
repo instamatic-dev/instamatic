@@ -258,4 +258,3 @@ if __name__ == '__main__':
     root = Tk()
     ExperimentalcRED(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
-

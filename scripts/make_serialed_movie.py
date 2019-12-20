@@ -70,4 +70,3 @@ cmd = "ffmpeg -r 5 -i movie/image_%04d.png -s:v 1280x720 -c:v libx264 -profile:v
 sp.call(cmd)
 
 print("Done")
-

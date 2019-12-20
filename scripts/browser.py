@@ -227,14 +227,14 @@ def main():
     description = """
 Program for indexing electron diffraction images.
 
-""" 
+"""
 
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("args", 
+    parser.add_argument("args",
                         type=str, metavar="FILE", nargs="?",
                         help="File pattern to image files")
 
