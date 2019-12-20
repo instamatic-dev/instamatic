@@ -1,7 +1,8 @@
 from tkinter import *
 from tkinter.ttk import *
 
-import os, sys
+import os
+import sys
 import traceback
 from instamatic.formats import *
 
@@ -22,6 +23,7 @@ job_dict = {}
 
 class DataCollectionController(threading.Thread):
     """docstring for DataCollectionController"""
+
     def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, log=None):
         super(DataCollectionController, self).__init__()
         self.ctrl = ctrl
@@ -36,7 +38,7 @@ class DataCollectionController(threading.Thread):
 
         self.q = queue.LifoQueue(maxsize=1)
         self.triggerEvent = threading.Event()
-        
+
         self.module_io = self.app.get_module("io")
 
         for name, module in self.app.modules.items():
@@ -44,7 +46,7 @@ class DataCollectionController(threading.Thread):
                 module.set_trigger(trigger=self.triggerEvent, q=self.q)
             except AttributeError:
                 pass  # module does not need/accept a trigger
-        
+
         self.exitEvent = threading.Event()
         atexit.register(self.triggerEvent.set)
         atexit.register(self.exitEvent.set)
@@ -85,6 +87,7 @@ class DataCollectionController(threading.Thread):
 
 class ModuleFrame(Frame):
     """docstring for DataCollectionGUI"""
+
     def __init__(self, parent, modules=()):
         super().__init__()
         # super(DataCollectionGUI, self).__init__(cam=cam)
@@ -128,6 +131,7 @@ class ModuleFrame(Frame):
 
 class MainFrame(object):
     """docstring for MainFrame"""
+
     def __init__(self, root, cam, modules=()):
         super(MainFrame, self).__init__()
 
@@ -146,7 +150,7 @@ class MainFrame(object):
 
         self.root.wm_title(version.__long_title__)
         self.root.wm_protocol("WM_DELETE_WINDOW", self.close)
-    
+
         self.root.bind('<Escape>', self.close)
 
     def close(self):

@@ -24,13 +24,14 @@ __citation_cred__ = "J. Appl. Cryst. (2018). 51, 1652–1661, https://doi.org/10
 __citation_serialed__ = "J. Appl. Cryst. (2018). 51, 1262–1273, https://doi.org/10.1107/S1600576718009500"
 __citation_serialred__ = "IUCrJ. (2019). 6(5), 854-867, https://doi.org/10.1107/S2052252519007681"
 
+
 def register_thank_you_message():
     import atexit
     import textwrap
 
     def message():
         msg = f"Thank you for using {__long_title__}. If you found this software useful, please consider citing it: {__citation__}"
-        
+
         h = "+"*74
         lines = [f"+ {line:70} +" for line in textwrap.wrap(msg)]
 

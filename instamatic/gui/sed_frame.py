@@ -1,7 +1,9 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.messagebox
-import os, sys
+import os
+import sys
 from pathlib import Path
 import json
 
@@ -11,7 +13,7 @@ from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
 
 
-PARAMS = { 
+PARAMS = {
  "flatfield": "C:/instamatic/flatfield.tiff",
  "diff_binsize": 1,
  "diff_brightness": 39422,
@@ -48,6 +50,7 @@ Press <OK> to start"""
 
 class ExperimentalSED(LabelFrame):
     """docstring for ExperimentalSED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial electron diffraction")
         self.parent = parent
@@ -82,7 +85,7 @@ class ExperimentalSED(LabelFrame):
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
-        frame = Frame(self)        
+        frame = Frame(self)
         self.ShowCalibBeamshift = Button(frame, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=1, column=0, sticky="EW")
 
@@ -174,7 +177,7 @@ def acquire_data_SED(controller, **kwargs):
         params = json.load(open(params,"r"))
     except IOError:
         params = PARAMS
-    
+
     params.update(kwargs)
     params["flatfield"] = controller.module_io.get_flatfield()
 
@@ -182,7 +185,7 @@ def acquire_data_SED(controller, **kwargs):
 
     controller.app.get_module("sed").calib_path = expdir / "calib"
 
-    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log, 
+    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log,
         scan_radius=scan_radius, begin_here=True)
     exp.report_status()
     exp.run()
@@ -190,7 +193,6 @@ def acquire_data_SED(controller, **kwargs):
     controller.log.info("Finish serialED experiment")
 
 
-from .base_module import BaseModule
 module = BaseModule("sed", "serialED", True, ExperimentalSED, commands={
     "sed": acquire_data_SED
     })

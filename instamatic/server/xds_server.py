@@ -19,8 +19,8 @@ def parse_xds(path):
     from instamatic.utils.xds_parser import xds_parser
 
     fn = Path(path) / "CORRECT.LP"
-    
-    # rlock prevents messages getting mangled with 
+
+    # rlock prevents messages getting mangled with
     # simultaneous print statements from different threads
     with rlock:
         if not fn.exists():
@@ -41,6 +41,7 @@ def parse_xds(path):
                 print(msg)
 
     return msg
+
 
 def run_xds_indexing(path):
     """Call XDS on the given `path`. Uses WSL (Windows 10 only)."""
@@ -65,7 +66,7 @@ def handle(conn):
 
         if not data:
             break
-    
+
         print(f"{now} | {data}")
         if data == "close":
             print(f"{now} | Closing connection")
@@ -91,8 +92,8 @@ def handle(conn):
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
@@ -111,6 +112,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn,)).start()
 
-    
+
 if __name__ == '__main__':
     main()

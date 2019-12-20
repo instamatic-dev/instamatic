@@ -1,3 +1,6 @@
+from instamatic import config
+import time
+import atexit
 import ctypes
 from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
 from ctypes import POINTER, create_unicode_buffer, byref, addressof
@@ -9,10 +12,6 @@ import platform
 import logging
 logger = logging.getLogger(__name__)
 
-import atexit
-import time
-
-from instamatic import config
 
 SYMBOLS = {}
 

@@ -1,7 +1,9 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
-import os, sys
+import os
+import sys
 import glob
 from instamatic import config
 from pathlib import Path
@@ -17,6 +19,7 @@ BUFSIZE = 1024
 
 class DebugFrame(LabelFrame):
     """docstring for DebugFrame"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="For debugging, be careful!")
         self.parent = parent
@@ -33,10 +36,10 @@ class DebugFrame(LabelFrame):
 
         self.BrowseButton = Button(frame, text="Browse..", command=self.browse)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
-        
+
         self.RunButton = Button(frame, text="Run", command=self.run_script)
         self.RunButton.grid(row=2, column=3, sticky="EW")
-        
+
         Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky="ew", pady=10)
 
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -47,10 +50,10 @@ class DebugFrame(LabelFrame):
 
         self.BrowseButton = Button(frame, text="Start", command=self.start_server)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
-        
+
         self.RunButton = Button(frame, text="Register", command=self.register_server)
         self.RunButton.grid(row=2, column=3, sticky="EW")
-  
+
         self.RunButton = Button(frame, text="Kill", command=self.kill_server)
         self.RunButton.grid(row=2, column=4, sticky="EW")
 
@@ -68,10 +71,10 @@ class DebugFrame(LabelFrame):
 
         self.ff_darkfield = Checkbutton(frame, text="Darkfield", variable=self.var_ff_darkfield)
         self.ff_darkfield.grid(row=2, column=3, sticky="EW", padx=5)
-        
+
         self.RunFlatfield = Button(frame, text="Run", command=self.run_flatfield_collection)
         self.RunFlatfield.grid(row=2, column=4, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
 
@@ -91,7 +94,7 @@ class DebugFrame(LabelFrame):
 
         self.resetTriggers = Button(frame, text="Empty queue", command=self.empty_queue)
         self.resetTriggers.grid(row=2, column=0, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
 
@@ -215,7 +218,7 @@ def autoindex(controller, **kwargs):
 
     elif task == "kill_server":
         payload = b"kill"
-    
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print("Sending job to server...", end=" ")
         s.connect((HOST, PORT))
@@ -239,7 +242,6 @@ def collect_flatfield(controller, **kwargs):
     flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
 
 
-from .base_module import BaseModule
 module = BaseModule("debug", "advanced", True, DebugFrame, commands={
     "debug": debug,
     "autoindex": autoindex,

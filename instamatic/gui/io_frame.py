@@ -1,7 +1,9 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import tkinter.filedialog
-import os, sys
+import os
+import sys
 import datetime
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
@@ -10,10 +12,11 @@ from pathlib import Path
 
 class IOFrame(LabelFrame):
     """docstring for ExperimentalSED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Input/Output")
         self.parent = parent
-        
+
         self.workdrc = Path(config.cfg.work_directory)
 
         self.init_vars()
@@ -25,7 +28,7 @@ class IOFrame(LabelFrame):
 
         self.BrowseButton = Button(frame, text="Browse..", command=self.browse_directory)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
-        
+
         self.sample_name = Entry(frame, width=50, textvariable=self.var_sample_name)
         self.sample_name.grid(row=3, column=1, sticky="EW")
 
@@ -34,7 +37,7 @@ class IOFrame(LabelFrame):
 
         self.BrowseFFButton = Button(frame, text="Browse..", command=self.browse_flatfield)
         self.BrowseFFButton.grid(row=4, column=2, sticky="EW")
-        
+
         Label(frame, text="Directory:").grid(row=2, column=0, sticky="W")
         Label(frame, text="Sample name:").grid(row=3, column=0, sticky="W")
         Label(frame, text="Flatfield:").grid(row=4, column=0, sticky="W")
@@ -46,7 +49,7 @@ class IOFrame(LabelFrame):
 
         frame.pack(side="top", fill="x", padx=10)
 
-        frame = Frame(self)        
+        frame = Frame(self)
         self.OpenDatadirButton = Button(frame, text="Open work directory", command=self.open_data_directory)
         self.OpenDatadirButton.grid(row=1, column=0, sticky="EW")
 
@@ -65,7 +68,7 @@ class IOFrame(LabelFrame):
 
     def init_vars(self):
         workdrc = self.workdrc
-        
+
         ff = config.cfg.flatfield
         if not ff:
             self.var_flatfield = StringVar(value="")
@@ -148,7 +151,6 @@ class IOFrame(LabelFrame):
         os.startfile(drc)
 
 
-from .base_module import BaseModule
 module = BaseModule("io", "i/o", False, IOFrame, {})
 
 

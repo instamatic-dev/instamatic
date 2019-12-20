@@ -6,12 +6,13 @@ winmm = ctypes.WinDLL('winmm')
 
 ENABLED = False
 
+
 class TIMECAPS(ctypes.Structure):
     _fields_ = (('wPeriodMin', wintypes.UINT),
                 ('wPeriodMax', wintypes.UINT))
 
 
-def enable(milliseconds: int=1) -> None:
+def enable(milliseconds: int = 1) -> None:
     """Set up the system for increased timer precision, e.g. time.sleep().
     Will be reset to the default of 10 ms once the parent process is killed.
     This effect is system-wide.

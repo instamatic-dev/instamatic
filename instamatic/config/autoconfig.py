@@ -45,7 +45,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     return calib_range
 
 
-def choice_prompt(choices: list=[], default=None, question: str="Which one?"):
+def choice_prompt(choices: list = [], default=None, question: str = "Which one?"):
     """Simple cli to prompt for a list of choices"""
     print()
 
@@ -64,7 +64,7 @@ def choice_prompt(choices: list=[], default=None, question: str="Which one?"):
         q = default_choice
     else:
         q = int(q) - 1
-    
+
     picked = choices[q]
 
     print(choices, picked)
@@ -154,7 +154,7 @@ def main():
 
     yaml.dump(tem_config, open(tem_config_fn, "w"), sort_keys=False)
     yaml.dump(calib_config, open(calib_config_fn, "w"), sort_keys=False)
-    
+
     print()
     print(f"Wrote files config files:")
     print(f"    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`")

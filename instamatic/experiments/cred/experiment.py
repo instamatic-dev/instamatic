@@ -48,22 +48,23 @@ class Experiment(object):
     stop_event:
         Instance of `threading.Event()` that signals the experiment to be terminated.
     """
-    def __init__(self, ctrl, 
-        path: str=None, 
-        log=None, 
-        flatfield: str=None,
-        exposure_time: float=0.5,
-        unblank_beam: bool=False,
-        mode: str=None,
-        footfree_rotate_to: float=60.0,
-        enable_image_interval: bool=False,
-        image_interval: int=99999,
-        diff_defocus: int=0,
-        exposure_time_image: float=0.01,
-        write_tiff: bool=True,
-        write_xds: bool=True,
-        write_dials: bool=True,
-        write_red: bool=True,
+
+    def __init__(self, ctrl,
+        path: str = None,
+        log=None,
+        flatfield: str = None,
+        exposure_time: float = 0.5,
+        unblank_beam: bool = False,
+        mode: str = None,
+        footfree_rotate_to: float = 60.0,
+        enable_image_interval: bool = False,
+        image_interval: int = 99999,
+        diff_defocus: int = 0,
+        exposure_time_image: float = 0.01,
+        write_tiff: bool = True,
+        write_xds: bool = True,
+        write_dials: bool = True,
+        write_red: bool = True,
         stop_event=None,
         ):
         super(Experiment,self).__init__()
@@ -178,20 +179,20 @@ class Experiment(object):
         if self.mode == "simulate":
             start_angle = a
             print("Data Recording started.")
-        
+
         elif self.mode == "footfree":
             rotate_to = self.footfree_rotate_to
 
             start_angle = self.ctrl.stage.a
             self.ctrl.stage.set(a=rotate_to, wait=False)
-        
+
         else:
             print("Waiting for rotation to start...", end=' ')
             a0 = a
             while abs(a - a0) < ACTIVATION_THRESHOLD:
                 if self.stopEvent.is_set():
                     break
-                
+
                 a = self.ctrl.stage.a
 
             print("Data Recording started.")
@@ -199,11 +200,11 @@ class Experiment(object):
 
         if self.unblank_beam:
             print("Unblanking beam")
-            self.ctrl.beamblank = False        
+            self.ctrl.beamblank = False
 
         return start_angle
 
-    def relax_beam(self, n_cycles: int=5):
+    def relax_beam(self, n_cycles: int = 5):
         """Relax the beam prior to the experiment by toggling between the defocused/focused states."""
         print(f"Relaxing beam ({n_cycles} cycles)", end='')
 
@@ -223,7 +224,7 @@ class Experiment(object):
         """
         self.setup_paths()
         self.log_start_status()
-        
+
         buffer = []
         image_buffer = []
 
@@ -349,7 +350,7 @@ class Experiment(object):
         
         The buffer index must start at 1."""
 
-        img_conv = ImgConversion(buffer=buffer, 
+        img_conv = ImgConversion(buffer=buffer,
                  osc_angle=self.osc_angle,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
@@ -362,13 +363,13 @@ class Experiment(object):
                  stretch_amplitude=self.stretch_amplitude,
                  stretch_azimuth=self.stretch_azimuth
                  )
-        
+
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,
                                   mrc_path=self.mrc_path,
                                   smv_path=self.smv_path,
                                   workers=8)
-        
+
         print("Writing input files...")
         if self.write_dials:
             img_conv.to_dials(self.smv_path)

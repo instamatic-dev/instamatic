@@ -14,7 +14,10 @@
 .. Created on Aug 9, 2012
 .. codeauthor:: Robert Langlois <rl2528@columbia.edu>
 '''
-import numpy, sys, logging, os
+import numpy
+import sys
+import logging
+import os
 from . import util
 # import util
 
@@ -25,7 +28,7 @@ mrc2numpy = {
     0: numpy.int8,
     1: numpy.int16,
     2: numpy.float32,
-    3: numpy.dtype([('real', numpy.int16), ('imag', numpy.int16)]), 
+    3: numpy.dtype([('real', numpy.int16), ('imag', numpy.int16)]),
       #complex made of two int16.  No such thing in numpy
 #     however, we could manually build a complex array by reading two
 #     int16 arrays somehow.
@@ -93,8 +96,8 @@ byteorderint2 = {
 }
 
 
-
 mrc_defaults = dict(alpha=90, beta=90, gamma=90, mapc=1, mapr=2, maps=3, map='MAP ', byteorder=byteorderint[sys.byteorder])
+
 
 def _gen_header():
     ''' Create the header for an MRC image and stack
@@ -108,7 +111,7 @@ def _gen_header():
     header_image_dtype : numpy.dtype
                          Header for an MRC image
     '''
-    
+
     shared_fields = [
         ('nx', numpy.int32),
         ('ny', numpy.int32),
@@ -135,7 +138,7 @@ def _gen_header():
         ('ispg', numpy.int32),
         ('nsymbt', numpy.int32),
     ]
-    
+
     header_image_dtype = numpy.dtype( shared_fields+[
         ('extra', 'S100'),
         ('xorigin', numpy.float32), #208 320  4   char    cmap;      Contains "MAP "
@@ -160,18 +163,20 @@ def _gen_header():
         ('label8', 'S80'),
         ('label9', 'S80'),
     ])
-    
+
     return header_image_dtype
 
 # --------------------------------------------------------------------
 # End attribution
 # --------------------------------------------------------------------
 
+
 header_image_dtype = _gen_header()
 
 mrc2ara={'': ''}
 mrc2ara.update(dict([(h[0], 'mrc'+h[0]) for h in header_image_dtype.names]))
 ara2mrc=dict([(val, key) for key,val in mrc2ara.items()])
+
 
 def create_header(shape, dtype, order='C', header=None):
     ''' Create a header for the MRC image format
@@ -191,8 +196,9 @@ def create_header(shape, dtype, order='C', header=None):
     h : dtype
         Data type for NumPy ndarray describing the header
     '''
-    
+
     pass
+
 
 def array_from_header(header):
     ''' Convert header information to array parameters
@@ -217,8 +223,9 @@ def array_from_header(header):
     swap : bool
             Swap byte order
     '''
-    
+
     pass
+
 
 def cache_data():
     ''' Get keywords to be added as data cache
@@ -228,8 +235,9 @@ def cache_data():
     extra : dict
             Keyword arguments
     '''
-    
+
     return dict(header=None, no_strict_mrc=False, force_volume=False)
+
 
 def is_format_header(h):
     ''' Test if the given header has the proper format
@@ -244,10 +252,12 @@ def is_format_header(h):
     val : bool
           Test if dtype matches format dtype
     '''
-    
+
     return h.dtype == header_image_dtype or h.dtype == header_image_dtype.newbyteorder()
 
+
 bad_mrc_header=False
+
 
 def is_readable(filename, no_strict_mrc=False):
     ''' Test if the file read has a valid MRC header
@@ -266,16 +276,16 @@ def is_readable(filename, no_strict_mrc=False):
     out : bool
           True if the header conforms to MRC
     '''
-    
+
     global bad_mrc_header
-    
-    if hasattr(filename, 'dtype'): 
+
+    if hasattr(filename, 'dtype'):
         h = filename
         if not is_format_header(h):
             raise ValueError("Array dtype incorrect")
-    else: 
+    else:
         try: h = read_mrc_header(filename)
-        except: 
+        except:
             return False
     if _logger.isEnabledFor(logging.DEBUG):
         _logger.debug("Mode: %d - %d"%(h['mode'][0], (h['mode'][0] not in mrc2numpy) ))
@@ -285,10 +295,10 @@ def is_readable(filename, no_strict_mrc=False):
             _logger.debug("%s: %f - %d"%(name, h[name][0], ((h[name][0] != 90.0) )))
         for name in ('nx', 'ny', 'nz'):
             _logger.debug("%s: %d - %d"%(name, h[name][0], (h[name][0] > 0 )))
-    if h['mode'][0] not in mrc2numpy: 
+    if h['mode'][0] not in mrc2numpy:
         _logger.debug("Failed to read proper mode - not MRC!")
         return False
-    
+
     if (h['byteorder'][0]&-65536) not in intbyteorder and \
        (h['byteorder'][0].byteswap()&-65536) not in intbyteorder:
             if h['alpha'][0] == 0.0 and h['beta'][0] == 0.0 and h['gamma'][0] == 0.0 and int(h['mode'][0]) == 6: # this line hack for non-standard writers
@@ -308,10 +318,11 @@ def is_readable(filename, no_strict_mrc=False):
             else:
                 _logger.debug("Failed to read proper machine stamp - not MRC!")
                 # return False
-    if not numpy.alltrue([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]): 
+    if not numpy.alltrue([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]):
         _logger.debug("Failed to read proper dimensions - not MRC!")
         return False
     return True
+
 
 def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
     ''' Read the MRC header
@@ -334,7 +345,7 @@ def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
     header : dict
              Dictionary with header information
     '''
-    
+
     h = read_mrc_header(filename, index, no_strict_mrc) if not hasattr(filename, 'ndim') else filename
     header={}
     header['apix']=float(h['xlen'][0])/float(h['nx'][0])
@@ -346,6 +357,7 @@ def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
         header['mrc_'+key] = h[key][0]
     header['format'] = 'mrc'
     return header
+
 
 def read_mrc_header(filename, index=None, no_strict_mrc=False):
     ''' Read the MRC header
@@ -366,7 +378,7 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
     out : array
           Array with header information in the file
     '''
-    
+
     f = util.uopen(filename, 'rb')
     try:
         #curr = f.tell()
@@ -377,13 +389,15 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
         util.close(filename, f)
     return h
 
+
 def is_volume(filename):
     '''
     '''
-    
+
     if hasattr(filename, 'dtype'): h=filename
     else: h = read_mrc_header(filename)
     return h['nz'][0] == h['nx'][0] and h['nz'][0] == h['ny'][0]
+
 
 def count_images(filename, no_strict_mrc=False):
     ''' Count the number of images in the file
@@ -402,10 +416,11 @@ def count_images(filename, no_strict_mrc=False):
     out : int
           Number of images in the file
     '''
-    
+
     if hasattr(filename, 'dtype'): h=filename
     else: h = read_mrc_header(filename, no_strict_mrc)
     return h['nz'][0]
+
 
 def iter_images(filename, index=None, header=None, no_strict_mrc=False):
     ''' Read a set of SPIDER images
@@ -428,7 +443,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
     out : array
           Array with image information from the file
     '''
-    
+
     f = util.uopen(filename, 'rb')
     if index is None: index = 0
     try:
@@ -453,12 +468,13 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         for i in index:
             if i != (last+1): f.seek(int(1024+int(h['nsymbt'])+ i * d_len * dtype.itemsize))
             out = util.fromfile(f, dtype=dtype, count=d_len)
-            
+
             out = reshape_data(out, h, index, count)
             if header_image_dtype.newbyteorder()[0]==h.dtype[0]: out = out.byteswap()
             yield out
     finally:
         util.close(filename, f)
+
 
 def valid_image(filename, no_strict_mrc=False):
     ''' Test if the image is valid
@@ -477,7 +493,7 @@ def valid_image(filename, no_strict_mrc=False):
         flag : bool
                True if image is valid
     '''
-    
+
     f = util.uopen(filename, 'rb')
     try:
         h = read_mrc_header(f, no_strict_mrc)
@@ -486,6 +502,7 @@ def valid_image(filename, no_strict_mrc=False):
         return total == (1024+int(h['nsymbt'])+int(h['nx'][0])*int(h['ny'][0])*int(h['nz'][0])*dtype.itemsize)
     finally:
         util.close(filename, f)
+
 
 def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volume=False):
     ''' Read an image from the specified file in the MRC format
@@ -508,7 +525,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         out : array
               Array with image information from the file
     '''
-    
+
     idx = 0 if index is None else index
     f = util.uopen(filename, 'rb')
     try:
@@ -535,6 +552,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
     #if header_image_dtype.newbyteorder()==h.dtype:out = out.byteswap()
     return out, header
 
+
 def reshape_data(out, h, index, count, force_volume=False):
     ''' Reshape the data to the proper dimensions
     
@@ -555,7 +573,7 @@ def reshape_data(out, h, index, count, force_volume=False):
           Array with image information from the file
     
     '''
-    
+
     if index is None and int(h['nz'][0]) > 1 and (count == h['nx'][0] or force_volume):
         if h['mapc'][0] == 2 and h['mapr'][0]==1:
             out = out.reshape( (int(h['nx'][0]), int(h['ny'][0]), int(h['nz'][0])) )
@@ -570,10 +588,12 @@ def reshape_data(out, h, index, count, force_volume=False):
             out = out.reshape( (int(h['ny'][0]), int(h['nx'][0])) )
     return out
 
+
 def file_size(fileobject):
     fileobject.seek(0,2) # move the cursor to the end of the file
     size = fileobject.tell()
     return size
+
 
 def is_writable(filename):
     ''' Test if the image extension of the given filename is understood
@@ -589,11 +609,12 @@ def is_writable(filename):
     write : bool
             True if the format is recognized
     '''
-    
+
     ext = os.path.splitext(filename)[1][1:].lower()
     return ext == 'mrc' or \
            ext == 'ccp4' or \
            ext == 'map'
+
 
 def write_image(filename, img, index=None, header=None, inplace=False):
     ''' Write an image array to a file in the MRC format
@@ -611,12 +632,12 @@ def write_image(filename, img, index=None, header=None, inplace=False):
     inplace : bool
               Write new image to stack without removing the stack
     '''
-    
+
     if header is None and hasattr(img, 'header'): header=img.header
     try: img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
     except:
         raise TypeError("Unsupported type for MRC writing: %s"%str(img.dtype))
-    
+
     mode = 'rb+' if index is not None and (index > 0 or inplace and index > -1) else 'wb+'
     f = util.uopen(filename, mode)
     if header is None or not hasattr(header, 'dtype') or not is_format_header(header):
@@ -644,14 +665,14 @@ def write_image(filename, img, index=None, header=None, inplace=False):
         header['amin'] = numpy.min(img)
         header['amax'] = numpy.max(img)
         header['amean'] = numpy.mean(img)
-        
+
         header['map'] = 'MAP'
         header['byteorder'] = byteorderint2[sys.byteorder] #'DA\x00\x00'
         header['nlabels'] = 1
         header['label0'] = 'Created by Instamatic'
-        
+
         #header['byteorder'] = numpy.fromstring('\x44\x41\x00\x00', dtype=header['byteorder'].dtype)
-        
+
         #header['rms'] = numpy.std(img)
         if img.ndim == 3:
             header['nxstart'] = header['nx'] / -2
@@ -665,7 +686,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
             #header['zorigin'] = stack_count/2.0
         else:
             index = 0
-    
+
     try:
         if inplace:
             f.seek(int(1024+int(h['nsymbt'])+index*img.ravel().shape[0]*img.dtype.itemsize))
@@ -677,7 +698,6 @@ def write_image(filename, img, index=None, header=None, inplace=False):
         img.tofile(f)
     finally:
         util.close(filename, f)
-        
 
 
 if __name__ == '__main__':
@@ -691,7 +711,7 @@ if __name__ == '__main__':
     header = {}
     header['SIZE1'] = 512
     header['SIZE2'] = 512
-    
+
     write_image(fn, img, header=header)
     print("writing:", img.shape)
     print("header:", header)
@@ -700,7 +720,7 @@ if __name__ == '__main__':
     arr,h = read_image(fn)
     print("reading", arr.shape, arr.dtype)
     print("header", h)
-    
+
     print()
     print("allclose:", np.allclose(img, arr))
 

@@ -1,5 +1,7 @@
 import os
-import time, datetime, tqdm
+import time
+import datetime
+import tqdm
 import numpy as np
 from pathlib import Path
 from instamatic import config
@@ -19,7 +21,8 @@ class Experiment(object):
     flatfield:
         Path to flatfield correction image
     """
-    def __init__(self, ctrl, path: str=None, log=None, flatfield=None):
+
+    def __init__(self, ctrl, path: str = None, log=None, flatfield=None):
         super(Experiment,self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
@@ -40,7 +43,7 @@ class Experiment(object):
         self.offset = 1
         self.current_angle = None
         self.buffer = []
-        
+
     def start_collection(self, exposure_time: float, tilt_range: float, stepsize: float):
         """Start or continue data collection for `tilt_range` degrees with steps given by `stepsize`,
         To finalize data collection and write data files, run `self.finalize`.
@@ -86,7 +89,7 @@ class Experiment(object):
 
         if ctrl.cam.streamable:
             ctrl.cam.block()
-    
+
         # for i, a in enumerate(tilt_positions):
         for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
             ctrl.stage.a = angle
@@ -114,7 +117,7 @@ class Experiment(object):
             print(f"Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.")
 
         self.logger.info("Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).")
-        
+
         self.current_angle = angle
         print(f"Done, current angle = {self.current_angle:.2f} degrees")
 
@@ -148,7 +151,7 @@ class Experiment(object):
             print(f"Stepsize: {self.stepsize:.4f} degrees", file=f)
             print(f"Number of frames: {self.nframes}", file=f)
 
-        img_conv = ImgConversion(buffer=self.buffer, 
+        img_conv = ImgConversion(buffer=self.buffer,
                  osc_angle=self.stepsize,
                  start_angle=self.start_angle,
                  end_angle=self.end_angle,
@@ -166,7 +169,7 @@ class Experiment(object):
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,
                                   mrc_path=self.mrc_path,
                                   workers=8)
-        
+
         print("Writing input files...")
         img_conv.write_ed3d(self.mrc_path)
         img_conv.write_pets_inp(self.path)
@@ -199,12 +202,12 @@ def main():
             break
 
     print(f"\nData directory: {expdir}")
-    
+
     red_exp = Experiment(ctrl=ctrl, path=expdir, log=log, flatfield=None)
     red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
 
     input("Press << Enter >> to start the experiment... ")
-    
+
     while not input(f"\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] ") :
         red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
 

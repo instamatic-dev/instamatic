@@ -21,14 +21,14 @@ class ServerError(Exception):
 
 def kill_server(p):
     # p.kill is not adequate
-    sp.call(['taskkill', '/F', '/T', '/PID',  str(p.pid)])
+    sp.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
 
 
 def start_server_in_subprocess():
-   cmd = "instamatic.goniotool.exe"
-   p = sp.Popen(cmd, stdout=sp.DEVNULL)
-   print(f"Starting GonioTool server ({HOST}:{PORT} on pid={p.pid})")
-   atexit.register(kill_server, p)
+    cmd = "instamatic.goniotool.exe"
+    p = sp.Popen(cmd, stdout=sp.DEVNULL)
+    print(f"Starting GonioTool server ({HOST}:{PORT} on pid={p.pid})")
+    atexit.register(kill_server, p)
 
 
 class GonioToolClient(object):
@@ -36,9 +36,10 @@ class GonioToolClient(object):
     Simulates a GonioToolWrapper object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the GonioToolWrapper API.
     """
+
     def __init__(self, name="GonioTool"):
         super().__init__()
-        
+
         self.name = name
         self.bufsize = BUFSIZE
 
@@ -80,8 +81,8 @@ class GonioToolClient(object):
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
             dct = {"func_name": func_name,
-               "args": args,
-               "kwargs": kwargs}
+                   "args": args,
+                   "kwargs": kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -106,7 +107,7 @@ class GonioToolClient(object):
     def _init_dict(self):
         gtw = GonioToolWrapper
 
-        self._dct = {key:value for key, value in  gtw.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in gtw.__dict__.items() if not key.startswith("_")}
 
     def __dir__(self):
         return self._dct.keys()
@@ -118,9 +119,10 @@ class GonioToolWrapper(object):
     barrier: threading.Barrier
         Synchronization primitive to synch with parent process
     """
+
     def __init__(self, barrier=None):
         super().__init__()
-        
+
         self.app = Application().start(GONIOTOOL_EXE)
         input("Enter password and press <ENTER> to continue...")  # delay for password, TODO: automate
         self.startup()
@@ -130,8 +132,8 @@ class GonioToolWrapper(object):
 
     def startup(self):
         """Initialize and start up the GonioTool interface"""
-        self.f1rate = self.app.TMainForm["f1/rate"] 
-        
+        self.f1rate = self.app.TMainForm["f1/rate"]
+
         self.f1 = self.app.TMainForm.f1
         self.rb_cmd = self.f1.CMDRadioButton
         self.rb_tkb = self.f1.TKBRadioButton
@@ -140,7 +142,7 @@ class GonioToolWrapper(object):
 
         self.click_get_button()
         self.click_cmd()
-        
+
         self.edit = self.app.TMainForm.f1.Edit7
 
     def closedown(self):

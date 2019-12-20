@@ -1,5 +1,6 @@
 import argparse
-import os, sys
+import os
+import sys
 import datetime
 import logging
 from instamatic import config
@@ -32,7 +33,7 @@ def locate(name, open=False):
         drc = config.cfg.data_directory
     else:
         raise ValueError(f"No such directory: `{name}`")
-    
+
     if open:
         try:
             os.startfile(drc)
@@ -50,7 +51,7 @@ def main():
     description = ""
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-        
+
     parser.add_argument("-s","--script",
                         action="store", type=str, dest="script",
                         help="Run the script given")
@@ -90,7 +91,7 @@ def main():
 
     from instamatic.utils import high_precision_timers
     high_precision_timers.enable()  # sleep timers with 1 ms resolution
-    
+
     # enable faster switching between threads
     sys.setswitchinterval(0.001)  # seconds
 
@@ -102,8 +103,8 @@ def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_{date}.log"
 
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
 
     logging.captureWarnings(True)
@@ -121,7 +122,7 @@ def main():
         ctrl.run_script_at_items(nav_items=nav_items, script=options.script)
     elif options.script:
         ctrl.run_script(options.script)
-    elif options.start_gui:   
+    elif options.start_gui:
         from instamatic.gui import start_gui
         start_gui(ctrl, log=log)
 

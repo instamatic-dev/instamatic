@@ -6,6 +6,7 @@ from instamatic.tools import autoscale
 
 class VideoStream(threading.Thread):
     """docstring for VideoStream"""
+
     def __init__(self, cam="simulate"):
         threading.Thread.__init__(self)
 

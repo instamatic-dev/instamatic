@@ -1,6 +1,7 @@
 import numpy as np
 from skimage.transform import resize
 
+
 def preprocess(image, n_std=4):
     x, y = np.where(image>np.max(image)*0.99)
     c_x, c_y = int(np.mean(x)), int(np.mean(y))

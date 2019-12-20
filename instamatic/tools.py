@@ -1,5 +1,6 @@
 from instamatic.formats import read_tiff, write_tiff
-import sys, os
+import sys
+import os
 import numpy as np
 import glob
 from skimage import exposure
@@ -65,7 +66,7 @@ def find_script(script: str) -> "pathlib.Path":
     return script
 
 
-def prepare_grid_coordinates(nx: int, ny: int, stepsize: float=1.0) -> "np.array":
+def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.array":
     """
     Prepare a list of grid coordinates nx by ny in size.
     The grid is centered at the center of the grid
@@ -82,7 +83,7 @@ def prepare_grid_coordinates(nx: int, ny: int, stepsize: float=1.0) -> "np.array
     cx = (nx-1) * stepsize / 2
     cy = (ny-1) * stepsize / 2
     center = np.array((cx, cy))
-    
+
     x_grid, y_grid = np.meshgrid(np.arange(nx) * stepsize, np.arange(ny) * stepsize)
     return np.stack([x_grid, y_grid]).reshape(2,-1).T - center
 
@@ -100,9 +101,9 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
     if kind == "quadrilateral":
         coords = np.round(coords).astype(int)
         s = "UNTRUSTED_QUADRILATERAL="
-        for x, y in coords:   
+        for x, y in coords:
             s += f" {y} {x}"  # coords are flipped in XDS
-        
+
         return s
 
     elif kind == "rectangle":
@@ -110,7 +111,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         s = "UNTRUSTED_RECTANGLE="
         (x1, y1), (x2, y2) = coords
         s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
-        
+
         return s
 
     elif kind == "ellipse":
@@ -118,7 +119,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         s = "UNTRUSTED_ELLIPSE="
         (x1, y1), (x2, y2) = coords
         s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
-        
+
         return s
 
     else:
@@ -137,7 +138,7 @@ def find_subranges(lst: list) -> (int, int):
         yield min(group), max(group)
 
 
-def autoscale(img: np.ndarray, maxdim: int=512) -> (np.ndarray, float):
+def autoscale(img: np.ndarray, maxdim: int = 512) -> (np.ndarray, float):
     """Scale the image to fit the maximum dimension given by `maxdim`
     Returns the scaled image, and the image scale"""
     if maxdim:
@@ -153,7 +154,7 @@ def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
     return ndimage.zoom(img, scale, order=1)
 
 
-def denoise(img: np.ndarray, sigma: int=3, method: str="median") -> np.ndarray:
+def denoise(img: np.ndarray, sigma: int = 3, method: str = "median") -> np.ndarray:
     """Denoises the image using a gaussian or median filter.
     median filter is better at preserving edges"""
     if method == "gaussian":
@@ -167,7 +168,7 @@ def enhance_contrast(img: np.ndarray) -> np.ndarray:
     return exposure.equalize_hist(img)
 
 
-def find_peak_max(arr: np.ndarray, sigma: int, m: int=50, w: int=10, kind: int=3) -> (float, float):
+def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3) -> (float, float):
     """Find the index of the pixel corresponding to peak maximum in 1D pattern `arr`
     First, the pattern is smoothed using a gaussian filter with standard deviation `sigma`
     The initial guess takes the position corresponding to the largest value in the resulting pattern
@@ -177,7 +178,7 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int=50, w: int=10, kind: int=3
     c1 = np.argmax(y1)  # initial guess for beam center
 
     win_len = 2*w+1
-    
+
     try:
         r1 = np.linspace(c1-w, c1+w, win_len)
         f  = interpolate.interp1d(r1, y1[c1-w: c1+w+1], kind=kind)
@@ -190,22 +191,22 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int=50, w: int=10, kind: int=3
     return c2 + c1 - w
 
 
-def find_beam_center(img: np.ndarray, sigma: int=30, m: int=100, kind: int=3) -> (float, float):
+def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int = 3) -> (float, float):
     """Find the center of the primary beam in the image `img`
     The position is determined by summing along X/Y directions and finding the position along the two
     directions independently. Uses interpolation by factor `m` to find the coordinates of the pimary
     beam with subpixel accuracy."""
     xx = np.sum(img, axis=1)
     yy = np.sum(img, axis=0)
-    
-    cx = find_peak_max(xx, sigma, m=m, kind=kind) 
-    cy = find_peak_max(yy, sigma, m=m, kind=kind) 
+
+    cx = find_peak_max(xx, sigma, m=m, kind=kind)
+    cy = find_peak_max(yy, sigma, m=m, kind=kind)
 
     center = np.array([cx, cy])
     return center
 
 
-def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False) -> (float, float):
+def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=False) -> (float, float):
     """Find the beam center when a beam stop is present. 
 
     methods: gauss, thresh
@@ -219,19 +220,19 @@ def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False
 
     z = thresh: percentile to segment the image at (99)
         gauss: standard deviation for the gaussian blurring (50)"""
-    
+
     if method == "gauss":
         if not z:
             z = 50
         blurred = ndimage.filters.gaussian_filter(img, z)
         cx, cy = np.unravel_index(blurred.argmax(), blurred.shape)
-    
+
     elif method == "thresh":
         if not z:
             z = 99
         seg = img > np.percentile(img, z)
         labeled, _ = ndimage.label(seg)
-        
+
         props = regionprops(labeled)
         props.sort(key=lambda x: x.area, reverse=True)
         prop = props[0]
@@ -257,9 +258,9 @@ def find_beam_center_with_beamstop(img, z: int=None, method="thresh", plot=False
 
             rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr, fill=False, edgecolor='red', linewidth=2)
             ax2.add_patch(rect)
-            
+
             plt.show()
-    
+
     return np.array((dx, dy))
 
 
@@ -325,7 +326,7 @@ def printer(data) -> None:
     sys.stdout.flush()
 
 
-def find_defocused_image_center(image: np.ndarray, treshold: int=1):
+def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
     """Find the center of a defocused diffraction pattern"""
     X = np.mean(image, axis=0)
     Y = np.mean(image, axis=1)
@@ -339,7 +340,7 @@ def find_defocused_image_center(image: np.ndarray, treshold: int=1):
     return center, rads
 
 
-def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True, drc: str=None) -> object:
+def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None) -> object:
     """take a list of timestamps and return the acquisition time and overhead
 
     Parameters
@@ -367,7 +368,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True,
     res = linregress(x, timestamps)
 
     y = x * res.slope + res.intercept
-    
+
     acq_time = res.slope * 1000
     overhead = acq_time - exp_time
 
@@ -387,7 +388,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool=True,
     return SimpleNamespace(acquisition_time=acq_time/1000, exposure_time=exp_time/1000, overhead=overhead/1000, units="s")
 
 
-def relativistic_wavelength(voltage: float=200_000) -> float:
+def relativistic_wavelength(voltage: float = 200_000) -> float:
     """
     Calculate the relativistic wavelength of electrons from the accelarating voltage
     

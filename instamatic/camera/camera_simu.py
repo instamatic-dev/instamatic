@@ -1,13 +1,11 @@
+from instamatic import config
+import atexit
 from pathlib import Path
 
 import time
 import numpy as np
 import logging
 logger = logging.getLogger(__name__)
-
-import atexit
-
-from instamatic import config
 
 
 class CameraSimu(object):
@@ -89,7 +87,7 @@ class CameraSimu(object):
     def releaseConnection(self) -> None:
         """Release the connection to the camera"""
         name = self.getName()
-        msg = f"Connection to camera '{name}' released" 
+        msg = f"Connection to camera '{name}' released"
         logger.info(msg)
 
     #### Mimic EMMENU API

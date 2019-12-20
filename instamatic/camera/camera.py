@@ -9,7 +9,7 @@ __all__ = ["Camera"]
 default_cam = config.camera.name
 
 
-def get_cam(name: str=None):
+def get_cam(name: str = None):
     """Grabs the camera object defined by `name`"""
 
     if name == "simulate":
@@ -28,7 +28,7 @@ def get_cam(name: str=None):
     return cam
 
 
-def Camera(name: str=None, as_stream: bool=False, use_server: bool=False):
+def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     """Initialize the camera identified by the 'name' parameter
     if `as_stream` is True, it will return a VideoStream object
     if `as_stream` is False, it will return the raw Camera object
@@ -103,11 +103,11 @@ def main_entry():
     parser.add_argument("-u", "--simulate",
                         action="store_true", dest="simulate",
                         help="""Simulate camera/microscope connection (default False)""")
-    
+
     parser.add_argument("-s", "--series",
                         action="store_true", dest="take_series",
                         help="""Enable mode to take a series of images (default False)""")
-    
+
     parser.set_defaults(
         binsize=1,
         exposure=1,
@@ -131,7 +131,7 @@ def main_entry():
 
     from instamatic import TEMController
     ctrl = TEMController.initialize()
-    
+
     if take_series:
         i = 1
         print("\nUsage:")
@@ -175,7 +175,7 @@ def main_entry():
             arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
 
             write_tiff(outfile, arr, header=h)
-    
+
             i += 1
     else:
         import matplotlib.pyplot as plt
@@ -186,7 +186,7 @@ def main_entry():
             # save_header(sys.stdout, h)
             plt.imshow(arr, cmap="gray", interpolation="none")
             plt.show()
-    
+
         if outfile:
             write_tiff(outfile, arr, header=h)
         else:
