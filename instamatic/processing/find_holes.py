@@ -55,7 +55,7 @@ def plot_props(img, props, fname=None, scale=1):
     ax = fig.add_subplot(111)
     plt.imshow(img, interpolation="none")
 
-    for i,prop in enumerate(props):
+    for i, prop in enumerate(props):
         y1, x1, y2, x2 = [x*scale for x in prop.bbox]
 
         color = "red"
@@ -209,7 +209,7 @@ def find_holes_entry():
 
         print()
         for hole in holes:
-            x,y = hole.centroid
+            x, y = hole.centroid
             px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
             area = hole.area*px*py / scale**2
             d = 2*(area/np.pi)**0.5

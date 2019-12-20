@@ -140,7 +140,7 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = F
     d = dict(zip(labels, slices))
 
     if plot:
-        fig, axes = plt.subplots(2,2, sharex=True, sharey=True)
+        fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
         axes = axes.flatten()
 
         for ax, s_, label in zip(axes, slices, labels):
@@ -193,9 +193,9 @@ def define_pairs(grid: "np.ndarray"):
     """
     nx, ny = grid.shape
 
-    footprint = np.array([[0,1,0],
-                          [1,0,1],
-                          [0,1,0]])
+    footprint = np.array([[0, 1, 0],
+                          [1, 0, 1],
+                          [0, 1, 0]])
 
     shape = np.array(footprint.shape)
     assert shape[0] == shape[1], "Axes must be equal"
@@ -254,7 +254,7 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
 
 
 def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
-    fig, axes = plt.subplots(ncols=2, figsize=(6,3))
+    fig, axes = plt.subplots(ncols=2, figsize=(6, 3))
     ax0, ax1 = axes.flatten()
 
     ax0.imshow(im0)
@@ -268,7 +268,7 @@ def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
 
 
 def plot_fft(strip0, strip1, shift, fft, side0, side1):
-    fig, axes = plt.subplots(nrows=4, figsize=(8,5))
+    fig, axes = plt.subplots(nrows=4, figsize=(8, 5))
     axes = axes.flatten()
     for ax in axes:
         ax.set_axis_off()
@@ -326,7 +326,7 @@ def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res
     rect0 = patches.Rectangle(coord0[::-1], res_x, res_y, linewidth=1, edgecolor='r', facecolor='none')
     rect1 = patches.Rectangle(coord1[::-1], res_x, res_y, linewidth=1, edgecolor='r', facecolor='none')
 
-    fig, ax = plt.subplots(1, figsize=(8,8))
+    fig, ax = plt.subplots(1, figsize=(8, 8))
 
     # Add the patch to the Axes
     ax.add_patch(rect0)
@@ -411,9 +411,9 @@ class Montage(object):
         m.filename = filename
         m.stagecoords = np.array([d["StagePosition"] for d in m.mdoc]) * 1000  # um->nm
         c1 = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
-        m.piececoords = c1[:,::-1]  # flip coordinates
+        m.piececoords = c1[:, ::-1]  # flip coordinates
         c2 = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
-        c2 = c2[:,::-1]  # flip coordinates
+        c2 = c2[:, ::-1]  # flip coordinates
         c2 -= c2.min(axis=0)  # set minval to 0
         m.alignedpiececoords = c2
 
@@ -422,7 +422,7 @@ class Montage(object):
         except KeyError:
             pass
         else:
-            c3 = c3[:,::-1]  # flip coordinates
+            c3 = c3[:, ::-1]  # flip coordinates
             c3 -= c3.min(axis=0)  # set minval to 0
             m.alignedpiececoordsvs = c3
 
@@ -449,7 +449,7 @@ class Montage(object):
 
         images = [read_tiff(fn)[0] for fn in fns]
 
-        gridspec = {k:v for k,v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
+        gridspec = {k: v for k, v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
 
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
         m.update_gridspec(flip=not d["flip"])  # BUG: Work-around for gridspec madness
@@ -594,7 +594,7 @@ class Montage(object):
             if score < threshold:
                 if verbose:
                     print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!")
-                shift = np.array((0,0))
+                shift = np.array((0, 0))
                 continue
             if verbose:
                 print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
@@ -680,7 +680,7 @@ class Montage(object):
             params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1]-res_y/2, max=row[1]+res_y/2)
 
         def obj_func(params, diff_vects):
-            V = np.array([p.value for p in params.values()]).reshape(-1,2)
+            V = np.array([p.value for p in params.values()]).reshape(-1, 2)
             n = len(V)
 
             # Minimization function from 2.2
@@ -705,8 +705,8 @@ class Montage(object):
 
         lmfit.report_fit(res, show_correl=verbose, min_correl=0.8)
 
-        Vn = np.array([p.value for p in res.params.values()]).reshape(-1,2)
-        offset = min(Vn[:,0]), min(Vn[:,1])
+        Vn = np.array([p.value for p in res.params.values()]).reshape(-1, 2)
+        offset = min(Vn[:, 0]), min(Vn[:, 1])
         coords = Vn - offset
 
         return coords
@@ -915,7 +915,7 @@ class Montage(object):
 
             if abs(d - diameter) < max_val:
                 ax1.scatter(y, x, marker="+")
-                stagecoord = self.pixel_to_stagecoord((x,y))
+                stagecoord = self.pixel_to_stagecoord((x, y))
                 stagecoords.append(stagecoord)
                 imagecoords.append((x, y))
 

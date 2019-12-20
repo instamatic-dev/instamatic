@@ -104,7 +104,7 @@ def main():
     log = logging.getLogger(__name__)
 
     s = socket(AF_INET, SOCK_STREAM)
-    s.bind((HOST,PORT))
+    s.bind((HOST, PORT))
     s.listen(5)
 
     log.info(f"Indexing server (DIALS) listening on {HOST}:{PORT}")

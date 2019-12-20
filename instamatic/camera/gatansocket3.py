@@ -78,7 +78,7 @@ enum_gs = [
 	'GS_FreeK2GainReference',
 ]
 # lookup table of function name to function code, starting with 1
-enum_gs = dict([(x,y) for (y,x) in enumerate(enum_gs,1)])
+enum_gs = dict([(x, y) for (y, x) in enumerate(enum_gs, 1)])
 
 ## C "long" -> numpy "int_"
 ARGS_BUFFER_SIZE = 1024
@@ -152,7 +152,7 @@ def log(message):
 def logwrap(func):
 	"""Decorator for socket send and recv calls, so they can make log"""
 	def newfunc(*args, **kwargs):
-		log('%s\t%s\t%s' % (func,args,kwargs))
+		log('%s\t%s\t%s' % (func, args, kwargs))
 		try:
 			result = func(*args, **kwargs)
 		except Exception as exc:
@@ -260,14 +260,14 @@ class GatanSocket(object):
 		## log the error code from received message
 		sendargs = message_send.array['longargs']
 		recvargs = message_recv.array['longargs']
-		log('Func: %d, Code: %d' % (sendargs[0],recvargs[0]))
+		log('Func: %d, Code: %d' % (sendargs[0], recvargs[0]))
 
 	def GetLong(self, funcName):
 		"""Common class of function that gets a single long"""
 		funcCode = enum_gs[funcName]
 		message_send = Message(longargs=(funcCode,))
 		# First recieved message longargs is error code
-		message_recv = Message(longargs=(0,0))
+		message_recv = Message(longargs=(0, 0))
 		self.ExchangeMessages(message_send, message_recv)
 		result = message_recv.array['longargs'][1]
 		return result
@@ -276,9 +276,9 @@ class GatanSocket(object):
 		"""Common class of function with one long arg
 		that returns a single long"""
 		funcCode = enum_gs[funcName]
-		message_send = Message(longargs=(funcCode,longarg))
+		message_send = Message(longargs=(funcCode, longarg))
 		# First recieved message longargs is error code
-		message_recv = Message(longargs=(0,0))
+		message_recv = Message(longargs=(0, 0))
 		self.ExchangeMessages(message_send, message_recv)
 		result = message_recv.array['longargs'][1]
 		return result
@@ -294,7 +294,7 @@ class GatanSocket(object):
 
 	def IsCameraInserted(self, camera):
 		funcCode = enum_gs['GS_IsCameraInserted']
-		message_send = Message(longargs=(funcCode,camera))
+		message_send = Message(longargs=(funcCode, camera))
 		message_recv = Message(longargs=(0,), boolargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 		result = bool(message_recv.array['boolargs'][0])
@@ -302,19 +302,19 @@ class GatanSocket(object):
 
 	def InsertCamera(self, camera, state):
 		funcCode = enum_gs['GS_InsertCamera']
-		message_send = Message(longargs=(funcCode,camera), boolargs=(state,))
+		message_send = Message(longargs=(funcCode, camera), boolargs=(state,))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
 	def SetReadMode(self, mode, scaling=1.0):
 		funcCode = enum_gs['GS_SetReadMode']
-		message_send = Message(longargs=(funcCode,mode),dblargs=(scaling,))
+		message_send = Message(longargs=(funcCode, mode), dblargs=(scaling,))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
 	def SetShutterNormallyClosed(self, camera, shutter):
 		funcCode = enum_gs['GS_SetShutterNormallyClosed']
-		message_send = Message(longargs=(funcCode,camera, shutter))
+		message_send = Message(longargs=(funcCode, camera, shutter))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
@@ -359,7 +359,7 @@ class GatanSocket(object):
 		return self.num_grab_sum
 
 	@logwrap
-	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0,earlyReturnRamGrabs=0, lzwtiff=False):
+	def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0, earlyReturnRamGrabs=0, lzwtiff=False):
 		pixelSize = 1.0
 		self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
 		if self.save_frames and (doEarlyReturn or lzwtiff):
@@ -367,12 +367,12 @@ class GatanSocket(object):
 			flag = 128*int(doEarlyReturn) + 8*int(lzwtiff)
 			numGrabSum = self.getNumGrabSum()
 			# set values to pass
-			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag,]
-			dbls = [pixelSize,numGrabSum,0.,0.,0.,]
+			longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag, ]
+			dbls = [pixelSize, numGrabSum, 0., 0., 0., ]
 		else:
-			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip,]
-			dbls = [pixelSize,]
-		bools = [filePerImage,]
+			longs = [enum_gs['GS_SetupFileSaving'], rotationFlip, ]
+			dbls = [pixelSize, ]
+		bools = [filePerImage, ]
 		names_str = dirname + '\0' + rootname + '\0'
 		extra = len(names_str) % 4
 		if extra:
@@ -380,14 +380,14 @@ class GatanSocket(object):
 			names_str = names_str + npad * '\0'
 		longarray = np.frombuffer(names_str.encode(), dtype=np.int_)
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
-		message_recv = Message(longargs=(0,0))
+		message_recv = Message(longargs=(0, 0))
 		self.ExchangeMessages(message_send, message_recv)
 
 	def GetFileSaveResult(self):
 		# this function is broken, many undefined variables
 		longs = [enum_gs['GS_GetFileSaveResult'], rotationFlip]
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
-		message_recv = Message(longargs=(0,0,0))
+		message_recv = Message(longargs=(0, 0, 0))
 		self.ExchangeMessages(message_send, message_recv)
 		args = message_recv.array['longargs']
 		numsaved = args[1]
@@ -395,7 +395,7 @@ class GatanSocket(object):
 
 	def SelectCamera(self, cameraid):
 		funcCode = enum_gs['GS_SelectCamera']
-		message_send = Message(longargs=(funcCode,cameraid))
+		message_send = Message(longargs=(funcCode, cameraid))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
 
@@ -489,8 +489,8 @@ class GatanSocket(object):
 			settling,
 		]
 
-		message_send = Message(longargs=longargs,dblargs=dblargs)
-		message_recv = Message(longargs=(0,0,0,0,0))
+		message_send = Message(longargs=longargs, dblargs=dblargs)
+		message_recv = Message(longargs=(0, 0, 0, 0, 0))
 
 		# attempt to solve UCLA problem by reconnecting
 		#if self.save_frames:
@@ -508,7 +508,7 @@ class GatanSocket(object):
 		bytesPerPixel = 2
 		numBytes = arrSize * bytesPerPixel
 		chunkSize = (numBytes + numChunks - 1) / numChunks
-		imArray = np.zeros((height,width), np.ushort)
+		imArray = np.zeros((height, width), np.ushort)
 		received = 0
 		remain = numBytes
 		for chunk in range(numChunks):
@@ -567,7 +567,7 @@ class GatanSocket(object):
 
 	def ExecuteSendScript(self, command_line, select_camera=0):
 		recv_longargs_init = (0,)
-		result = self.ExecuteScript(command_line,select_camera,recv_longargs_init)
+		result = self.ExecuteScript(command_line, select_camera, recv_longargs_init)
 		# first longargs is error code. Error if > 0
 		return result.array['longargs'][0]
 
@@ -576,14 +576,14 @@ class GatanSocket(object):
 		Execute DM script and return the result as integer
 		"""
 		# SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
-		return int(self.ExecuteGetDoubleScript(command_line,select_camera))
+		return int(self.ExecuteGetDoubleScript(command_line, select_camera))
 
 	def ExecuteGetDoubleScript(self, command_line, select_camera=0):
 		"""
 		Execute DM script that gets one double float number
 		"""
 		recv_dblargs_init = (0.0,)
-		result = self.ExecuteScript(command_line,select_camera,recv_dblargs_init=recv_dblargs_init)
+		result = self.ExecuteScript(command_line, select_camera, recv_dblargs_init=recv_dblargs_init)
 		return result.array['dblargs'][0]
 
 	def ExecuteScript(self, command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):

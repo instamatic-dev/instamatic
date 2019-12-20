@@ -211,7 +211,7 @@ class CalibStage(object):
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*stagepos_.T, label="Positions in pixel coords")
 
-        for i, (x,y) in enumerate(shifts):
+        for i, (x, y) in enumerate(shifts):
             plt.text(x+5, y+5, str(i), size=14)
 
         plt.legend()
@@ -258,7 +258,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     tot = gridsize*gridsize
 
     i = 0
-    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
+    for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         print()
         print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
 

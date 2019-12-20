@@ -111,7 +111,7 @@ if __name__ == '__main__':
     print("header:", header)
     print()
 
-    arr,h = read_adsc(fn)
+    arr, h = read_adsc(fn)
     print("reading", arr.shape)
     print("header", h)
 

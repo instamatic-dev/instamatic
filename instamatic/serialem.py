@@ -22,7 +22,7 @@ INTEGER = ("Color",        "NumPts",       "Draw",         "Regis",
            # other
            "Corner",        "Imported",     "K2ReadMode",     "MapAlpha",
            "PolyID",        "RealignReg",   "RealignedID",    "RegPt",
-           "RegisteredToID","RotOnLoad",
+           "RegisteredToID", "RotOnLoad",
            # DE-12
            "DE12-TotalNumberOfFrames",
            "DE12-FramesPerSecond",
@@ -281,7 +281,7 @@ class MapItem(NavItem):
         try:
             d["BklshXY"] = self.BklshXY
         except AttributeError:
-            d["BklshXY"] = 10 ,-10
+            d["BklshXY"] = 10 , -10
         d["Color"] = 0
         d["DrawnID"] = self.MapID
         d["GroupID"] = MapItem.GROUP_ID_ITERATOR

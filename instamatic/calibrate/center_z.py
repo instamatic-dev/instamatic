@@ -47,7 +47,7 @@ def center_z_height(ctrl, verbose=False):
     ctrl.stage.z = z0 - 1000
     ctrl.stage.z = z0
 
-    for i in range(0,10):
+    for i in range(0, 10):
         z1 = ctrl.stage.z
         ctrl.stage.set(a=a0)
         img0, h = ctrl.getImage(exposure=0.01, comment="z height finding")
@@ -111,7 +111,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     ctrl.magnification.value = 2500
     magnification = ctrl.magnification.value
 
-    x0,y0,z0,a0,b0 = ctrl.stage.get()
+    x0, y0, z0, a0, b0 = ctrl.stage.get()
     img0, h = ctrl.getImage(exposure=0.01, comment="z height finding HY")
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread=spread, offset=offset)
@@ -161,12 +161,12 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
                     crystal_inter_pos = crystal_inter1_pos
                 else:
                     ctrl.stage.stop()
-                    return 999999,999999
+                    return 999999, 999999
         except:
             if verbose:
                 print("No crystal found. Finding another area for z height adjustment.")
             ctrl.stage.stop()
-            return 999999,999999
+            return 999999, 999999
 
         z0 = ctrl.stage.z
 

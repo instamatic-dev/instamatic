@@ -161,7 +161,7 @@ def main_entry():
                     value = int(value)
                 except ValueError as e:
                     print(e)
-                if value in (1,2,4):
+                if value in (1, 2, 4):
                     binsize = value
             elif key == "i":
                 try:

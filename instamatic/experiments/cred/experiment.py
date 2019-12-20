@@ -67,7 +67,7 @@ class Experiment(object):
         write_red: bool = True,
         stop_event=None,
         ):
-        super(Experiment,self).__init__()
+        super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
         self.exposure = exposure_time

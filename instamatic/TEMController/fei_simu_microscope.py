@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-FUNCTION_MODES = {0:'LM',1:'Mi',2:'SA',3:'Mh',4:'LAD',5:'D'}
+FUNCTION_MODES = {0: 'LM', 1: 'Mi', 2: 'SA', 3: 'Mh', 4: 'LAD', 5: 'D'}
 
 MIN = 0.0
 MAX = 1.0

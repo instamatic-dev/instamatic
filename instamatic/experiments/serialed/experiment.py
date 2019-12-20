@@ -110,7 +110,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
             cx, cy = np.dot((cx, cy), r)
 
         if num < 1000:
-            fig = plt.figure(figsize=(10,5))
+            fig = plt.figure(figsize=(10, 5))
             ax = fig.add_subplot(111)
             plt.scatter(0, 0)
             plt.scatter(x_offsets, y_offsets, picker=8, marker="+")
@@ -185,7 +185,7 @@ class Experiment(object):
         if not self.begin_here:
             input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stage.get()
-        self.scan_centers = np.array([[x,y]])
+        self.scan_centers = np.array([[x, y]])
         if not self.scan_radius:
             self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
@@ -355,7 +355,7 @@ class Experiment(object):
                 continue
             else:
                 self.log.info("Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)", i, ncenters, x, y)
-                yield i, (x,y)
+                yield i, (x, y)
 
     def loop_positions(self, delay=0.05):
         """Loop over positions defined
@@ -552,7 +552,7 @@ def main_gui():
 def main():
     from instamatic import TEMController
     try:
-        params = json.load(open("params.json","r"))
+        params = json.load(open("params.json", "r"))
     except IOError:
         params = {}
 

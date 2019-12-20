@@ -52,23 +52,23 @@ def main():
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("-s","--script",
+    parser.add_argument("-s", "--script",
                         action="store", type=str, dest="script",
                         help="Run the script given")
 
-    parser.add_argument("-n","--nav",
+    parser.add_argument("-n", "--nav",
                         action="store", type=str, dest="nav_file",
                         help="Load the given .nav file")
 
-    parser.add_argument("-a","--acquire_at_items",
+    parser.add_argument("-a", "--acquire_at_items",
                         action="store_true", dest="acquire_at_items",
                         help="Run the script file `--script` at every point marked with `Acquire` in the nav file `--nav`.")
 
-    parser.add_argument("-l","--locate",
+    parser.add_argument("-l", "--locate",
                         action="store", type=str, dest="locate",
                         help="Locate a requested directory and exit, i.e. `config`, `data`, `scripts`, `base`, 'work`, `logs`")
 
-    parser.add_argument("-o","--open",
+    parser.add_argument("-o", "--open",
                         action="store", type=str, dest="open",
                         help="Open the requested directory and exit, see `--locate`.")
 

@@ -175,7 +175,7 @@ header_image_dtype = _gen_header()
 
 mrc2ara={'': ''}
 mrc2ara.update(dict([(h[0], 'mrc'+h[0]) for h in header_image_dtype.names]))
-ara2mrc=dict([(val, key) for key,val in mrc2ara.items()])
+ara2mrc=dict([(val, key) for key, val in mrc2ara.items()])
 
 
 def create_header(shape, dtype, order='C', header=None):
@@ -590,7 +590,7 @@ def reshape_data(out, h, index, count, force_volume=False):
 
 
 def file_size(fileobject):
-    fileobject.seek(0,2) # move the cursor to the end of the file
+    fileobject.seek(0, 2) # move the cursor to the end of the file
     size = fileobject.tell()
     return size
 
@@ -717,7 +717,7 @@ if __name__ == '__main__':
     print("header:", header)
     print()
 
-    arr,h = read_image(fn)
+    arr, h = read_image(fn)
     print("reading", arr.shape, arr.dtype)
     print("header", h)
 

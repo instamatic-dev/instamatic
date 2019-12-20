@@ -89,7 +89,7 @@ def get_calibrated_rotation_speed(val):
     rotation speeds of the microscope, and matches them to the observed one"""
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
-    calibrated_value = min(rotation_speeds, key=lambda x:abs(x-val))
+    calibrated_value = min(rotation_speeds, key=lambda x: abs(x-val))
     logger.info(f"Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}")
     return calibrated_value
 
@@ -277,8 +277,8 @@ class ImgConversion(object):
 
         new = np.dot(coords, s)
 
-        xcorr = (new[:,0].reshape(shape) + center[0]) - xi
-        ycorr = (new[:,1].reshape(shape) + center[1]) - yi
+        xcorr = (new[:, 0].reshape(shape) + center[0]) - xi
+        ycorr = (new[:, 1].reshape(shape) + center[1]) - yi
 
         # reverse XY coordinates for XDS
         xcorr, ycorr = ycorr, xcorr
@@ -571,7 +571,7 @@ class ImgConversion(object):
             rot_z=rot_z
             )
 
-        with open(path / 'XDS.INP','w') as f:
+        with open(path / 'XDS.INP', 'w') as f:
             print(s, file=f)
 
         logger.info("XDS INP file created.")

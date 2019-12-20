@@ -45,10 +45,10 @@ def arrangeData(raw, out=None):
 def correctCross(raw, factor=2.15):
     """100000 loops, best of 3: 18 us per loop"""
     raw[255:258] = raw[255] / factor
-    raw[:,255:258] = raw[:,255:256] / factor
+    raw[:, 255:258] = raw[:, 255:256] / factor
 
     raw[258:261] = raw[260] / factor
-    raw[:,258:261] = raw[:,260:261] / factor
+    raw[:, 258:261] = raw[:, 260:261] / factor
 
 
 class CameraTPX(object):

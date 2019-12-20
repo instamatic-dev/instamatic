@@ -78,7 +78,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         return 0
 
     try:
-        with open(log_iscalibs / file,'rb') as f:
+        with open(log_iscalibs / file, 'rb') as f:
             transform_imgshift, c = pickle.load(f)
     except:
         print("No {}, defocus = {} calibration found. Choose the desired defocus value.".format(imageshift, diff_defocus))
@@ -144,7 +144,7 @@ class Experiment(object):
                        flatfield=None,
                        image_interval=99999,
                        diff_defocus=0):
-        super(Experiment,self).__init__()
+        super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = path
         self.expt = exposure_time
@@ -239,7 +239,7 @@ class Experiment(object):
         a2 = int(crystal_pos[1]-window_size/2)
         b2 = int(crystal_pos[1]+window_size/2)
 
-        img_cropped = img[a1:b1,a2:b2]
+        img_cropped = img[a1:b1, a2:b2]
         return crystal_pos, img_cropped, window_size
 
     def hysteresis_check(self, n_cycle=4):
@@ -324,7 +324,7 @@ class Experiment(object):
             _x0 = self.ctrl.stage.x
             _y0 = self.ctrl.stage.y
 
-            displacement = np.subtract((258,258), pos_arr)
+            displacement = np.subtract((258, 258), pos_arr)
             mag = self.ctrl.magnification.value
 
             s = config.calibration.pixelsize_mag1[mag] / 1000 # nm -> um
@@ -342,7 +342,7 @@ class Experiment(object):
         n_crystals = len(crystal_positions)
         if n_crystals == 0:
             self.print_and_del("No crystal found on image!")
-            return (0,0)
+            return (0, 0)
 
         else:
             beam_area = beamsize ** 2
@@ -360,7 +360,7 @@ class Experiment(object):
                     #print(crystal_positions_new)
                     if n_crystals_new == 0:
                         self.print_and_del("No crystal found after centering...")
-                        return (0,0)
+                        return (0, 0)
 
                     else:
                         #print("Start looping.")
@@ -371,10 +371,10 @@ class Experiment(object):
 
                                 return (beamshift_coords, crystalsize)
                             else:
-                                return (0,0)
+                                return (0, 0)
 
                 else:
-                    return (0,0)
+                    return (0, 0)
 
     def isolated(self, c, crystalpositions,  thresh=100):
         distances=[]
@@ -435,7 +435,7 @@ class Experiment(object):
         a2 = int(crystal_pos[1]-window_size/2)
         b2 = int(crystal_pos[1]+window_size/2)
 
-        img_cropped = img[a1:b1,a2:b2]
+        img_cropped = img[a1:b1, a2:b2]
 
         #crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread=spread, offset = offset)
         #crystalposition = self.find_crystal_center(img_cropped, window_size)
@@ -486,7 +486,7 @@ class Experiment(object):
         input("Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.")
         img_var_est = []
         beamsize_est = []
-        for i in range(0,cycle):
+        for i in range(0, cycle):
             img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
             crystal_pos, img0_cropped, window_size = self.image_cropper(img=img, window_size=0)
             v = self.img_var(img0_cropped, crystal_pos)
@@ -685,7 +685,7 @@ class Experiment(object):
 
                     if trackmethod == "c":
 
-                        cc,err,diffphase = register_translation(img0_cropped,img_cropped)
+                        cc, err, diffphase = register_translation(img0_cropped, img_cropped)
                         self.logger.debug("Cross correlation result: {}".format(cc))
 
                         if self.guess_crystmove and i >= self.nom_ii:
@@ -893,7 +893,7 @@ class Experiment(object):
         #self.logger.info("XDS INP file created.")
 
         if image_buffer:
-            drc = os.path.join(path,"tiff_image")
+            drc = os.path.join(path, "tiff_image")
             os.makedirs(drc)
             while len(image_buffer) != 0:
                 i, img, h = image_buffer.pop(0)
@@ -930,7 +930,7 @@ class Experiment(object):
         is1status = self.ctrl.imageshift1.get()
         is2status = self.ctrl.imageshift2.get()
         plastatus = self.ctrl.diffshift.get()
-        with open(self.calibdir / "beam_brightness.pkl",'wb') as f:
+        with open(self.calibdir / "beam_brightness.pkl", 'wb') as f:
             pickle.dump([img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl], f)
 
         print("Brightness recorded.")
@@ -1031,7 +1031,7 @@ class Experiment(object):
                 os.makedirs(path)
 
         try:
-            with open(self.calibdir / "beam_brightness.pkl",'rb') as f:
+            with open(self.calibdir / "beam_brightness.pkl", 'rb') as f:
                 [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = pickle.load(f)
         except IOError:
             [img_brightness, bs, dp_focus, is1status, is2status, plastatus, desired_mag, desired_cl] = self.write_BrightnessStates()
@@ -1059,7 +1059,7 @@ class Experiment(object):
 
         try:
             self.calib_directbeam = CalibDirectBeam.from_file(fn=self.calibdir / CALIB_DIRECTBEAM)
-            with open(self.calibdir / 'diff_par.pkl','rb') as f:
+            with open(self.calibdir / 'diff_par.pkl', 'rb') as f:
                 self.diff_brightness, self.diff_difffocus = pickle.load(f)
         except IOError:
             if not self.ctrl.mode == 'diff':
@@ -1072,15 +1072,15 @@ class Experiment(object):
             self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir=self.calibdir)
             self.diff_brightness = self.ctrl.brightness.value
             self.diff_difffocus = self.ctrl.difffocus.value
-            with open(self.calibdir / 'diff_par.pkl','wb') as f:
+            with open(self.calibdir / 'diff_par.pkl', 'wb') as f:
                 pickle.dump([self.diff_brightness, self.diff_difffocus], f)
 
         try:
-            with open(self.calibdir / "imgvariance.pkl","rb") as f:
+            with open(self.calibdir / "imgvariance.pkl", "rb") as f:
                 self.imgvar_threshold, self.beam_size_avg = pickle.load(f)
         except IOError:
             self.imgvar_threshold, self.beam_size_avg = self.imagevar_blank_estimator(brightness=img_brightness)
-            with open(self.calibdir / "imgvariance.pkl","wb") as f:
+            with open(self.calibdir / "imgvariance.pkl", "wb") as f:
                 pickle.dump([self.imgvar_threshold, self.beam_size_avg], f)
 
         self.neutral_beamshift = bs
@@ -1341,7 +1341,7 @@ class Experiment(object):
                 pickle.dump(t, f)
 
         lensPar = self.ctrl.to_dict()
-        with open(self.calibdir / "LensPar.pkl","wb") as f:
+        with open(self.calibdir / "LensPar.pkl", "wb") as f:
             pickle.dump(lensPar, f)
 
         ## Check DIALS server connection status here
@@ -1353,7 +1353,7 @@ class Experiment(object):
 
         self.stopEvent_rasterScan.clear()
 
-        with open(self.calibdir / "LensPar.pkl","rb") as f:
+        with open(self.calibdir / "LensPar.pkl", "rb") as f:
             lensPar_i = pickle.load(f)
 
         self.ctrl.from_dict(lensPar_i)

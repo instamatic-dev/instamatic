@@ -273,12 +273,12 @@ class ExperimentalautocRED(LabelFrame):
         Only input a number and press ENTER>>""")
         idx = int(idx)
 
-        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP),(6, CALIB_BEAMSHIFT_DP_DEFOC)])
+        FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC), (5, CALIB_BEAMSHIFT_DP), (6, CALIB_BEAMSHIFT_DP_DEFOC)])
 
         path = self.calib_path_is / FLIST[idx]
         print(path)
         try:
-            with open(path,'rb') as f:
+            with open(path, 'rb') as f:
                 t, c = pickle.load(f)
         except IOError as e:
             print(e)
