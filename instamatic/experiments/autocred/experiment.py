@@ -26,7 +26,7 @@ import traceback
 # SerialRED:
 #  Currently only working if live view can be read directly from camera via Python API
 #  Extensively tested on a JEOL 2100 LaB6 TEM with a Timepix camera.
-#  Imgvar can be compared with the first defocused image. 
+#  Imgvar can be compared with the first defocused image.
 #  If other particles move in, the variance will be at least 50% different
 
 # spread, offset: parameters for find_crystals_timepix

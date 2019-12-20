@@ -1,13 +1,13 @@
 # This defines a client class to interface with the socket based DM plugin.
-# 
+#
 # Script adapted from Leginon (http://emg.nysbc.org/redmine/projects/leginon/wiki/Leginon_Homepage)
 # Leginon is licenced under the Apache License, Version 2.0
 # Converted from Python2.7 to Python3.6+ from:
 # http://emg.nysbc.org/redmine/projects/leginon/repository/revisions/trunk/entry/pyscope/gatansocket.py
-# 
+#
 # Needs the SERIALEMCCD plugin to be installed in DigitalMicrograph:
 # https://bio3d.colorado.edu/SerialEM/hlp/html/setting_up_serialem.htm
-# 
+#
 # To connect to DigitalMicrograph through a socket interface on the same or a different computer, such as for a K2/K3 camera with SerialEM running on an FEI microscope, you need to do the following:
 #  - Determine the IP address of the computer running DM on the network which that computer shares with the computer running SerialEM.  If SerialEM and DM are running on the same computer, use '127.0.0.1' for the address.
 #  - Set general property GatanServerIP to this address
@@ -132,15 +132,15 @@ class Message(object):
         """
         unpack buffer into our data structure
         """
-        self.array = np.frombuffer(buf, dtype=self.dtype)[0]
+        self.array=np.frombuffer(buf, dtype = self.dtype)[0]
 
 
 def log(message):
     global debug_log
     if debug_log is None:
         return
-    f = open(debug_log, 'a')
-    line = '%f\t%s\n' % (time.time(), message)
+    f=open(debug_log, 'a')
+    line='%f\t%s\n' % (time.time(), message)
     f.write(line)
     f.close()
 
@@ -150,7 +150,7 @@ def logwrap(func):
     def newfunc(*args, **kwargs):
         log('%s\t%s\t%s' % (func, args, kwargs))
         try:
-            result = func(*args, **kwargs)
+            result=func(*args, **kwargs)
         except Exception as exc:
             log('EXCEPTION: %s' % (exc,))
             raise
@@ -159,26 +159,26 @@ def logwrap(func):
 
 
 class GatanSocket(object):
-    def __init__(self, host='', port=None):
-        self.host = host
+    def __init__(self, host = '', port = None):
+        self.host=host
         if port is not None:
-            self.port = port
+            self.port=port
         elif 'SERIALEMCCD_PORT' in os.environ:
-            self.port = os.environ['SERIALEMCCD_PORT']
+            self.port=os.environ['SERIALEMCCD_PORT']
         else:
             raise ValueError('Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
 
-        self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
+        self.debug=os.environ.get('SERIALEMCCD_DEBUG', 0)
         if self.debug:
             print("host", repr(self.host))
             print("port", self.port)
             print("debug mode", os.environ['SERIALEMCCD_DEBUG'])
 
-        self.save_frames = False
-        self.num_grab_sum = 0
+        self.save_frames=False
+        self.num_grab_sum=0
         self.connect()
 
-        self.script_functions = [
+        self.script_functions=[
             ('AFGetSlitState', 'GetEnergyFilter'),
             ('AFSetSlitState', 'SetEnergyFilter'),
             ('AFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -518,7 +518,7 @@ class GatanSocket(object):
             while chunkRemain:
                 new_recv = self.recv_data(chunkRemain)
                 len_recv = len(new_recv)
-                imArray.data[received:received + len_recv] = new_recv
+                imArray.data[received: received + len_recv]= new_recv
                 chunkReceived += len_recv
                 chunkRemain -= len_recv
                 remain -= len_recv

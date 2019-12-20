@@ -6,15 +6,15 @@ import numpy as np
 
 # Script to process cRED data collecting using the DigitalMicrograph script `insteaDMatic`
 # https://github.com/stefsmeets/instamatic/tree/master/dmscript
-# 
+#
 # To use:
 #     Run `python process_dm.py cred_log.txt`
-# 
+#
 # Where the first argument is the path to the cred_log.txt file. Assumes the data are stored
 # in a subdirectory `tiff/*.tif` from where cred_log.txt is stored.
-# 
+#
 # Defaults to `cred_log.txt` in the current directory if left blank.
-# 
+#
 # If the first argument is given as `all`, the script will look for
 # all `cred_log.txt` files in the subdirectories, and iterate over those.
 

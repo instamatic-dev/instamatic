@@ -320,10 +320,10 @@ def acquire_data_autocRED(controller, **kwargs):
 
     # controller.stream.get_module("sed").calib_path = expdir / "calib"
 
-    cexp = autocRED.Experiment(ctrl=controller.ctrl, 
-                               path=expdir, 
-                               flatfield=controller.module_io.get_flatfield(), 
-                               log=controller.log, 
+    cexp = autocRED.Experiment(ctrl=controller.ctrl,
+                               path=expdir,
+                               flatfield=controller.module_io.get_flatfield(),
+                               log=controller.log,
                                **kwargs)
     cexp.start_collection()
 

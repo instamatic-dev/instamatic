@@ -289,9 +289,6 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     strip1_shifted = ndimage.shift(strip1, (shift_x, shift_y))
     difference = strip1_shifted - strip0.astype(float)
 
-    # Show shift in fourier space
-    image_product = np.fft.fft2(strip0) * np.fft.fft2(strip1).conj()
-
     ax0.imshow(strip0, interpolation="nearest")
     ax0.set_title(f"{side0}")
     ax1.imshow(strip1, interpolation="nearest")
