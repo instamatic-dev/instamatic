@@ -20,32 +20,32 @@ def closest_distance(node, nodes):
 def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
     """Find crystals that are at least `min_separation` in micrometers away from other crystals"""
     isolated = []
-    
+
     for fn in fns:
         img, h = read_hdf5(fn)
         coords = h["exp_crystal_coords"]
-        
+
         if len(coords) == 0:
             continue
 
         # apply calibration
         shape = h["ImageCameraDimensions"]
         dimensions = h["ImageDimensions"]
-        calibrated_coords = np.multiply(coords, dimensions / shape )
-        
+        calibrated_coords = np.multiply(coords, dimensions / shape)
+
         boundary_px = shape * boundary / dimensions
-        
+
         objects = []
         n_isolated = 0
-        
+
         for i, (coord, calibrated_coord) in enumerate(zip(coords, calibrated_coords)):
             try:
                 min_dist = closest_distance(calibrated_coord, calibrated_coords)
             except IndexError:
                 min_dist = 9999
 
-            x,y = coord
-            
+            x, y = coord
+
             if not (boundary_px[0] < x < shape[0] - boundary_px[0]):
                 objects.append((x, y, "orange"))
             elif not (boundary_px[1] < y < shape[1] - boundary_px[1]):
@@ -57,24 +57,24 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
                 isolated.append(p.parents[1] / "data" / f"{p.stem}_{i:04d}{p.suffix}")
             else:
                 objects.append((x, y, "blue"))
-            
+
         if plot and n_isolated:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots()
             ax.imshow(img)
-            
+
             for (x, y, color) in objects:
                 ax.scatter(y, x, color=color)
-            
+
             # diff_img, _ = read_hdf5(isolated[-1])
             # ax2 = inset_locator.inset_axes(ax, "40%", "40%", loc=3)
             # ax2.imshow(diff_img, vmax=np.percentile(diff_img, 99))
             # ax2.axis("off")
-            
+
             ax.axis("off")
             ax.set_title(fn)
             plt.show()
-        
+
     return isolated
 
 
@@ -100,11 +100,11 @@ def main(file_pattern):
             continue
 
         try:
-            size = h["total_area_micrometer"] / h["crystal_clusters"] # micrometer^2
+            size = h["total_area_micrometer"] / h["crystal_clusters"]  # micrometer^2
         except KeyError:
             # old data formats don't have this information
             size = 0.0
-    
+
         try:
             dx, dy = h["exp_hole_offset"]
             cx, cy = h["exp_hole_center"]
@@ -116,7 +116,7 @@ def main(file_pattern):
         size = round(size, 4)
         x = int(cx + dx)
         y = int(cy + dy)
-        
+
         lst.append((fn.absolute(), frame, number, prediction, size, x, y))
 
     with open('learning.csv', 'w', newline="") as csvfile:
@@ -131,7 +131,7 @@ def main_entry():
         pattern = sys.argv[1]
     else:
         pattern = "images/*.h5"
-    
+
     main(pattern)
 
 

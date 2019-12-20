@@ -21,7 +21,7 @@ def main():
        shape: {}
        range: {}-{}
        dtype: {}
-""".format(fn, img.nbytes/1024, img.shape, img.min(), img.max(), img.dtype))
+""".format(fn, img.nbytes / 1024, img.shape, img.min(), img.max(), img.dtype))
 
     max_len = max([len(s) for s in h.keys()])
 
@@ -32,6 +32,7 @@ def main():
     plt.imshow(img, cmap="gray")
     plt.title(fn)
     plt.show()
+
 
 if __name__ == '__main__':
     main()

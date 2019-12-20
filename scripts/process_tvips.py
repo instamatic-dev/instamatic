@@ -33,7 +33,7 @@ def extract_image_number(s):
 def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     credlog = Path(credlog)
     drc = credlog.parent
-    
+
     pattern = "tiff/*.tif*"
 
     image_fns = list(drc.glob(pattern))
@@ -53,7 +53,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     hs = [im.tvips_metadata for im in ims]
 
     ts = [h["Time"] for h in hs]  # sort by timestamps
-    
+
     h0 = hs[0]
     exposure_time = h0["ExposureTime"]
 
@@ -89,7 +89,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     # from cred_log
 
     osc_angle = abs(rotation_speed * acquisition_time)
-    direction = [1,-1][end_angle < start_angle]
+    direction = [1, -1][end_angle < start_angle]
     end_angle = start_angle + direction * nframes * osc_angle
 
     # from header
@@ -109,12 +109,12 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     physical_pixelsize_y_tvips = binning_y * h0["PhysicalPixelSizeY"] / 1_000_000  # nm -> mm
 
     # pixelsize can be a factor 10 off, depending on the mode used
-    pixelsize_x_tvips = np.sin(h0["PixelSizeX"] / 1_000_000) / wavelength  #  µrad/px -> rad/px -> px/Å
-    pixelsize_y_tvips = np.sin(h0["PixelSizeY"] / 1_000_000) / wavelength  #  µrad/px -> rad/px -> px/Å
+    pixelsize_x_tvips = np.sin(h0["PixelSizeX"] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
+    pixelsize_y_tvips = np.sin(h0["PixelSizeY"] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
 
     image_res_x_tvips = h0["ImageSizeX"]
     image_res_y_tvips = h0["ImageSizeY"]
-    
+
     print(f"Number of frames: {nframes}")
     print()
     print("# cRED_log.txt")
@@ -172,15 +172,15 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
 
     print("Setting up image conversion")
     img_conv = ImgConversion(buffer=buffer,
-         osc_angle=osc_angle,
-         start_angle=start_angle,
-         end_angle=end_angle,
-         rotation_axis=rotation_axis,            
-         acquisition_time=acquisition_time,
-         flatfield=None,
-         pixelsize=pixelsize,
-         physical_pixelsize=physical_pixelsize,
-         wavelength=wavelength)
+                             osc_angle=osc_angle,
+                             start_angle=start_angle,
+                             end_angle=end_angle,
+                             rotation_axis=rotation_axis,            
+                             acquisition_time=acquisition_time,
+                             flatfield=None,
+                             pixelsize=pixelsize,
+                             physical_pixelsize=physical_pixelsize,
+                             wavelength=wavelength)
 
     if beamstop:
         from instamatic.utils.beamstop import find_beamstop_rect
@@ -203,7 +203,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
                               mrc_path=mrc_path,
                               smv_path=smv_path,
                               workers=8)
-    
+
     print("Writing input files")
     if mrc_path:
         img_conv.write_ed3d(mrc_path)
@@ -236,4 +236,4 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+    main()

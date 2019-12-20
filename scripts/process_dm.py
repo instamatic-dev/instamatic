@@ -23,7 +23,7 @@ all `cred_log.txt` files in the subdirectories, and iterate over those.
 """
 
 
-def relativistic_wavelength(voltage: float=200):
+def relativistic_wavelength(voltage: float = 200):
     """Calculate the relativistic wavelength of electrons
     Voltage in kV
     Return wavelength in Angstrom"""
@@ -31,10 +31,10 @@ def relativistic_wavelength(voltage: float=200):
 
     h = 6.626070150e-34  # planck constant J.s
     m = 9.10938356e-31   # electron rest mass kg
-    e = 1.6021766208e-19 # elementary charge C
+    e = 1.6021766208e-19  # elementary charge C
     c = 299792458        # speed of light m/s
 
-    wl = h/((2*m*voltage*e*(1+(e*voltage)/(2*m*c**2))))**0.5
+    wl = h / ((2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))))**0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom
 
@@ -42,7 +42,7 @@ def relativistic_wavelength(voltage: float=200):
 def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     credlog = Path(credlog)
     drc = credlog.parent
-    
+
     image_fns = list(drc.glob("tiff/*.tif"))
 
     n = len(image_fns)
@@ -51,7 +51,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
         exit()
     else:
         print(n)
-    
+
     buffer = []
 
     with open(credlog, "r") as f:
@@ -97,7 +97,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
 
     # convert from 1/nm to 1/angstrom
     pixelsize = pixelsize[0] * 10
-    
+
     # rotation axis
     # for themisZ/Oneview: -171.0; for 2100LaB6/Orius: 53.0; otherwise: 0.0
     rotation_axis = np.radians(rotation_axis)
@@ -116,34 +116,32 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     print("Rotation axis (rad.):", rotation_axis)
     # print("Binsize:", binsize)
 
-
     def extract_image_number(s):
         p = Path(s)
         return int(p.stem.split("_")[-1])
-    
+
     for i, fn in enumerate(image_fns):
         j = extract_image_number(fn)
         img = np.array(Image.open(fn))
 
         if img.dtype != np.uint16:
             # cast to 16 bit uint16
-            img = (2**16-1) * (img - img.min()) / (img.max() - img.min())
+            img = (2**16 - 1) * (img - img.min()) / (img.max() - img.min())
 
         h = {"ImageGetTime": timestamp, "ImageExposureTime": exposure_time}
         buffer.append((j, img, h))
-    
 
     img_conv = ImgConversion(buffer=buffer,
-             osc_angle=osc_angle,
-             start_angle=start_angle,
-             end_angle=end_angle,
-             rotation_axis=rotation_axis,
-             acquisition_time=acquisition_time,
-             flatfield=None,
-             pixelsize=pixelsize,
-             physical_pixelsize=physical_pixelsize,
-             wavelength=wavelength)
-    
+                             osc_angle=osc_angle,
+                             start_angle=start_angle,
+                             end_angle=end_angle,
+                             rotation_axis=rotation_axis,
+                             acquisition_time=acquisition_time,
+                             flatfield=None,
+                             pixelsize=pixelsize,
+                             physical_pixelsize=physical_pixelsize,
+                             wavelength=wavelength)
+
     if mrc_path:
         mrc_path = drc / mrc_path
     if smv_path:
@@ -156,10 +154,10 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
                               mrc_path=mrc_path,
                               smv_path=smv_path,
                               workers=8)
-    
+
     if mrc_path:
         img_conv.write_ed3d(mrc_path)
-    
+
     if smv_path:
         img_conv.write_xds_inp(smv_path)
         # img_conv.to_dials(smv_path)
@@ -185,4 +183,4 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+    main()

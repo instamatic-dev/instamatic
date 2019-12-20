@@ -24,7 +24,7 @@ if not os.path.isdir("movie"):
 
 for i, fn in enumerate(tqdm.tqdm(fns)):
     dps = glob.glob(fn.replace("images", "data").replace(".h5", "_*.h5"))
-    
+
     im, h_im = read_image(fn)
 
     crystal_coords = np.array(h_im["exp_crystal_coords"])
@@ -35,23 +35,23 @@ for i, fn in enumerate(tqdm.tqdm(fns)):
         except:
             print("fail")
             continue
-        
-        x,y = crystal_coords[j]
-        
+
+        x, y = crystal_coords[j]
+
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(21.5, 10), sharex=True, sharey=True)
-        
+
         ax1.imshow(im, vmax=np.percentile(im, 99.5))
         ax1.axis('off')
-        ax1.scatter(crystal_coords[:,1], crystal_coords[:,0], marker=".", color="red", s=100)
-        ax1.scatter(y,x, marker="o", color="red", s=200)
+        ax1.scatter(crystal_coords[:, 1], crystal_coords[:, 0], marker=".", color="red", s=100)
+        ax1.scatter(y, x, marker="o", color="red", s=200)
         ax1.set_title(fn, fontdict)
         ax2.imshow(diff, vmin=vmin_diff, vmax=vmax_diff)
 
         ax2.axis('off')
         ax2.set_title(dp, fontdict)
-        
+
         plt.tight_layout()
-        
+
         # out = dp.replace("h5", "png").replace("data\\","movie\\")
         out = "movie\image_{:04d}.png".format(number)
         number += 1
