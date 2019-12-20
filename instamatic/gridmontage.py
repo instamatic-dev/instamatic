@@ -120,7 +120,7 @@ class GridMontage(object):
 
     def to_montage(self):
         """Convert the experimental data to a `Montage` object."""
-        images = [im for im,h in self.buffer]
+        images = [im for im, h in self.buffer]
         m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
         m.update_gridspec(flip=not self.flip)  # BUG: Work-around for gridspec madness
                                             # Possibly related is that images are rotated 90 deg. in SerialEM mrc files

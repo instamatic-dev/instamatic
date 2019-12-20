@@ -120,7 +120,7 @@ def main():
     barrier.wait()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST,PORT))
+    s.bind((HOST, PORT))
     s.listen(5)
 
     log.info(f"Server listening on {HOST}:{PORT}")

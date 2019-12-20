@@ -127,7 +127,7 @@ class CalibDirectBeam(object):
             "t": t
         }
 
-        return cls({key:d})
+        return cls({key: d})
 
     @classmethod
     def from_file(cls, fn=CALIB_DIRECTBEAM):
@@ -228,7 +228,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
 
-    for i, (dx,dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2,-1).T):
+    for i, (dx, dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2, -1).T):
         i += 1
 
         attr.set(x=x_cent+dx, y=y_cent+dy)

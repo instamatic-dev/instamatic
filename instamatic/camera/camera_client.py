@@ -122,7 +122,7 @@ class CamClient(object):
         from instamatic.camera.camera import get_cam
         cam = get_cam(self.name)
 
-        self._dct = {key:value for key, value in  cam.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in  cam.__dict__.items() if not key.startswith("_")}
         self._dct["get_attrs"] = None
 
     def _init_attr_dict(self):

@@ -170,7 +170,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     tot = gridsize*gridsize
 
     i = 0
-    for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
+    for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         ctrl.beamshift.set(x=x_cent+dx, y=y_cent+dy)
 
         printer("Position: {}/{}: {}".format(i+1, tot, ctrl.beamshift))

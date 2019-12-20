@@ -174,7 +174,7 @@ def acquire_data_SED(controller, **kwargs):
 
     params = workdir / "params.json"
     try:
-        params = json.load(open(params,"r"))
+        params = json.load(open(params, "r"))
     except IOError:
         params = PARAMS
 

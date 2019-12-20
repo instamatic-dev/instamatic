@@ -422,7 +422,7 @@ class Experiment(object):
         except AttributeError as e:
             print(e)
             print(f"Timestamps from {start_index} to {end_index}")
-            timestamps = [1,2,3,4,5]  # just to make it work
+            timestamps = [1, 2, 3, 4, 5]  # just to make it work
 
         self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=self.path)
 
@@ -538,11 +538,11 @@ class Experiment(object):
                 print("Not enough stage positions for interpolation")
             else:
                 pos = np.array([p[1] for p in self.stage_positions])  # (t, (x y z a b))
-                idx = np.argmin(np.abs(pos[:,3]))
-                x_center = pos[:,0].mean()
-                y_center = pos[idx,1]
-                z_pos = pos[0:,2].mean()
-                f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
+                idx = np.argmin(np.abs(pos[:, 3]))
+                x_center = pos[:, 0].mean()
+                y_center = pos[idx, 1]
+                z_pos = pos[0:, 2].mean()
+                f = interp1d(pos[:, 3], pos[:, 1]-y_center, fill_value="extrapolate", kind="quadratic")
 
                 d = {}
                 d["y_offset"] = f

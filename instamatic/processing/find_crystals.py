@@ -91,7 +91,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     markers = arr*2 + bkg
 
     # segment using random_walker
-    segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5,5), mode='bf')
+    segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5, 5), mode='bf')
     segmented = segmented.astype(int) -1
 
     return arr, segmented
@@ -183,8 +183,8 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
         if len(crystals) > 0:
-            x,y = np.array([(crystal.x*scale, crystal.y*scale) for crystal in crystals]).T
-            plt.scatter(y,x, color="red")
+            x, y = np.array([(crystal.x*scale, crystal.y*scale) for crystal in crystals]).T
+            plt.scatter(y, x, color="red")
         ax = plt.axes()
         ax.set_axis_off()
         plt.show()

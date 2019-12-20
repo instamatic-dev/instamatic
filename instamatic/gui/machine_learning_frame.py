@@ -49,7 +49,7 @@ class MachineLearningFrame(LabelFrame):
         tv.heading('y', text='Y', command=lambda: treeview_sort_column(tv, 'y', False))
         tv.column('y', anchor='center', width=15)
 
-        tv.grid(sticky=(N,S,W,E))
+        tv.grid(sticky=(N, S, W, E))
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
         frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)

@@ -23,7 +23,7 @@ class Experiment(object):
     """
 
     def __init__(self, ctrl, path: str = None, log=None, flatfield=None):
-        super(Experiment,self).__init__()
+        super(Experiment, self).__init__()
         self.ctrl = ctrl
         self.path = Path(path)
 

@@ -25,9 +25,9 @@ def apply_corrections(img, deadpixels=None):
 def remove_deadpixels(img, deadpixels, d=1):
     """Remove dead pixels from the images by replacing them with the average of neighbouring pixels"""
     d = 1
-    for (i,j) in deadpixels:
+    for (i, j) in deadpixels:
         neighbours = img[i-d:i+d+1, j-d:j+d+1].flatten()
-        img[i,j] = np.mean(neighbours)
+        img[i, j] = np.mean(neighbours)
     return img
 
 
@@ -38,14 +38,14 @@ def get_deadpixels(img):
 
 def apply_center_pixel_correction(img, k=1.19870594245):
     """Correct the intensity of the center pixels"""
-    img[255:261,255:261] = img[255:261,255:261] * k
+    img[255:261, 255:261] = img[255:261, 255:261] * k
     return img
 
 
 def get_center_pixel_correction(img):
     """Get the correction factor for the center pixels"""
-    center = np.sum(img[255:261,255:261])
-    edge = np.sum(img[254:262,254:262]) - center
+    center = np.sum(img[255:261, 255:261])
+    edge = np.sum(img[254:262, 254:262]) - center
 
     avg1 = center/36.0
     avg2 = edge/28.0
@@ -112,7 +112,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     print("\nCollecting flatfield images")
     for n in tqdm(range(frames)):
         outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
-        img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
         buffer.append(img)
 
     f = np.mean(buffer, axis=0)
@@ -133,7 +133,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
         print("\nCollecting darkfield images")
         for n in tqdm(range(frames)):
             outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
-            img,h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
+            img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
             buffer.append(img)
 
         d = np.mean(buffer, axis=0)
@@ -194,14 +194,14 @@ def main_entry():
         exit()
 
     if options.flatfield:
-        flatfield,h = read_tiff(options.flatfield)
+        flatfield, h = read_tiff(options.flatfield)
         deadpixels = h["deadpixels"]
     else:
         print("No flatfield file specified")
         exit()
 
     if options.darkfield:
-        darkfield,h = read_tiff(options.darkfield)
+        darkfield, h = read_tiff(options.darkfield)
     else:
         darkfield = np.zeros_like(flatfield)
 
@@ -214,7 +214,7 @@ def main_entry():
     drc.mkdir(exist_ok=True, parents=True)
 
     for f in args:
-        img,h = read_tiff(f)
+        img, h = read_tiff(f)
 
         img = apply_corrections(img, deadpixels=deadpixels)
         img = apply_flatfield_correction(img, flatfield, darkfield=darkfield)

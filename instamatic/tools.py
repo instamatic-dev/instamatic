@@ -37,7 +37,7 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
     if ndarray.ndim != len(new_shape):
         raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
                                                            new_shape))
-    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
+    compression_pairs = [(d, c//d) for d, c in zip(new_shape,
                                                   ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
@@ -85,7 +85,7 @@ def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.arr
     center = np.array((cx, cy))
 
     x_grid, y_grid = np.meshgrid(np.arange(nx) * stepsize, np.arange(ny) * stepsize)
-    return np.stack([x_grid, y_grid]).reshape(2,-1).T - center
+    return np.stack([x_grid, y_grid]).reshape(2, -1).T - center
 
 
 def to_xds_untrusted_area(kind: str, coords: list) -> str:
@@ -290,7 +290,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
         raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
-    compression_pairs = [(d, c//d) for d,c in zip(new_shape,
+    compression_pairs = [(d, c//d) for d, c in zip(new_shape,
                                                   ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
@@ -333,7 +333,7 @@ def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
     im_mean = np.mean(X)
     rads = np.zeros(2)
     center = np.zeros(2)
-    for n, XY in enumerate([X,Y]):
+    for n, XY in enumerate([X, Y]):
         over = np.where(XY>(im_mean*treshold))[0]
         rads[n] = (over[-1] - over[0])/2
         center[n] = over[0] + rads[n]

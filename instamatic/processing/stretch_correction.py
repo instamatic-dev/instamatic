@@ -47,9 +47,9 @@ def affine_transform_ellipse_to_circle(azimuth: float, amplitude: float, inverse
     sy    = 1 + amplitude
 
     # apply in this order
-    rot1 = np.array((cos, -sin,  sin, cos)).reshape(2,2)
-    scale = np.array((sx, 0, 0, sy)).reshape(2,2)
-    rot2 = np.array((cos,  sin, -sin, cos)).reshape(2,2)
+    rot1 = np.array((cos, -sin,  sin, cos)).reshape(2, 2)
+    scale = np.array((sx, 0, 0, sy)).reshape(2, 2)
+    rot2 = np.array((cos,  sin, -sin, cos)).reshape(2, 2)
 
     composite = rot1.dot(scale).dot(rot2)
 

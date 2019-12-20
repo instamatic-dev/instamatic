@@ -69,13 +69,13 @@ class VideoStreamFrame(Frame):
         self.var_brightness.trace_add("write", self.update_brightness)
 
         self.var_display_range = DoubleVar(value=self.display_range_default)
-        self.var_display_range.trace_add("write",self.update_display_range)
+        self.var_display_range.trace_add("write", self.update_display_range)
 
         self.var_resize_image = BooleanVar(value=self.resize_image)
-        self.var_resize_image.trace_add("write",self.update_resize_image)
+        self.var_resize_image.trace_add("write", self.update_resize_image)
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
-        self.var_auto_contrast.trace_add("write",self.update_auto_contrast)
+        self.var_auto_contrast.trace_add("write", self.update_auto_contrast)
 
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
@@ -125,7 +125,7 @@ class VideoStreamFrame(Frame):
 
         frame.pack()
 
-    def makepanel(self, master, resolution=(512,512)):
+    def makepanel(self, master, resolution=(512, 512)):
         if self.panel is None:
             image = Image.fromarray(np.zeros(resolution))
             image = ImageTk.PhotoImage(image)
@@ -216,7 +216,7 @@ class VideoStreamFrame(Frame):
 
         # the display range in ImageTk is from 0 to 256
         if self.auto_contrast:
-            frame = frame * (256.0 / (1 + np.percentile(frame[::4,::4], 99.5)))  # use 128x128 array for faster calculation
+            frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
 
             image = Image.fromarray(frame)
         elif self.display_range != self.display_range_default:
