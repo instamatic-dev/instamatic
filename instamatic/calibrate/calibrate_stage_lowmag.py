@@ -36,7 +36,7 @@ class CalibStage(object):
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, t, reference_pos):
         """
         Function to transform stage position to pixel coordinates
-        
+
         px_ref: `list`
             stage position (x,y) to transform to pixel coordinates on 
             current image
@@ -65,7 +65,7 @@ class CalibStage(object):
     def _pixelcoord_to_reference_setting(self, px, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to pixel coordinates in reference setting
-        
+
         px: `list`
             image pixel coordinates to transform to stage position
         r: `2d ndarray`, shape (2,2)
@@ -93,7 +93,7 @@ class CalibStage(object):
     def _pixelcoord_to_stagepos(self, px, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to stage position
-        
+
         px: `list`
             image pixel coordinates to transform to stage position
         r: `2d ndarray`, shape (2,2)
@@ -114,7 +114,7 @@ class CalibStage(object):
     def _stagepos_to_pixelcoord(self, stagepos, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to stage position
-        
+
         px: `list`
             image pixel coordinates to transform to stage position
         r: `2d ndarray`, shape (2,2)

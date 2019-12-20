@@ -192,23 +192,23 @@ class ImgConversion(object):
                 setattr(self, attr, default)
 
         attrs = [
-        # "rotation_speed",
-        "acquisition_time",
-        "start_angle",
-        "end_angle",
-        "osc_angle",
-        "distance",
-        "mean_beam_center",
-        "wavelength",
-        "physical_pixelsize",
-        "pixelsize",
-        "data_shape",
-        "missing_range",
-        "complete_range",
-        "observed_range",
-        "headers",
-        "data",
-        "XDS_template"
+            # "rotation_speed",
+            "acquisition_time",
+            "start_angle",
+            "end_angle",
+            "osc_angle",
+            "distance",
+            "mean_beam_center",
+            "wavelength",
+            "physical_pixelsize",
+            "pixelsize",
+            "data_shape",
+            "missing_range",
+            "complete_range",
+            "observed_range",
+            "headers",
+            "data",
+            "XDS_template"
         ]
 
         for attr in attrs:
@@ -251,7 +251,7 @@ class ImgConversion(object):
     def write_geometric_correction_files(self, path) -> None:
         """Make geometric correction images for XDS
         Writes files XCORR.cbf and YCORR.cbf to `path`
-        
+
         To use:
             DETECTOR= PILATUS     ! fake being a PILATUS detector
             X-GEO_CORR= XCORR.cbf
@@ -569,7 +569,7 @@ class ImgConversion(object):
             rot_x=rot_x,
             rot_y=rot_y,
             rot_z=rot_z
-            )
+        )
 
         with open(path / 'XDS.INP', 'w') as f:
             print(s, file=f)

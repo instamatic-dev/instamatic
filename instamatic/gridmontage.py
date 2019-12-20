@@ -30,7 +30,7 @@ class GridMontage(object):
               stage_shift: tuple = (0.0, 0.0),
               binning: int = None) -> "np.array":
         """Set up the experiment, run `GridMontage.start` to acquire data.
-        
+
         Parameters
         ----------
         nx, ny : int
@@ -41,7 +41,7 @@ class GridMontage(object):
             Apply a shift to the calculated stage coordinates.
         binning : int
             Binning for the images.
-        
+
         Returns
         -------
         coords : np.array
@@ -123,7 +123,7 @@ class GridMontage(object):
         images = [im for im, h in self.buffer]
         m = Montage(images=images, gridspec=self.gridspec, overlap=self.overlap)
         m.update_gridspec(flip=not self.flip)  # BUG: Work-around for gridspec madness
-                                            # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
+        # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = self.stagecoords
         m.stagematrix = self.stagematrix
         return m

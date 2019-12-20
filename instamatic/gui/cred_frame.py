@@ -146,18 +146,18 @@ class ExperimentalcRED(LabelFrame):
 
     def get_params(self):
         params = {"exposure_time": self.var_exposure_time.get(),
-                   "exposure_time_image": self.var_exposure_time_image.get(),
-                   "unblank_beam": self.var_unblank_beam.get(),
-                   "enable_image_interval": self.var_enable_image_interval.get(),
-                   "image_interval": self.var_image_interval.get(),
-                   "diff_defocus": self.var_diff_defocus.get(),
-                   "mode": self.mode,
-                   "footfree_rotate_to": self.var_footfree_rotate_to.get(),
-                   "write_tiff": self.var_save_tiff.get(),
-                   "write_xds": self.var_save_xds.get(),
-                   "write_dials": self.var_save_dials.get(),
-                   "write_red": self.var_save_red.get(),
-                   "stop_event": self.stopEvent}
+                  "exposure_time_image": self.var_exposure_time_image.get(),
+                  "unblank_beam": self.var_unblank_beam.get(),
+                  "enable_image_interval": self.var_enable_image_interval.get(),
+                  "image_interval": self.var_image_interval.get(),
+                  "diff_defocus": self.var_diff_defocus.get(),
+                  "mode": self.mode,
+                  "footfree_rotate_to": self.var_footfree_rotate_to.get(),
+                  "write_tiff": self.var_save_tiff.get(),
+                  "write_xds": self.var_save_xds.get(),
+                  "write_dials": self.var_save_dials.get(),
+                  "write_red": self.var_save_red.get(),
+                  "stop_event": self.stopEvent}
         return params
 
     def toggle_interval_buttons(self):
@@ -251,7 +251,7 @@ module = BaseModule("cred", "cRED", True, ExperimentalcRED, commands={
     "cred": acquire_data_cRED,
     "toggle_difffocus": toggle_difffocus,
     "relax_beam": relax_beam
-    })
+})
 
 
 if __name__ == '__main__':

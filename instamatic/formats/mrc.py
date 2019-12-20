@@ -29,9 +29,9 @@ mrc2numpy = {
     1: numpy.int16,
     2: numpy.float32,
     3: numpy.dtype([('real', numpy.int16), ('imag', numpy.int16)]),
-      # complex made of two int16.  No such thing in numpy
-#     however, we could manually build a complex array by reading two
-#     int16 arrays somehow.
+    # complex made of two int16.  No such thing in numpy
+    #     however, we could manually build a complex array by reading two
+    #     int16 arrays somehow.
     4: numpy.complex64,
 
     6: numpy.uint16,    # according to UCSF
@@ -42,13 +42,13 @@ mrc2numpy = {
 numpy2mrc = {
     # convert these to int8
     numpy.int8: 0,
-#    numpy.uint8: 0,
+    #    numpy.uint8: 0,
     numpy.bool: 0,
     numpy.bool_: 0,
 
     # convert these to int16
     numpy.int16: 1,
-#    numpy.int8: 1,
+    #    numpy.int8: 1,
 
     # convert these to float32
     numpy.float32: 2,
@@ -101,13 +101,13 @@ mrc_defaults = dict(alpha=90, beta=90, gamma=90, mapc=1, mapr=2, maps=3, map='MA
 
 def _gen_header():
     ''' Create the header for an MRC image and stack
-    
+
     .. note::
-        
+
         The following code was adopted from mrc.py in Scripps Appion Package
-    
+
     :Returns:
-    
+
     header_image_dtype : numpy.dtype
                          Header for an MRC image
     '''
@@ -180,11 +180,11 @@ ara2mrc = dict([(val, key) for key, val in mrc2ara.items()])
 
 def create_header(shape, dtype, order='C', header=None):
     ''' Create a header for the MRC image format
-    
+
     @todo support header parameters
-    
+
     :Parameters:
-    
+
     shape : tuple
             Shape of the array 
     dtype : numpy.dtype 
@@ -192,7 +192,7 @@ def create_header(shape, dtype, order='C', header=None):
     header : dict
              Header values  for image
     :Returns:
-    
+
     h : dtype
         Data type for NumPy ndarray describing the header
     '''
@@ -202,14 +202,14 @@ def create_header(shape, dtype, order='C', header=None):
 
 def array_from_header(header):
     ''' Convert header information to array parameters
-    
+
     :Parameters:
-    
+
     header : header_dtype
              Header fields
-    
+
     :Returns:
-    
+
     header : dict
              File header
     dtype : dtype
@@ -229,9 +229,9 @@ def array_from_header(header):
 
 def cache_data():
     ''' Get keywords to be added as data cache
-    
+
     :Returns:
-    
+
     extra : dict
             Keyword arguments
     '''
@@ -241,14 +241,14 @@ def cache_data():
 
 def is_format_header(h):
     ''' Test if the given header has the proper format
-    
+
     :Parameters:
-    
+
     h : array
         Header to test
-    
+
     :Returns:
-    
+
     val : bool
           Test if dtype matches format dtype
     '''
@@ -261,18 +261,18 @@ bad_mrc_header = False
 
 def is_readable(filename, no_strict_mrc=False):
     ''' Test if the file read has a valid MRC header
-    
+
     :Parameters:
-    
+
     filename : str or file object
                Filename or open stream for a file
     no_strict_mrc : bool
                     Perform strict MRC header checking (recommended) - Only
                     EPU MRC files and Yifan's frame alignment require this
                     to be off.
-    
+
     :Returns:
-        
+
     out : bool
           True if the header conforms to MRC
     '''
@@ -301,23 +301,23 @@ def is_readable(filename, no_strict_mrc=False):
 
     if (h['byteorder'][0] & -65536) not in intbyteorder and \
        (h['byteorder'][0].byteswap() & -65536) not in intbyteorder:
-            if h['alpha'][0] == 0.0 and h['beta'][0] == 0.0 and h['gamma'][0] == 0.0 and int(h['mode'][0]) == 6:  # this line hack for non-standard writers
-                if not bad_mrc_header:
-                    bad_mrc_header = True
-                    if not no_strict_mrc and 1 == 0:
-                        _logger.warn("This image could be MRC format likely this image came from EPU. Use --no-strict-mrc to read this image")
-                        return False
-                    _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from EPU)")
-            elif h['alpha'][0] == 90.0 and h['beta'][0] == 90.0 and h['gamma'][0] == 90.0:  # this line hack for non-standard writers
-                if not bad_mrc_header:
-                    bad_mrc_header = True
-                    if not no_strict_mrc and 1 == 0:
-                        _logger.warn("This image could be MRC format likely this image came from Yifan's GPU alignment. Use --no-strict-mrc to read this image")
-                        return False
-                    _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from Yifan's GPU alignment)")
-            else:
-                _logger.debug("Failed to read proper machine stamp - not MRC!")
-                # return False
+        if h['alpha'][0] == 0.0 and h['beta'][0] == 0.0 and h['gamma'][0] == 0.0 and int(h['mode'][0]) == 6:  # this line hack for non-standard writers
+            if not bad_mrc_header:
+                bad_mrc_header = True
+                if not no_strict_mrc and 1 == 0:
+                    _logger.warn("This image could be MRC format likely this image came from EPU. Use --no-strict-mrc to read this image")
+                    return False
+                _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from EPU)")
+        elif h['alpha'][0] == 90.0 and h['beta'][0] == 90.0 and h['gamma'][0] == 90.0:  # this line hack for non-standard writers
+            if not bad_mrc_header:
+                bad_mrc_header = True
+                if not no_strict_mrc and 1 == 0:
+                    _logger.warn("This image could be MRC format likely this image came from Yifan's GPU alignment. Use --no-strict-mrc to read this image")
+                    return False
+                _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from Yifan's GPU alignment)")
+        else:
+            _logger.debug("Failed to read proper machine stamp - not MRC!")
+            # return False
     if not numpy.alltrue([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]):
         _logger.debug("Failed to read proper dimensions - not MRC!")
         return False
@@ -326,9 +326,9 @@ def is_readable(filename, no_strict_mrc=False):
 
 def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
     ''' Read the MRC header
-    
+
     :Parameters:
-    
+
     filename : str or file object
                Filename or open stream for a file
     index : int, ignored
@@ -339,9 +339,9 @@ def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
                     to be off.
     force_volume : bool
                    Force image to be treated as a volume
-    
+
     :Returns:
-        
+
     header : dict
              Dictionary with header information
     '''
@@ -361,9 +361,9 @@ def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
 
 def read_mrc_header(filename, index=None, no_strict_mrc=False):
     ''' Read the MRC header
-    
+
     :Parameters:
-    
+
     filename : str or file object
                Filename or open stream for a file
     index : int, ignored
@@ -372,9 +372,9 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
                     Perform strict MRC header checking (recommended) - Only
                     EPU MRC files and Yifan's frame alignment require this
                     to be off.
-    
+
     :Returns:
-        
+
     out : array
           Array with header information in the file
     '''
@@ -401,18 +401,18 @@ def is_volume(filename):
 
 def count_images(filename, no_strict_mrc=False):
     ''' Count the number of images in the file
-    
+
     :Parameters:
-    
+
     filename : str or file object
                Filename or open stream for a file
     no_strict_mrc : bool
                     Perform strict MRC header checking (recommended) - Only
                     EPU MRC files and Yifan's frame alignment require this
                     to be off.
-    
+
     :Returns:
-        
+
     out : int
           Number of images in the file
     '''
@@ -424,9 +424,9 @@ def count_images(filename, no_strict_mrc=False):
 
 def iter_images(filename, index=None, header=None, no_strict_mrc=False):
     ''' Read a set of SPIDER images
-    
+
     :Parameters:
-    
+
     filename : str or file object
                Filename or open stream for a file
     index : int, optional
@@ -437,9 +437,9 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
                     Perform strict MRC header checking (recommended) - Only
                     EPU MRC files and Yifan's frame alignment require this
                     to be off.
-    
+
     :Returns:
-        
+
     out : array
           Array with image information from the file
     '''
@@ -478,18 +478,18 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
 
 def valid_image(filename, no_strict_mrc=False):
     ''' Test if the image is valid
-    
+
     :Parameters:
-    
+
         filename : str
                    Input filename to test
         no_strict_mrc : bool
                         Perform strict MRC header checking (recommended) - Only
                         EPU MRC files and Yifan's frame alignment require this
                         to be off.
-    
+
     :Returns:
-        
+
         flag : bool
                True if image is valid
     '''
@@ -506,9 +506,9 @@ def valid_image(filename, no_strict_mrc=False):
 
 def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volume=False):
     ''' Read an image from the specified file in the MRC format
-    
+
     :Parameters:
-    
+
         filename : str or file object
                    Filename or open stream for a file
         index : int, optional
@@ -519,9 +519,9 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
                         to be off.
         force_volume : bool
                        For image to be read as a volume
-    
+
     :Returns:
-            
+
         out : array
               Array with image information from the file
     '''
@@ -555,9 +555,9 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
 
 def reshape_data(out, h, index, count, force_volume=False):
     ''' Reshape the data to the proper dimensions
-    
+
     :Parameters:
-    
+
     out : array
           Array with image information from the file
     h : array
@@ -566,12 +566,12 @@ def reshape_data(out, h, index, count, force_volume=False):
             Index of image
     count : int
             Number of images in file
-    
+
     :Returns:
-    
+
     out : array
           Array with image information from the file
-    
+
     '''
 
     if index is None and int(h['nz'][0]) > 1 and (count == h['nx'][0] or force_volume):
@@ -598,29 +598,29 @@ def file_size(fileobject):
 def is_writable(filename):
     ''' Test if the image extension of the given filename is understood
     as a writable format.
-    
+
     :Parameters:
-    
+
     filename : str
                Output filename to test
-    
+
     :Returns:
-    
+
     write : bool
             True if the format is recognized
     '''
 
     ext = os.path.splitext(filename)[1][1:].lower()
     return ext == 'mrc' or \
-           ext == 'ccp4' or \
-           ext == 'map'
+        ext == 'ccp4' or \
+        ext == 'map'
 
 
 def write_image(filename, img, index=None, header=None, inplace=False):
     ''' Write an image array to a file in the MRC format
-    
+
     :Parameters:
-    
+
     filename : str
                Name of the output file
     img : array

@@ -33,7 +33,7 @@ INTEGER = ("Color", "NumPts", "Draw", "Regis",
            "DE12-SensorModuleSerialNumber",
            "DE12-SensorReadoutDelay(ms)",
            "DE12-IgnoredFramesInSummedImage",
-          )
+           )
 
 # float
 FLOAT = ("MapExposure", "MapIntensity", "MapTiltAngle", "MapSettling",
@@ -47,14 +47,14 @@ FLOAT = ("MapExposure", "MapIntensity", "MapTiltAngle", "MapSettling",
          "DE12-ServerSoftwareVersion",
          "DE12-PreexposureTime(s)",
          "DE12-FaradayPlatePeakReading(pA/cm2)",
-        )
+         )
 
 # str
 STRING = ("MapFile", "Note",
           # .mdoc
           "DateTime", "ImageFile", "NavigatorLabel",
           "SubFramePath", "ChannelName",
-         )
+          )
 
 # list, float
 FLOAT_LIST = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
@@ -69,7 +69,7 @@ FLOAT_LIST = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
               "FilterSlitAndLoss",
               # external
               "CoordsInMap", "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
-             )
+              )
 
 # list, int
 INTEGER_LIST = ("MapWidthHeight", "MapFramesXY",
@@ -81,7 +81,7 @@ INTEGER_LIST = ("MapWidthHeight", "MapFramesXY",
                 # other
                 "HoleArray", "LDAxisAngle", "SkipHoles",
                 "SuperMontXY",
-               )
+                )
 
 UNDEFINED = ()
 
@@ -89,7 +89,7 @@ UNDEFINED = ()
 class NavItem(object):
     """
     DataClass for SerialEM Nav items
-    
+
     Type:
         0: Marker
         1: Polygon
@@ -473,12 +473,12 @@ def read_mdoc_file(fn: str, only_kind: str = None) -> list:
     """
     Reads a SerialEM .mdoc file and returns a list of dictionaries
     containing supporting data.
-    
+
     Parameters
     ----------
     only_kind : str
         Return only items of this kind, i.e. ZValue or MontSection (case-insensitive)
-    
+
     Returns:
     --------
     List of dicts with header information from the .mdoc file

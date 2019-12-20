@@ -11,20 +11,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 NTRLMAPPING = {
-   "GUN1": 0,
-   "GUN2": 1,
-   "CLA1": 2,
-   "CLA2": 3,
-   "SHIFT": 4,
-   "TILT": 5,
-   "ANGLE": 6,
-   "CLS": 7,
-   "IS1": 8,
-   "IS2": 9,
-   "SPOT": 10,
-   "PLA": 11,
-   "OLS": 12,
-   "ILS": 13
+    "GUN1": 0,
+    "GUN2": 1,
+    "CLA1": 2,
+    "CLA2": 3,
+    "SHIFT": 4,
+    "TILT": 5,
+    "ANGLE": 6,
+    "CLS": 7,
+    "IS1": 8,
+    "IS2": 9,
+    "SPOT": 10,
+    "PLA": 11,
+    "OLS": 12,
+    "ILS": 13
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')

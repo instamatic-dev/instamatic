@@ -78,7 +78,7 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
 def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc=".", **kwargs):
     """Routine to collect flatfield correction files.
-    
+
     Spread the beam and focus on an a vacuum area
     The routine will collect a number of images and average them for the flatfield correction images
     The optimal exposure time for each image is calculated automatically so that the response is at approximately

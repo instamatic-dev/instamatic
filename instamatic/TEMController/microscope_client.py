@@ -28,10 +28,10 @@ def kill_server(p):
 
 
 def start_server_in_subprocess():
-   cmd = "instamatic.temserver.exe"
-   p = sp.Popen(cmd, stdout=sp.DEVNULL)
-   print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
-   atexit.register(kill_server, p)
+    cmd = "instamatic.temserver.exe"
+    p = sp.Popen(cmd, stdout=sp.DEVNULL)
+    print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
+    atexit.register(kill_server, p)
 
 
 class MicroscopeClient(object):
@@ -82,8 +82,8 @@ class MicroscopeClient(object):
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
             dct = {"func_name": func_name,
-               "args": args,
-               "kwargs": kwargs}
+                   "args": args,
+                   "kwargs": kwargs}
             return self._eval_dct(dct)
 
         return wrapper

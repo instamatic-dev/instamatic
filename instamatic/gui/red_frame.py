@@ -96,9 +96,9 @@ class ExperimentalRED(LabelFrame):
 
     def get_params(self, task=None):
         params = {"exposure_time": self.var_exposure_time.get(),
-                   "tilt_range": self.var_tilt_range.get(),
-                   "stepsize": self.var_stepsize.get(),
-                   "task": task}
+                  "tilt_range": self.var_tilt_range.get(),
+                  "stepsize": self.var_stepsize.get(),
+                  "task": task}
         return params
 
 
@@ -119,7 +119,7 @@ def acquire_data_RED(controller, **kwargs):
         expdir.mkdir(exist_ok=True, parents=True)
 
         controller.red_exp = RED.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
-                           flatfield=flatfield)
+                                            flatfield=flatfield)
         controller.red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
     elif task == "continue":
         controller.red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
@@ -130,7 +130,7 @@ def acquire_data_RED(controller, **kwargs):
 
 module = BaseModule("red", "RED", True, ExperimentalRED, commands={
     "red": acquire_data_RED
-    })
+})
 
 
 if __name__ == '__main__':

@@ -149,7 +149,7 @@ class ExperimentalCtrl(LabelFrame):
     def set_brightness(self, event=None):
         self.var_brightness.set((self.var_brightness.get()))
         self.q.put(("ctrl", {"task": "brightness.set",
-                              "value": self.var_brightness.get()}))
+                             "value": self.var_brightness.get()}))
         self.triggerEvent.set()
 
     def get_brightness(self, event=None):
@@ -158,7 +158,7 @@ class ExperimentalCtrl(LabelFrame):
     def set_difffocus(self, event=None):
         self.var_difffocus.set((self.var_difffocus.get()))
         self.q.put(("ctrl", {"task": "difffocus.set",
-                              "value": self.var_difffocus.get()}))
+                             "value": self.var_difffocus.get()}))
         self.triggerEvent.set()
 
     def get_difffocus(self, event=None):
@@ -166,20 +166,20 @@ class ExperimentalCtrl(LabelFrame):
 
     def set_negative_angle(self):
         self.q.put(("ctrl", {"task": "stage.set",
-                              "a": self.var_negative_angle.get(),
-                              "wait": self.var_stage_wait.get()}))
+                             "a": self.var_negative_angle.get(),
+                             "wait": self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
     def set_neutral_angle(self):
         self.q.put(("ctrl", {"task": "stage.set",
-                              "a": self.var_neutral_angle.get(),
-                              "wait": self.var_stage_wait.get()}))
+                             "a": self.var_neutral_angle.get(),
+                             "wait": self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
     def set_positive_angle(self):
         self.q.put(("ctrl", {"task": "stage.set",
-                              "a": self.var_positive_angle.get(),
-                              "wait": self.var_stage_wait.get()}))
+                             "a": self.var_positive_angle.get(),
+                             "wait": self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
     def set_goniotool_tx(self, event=None, value=None):
@@ -193,9 +193,9 @@ class ExperimentalCtrl(LabelFrame):
 
     def set_stage(self):
         self.q.put(("ctrl", {"task": "stage.set",
-                              "x": self.var_stage_x.get(),
-                              "y": self.var_stage_y.get(),
-                              "wait": self.var_stage_wait.get()}))
+                             "x": self.var_stage_x.get(),
+                             "y": self.var_stage_y.get(),
+                             "wait": self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
     def get_stage(self, event=None):
@@ -210,8 +210,8 @@ class ExperimentalCtrl(LabelFrame):
         self.b_start_wobble.config(state=DISABLED)
 
         self.q.put(("ctrl", {"task": "stage.alpha_wobbler",
-                              "delta": self.var_alpha_wobbler.get(),
-                              "event": self.wobble_stop_event}))
+                             "delta": self.var_alpha_wobbler.get(),
+                             "event": self.wobble_stop_event}))
         self.triggerEvent.set()
 
     def stop_alpha_wobbler(self):
@@ -240,7 +240,7 @@ def microscope_control(controller, **kwargs):
 
 module = BaseModule("ctrl", "control", True, ExperimentalCtrl, commands={
     "ctrl": microscope_control
-    })
+})
 
 
 if __name__ == '__main__':

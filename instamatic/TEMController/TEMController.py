@@ -801,7 +801,7 @@ class TEMController(object):
 
     def run_script_at_items(self, nav_items: list, script: str, backlash: bool = True) -> None:
         """"Run the given script at all coordinates defined by the nav_items.
-        
+
         Parameters
         ----------
         nav_items: list
@@ -868,7 +868,7 @@ class TEMController(object):
         The stagematrix is used to convert from pixel coordinates to stage
         coordiantes. The parameters are optional and if not given, 
         the current values are read out from the microscope/camera.
-        
+
         Parameters
         ----------
         binning: int
@@ -877,7 +877,7 @@ class TEMController(object):
             Magnification value
         mode: str
             Current TEM mode ("lowmag", "mag1")
-        
+
         Returns
         -------
         stagematrix : np.array[2, 2]
@@ -898,23 +898,23 @@ class TEMController(object):
         return stagematrix
 
     def align_to(self, ref_img: "np.array",
-                       apply: bool = True) -> list:
+                 apply: bool = True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
         (in the reference image) is at the center of the view.
-        
+
         Parameters
         ----------
         ref_img: np.array
             Reference image that the microscope will be aligned to
         apply: bool
             Toggle to translate the stage to center the image
-        
+
         Returns
         -------
         stage_shift : np.array[2]
             The stage shift vector determined from cross correlation
-            
+
         """
         from skimage.feature import register_translation
 
@@ -940,10 +940,10 @@ class TEMController(object):
         return stage_shift
 
     def find_eucentric_height(self, tilt: float = 5,
-                                    steps: int = 5,
-                                    dz: int = 50_000,
-                                    apply: bool = True,
-                                    verbose: bool = True) -> float:
+                              steps: int = 5,
+                              dz: int = 50_000,
+                              apply: bool = True,
+                              verbose: bool = True) -> float:
         """Automated routine to find the eucentric height, accurate up to ~1 um
         Measures the shift (cross correlation) between 2 angles (-+tilt) over 
         a range of z values (defined by `dz` and `steps`). The height is calculated
@@ -1039,7 +1039,7 @@ class TEMController(object):
 
         keys: tuple of str (optional)
             If any keys are specified, dict is returned with only the given properties
-        
+
         self.to_dict('all') or self.to_dict() will return all properties
         """
 
@@ -1220,7 +1220,7 @@ class TEMController(object):
     def show_stream(self):
         """If the camera has been opened as a stream, start a live view in a tkinter window"""
         try:
-           self.cam.show_stream()
+            self.cam.show_stream()
         except AttributeError:
             print("Cannot open live view. The camera interface must be initialized as a stream object.")
 

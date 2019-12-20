@@ -14,16 +14,16 @@ from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
 
 
 PARAMS = {
- "flatfield": "C:/instamatic/flatfield.tiff",
- "diff_binsize": 1,
- "diff_brightness": 39422,
- "diff_exposure": 0.1,
- "diff_spotsize": 4,
- "image_binsize": 1,
- "image_exposure": 0.5,
- "image_spotsize": 4,
- "image_threshold": 10,
- "crystal_spread": 0.6
+    "flatfield": "C:/instamatic/flatfield.tiff",
+    "diff_binsize": 1,
+    "diff_brightness": 39422,
+    "diff_exposure": 0.1,
+    "diff_spotsize": 4,
+    "image_binsize": 1,
+    "image_exposure": 0.5,
+    "image_spotsize": 4,
+    "image_threshold": 10,
+    "crystal_spread": 0.6
 }
 
 
@@ -156,11 +156,11 @@ class ExperimentalSED(LabelFrame):
 
     def get_params(self):
         params = {"image_exposure": self.var_image_exposure.get(),
-                   "image_spotsize": self.var_image_spotsize.get(),
-                   "diff_exposure": self.var_diff_exposure.get(),
-                   "diff_spotsize": self.var_image_spotsize.get(),
-                   "diff_brightness": self.var_diff_brightness.get(),
-                   "scan_radius": self.var_scan_radius.get()}
+                  "image_spotsize": self.var_image_spotsize.get(),
+                  "diff_exposure": self.var_diff_exposure.get(),
+                  "diff_spotsize": self.var_image_spotsize.get(),
+                  "diff_brightness": self.var_diff_brightness.get(),
+                  "scan_radius": self.var_scan_radius.get()}
         return params
 
 
@@ -186,7 +186,7 @@ def acquire_data_SED(controller, **kwargs):
     controller.app.get_module("sed").calib_path = expdir / "calib"
 
     exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log,
-        scan_radius=scan_radius, begin_here=True)
+                              scan_radius=scan_radius, begin_here=True)
     exp.report_status()
     exp.run()
 
@@ -195,7 +195,7 @@ def acquire_data_SED(controller, **kwargs):
 
 module = BaseModule("sed", "serialED", True, ExperimentalSED, commands={
     "sed": acquire_data_SED
-    })
+})
 
 
 if __name__ == '__main__':

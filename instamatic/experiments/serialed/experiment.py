@@ -92,8 +92,8 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
         sin = np.sin(angle)
         cos = np.cos(angle)
         r = np.array([
-                    [cos, -sin],
-                    [sin, cos]])
+            [cos, -sin],
+            [sin, cos]])
         x_offsets, y_offsets = np.dot(np.vstack([x_offsets, y_offsets]).T, r).T
 
     if plot:
@@ -124,7 +124,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
                 ax.add_artist(rect)
 
             ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+                    verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
             ax.set_xlim(-100, 100)
             ax.set_ylim(-100, 100)
@@ -195,7 +195,7 @@ class Experiment(object):
         self.image_spotsize = kwargs.get("image_spotsize", 4)
         # self.magnification   = kwargs["magnification"]
         self.image_threshold = kwargs.get("image_threshold", 100)
-         # do not store brightness to self, as this is set later when calibrating the direct beam
+        # do not store brightness to self, as this is set later when calibrating the direct beam
         image_brightness = kwargs.get("diff_brightness", 38000)
 
         try:
@@ -446,20 +446,20 @@ class Experiment(object):
         header_keys = kwargs.get("header_keys", None)
 
         d_image = {
-                "exp_neutral_diffshift": self.neutral_beamshift,
-                "exp_neutral_beamshift": self.neutral_diffshift,
-                "exp_image_spotsize": self.image_spotsize,
-                "exp_magnification": self.magnification,
-                "ImageDimensions": self.image_dimensions
+            "exp_neutral_diffshift": self.neutral_beamshift,
+            "exp_neutral_beamshift": self.neutral_diffshift,
+            "exp_image_spotsize": self.image_spotsize,
+            "exp_magnification": self.magnification,
+            "ImageDimensions": self.image_dimensions
         }
         d_diff = {
-                "exp_neutral_diffshift": self.neutral_beamshift,
-                "exp_neutral_beamshift": self.neutral_diffshift,
-                "exp_diff_brightness": self.diff_brightness,
-                "exp_diff_spotsize": self.diff_spotsize,
-                "exp_diff_cameralength": self.diff_cameralength,
-                "exp_diff_difffocus": self.diff_difffocus,
-                "ImagePixelsize": self.diff_pixelsize
+            "exp_neutral_diffshift": self.neutral_beamshift,
+            "exp_neutral_beamshift": self.neutral_diffshift,
+            "exp_diff_brightness": self.diff_brightness,
+            "exp_diff_spotsize": self.diff_spotsize,
+            "exp_diff_cameralength": self.diff_cameralength,
+            "exp_diff_difffocus": self.diff_difffocus,
+            "ImagePixelsize": self.diff_pixelsize
         }
 
         self.log.info("d_image", d_image)

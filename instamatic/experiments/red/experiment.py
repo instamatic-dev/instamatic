@@ -152,18 +152,18 @@ class Experiment(object):
             print(f"Number of frames: {self.nframes}", file=f)
 
         img_conv = ImgConversion(buffer=self.buffer,
-                 osc_angle=self.stepsize,
-                 start_angle=self.start_angle,
-                 end_angle=self.end_angle,
-                 rotation_axis=self.rotation_axis,
-                 acquisition_time=self.exposure_time,
-                 flatfield=self.flatfield,
-                 pixelsize=self.pixelsize,
-                 physical_pixelsize=self.physical_pixelsize,
-                 wavelength=self.wavelength,
-                 stretch_amplitude=self.stretch_amplitude,
-                 stretch_azimuth=self.stretch_azimuth
-                 )
+                                 osc_angle=self.stepsize,
+                                 start_angle=self.start_angle,
+                                 end_angle=self.end_angle,
+                                 rotation_axis=self.rotation_axis,
+                                 acquisition_time=self.exposure_time,
+                                 flatfield=self.flatfield,
+                                 pixelsize=self.pixelsize,
+                                 physical_pixelsize=self.physical_pixelsize,
+                                 wavelength=self.wavelength,
+                                 stretch_amplitude=self.stretch_amplitude,
+                                 stretch_azimuth=self.stretch_azimuth
+                                 )
 
         print("Writing data files...")
         img_conv.threadpoolwriter(tiff_path=self.tiff_path,

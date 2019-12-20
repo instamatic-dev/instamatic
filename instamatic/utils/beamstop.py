@@ -13,7 +13,7 @@ from instamatic.tools import find_beam_center_with_beamstop
 def minimum_bounding_rectangle(points):
     """
     # From https://stackoverflow.com/a/33619018
-    
+
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
 
@@ -109,13 +109,13 @@ def radial_average(z, center, as_radial_map=False):
 
 def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc="."):
     """Find rectangle fitting the beamstop
-    
+
     1. Radially scale the image (divide each point in the image by the radial average)
     2. Segment the image via thresholding. The beamstop is identified by the area where the image < radially scaled image
     3. Contour the segmented image.
     4. Find minimum bounding rectangle for points that define the contours
     5. The contour closest to the beam center is then taken as beamstop
-    
+
     input:
         image, nxn 2D np.array defining the image. The average of the image stack works well
         center, 2x1 np.array defining the center of the image. If omitted, will be find automatically

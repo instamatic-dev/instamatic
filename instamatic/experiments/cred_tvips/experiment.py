@@ -16,13 +16,13 @@ class SerialExperiment(object):
     """docstring for SerialExperiment"""
 
     def __init__(self, ctrl,
-                       path: str = None,
-                       log=None,
-                       instruction_file: str = None,
-                       exposure: float = 400,
-                       mode: str = "diff",
-                       target_angle: float = 40,
-                       rotation_speed=None):
+                 path: str = None,
+                 log=None,
+                 instruction_file: str = None,
+                 exposure: float = 400,
+                 mode: str = "diff",
+                 target_angle: float = 40,
+                 rotation_speed=None):
         super().__init__()
 
         self.instruction_file = Path(instruction_file)

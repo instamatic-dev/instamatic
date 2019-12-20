@@ -38,7 +38,7 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
         raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
                                                            new_shape))
     compression_pairs = [(d, c // d) for d, c in zip(new_shape,
-                                                  ndarray.shape)]
+                                                     ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
@@ -70,13 +70,13 @@ def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.arr
     """
     Prepare a list of grid coordinates nx by ny in size.
     The grid is centered at the center of the grid
-    
+
     nx, ny: int,
         Defines the grid in x and y direction.
         The number of steps is defined by nx * ny
     stepsize:
         Distance between each grid point in x/y
-    
+
     returns:
         list of coordinates
     """
@@ -291,7 +291,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
     if ndarray.ndim != len(new_shape):
         raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
     compression_pairs = [(d, c // d) for d, c in zip(new_shape,
-                                                  ndarray.shape)]
+                                                     ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
@@ -391,7 +391,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
 def relativistic_wavelength(voltage: float = 200_000) -> float:
     """
     Calculate the relativistic wavelength of electrons from the accelarating voltage
-    
+
     Input: Voltage in V
     Output: Wavelength in Angstrom
     """

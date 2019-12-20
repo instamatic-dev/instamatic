@@ -34,7 +34,7 @@ class ImgConversionTPX(ImgConversion):
         self.smv_subdrc = "data"
 
         self.untrusted_areas = [("rectangle", ((0, 255), (517, 262))),
-                                 ("rectangle", ((255, 0), (262, 517)))]
+                                ("rectangle", ((255, 0), (262, 517)))]
 
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)

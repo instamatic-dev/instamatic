@@ -79,7 +79,7 @@ class VideoStreamFrame(Frame):
 
     def buttonbox(self, master):
         btn = Button(master, text="Save image",
-            command=self.saveImage)
+                     command=self.saveImage)
         btn.pack(side="bottom", fill="both", padx=10, pady=10)
 
     def header(self, master):
@@ -203,7 +203,7 @@ class VideoStreamFrame(Frame):
         self.stream.close()
         self.parent.quit()
         # for func in self._atexit_funcs:
-            # func()
+        # func()
 
     def start_stream(self):
         self.stream.update_frametime(self.frametime)

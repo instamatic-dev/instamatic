@@ -74,7 +74,7 @@ class CameraEMMENU(object):
         self._vp.FlapState = 2  # pull out the flap, because we can :-) [0, 1, 2]
 
         self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
-                                                       # other choices: DeleteBufferOnDeleteImage / Default
+        # other choices: DeleteBufferOnDeleteImage / Default
 
         # Image manager for managing image buffers (left panel)
         self._immgr = self._obj.ImageManager

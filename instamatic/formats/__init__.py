@@ -105,7 +105,7 @@ def write_hdf5(fname: str, data, header: dict = None):
 
 def read_hdf5(fname: str) -> (np.array, dict):
     """Simple function to read a hdf5 file written by Instamatic
-    
+
     fname: str,
         path or filename to image which should be opened
 
