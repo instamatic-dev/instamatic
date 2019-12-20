@@ -498,7 +498,7 @@ class JeolMicroscope(object):
         """Set the probe mode
         0: TEM, 1: EDS, 2: NBD, 3:CBD"""
         value = {"TEM": 0, "EDS": 1, "NBD": 2, "CBD": 3}[mode]
-        self.eos3.selectProbeMode(val)
+        self.eos3.selectProbeMode(value)
 
     def getProbeMode(self) -> str:
         """Gets the probe mode

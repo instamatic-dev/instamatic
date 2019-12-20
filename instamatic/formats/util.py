@@ -5,6 +5,9 @@
 '''
 import numpy, os, bz2
 import logging
+from scipy import ndimage
+import numpy as np
+
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -20,9 +23,9 @@ def fromfile(fin, dtype, count, sep=''):
     '''
     
     if hasattr(fin, 'fileno'):
-        return numpy.fromfile(fin, dtype, count, sep)
+        return np.fromfile(fin, dtype, count, sep)
     else:
-        return numpy.frombuffer(fin.read(count*dtype.itemsize), dtype, count)
+        return np.frombuffer(fin.read(count*dtype.itemsize), dtype, count)
 
 def uopen(filename, mode):
     ''' Open a stream to filename
@@ -124,11 +127,12 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
           Array of image data
     '''
     
-    out = numpy.fromfile(f, dtype=dtype, count=dlen)
+    out = np.fromfile(f, dtype=dtype, count=dlen)
     out.shape = shape
     out = out.squeeze()
     if order == 'F':
         out.shape = out.shape[::-1]
         out = out.transpose()
-    if swap:out = out.byteswap().newbyteorder()
+    if swap:
+        out = out.byteswap().newbyteorder()
     return ndimage(out, header)

@@ -30,7 +30,8 @@ def parse_dials_index_log(fn="dials.index.log"):
 
 
 def run_dials_indexing(data):
-    cmd = [str(EXE), data["path"]]
+    path = data["path"]
+    cmd = [str(EXE), path]
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
     unitcelloutput = []
@@ -43,12 +44,12 @@ def run_dials_indexing(data):
 
     if unitcelloutput:
         with open(fn, "a") as f:
-            f.write(f"\nData Path: {data["path"]}\n")
+            f.write(f"\nData Path: {path}\n")
             f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
             f.write(f"Rotation range: {data["rotrange"]} degrees\n")
             f.write(f"Number of frames: {data["nframes"]}\n")
             f.write(f"Oscillation angle: {data["osc"]} deg\n\n\n\n")
-            print(f"Indexing result written to dials indexing log file; path: {data["path"]}")
+            print(f"Indexing result written to dials indexing log file; path: {path}")
     
     p.wait()
     unitcelloutput = []

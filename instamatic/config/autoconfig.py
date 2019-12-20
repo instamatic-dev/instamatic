@@ -3,6 +3,8 @@ import yaml
 from instamatic import config
 from pathlib import Path
 import shutil
+import numpy as np
+
 
 def list_representer(dumper, data):
     """For cleaner printing of lists in yaml files"""

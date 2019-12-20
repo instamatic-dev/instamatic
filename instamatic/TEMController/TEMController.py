@@ -644,10 +644,9 @@ class Stage(object):
             return
 
         n_steps += 1
-        s = target_direction/abs(target_direction)  # get sign of movement
         
         for i in reversed(range(n_steps)):
-            self.a = current - s*i*stepsize
+            self.a = current - s*i*step
             time.sleep(settle_delay)
 
 

@@ -57,7 +57,7 @@ class SerialExperiment(object):
         exposure = self.exposure
 
         if self.rotation_speed:
-            ctrl.stage.set_rotation_speed(rotation_speed)
+            self.ctrl.stage.set_rotation_speed(rotation_speed)
 
         def pre_acquire(ctrl):
             ctrl.stage.set(a=start_angle)
@@ -91,7 +91,7 @@ class SerialExperiment(object):
                                    post_acquire=post_acquire)
 
         if self.rotation_speed:
-            ctrl.stage.set_rotation_speed(12)
+            self.ctrl.stage.set_rotation_speed(12)
 
 
     def run_from_tracking_file(self):
@@ -126,7 +126,7 @@ class SerialExperiment(object):
             try:
                 exp.start_collection(target_angle=0)
             except InterruptedError:
-                ctrl.cam.stop_liveview()
+                self.ctrl.cam.stop_liveview()
                 break
             finally:
                 del exp
@@ -563,7 +563,13 @@ class Experiment(object):
 
 
 if __name__ == '__main__':
+    from instamatic import TEMController
+
+    ctrl = TEMController.initialize()
+
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
     
-    start_experiment(ctrl=ctrl, path=expdir)
+    exp = Experiment(ctrl, path=expdir)
+    exp.get_ready()
+    exp.run(target_angle=20)
