@@ -1,8 +1,10 @@
+import subprocess as sp
 import os
 import matplotlib.pyplot as plt
 from instamatic.formats import read_image
 from instamatic.tools import get_files
-import tqdm, glob
+import tqdm
+import glob
 import numpy as np
 
 plt.rcParams["figure.figsize"] = 10, 10
@@ -64,7 +66,6 @@ for i, fn in enumerate(tqdm.tqdm(fns)):
 
 print("Running ffmpeg...")
 
-import subprocess as sp
 cmd = "ffmpeg -r 5 -i movie/image_%04d.png -s:v 1280x720 -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p -r 24 -y movie/compilation.mp4".split()
 sp.call(cmd)
 

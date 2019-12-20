@@ -2,7 +2,8 @@ import glob
 from instamatic.formats import *
 from instamatic import neural_network
 import csv
-import os, sys
+import os
+import sys
 from pathlib import Path
 
 import os

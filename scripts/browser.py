@@ -1,7 +1,9 @@
 import matplotlib
 import matplotlib.pyplot as plt
 from instamatic.formats import *
-import os, sys, glob
+import os
+import sys
+import glob
 import numpy as np
 from pathlib import Path
 
