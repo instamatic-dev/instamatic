@@ -490,6 +490,7 @@ def read_mdoc_file(fn: str, only_kind: str=None) -> list:
     block = []
     items = []
     tag = ""
+    kind = None
 
     f = open(fn, "r")
     for line in f:

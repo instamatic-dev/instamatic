@@ -379,6 +379,7 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 
 	def GetFileSaveResult(self):
+		# this function is broken, many undefined variables
 		longs = [enum_gs['GS_GetFileSaveResult'], rotationFlip]
 		message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
 		message_recv = Message(longargs=(0,0,0))

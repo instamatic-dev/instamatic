@@ -1,4 +1,4 @@
-from instamatic.processing.ImgConversionTPX as ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic.formats import read_tiff
 import glob, sys
 from pathlib import Path

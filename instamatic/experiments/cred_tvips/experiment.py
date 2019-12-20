@@ -57,7 +57,7 @@ class SerialExperiment(object):
         exposure = self.exposure
 
         if self.rotation_speed:
-            self.ctrl.stage.set_rotation_speed(rotation_speed)
+            self.ctrl.stage.set_rotation_speed(self.rotation_speed)
 
         def pre_acquire(ctrl):
             ctrl.stage.set(a=start_angle)
@@ -563,11 +563,12 @@ class Experiment(object):
 
 
 if __name__ == '__main__':
+    from instamatic.io import get_new_work_subdirectory
     from instamatic import TEMController
 
     ctrl = TEMController.initialize()
 
-    expdir = controller.module_io.get_new_experiment_directory()
+    expdir = get_new_work_subdirectory()
     expdir.mkdir(exist_ok=True, parents=True)
     
     exp = Experiment(ctrl, path=expdir)

@@ -230,7 +230,7 @@ class FEIMicroscope(object):
         axis = 0
         
         if speed > 1 or speed < 0:
-            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {value}")
+            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {speed}")
         
         self.tom.Stage.Speed = speed
         goniospeed = self.tom.Stage.Speed

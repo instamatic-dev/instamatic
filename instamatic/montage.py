@@ -550,19 +550,19 @@ class Montage(object):
             seq0 = pair["seq0"]
             seq1 = pair["seq1"]
 
-            if (seq1, seq0) in difference_vectors:
-                difference_vector = -difference_vectors[seq1, seq0]
-                if verbose:
-                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}")
-                difference_vectors[seq0, seq1] = difference_vector
-                continue
-
             side0 = pair["side0"]
             side1 = pair["side1"]
             idx0 = pair["idx0"]
             idx1 = pair["idx1"]
             im0 = images[seq0]
             im1 = images[seq1]
+
+            if (seq1, seq0) in difference_vectors:
+                difference_vector = -difference_vectors[seq1, seq0]
+                if verbose:
+                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}")
+                difference_vectors[seq0, seq1] = difference_vector
+                continue
             
             if plot and False:
                 plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1)
