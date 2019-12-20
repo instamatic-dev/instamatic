@@ -115,7 +115,7 @@ class Experiment(object):
         end_xy = np.array(self.end_position[0:2])
 
         print_and_log(f"Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})", logger=self.logger)
-        fmt = lambda arr: f"[{arr[0]:.0f} {arr[1]:.0f}]"
+        def fmt(arr): return f"[{arr[0]:.0f} {arr[1]:.0f}]"
         print_and_log(f"Stage moved from {fmt(start_xy)} to {fmt(end_xy)}, drift: {fmt(start_xy - end_xy)}", logger=self.logger)
         self.logger.info(f"Start stage position: {self.start_position}")
         self.logger.info(f"End stage position: {self.end_position}")

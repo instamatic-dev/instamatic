@@ -633,7 +633,8 @@ def test1():
     s = 'Result("Hello world\\n")'
     g.ExecuteScript(s)
 
-    breakpoint(); exit()
+    breakpoint()
+    exit()
 
 
 if __name__ == '__main__':

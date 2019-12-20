@@ -73,7 +73,8 @@ def close(filename, fd):
          File descriptor
     '''
 
-    if fd != filename: fd.close()
+    if fd != filename:
+        fd.close()
 
 
 def update_header(dest, source, header_map, tag=None):
@@ -96,7 +97,8 @@ def update_header(dest, source, header_map, tag=None):
            Destination of the header values
     '''
 
-    if source is None: return dest
+    if source is None:
+        return dest
     keys = dest.dtype.names if hasattr(dest, 'dtype') else dest.keys()
     tag = None
     for key in keys:
@@ -104,8 +106,10 @@ def update_header(dest, source, header_map, tag=None):
             dest[key] = source[header_map.get(key, key)]
         except:
             if tag is not None:
-                try: dest[key] = source[tag + "_" + key]
-                except: pass
+                try:
+                    dest[key] = source[tag + "_" + key]
+                except:
+                    pass
     return dest
 
 

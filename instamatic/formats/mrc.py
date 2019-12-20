@@ -284,7 +284,8 @@ def is_readable(filename, no_strict_mrc=False):
         if not is_format_header(h):
             raise ValueError("Array dtype incorrect")
     else:
-        try: h = read_mrc_header(filename)
+        try:
+            h = read_mrc_header(filename)
         except:
             return False
     if _logger.isEnabledFor(logging.DEBUG):
@@ -383,8 +384,10 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
     try:
         #curr = f.tell()
         h = util.fromfile(f, dtype=header_image_dtype, count=1)
-        if not is_readable(h, no_strict_mrc): h = h.newbyteorder()
-        if not is_readable(h, no_strict_mrc): raise IOError("Not MRC header")
+        if not is_readable(h, no_strict_mrc):
+            h = h.newbyteorder()
+        if not is_readable(h, no_strict_mrc):
+            raise IOError("Not MRC header")
     finally:
         util.close(filename, f)
     return h
@@ -394,8 +397,10 @@ def is_volume(filename):
     '''
     '''
 
-    if hasattr(filename, 'dtype'): h = filename
-    else: h = read_mrc_header(filename)
+    if hasattr(filename, 'dtype'):
+        h = filename
+    else:
+        h = read_mrc_header(filename)
     return h['nz'][0] == h['nx'][0] and h['nz'][0] == h['ny'][0]
 
 
@@ -417,8 +422,10 @@ def count_images(filename, no_strict_mrc=False):
           Number of images in the file
     '''
 
-    if hasattr(filename, 'dtype'): h = filename
-    else: h = read_mrc_header(filename, no_strict_mrc)
+    if hasattr(filename, 'dtype'):
+        h = filename
+    else:
+        h = read_mrc_header(filename, no_strict_mrc)
     return h['nz'][0]
 
 
@@ -445,13 +452,15 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
     '''
 
     f = util.uopen(filename, 'rb')
-    if index is None: index = 0
+    if index is None:
+        index = 0
     try:
         h = read_mrc_header(f, no_strict_mrc)
         count = count_images(h)
         #if header is not None:  util.update_header(header, h, mrc2ara, 'mrc')
         tmp = read_header(h)
-        if header is not None: header.update(tmp)
+        if header is not None:
+            header.update(tmp)
         d_len = h['nx'][0] * h['ny'][0]
         dtype = numpy.dtype(mrc2numpy[h['mode'][0]])
         offset = 1024 + int(h['nsymbt']) + 0 * d_len * dtype.itemsize
@@ -460,17 +469,22 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         except:
             _logger.error("%s -- %s" % (str(offset), str(offset.__class__.__name__)))
             raise
-        if not hasattr(index, '__iter__'): index = range(index, count)
-        else: index = index.astype(numpy.int)
+        if not hasattr(index, '__iter__'):
+            index = range(index, count)
+        else:
+            index = index.astype(numpy.int)
         last = 0
         total = file_size(f)
-        if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize): raise util.InvalidHeaderException("file size != header: %d != %d -- %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), int(h['nsymbt'])))
+        if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize):
+            raise util.InvalidHeaderException("file size != header: %d != %d -- %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), int(h['nsymbt'])))
         for i in index:
-            if i != (last + 1): f.seek(int(1024 + int(h['nsymbt']) + i * d_len * dtype.itemsize))
+            if i != (last + 1):
+                f.seek(int(1024 + int(h['nsymbt']) + i * d_len * dtype.itemsize))
             out = util.fromfile(f, dtype=dtype, count=d_len)
 
             out = reshape_data(out, h, index, count)
-            if header_image_dtype.newbyteorder()[0] == h.dtype[0]: out = out.byteswap()
+            if header_image_dtype.newbyteorder()[0] == h.dtype[0]:
+                out = out.byteswap()
             yield out
     finally:
         util.close(filename, f)
@@ -533,7 +547,8 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         #if header is not None: util.update_header(header, h, mrc2ara, 'mrc')
         header = read_header(h, force_volume=force_volume)
         count = count_images(h)
-        if idx >= count: raise IOError("Index exceeds number of images in stack: %d < %d" % (idx, count))
+        if idx >= count:
+            raise IOError("Index exceeds number of images in stack: %d < %d" % (idx, count))
         if index is None and (count == h['nx'][0] or force_volume):
             d_len = h['nx'][0] * h['ny'][0] * h['nz'][0]
         else:
@@ -541,11 +556,13 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         dtype = numpy.dtype(mrc2numpy[h['mode'][0]])
         offset = 1024 + int(h['nsymbt']) + idx * d_len * dtype.itemsize
         total = file_size(f)
-        if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize): raise util.InvalidHeaderException("file size != header: %d != %d -- %s, %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), str(idx), int(h['nsymbt'])))
+        if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize):
+            raise util.InvalidHeaderException("file size != header: %d != %d -- %s, %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), str(idx), int(h['nsymbt'])))
         f.seek(int(offset))
         out = util.fromfile(f, dtype=dtype, count=d_len)
         out = reshape_data(out, h, index, count, force_volume)
-        if header_image_dtype.newbyteorder()[0] == h.dtype[0]: out = out.byteswap()
+        if header_image_dtype.newbyteorder()[0] == h.dtype[0]:
+            out = out.byteswap()
     finally:
         util.close(filename, f)
     # assert(numpy.alltrue(numpy.logical_not(numpy.isnan(out))))
@@ -633,8 +650,10 @@ def write_image(filename, img, index=None, header=None, inplace=False):
               Write new image to stack without removing the stack
     '''
 
-    if header is None and hasattr(img, 'header'): header = img.header
-    try: img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
+    if header is None and hasattr(img, 'header'):
+        header = img.header
+    try:
+        img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
     except:
         raise TypeError("Unsupported type for MRC writing: %s" % str(img.dtype))
 
