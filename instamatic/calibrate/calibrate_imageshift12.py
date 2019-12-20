@@ -18,14 +18,14 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key="IS1"):
      1. Go to diffraction mode.
      2. Focus the diffraction spots.
      3. Center the beam with PLA.
-        
+
      >> Press <ENTER> to start >> \n""")
     else:
         inp = input("""Calibrate stage vs camera
         ------------------
         1. Go to mag1.
         2. Find area with particles.
-        
+
         >> Press <ENTER> to start >> \n""")
 
     d = {"IS1": ctrl.imageshift1,

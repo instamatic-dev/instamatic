@@ -82,7 +82,7 @@ class ConfigObject(object):
 
 def load(microscope_name=None, calibration_name=None, camera_name=None):
     """Load the global.yaml file and microscope/calib/camera configs
-    The config files to load can be overridden by specifying 
+    The config files to load can be overridden by specifying
         microscope_name/calibration_name/camera_name"""
 
     global microscope

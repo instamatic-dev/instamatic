@@ -11,7 +11,7 @@ def get_background_of_widget(widget):
     try:
         # We assume first tk widget
         background = widget.cget("background")
-    except:
+    except BaseException:
         # Otherwise this is a ttk widget
         style = widget.cget("style")
 

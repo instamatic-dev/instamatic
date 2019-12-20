@@ -211,7 +211,7 @@ def cells_to_cellparm(ps):
 
 
 def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
-    """Takes a list of `xds_parser` instances and gathers the 
+    """Takes a list of `xds_parser` instances and gathers the
     corresponding `XDS_ASCII.HKL` files into the current directory.
     The data source and numbering scheme is summarized in the file `filelist.txt`.
     """

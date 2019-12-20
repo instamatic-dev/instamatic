@@ -86,7 +86,7 @@ class CalibBeamShift(object):
         if not self.has_data:
             return
 
-        if to_file == True:
+        if to_file:
             to_file = f"calib_{beamshift}.png"
 
         beampos = self.data_beampos
@@ -273,7 +273,7 @@ Calibrate beamshift
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
-    
+
  >> Press <ENTER> to start >> \n""")
                 if inp == "x":
                     ctrl.restore()
@@ -302,7 +302,7 @@ def main_entry():
         print("""
 Program to calibrate beamshift of microscope
 
-Usage: 
+Usage:
     instamatic.calibrate_beamshift
         To start live calibration routine on the microscope
 

@@ -53,7 +53,7 @@ try:
     s.connect((dials_host, dials_port))
     print("DIALS server connected for autocRED.")
     s_c = 1
-except:
+except BaseException:
     s_c = 0
 
 
@@ -80,7 +80,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
     try:
         with open(log_iscalibs / file, 'rb') as f:
             transform_imgshift, c = pickle.load(f)
-    except:
+    except BaseException:
         print("No {}, defocus = {} calibration found. Choose the desired defocus value.".format(imageshift, diff_defocus))
         inp = input("Press ENTER when ready.")
         if ctrl.mode != mode:
@@ -281,7 +281,7 @@ class Experiment(object):
                 for px in range(255, 261):
                     try:
                         indx.append(x_range.index(px))
-                    except:
+                    except BaseException:
                         pass
 
                 img = np.delete(img, indx, 0)
@@ -291,7 +291,7 @@ class Experiment(object):
                 for px in range(255, 261):
                     try:
                         indy.append(y_range.index(px))
-                    except:
+                    except BaseException:
                         pass
 
                 img = np.delete(img, indy, 1)
@@ -572,9 +572,9 @@ class Experiment(object):
                 shift = self.tracking_by_particlerecog(img0)
                 delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
                 self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-                
+
                 bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
-            
+
                 img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)"""
 
             img0_p = preprocess(img0.astype(np.float))
@@ -602,7 +602,7 @@ class Experiment(object):
                     self.ctrl.stage.set(a=a_i + rotation_range, wait=False)
                 else:
                     self.ctrl.stage.set(a=a_i - rotation_range, wait=False)
-            except:
+            except BaseException:
                 if a_i < 0:
                     self.ctrl.stage.set(a=a_i + rotation_range, wait=False)
                 else:
@@ -1005,7 +1005,7 @@ class Experiment(object):
                                 self.logger.info("Stage position: x = {}, y = {}. Z height adjusted to {}. Tilt angle x {} deg, Tilt angle y {} deg".format(xpoint, ypoint, zpoint, aaa, bbb))
                             else:
                                 self.print_and_del("Z height not found.")
-                except:
+                except BaseException:
                     self.print_and_del("Something went wrong, unable to adjust height")
                     pass
 
@@ -1261,7 +1261,7 @@ class Experiment(object):
                         k = k + 1
                         if k >= n_crystals:
                             break
-                    except:
+                    except BaseException:
                         traceback.print_exc()
                         self.ctrl.beamblank = False
                         self.print_and_del("Exitting loop...")
@@ -1286,7 +1286,7 @@ class Experiment(object):
                 if len(os.listdir(path)) == 0:
                     os.rmdir(path)
                     #print("Path {} removed since it is empty.".format(path))
-            except:
+            except BaseException:
                 #print("Deletion error. Path might have already been deleted.")
                 pass
 
@@ -1310,7 +1310,7 @@ class Experiment(object):
             #print("Raster scan stopper clearing..")
             self.stopEvent_rasterScan.clear()
 
-        if self.auto_zheight == False:
+        if not self.auto_zheight:
             try:
                 with open(self.calibdir / "z-height-adjustment-time.pkl", "rb") as f:
                     t = pickle.load(f)
@@ -1323,7 +1323,7 @@ class Experiment(object):
                         with open(self.calibdir / "z-height-adjustment-time.pkl", "wb") as f:
                             pickle.dump(t, f)
 
-            except:
+            except BaseException:
                 input("No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>")
                 x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset=self.offset)
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()

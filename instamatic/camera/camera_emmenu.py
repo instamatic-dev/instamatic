@@ -280,7 +280,7 @@ class CameraEMMENU(object):
         for i, p in enumerate(self._emi):
             try:
                 self._emi.DeleteImage(p)
-            except:
+            except BaseException:
                 # sometimes EMMenu also loses track of image pointers...
                 print(f"Failed to delete buffer {i} ({p})")
 
@@ -357,7 +357,7 @@ class CameraEMMENU(object):
         self.writeTiffFromPointer(p, filename)
 
     def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
-        """Write a series of data in tiff format and writes them to 
+        """Write a series of data in tiff format and writes them to
         the given `path` using EMMENU machinery"""
         path = Path(path)
         drc_index = self.drc_index

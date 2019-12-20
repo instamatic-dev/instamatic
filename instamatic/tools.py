@@ -14,7 +14,7 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
     Bins an ndarray in all axes based on the target shape, by summing or
         averaging.
 
-    Number of output dimensions must match number of input dimensions and 
+    Number of output dimensions must match number of input dimensions and
         new axes must divide old ones.
 
     Example
@@ -32,7 +32,7 @@ def bin_ndarray(ndarray, new_shape, operation='sum'):
     https://stackoverflow.com/a/29042041
     """
     operation = operation.lower()
-    if not operation in ['sum', 'mean']:
+    if operation not in ['sum', 'mean']:
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
         raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
@@ -127,7 +127,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
 
 
 def find_subranges(lst: list) -> (int, int):
-    """Takes a range of sequential numbers (possibly with gaps) and 
+    """Takes a range of sequential numbers (possibly with gaps) and
     splits them in sequential sub-ranges defined by the minimum and maximum value.
     """
     from operator import itemgetter
@@ -207,7 +207,7 @@ def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int =
 
 
 def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=False) -> (float, float):
-    """Find the beam center when a beam stop is present. 
+    """Find the beam center when a beam stop is present.
 
     methods: gauss, thresh
 
@@ -215,7 +215,7 @@ def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=Fal
     primary beam. The center of the bounding box of the blob defines the beam center.
 
     `gauss` applies a gaussian filter with a very large standard deviation in an attempt
-    to smooth out the beam stop. The position of the largest pixel corresponds to the 
+    to smooth out the beam stop. The position of the largest pixel corresponds to the
     beam center.
 
     z = thresh: percentile to segment the image at (99)
@@ -269,7 +269,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
     Bins an ndarray in all axes based on the target shape, by summing or
         averaging.
 
-    Number of output dimensions must match number of input dimensions and 
+    Number of output dimensions must match number of input dimensions and
         new axes must divide old ones.
 
     Example
@@ -286,7 +286,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
 
     """
     operation = operation.lower()
-    if not operation in ['sum', 'mean']:
+    if operation not in ['sum', 'mean']:
         raise ValueError("Operation not supported.")
     if ndarray.ndim != len(new_shape):
         raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
@@ -344,7 +344,7 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
     """take a list of timestamps and return the acquisition time and overhead
 
     Parameters
-    ----------    
+    ----------
     timestamps : tuple
         List of timestamps
     exp_time : float

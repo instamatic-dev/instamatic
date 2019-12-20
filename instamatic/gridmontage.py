@@ -129,7 +129,7 @@ class GridMontage(object):
         return m
 
     def save(self, drc: str = None):
-        """Save the data to the given directory, 
+        """Save the data to the given directory,
         defaults to the instamatic data directory defined in the config
         """
         from instamatic.formats import write_tiff

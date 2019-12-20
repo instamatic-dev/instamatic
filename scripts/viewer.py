@@ -10,7 +10,7 @@ from instamatic.formats import read_image
 def main():
     try:
         fn = sys.argv[1]
-    except:
+    except BaseException:
         print("Usage: instamatic.viewer IMG.tiff")
         exit()
 

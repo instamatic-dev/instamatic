@@ -32,7 +32,7 @@ def apply_transform_to_image(img, transform, center=None):
 
 
 def affine_transform_ellipse_to_circle(azimuth: float, amplitude: float, inverse=False):
-    """Usage: 
+    """Usage:
 
     e2c = circle_to_ellipse_affine_transform(azimuth, amplitude):
     np.dot(arr, e2c) # arr.shape == (n, 2)
@@ -60,7 +60,7 @@ def affine_transform_ellipse_to_circle(azimuth: float, amplitude: float, inverse
 
 
 def affine_transform_circle_to_ellipse(azimuth: float, amplitude: float):
-    """Usage: 
+    """Usage:
 
     c2e = circle_to_ellipse_affine_transform(azimuth, amplitude):
     np.dot(arr, c2e) # arr.shape == (n, 2)

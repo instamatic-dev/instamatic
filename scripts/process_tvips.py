@@ -21,7 +21,7 @@ in a subdirectory `tiff/*.tif` from where cred_log.txt is stored.
 
 Defaults to `cred_log.txt` in the current directory if left blank.
 
-If the first argument is given as `all`, the script will look for 
+If the first argument is given as `all`, the script will look for
 all `cred_log.txt` files in the subdirectories, and iterate over those.
 """
 

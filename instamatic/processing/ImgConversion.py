@@ -84,8 +84,8 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
 
 
 def get_calibrated_rotation_speed(val):
-    """Correct for the overestimation of the oscillation angle if the rotation 
-    was stopped before interrupting the data collection. It uses calibrated values for the 
+    """Correct for the overestimation of the oscillation angle if the rotation
+    was stopped before interrupting the data collection. It uses calibrated values for the
     rotation speeds of the microscope, and matches them to the observed one"""
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
@@ -174,7 +174,7 @@ class ImgConversion(object):
 
     def check_settings(self) -> None:
         """
-        Check for the presence of all required attributes. 
+        Check for the presence of all required attributes.
         If possible, optional missing attributes are set to their defaults.
         """
 
@@ -323,8 +323,8 @@ class ImgConversion(object):
         logger.debug(f"MRC files created in folder: {path}")
 
     def threadpoolwriter(self, tiff_path: str = None, smv_path: str = None, mrc_path: str = None, workers: int = 8) -> None:
-        """Efficiently write all data to the specified formats using a threadpool. 
-        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF 
+        """Efficiently write all data to the specified formats using a threadpool.
+        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF
         files are written to that path.
         """
         write_tiff = tiff_path is not None
@@ -422,7 +422,7 @@ class ImgConversion(object):
 
         try:
             date = str(datetime.fromtimestamp(h["ImageGetTime"]))
-        except:
+        except BaseException:
             date = "0"
 
         header = collections.OrderedDict()

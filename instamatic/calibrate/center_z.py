@@ -27,7 +27,7 @@ def eliminate_backlash_in_tiltx(ctrl):
 def center_z_height(ctrl, verbose=False):
     """Automated routine to find the z-height
 
-    Koster, A. J., et al. "Automated microscopy for electron tomography." 
+    Koster, A. J., et al. "Automated microscopy for electron tomography."
     Ultramicroscopy 46.1-4 (1992): 207-227.
     http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
     """
@@ -89,7 +89,7 @@ def center_z_height(ctrl, verbose=False):
 def find_crystal_max(img, magnification, spread, offset):
 
     crystal_positions = find_crystals_timepix(img, magnification, spread=spread, offset=offset)
-    crystal_area = [crystal.area_pixel for crystal in crystal_positions if crystal.isolated == True]
+    crystal_area = [crystal.area_pixel for crystal in crystal_positions if crystal.isolated]
     maxind = crystal_area.index(max(crystal_area))
 
     crystal_inter = max(crystal_area)
@@ -117,7 +117,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread=spread, offset=offset)
         if verbose:
             print(f"Feature Captured. Area: {crystal_inter} pixels")
-    except:
+    except BaseException:
         if verbose:
             print("No crystals found. Please find another area for z height adjustment.")
 
@@ -162,7 +162,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
                 else:
                     ctrl.stage.stop()
                     return 999999, 999999
-        except:
+        except BaseException:
             if verbose:
                 print("No crystal found. Finding another area for z height adjustment.")
             ctrl.stage.stop()

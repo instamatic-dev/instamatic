@@ -113,7 +113,7 @@ def main():
     ctrl = TEMController(tem=tem, cam=cam)
     try:
         ranges = ctrl.magnification.get_ranges()
-    except:
+    except BaseException:
         print("Warning: Cannot access magnification ranges")
         ranges = {}
 

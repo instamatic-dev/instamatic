@@ -34,7 +34,7 @@ for i, fn in enumerate(tqdm.tqdm(fns)):
     for j, dp in enumerate(dps):
         try:
             diff, h_diff = read_image(dp)
-        except:
+        except BaseException:
             print("fail")
             continue
 

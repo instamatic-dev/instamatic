@@ -192,7 +192,7 @@ def main_entry():
         print("""
 Program to calibrate brightness of microscope
 
-Usage: 
+Usage:
 prepare
     instamatic.calibrate_brightness
         To start live calibration routine on the microscope

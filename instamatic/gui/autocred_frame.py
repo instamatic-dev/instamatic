@@ -335,7 +335,7 @@ def acquire_data_autocRED(controller, **kwargs):
 
     try:
         diff_defocus = controller.ctrl.difffocus.value + kwargs["diff_defocus"]
-    except:
+    except BaseException:
         pass
 
     #controller.stream.get_module("sed").calib_path = expdir / "calib"

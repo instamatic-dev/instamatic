@@ -186,8 +186,8 @@ def create_header(shape, dtype, order='C', header=None):
     :Parameters:
 
     shape : tuple
-            Shape of the array 
-    dtype : numpy.dtype 
+            Shape of the array
+    dtype : numpy.dtype
             Data type for NumPy ndarray
     header : dict
              Header values  for image
@@ -286,7 +286,7 @@ def is_readable(filename, no_strict_mrc=False):
     else:
         try:
             h = read_mrc_header(filename)
-        except:
+        except BaseException:
             return False
     if _logger.isEnabledFor(logging.DEBUG):
         _logger.debug("Mode: %d - %d" % (h['mode'][0], (h['mode'][0] not in mrc2numpy)))
@@ -466,7 +466,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         offset = 1024 + int(h['nsymbt']) + 0 * d_len * dtype.itemsize
         try:
             f.seek(int(offset))
-        except:
+        except BaseException:
             _logger.error("%s -- %s" % (str(offset), str(offset.__class__.__name__)))
             raise
         if not hasattr(index, '__iter__'):
@@ -654,7 +654,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
         header = img.header
     try:
         img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
-    except:
+    except BaseException:
         raise TypeError("Unsupported type for MRC writing: %s" % str(img.dtype))
 
     mode = 'rb+' if index is not None and (index > 0 or inplace and index > -1) else 'wb+'

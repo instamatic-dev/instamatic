@@ -141,21 +141,21 @@ class VideoStreamFrame(Frame):
         # print name, index, mode
         try:
             self.resize_image = self.var_resize_image.get()
-        except:
+        except BaseException:
             pass
 
     def update_auto_contrast(self, name, index, mode):
         # print name, index, mode
         try:
             self.auto_contrast = self.var_auto_contrast.get()
-        except:
+        except BaseException:
             pass
 
     def update_frametime(self, name, index, mode):
         # print name, index, mode
         try:
             self.frametime = self.var_frametime.get()
-        except:
+        except BaseException:
             pass
         else:
             self.stream.update_frametime(self.frametime)
@@ -164,14 +164,14 @@ class VideoStreamFrame(Frame):
         # print name, index, mode
         try:
             self.brightness = self.var_brightness.get()
-        except:
+        except BaseException:
             pass
 
     def update_display_range(self, name, index, mode):
         try:
             val = self.var_display_range.get()
             self.display_range = max(1, val)
-        except:
+        except BaseException:
             pass
 
     def saveImage(self):
@@ -189,7 +189,7 @@ class VideoStreamFrame(Frame):
             try:
                 flatfield, h = read_tiff(module_io.get_flatfield())
                 frame = apply_flatfield_correction(self.frame, flatfield)
-            except:
+            except BaseException:
                 frame = self.frame
                 h = {}
         else:

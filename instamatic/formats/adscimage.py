@@ -69,7 +69,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     with open(fname, "rb", buffering=0) as infile:
         try:
             header = readheader(infile)
-        except:
+        except BaseException:
             raise Exception("Error processing adsc header")
         # banned by bzip/gzip???
         try:
@@ -92,7 +92,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-        raise IOError('Size spec in ADSC-header does not match ' + \
+        raise IOError('Size spec in ADSC-header does not match ' +
                       'size of image data field %sx%s != %s' % (dim1, dim2, data.size))
 
     return data, header

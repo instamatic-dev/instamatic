@@ -288,7 +288,7 @@ def main_entry():
         print("""
 Program to calibrate mag1 of microscope
 
-Usage: 
+Usage:
 prepare
     instamatic.calibrate_mag1
         To start live calibration routine on the microscope

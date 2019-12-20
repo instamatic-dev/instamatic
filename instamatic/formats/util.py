@@ -50,7 +50,7 @@ def uopen(filename, mode):
 
     try:
         os.fspath(filename)
-    except:
+    except BaseException:
         f = filename
     else:
         if os.path.splitext(filename)[1] == '.bz2':
@@ -58,7 +58,7 @@ def uopen(filename, mode):
         else:
             try:
                 f = open(filename, mode)
-            except:
+            except BaseException:
                 _logger.error("Mode: %s" % str(mode))
                 raise
     return f
@@ -85,7 +85,7 @@ def update_header(dest, source, header_map, tag=None):
     dest : array or dict
            Destination of the header values
     source : array or dict
-             Source of the header values    
+             Source of the header values
     header_map : dict
                  Map from destination to source
     tag : str
@@ -104,11 +104,11 @@ def update_header(dest, source, header_map, tag=None):
     for key in keys:
         try:
             dest[key] = source[header_map.get(key, key)]
-        except:
+        except BaseException:
             if tag is not None:
                 try:
                     dest[key] = source[tag + "_" + key]
-                except:
+                except BaseException:
                     pass
     return dest
 
@@ -123,11 +123,11 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
     header : dict
              Header
     dtype : dtype
-            Data type 
+            Data type
     dlen : int
            Number of elements
     shape : tuple
-            Shape of the array 
+            Shape of the array
     swap : bool
            Swap the byte order
     order : str

@@ -77,7 +77,7 @@ class AcquireAtItems(object):
             else:
                 raise IndexError(f"Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}")
 
-        if z != None:
+        if z is not None:
             self.ctrl.stage.set(z=z)
 
         if self.backlash:

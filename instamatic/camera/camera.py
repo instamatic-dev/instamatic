@@ -33,7 +33,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     if `as_stream` is True, it will return a VideoStream object
     if `as_stream` is False, it will return the raw Camera object
     """
-    if name == None:
+    if name is None:
         name = default_cam
     elif name != config.cfg.camera:
         config.load(camera_name=name)

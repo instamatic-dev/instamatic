@@ -181,7 +181,7 @@ class DiffFocus(Lens):
     def set(self, value: int, confirm_mode: bool = True):
         """
         confirm_mode: verify that TEM is set to the correct mode ('diff').
-        IL1 maps to different values in image and diffraction mode. 
+        IL1 maps to different values in image and diffraction mode.
         Turning it off results in a 2x speed-up in the call, but it will silently fail if the TEM is in the wrong mode.
         """
         self._setter(value, confirm_mode=confirm_mode)
@@ -582,7 +582,7 @@ class Stage(object):
             stepsize in nm
         settle_delay: float,
             delay between movements in seconds to allow the stage to settle
-        wait: bool, 
+        wait: bool,
             block until stage movement is complete (JEOL only)
         """
 
@@ -633,8 +633,8 @@ class Stage(object):
     def eliminate_backlash_a(self, target_angle: float = 0.0, step: float = 1.0, n_steps: int = 3, settle_delay: float = 0.200) -> None:
         """
         Eliminate backlash by relaxing the position. The routine will move in opposite direction
-        of the targeted angle by `n_steps`*`step`, and walk up to the current 
-        tilt angle in `n_steps`. 
+        of the targeted angle by `n_steps`*`step`, and walk up to the current
+        tilt angle in `n_steps`.
         Based on Suloway et al., J. Struct. Biol. (2009), doi: 10.1016/j.jsb.2009.03.019
 
         target_angle: float,
@@ -866,7 +866,7 @@ class TEMController(object):
     def get_stagematrix(self, binning: int = None, mag: int = None, mode: int = None):
         """Helper function to get the stage matrix from the config file.
         The stagematrix is used to convert from pixel coordinates to stage
-        coordiantes. The parameters are optional and if not given, 
+        coordiantes. The parameters are optional and if not given,
         the current values are read out from the microscope/camera.
 
         Parameters
@@ -945,7 +945,7 @@ class TEMController(object):
                               apply: bool = True,
                               verbose: bool = True) -> float:
         """Automated routine to find the eucentric height, accurate up to ~1 um
-        Measures the shift (cross correlation) between 2 angles (-+tilt) over 
+        Measures the shift (cross correlation) between 2 angles (-+tilt) over
         a range of z values (defined by `dz` and `steps`). The height is calculated
         by fitting the shifts vs. z.
 
@@ -953,7 +953,7 @@ class TEMController(object):
 
         Takes roughly 35 seconds (2 steps) or 70 seconds (5 steps) on a JEOL 1400 with a TVIPS camera.
 
-        Based on: Koster, et al., Ultramicroscopy 46 (1992): 207–27. 
+        Based on: Koster, et al., Ultramicroscopy 46 (1992): 207–27.
                   https://doi.org/10.1016/0304-3991(92)90016-D.
 
         Parameters
@@ -1115,15 +1115,15 @@ class TEMController(object):
         """Retrieve image as numpy array from camera
 
         Parameters:
-            exposure: float, 
+            exposure: float,
                 exposure time in seconds
-            binsize: int, 
+            binsize: int,
                 which binning to use for the image, must be 1, 2, or 4
-            comment: str, 
+            comment: str,
                 arbitrary comment to add to the header file under 'ImageComment'
-            out: str, 
+            out: str,
                 path or filename to which the image/header is saved (defaults to tiff)
-            plot: bool, 
+            plot: bool,
                 toggle whether to show the image using matplotlib after acquisition
             full_header: bool,
                 return the full header

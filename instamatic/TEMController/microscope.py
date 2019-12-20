@@ -37,7 +37,7 @@ def Microscope(name: str = None, use_server: bool = False):
 
     returns: TEM interface class
     """
-    if name == None:
+    if name is None:
         name = default_tem
     elif name != config.cfg.microscope:
         config.load(microscope_name=name)

@@ -161,7 +161,7 @@ class CalibDirectBeam(object):
         data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
         data_readout = self._dct[key]["data_readout"]  # microscope readout
 
-        if to_file == True:
+        if to_file:
             to_file = f"calib_db_{key}.png"
 
         shifts_ = self.any2pixelshift(shift=data_readout, key=key)
@@ -193,7 +193,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         exposure time
     binsize: `int` or None
 
-    In case paramers are not defined, camera specific default parameters are 
+    In case paramers are not defined, camera specific default parameters are
 
     return:
         instance of Calibration class with conversion methods
@@ -315,7 +315,7 @@ Calibrate direct beam position
  1. Go to diffraction mode and select desired camera length (CAM L)
  2. Center the beam with diffraction shift (PLA)
  3. Focus the diffraction pattern (DIFF FOCUS)
-    
+
  >> Press <ENTER> to start\n"""):
             return
         else:
@@ -356,10 +356,10 @@ def main_entry():
         print("""
 Program to calibrate PLA to compensate for beamshift movements
 
-Usage: 
+Usage:
     instamatic.calibrate_directbeam
         To start live calibration routine on the microscope
-    
+
     instamatic.calibrate_directbeam (DiffShift:pattern.tiff) (BeamShift:pattern.tiff)
         To perform calibration from saved images
 """)

@@ -38,7 +38,7 @@ class CalibStage(object):
         Function to transform stage position to pixel coordinates
 
         px_ref: `list`
-            stage position (x,y) to transform to pixel coordinates on 
+            stage position (x,y) to transform to pixel coordinates on
             current image
         r: `2d ndarray`, shape (2,2)
             transformation matrix from calibration
@@ -384,7 +384,7 @@ def main_entry():
         print("""
 Program to calibrate lowmag (100x) of microscope
 
-Usage: 
+Usage:
 prepare
     instamatic.calibrate_lowmag
         To start live calibration routine on the microscope

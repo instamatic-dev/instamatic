@@ -188,7 +188,7 @@ def define_directions(pairs: list):
 def define_pairs(grid: "np.ndarray"):
     """Take a sequence grid and return all pairs of neighbours
 
-    Returns a list of dictionaries containing the indices of the pairs 
+    Returns a list of dictionaries containing the indices of the pairs
     (neighbouring only), and the corresponding sequence numbers (corresponding to the image array)
     """
     nx, ny = grid.shape

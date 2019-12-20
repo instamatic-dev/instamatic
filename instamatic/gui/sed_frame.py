@@ -31,14 +31,14 @@ message1 = """
  1. Go to diffraction mode and select desired camera length (CAM L)
  2. Center the beam with diffraction shift (PLA)
  3. Focus the diffraction pattern (DIFF FOCUS)
-    
+
 Press <OK> to start"""
 
 message2 = """
  1. Go to desired magnification (e.g. 2500x)
  2. Select desired beam size (BRIGHTNESS)
  3. Center the beam with beamshift
-    
+
 Press <OK> to start"""
 
 message3 = """

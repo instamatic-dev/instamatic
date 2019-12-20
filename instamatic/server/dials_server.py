@@ -14,7 +14,7 @@ import ast
 
 try:
     EXE = Path(sys.argv[1])
-except:
+except BaseException:
     EXE = Path(config.cfg.dials_script)
 
 CWD = EXE.parent

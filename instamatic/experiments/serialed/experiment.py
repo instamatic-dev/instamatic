@@ -44,7 +44,7 @@ def get_gridpoints_in_circle(nx, ny=0, radius=1, borderwidth=0.8):
         radius of circle
     borderwidth: `float`, 0.0 - 1.0
         define a border around the circumference not to place any points
-        should probably be related to the effective camera size: 
+        should probably be related to the effective camera size:
     """
     xr = np.linspace(-1, 1, nx)
     if ny:
@@ -64,7 +64,7 @@ def get_gridpoints_in_circle(nx, ny=0, radius=1, borderwidth=0.8):
 def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=0, plot=False):
     """
     box_x: float or int,
-        x-dimensions of the box in micrometers. 
+        x-dimensions of the box in micrometers.
         if box_y is missing, box_y = box_x
     box_y: float or int,
         y-dimension of the box in micrometers (optional)
