@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import numpy as np
 import json
 
@@ -20,16 +21,16 @@ from pathlib import Path
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
     """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
     stepsize = np.array((0.016*512, 0.016*512))
-    
+
     x1, y1 = pos1 = np.array((0, 0))
     x2, y2 = pos2 = np.array((1000, 1000))
-    
+
     pos_delta = pos2 - pos1
-    
+
     nx, ny = np.abs(pos_delta / (stepsize + padding)).astype(int)
-    
+
     xgrid, ygrid = np.meshgrid(np.linspace(x1, x2, nx), np.linspace(y1, y2, ny))
-    
+
     return np.stack((xgrid.flatten(), ygrid.flatten())).T
 
 
@@ -52,7 +53,7 @@ def get_gridpoints_in_circle(nx, ny=0, radius=1, borderwidth=0.8):
         yr = xr
     xgrid, ygrid = np.meshgrid(xr, yr)
     # reverse order of every other row for more efficient pathing
-    xgrid[1::2] = np.fliplr(xgrid[1::2]) 
+    xgrid[1::2] = np.fliplr(xgrid[1::2])
 
     sel = xgrid**2 + ygrid**2 < 1.0*(1-borderwidth)
     xvals = xgrid[sel].flatten()
@@ -82,11 +83,11 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
     else:
         diff = 0.5*(2*(box_x)**2)**0.5
         ny = 0
-    
+
     borderwidth = k*(1.0 - (radius - diff) / radius)
-       
+
     x_offsets, y_offsets = get_gridpoints_in_circle(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
-    
+
     if angle:
         sin = np.sin(angle)
         cos = np.cos(angle)
@@ -100,14 +101,14 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
 
         num = len(x_offsets)
         textstr = f"grid: {nx} x {ny}\nk: {k}\nborder: {borderwidth:.2f}\nradius: {radius:.2f}\nboxsize: {box_x:.2f} x {box_y:.2f} um\nnumber: {num}"
-        
+
         print()
         print(textstr)
-        
+
         cx, cy = (box_x/2.0, box_y/2.0)
         if angle:
             cx, cy = np.dot((cx, cy), r)
-        
+
         if num < 1000:
             fig = plt.figure(figsize=(10,5))
             ax = fig.add_subplot(111)
@@ -117,11 +118,11 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
             ax.add_artist(circle)
             circle = plt.Circle((0, 0), radius*(1-borderwidth/2), fill=False, color="red")
             ax.add_artist(circle)
-            
+
             for dx, dy in zip(x_offsets, y_offsets):
                 rect = patches.Rectangle((dx - cx, dy - cy), box_x, box_y, fill=False, angle=np.degrees(-angle))
                 ax.add_artist(rect)
-            
+
             ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
@@ -129,12 +130,13 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
             ax.set_ylim(-100, 100)
             ax.set_aspect('equal')
             plt.show()
-    
+
     return np.vstack((x_offsets, y_offsets)).T
 
 
 class Experiment(object):
     """docstring for Experiment"""
+
     def __init__(self, ctrl, params, scan_radius=None, begin_here=False, expdir=None, log=None):
         super(Experiment, self).__init__()
         self.ctrl = ctrl
@@ -160,7 +162,7 @@ class Experiment(object):
                     n += 1
                 else:
                     break
-        
+
         self.expdir = expdir
         self.calibdir = self.expdir / "calib"
         self.imagedir = self.expdir / "images"
@@ -173,7 +175,7 @@ class Experiment(object):
 
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files"""
-        
+
         self.ctrl.mode_mag1()
         self.ctrl.brightness.max()
 
@@ -183,7 +185,7 @@ class Experiment(object):
         if not self.begin_here:
             input(" >> Move the stage to where you want to start and press <ENTER> to continue")
         x, y, _, _, _ = self.ctrl.stage.get()
-        self.scan_centers = np.array([[x,y]])            
+        self.scan_centers = np.array([[x,y]])
         if not self.scan_radius:
             self.scan_radius = float(input(" >> Enter the radius (micrometer) of the area to scan: [100] ") or 100)
         border_k = 0
@@ -195,7 +197,7 @@ class Experiment(object):
         self.image_threshold = kwargs.get("image_threshold",     100)
          # do not store brightness to self, as this is set later when calibrating the direct beam
         image_brightness = kwargs.get("diff_brightness", 38000)
-        
+
         try:
             self.calib_beamshift = CalibBeamShift.from_file()
         except IOError:
@@ -205,7 +207,7 @@ class Experiment(object):
             self.ctrl.tem.setSpotSize(self.image_spotsize)
 
             self.calib_beamshift = CalibBeamShift.live(self.ctrl, outdir=self.calibdir)
-            
+
             self.magnification = self.ctrl.magnification.value
             self.log.info("Brightness=%s", self.ctrl.brightness)
 
@@ -250,7 +252,7 @@ class Experiment(object):
         # self.sample_rotation_angles = ( -10, -5, 5, 10 )
         # self.sample_rotation_angles = (-5, 5)
         self.sample_rotation_angles = ()
-    
+
         self.camera_rotation_angle = config.camera.camera_rotation_vs_stage_xy
 
         # Make negative to reflect config change 2019-07-03 to make omega more in line with other software
@@ -287,7 +289,7 @@ class Experiment(object):
         input("\nPress <ENTER> to get neutral diffraction shift")
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         self.log.info("DiffShift(x=%d, y=%d)", *self.neutral_diffshift)
-    
+
         self.ctrl.mode_mag1()
         self.ctrl.magnification.value = self.magnification
         self.ctrl.brightness.max()
@@ -297,7 +299,7 @@ class Experiment(object):
 
     def image_mode(self, delay=0.2):
         """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
-        
+
         # self.log.debug("Switching back to image mode")
         time.sleep(delay)
 
@@ -354,7 +356,7 @@ class Experiment(object):
             else:
                 self.log.info("Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)", i, ncenters, x, y)
                 yield i, (x,y)
-            
+
     def loop_positions(self, delay=0.05):
         """Loop over positions defined
         Move the stage to each of the positions in self.offsets
@@ -387,7 +389,6 @@ class Experiment(object):
                     dct["ImageComment"] = "scan {exp_scan_number} image {exp_image_number}".format(**dct)
                     yield dct
 
-
     def loop_crystals(self, crystal_coords, delay=0):
         """Loop over crystal coordinates (pixels)
         Switch to diffraction mode, and shift the beam to be on the crystal
@@ -408,23 +409,23 @@ class Experiment(object):
         for k, beamshift in enumerate(t):
             # self.log.debug("Diffraction: crystal %d/%d", k+1, ncrystals)
             self.ctrl.beamshift.set(*beamshift)
-        
+
             # compensate beamshift
             beamshift_offset = beamshift - self.neutral_beamshift
             pixelshift = self.calib_directbeam.beamshift2pixelshift(beamshift_offset)
-        
+
             diffshift_offset = self.calib_directbeam.pixelshift2diffshift(pixelshift)
             diffshift = self.neutral_diffshift - diffshift_offset
-        
+
             self.ctrl.diffshift.set(*diffshift.astype(int))
 
             t.set_description("BeamShift(x={:5.0f}, y={:5.0f})".format(*beamshift))
             time.sleep(delay)
 
-            dct = {"exp_pattern_number": k, 
-                   "exp_diffshift_offset": diffshift_offset, 
-                   "exp_beamshift_offset": beamshift_offset, 
-                   "exp_beamshift": beamshift, 
+            dct = {"exp_pattern_number": k,
+                   "exp_diffshift_offset": diffshift_offset,
+                   "exp_beamshift_offset": beamshift_offset,
+                   "exp_beamshift": beamshift,
                    "exp_diffshift": diffshift}
 
             yield dct
@@ -467,17 +468,17 @@ class Experiment(object):
         input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
 
         for i, d_pos in enumerate(self.loop_positions()):
-   
+
             outfile = self.imagedir / f"image_{i:04d}"
-            
+
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
-    
+
             img, h = self.ctrl.getImage(exposure=self.image_exposure, binsize=self.image_binsize, header_keys=header_keys)
-    
+
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
-    
+
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
             im_mean = img.mean()
@@ -501,7 +502,7 @@ class Experiment(object):
                 continue
 
             self.log.info("%d crystals found in %s", ncrystals, outfile)
-    
+
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = self.datadir / f"image_{i:04d}_{k:04d}"
                 comment = f"Image {i} Crystal {k}"
@@ -521,23 +522,23 @@ class Experiment(object):
                 # h["crystal_quality"] = quality
 
                 write_hdf5(outfile, img, header=h)
-             
+
                 if self.sample_rotation_angles:
                     for rotation_angle in self.sample_rotation_angles:
                         self.log.debug("Rotation angle = %f", rotation_angle)
                         self.ctrl.stage.a = rotation_angle
-        
+
                         outfile = self.datadir / f"image_{i:04d}_{k:04d}_{rotation_angle}"
                         img, h = self.ctrl.getImage(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
-                                                    
+
                         for d in (d_diff, d_pos, d_cryst):
                             h.update(d)
-    
+
                         write_hdf5(outfile, img, header=h)
-                    
+
                     self.ctrl.stage.a = 0
-    
+
             self.image_mode()
 
         print("\n\nData collection finished.")
@@ -555,8 +556,8 @@ def main():
     except IOError:
         params = {}
 
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename="instamatic.log", 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename="instamatic.log",
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)

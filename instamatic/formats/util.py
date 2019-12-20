@@ -3,7 +3,9 @@
 .. Created on Jul 18, 2013
 .. codeauthor:: Robert Langlois <rl2528@columbia.edu>
 '''
-import numpy, os, bz2
+import numpy
+import os
+import bz2
 import logging
 from scipy import ndimage
 import numpy as np
@@ -12,20 +14,23 @@ import numpy as np
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 
+
 class InvalidHeaderException(Exception):
     ''' Thrown when the image file has an invalid header
     '''
-    
+
     pass
+
 
 def fromfile(fin, dtype, count, sep=''):
     '''
     '''
-    
+
     if hasattr(fin, 'fileno'):
         return np.fromfile(fin, dtype, count, sep)
     else:
         return np.frombuffer(fin.read(count*dtype.itemsize), dtype, count)
+
 
 def uopen(filename, mode):
     ''' Open a stream to filename
@@ -42,7 +47,7 @@ def uopen(filename, mode):
     fd : File
          File descriptor
     '''
-    
+
     try:
         os.fspath(filename)
     except:
@@ -58,6 +63,7 @@ def uopen(filename, mode):
                 raise
     return f
 
+
 def close(filename, fd):
     ''' Close the file descriptor (if it was opened by caller)
     
@@ -66,8 +72,9 @@ def close(filename, fd):
     fd : File
          File descriptor
     '''
-    
+
     if fd != filename: fd.close()
+
 
 def update_header(dest, source, header_map, tag=None):
     ''' Map values from or to the format and the internal header
@@ -88,7 +95,7 @@ def update_header(dest, source, header_map, tag=None):
     dest : array or dict
            Destination of the header values
     '''
-    
+
     if source is None: return dest
     keys = dest.dtype.names if hasattr(dest, 'dtype') else dest.keys()
     tag = None
@@ -100,6 +107,7 @@ def update_header(dest, source, header_map, tag=None):
                 try: dest[key] = source[tag+"_"+key]
                 except: pass
     return dest
+
 
 def read_image(f, header, dtype, dlen, shape, swap, order='C'):
     ''' Read an image from a file using random file acess
@@ -126,7 +134,7 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
     out : ndarray
           Array of image data
     '''
-    
+
     out = np.fromfile(f, dtype=dtype, count=dlen)
     out.shape = shape
     out = out.squeeze()

@@ -39,9 +39,10 @@ class MicroscopeClient(object):
     Simulates a Microscope object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the microscope API.
     """
+
     def __init__(self, name):
         super().__init__()
-        
+
         self.name = name
         self._bufsize = BUFSIZE
 
@@ -65,7 +66,7 @@ class MicroscopeClient(object):
         self._init_dict()
 
         atexit.register(self.s.close)
-    
+
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
@@ -117,6 +118,7 @@ class MicroscopeClient(object):
 
 class TraceVariable(object):
     """docstring for Tracer"""
+
     def __init__(self, func, interval=1.0, name="variable", verbose=False):
         super().__init__()
         self.name = name
@@ -139,13 +141,13 @@ class TraceVariable(object):
 
     def update(self):
         ret = self.func()
-        
+
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    
+
         if self.verbose:
             print(f"{now} | Trace {self.name}: {ret}")
-    
+
         self._traced.append((now, ret))
-        
+
         self._timer = threading.Timer(self.interval, self.update)
         self._timer.start()

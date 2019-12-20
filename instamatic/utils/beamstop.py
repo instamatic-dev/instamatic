@@ -22,7 +22,7 @@ def minimum_bounding_rectangle(points):
     """
     from scipy.ndimage.interpolation import rotate
     from scipy.spatial import ConvexHull
-    
+
     pi2 = np.pi/2.0
 
     # get the convex hull for the points
@@ -142,7 +142,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     seg = morphology.remove_small_objects(seg, 64)
     seg = morphology.remove_small_holes(seg, 64)
-    
+
     # pad the beamstop to make the outline a big bigger
     if pad:
         seg = morphology.binary_dilation(seg, selem=morphology.disk(pad))
@@ -151,11 +151,11 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     if len(arr) > 1:
         rects = [minimum_bounding_rectangle(a) for a in arr if len(a) > minsize]
-    
+
         a = [np.mean(rect, axis=0) for rect in rects]
         dists = [np.linalg.norm(b - center) for b in a]
         i = np.argmin(dists)
-    
+
         rect = rects[i]
     else:
         a = arr[0]
@@ -201,15 +201,15 @@ if __name__ == '__main__':
     fns = list(Path(drc).glob("raw/*.tif"))
 
     print(len(fns))
-    
+
     imgs, hs = zip(*(read_tiff(fn) for fn in fns))
-    
+
     stack_mean = np.mean(imgs, axis=0)
 
     center = find_beam_center_with_beamstop(stack_mean, z=99)
 
     beamstop_rect = find_beamstop_rect(stack_mean, center, pad=1, plot=True)
-    
+
     from instamatic.tools import to_xds_untrusted_area
 
     xds_quad = to_xds_untrusted_area("quadrilateral", beamstop_rect)

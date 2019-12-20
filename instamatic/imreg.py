@@ -26,7 +26,7 @@ def translation(im0, im1, return_fft=False):
         t0 -= shape[0]
     if t1 > shape[1] // 2:
         t1 -= shape[1]
-    
+
     if return_fft:
         return [t0, t1], ir
     else:

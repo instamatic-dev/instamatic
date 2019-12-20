@@ -5,9 +5,10 @@ import atexit
 
 class ImageGrabber(object):
     """docstring for ImageGrabber"""
+
     def __init__(self, cam, callback, frametime=0.05):
         super(ImageGrabber, self).__init__()
-        
+
         self.callback = callback
         self.cam = cam
 
@@ -38,7 +39,7 @@ class ImageGrabber(object):
 
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
-                
+
                 frame = self.cam.getImage(exposure=self.exposure)
                 self.callback(frame, acquire=True)
 
@@ -57,6 +58,7 @@ class ImageGrabber(object):
 
 class VideoStream(threading.Thread):
     """docstring for VideoStream"""
+
     def __init__(self, cam="simulate"):
         threading.Thread.__init__(self)
 
@@ -127,7 +129,7 @@ class VideoStream(threading.Thread):
         self.grabber.lock.acquire(True)
         frame = self.acquired_frame
         self.grabber.lock.release()
-        
+
         self.grabber.acquireCompleteEvent.clear()
         self.grabber.frametime = current_frametime
         return frame

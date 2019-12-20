@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import threading
@@ -8,6 +9,7 @@ ENABLE_FOOTFREE_OPTION = False
 
 class ExperimentalcRED(LabelFrame):
     """docstring for ExperimentalSED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction")
         self.parent = parent
@@ -20,9 +22,9 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text="Exposure time (s):").grid(row=1, column=0, sticky="W")
         exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         exposure_time.grid(row=1, column=1, sticky="W", padx=10)
-        
+
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
-        
+
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky="ew", pady=10)
 
         Checkbutton(frame, text="Enable image interval", variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky="W")
@@ -36,7 +38,7 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
-        
+
         Label(frame, text="Image exposure (s):").grid(row=7, column=0, sticky="W")
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
@@ -46,11 +48,11 @@ class ExperimentalcRED(LabelFrame):
 
         if ENABLE_FOOTFREE_OPTION:
             Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky="ew", pady=10)
-            
+
             Label(frame, text="Rotate to:").grid(row=9, column=0, sticky="W")
             self.e_max_rotation = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
             self.e_max_rotation.grid(row=9, column=1, sticky="W", padx=10)
-        
+
             Checkbutton(frame, text="Footfree mode", variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky="W")
 
         self.lb_coll0 = Label(frame, text="")
@@ -81,7 +83,7 @@ class ExperimentalcRED(LabelFrame):
 
         self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
-        
+
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
@@ -170,9 +172,9 @@ class ExperimentalcRED(LabelFrame):
             self.e_image_interval.config(state=DISABLED)
             self.e_image_exposure.config(state=DISABLED)
             self.e_diff_defocus.config(state=DISABLED)
-            self.c_toggle_defocus.config(state=DISABLED)     
-            self.RelaxButton.config(state=DISABLED)     
-    
+            self.c_toggle_defocus.config(state=DISABLED)
+            self.RelaxButton.config(state=DISABLED)
+
     def relax_beam(self):
         difffocus = self.var_diff_defocus.get()
 
@@ -227,17 +229,17 @@ def toggle_difffocus(controller, **kwargs):
 def acquire_data_cRED(controller, **kwargs):
     controller.log.info("Start cRED experiment")
     from instamatic.experiments import cRED
-    
+
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
-    
+
     cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
 
     success = cexp.start_collection()
 
     if not success:
         return
-    
+
     controller.log.info("Finish cRED experiment")
 
     if controller.use_indexing_server:
@@ -245,7 +247,6 @@ def acquire_data_cRED(controller, **kwargs):
         controller.triggerEvent.set()
 
 
-from .base_module import BaseModule
 module = BaseModule("cred", "cRED", True, ExperimentalcRED, commands={
     "cred": acquire_data_cRED,
     "toggle_difffocus": toggle_difffocus,

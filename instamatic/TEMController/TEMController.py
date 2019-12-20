@@ -26,7 +26,7 @@ class TEMControllerException(Exception):
     pass
 
 
-def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: bool=True) -> "TEMController":
+def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> "TEMController":
     """Initialize TEMController object giving access to the TEM and Camera interfaces
 
     tem_name: Name of the TEM to use
@@ -36,7 +36,7 @@ def initialize(tem_name: str=default_tem, cam_name: str=default_cam, stream: boo
 
     print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
     tem = Microscope(tem_name, use_server=use_tem_server)
-    
+
     if cam_name:
         if use_cam_server:
             cam_tag = ' (server)'
@@ -62,7 +62,7 @@ def get_instance() -> "TEMController":
     initialize it using default parameters"""
 
     global _ctrl
-    
+
     if _ctrl:
         ctrl = _ctrl
     else:
@@ -79,6 +79,7 @@ DeflectorTuple = namedtuple("DeflectorTuple", ["x", "y"])
 class Deflector(object):
     """Generic microscope deflector object defined by X/Y values
     Must be subclassed to set the self._getter, self._setter functions"""
+
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
@@ -134,13 +135,14 @@ class Deflector(object):
 class Lens(object):
     """Generic microscope lens object defined by one value
     Must be subclassed to set the self._getter, self._setter functions"""
+
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
         self._getter = None
         self._setter = None
         self.key = "lens"
-        
+
     def __repr__(self):
         try:
             value = self.value
@@ -169,13 +171,14 @@ class Lens(object):
 
 class DiffFocus(Lens):
     """Control the Difffraction focus lens (IL1)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getDiffFocus
         self._setter = self._tem.setDiffFocus
         self.is_defocused = False
 
-    def set(self, value: int, confirm_mode: bool=True):
+    def set(self, value: int, confirm_mode: bool = True):
         """
         confirm_mode: verify that TEM is set to the correct mode ('diff').
         IL1 maps to different values in image and diffraction mode. 
@@ -210,6 +213,7 @@ class DiffFocus(Lens):
 
 class Brightness(Lens):
     """Control object for the Brightness (CL3)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getBrightness
@@ -227,6 +231,7 @@ class Magnification(Lens):
     Magnification control. The magnification can be set directly, or
     by passing the corresponding index
     """
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._getter = self._tem.getMagnification
@@ -266,6 +271,7 @@ class Magnification(Lens):
 
 class GunShift(Deflector):
     """GunShift control"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setGunShift
@@ -275,6 +281,7 @@ class GunShift(Deflector):
 
 class GunTilt(Deflector):
     """GunTilt control"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setGunTilt
@@ -285,6 +292,7 @@ class GunTilt(Deflector):
 
 class BeamShift(Deflector):
     """BeamShift control (CLA1)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamShift
@@ -294,24 +302,27 @@ class BeamShift(Deflector):
 
 class BeamTilt(Deflector):
     """BeamTilt control (CLA2)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamTilt
         self._getter = self._tem.getBeamTilt
         self.key = "CLA2"
-        
+
 
 class DiffShift(Deflector):
     """Control for the Diffraction Shift (PLA)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setDiffShift
         self._getter = self._tem.getDiffShift
         self.key = "PLA"
-        
- 
+
+
 class ImageShift1(Deflector):
     """ImageShift control (IS1)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift1
@@ -321,6 +332,7 @@ class ImageShift1(Deflector):
 
 class ImageShift2(Deflector):
     """ImageShift control (IS2)"""
+
     def __init__(self, tem):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift2
@@ -330,13 +342,14 @@ class ImageShift2(Deflector):
 
 class Stage(object):
     """Stage control"""
+
     def __init__(self, tem):
         super().__init__()
         self._tem = tem
         self._setter = self._tem.setStagePosition
         self._getter = self._tem.getStagePosition
         self._wait = True  # properties only
-        
+
     def __repr__(self):
         x, y, z, a, b = self.get()
         return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
@@ -345,11 +358,11 @@ class Stage(object):
     def name(self) -> str:
         return self.__class__.__name__
 
-    def set(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True) -> None:
+    def set(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True) -> None:
         """wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
-        
-    def set_with_speed(self, x: int=None, y: int=None, z: int=None, a: int=None, b: int=None, wait: bool=True, speed: float=1.0) -> None:
+
+    def set_with_speed(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True, speed: float = 1.0) -> None:
         """
         Note that this function only works on FEI machines
 
@@ -362,7 +375,7 @@ class Stage(object):
         """Sets the stage (rotation) movement speed on the TEM"""
         self._tem.setRotationSpeed(value=speed)
 
-    def set_a_with_speed(self, a: float, speed: int, wait: bool=False):
+    def set_a_with_speed(self, a: float, speed: int, wait: bool = False):
         """Rotate to angle `a` with speed (JEOL only).
         wait: bool, block until stage movement is complete.
         """
@@ -410,7 +423,7 @@ class Stage(object):
     @y.setter
     def y(self, value: int):
         self.set(y=value, wait=self._wait)
-    
+
     @property
     def xy(self) -> Tuple[int, int]:
         x, y, z, a, b = self.get()
@@ -420,7 +433,6 @@ class Stage(object):
     def xy(self, values: Tuple[int, int]):
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
-
 
     def move_in_projection(self, delta_x: int, delta_y: int) -> None:
         r"""y and z are always perpendicular to the sample stage. To achieve the movement
@@ -449,7 +461,7 @@ class Stage(object):
         a = np.radians(a)
         y = y + delta_z * np.sin(a)
         z = z + delta_z * np.cos(a)
-        self.set(y=y, z=z) 
+        self.set(y=y, z=z)
 
     @property
     def z(self) -> int:
@@ -508,7 +520,7 @@ class Stage(object):
         """This will halt the stage preemptively if `wait=False` is passed to Stage.set"""
         self._tem.stopStage()
 
-    def alpha_wobbler(self, delta: float=5.0, event=None) -> None:
+    def alpha_wobbler(self, delta: float = 5.0, event=None) -> None:
         """Tilt the stage by plus/minus the value of delta (degrees)
         If event is not set, press Ctrl-C to interrupt"""
 
@@ -532,11 +544,11 @@ class Stage(object):
         self.a = a_center
         print(f"Print z={self.z:.2f}")
 
-    def relax_xy(self, step: int=100) -> None:
+    def relax_xy(self, step: int = 100) -> None:
         """Relax the stage by moving it in the opposite direction from the last movement"""
         pass
 
-    def set_xy_with_backlash_correction(self, x: int=None, y: int=None, step: float=10000, settle_delay: float=0.200) -> None:
+    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200) -> None:
         """
         Move to new x/y position with backlash correction. This is done
         by approaching the target x/y position always from the same direction.
@@ -552,12 +564,12 @@ class Stage(object):
         self.set(x=x-step, y=y-step)
         if settle_delay:
             time.sleep(settle_delay)
-        
+
         self.set(x=x, y=y, wait=wait)
         if settle_delay:
             time.sleep(settle_delay)
 
-    def move_xy_with_backlash_correction(self, shift_x: int=None, shift_y: int=None, step: float=5000, settle_delay: float=0.200, wait=True) -> None:
+    def move_xy_with_backlash_correction(self, shift_x: int = None, shift_y: int = None, step: float = 5000, settle_delay: float = 0.200, wait=True) -> None:
         """
         Move xy by given shifts in stage coordinates with backlash correction. This is done by moving backwards
         from the targeted position by `step`, before moving to the targeted position. This function is meant
@@ -599,12 +611,12 @@ class Stage(object):
         self.set(x=pre_x, y=pre_y)
         if settle_delay:
             time.sleep(settle_delay)
-        
+
         self.set(x=target_x, y=target_y, wait=wait)
         if settle_delay:
             time.sleep(settle_delay)
 
-    def eliminate_backlash_xy(self, step: float=10000, settle_delay: float=0.200) -> None:
+    def eliminate_backlash_xy(self, step: float = 10000, settle_delay: float = 0.200) -> None:
         """
         Eliminate backlash by in XY by moving the stage away from the current position, and
         approaching it from the common direction. Uses `set_xy_with_backlash_correction`
@@ -618,7 +630,7 @@ class Stage(object):
         stage = self.get()
         self.set_xy_with_backlash_correction(x=stage.x, y=stage.y, step=step, settle_delay=settle_delay)
 
-    def eliminate_backlash_a(self, target_angle: float=0.0, step: float=1.0, n_steps: int=3, settle_delay: float=0.200) -> None:
+    def eliminate_backlash_a(self, target_angle: float = 0.0, step: float = 1.0, n_steps: int = 3, settle_delay: float = 0.200) -> None:
         """
         Eliminate backlash by relaxing the position. The routine will move in opposite direction
         of the targeted angle by `n_steps`*`step`, and walk up to the current 
@@ -635,7 +647,7 @@ class Stage(object):
             delay between movements in seconds to allow the stage to settle
         """
         current = self.a
-        
+
         if target_angle > current:
             s = +1
         elif target_angle < current:
@@ -644,7 +656,7 @@ class Stage(object):
             return
 
         n_steps += 1
-        
+
         for i in reversed(range(n_steps)):
             self.a = current - s*i*step
             time.sleep(settle_delay)
@@ -754,7 +766,7 @@ class TEMController(object):
         """Turn the beamblank on."""
         self.tem.setBeamBlank(True)
 
-    def beamblank_off(self, delay: float=0.0):
+    def beamblank_off(self, delay: float = 0.0):
         """Turn the beamblank off, optionally wait for `delay` ms to allow the beam to settle."""
         self.tem.setBeamBlank(False)
         if delay:
@@ -787,7 +799,7 @@ class TEMController(object):
         aai = AcquireAtItems(ctrl, *args, **kwargs)
         aai.start()
 
-    def run_script_at_items(self, nav_items: list, script: str, backlash: bool=True) -> None:
+    def run_script_at_items(self, nav_items: list, script: str, backlash: bool = True) -> None:
         """"Run the given script at all coordinates defined by the nav_items.
         
         Parameters
@@ -821,18 +833,18 @@ class TEMController(object):
         ntot = len(nav_items)
 
         print(f"Running script: {script} on {ntot} items.")
-        
+
         pre_acquire = getattr(acquire, "pre_acquire", None)
         post_acquire = getattr(acquire, "post_acquire", None)
         acquire = getattr(acquire, "acquire", None)
 
         self.acquire_at_items(nav_items,
-                              acquire=acquire, 
-                              pre_acquire=pre_acquire, 
-                              post_acquire=post_acquire, 
+                              acquire=acquire,
+                              pre_acquire=pre_acquire,
+                              post_acquire=post_acquire,
                               backlash=backlash)
 
-    def run_script(self, script: str, verbose: bool=True) -> None:
+    def run_script(self, script: str, verbose: bool = True) -> None:
         """Run a custom python script with access to the `ctrl` object. It will check
         if the script exists in the scripts directory if it cannot find it directly.
         """
@@ -851,7 +863,7 @@ class TEMController(object):
         if verbose:
             print(f"\nScript finished in {t1-t0:.4f} s")
 
-    def get_stagematrix(self, binning: int=None, mag: int=None, mode: int=None):
+    def get_stagematrix(self, binning: int = None, mag: int = None, mode: int = None):
         """Helper function to get the stage matrix from the config file.
         The stagematrix is used to convert from pixel coordinates to stage
         coordiantes. The parameters are optional and if not given, 
@@ -885,8 +897,8 @@ class TEMController(object):
 
         return stagematrix
 
-    def align_to(self, ref_img: "np.array", 
-                       apply: bool= True) -> list:
+    def align_to(self, ref_img: "np.array",
+                       apply: bool = True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of interest
         (in the reference image) is at the center of the view.
@@ -919,19 +931,19 @@ class TEMController(object):
 
         print(f"Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}")
 
-        new_x = current_x - stage_shift[0] 
-        new_y = current_y + stage_shift[1] 
+        new_x = current_x - stage_shift[0]
+        new_y = current_y + stage_shift[1]
         print(f"New stage position: {new_x:.0f} {new_y:.0f}")
         if apply:
             self.stage.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
         return stage_shift
 
-    def find_eucentric_height(self, tilt: float=5, 
-                                    steps: int=5, 
-                                    dz: int=50_000, 
-                                    apply: bool=True, 
-                                    verbose: bool=True) -> float:
+    def find_eucentric_height(self, tilt: float = 5,
+                                    steps: int = 5,
+                                    dz: int = 50_000,
+                                    apply: bool = True,
+                                    verbose: bool = True) -> float:
         """Automated routine to find the eucentric height, accurate up to ~1 um
         Measures the shift (cross correlation) between 2 angles (-+tilt) over 
         a range of z values (defined by `dz` and `steps`). The height is calculated
@@ -964,15 +976,15 @@ class TEMController(object):
         """
         from skimage.feature import register_translation
 
-        def one_cycle(tilt: float=5, sign=1) -> list:
+        def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt*sign
             self.stage.a = angle1
             img1 = self.getRawImage()
-            
+
             angle2 = +tilt*sign
             self.stage.a = angle2
             img2 = self.getRawImage()
-            
+
             if sign < 1:
                 img2, img1 = img1, img2
 
@@ -1030,9 +1042,9 @@ class TEMController(object):
         
         self.to_dict('all') or self.to_dict() will return all properties
         """
-        
+
         ## Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
-        funcs = { 
+        funcs = {
             'FunctionMode': self.tem.getFunctionMode,
             'GunShift': self.gunshift.get,
             'GunTilt': self.guntilt.get,
@@ -1089,17 +1101,17 @@ class TEMController(object):
                 func = funcs[k]
             else:
                 continue
-            
+
             try:
                 func(*v)
             except TypeError:
                 func(v)
 
-    def getRawImage(self, exposure: float=0.5, binsize: int=1) -> np.ndarray:
+    def getRawImage(self, exposure: float = 0.5, binsize: int = 1) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the raw data array"""
         return self.cam.getImage(exposure=exposure, binsize=binsize)
 
-    def getImage(self, exposure: float=0.5, binsize: int=1, comment: str="", out: str=None, plot: bool=False, verbose: bool=False, header_keys: Tuple[str]="all") -> Tuple[np.ndarray, dict]:
+    def getImage(self, exposure: float = 0.5, binsize: int = 1, comment: str = "", out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = "all") -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera
 
         Parameters:
@@ -1134,13 +1146,13 @@ class TEMController(object):
 
         if self.autoblank and self.beamblank:
             self.beamblank = False
-        
+
         h["ImageGetTimeStart"] = time.perf_counter()
 
         arr = self.cam.getImage(exposure=exposure, binsize=binsize)
-        
+
         h["ImageGetTimeEnd"] = time.perf_counter()
-        
+
         if self.autoblank:
             self.beamblank = True
 
@@ -1165,7 +1177,7 @@ class TEMController(object):
 
         return arr, h
 
-    def store_diff_beam(self, name: str="beam", save_to_file: bool=False):
+    def store_diff_beam(self, name: str = "beam", save_to_file: bool = False):
         """Record alignment for current diffraction beam.
         Stores Guntilt (for dose control), diffraction focus, spot size, brightness,
         and the function mode.
@@ -1177,7 +1189,7 @@ class TEMController(object):
         keys = "FunctionMode", "Brightness", "GunTilt", "DiffFocus", "SpotSize"
         self.store(name=name, keys=keys, save_to_file=save_to_file)
 
-    def store(self, name: str="stash", keys: tuple=None, save_to_file: bool=False):
+    def store(self, name: str = "stash", keys: tuple = None, save_to_file: bool = False):
         """Stores current settings to dictionary.
         Multiple settings can be stored under different names.
         Specify which settings should be stored using `keys`"""
@@ -1193,7 +1205,7 @@ class TEMController(object):
             yaml.dump(d, stream=open(fn, "w"))
             print(f"Saved alignment to file `{fn}`")
 
-    def restore(self, name: str="stash"):
+    def restore(self, name: str = "stash"):
         """Restores alignment from dictionary by the given name."""
         d = self._saved_alignments[name]
         self.from_dict(d)
@@ -1228,7 +1240,7 @@ def main_entry():
     parser.add_argument("-u", "--simulate",
                         action="store_true", dest="simulate",
                         help="""Simulate microscope connection (default False)""")
-    
+
     parser.set_defaults(
         simulate=False,
         tem="simtem",
@@ -1245,7 +1257,7 @@ def main_entry():
 if __name__ == '__main__':
     from IPython import embed
     ctrl = initialize()
-    
+
     embed(banner1="\nAssuming direct control.\n")
 
     ctrl.close()

@@ -6,18 +6,18 @@ from collections import defaultdict
 
 
 # int
-INTEGER = ("Color",        "NumPts",       "Draw",         "Regis", 
-           "MapMontage",   "MapSection",   "MapBinning",   "MapMagInd", 
-           "MapCamera",    "ShutterMode",  "MapSpotSize", 
-           "MapSlitIn",    "ImageType",    "MontUseStage", 
+INTEGER = ("Color",        "NumPts",       "Draw",         "Regis",
+           "MapMontage",   "MapSection",   "MapBinning",   "MapMagInd",
+           "MapCamera",    "ShutterMode",  "MapSpotSize",
+           "MapSlitIn",    "ImageType",    "MontUseStage",
            "MapProbeMode", "MapLDConSet",  "Type",           "GroupID",
            "MapID",        "PieceOn",      "Acquire",        "DrawnID",
            "MontBinning",  "SamePosId",    "OrigReg" ,
            # mdoc
            "SpotSize",
-           "Binning",       "CameraIndex",  "DividedBy2",    "MagIndex", 
+           "Binning",       "CameraIndex",  "DividedBy2",    "MagIndex",
            "Magnification", "ProbeMode",    "MoveStage",
-           "Alpha",         "ImageSize",    "DataMode",      "Montage", 
+           "Alpha",         "ImageSize",    "DataMode",      "Montage",
            "ImageSeries",   "UsingCDS",     "LowDoseConSet", "NumSubFrames",
            # other
            "Corner",        "Imported",     "K2ReadMode",     "MapAlpha",
@@ -36,8 +36,8 @@ INTEGER = ("Color",        "NumPts",       "Draw",         "Regis",
           )
 
 # float
-FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",  
-         # .mdoc 
+FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",
+         # .mdoc
          "StageZ",            "PixelSpacing",  "Defocus",      "RotationAngle",
          "CountsPerElectron", "TargetDefocus", "TiltAngle",    "ExposureTime",
          "DriftSettling",     "Intensity",     "ExposureDose", "PriorRecordDose",
@@ -48,11 +48,11 @@ FLOAT = ("MapExposure",       "MapIntensity",  "MapTiltAngle", "MapSettling",
          "DE12-PreexposureTime(s)",
          "DE12-FaradayPlatePeakReading(pA/cm2)",
         )
-      
+
 # str
 STRING = ("MapFile",  "Note",
           # .mdoc
-          "DateTime",     "ImageFile",   "NavigatorLabel", 
+          "DateTime",     "ImageFile",   "NavigatorLabel",
           "SubFramePath", "ChannelName",
          )
 
@@ -64,8 +64,8 @@ FLOAT_LIST = ("StageXYZ",         "RawStageXY",      "MapScaleMat",       "XYinP
               "XedgeDxy",         "YedgeDxy",        "ImageShift",        "BufISXY",
               # other
               "BklshXY",          "FocusOffsets",    "LocalErrXY",        "NetViewShiftXY",
-              "RealignErrXY",     "ViewBeamShiftXY", "ViewBeamTiltXY", 
-              "SuperMontCoords",  "StageOffsets",    "FrameDosesAndNumbers", 
+              "RealignErrXY",     "ViewBeamShiftXY", "ViewBeamTiltXY",
+              "SuperMontCoords",  "StageOffsets",    "FrameDosesAndNumbers",
               "FilterSlitAndLoss",
               # external
               "CoordsInMap",      "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
@@ -74,12 +74,12 @@ FLOAT_LIST = ("StageXYZ",         "RawStageXY",      "MapScaleMat",       "XYinP
 # list, int
 INTEGER_LIST = ("MapWidthHeight",     "MapFramesXY",
                 # .mdoc
-                "PieceCoordinates",   "AlignedPieceCoordsVS", 
-                "AlignedPieceCoords", "MontBacklash", 
+                "PieceCoordinates",   "AlignedPieceCoordsVS",
+                "AlignedPieceCoords", "MontBacklash",
                 "ValidBacklash",      "CameraModes",   "FilterState",
                 "ConSetUsed",         "MultishotHoleAndPosition",
                 # other
-                "HoleArray",          "LDAxisAngle",   "SkipHoles", 
+                "HoleArray",          "LDAxisAngle",   "SkipHoles",
                 "SuperMontXY",
                )
 
@@ -98,18 +98,18 @@ class NavItem(object):
 
     TAG_ID_ITERATOR = 1
     # MAP_ID_ITERATOR = 1
-    
+
     def __init__(self, d: dict, tag: str):
         super().__init__()
         # if not "MapID" in d:
         #     d["MapID"] = NavItem.MAP_ID_ITERATOR
         #     NavItem.MAP_ID_ITERATOR += 1
-        
+
         self._keys = tuple(d.keys())
-        
+
         self.Acquire = 0
         self.__dict__.update(d)
-        
+
         if not tag:
             tag = f"Item-{NavItem.TAG_ID_ITERATOR}"
             NavItem.TAG_ID_ITERATOR += 1
@@ -174,19 +174,20 @@ class NavItem(object):
 
 class ClassName(object):
     """docstring for ClassName"""
+
     def __init__(self, arg):
         super(ClassName, self).__init__()
         self.arg = arg
-        
+
 
 class MapItem(NavItem):
     """Adds some extra methods for map items"""
-    
+
     GROUP_ID_ITERATOR = random.randint(1, 90000)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         self.markers = {}
 
     @property
@@ -219,23 +220,23 @@ class MapItem(NavItem):
 
         return np.dot(coords - cs, mat) + cp
 
-    def load_image(self, drc: str=None) -> "np.array":
+    def load_image(self, drc: str = None) -> "np.array":
         """Loads the image corresponding to this item"""
         import mrcfile
 
         if not drc:
             drc = "."
         drc = Path(drc)
-    
-        map_file = Path(self.MapFile)        
+
+        map_file = Path(self.MapFile)
         if not map_file.exists():
             map_file = drc / Path(self.MapFile).name
-    
+
         m = mrcfile.mmap(map_file)
         s = self.MapSection
         return np.array(m.data[s])
 
-    def plot_image(self, markers: bool=True) -> None:
+    def plot_image(self, markers: bool = True) -> None:
         """Plot the image including markers (optional)"""
         import matplotlib.pyplot as plt
 
@@ -329,7 +330,7 @@ class MapItem(NavItem):
         self.update_markers(*items)
 
 
-def block2dict(block: list, kind: str=None, sequence: int=-1) -> dict:
+def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
     dictionary"""
     patt_split = re.compile("\s?=\s?")
@@ -380,10 +381,10 @@ def block2nav(block: list, tag=None) -> "NavItem":
     else:
         ret = NavItem(d, tag=tag)
 
-    return ret 
+    return ret
 
 
-def read_nav_file(fn: str, acquire_only: bool=False) -> list:
+def read_nav_file(fn: str, acquire_only: bool = False) -> list:
     """
     Reads a SerialEM .nav file and returns a list of dictionaries
     containing nav item data.
@@ -407,7 +408,7 @@ def read_nav_file(fn: str, acquire_only: bool=False) -> list:
             continue
 
         m = re.match(patt_match, line)
-        
+
         if m:
             if block:
                 items.append(block2nav(block, tag=tag))
@@ -434,12 +435,12 @@ def read_nav_file(fn: str, acquire_only: bool=False) -> list:
     # associate markers with map items
     map_items = (item for item in items if item.kind == "Map")
     markers = (item for item in items if item.kind == "Marker")
-    
+
     d = defaultdict(list)
-    
+
     for marker in markers:
         d[marker.DrawnID].append(marker)
-    
+
     for map_item in map_items:
         markers = d[map_item.MapID]
         map_item.update_markers(*markers)
@@ -458,17 +459,17 @@ def write_nav_file(fn: str, *items, mode="w") -> None:
     """
     f = open(fn, mode) if fn else None
     version = "2.00"
-    
+
     if mode == "w":
         print(f"AdocVersion = {version}", file=f)
         print(f"LastSavedAs = {fn}", file=f)
         print("", file=f)
-    
+
     for item in items:
         print(item.to_string(), file=f)
 
 
-def read_mdoc_file(fn: str, only_kind: str=None) -> list:
+def read_mdoc_file(fn: str, only_kind: str = None) -> list:
     """
     Reads a SerialEM .mdoc file and returns a list of dictionaries
     containing supporting data.
@@ -499,7 +500,7 @@ def read_mdoc_file(fn: str, only_kind: str=None) -> list:
             continue
 
         m = re.match(patt_match, line)
-        
+
         if m:
             if block:
                 items.append(block2dict(block, kind=kind, sequence=sequence))
@@ -507,7 +508,7 @@ def read_mdoc_file(fn: str, only_kind: str=None) -> list:
             # prep for next block
             kind = m.groups()[0]
             sequence = int(m.groups()[1])
-            
+
             block = []
             capture = True
         elif capture:
@@ -516,7 +517,7 @@ def read_mdoc_file(fn: str, only_kind: str=None) -> list:
             print(line)
 
     items.append(block2dict(block, kind=kind, sequence=sequence))
-    
+
     if only_kind:
         only_kind = only_kind.lower()
         items = [item for item in items if item["kind"].lower() == only_kind]

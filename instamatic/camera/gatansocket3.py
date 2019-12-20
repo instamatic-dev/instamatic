@@ -87,12 +87,14 @@ MAX_DBL_ARGS = 8
 MAX_BOOL_ARGS = 8
 sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
+
 class Message(object):
 	"""
 	Information packet to send and receive on the socket.
 	Initialize with the sequences of args (longs, bools, doubles)
 	and optional long array.
 	"""
+
 	def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
 		# Strings are packaged as long array using np.frombuffer(buffer,np.int_)
 		# and can be converted back with longarray.tostring()
@@ -136,6 +138,7 @@ class Message(object):
 		"""
 		self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
+
 def log(message):
 	global debug_log
 	if debug_log is None:
@@ -144,6 +147,7 @@ def log(message):
 	line = '%f\t%s\n' % (time.time(), message)
 	f.write(line)
 	f.close()
+
 
 def logwrap(func):
 	"""Decorator for socket send and recv calls, so they can make log"""
@@ -157,6 +161,7 @@ def logwrap(func):
 		return result
 	return newfunc
 
+
 class GatanSocket(object):
 	def __init__(self, host='', port=None):
 		self.host = host
@@ -166,7 +171,7 @@ class GatanSocket(object):
 			self.port = os.environ['SERIALEMCCD_PORT']
 		else:
 			raise ValueError('Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
-		
+
 		self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
 		if self.debug:
 			print("host", repr(self.host))
@@ -177,7 +182,7 @@ class GatanSocket(object):
 		self.num_grab_sum = 0
 		self.connect()
 
-		self.script_functions = [ 
+		self.script_functions = [
 			('AFGetSlitState', 'GetEnergyFilter'),
 			('AFSetSlitState', 'SetEnergyFilter'),
 			('AFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -201,7 +206,7 @@ class GatanSocket(object):
 			hasScriptFunction = self.hasScriptFunction(name)
 			if self.hasScriptFunction(name):
 				self.filter_functions[method_name] = name
-			
+
 			if self.debug:
 				print(name, method_name, hasScriptFunction)
 		if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
@@ -393,7 +398,7 @@ class GatanSocket(object):
 		message_send = Message(longargs=(funcCode,cameraid))
 		message_recv = Message(longargs=(0,))
 		self.ExchangeMessages(message_send, message_recv)
-		
+
 	def UpdateK2HardwareDarkReference(self, cameraid):
 		function_name = 'K2_updateHardwareDarkReference'
 		return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
@@ -557,7 +562,7 @@ class GatanSocket(object):
 			return False
 		fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
 		fullcommand += "%s(camera);\n" % (function_name)
-		result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init) 
+		result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
 		return result
 
 	def ExecuteSendScript(self, command_line, select_camera=0):
@@ -596,7 +601,7 @@ class GatanSocket(object):
 		self.ExchangeMessages(message_send, message_recv)
 		return message_recv
 
-	def RunScript(self, fn: str, background: bool=False):
+	def RunScript(self, fn: str, background: bool = False):
 		"""
 		Run a DM script
 
@@ -629,6 +634,7 @@ def test1():
 	g.ExecuteScript(s)
 
 	breakpoint(); exit()
+
 
 if __name__ == '__main__':
 	test1()

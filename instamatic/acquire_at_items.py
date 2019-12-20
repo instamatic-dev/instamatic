@@ -24,14 +24,15 @@ class AcquireAtItems(object):
     aai: `AcquireatItems`
         Returns instance of AcquireAtItems, run `aai.start()` to begin.
     """
+
     def __init__(self, ctrl,
-                       nav_items: list, 
-                       acquire=None, 
-                       pre_acquire=None, 
-                       post_acquire=None, 
-                       backlash: bool=True):
+                 nav_items: list,
+                 acquire=None,
+                 pre_acquire=None,
+                 post_acquire=None,
+                 backlash: bool = True):
         super(AcquireAtItems, self).__init__()
-        
+
         self.nav_items = nav_items
         self.ctrl = ctrl
 
@@ -105,13 +106,13 @@ class AcquireAtItems(object):
         t0 = t_last = time.perf_counter()
         eta = 0
         last_interval = interval = 1
-        
+
         for i, item in enumerate(nav_items):
             ctrl.current_item = item
             ctrl.current_i = i
-        
+
             print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
-            
+
             self.move_to_item(item)
 
             try:
@@ -124,9 +125,9 @@ class AcquireAtItems(object):
             t = time.perf_counter()
             interval = t - t_last
             last_interval = interval = (interval * 0.20) + (last_interval * 0.80)
-            eta = ((ntot-i)*interval) / 60 # min
+            eta = ((ntot - i) * interval) / 60  # min
             t_last = t
-        
+
             # Stop/interrupt acquisition
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode()
@@ -138,7 +139,7 @@ class AcquireAtItems(object):
 
         self.post_acquire(ctrl)
 
-        dt = t1-t0
-        n_items = i+1
+        dt = t1 - t0
+        n_items = i + 1
         print(f"Total time taken: {dt:.0f} s for {n_items} items ({dt/n_items:.2f} s/item)")
         print("\nAll done!")

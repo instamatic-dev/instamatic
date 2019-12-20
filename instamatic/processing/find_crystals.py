@@ -64,7 +64,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
 
     # normalize
     img = img * (1.0/img.max())
-    
+
     # adaptive thresholding, because contrast is not equal over image
     arr = img > filters.threshold_local(img, r, method="mean", offset=offset)
     arr = np.invert(arr)
@@ -75,13 +75,13 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     # magic
     arr = morphology.binary_closing(arr, morphology.disk(footprint)) # dilation + erosion
     arr = morphology.binary_erosion(arr, morphology.disk(footprint)) # erosion
-    
+
     # remove carbon lines
     if remove_carbon_lacing:
         arr = morphology.remove_small_objects(arr, min_size=8*8, connectivity=0)
         arr = morphology.remove_small_holes(arr, min_size=32*32, connectivity=0)
     arr = morphology.binary_dilation(arr, morphology.disk(footprint)) # dilation
-    
+
     # get background pixels
     bkg = np.invert(morphology.binary_dilation(arr, morphology.disk(footprint*2)) | arr)
 
@@ -89,7 +89,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     # 1: background
     # 0: unlabeled
     markers = arr*2 + bkg
-    
+
     # segment using random_walker
     segmented = segmentation.random_walker(img, markers, beta=50, spacing=(5,5), mode='bf')
     segmented = segmented.astype(int) -1
@@ -104,15 +104,15 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     # 'offset' determines sensitivity of thresholding
     #   higher = less sensitive to noise
     #   lower = more sensitive to noise
-    offset = kwargs.get("offset", 15) 
+    offset = kwargs.get("offset", 15)
     footprint = kwargs.get("footprint", 3)
-    
-    return find_crystals(img=img, 
-                         magnification=magnification, 
-                         spread=spread, 
-                         plot=plot, 
-                         footprint=footprint, 
-                         offset=offset, 
+
+    return find_crystals(img=img,
+                         magnification=magnification,
+                         spread=spread,
+                         plot=plot,
+                         footprint=footprint,
+                         offset=offset,
                          r=r,
                          remove_carbon_lacing=False)
 
@@ -135,37 +135,37 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
     keywords to pass to segment_crystals
     """
     img, scale = autoscale(img, maxdim=256)  # scale down for faster
-    
+
     # segment the image, and find objects
     arr, seg = segment_crystals(img, **kwargs)
-    
+
     labels, numlabels = ndimage.label(seg)
     props = measure.regionprops(labels, img)
-    
+
     # calculate the pixel dimensions in micrometer
     px, py = calibration.pixelsize_mag1[magnification] / 1000  # nm -> um
-    
+
     iters = 20
-    
+
     crystals = []
     for prop in props:
         area = prop.area*px*py
         bbox = np.array(prop.bbox)
-        
+
         # origin of the prop
         origin = bbox[0:2]
-        
+
         # edge detection
         if isedge(prop):
             continue
 
         # number of centroids for kmeans clustering
         nclust = int(area // spread) + 1
-            
+
         if nclust > 1:
             # use skmeans clustering to segment large blobs
             coordinates = np.argwhere(prop.image)
-            
+
             # kmeans needs normalized data (w), store std to calculate coordinates after
             w, std = whiten(coordinates)
 
@@ -178,7 +178,7 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
         else:
             x, y = prop.centroid
             crystals.append(CrystalPosition(x/scale, y/scale, True, nclust, area, prop.area))
-    
+
     if plot:
         plt.imshow(img)
         plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
@@ -199,9 +199,9 @@ def main_entry():
 
     for fn in sys.argv[1:]:
         img, h = read_image(fn)
-        
+
         crystals = find_crystals_timepix(img, h["exp_magnification"], plot=True)
-    
+
         for crystal in crystals:
             print(crystal)
 

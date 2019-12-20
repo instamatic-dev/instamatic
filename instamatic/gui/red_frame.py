@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 from instamatic.utils.spinbox import Spinbox
@@ -5,6 +6,7 @@ from instamatic.utils.spinbox import Spinbox
 
 class ExperimentalRED(LabelFrame):
     """docstring for ExperimentalRED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Rotation electron diffraction")
         self.parent = parent
@@ -17,7 +19,7 @@ class ExperimentalRED(LabelFrame):
         Label(frame, text="Exposure time (s):").grid(row=4, column=0, sticky="W")
         self.e_exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.1, to=9999, increment=0.1)
         self.e_exposure_time.grid(row=4, column=1, sticky="W", padx=10)
-        
+
         Label(frame, text="Tilt range (deg):").grid(row=5, column=0, sticky="W")
         self.e_tilt_range = Spinbox(frame, textvariable=self.var_tilt_range, width=sbwidth, from_=0.1, to=9999, increment=0.5)
         self.e_tilt_range.grid(row=5, column=1, sticky="W", padx=10)
@@ -63,7 +65,6 @@ class ExperimentalRED(LabelFrame):
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
 
-
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -94,8 +95,8 @@ class ExperimentalRED(LabelFrame):
         self.triggerEvent.set()
 
     def get_params(self, task=None):
-        params = { "exposure_time": self.var_exposure_time.get(), 
-                   "tilt_range": self.var_tilt_range.get(), 
+        params = { "exposure_time": self.var_exposure_time.get(),
+                   "tilt_range": self.var_tilt_range.get(),
                    "stepsize": self.var_stepsize.get(),
                    "task": task }
         return params
@@ -116,7 +117,7 @@ def acquire_data_RED(controller, **kwargs):
 
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
-    
+
         controller.red_exp = RED.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
                            flatfield=flatfield)
         controller.red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
@@ -127,7 +128,6 @@ def acquire_data_RED(controller, **kwargs):
         del controller.red_exp
 
 
-from .base_module import BaseModule
 module = BaseModule("red", "RED", True, ExperimentalRED, commands={
     "red": acquire_data_RED
     })

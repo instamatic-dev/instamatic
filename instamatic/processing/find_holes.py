@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from instamatic.tools import *
+from instamatic.config import calibration
 import os
 import sys
 
@@ -18,9 +20,6 @@ from skimage import measure
 import json
 
 plt.rcParams['image.cmap'] = 'gray'
-
-from instamatic.config import calibration
-from instamatic.tools import *
 
 
 def plot_features(img, segmented):
@@ -88,18 +87,18 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
     """Get markers using simple thresholds"""
     background = 1
     features = 2
-    
+
     markers = np.zeros_like(img)
     if verbose:
         print("\nbounds:", lower, upper)
 
     if dark_on_bright:
         markers[img < lower] = features
-        markers[img > upper] = background  
+        markers[img > upper] = background
     else:
         markers[img < lower] = background
         markers[img > upper] = features
-    
+
     if verbose:
         print(f"\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}")
         print(f"background {1.0*np.sum(markers == background) / markers.size:6.2%}")
@@ -158,7 +157,7 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     if verbose:
         print(f"img range: {img.min()} - {img.max()}")
         print(f"otsu: {otsu:.0f} ({l:.0f} - {i:.0f})")
-    
+
     markers = get_markers_bounds(img, lower=l, upper=u, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
 
@@ -178,13 +177,13 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
         if prop.eccentricity > max_eccentricity:
             continue
         # FIXME .convex_area crashes here with skimage-0.12.3, use .area instead
-        if prop.area < area*0.75:  
+        if prop.area < area*0.75:
             continue
 
         newprops.append(prop)
-    
+
     print(f" >> {len(newprops)} holes found in {numlabels} objects.")
-    
+
     if plot:
         plot_props(img, newprops)
     if fname:
@@ -200,7 +199,7 @@ def find_holes_entry():
         img, h = read_image(fn)
 
         img_zoomed, scale = autoscale(img, maxdim=512)
-        
+
         binsize = h["ImageBinSize"]
         magnification = h["Magnification"]
         d = 150

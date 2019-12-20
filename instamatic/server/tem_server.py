@@ -29,6 +29,7 @@ class TemServer(threading.Thread):
     Start the server using `TemServer.run` which will wait for items to appear on `q` and
     execute them on the specified microscope instance.
     """
+
     def __init__(self, log=None, q=None, name=None):
         super().__init__()
 
@@ -37,7 +38,7 @@ class TemServer(threading.Thread):
 
         # self.name is a reserved parameter for threads
         self._name = name
-    
+
     def run(self):
         """Start the server thread"""
         self.tem = Microscope(name=self._name, use_server=False)
@@ -45,14 +46,14 @@ class TemServer(threading.Thread):
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-            
+
             cmd = self.q.get()
 
             with condition:
                 func_name = cmd["func_name"]
                 args = cmd.get("args", ())
                 kwargs = cmd.get("kwargs", {})
-    
+
                 try:
                     ret = self.evaluate(func_name, args, kwargs)
                     status = 200
@@ -62,7 +63,7 @@ class TemServer(threading.Thread):
                         self.log.exception(e)
                     ret = e
                     status = 500
-    
+
                 box.append((status, ret))
                 condition.notify()
                 print(f"{now} | {status} {func_name}: {ret}")
@@ -93,7 +94,7 @@ def handle(conn, q):
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
-    
+
             with condition:
                 q.put(data)
                 condition.wait()
@@ -120,17 +121,17 @@ def main():
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_TEMServer_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
     q = queue.Queue(maxsize=100)
-    
+
     tem_reader = TemServer(name=microscope, log=log, q=q)
     tem_reader.start()
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))
     s.listen(5)
@@ -145,6 +146,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn, q)).start()
 
-    
+
 if __name__ == '__main__':
     main()

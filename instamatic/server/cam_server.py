@@ -31,15 +31,16 @@ class CamServer(threading.Thread):
     Start the server using `CamServer.run` which will wait for items to appear on `q` and
     execute them on the specified camera instance.
     """
+
     def __init__(self, log=None, q=None, name=None):
         super().__init__()
 
         self.log = log
         self.q = q
-    
+
         # self.name is a reserved parameter for threads
         self._name = name
-    
+
     def run(self):
         """Start server thread"""
         self.cam = Camera(name=self._name, use_server=False)
@@ -49,7 +50,7 @@ class CamServer(threading.Thread):
 
         while True:
             now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-            
+
             cmd = self.q.get()
 
             with condition:
@@ -90,8 +91,9 @@ class CamServer(threading.Thread):
             obj = getattr(self.cam, item)
             if not callable(obj):
                 attrs[item] = type(obj)
-        
+
         return attrs
+
 
 def handle(conn, q):
     """Handle incoming connection, put command on the Queue `q`,
@@ -111,7 +113,7 @@ def handle(conn, q):
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
-    
+
             with condition:
                 q.put(data)
                 condition.wait()
@@ -133,17 +135,17 @@ def main():
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_CAMServer_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
     q = queue.Queue(maxsize=100)
-    
+
     cam_reader = CamServer(name=camera, log=log, q=q)
     cam_reader.start()
-    
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST,PORT))
     s.listen(5)
@@ -158,6 +160,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn, q)).start()
 
-    
+
 if __name__ == '__main__':
     main()

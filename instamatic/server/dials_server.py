@@ -40,7 +40,7 @@ def run_dials_indexing(data):
     fn = config.logs_drc / f"Dials_indexing_{date}.log"
     unitcelloutput = []
 
-    p = sp.Popen(cmd, cwd=CWD, stdout = sp.PIPE)
+    p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
     for line in p.stdout:
         if b'Unit cell:' in line:
             print(line.decode('utf-8'))
@@ -54,7 +54,7 @@ def run_dials_indexing(data):
             f.write(f"Number of frames: {nframes}\n")
             f.write(f"Oscillation angle: {osc} deg\n\n\n\n")
             print(f"Indexing result written to dials indexing log file; path: {path}")
-    
+
     p.wait()
     unitcelloutput = []
     now = datetime.datetime.now().strftime("%H:%M:%S.%f")
@@ -72,7 +72,7 @@ def handle(conn):
 
         if not data:
             break
-    
+
         print(f"{now} | {data}")
         if data == "close":
             print(f"{now} | Closing connection")
@@ -97,8 +97,8 @@ def handle(conn):
 def main():
     date = datetime.datetime.now().strftime("%Y-%m-%d")
     logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s", 
-                        filename=logfile, 
+    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+                        filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
@@ -119,6 +119,6 @@ def main():
             print('Connected by', addr)
             threading.Thread(target=handle, args=(conn,)).start()
 
-    
+
 if __name__ == '__main__':
     main()

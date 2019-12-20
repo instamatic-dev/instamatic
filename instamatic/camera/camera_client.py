@@ -35,9 +35,10 @@ class CamClient(object):
     Simulates a Camera object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the camera API.
     """
+
     def __init__(self, name):
         super().__init__()
-        
+
         self.name = name
         self.bufsize = BUFSIZE
         self.streamable = False  # overrides cam settings
@@ -67,7 +68,7 @@ class CamClient(object):
         xres, yres = self.getDimensions()
         bitdepth = 4
         self.imagebufsize = bitdepth*xres*yres + self.bufsize
-    
+
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))

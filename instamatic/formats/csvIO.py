@@ -24,8 +24,10 @@ def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
     """
     if isinstance(f, str):
         f = open(f, "w")
+
     class OrderedDumper(Dumper):
         pass
+
     def _dict_representer(dumper, obj):
         return dumper.represent_mapping(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
@@ -43,8 +45,10 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     """
     if isinstance(f, str):
         f = open(f, "r")
+
     class OrderedLoader(Loader):
         pass
+
     def construct_mapping(loader, node):
         loader.flatten_mapping(node)
         return object_pairs_hook(loader.construct_pairs(node))
@@ -80,16 +84,16 @@ def read_ycsv(f):
         ---
         $CSV_BLOCK
     """
-    
+
     if isinstance(f, str):
         f = open(f, "r")
-    
+
     first_line = f.tell()
-    
+
     in_yaml_block = False
-    
+
     yaml_block = []
-    
+
     for line in f:
         if line.strip() == "---":
             if not in_yaml_block:
@@ -98,13 +102,13 @@ def read_ycsv(f):
                 in_yaml_block = False
                 break
             continue
-                
+
         if in_yaml_block:
             yaml_block.append(line)
-    
+
     # white space is important when reading yaml
     d = yaml_ordered_load(io.StringIO("".join(yaml_block)))
-    
+
     # workaround to fix pandas crash when it is not at the first line for some reason
     f.seek(first_line)
     header = len(yaml_block) + 2
@@ -112,9 +116,9 @@ def read_ycsv(f):
         df = pd.DataFrame.from_csv(f, header=header)
     except pd.io.common.EmptyDataError:
         df = None
-        
+
     # print "".join(yaml_block)
-    
+
     return df, d
 
 
@@ -129,12 +133,12 @@ def write_ycsv(f, data, metadata):
         ---
         $CSV_BLOCK
     """
-    
+
     if isinstance(f, str):
         f = open(f, "w")
-        
+
     f.write("---\n")
     yaml_ordered_dump(metadata, f, default_flow_style=False)
-    
+
     f.write("---\n")
     write_csv(f, data)

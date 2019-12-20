@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys
+import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 class CalibStage(object):
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
+
     def __init__(self, rotation, camera_dimensions, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
         super(CalibStage, self).__init__()
         self.has_data = False
@@ -27,7 +29,7 @@ class CalibStage(object):
         self.translation = translation
         self.reference_position = reference_position
         self.center_pixel = np.array(camera_dimensions) / 2.0
-   
+
     def __repr__(self):
         return f"CalibStage(rotation=\n{self.rotation},\n translation=\n{self.translation},\n reference_position=\n{self.reference_position})"
 
@@ -48,18 +50,18 @@ class CalibStage(object):
         image_pos = np.array(image_pos)
         reference_pos = np.array(reference_pos)
         px_ref = np.array(px_ref)
-        
+
         # do the inverse transoformation here
         r_i = np.linalg.inv(r)
-        
+
         # get stagepos vector from reference image (center) to current image
         vect = image_pos - reference_pos
-        
+
         # px_ref -> pixel coords, and add offset for pixel position
         px = px_ref - np.dot(vect - t, r_i)
-    
+
         return px
-     
+
     def _pixelcoord_to_reference_setting(self, px, image_pos, r, t, reference_pos):
         """
         Function to transform pixel coordinates to pixel coordinates in reference setting
@@ -76,16 +78,16 @@ class CalibStage(object):
         image_pos = np.array(image_pos)
         reference_pos = np.array(reference_pos)
         px = np.array(px)
-        
+
         # do the inverse transoformation here
         r_i = np.linalg.inv(r)
-        
+
         # get stagepos vector from reference image (center) to current image
         vect = image_pos - reference_pos
-        
+
         # stagepos -> pixel coords, and add offset for pixel position
         px_ref = np.dot(vect - t, r_i) + np.array(px)
-    
+
         return px_ref
 
     def _pixelcoord_to_stagepos(self, px, image_pos, r, t, reference_pos):
@@ -102,11 +104,11 @@ class CalibStage(object):
             stage position of the reference (center) image
         """
         reference_pos = np.array(reference_pos)
-        
+
         px_ref = self._pixelcoord_to_reference_setting(px, image_pos, r, t, reference_pos)
-    
+
         stagepos = np.dot(px_ref - self.center_pixel, r) + t + reference_pos
-        
+
         return stagepos
 
     def _stagepos_to_pixelcoord(self, stagepos, image_pos, r, t, reference_pos):
@@ -125,7 +127,7 @@ class CalibStage(object):
         stagepos = np.array(stagepos)
         image_pos = np.array(image_pos)
         reference_pos = np.array(reference_pos)
-        
+
         # do the inverse transoformation here
         r_i = np.linalg.inv(r)
 
@@ -208,7 +210,7 @@ class CalibStage(object):
 
         plt.scatter(*shifts.T, label="Observed pixel shifts")
         plt.scatter(*stagepos_.T, label="Positions in pixel coords")
-        
+
         for i, (x,y) in enumerate(shifts):
             plt.text(x+5, y+5, str(i), size=14)
 
@@ -245,12 +247,12 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
     xy_cent = np.array([x_cent, y_cent])
-    
+
     img_cent, scale = autoscale(img_cent)
 
     stagepos = []
     shifts = []
-    
+
     n = int((gridsize - 1) / 2) # number of points = n*(n+1)
     x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
     tot = gridsize*gridsize
@@ -259,25 +261,25 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     for dx,dy in np.stack([x_grid, y_grid]).reshape(2,-1).T:
         print()
         print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
-        
+
         ctrl.stage.set(x=x_cent+dx, y=y_cent+dy)
         print(ctrl.stage)
-        
+
         outfile = f"calib_{i:04d}" if save_images else None
 
         comment = comment
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="StagePosition")
-        
+
         img = imgscale(img, scale)
 
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         xobs, yobs, _, _, _ = h["StagePosition"]
         stagepos.append((xobs, yobs))
         shifts.append(shift)
-        
+
         i += 1
-    
+
     print(" >> Reset to center")
     ctrl.stage.set(x=x_cent, y=y_cent)
     ctrl.stage.reset_xy()
@@ -286,17 +288,17 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - np.array((x_cent, y_cent))
 
-    m = gridsize**2 // 2 
+    m = gridsize**2 // 2
     if gridsize % 2 and stagepos[m].max() > 50:
         print(f" >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.")
         print("    Difference:", stagepos[m])
         print()
-    
+
     if save_images:
         ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
-    
+
     # Calling c.plot with videostream crashes program
     if not hasattr(ctrl.cam, "VideoLoop"):
         c.plot(key)
@@ -317,7 +319,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         instance of Calibration class with conversion methods
     """
     img_cent, h_cent = load_img(center_fn)
-    
+
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
     x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
@@ -330,7 +332,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
     shifts = []
     stagepos = []
-    
+
     # gridsize = 5
     # stepsize = 50000
     # n = (gridsize - 1) / 2 # number of points = n*(n+1)
@@ -341,14 +343,14 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         img, h = load_img(fn)
 
         img = imgscale(img, scale)
-        
+
         xobs, yobs, _, _, _ = h["StagePosition"]
         print("Image:", fn)
         print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
         print()
-        
+
         shift = register_translation(img_cent, img, upsample_factor=10)
-        
+
         stagepos.append((xobs, yobs))
         shifts.append(shift)
 

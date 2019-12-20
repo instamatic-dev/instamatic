@@ -6,6 +6,7 @@ from .montage import *
 
 class GridMontage(object):
     """Set up an automated montage map"""
+
     def __init__(self, ctrl):
         super().__init__()
         self.ctrl = ctrl
@@ -23,11 +24,11 @@ class GridMontage(object):
         }
         return gridspec
 
-    def setup(self, 
-              nx: int, ny: int, 
-              overlap: float=0.1, 
-              stage_shift: tuple=(0.0, 0.0), 
-              binning: int=None) -> "np.array":
+    def setup(self,
+              nx: int, ny: int,
+              overlap: float = 0.1,
+              stage_shift: tuple = (0.0, 0.0),
+              binning: int = None) -> "np.array":
         """Set up the experiment, run `GridMontage.start` to acquire data.
         
         Parameters
@@ -89,7 +90,7 @@ class GridMontage(object):
         print("  Spot size:", self.spotsize)
 
         # return coords
-    
+
     def start(self):
         """Start the experiment."""
         ctrl = self.ctrl
@@ -107,9 +108,9 @@ class GridMontage(object):
         def post_acquire(ctrl):
             print("Post-acquire: done!")
 
-        self.ctrl.acquire_at_items(self.stagecoords, 
-                                   acquire=acquire, 
-                                   pre_acquire=pre_acquire, 
+        self.ctrl.acquire_at_items(self.stagecoords,
+                                   acquire=acquire,
+                                   pre_acquire=pre_acquire,
                                    post_acquire=post_acquire)
 
         self.stagematrix = self.ctrl.get_stagematrix()
@@ -127,7 +128,7 @@ class GridMontage(object):
         m.stagematrix = self.stagematrix
         return m
 
-    def save(self, drc: str=None):
+    def save(self, drc: str = None):
         """Save the data to the given directory, 
         defaults to the instamatic data directory defined in the config
         """
@@ -158,6 +159,7 @@ class GridMontage(object):
         import yaml
         yaml.dump(d, stream=open(drc / "montage.yaml", "w"))
         print(f" >> Wrote {len(self.stagecoords)} montage images to {drc}")
+
 
 if __name__ == '__main__':
     from instamatic import TEMController

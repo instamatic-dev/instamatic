@@ -18,10 +18,12 @@ def conv_layer(in_layer, weight, offset):
     convoluted_reshaped += offset
 
     return convoluted_reshaped
-    
+
+
 def relu(convoluted):
     convoluted[convoluted<0] = 0
     return convoluted
+
 
 def max_pooling(convoluted):
     pooled = np.ones((convoluted.shape[0]//2, convoluted.shape[1]//2, convoluted.shape[2]))
@@ -30,8 +32,10 @@ def max_pooling(convoluted):
             pooled[n, p] = np.amax(convoluted[n*2:n*2+2, p*2:p*2+2], axis=(0, 1))
     return pooled
 
+
 def logistic(x):
     return 1/(1+np.exp(-x))
+
 
 def predict(image, weights=weights):
     convoluted1 = relu(conv_layer(image, weights[0], weights[1]))

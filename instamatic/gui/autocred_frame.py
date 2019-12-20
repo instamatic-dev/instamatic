@@ -1,3 +1,4 @@
+from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
 import threading
@@ -12,8 +13,10 @@ import matplotlib.pyplot as plt
 from instamatic import config
 import datetime
 
+
 class ExperimentalautocRED(LabelFrame):
     """docstring for ExperimentalautocRED"""
+
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial Rotation Electron Diffraction (SerialRED)")
         self.parent = parent
@@ -28,9 +31,9 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="Exposure time:").grid(row=1, column=0, sticky="W")
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
         self.exposure_time.grid(row=1, column=1, sticky="W", padx=10)
-        
+
         Checkbutton(frame, text="Beam unblanker", variable=self.var_unblank_beam).grid(row=1, column=2, sticky="W")
-        
+
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky="ew", pady=10)
 
         Checkbutton(frame, text="Enable image interval", variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky="W")
@@ -44,11 +47,11 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100)
         self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
-        
+
         Label(frame, text="Exposure (image):").grid(row=7, column=0, sticky="W")
         self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=10, from_=0.0, to=100.0, increment=0.01)
         self.e_image_exposure.grid(row=7, column=1, sticky="W", padx=10)
-        
+
         Label(frame, text="Scan Area (um):").grid(row=8, column=0, sticky="W")
         self.scan_area = Entry(frame, textvariable=self.var_scan_area)
         self.scan_area.grid(row=8, column=1, sticky="W", padx=10)
@@ -80,42 +83,42 @@ class ExperimentalautocRED(LabelFrame):
         Label(frame, text="expected rot speed").grid(row=16, column=2, sticky="W")
         self.rot_speed = Entry(frame, textvariable=self.var_rotspeed)
         self.rot_speed.grid(row=16, column=2, sticky="E", padx=10)
-        
+
         self.acred_status = Checkbutton(frame, text="Enable Auto Tracking", variable=self.var_enable_autotrack, command=self.autotrack)
         self.acred_status.grid(row=7, column=2, sticky="W")
-        
-        self.fullacred_status = Checkbutton(frame, text = "Enable Full AutocRED Feature", variable = self.var_enable_fullacred, command=self.fullacred)
+
+        self.fullacred_status = Checkbutton(frame, text="Enable Full AutocRED Feature", variable=self.var_enable_fullacred, command=self.fullacred)
         self.fullacred_status.grid(row=8, column=2, sticky="W")
-        
-        self.fullacred_crystalFinder_status = Checkbutton(frame, text = "Enable Full AutocRED + crystal finder Feature", variable = self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
+
+        self.fullacred_crystalFinder_status = Checkbutton(frame, text="Enable Full AutocRED + crystal finder Feature", variable=self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
         self.fullacred_crystalFinder_status.grid(row=9, column=2, sticky="W")
 
-        self.zheight = Checkbutton(frame, text = "Enable auto z height adjustment", variable = self.var_zheight)
+        self.zheight = Checkbutton(frame, text="Enable auto z height adjustment", variable=self.var_zheight)
         self.zheight.grid(row=10, column=2, sticky="W")
 
-        self.auto_center_SMV = Checkbutton(frame, text = "Enable auto center of SMV files", variable = self.var_autoc)
+        self.auto_center_SMV = Checkbutton(frame, text="Enable auto center of SMV files", variable=self.var_autoc)
         self.auto_center_SMV.grid(row=11, column=2, sticky="W")
 
         frame.grid_columnconfigure(1, weight=1)
         frame.pack(side="top", fill="x", expand=False, padx=10, pady=10)
 
         frame = Frame(self)
-        
+
         self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky="EW")
 
         self.CollectionStopButton = Button(frame, text="Stop Collection", command=self.stop_collection, state=DISABLED)
         self.CollectionStopButton.grid(row=1, column=1, sticky="EW")
-        
+
         self.ShowCalibBeamshift = Button(frame, text="Stop Rotation", command=self.stop_collection_acred, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=3, column=0, sticky="EW")
 
         self.ShowCalibBeamshift = Button(frame, text="Show calib_beamshift", command=self.show_calib_beamshift, state=NORMAL)
         self.ShowCalibBeamshift.grid(row=2, column=1, sticky="EW")
 
-        self.acquireTEMStatusButton = Button(frame, text = "Show calib_is", command = self.show_calib_is, state=NORMAL)
-        self.acquireTEMStatusButton.grid(row=2, column = 0, sticky = "EW")
-        
+        self.acquireTEMStatusButton = Button(frame, text="Show calib_is", command=self.show_calib_is, state=NORMAL)
+        self.acquireTEMStatusButton.grid(row=2, column=0, sticky="EW")
+
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.pack(side="bottom", fill="x", padx=10, pady=10)
@@ -131,7 +134,7 @@ class ExperimentalautocRED(LabelFrame):
         self.var_enable_image_interval = BooleanVar(value=True)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_exposure_time_image = DoubleVar(value=0.01)
-        
+
         self.var_enable_autotrack = BooleanVar(value=True)
         self.var_enable_fullacred = BooleanVar(value=True)
         self.var_enable_fullacred_crystalFinder = BooleanVar(value=True)
@@ -139,12 +142,12 @@ class ExperimentalautocRED(LabelFrame):
         self.var_activ_thr = DoubleVar(value=0.1)
         self.var_spread = DoubleVar(value=2.0)
         self.var_offset = DoubleVar(value=15.0)
-        self.var_zheight = BooleanVar(value = False)
-        self.var_autoc = BooleanVar(value = True)
+        self.var_zheight = BooleanVar(value=False)
+        self.var_autoc = BooleanVar(value=True)
         self.var_rotrange = IntVar(value=70)
         self.var_backlash = DoubleVar(value=1.0)
         self.var_rotspeed = DoubleVar(value=0.86)
-        
+
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -172,7 +175,7 @@ class ExperimentalautocRED(LabelFrame):
         #self.lb_coll1.config(text="")
         #self.lb_coll2.config(text="")
 
-    def stop_collection_acred(self, event = None):
+    def stop_collection_acred(self, event=None):
         self.stopEvent.set()
 
     def get_params(self):
@@ -216,15 +219,15 @@ class ExperimentalautocRED(LabelFrame):
             self.fullacred_status.config(state=DISABLED)
             self.fullacred_crystalFinder_status.config(state=DISABLED)
             self.e_image_exposure.config(state=DISABLED)
-            
+
     def autotrack(self):
         enable = self.var_enable_autotrack.get()
         if enable:
             self.e_image_interval.config(state=NORMAL)
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
-        # Focused beam, CC, Calibration for beam shift        
-        
+        # Focused beam, CC, Calibration for beam shift
+
     def fullacred(self):
         enable = self.var_enable_fullacred.get()
         if enable:
@@ -232,7 +235,7 @@ class ExperimentalautocRED(LabelFrame):
             self.e_diff_defocus.config(state=NORMAL)
             self.c_toggle_defocus.config(state=NORMAL)
             self.acred_status.config(state=NORMAL)
-            
+
     def fullacred_crystalFinder(self):
         enable = self.var_enable_fullacred.get()
         if enable:
@@ -247,7 +250,7 @@ class ExperimentalautocRED(LabelFrame):
 
         self.q.put(("toggle_difffocus", {"value": difffocus, "toggle": toggle} ))
         self.triggerEvent.set()
-    
+
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
         path = self.calib_path / CALIB_BEAMSHIFT
@@ -258,7 +261,7 @@ class ExperimentalautocRED(LabelFrame):
             print(e)
         else:
             c.plot()
-            
+
     def show_calib_is(self):
         idx = input("""Indicate which calibration you want to plot:
         1. IS1 defocused
@@ -269,9 +272,9 @@ class ExperimentalautocRED(LabelFrame):
         6. Beamshift for DP defocused
         Only input a number and press ENTER>>""")
         idx = int(idx)
-        
+
         FLIST = dict([(1, CALIB_IS1_DEFOC), (2, CALIB_IS1_FOC), (3, CALIB_IS2_DEFOC), (4, CALIB_IS2_FOC),(5, CALIB_BEAMSHIFT_DP),(6, CALIB_BEAMSHIFT_DP_DEFOC)])
-        
+
         path = self.calib_path_is / FLIST[idx]
         print(path)
         try:
@@ -280,11 +283,12 @@ class ExperimentalautocRED(LabelFrame):
         except IOError as e:
             print(e)
         else:
-            plt.scatter(*c[1].T, marker = ">", label = "Observed pixel shifts")
-            plt.scatter(*c[0].T, marker = "<", label = "Positions in pixel coords")
+            plt.scatter(*c[1].T, marker=">", label="Observed pixel shifts")
+            plt.scatter(*c[0].T, marker="<", label="Positions in pixel coords")
             plt.legend()
             plt.title("calibration map")
             plt.show()
+
 
 def toggle_difffocus(controller, **kwargs):
     toggle = kwargs["toggle"]
@@ -302,11 +306,12 @@ def toggle_difffocus(controller, **kwargs):
         value = controller._difffocus_proper
 
     controller.ctrl.difffocus.set(value=value)
-        
+
+
 def acquire_data_autocRED(controller, **kwargs):
     controller.log.info("Starting automatic cRED experiment")
     from instamatic.experiments import autocRED
-    
+
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
 
@@ -334,16 +339,15 @@ def acquire_data_autocRED(controller, **kwargs):
         pass
 
     #controller.stream.get_module("sed").calib_path = expdir / "calib"
-    
+
     cexp = autocRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
     cexp.start_collection()
-    
+
     stop_event.clear()
     stop_event_experiment.clear()
     controller.log.info("Finish autocRED experiment")
-    
 
-from .base_module import BaseModule
+
 module = BaseModule("autocred", "autocRED", True, ExperimentalautocRED, commands={
     "autocred": acquire_data_autocRED})
 

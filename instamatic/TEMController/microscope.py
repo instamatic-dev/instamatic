@@ -27,7 +27,7 @@ def get_tem(name: str):
     return cls
 
 
-def Microscope(name: str=None, use_server: bool=False):
+def Microscope(name: str = None, use_server: bool = False):
     """Generic class to load microscope interface class
 
     name: str

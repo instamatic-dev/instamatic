@@ -20,10 +20,11 @@ def volume(cell):
 
 class xds_parser(object):
     """docstring for xds_parser"""
+
     def __init__(self, filename):
         super(xds_parser, self).__init__()
         self.ios_threshold = 0.8
-        
+
         self.filename = Path(filename).resolve()
         self.d = self.parse()
 
@@ -31,14 +32,14 @@ class xds_parser(object):
         ios_threshold = self.ios_threshold
 
         fn = self.filename
-    
+
         f = open(fn, "r")
-    
+
         in_block = False
         block = []
-    
+
         d = {}
-    
+
         for line in f:
             if line.startswith(" SUBSET OF INTENSITY DATA WITH SIGNAL/NOISE >= -3.0 AS FUNCTION OF RESOLUTION"):
                 in_block = True
@@ -63,47 +64,47 @@ class xds_parser(object):
                 line = next(f)
                 inp = line.split()
                 resolution_range = float(inp[0]), float(inp[1])
-    
+
             if in_block:
                 if line:
                     block.append(line.strip("\n"))
-    
+
         vol = volume(cell)
         raw_vol = volume(raw_cell)
-    
+
         d["ISa"] = ISa
         d["Boverall"] = Boverall
-    
+
         dmin = 999
-    
+
         for line in block:
             inp = line.split()
             if len(inp) != 14:
                 continue
-    
+
             try:
                 res = float(inp[0])
             except ValueError:
                 res = inp[0]
                 if res != "total":
                     continue
-    
+
             res = float(inp[0]) if inp[0] != "total" else inp[0]
             ntot, nuniq, completeness = int(inp[1]), int(inp[2]), float(inp[4].strip("%"))
             ios, rmeas, cchalf = float(inp[8]), float(inp[9].strip("%")), float(inp[10].strip("*"))
-    
+
             if ios < ios_threshold and res != "total":
                 continue
-    
+
             if (res != "total") and (res < dmin):
                 shell = (dmin, res)
                 dmin = res
-    
+
             d[res] = {"ntot": ntot, "nuniq": nuniq, "completeness": completeness, "ios": ios, "rmeas": rmeas, "cchalf": cchalf}
-    
+
         if dmin == 999:
             return
-    
+
         d["outer"] = dmin
         d["outer_shell"] = shell
         d["res_range"] = resolution_range
@@ -113,7 +114,7 @@ class xds_parser(object):
         d["raw_volume"] = raw_vol
         d["spgr"] = spgr
         d["fn"] = fn
-    
+
         return d
 
     def info_header(self):
@@ -140,7 +141,7 @@ class xds_parser(object):
 
         if k == 0:
             s += self.info_header()
-        
+
         dmax, dmin = d["res_range"]
 
         s += "{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}".format(
@@ -197,7 +198,7 @@ def cells_to_cellparm(ps):
     """Takes a list of `xds_parser` instances and writes the cell
     parameters to an instruction file `CELLPARM.INP` for the program
     `cellparm`.
-    """    
+    """
     # write cellparm input file
     with open("CELLPARM.INP", "w") as f:
         for i, p in enumerate(ps):
@@ -231,9 +232,9 @@ def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
             src = fn.with_name("XDS_ASCII.HKL")
             dst = f"{i:02d}_XDS_ASCII.HKL"
             shutil.copy(src, dst)
-    
+
             dmax, dmin = p.d["res_range"]
-            print(f" {i: 3d} {dst} {dmax:8.2f} {dmin:8.2f}  # {fn}", file=f)  
+            print(f" {i: 3d} {dst} {dmax:8.2f} {dmin:8.2f}  # {fn}", file=f)
 
 
 def parse_fns(fns):
@@ -242,7 +243,7 @@ def parse_fns(fns):
     for fn in fns:
         if fn.is_dir():
             new_fns.extend(list(fn.glob("**/CORRECT.LP")))
-        else:  
+        else:
             new_fns.append(fn)
     # new_fns = [fn for fn in new_fns if "reprocessed" in str(fn)]
     new_fns = [fn.resolve() for fn in new_fns]
@@ -251,15 +252,15 @@ def parse_fns(fns):
 
 def main():
     fns = sys.argv[1:]
-    
+
     if not fns:
         fns = [Path(".")]
     else:
         fns = [Path(fn) for fn in fns]
-    
+
     fns = parse_fns(fns)
     print(f"Found {len(fns)} files matching CORRECT.LP\n")
-    
+
     xdsall = []
     for fn in fns:
         try:
@@ -269,20 +270,20 @@ def main():
         else:
             if p.d:
                 xdsall.append(p)
-    
+
     for i, p in enumerate(xdsall):
         print(p.cell_info(sequence=i))
-    
+
     print()
-    
+
     for i, p in enumerate(xdsall):
         print(p.integration_info(sequence=i, filename=True))
-    
+
     print()
-    
+
     cells_to_excel(xdsall)
     cells_to_cellparm(xdsall)
-    
+
     gather_xds_ascii(xdsall)
 
 

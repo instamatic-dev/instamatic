@@ -15,19 +15,19 @@ import msvcrt
 class SerialExperiment(object):
     """docstring for SerialExperiment"""
 
-    def __init__(self, ctrl, 
-                       path: str=None, 
-                       log=None, 
-                       instruction_file: str=None, 
-                       exposure: float=400, 
-                       mode: str="diff", 
-                       target_angle: float=40, 
+    def __init__(self, ctrl,
+                       path: str = None,
+                       log=None,
+                       instruction_file: str = None,
+                       exposure: float = 400,
+                       mode: str = "diff",
+                       target_angle: float = 40,
                        rotation_speed=None):
         super().__init__()
 
         self.instruction_file = Path(instruction_file)
         self.base_drc = self.instruction_file.parent
-        
+
         if self.instruction_file.suffix == ".nav":
             self.nav_items = serialem.read_nav_file(self.instruction_file, acquire_only=True)
             self.run = self.run_from_nav_file
@@ -36,7 +36,7 @@ class SerialExperiment(object):
         else:
             self.tracks = open(self.instruction_file, "r").readlines()
             self.run = self.run_from_tracking_file
-        
+
         self.log = log
         self.path = path
         self.ctrl = ctrl
@@ -65,7 +65,7 @@ class SerialExperiment(object):
         def acquire(ctrl):
             nonlocal start_angle
             nonlocal end_angle
-            
+
             tag = ctrl.current_item.tag
             out_path = path / tag
 
@@ -85,14 +85,13 @@ class SerialExperiment(object):
         def post_acquire(ctrl):
             ctrl.cam.stop_liveview()
 
-        self.ctrl.acquire_at_items(self.nav_items, 
-                                   acquire=acquire, 
-                                   pre_acquire=pre_acquire, 
+        self.ctrl.acquire_at_items(self.nav_items,
+                                   acquire=acquire,
+                                   pre_acquire=pre_acquire,
                                    post_acquire=post_acquire)
 
         if self.rotation_speed:
             self.ctrl.stage.set_rotation_speed(12)
-
 
     def run_from_tracking_file(self):
         t0 = time.clock()
@@ -156,13 +155,14 @@ class Experiment(object):
         Exposure time in ms
     mode: str
     """
-    def __init__(self, ctrl, 
-                 path: str=None, 
-                 log=None, 
-                 track: str=None, 
-                 exposure: float=400, 
-                 mode: str="diff", 
-                 rotation_speed: int=None):
+
+    def __init__(self, ctrl,
+                 path: str = None,
+                 log=None,
+                 track: str = None,
+                 exposure: float = 400,
+                 mode: str = "diff",
+                 rotation_speed: int = None):
         super().__init__()
 
         self.ctrl = ctrl
@@ -176,7 +176,7 @@ class Experiment(object):
         self.mode = mode
 
         self.rotation_speed = rotation_speed
-        
+
         if track:
             self.load_tracking_file(track)
             self.track = True
@@ -188,23 +188,23 @@ class Experiment(object):
         if trackfile.suffix == ".pickle":
             print(f"(autotracking) Loading tracking file: {trackfile}")
             dct = pickle.load(open(trackfile, "rb"))
-    
+
             self.track_func = dct["y_offset"]
             self.x_offset = dct["x_offset"]
             self.start_x = dct["x_center"]
             self.start_y = dct["y_center"]
             self.start_z = dct["z_pos"]
-    
+
             self.min_angle = dct["angle_min"]
             self.max_angle = dct["angle_max"]
 
             self.crystal_number = dct["i"]
 
             self.trackfile = trackfile
-    
+
             self.track_interval = 2
             self.track_relative = False
-        
+
         else:
             raise IOError("I don't know how to read file `{trackfile}`")
 
@@ -222,7 +222,7 @@ class Experiment(object):
                 start_angle, target_angle = min_angle, max_angle
 
             print(f"(autotracking) Overriding angle range: {start_angle:.0f} -> {target_angle:.0f}")
-            
+
             y_offset = int(self.track_func(start_angle))
             x_offset = self.x_offset
 
@@ -254,9 +254,9 @@ class Experiment(object):
         self.beamblank_is_on = self.ctrl.beamblank
         if not self.beamblank_is_on:
             self.ctrl.beamblank_on()
-        
+
         self.ctrl.screen_up()
-    
+
         if self.ctrl.mode != self.mode:
             print(f"Switching to {self.mode} mode")
             self.ctrl.mode = self.mode
@@ -265,7 +265,7 @@ class Experiment(object):
             self.ctrl.difffocus.refocus()
 
         spotsize = self.ctrl.spotsize
-    
+
         self.emmenu.start_liveview()
 
         print("Ready...")
@@ -275,14 +275,14 @@ class Experiment(object):
 
         print("Waiting for rotation to start...", end=' ')
         a0 = a = self.ctrl.stage.a
-        while abs(a - a0) < ACTIVATION_THRESHOLD:           
+        while abs(a - a0) < ACTIVATION_THRESHOLD:
             a = self.ctrl.stage.a
 
         print("Rotation started...")
 
         return a
 
-    def start_collection(self, target_angle: float, start_angle: float=None, manual_control: bool=False):
+    def start_collection(self, target_angle: float, start_angle: float = None, manual_control: bool = False):
         """
         manual_control : bool
             Control the rotation using the buttons or pedals
@@ -296,7 +296,7 @@ class Experiment(object):
 
         if self.track:
             start_angle, target_angle = self.prepare_tracking()
-        
+
         if start_angle:
             print(f"Going to starting angle: {start_angle:.1f}")
             self.ctrl.stage.a = start_angle
@@ -309,7 +309,7 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
-    
+
             input("Move SAED aperture to crystal and press <ENTER> to measure! ")
 
             ## cannot do this while lieview is running
@@ -320,7 +320,7 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
             time.sleep(3)
-        
+
         self.ctrl.beamblank_off(delay=0.2)  # give the beamblank some time to dissappear to avoid weak first frame
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
@@ -339,7 +339,7 @@ class Experiment(object):
         self.emmenu.start_record()  # start recording
 
         t0 = time.perf_counter()
-        t_delta = t0       
+        t_delta = t0
 
         n = 0
 
@@ -372,7 +372,7 @@ class Experiment(object):
 
                 if self.track:
                     self.track_crystal(n=n, angle=a)
-            
+
             # Stop/interrupt and go to next crystal
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode()
@@ -392,20 +392,20 @@ class Experiment(object):
 
         self.end_position = self.ctrl.stage.get()
         end_angle = self.end_position.a
-        
+
         end_index = self.emmenu.get_image_index()
 
         self.t_start = t0
         self.t_end = t1
         self.total_time = t1 - t0
-        
+
         self.nframes = nframes = end_index - start_index + 1
         if nframes < 1:
             print("No frames measured??")
             return
 
         self.osc_angle = abs(end_angle - start_angle) / nframes
-        
+
         # acquisition_time = total_time / nframes
         self.total_angle = abs(end_angle - start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
@@ -414,7 +414,7 @@ class Experiment(object):
         self.rotation_speed = (end_angle-start_angle) / self.total_time
         self.exposure_time = self.emmenu.get_exposure()
         self.start_angle, self.end_angle = start_angle, end_angle
-        
+
         try:
             # sometimes breaks with:
             # AttributeError: 'NoneType' object has no attribute 'EMVector'
@@ -440,16 +440,16 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
-    
+
             img2 = self.ctrl.getRawImage()
             write_tiff(self.path / "image_after.tiff", img2)
-    
+
             self.ctrl.beamblank_on()
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images (#{start_index}->#{end_index}) to {path_data}")
-        
+
         if self.track:
             print(f"Done with this crystal (number #{self.crystal_number})!")
         else:
@@ -465,7 +465,7 @@ class Experiment(object):
             pixelsize = 1.0
 
         physical_pixelsize = config.camera.physical_pixelsize # mm
-        
+
         bin_x, bin_y = self.emmenu.getBinning()
         image_dimensions_x, image_dimensions_y = self.emmenu.getImageDimensions()
         camera_dimensions_x, camera_dimensions_y = self.emmenu.getCameraDimensions()
@@ -530,7 +530,7 @@ class Experiment(object):
             print("# timestamp x y z a b", file=f)
             for t, (x, y, z, a, b) in self.stage_positions:
                 print(t, x, y, z, a, b, file=f)
-        
+
         print(f"Wrote file {f.name}")
 
         if self.mode != "diff":
@@ -543,22 +543,22 @@ class Experiment(object):
                 y_center = pos[idx,1]
                 z_pos = pos[0:,2].mean()
                 f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
-    
+
                 d = {}
                 d["y_offset"] = f
                 d["x_offset"] = 0
                 d["x_center"] = x_center
                 d["y_center"] = y_center
                 d["z_pos"] = z_pos
-    
+
                 d["angle_min"] = self.start_angle
                 d["angle_max"] = self.end_angle
-    
+
                 d["i"] = 0
-    
+
                 fn = self.path / f"track.pickle"
                 pickle.dump(d, open(fn, "wb"))
-    
+
                 print(f"Wrote file {fn.name}")
 
 
@@ -570,7 +570,7 @@ if __name__ == '__main__':
 
     expdir = get_new_work_subdirectory()
     expdir.mkdir(exist_ok=True, parents=True)
-    
+
     exp = Experiment(ctrl, path=expdir)
     exp.get_ready()
     exp.run(target_angle=20)
