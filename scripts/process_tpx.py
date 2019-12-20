@@ -1,4 +1,4 @@
-from instamatic.processing.ImgConversionTPX as ImgConversionTPX as ImgConversion
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic.formats import read_tiff
 import glob, sys
 from pathlib import Path
@@ -138,17 +138,17 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path="SMV_reprocessed"
         buffer.append((j, img, h))
     
     img_conv = ImgConversion(buffer=buffer, 
-             osc_angle=self.osc_angle,
-             start_angle=self.start_angle,
-             end_angle=self.end_angle,
-             rotation_axis=self.rotation_axis,
-             acquisition_time=self.acquisition_time,
+             osc_angle=osc_angle,
+             start_angle=start_angle,
+             end_angle=end_angle,
+             rotation_axis=rotation_axis,
+             acquisition_time=acquisition_time,
              flatfield=None,
-             pixelsize=self.pixelsize,
-             physical_pixelsize=self.physical_pixelsize,
-             wavelength=self.wavelength,
-             stretch_amplitude=self.stretch_amplitude,
-             stretch_azimuth=self.stretch_azimuth
+             pixelsize=pixelsize,
+             physical_pixelsize=physical_pixelsize,
+             wavelength=wavelength,
+             stretch_amplitude=stretch_amplitude,
+             stretch_azimuth=stretch_azimuth
              )
 
     # azimuth, amplitude = 83.37, 2.43  # add 90 to azimuth for old files
