@@ -41,7 +41,7 @@ def close_down_vm_process(session):
 def main():
 	print("Starting Ubuntu server installed in VirtualBox...")
 	session = start_vm_process()
-	time.sleep(5)
+	time.sleep(15)
 	vm_ubuntu_start_terminal(session)
 	time.sleep(5)
 	vm_ubuntu_start_xds_AtFolder(session)
