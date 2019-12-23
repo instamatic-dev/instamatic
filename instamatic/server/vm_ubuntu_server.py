@@ -5,7 +5,7 @@ import datetime
 import logging
 import threading
 from instamatic import config
-import ast
+#import ast
 
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
@@ -44,7 +44,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
 
 	while True:
 		data = conn.recv(BUFF).decode()
-		data = ast.literal_eval(data)
+		#data = ast.literal_eval(data)
 		now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
 		if not data:
