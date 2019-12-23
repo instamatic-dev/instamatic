@@ -303,6 +303,7 @@ def collect_flatfield(controller, **kwargs):
 module = BaseModule("debug", "advanced", True, DebugFrame, commands={
     "debug": debug,
     "autoindex": autoindex,
+    "autoindex_xdsVM": autoindex_xdsVM,
     "flatfield": collect_flatfield
 })
 
