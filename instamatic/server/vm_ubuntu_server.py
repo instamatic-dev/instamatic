@@ -71,8 +71,8 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
 			time.sleep(60)
 
 	conn.send(b"Connection closed")
-    conn.close()
-    print("Connection closed")
+	conn.close()
+	print("Connection closed")
 
 def close_down_vm_process(session):
 	session.console.power_down()
@@ -84,26 +84,26 @@ def main():
 	vm_ubuntu_start_terminal(session)
 
 	date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_xdsVM_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
-                        filename=logfile,
-                        level=logging.DEBUG)
-    logging.captureWarnings(True)
-    log = logging.getLogger(__name__)
+	logfile = config.logs_drc / f"instamatic_xdsVM_server_{date}.log"
+	logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+						filename=logfile,
+						level=logging.DEBUG)
+	logging.captureWarnings(True)
+	log = logging.getLogger(__name__)
 
-    s = socket(AF_INET, SOCK_STREAM)
-    s.bind((HOST, PORT))
-    s.listen(5)
+	s = socket(AF_INET, SOCK_STREAM)
+	s.bind((HOST, PORT))
+	s.listen(5)
 
-    log.info(f"Indexing server (XDS) listening on {HOST}:{PORT}")
-    print(f"Indexing server (XDS) listening on {HOST}:{PORT}")
+	log.info(f"Indexing server (XDS) listening on {HOST}:{PORT}")
+	print(f"Indexing server (XDS) listening on {HOST}:{PORT}")
 
-    with s:
-        while True:
-            conn, addr = s.accept()
-            log.info('Connected by %s', addr)
-            print('Connected by', addr)
-            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn,)).start()
+	with s:
+		while True:
+			conn, addr = s.accept()
+			log.info('Connected by %s', addr)
+			print('Connected by', addr)
+			threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn,)).start()
 
 	#time.sleep(5)
 	#vm_ubuntu_start_xds_AtFolder(session)
@@ -113,4 +113,4 @@ def main():
 	#print("VM server closed down safely!")
 
 if __name__ == '__main__':
-    main()
+	main()
