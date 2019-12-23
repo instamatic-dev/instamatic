@@ -1,7 +1,7 @@
 import virtualbox
 import time
 
-def start_vm_process(vmname="Ubuntu 14.04.3", vmachine_pwd="testtest"):
+def start_vm_process(vmname="Ubuntu 14.04.3", vmachine_pwd="testtest", time_delay=20):
 	try:
 		vbox = virtualbox.VirtualBox()
 	except ModuleNotFoundError:
@@ -11,11 +11,11 @@ def start_vm_process(vmname="Ubuntu 14.04.3", vmachine_pwd="testtest"):
 
 	session = virtualbox.Session()
 	machine = vbox.find_machine(vmname)
-	progress = machine.launch_vm_progress(session, "gui", "")
+	progress = machine.launch_vm_process(session, "gui", "")
 	progress.wait_for_completion()
 
 	"""wait for 15 s to ensure a normal vm startup"""
-	time.sleep(15)
+	time.sleep(time_delay)
 
 	"""assume vm is password protected"""
 	session.console.keyboard.put_keys(vmachine_pwd)
@@ -41,10 +41,14 @@ def close_down_vm_process(session):
 def main():
 	print("Starting Ubuntu server installed in VirtualBox...")
 	session = start_vm_process()
-
+	time.sleep(5)
 	vm_ubuntu_start_terminal(session)
+	time.sleep(5)
 	vm_ubuntu_start_xds_AtFolder(session)
+	time.sleep(5)
 	close_down_vm_process(session)
+	time.sleep(5)
+	print("VM server closed down safely!")
 
 if __name__ == '__main__':
     main()
