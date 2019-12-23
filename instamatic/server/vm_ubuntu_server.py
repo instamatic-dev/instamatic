@@ -4,6 +4,8 @@ import time
 import datetime
 import logging
 import threading
+from instamatic import config
+import ast
 
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
