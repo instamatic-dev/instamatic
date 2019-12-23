@@ -9,9 +9,10 @@ from instamatic import config
 
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
+VM_ID = config.cfg.VM_ID
 BUFF = 1024
 
-def start_vm_process(vmname="Ubuntu 14.04.3", vmachine_pwd="testtest", time_delay=20):
+def start_vm_process(vmname=VM_ID, vmachine_pwd="testtest", time_delay=20):
 	try:
 		vbox = virtualbox.VirtualBox()
 	except ModuleNotFoundError:
