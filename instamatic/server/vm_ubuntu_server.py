@@ -10,9 +10,12 @@ from instamatic import config
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
 VM_ID = config.cfg.VM_ID
+VM_PWD = config.cfg.VM_PWD
+VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
+VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
 BUFF = 1024
 
-def start_vm_process(vmname=VM_ID, vmachine_pwd="testtest", time_delay=20):
+def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1):
 	try:
 		vbox = virtualbox.VirtualBox()
 	except ModuleNotFoundError:
@@ -25,12 +28,13 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd="testtest", time_delay=20):
 	progress = machine.launch_vm_process(session, "gui", "")
 	progress.wait_for_completion()
 
-	"""wait for 15 s to ensure a normal vm startup"""
+	"""wait for certain sec to ensure a normal vm startup"""
 	time.sleep(time_delay)
 
 	"""assume vm is password protected"""
 	session.console.keyboard.put_keys(vmachine_pwd)
 	session.console.keyboard.put_keys(["ENTER"])
+	print("password delivered!")
 	return session
 
 
@@ -83,8 +87,9 @@ def close_down_vm_process(session):
 def main():
 	print("Starting Ubuntu server installed in VirtualBox...")
 	session = start_vm_process()
-	time.sleep(15)
+	time.sleep(VM_DELAY2)
 	vm_ubuntu_start_terminal(session)
+	print("Ctrl Alt T sent!")
 
 	date = datetime.datetime.now().strftime("%Y-%m-%d")
 	logfile = config.logs_drc / f"instamatic_xdsVM_server_{date}.log"

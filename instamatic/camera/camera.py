@@ -48,7 +48,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 
         if name in ("timepix", "pytimepix"):
             tpx_config = Path(__file__).parent / "tpx" / "config.txt"  # TODO: put this somewhere central
-            cam = cam_cls(tpx_config)
+            cam = cam_cls.initialize(tpx_config)
         elif name in ("emmenu", "tvips"):
             cam = cam_cls()
             as_stream = False  # override `as_stream` for this interface
