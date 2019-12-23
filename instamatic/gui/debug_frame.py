@@ -12,6 +12,9 @@ HOST = config.cfg.indexing_server_host
 PORT = config.cfg.indexing_server_port
 BUFSIZE = 1024
 
+VM_SERVER_EXE = config.cfg.VM_server_exe
+VMHOST = config.cfg.VM_server_host
+VMPORT = config.cfg.VM_server_port
 
 class DebugFrame(LabelFrame):
     """docstring for DebugFrame"""
@@ -42,7 +45,7 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
-        Label(frame, text="Indexing server for DIALS").grid(row=2, column=0, sticky="W")
+        Label(frame, text="Indexing server: DIALS").grid(row=2, column=0, sticky="W")
 
         self.BrowseButton = Button(frame, text="Start", command=self.start_server)
         self.BrowseButton.grid(row=2, column=2, sticky="EW")
@@ -52,6 +55,17 @@ class DebugFrame(LabelFrame):
 
         self.RunButton = Button(frame, text="Kill", command=self.kill_server)
         self.RunButton.grid(row=2, column=4, sticky="EW")
+
+        Label(frame, text="Indexing server: XDS (Ubuntu in VirtualBox)").grid(row=3, column=0, sticky="W")
+
+        self.BrowseButton = Button(frame, text="Start", command=self.start_server_xdsVM)
+        self.BrowseButton.grid(row=3, column=2, sticky="EW")
+
+        self.RunButton = Button(frame, text="Register", command=self.register_server_xdsVM)
+        self.RunButton.grid(row=3, column=3, sticky="EW")
+
+        self.RunButton = Button(frame, text="Kill", command=self.kill_server_xdsVM)
+        self.RunButton.grid(row=3, column=4, sticky="EW")
 
         frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -114,6 +128,18 @@ class DebugFrame(LabelFrame):
 
     def register_server(self):
         self.q.put(("autoindex", {"task": "register_server"}))
+        self.triggerEvent.set()
+
+    def kill_server_xdsVM(self):
+        self.q.put(("autoindex_xdsVM", {"task": "kill_server_xdsVM"}))
+        self.triggerEvent.set()
+
+    def start_server_xdsVM(self):
+        self.q.put(("autoindex_xdsVM", {"task": "start_server_xdsVM"}))
+        self.triggerEvent.set()
+
+    def register_server_xdsVM(self):
+        self.q.put(("autoindex_xdsVM", {"task": "register_server_xdsVM"}))
         self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
@@ -227,6 +253,42 @@ def autoindex(controller, **kwargs):
     if task == "kill":
         del controller.indexing_server_process
 
+def autoindex_xdsVM(controller, **kwargs):
+    import socket
+
+    task = kwargs.get("task")
+    if task == "start_server_xdsVM":
+        import subprocess as sp
+
+        cmd = f"start {VM_SERVER_EXE}"
+        controller.indexing_server_process = sp.call(cmd, shell=True)
+        print(f"Indexing server `{VM_SERVER_EXE}` started on {VMHOST}:{VMPORT}")
+        controller.use_indexing_server = True
+        print("VM XDS Indexing server registered")
+        return
+
+    elif task == "register_server_xdsVM":
+        controller.use_indexing_server = True
+        print("VM XDS Indexing server registered")
+        return
+
+    elif task == "run":
+        payload = bytes(kwargs.get("path"))
+
+    elif task == "kill_server_xdsVM":
+        payload = b"kill"
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print("Sending job to server...", end=" ")
+        s.connect((VMHOST, VMPORT))
+        s.send(payload)
+        data = s.recv(BUFSIZE).decode()
+        print(data)
+        data = s.recv(BUFSIZE).decode()
+        print(data)
+
+    if task == "kill":
+        del controller.indexing_server_process
 
 def collect_flatfield(controller, **kwargs):
     from instamatic.processing import flatfield
