@@ -26,7 +26,7 @@ goniotool_server_port: 8090
 fei_server_host: '192.168.12.1'
 fei_server_port: 8091
 
-VM_server_exe: 'instamatic.vm_ubuntu_server.exe'
+VM_server_exe: 'instamatic.VMserver.exe'
 VM_server_host: 'localhost'
 VM_server_port: 8092
 
