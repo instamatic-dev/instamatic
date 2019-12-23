@@ -7,6 +7,7 @@ from instamatic.calibrate.filenames import *
 from instamatic.calibrate import CalibBeamShift
 from pathlib import Path
 import matplotlib.pyplot as plt
+import threading
 
 from instamatic import config
 import datetime

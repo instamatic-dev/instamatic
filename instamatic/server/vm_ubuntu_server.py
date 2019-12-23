@@ -43,12 +43,12 @@ def main():
 	session = start_vm_process()
 	time.sleep(15)
 	vm_ubuntu_start_terminal(session)
-	time.sleep(5)
-	vm_ubuntu_start_xds_AtFolder(session)
-	time.sleep(5)
-	close_down_vm_process(session)
-	time.sleep(5)
-	print("VM server closed down safely!")
+	#time.sleep(5)
+	#vm_ubuntu_start_xds_AtFolder(session)
+	#time.sleep(5)
+	#close_down_vm_process(session)
+	#time.sleep(5)
+	#print("VM server closed down safely!")
 
 if __name__ == '__main__':
     main()
