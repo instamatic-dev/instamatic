@@ -21,7 +21,7 @@ def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
         rotation_axis += np.pi
 
     rot_x = cos(rotation_axis)
-    rot_y = np.sin(rotation_axis)
+    rot_y = cos(rotation_axis + np.pi/2)
     rot_z = 0
 
     if setting == 'dials':
