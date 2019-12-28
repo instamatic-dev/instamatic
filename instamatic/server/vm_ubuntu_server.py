@@ -5,7 +5,7 @@ import datetime
 import logging
 import threading
 from instamatic import config
-#import ast
+import ast
 
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
@@ -49,7 +49,6 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
 
     while True:
         data = conn.recv(BUFF).decode()
-        #data = ast.literal_eval(data)
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
         if not data:
@@ -66,7 +65,10 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
             break
         else:
             conn.send(b"OK")
-            path = data #Need checking
+            data = ast.literal_eval(data)
+            path = data["path"]#Need checking
+            path = path.replace("C:\\","\\media\\sf_")
+            path = path.replace("\\", "/")
             session.console.keyboard.put_keys("cd ")
             session.console.keyboard.put_keys("{}".format(path))
             session.console.keyboard.put_keys(["ENTER"])

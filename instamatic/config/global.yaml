@@ -15,6 +15,7 @@ use_cam_server: False
 cam_server_host: 'localhost'
 cam_server_port: 8087
 
+use_indexing_server_exe: False
 indexing_server_exe: 'instamatic.dialsserver.exe'
 indexing_server_host: 'localhost'
 indexing_server_port: 8089
@@ -26,6 +27,7 @@ goniotool_server_port: 8090
 fei_server_host: '192.168.12.1'
 fei_server_port: 8091
 
+use_VM_server_exe: True
 VM_server_exe: 'instamatic.VMserver.exe'
 VM_server_host: 'localhost'
 VM_server_port: 8092

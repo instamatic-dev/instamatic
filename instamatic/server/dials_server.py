@@ -59,7 +59,6 @@ def handle(conn):
 
     while True:
         data = conn.recv(BUFF).decode()
-        data = ast.literal_eval(data)
         now = datetime.datetime.now().strftime("%H:%M:%S.%f")
 
         if not data:
@@ -77,6 +76,7 @@ def handle(conn):
 
         else:
             conn.send(b"OK")
+            data = ast.literal_eval(data)
             run_dials_indexing(data)
 
     conn.send(b"Connection closed")
