@@ -7,7 +7,7 @@ There are several programs coming with `instamatic`. Some of the more commonly u
 Start the instamatic GUI. The GUI is modular and can be defined using the config system. The GUI can be used to control the microscope and run the experiments. The GUI itself is further described on the GUI page.
 
 Usage:
-    
+
     instamatic
 
 <!-- ### instamatic.serialed
@@ -15,7 +15,7 @@ Usage:
 Command line program to run the serial ED data collection routine.
 
 Usage:
-    
+
     instamatic.serialed -->
 
 ### instamatic.controller
@@ -23,19 +23,19 @@ Usage:
 Connect to the microscope and camera, and open an IPython terminal to interactively control the microscope. Useful for testing! It initializes the TEMController (accessible through the `ctrl` variable) using the parameters given in the `config`.
 
 Usage:
-    
+
     instamatic.controller
 
 ### instamatic.flatfield
 
 This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
-    
+
     instamatic.flatfield --collect
 
 This will collect 100 images and average them to determine the flatfield image. A darkfield image is also collected by applying the same routine with the beam blanked. Dead pixels are identified as pixels with 0 intensities. To apply these corrections:
 
     instamatic.flatfield image.tiff [image.tiff ..] -f flatfield.tiff [-d darkfield.tiff] [-o drc]
-   
+
 This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`.
 
 ### instamatic.stretch_correction
@@ -43,7 +43,7 @@ This will apply the flatfield correction (`-f`) and optionally the darkfield cor
 Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the `config` under `camera.stretch_azimuth` and `camera.stretch_percentage`.
 
 Usage:
-    
+
     instamatic.stretch_correction powder_pattern.tiff
 
 ### instamatic.browser
@@ -51,7 +51,7 @@ Usage:
 Visualize the data collected (both images and diffraction data) in a serialED experiment. The `-s` flag attempts to stitch the images together.
 
 Usage:
-    
+
     instamatic.browser images/*.h5 [-s]
 
 ### instamatic.viewer
@@ -59,7 +59,7 @@ Usage:
 Simple image viewer to open any image collected collected using instamatic. Supported formats include [`hdf5`](http://www.h5py.org/), `TIFF`, and [`SMV`](https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php/SMV_file_format).
 
 Usage:
-    
+
     instamatic.viewer image.tiff
 
 
@@ -83,6 +83,19 @@ The host and port are defined in `config/global.yaml`
 Usage:
 
     instamatic.camserver
+
+
+### instamatic.VMserver
+
+The script sets up socket connection between `instamatic` and [`VirtualBox`](https://www.virtualbox.org/wiki/Downloads) software via [`virtualbox python API`](https://www.virtualbox.org/wiki/Downloads). Therefore, `VirtualBox` and the corresponding SDK need to be installed before running this command. This script is developed particularly for the possibility of running software [`XDS`](http://xds.mpimf-heidelberg.mpg.de/html_doc/downloading.html) under windows 7, a system which a lot of TEM computers may be using.
+
+After installation of `VirtualBox` and the corresponding SDK, `XDS` needs to be installed correctly in the guest Ubuntu system. In addition, a shared folder between `VirtualBox` and windows system needs to be set up properly in order for the server to work.
+
+The host and port are defined in `config/global.yaml`
+
+Usage:
+
+    instamatic.VMserver
 
 
 ### instamatic.install
