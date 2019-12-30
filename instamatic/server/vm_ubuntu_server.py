@@ -10,6 +10,7 @@ import ast
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
 VM_ID = config.cfg.VM_ID
+VM_USERNAME = config.cfg.VM_USERNAME
 VM_PWD = config.cfg.VM_PWD
 VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
 VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
@@ -41,6 +42,25 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1):
 def vm_ubuntu_start_terminal(session):
     """type ctrl+alt+t to bring up terminal in the ubuntu machine"""
     session.console.keyboard.put_keys(press_keys="t", hold_keys=["CTRL","ALT"])
+
+def vm_ubuntu_start_headless(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachine_pwd=VM_PWD, time_delay=30):
+    try:
+        vbox = virtualbox.VirtualBox()
+    except ModuleNotFoundError:
+        print("Please install virtualbox with guest ubuntu and virtualbox SDK first before using this server.")
+        print("Download virtualbox python SDK from:")
+        print("https://www.virtualbox.org/wiki/Downloads")
+
+    session = virtualbox.Session()
+    machine = vbox.find_machine(vmname)
+    progress = machine.launch_vm_process(session, "headless", "")
+    time.sleep(time_delay)
+
+    gs = session.console.guest.create_session(vmachine_username, vmachine_pwd)
+
+    process, stdout, stderr = gs.execute("/usr/loca/bin/xds")
+    print(stdout)
+
 
 def vm_ubuntu_start_xds_AtFolder(session, conn):
     """incoming conn should contain a path that is shared already between VBox and windows"""
