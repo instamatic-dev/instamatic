@@ -16,7 +16,8 @@ VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
 VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
 BUFF = 1024
 
-def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1):
+def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mode="headless"):
+    """mode can be either gui or headless"""
     try:
         vbox = virtualbox.VirtualBox()
     except ModuleNotFoundError:
@@ -26,7 +27,7 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1):
 
     session = virtualbox.Session()
     machine = vbox.find_machine(vmname)
-    progress = machine.launch_vm_process(session, "gui", "")
+    progress = machine.launch_vm_process(session, mode, "")
     progress.wait_for_completion()
 
     """wait for certain sec to ensure a normal vm startup"""
@@ -43,7 +44,7 @@ def vm_ubuntu_start_terminal(session):
     """type ctrl+alt+t to bring up terminal in the ubuntu machine"""
     session.console.keyboard.put_keys(press_keys="t", hold_keys=["CTRL","ALT"])
 
-def vm_ubuntu_start_headless(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachine_pwd=VM_PWD, time_delay=30):
+def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachine_pwd=VM_PWD, time_delay=30, script_path="/usr/loca/bin/xds"):
     try:
         vbox = virtualbox.VirtualBox()
     except ModuleNotFoundError:
@@ -58,9 +59,8 @@ def vm_ubuntu_start_headless(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachi
 
     gs = session.console.guest.create_session(vmachine_username, vmachine_pwd)
 
-    process, stdout, stderr = gs.execute("/usr/loca/bin/xds")
+    process, stdout, stderr = gs.execute(script_path)
     print(stdout)
-
 
 def vm_ubuntu_start_xds_AtFolder(session, conn):
     """incoming conn should contain a path that is shared already between VBox and windows"""
