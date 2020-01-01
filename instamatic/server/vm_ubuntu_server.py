@@ -179,7 +179,7 @@ FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
 def solve_structure_shelxt(path, ins_name = "shelx"):
     CWD = Path(path)
     cmd = ["shelxt", ins_name]
-    print(f"SHELXT attempting at {path}"...)
+    print(f"SHELXT attempting at {path}...")
     p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
     for line in p.stdout:
         if b'R1  Rweak' in line:
@@ -189,6 +189,10 @@ def solve_structure_shelxt(path, ins_name = "shelx"):
     print("Shelxt finished running.")
 
 def main():
+    if ENABLE_SHELXT:
+        composition = input("In order to run shelxt automatically, please input the composition information of your crystal: (e.g. Si1 O2) \n")
+    else:
+        composition = None
     print("Starting Ubuntu server installed in VirtualBox...")
     session = start_vm_process()
     time.sleep(VM_DELAY2)
@@ -202,11 +206,6 @@ def main():
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
-
-    if ENABLE_SHELXT:
-        composition = input("In order to run shelxt automatically, please input the composition information of your crystal: (e.g. Si1 O2)")
-    else:
-        composition = None
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST, PORT))
