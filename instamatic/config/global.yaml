@@ -34,8 +34,9 @@ VM_server_port: 8092
 VM_ID: "Ubuntu 14.04.3"
 VM_USERNAME: "lab6"
 VM_PWD: "testtest"
-VM_STARTUP_DELAY: 90
-VM_DESKTOP_DELAY: 30
+VM_STARTUP_DELAY: 50
+VM_DESKTOP_DELAY: 20
+VM_SHARED_FOLDER: F:\\SharedWithVM
 ENABLE_SHELXT: True
 
 dials_script: 'E:/cctbx/dials_script.bat'

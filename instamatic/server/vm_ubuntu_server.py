@@ -16,6 +16,7 @@ VM_USERNAME = config.cfg.VM_USERNAME
 VM_PWD = config.cfg.VM_PWD
 VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
 VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
+VM_SF = config.cfg.VM_SHARED_FOLDER
 ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
 BUFF = 1024
 
@@ -89,8 +90,9 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
         else:
             conn.send(b"OK")
             data = ast.literal_eval(data)
-            path = data["path"]#Need checking
-            path_vm = path.replace("C:\\","\\media\\sf_")
+            path = data["path"]
+            slashindex = path.rfind("\\")
+            path_vm = path.replace(VM_SF[:slashindex + 1],"\\media\\sf_")
             path_vm = path_vm.replace("\\", "/")
             session.console.keyboard.put_keys("cd ")
             session.console.keyboard.put_keys("{}".format(path_vm))
@@ -100,7 +102,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
             session.console.keyboard.put_keys(["ENTER"])
 
             """Not sure if I should put some delay here, but just to avoid neglected communication"""
-            time.sleep(60)
+            #time.sleep(60)
 
             if ENABLE_SHELXT:
                 try:
@@ -139,6 +141,7 @@ def generate_shelxt_input(composition, path):
     
     wavelength = 0.02508
     a, b, c, al, be, ga = cell
+    spgr = str(spgr)
     out = Path(path) / "shelx.ins"
 
     f = open(out, "w")
@@ -154,7 +157,7 @@ def generate_shelxt_input(composition, path):
         print(line, file=f)
     
     UNIT = "UNIT"
-    for name, number in atoms.items():
+    for name, number in composition.items():
         SFAC = get_sfac(name)
         print(SFAC, file=f)
         UNIT += f" {number}"
@@ -169,7 +172,7 @@ def generate_xdsconv_input(path):
     out = Path(path) / "XDSCONV.INP"
     f = open(out, "w")
     print("""
-INPUT_FILE= MERGED.HKL
+INPUT_FILE= XDS_ASCII.HKL
 INCLUDE_RESOLUTION_RANGE= 20 0.8 ! optional 
 OUTPUT_FILE= shelx.hkl  SHELX    ! Warning: do _not_ name this file "temp.mtz" !
 FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
@@ -177,7 +180,7 @@ FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
     print(f"Wrote xdsconv input file at {path}.")
 
 def solve_structure_shelxt(path, ins_name = "shelx"):
-    CWD = Path(path)
+    CWD = str(path)
     cmd = ["shelxt", ins_name]
     print(f"SHELXT attempting at {path}...")
     p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
@@ -194,6 +197,7 @@ def main():
     else:
         composition = None
     print("Starting Ubuntu server installed in VirtualBox...")
+    print("Please allow around 2 min for VM to start up properly.")
     session = start_vm_process()
     time.sleep(VM_DELAY2)
     vm_ubuntu_start_terminal(session)
