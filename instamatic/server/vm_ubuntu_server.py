@@ -7,6 +7,7 @@ import threading
 from instamatic import config
 from pathlib import Path
 import ast
+import subprocess as sp
 
 HOST = config.cfg.VM_server_host
 PORT = config.cfg.VM_server_port
@@ -109,7 +110,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
                     time.sleep(3)
                 
                     generate_shelxt_input(composition, path)
-                    solve_structure(path)
+                    solve_structure_shelxt(path)
 
                 except Exception as e:
                     print(e)
@@ -174,6 +175,18 @@ OUTPUT_FILE= shelx.hkl  SHELX    ! Warning: do _not_ name this file "temp.mtz" !
 FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
 
     print(f"Wrote xdsconv input file at {path}.")
+
+def solve_structure_shelxt(path, ins_name = "shelx"):
+    CWD = Path(path)
+    cmd = ["shelxt", ins_name]
+    print(f"SHELXT attempting at {path}"...)
+    p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
+    for line in p.stdout:
+        if b'R1  Rweak' in line:
+            print(f"Possible solution found at {path}!!!")
+
+    p.wait()
+    print("Shelxt finished running.")
 
 def main():
     print("Starting Ubuntu server installed in VirtualBox...")
