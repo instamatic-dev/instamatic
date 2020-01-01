@@ -5,6 +5,7 @@ import datetime
 import logging
 import threading
 from instamatic import config
+from pathlib import Path
 import ast
 
 HOST = config.cfg.VM_server_host
@@ -14,6 +15,7 @@ VM_USERNAME = config.cfg.VM_USERNAME
 VM_PWD = config.cfg.VM_PWD
 VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
 VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
+ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
 BUFF = 1024
 
 def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mode="headless"):
@@ -62,7 +64,7 @@ def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachi
     process, stdout, stderr = gs.execute(script_path)
     print(stdout)
 
-def vm_ubuntu_start_xds_AtFolder(session, conn):
+def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
     """incoming conn should contain a path that is shared already between VBox and windows"""
     
     #path = "/media/sf_SharedWithVM/test_vm_server"
@@ -87,10 +89,10 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
             conn.send(b"OK")
             data = ast.literal_eval(data)
             path = data["path"]#Need checking
-            path = path.replace("C:\\","\\media\\sf_")
-            path = path.replace("\\", "/")
+            path_vm = path.replace("C:\\","\\media\\sf_")
+            path_vm = path_vm.replace("\\", "/")
             session.console.keyboard.put_keys("cd ")
-            session.console.keyboard.put_keys("{}".format(path))
+            session.console.keyboard.put_keys("{}".format(path_vm))
             session.console.keyboard.put_keys(["ENTER"])
 
             session.console.keyboard.put_keys("xds")
@@ -99,12 +101,79 @@ def vm_ubuntu_start_xds_AtFolder(session, conn):
             """Not sure if I should put some delay here, but just to avoid neglected communication"""
             time.sleep(60)
 
+            if ENABLE_SHELXT:
+                try:
+                    generate_xdsconv_input(path)
+                    session.console.keyboard.put_keys("xdsconv")
+                    session.console.keyboard.put_keys(["ENTER"])
+                    time.sleep(3)
+                
+                    generate_shelxt_input(composition, path)
+                    solve_structure(path)
+
+                except Exception as e:
+                    print(e)
+                    print("Because of the error auto structure solution could not be performed.")
+
     conn.send(b"Connection closed")
     conn.close()
     print("Connection closed")
 
 def close_down_vm_process(session):
     session.console.power_down()
+
+def generate_shelxt_input(composition, path):
+    from edtools.make_shelx import comp2dict, get_latt_symm_cards, get_sfac
+    composition = comp2dict(composition)
+    with open(Path(path) / "CORRECT.LP", "r") as f:
+        for line in f:
+            if line.startswith(" UNIT_CELL_CONSTANTS="):
+                cell = list(map(float, line.strip("\n").split()[1:7]))
+            elif line.startswith(" UNIT CELL PARAMETERS"):
+                cell = list(map(float, line.strip("\n").split()[3:9]))
+            elif line.startswith(" SPACE GROUP NUMBER"):
+                spgr = int(line.strip("\n").split()[-1])
+            elif line.startswith(" SPACE_GROUP_NUMBER="):
+                spgr = int(line.strip("\n").split()[1])
+    
+    wavelength = 0.02508
+    a, b, c, al, be, ga = cell
+    out = Path(path) / "shelx.ins"
+
+    f = open(out, "w")
+
+    print(f"TITL {spgr}", file=f)
+    print(f"CELL {wavelength:.4f} {a:6.3f} {b:6.3f} {c:6.3f} {al:7.3f} {be:7.3f} {ga:7.3f}", file=f)
+    print(f"ZERR 1.00    0.000  0.000  0.000   0.000   0.000   0.000", file=f)
+
+    LATT, SYMM = get_latt_symm_cards(spgr)
+    
+    print(LATT, file=f)
+    for line in SYMM:
+        print(line, file=f)
+    
+    UNIT = "UNIT"
+    for name, number in atoms.items():
+        SFAC = get_sfac(name)
+        print(SFAC, file=f)
+        UNIT += f" {number}"
+    
+    print(UNIT, file=f)
+    print("TREF 5000", file=f)
+    print("HKLF 4", file=f)
+    print("END", file=f)
+    print(f"SHELXT ins file generated at {path}.")
+
+def generate_xdsconv_input(path):
+    out = Path(path) / "XDSCONV.INP"
+    f = open(out, "w")
+    print("""
+INPUT_FILE= MERGED.HKL
+INCLUDE_RESOLUTION_RANGE= 20 0.8 ! optional 
+OUTPUT_FILE= shelx.hkl  SHELX    ! Warning: do _not_ name this file "temp.mtz" !
+FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
+
+    print(f"Wrote xdsconv input file at {path}.")
 
 def main():
     print("Starting Ubuntu server installed in VirtualBox...")
@@ -121,6 +190,11 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
+    if ENABLE_SHELXT:
+        composition = input("In order to run shelxt automatically, please input the composition information of your crystal: (e.g. Si1 O2)")
+    else:
+        composition = None
+
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST, PORT))
     s.listen(5)
@@ -133,7 +207,7 @@ def main():
             conn, addr = s.accept()
             log.info('Connected by %s', addr)
             print('Connected by', addr)
-            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn,)).start()
+            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn, composition)).start()
 
     #time.sleep(5)
     #vm_ubuntu_start_xds_AtFolder(session)
