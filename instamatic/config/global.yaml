@@ -36,8 +36,7 @@ VM_USERNAME: "lab6"
 VM_PWD: "testtest"
 VM_STARTUP_DELAY: 50
 VM_DESKTOP_DELAY: 20
-VM_SHARED_FOLDER: F:\\SharedWithVM
-ENABLE_SHELXT: True
+VM_SHARED_FOLDER: F:\SharedWithVM
 
 dials_script: 'E:/cctbx/dials_script.bat'
 

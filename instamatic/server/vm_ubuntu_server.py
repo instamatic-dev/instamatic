@@ -17,7 +17,7 @@ VM_PWD = config.cfg.VM_PWD
 VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
 VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
 VM_SF = config.cfg.VM_SHARED_FOLDER
-ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
+#ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
 BUFF = 1024
 
 def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mode="headless"):
@@ -66,7 +66,7 @@ def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachi
     process, stdout, stderr = gs.execute(script_path)
     print(stdout)
 
-def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
+def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composition):
     """incoming conn should contain a path that is shared already between VBox and windows"""
     
     #path = "/media/sf_SharedWithVM/test_vm_server"
@@ -91,7 +91,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
             conn.send(b"OK")
             data = ast.literal_eval(data)
             path = data["path"]
-            slashindex = path.rfind("\\")
+            slashindex = VM_SF.rfind("\\")
             path_vm = path.replace(VM_SF[:slashindex + 1],"\\media\\sf_")
             path_vm = path_vm.replace("\\", "/")
             session.console.keyboard.put_keys("cd ")
@@ -104,14 +104,14 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
             """Not sure if I should put some delay here, but just to avoid neglected communication"""
             #time.sleep(60)
 
-            if ENABLE_SHELXT:
+            if shelxt:
                 try:
                     generate_xdsconv_input(path)
                     session.console.keyboard.put_keys("xdsconv")
                     session.console.keyboard.put_keys(["ENTER"])
                     time.sleep(3)
                 
-                    generate_shelxt_input(composition, path)
+                    generate_shelxt_input(unitcell, spgr, composition, path)
                     solve_structure_shelxt(path)
 
                 except Exception as e:
@@ -125,19 +125,28 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, composition):
 def close_down_vm_process(session):
     session.console.power_down()
 
-def generate_shelxt_input(composition, path):
+def generate_shelxt_input(unitcell, spgr, composition, path):
     from edtools.make_shelx import comp2dict, get_latt_symm_cards, get_sfac
     composition = comp2dict(composition)
-    with open(Path(path) / "CORRECT.LP", "r") as f:
-        for line in f:
-            if line.startswith(" UNIT_CELL_CONSTANTS="):
-                cell = list(map(float, line.strip("\n").split()[1:7]))
-            elif line.startswith(" UNIT CELL PARAMETERS"):
-                cell = list(map(float, line.strip("\n").split()[3:9]))
-            elif line.startswith(" SPACE GROUP NUMBER"):
+
+    if unitcell is None:
+        with open(Path(path) / "CORRECT.LP", "r") as f:
+            for line in f:
+                if line.startswith(" UNIT_CELL_CONSTANTS="):
+                    cell = list(map(float, line.strip("\n").split()[1:7]))
+                elif line.startswith(" UNIT CELL PARAMETERS"):
+                    cell = list(map(float, line.strip("\n").split()[3:9]))
+    else:
+        cell = [float(ucl) for ucl in unitcell]
+
+    if spgr is None:
+        with open(Path(path) / "CORRECT.LP", "r") as f:
+            if line.startswith(" SPACE GROUP NUMBER"):
                 spgr = int(line.strip("\n").split()[-1])
             elif line.startswith(" SPACE_GROUP_NUMBER="):
                 spgr = int(line.strip("\n").split()[1])
+    else:
+        spgr = str(spgr)
     
     wavelength = 0.02508
     a, b, c, al, be, ga = cell
@@ -192,12 +201,50 @@ def solve_structure_shelxt(path, ins_name = "shelx"):
     print("Shelxt finished running.")
 
 def main():
-    if ENABLE_SHELXT:
+    """if ENABLE_SHELXT:
         composition = input("In order to run shelxt automatically, please input the composition information of your crystal: (e.g. Si1 O2) \n")
     else:
-        composition = None
+        composition = None"""
+
+    import argparse
+
+    description = "VM server to run XDS online while performing data collection. Option to run SHELXT."
+    parser = argparse.ArgumentParser(description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument("-shelxt",
+                        action="store_true", dest="shelxt",
+                        help="Run shelxt when xds ASCII HKL file is generated")
+
+    parser.add_argument("-c", "--unitcell",
+                        action="store", type=str, nargs=6, dest="unitcell",
+                        help="Preknowledge: six numbers of the unit cell parameters")
+
+    parser.add_argument("-s", "--spgr",
+                        action="store", type=str, dest="spgr",
+                        help="Preknowledge: space group")
+
+    parser.add_argument("-m", "--composition",
+                        action="store", type=str, nargs="+", dest="composition",
+                        help="Preknowledge: crystal unit cell composition")
+
+    parser.set_defaults(shelxt=False,
+                        unitcell=None,
+                        spgr=None,
+                        composition=None)
+    
+    options = parser.parse_args()
+
+    shelxt = options.shelxt
+    unitcell = options.unitcell
+    spgr = options.spgr
+    composition = options.composition
+
+    #print(shelxt, unitcell, spgr, composition)
+
+    total_wait_sec = VM_DELAY1 + VM_DELAY2 + 10
     print("Starting Ubuntu server installed in VirtualBox...")
-    print("Please allow around 2 min for VM to start up properly.")
+    print(f"Please allow around {total_wait_sec} sec for VM to finish start-up process.")
     session = start_vm_process()
     time.sleep(VM_DELAY2)
     vm_ubuntu_start_terminal(session)
@@ -223,7 +270,7 @@ def main():
             conn, addr = s.accept()
             log.info('Connected by %s', addr)
             print('Connected by', addr)
-            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn, composition)).start()
+            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn, shelxt, unitcell, spgr, composition,)).start()
 
     #time.sleep(5)
     #vm_ubuntu_start_xds_AtFolder(session)
