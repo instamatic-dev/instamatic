@@ -90,6 +90,7 @@ class Message:
     Initialize with the sequences of args (longs, bools, doubles)
     and optional long array.
     """
+
     def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
         # Strings are packaged as long array using np.frombuffer(buffer,np.int_)
         # and can be converted back with longarray.tostring()
