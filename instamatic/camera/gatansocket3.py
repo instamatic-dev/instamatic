@@ -74,7 +74,7 @@ enum_gs = [
     'GS_FreeK2GainReference',
 ]
 # lookup table of function name to function code, starting with 1
-enum_gs = dict([(x, y) for (y, x) in enumerate(enum_gs, 1)])
+enum_gs = {x: y for (y, x) in enumerate(enum_gs, 1)}
 
 # C "long" -> numpy "int_"
 ARGS_BUFFER_SIZE = 1024
@@ -84,7 +84,7 @@ MAX_BOOL_ARGS = 8
 sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 
-class Message(object):
+class Message:
     """
     Information packet to send and receive on the socket.
     Initialize with the sequences of args (longs, bools, doubles)
@@ -124,23 +124,25 @@ class Message(object):
         """
         Serialize the data
         """
-        if self.array.data.itemsize > ARGS_BUFFER_SIZE:
-            raise RuntimeError('Message packet size %d is larger than maximum %d' % (self.array.data.itemsize), ARGS_BUFFER_SIZE))
+        itemsize = self.array.data.itemsize
+        if itemsize > ARGS_BUFFER_SIZE:
+            raise RuntimeError(f'Message packet size {itemsize} is larger than maximum {ARGS_BUFFER_SIZE}')
         return self.array.data
 
     def unpack(self, buf):
         """
         unpack buffer into our data structure
         """
-        self.array=np.frombuffer(buf, dtype = self.dtype)[0]
+        self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
 
 def log(message):
     global debug_log
     if debug_log is None:
         return
-    f=open(debug_log, 'a')
-    line='%f\t%s\n' % (time.time(), message)
+    f = open(debug_log, 'a')
+    now = time.time()
+    line = f'{now:f}\t{message}\n'
     f.write(line)
     f.close()
 
@@ -148,37 +150,37 @@ def log(message):
 def logwrap(func):
     """Decorator for socket send and recv calls, so they can make log"""
     def newfunc(*args, **kwargs):
-        log('%s\t%s\t%s' % (func, args, kwargs))
+        log(f'{func}\t{args}\t{kwargs}')
         try:
-            result=func(*args, **kwargs)
+            result = func(*args, **kwargs)
         except Exception as exc:
-            log('EXCEPTION: %s' % (exc,))
+            log(f'EXCEPTION: {exc}')
             raise
         return result
     return newfunc
 
 
-class GatanSocket(object):
-    def __init__(self, host = '', port = None):
-        self.host=host
+class GatanSocket:
+    def __init__(self, host='', port=None):
+        self.host = host
         if port is not None:
-            self.port=port
+            self.port = port
         elif 'SERIALEMCCD_PORT' in os.environ:
-            self.port=os.environ['SERIALEMCCD_PORT']
+            self.port = os.environ['SERIALEMCCD_PORT']
         else:
             raise ValueError('Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
 
-        self.debug=os.environ.get('SERIALEMCCD_DEBUG', 0)
+        self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
         if self.debug:
             print("host", repr(self.host))
             print("port", self.port)
             print("debug mode", os.environ['SERIALEMCCD_DEBUG'])
 
-        self.save_frames=False
-        self.num_grab_sum=0
+        self.save_frames = False
+        self.num_grab_sum = 0
         self.connect()
 
-        self.script_functions=[
+        self.script_functions = [
             ('AFGetSlitState', 'GetEnergyFilter'),
             ('AFSetSlitState', 'SetEnergyFilter'),
             ('AFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -211,8 +213,7 @@ class GatanSocket(object):
             self.wait_for_filter = ''
 
     def hasScriptFunction(self, name):
-        script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }'
-        script %= name
+        script = f'if ( DoesFunctionExist("{name}") ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
         result = self.ExecuteGetDoubleScript(script)
         return result > 0.0
 
@@ -256,7 +257,7 @@ class GatanSocket(object):
         # log the error code from received message
         sendargs = message_send.array['longargs']
         recvargs = message_recv.array['longargs']
-        log('Func: %d, Code: %d' % (sendargs[0], recvargs[0]))
+        log(f'Func: {sendargs[0]}, Code: {recvargs[0]}')
 
     def GetLong(self, funcName):
         """Common class of function that gets a single long"""
@@ -402,7 +403,8 @@ class GatanSocket(object):
     def GetEnergyFilter(self):
         if 'GetEnergyFilter' not in self.filter_functions.keys():
             return -1.0
-        script = 'if ( %s() ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['GetEnergyFilter'],)
+        func = self.filter_functions['GetEnergyFilter']
+        script = f'if ( {func}() ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
         return self.ExecuteGetDoubleScript(script)
 
     def SetEnergyFilter(self, value):
@@ -412,35 +414,43 @@ class GatanSocket(object):
             i = 1
         else:
             i = 0
-        script = '%s(%d); %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
+        func = self.filter_functions['SetEnergyFilter']
+        wait = self.wait_for_filter
+        script = f'{func}({i}); {wait}'
         return self.ExecuteSendScript(script)
 
     def GetEnergyFilterWidth(self):
         if 'GetEnergyFilterWidth' not in self.filter_functions.keys():
             return -1.0
-        script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterWidth'],)
+        func = self.filter_functions['GetEnergyFilterWidth']
+        script = f'Exit({func}())'
         return self.ExecuteGetDoubleScript(script)
 
     def SetEnergyFilterWidth(self, value):
         if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
             return -1.0
-        script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterWidth'], value)
+        func = self.filter_functions['SetEnergyFilterWidth']
+        script = f'if ( {func}({value:f}) ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
         return self.ExecuteSendScript(script)
 
     def GetEnergyFilterOffset(self):
         if 'GetEnergyFilterOffset' not in self.filter_functions.keys():
             return 0.0
-        script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
+        func = self.filter_functions['GetEnergyFilterOffset']
+        script = f'Exit({func}())'
         return self.ExecuteGetDoubleScript(script)
 
     def SetEnergyFilterOffset(self, value):
         if 'SetEnergyFilterOffset' not in self.filter_functions.keys():
             return -1.0
-        script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['SetEnergyFilterOffset'], value)
+        func = self.filter_functions['SetEnergyFilterOffset']
+        script = 'if ( {func}({value:f}) ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
         return self.ExecuteSendScript(script)
 
     def AlignEnergyFilterZeroLossPeak(self):
-        script = ' if ( %s() ) { %s Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
+        func = self.filter_functions['AlignEnergyFilterZeroLossPeak']
+        wait = self.wait_for_filter
+        script = f' if ( {func}() ) {{ {wait} Exit(1.0); }} else {{ Exit(-1.0); }}'
         return self.ExecuteGetDoubleScript(script)
 
     @logwrap
@@ -518,7 +528,7 @@ class GatanSocket(object):
             while chunkRemain:
                 new_recv = self.recv_data(chunkRemain)
                 len_recv = len(new_recv)
-                imArray.data[received: received + len_recv]= new_recv
+                imArray.data[received: received + len_recv] = new_recv
                 chunkReceived += len_recv
                 chunkRemain -= len_recv
                 remain -= len_recv
@@ -556,8 +566,10 @@ class GatanSocket(object):
         if not self.hasScriptFunction(function_name):
             # unsuccessful
             return False
-        fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (camera_id)
-        fullcommand += "%s(camera);\n" % (function_name)
+        fullcommand = (f"Object manager = CM_GetCameraManager();\n"
+                       f"Object cameraList = CM_GetCameras(manager);\n"
+                       f"Object camera = ObjectAt(cameraList,{camera_id});\n"
+                       f"{function_name}(camera);\n")
         result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
         return result
 
