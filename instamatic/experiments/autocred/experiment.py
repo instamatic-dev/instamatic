@@ -390,10 +390,10 @@ class Experiment:
                 return False
 
     def find_crystal_center(self, img_c, window_size, gauss_window=4):
-        l = np.min(img_c)
-        h = np.max(img_c)
+        mn = np.min(img_c)
+        mx = np.max(img_c)
 
-        sel = (img_c > l + 0.1 * (h - l)) & (img_c < h - 0.4 * (h - l))
+        sel = (img_c > l + 0.1 * (mx - mn)) & (img_c < mx - 0.4 * (h - mn))
         blurred = ndimage.filters.gaussian_filter(sel.astype(float), gauss_window)
         x, y = np.unravel_index(np.argmax(blurred, axis=None), blurred.shape)
         return (y, x)
@@ -423,7 +423,7 @@ class Experiment:
             else:
                 window_size = r[1] * 2
 
-            #window_size = int(window_size/1.414)
+            # window_size = int(window_size/1.414)
             if window_size % 2 == 1:
                 window_size = window_size + 1
 
@@ -434,13 +434,13 @@ class Experiment:
 
         img_cropped = img[a1:b1, a2:b2]
 
-        #crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread=spread, offset = offset)
-        #crystalposition = self.find_crystal_center(img_cropped, window_size)
+        # crystalpositions = find_crystals_timepix(img_cropped, magnification = magnification, spread=spread, offset = offset)
+        # crystalposition = self.find_crystal_center(img_cropped, window_size)
         crystalposition = self.find_crystal_center_fromhist(img_cropped)
         center = (window_size / 2, window_size / 2)
 
         # if len(crystalpositions) == 1:
-        #crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
+        # crystalxy = (crystalpositions[0].x, crystalpositions[0].y)
         shift = np.subtract(center, crystalposition)
         # elif len(crystalpositions) > 1:
         #    areas = [crystal.area_pixel for crystal in crystalpositions]
@@ -476,7 +476,7 @@ class Experiment:
         print("\033[k", msg, end="\r")
 
     def imagevar_blank_estimator(self, brightness, cycle=3):
-        #previous_mode = self.ctrl.mode
+        # previous_mode = self.ctrl.mode
         self.ctrl.mode = 'mag1'
         self.ctrl.brightness.value = brightness
 
@@ -576,7 +576,7 @@ class Experiment:
 
             img0_p = preprocess(img0.astype(np.float))
             scorefromCNN = predict(img0_p)
-            #self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
+            # self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
             self.logger.debug(f"Score for the DP: {scorefromCNN}")
 
             crystal_pos, img0_cropped, window_size = self.image_cropper(img=img0, window_size=0)
@@ -807,7 +807,7 @@ class Experiment:
         self.ctrl.imageshift1.set(x=is1_init[0], y=is1_init[1])
         self.ctrl.imageshift2.set(x=is2_init[0], y=is2_init[1])
 
-        #stage_positions = tracer.stop()
+        # stage_positions = tracer.stop()
         stageposx, stageposy, stageposz, stageposa, stageposb = self.ctrl.stage.get()
         rotrange = abs(self.endangle - self.startangle)
 
@@ -887,7 +887,7 @@ class Experiment:
             s.send(msg_tosend)
             self.print_and_del("SMVs sent to DIALS for processing.")
 
-        #self.logger.info("XDS INP file created.")
+        # self.logger.info("XDS INP file created.")
 
         if image_buffer:
             drc = os.path.join(path, "tiff_image")
@@ -1095,12 +1095,12 @@ class Experiment:
 
         transform_beamshift_d, c = load_IS_Calibrations(imageshift='BS', ctrl=self.ctrl, diff_defocus=0, logger=self.logger, mode='diff')
         transform_beamshift_d_defoc, c = load_IS_Calibrations(imageshift='BS', ctrl=self.ctrl, diff_defocus=self.diff_defocus, logger=self.logger, mode='diff')
-        #transform_beamshift_d = self.calib_beamshift.transform
+        # transform_beamshift_d = self.calib_beamshift.transform
 
         transform_stagepos, c = load_IS_Calibrations(imageshift='S', ctrl=self.ctrl, diff_defocus=0, logger=self.logger, mode='mag1')
 
         if self.mode == 3:
-            #ready = input("Please make sure that you are in the super user mode and the rotation speed is set via GONIOTOOL! Press ENTER to continue.")
+            # ready = input("Please make sure that you are in the super user mode and the rotation speed is set via GONIOTOOL! Press ENTER to continue.")
 
             if self.ctrl.mode != 'mag1':
                 self.ctrl.mode = 'mag1'
@@ -1119,7 +1119,7 @@ class Experiment:
 
             self.rotation_direction = self.eliminate_backlash_in_tiltx()
             img, h = self.ctrl.getImage(exposure=self.expt, header_keys=header_keys)
-            #img, h = Experiment.apply_corrections(img, h)
+            # img, h = Experiment.apply_corrections(img, h)
 
             threshold = 10  # ignore black images
 
@@ -1221,7 +1221,7 @@ class Experiment:
 
                             crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
-                            #self.ctrl.brightness.value = img_brightness
+                            # self.ctrl.brightness.value = img_brightness
 
                             if n_crystals == 0:
                                 self.print_and_del("No crystals found in the image. exitting loop...")

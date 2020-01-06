@@ -40,7 +40,7 @@ def print_subranges(data, n=100, step=50):
 def get_drifts_per_scan_range(xy):
     i = np.nansum(xy, axis=1) == 0
 
-    rng = np.arange(len(i))[i != True]
+    rng = np.arange(len(i))[i != True]  # noqa
 
     subranges = find_subranges(rng)
     normalized_xy = []
