@@ -7,7 +7,6 @@ from instamatic.processing.stretch_correction import affine_transform_ellipse_to
 from instamatic import config
 from instamatic.tools import find_beam_center, find_subranges
 from instamatic.tools import find_beam_center_with_beamstop, to_xds_untrusted_area
-from math import cos
 import collections
 import logging
 logger = logging.getLogger(__name__)
@@ -20,8 +19,8 @@ def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
     if invert:
         rotation_axis += np.pi
 
-    rot_x = cos(rotation_axis)
-    rot_y = cos(rotation_axis + np.pi/2)
+    rot_x = np.cos(rotation_axis)
+    rot_y = np.sin(rotation_axis)
     rot_z = 0
 
     if setting == 'dials':
