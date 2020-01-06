@@ -174,8 +174,8 @@ def _gen_header():
 header_image_dtype = _gen_header()
 
 mrc2ara = {'': ''}
-mrc2ara.update(dict([(h[0], 'mrc' + h[0]) for h in header_image_dtype.names]))
-ara2mrc = dict([(val, key) for key, val in mrc2ara.items()])
+mrc2ara.update({h[0]: 'mrc' + h[0] for h in header_image_dtype.names})
+ara2mrc = {val: key for key, val in mrc2ara.items()}
 
 
 def create_header(shape, dtype, order='C', header=None):
@@ -293,7 +293,7 @@ def is_readable(filename, no_strict_mrc=False):
         _logger.debug("Byteorder: %d - %d" % (h['byteorder'][0], ((h['byteorder'][0] & -65536) not in intbyteorder)))
         _logger.debug("Byteorder-swap: %d - %d" % ((h['byteorder'][0].byteswap() & -65536), ((h['byteorder'][0].byteswap() & -65536) not in intbyteorder)))
         for name in ('alpha', 'beta', 'gamma'):
-            _logger.debug("%s: %f - %d" % (name, h[name][0], ((h[name][0] != 90.0))))
+            _logger.debug("%s: %f - %d" % (name, h[name][0], (h[name][0] != 90.0)))
         for name in ('nx', 'ny', 'nz'):
             _logger.debug("%s: %d - %d" % (name, h[name][0], (h[name][0] > 0)))
     if h['mode'][0] not in mrc2numpy:
@@ -387,7 +387,7 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
         if not is_readable(h, no_strict_mrc):
             h = h.newbyteorder()
         if not is_readable(h, no_strict_mrc):
-            raise IOError("Not MRC header")
+            raise OSError("Not MRC header")
     finally:
         util.close(filename, f)
     return h
@@ -467,7 +467,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         try:
             f.seek(int(offset))
         except BaseException:
-            _logger.error("%s -- %s" % (str(offset), str(offset.__class__.__name__)))
+            _logger.error("{} -- {}".format(str(offset), str(offset.__class__.__name__)))
             raise
         if not hasattr(index, '__iter__'):
             index = range(index, count)
@@ -548,7 +548,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         header = read_header(h, force_volume=force_volume)
         count = count_images(h)
         if idx >= count:
-            raise IOError("Index exceeds number of images in stack: %d < %d" % (idx, count))
+            raise OSError("Index exceeds number of images in stack: %d < %d" % (idx, count))
         if index is None and (count == h['nx'][0] or force_volume):
             d_len = h['nx'][0] * h['ny'][0] * h['nz'][0]
         else:

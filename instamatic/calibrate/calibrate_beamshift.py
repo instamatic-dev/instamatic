@@ -20,12 +20,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CalibBeamShift(object):
+class CalibBeamShift:
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
 
     def __init__(self, transform, reference_shift, reference_pixel):
-        super(CalibBeamShift, self).__init__()
+        super().__init__()
         self.transform = transform
         self.reference_shift = reference_shift
         self.reference_pixel = reference_pixel
@@ -64,9 +64,9 @@ class CalibBeamShift(object):
         import pickle
         try:
             return pickle.load(open(fn, "rb"))
-        except IOError as e:
+        except OSError as e:
             prog = "instamatic.calibrate_beamshift"
-            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     @classmethod
     def live(cls, ctrl, outdir="."):
@@ -194,7 +194,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
-    beampos = np.array(beampos) - np.array((beamshift_cent))
+    beampos = np.array(beampos) - np.array(beamshift_cent)
 
     c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
 
@@ -240,7 +240,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         img, h = load_img(fn)
         img = imgscale(img, scale)
 
-        beamshift = np.array((h["BeamShift"]))
+        beamshift = np.array(h["BeamShift"])
         print()
         print("Image:", fn)
         print("Beamshift: x={} | y={}".format(*beamshift))

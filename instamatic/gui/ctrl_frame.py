@@ -147,7 +147,7 @@ class ExperimentalCtrl(LabelFrame):
         self.ctrl.mode = self.var_mode.get()
 
     def set_brightness(self, event=None):
-        self.var_brightness.set((self.var_brightness.get()))
+        self.var_brightness.set(self.var_brightness.get())
         self.q.put(("ctrl", {"task": "brightness.set",
                              "value": self.var_brightness.get()}))
         self.triggerEvent.set()
@@ -156,7 +156,7 @@ class ExperimentalCtrl(LabelFrame):
         self.var_brightness.set(self.ctrl.brightness.get())
 
     def set_difffocus(self, event=None):
-        self.var_difffocus.set((self.var_difffocus.get()))
+        self.var_difffocus.set(self.var_difffocus.get())
         self.q.put(("ctrl", {"task": "difffocus.set",
                              "value": self.var_difffocus.get()}))
         self.triggerEvent.set()

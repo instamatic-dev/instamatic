@@ -7,12 +7,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CameraSimu(object):
+class CameraSimu:
     """docstring for CameraSimu"""
 
     def __init__(self, name="simulate"):
         """Initialize camera module """
-        super(CameraSimu, self).__init__()
+        super().__init__()
 
         self.name = name
 

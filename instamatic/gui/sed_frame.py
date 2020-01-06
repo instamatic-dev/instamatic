@@ -127,7 +127,7 @@ class ExperimentalSED(LabelFrame):
         path = self.calib_path / CALIB_BEAMSHIFT
         try:
             c = CalibDirectBeam.from_file(path)
-        except IOError as e:
+        except OSError as e:
             print(e)
         else:
             c.plot()
@@ -137,7 +137,7 @@ class ExperimentalSED(LabelFrame):
         path = self.calib_path / CALIB_DIRECTBEAM
         try:
             c = CalibDirectBeam.from_file(path)
-        except IOError as e:
+        except OSError as e:
             print(e)
         else:
             c.plot("DiffShift")
@@ -147,7 +147,7 @@ class ExperimentalSED(LabelFrame):
         path = self.calib_path / CALIB_DIRECTBEAM
         try:
             c = CalibDirectBeam.from_file(path)
-        except IOError as e:
+        except OSError as e:
             print(e)
         else:
             c.plot("BeamShift")
@@ -173,7 +173,7 @@ def acquire_data_SED(controller, **kwargs):
     params = workdir / "params.json"
     try:
         params = json.load(open(params, "r"))
-    except IOError:
+    except OSError:
         params = PARAMS
 
     params.update(kwargs)

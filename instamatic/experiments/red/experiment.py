@@ -9,7 +9,7 @@ from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
-class Experiment(object):
+class Experiment:
     """Initialize stepwise rotation electron diffraction experiment.
 
     ctrl:
@@ -23,7 +23,7 @@ class Experiment(object):
     """
 
     def __init__(self, ctrl, path: str = None, log=None, flatfield=None):
-        super(Experiment, self).__init__()
+        super().__init__()
         self.ctrl = ctrl
         self.path = Path(path)
 

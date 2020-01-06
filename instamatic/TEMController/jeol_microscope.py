@@ -44,16 +44,16 @@ MIN = 0
 # Piezo stage seems to operate on a different level than standard XY
 
 
-class JeolMicroscope(object):
+class JeolMicroscope:
     """docstring for microscope"""
 
     def __init__(self, name: str = "jeol"):
-        super(JeolMicroscope, self).__init__()
+        super().__init__()
 
         # initial COM in multithread mode if not initialized otherwise
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-        except WindowsError:
+        except OSError:
             comtypes.CoInitialize()
 
         # get the JEOL COM library and create the TEM3 object
@@ -389,13 +389,13 @@ class JeolMicroscope(object):
         if self.goniotool_available:
             self.goniotool.get_rate()
         else:
-            raise IOError("Goniotool connection is not available.")
+            raise OSError("Goniotool connection is not available.")
 
     def setRotationSpeed(self, value: int):
         if self.goniotool_available:
             self.goniotool.set_rate(value)
         else:
-            raise IOError("Goniotool connection is not available.")
+            raise OSError("Goniotool connection is not available.")
 
     def resetStage(self):
         """Move stage to origin"""

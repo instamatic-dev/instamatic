@@ -2,7 +2,7 @@ import numpy as np
 from .montage import *
 
 
-class GridMontage(object):
+class GridMontage:
     """Set up an automated montage map"""
 
     def __init__(self, ctrl):
@@ -69,7 +69,7 @@ class GridMontage(object):
         stage_center = np.dot(px_center, mati) + stage_shift
         stagepos = np.dot(px_coords, mati)
 
-        coords = ((stagepos - stage_center)).astype(int)
+        coords = (stagepos - stage_center).astype(int)
 
         self.stagecoords = coords
         self.grid = grid

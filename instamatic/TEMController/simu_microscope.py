@@ -29,11 +29,11 @@ MAX = 65535
 MIN = 0
 
 
-class SimuMicroscope(object):
+class SimuMicroscope:
     """docstring for microscope"""
 
     def __init__(self, name: str = "simulate"):
-        super(SimuMicroscope, self).__init__()
+        super().__init__()
 
         self.CurrentDensity_value = 100_000.0
 

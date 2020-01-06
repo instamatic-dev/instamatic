@@ -11,7 +11,7 @@ import pickle
 import time
 
 
-class SerialExperiment(object):
+class SerialExperiment:
     """docstring for SerialExperiment"""
 
     def __init__(self, ctrl,
@@ -140,7 +140,7 @@ class SerialExperiment(object):
         print(f"Data directory: {self.path}")
 
 
-class Experiment(object):
+class Experiment:
     """Class to control data collection through EMMenu to collect
     continuous rotation electron diffraction data
 
@@ -205,7 +205,7 @@ class Experiment(object):
             self.track_relative = False
 
         else:
-            raise IOError("I don't know how to read file `{trackfile}`")
+            raise OSError("I don't know how to read file `{trackfile}`")
 
     def prepare_tracking(self):
         if self.track:

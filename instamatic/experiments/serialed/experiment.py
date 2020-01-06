@@ -131,11 +131,11 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
     return np.vstack((x_offsets, y_offsets)).T
 
 
-class Experiment(object):
+class Experiment:
     """docstring for Experiment"""
 
     def __init__(self, ctrl, params, scan_radius=None, begin_here=False, expdir=None, log=None):
-        super(Experiment, self).__init__()
+        super().__init__()
         self.ctrl = ctrl
         self.camera = ctrl.cam.name
         self.log = log
@@ -197,7 +197,7 @@ class Experiment(object):
 
         try:
             self.calib_beamshift = CalibBeamShift.from_file()
-        except IOError:
+        except OSError:
             self.ctrl.mode_mag1()
             self.ctrl.store("image")
             self.ctrl.brightness.set(image_brightness)
@@ -220,7 +220,7 @@ class Experiment(object):
 
         try:
             self.calib_directbeam = CalibDirectBeam.from_file()
-        except IOError:
+        except OSError:
             self.ctrl.mode_diffraction()
             self.ctrl.store("diffraction")
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
@@ -547,7 +547,7 @@ def main():
     from instamatic import TEMController
     try:
         params = json.load(open("params.json", "r"))
-    except IOError:
+    except OSError:
         params = {}
 
     logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",

@@ -17,7 +17,7 @@ class DataCollectionController(threading.Thread):
     """docstring for DataCollectionController"""
 
     def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, log=None):
-        super(DataCollectionController, self).__init__()
+        super().__init__()
         self.ctrl = ctrl
         self.stream = stream
         self.beam_ctrl = beam_ctrl
@@ -121,11 +121,11 @@ class ModuleFrame(Frame):
         return self.modules[module]
 
 
-class MainFrame(object):
+class MainFrame:
     """docstring for MainFrame"""
 
     def __init__(self, root, cam, modules=()):
-        super(MainFrame, self).__init__()
+        super().__init__()
 
         self.root = root
 

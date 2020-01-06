@@ -14,12 +14,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CalibStage(object):
+class CalibStage:
     """Simple class to hold the methods to perform transformations from one setting to another
     based on calibration results"""
 
     def __init__(self, rotation, camera_dimensions, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
-        super(CalibStage, self).__init__()
+        super().__init__()
         self.has_data = False
         self.rotation = rotation
         self.translation = translation
@@ -186,9 +186,9 @@ class CalibStage(object):
     def from_file(cls, fn=CALIB_STAGE_LOWMAG):
         try:
             return pickle.load(open(fn, "rb"))
-        except IOError as e:
+        except OSError as e:
             prog = "instamatic.calibrate_stage_lowmag/mag1"
-            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     def to_file(self, fn=CALIB_STAGE_LOWMAG):
         pickle.dump(self, open(fn, "wb"))

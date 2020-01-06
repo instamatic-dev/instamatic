@@ -31,7 +31,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
     else:
         #         hsize = ((len(out) + 23) // 512 + 1) * 512
         hsize = (len(out) + 533) & ~(512 - 1)
-        out += "HEADER_BYTES={:d};\n".format(hsize).encode()
+        out += f"HEADER_BYTES={hsize:d};\n".encode()
         pad = hsize - len(out) - 2
     out += b"}" + (pad + 1) * b'\x00'
     assert len(out) % 512 == 0, "Header is not multiple of 512"
@@ -92,7 +92,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-        raise IOError(f"Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}")
+        raise OSError(f"Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}")
 
     return data, header
 

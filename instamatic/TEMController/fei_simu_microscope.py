@@ -14,15 +14,15 @@ MIN = 0.0
 MAX = 1.0
 
 
-class FEISimuMicroscope(object):
+class FEISimuMicroscope:
     """docstring for FEI microscope"""
 
     def __init__(self, name="fei_simu"):
-        super(FEISimuMicroscope, self).__init__()
+        super().__init__()
 
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-        except WindowsError:
+        except OSError:
             comtypes.CoInitialize()
 
         print("BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU")

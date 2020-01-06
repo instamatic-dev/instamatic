@@ -51,7 +51,7 @@ def correctCross(raw, factor=2.15):
     raw[:, 258:261] = raw[:, 260:261] / factor
 
 
-class CameraTPX(object):
+class CameraTPX:
     def __init__(self):
         libdrc = Path(__file__).parent
 
@@ -105,7 +105,7 @@ class CameraTPX(object):
             self.is_connected = True
             print(f"Camera connected (hwId={hwId.value})")
         else:
-            raise IOError("Could not establish connection to camera.")
+            raise OSError("Could not establish connection to camera.")
         return ret
 
     def disconnect(self):
@@ -125,7 +125,7 @@ class CameraTPX(object):
     def readRealDacs(self, filename):
         "std::string filename"
         if not os.path.exists(filename):
-            raise IOError(f"Cannot find `RealDacs` file: {filename}")
+            raise OSError(f"Cannot find `RealDacs` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -141,7 +141,7 @@ class CameraTPX(object):
     def readHwDacs(self, filename):
         "std::string filename"
         if not os.path.exists(filename):
-            raise IOError(f"Cannot find `HwDacs` file: {filename}")
+            raise OSError(f"Cannot find `HwDacs` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -158,7 +158,7 @@ class CameraTPX(object):
         "std::string filename"
         "int mode = TPX_MODE_DONT_SET  ->  set in header file"
         if not os.path.exists(filename):
-            raise IOError(f"Cannot find `PixelsCfg` file: {filename}")
+            raise OSError(f"Cannot find `PixelsCfg` file: {filename}")
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
