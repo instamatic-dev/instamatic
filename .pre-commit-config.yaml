@@ -13,7 +13,7 @@ repos:
     rev: v1.4.4  # Use the sha / tag you want to point at
     hooks:
     -   id: autopep8
-        args: ['--in-place', '--ignore=E265,E501,W504']
+        args: ['--in-place', '--ignore=E501,W504']
 -   repo: https://github.com/asottile/pyupgrade
     rev: v1.25.2
     hooks:
@@ -23,4 +23,4 @@ repos:
     rev: 3.7.9
     hooks:
     -   id: flake8
-        args: ['--statistics', '--ignore=F405,E501', '--output=flake8.log', '--exit-zero']
+        args: ['--statistics', '--ignore=F401,F403,F405,F821,F841,E265,E501']
