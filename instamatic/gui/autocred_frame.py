@@ -1,6 +1,7 @@
 from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
+import threading
 import os
 import pickle
 from instamatic.calibrate.filenames import *
