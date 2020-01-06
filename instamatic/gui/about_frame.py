@@ -24,7 +24,7 @@ def get_background_of_widget(widget):
     return background
 
 
-class Link_Button(tkLabel, object):
+class Link_Button(tkLabel):
     """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-button/"""
 
     def __init__(self, master, text, background=None, font=None, familiy=None, size=None, underline=True, visited_fg="#551A8B", normal_fg="#0000EE", visited=False, action=None):

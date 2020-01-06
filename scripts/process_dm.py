@@ -30,7 +30,7 @@ def relativistic_wavelength(voltage: float = 200):
     e = 1.6021766208e-19  # elementary charge C
     c = 299792458        # speed of light m/s
 
-    wl = h / ((2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))))**0.5
+    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2)))**0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom
 

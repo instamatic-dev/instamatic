@@ -86,7 +86,7 @@ INTEGER_LIST = ("MapWidthHeight", "MapFramesXY",
 UNDEFINED = ()
 
 
-class NavItem(object):
+class NavItem:
     """
     DataClass for SerialEM Nav items
 
@@ -172,11 +172,11 @@ class NavItem(object):
         return {key: self.__dict__[key] for key in self._keys}
 
 
-class ClassName(object):
+class ClassName:
     """docstring for ClassName"""
 
     def __init__(self, arg):
-        super(ClassName, self).__init__()
+        super().__init__()
         self.arg = arg
 
 

@@ -46,7 +46,7 @@ def EMVector2dict(vec):
     return d
 
 
-class CameraEMMENU(object):
+class CameraEMMENU:
     """docstring for CameraEMMENU"""
 
     def __init__(self, drc_name: str = "Diffraction", interface: str = "emmenu"):
@@ -55,7 +55,7 @@ class CameraEMMENU(object):
 
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-        except WindowsError:
+        except OSError:
             comtypes.CoInitialize()
 
         self.name = interface

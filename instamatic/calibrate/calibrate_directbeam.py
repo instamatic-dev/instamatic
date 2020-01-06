@@ -51,11 +51,11 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
     return newval
 
 
-class CalibDirectBeam(object):
+class CalibDirectBeam:
     """docstring for CalibDirectBeam"""
 
     def __init__(self, dct={}):
-        super(CalibDirectBeam, self).__init__()
+        super().__init__()
         self._dct = dct
 
     def __repr__(self):
@@ -132,9 +132,9 @@ class CalibDirectBeam(object):
         import pickle
         try:
             return pickle.load(open(fn, "rb"))
-        except IOError as e:
+        except OSError as e:
             prog = "instamatic.calibrate_directbeam"
-            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     @classmethod
     def live(cls, ctrl, outdir="."):
@@ -231,7 +231,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
         attr.set(x=x_cent + dx, y=y_cent + dy)
 
-        printer("Position: {}/{}: {}".format(i, tot, attr))
+        printer(f"Position: {i}/{tot}: {attr}")
 
         outfile = os.path.join(outdir, f"calib_db_{key}_{i:04d}") if save_images else None
 
@@ -251,7 +251,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
-    readouts = np.array(readouts) - np.array((readout_cent))
+    readouts = np.array(readouts) - np.array(readout_cent)
 
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
 
@@ -283,7 +283,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
         img, h = load_img(fn)
         img = imgscale(img, scale)
 
-        readout = np.array((h[key]))
+        readout = np.array(h[key])
         print()
         print("Image:", fn)
         print("{}: dx={} | dy={}".format(key, *readout))
@@ -295,7 +295,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
-    readouts = np.array(readouts) - np.array((readout_cent))
+    readouts = np.array(readouts) - np.array(readout_cent)
 
     c = CalibDirectBeam.from_data(shifts, readouts, key, header=h_cent, **refine_params[key])
     c.plot(key)

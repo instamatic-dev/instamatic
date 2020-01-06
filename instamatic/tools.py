@@ -20,7 +20,7 @@ def find_script(script: str):
     if not script.exists():
         test_location = config.scripts_drc / script
         if not test_location.exists():
-            raise IOError(f"No such script: {script}")
+            raise OSError(f"No such script: {script}")
         else:
             script = test_location
 
@@ -276,7 +276,7 @@ def get_files(file_pat: str) -> list:
         fns = glob.glob(file_pat)
 
     if len(fns) == 0:
-        raise IOError(f"No files matching '{file_pat}' were found.")
+        raise OSError(f"No files matching '{file_pat}' were found.")
 
     return fns
 
@@ -362,6 +362,6 @@ def relativistic_wavelength(voltage: float = 200_000) -> float:
     e = 1.6021766208e-19  # elementary charge C
     c = 299792458        # speed of light m/s
 
-    wl = h / ((2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))))**0.5
+    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2)))**0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom

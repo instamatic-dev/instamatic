@@ -31,7 +31,7 @@ def start_server_in_subprocess():
     atexit.register(kill_server, p)
 
 
-class GonioToolClient(object):
+class GonioToolClient:
     """
     Simulates a GonioToolWrapper object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the GonioToolWrapper API.
@@ -113,7 +113,7 @@ class GonioToolClient(object):
         return self._dct.keys()
 
 
-class GonioToolWrapper(object):
+class GonioToolWrapper:
     """docstring for GonioToolWrapper
 
     barrier: threading.Barrier

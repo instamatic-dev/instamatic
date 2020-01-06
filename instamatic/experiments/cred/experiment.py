@@ -17,7 +17,7 @@ def print_and_log(msg, logger=None):
         logger.info(msg)
 
 
-class Experiment(object):
+class Experiment:
     """Initialize continuous rotation electron diffraction experiment.
 
     ctrl:
@@ -65,7 +65,7 @@ class Experiment(object):
                  write_red: bool = True,
                  stop_event=None,
                  ):
-        super(Experiment, self).__init__()
+        super().__init__()
         self.ctrl = ctrl
         self.path = Path(path)
         self.exposure = exposure_time

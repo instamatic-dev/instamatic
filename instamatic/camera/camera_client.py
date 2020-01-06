@@ -30,7 +30,7 @@ def start_server_in_subprocess():
     atexit.register(kill_server, p)
 
 
-class CamClient(object):
+class CamClient:
     """
     Simulates a Camera object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the camera API.

@@ -17,11 +17,11 @@ def volume(cell):
     return vol
 
 
-class xds_parser(object):
+class xds_parser:
     """docstring for xds_parser"""
 
     def __init__(self, filename):
-        super(xds_parser, self).__init__()
+        super().__init__()
         self.ios_threshold = 0.8
 
         self.filename = Path(filename).resolve()

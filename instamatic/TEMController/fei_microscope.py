@@ -117,15 +117,15 @@ CameraLengthMapping = {
     21: 3700}
 
 
-class FEIMicroscope(object):
+class FEIMicroscope:
     """docstring for FEI microscope"""
 
     def __init__(self, name="fei"):
-        super(FEIMicroscope, self).__init__()
+        super().__init__()
 
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
-        except WindowsError:
+        except OSError:
             comtypes.CoInitialize()
 
         print("FEI Themis Z initializing...")

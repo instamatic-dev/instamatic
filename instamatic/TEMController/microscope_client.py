@@ -34,7 +34,7 @@ def start_server_in_subprocess():
     atexit.register(kill_server, p)
 
 
-class MicroscopeClient(object):
+class MicroscopeClient:
     """
     Simulates a Microscope object and synchronizes calls over a socket server.
     For documentation, see the actual python interface to the microscope API.
@@ -116,7 +116,7 @@ class MicroscopeClient(object):
         return self._dct.keys()
 
 
-class TraceVariable(object):
+class TraceVariable:
     """docstring for Tracer"""
 
     def __init__(self, func, interval=1.0, name="variable", verbose=False):

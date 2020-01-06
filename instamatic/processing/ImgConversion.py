@@ -42,7 +42,7 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
     scanranges = find_subranges(sequence)
 
     scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
-    excludeimages = ",".join((str(n) for n in missing))
+    excludeimages = ",".join(str(n) for n in missing)
 
     if rotation_xyz:
         rot_x, rot_y, rot_z = rotation_xyz
@@ -91,7 +91,7 @@ def get_calibrated_rotation_speed(val):
     return calibrated_value
 
 
-class ImgConversion(object):
+class ImgConversion:
     """This class is for post RED/cRED data collection image conversion.
     Files can be generated for REDp, DIALS, XDS, and PETS.
 
@@ -282,8 +282,8 @@ class ImgConversion(object):
 
         # In XDS, the geometrically corrected coordinates of a pixel at IX,IY
         # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
-        write_cbf(path / "XCORR.cbf", np.int32((xcorr * 100)))
-        write_cbf(path / "YCORR.cbf", np.int32((ycorr * 100)))
+        write_cbf(path / "XCORR.cbf", np.int32(xcorr * 100))
+        write_cbf(path / "YCORR.cbf", np.int32(ycorr * 100))
 
     def tiff_writer(self, path: str) -> None:
         """Write all data as tiff files to given `path`"""
