@@ -68,7 +68,7 @@ def write_csv(f, results):
 def read_csv(f):
     """Read a csv file into a pandas DataFrame"""
     if isinstance(f, (list, tuple)):
-        return pd.concat((read_csv(csv) for csv in f))
+        return pd.concat(read_csv(csv) for csv in f)
     else:
         return pd.DataFrame.from_csv(f)
 

@@ -61,11 +61,11 @@ def get_alignments() -> dict:
     return alignments
 
 
-class ConfigObject(object):
+class ConfigObject:
     """Namespace for configuration (maps dict items to attributes"""
 
     def __init__(self, d):
-        super(ConfigObject, self).__init__()
+        super().__init__()
         self.d = d
 
         for key, value in d.items():

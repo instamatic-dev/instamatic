@@ -31,7 +31,7 @@ def read_image(fname: str) -> (np.array, dict):
     elif ext in (".mrc"):
         img, h = read_mrc(fname)
     else:
-        raise IOError(f"Cannot open file {fname}, unknown extension: {ext}")
+        raise OSError(f"Cannot open file {fname}, unknown extension: {ext}")
     return img, h
 
 

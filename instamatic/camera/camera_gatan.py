@@ -60,7 +60,7 @@ else:
     SYMBOLS["simu"] = SYMBOLS["actual"]
 
 
-class CameraDLL(object):
+class CameraDLL:
     """docstring for Camera"""
 
     def __init__(self, name="gatan"):
@@ -70,7 +70,7 @@ class CameraDLL(object):
             'gatan'
             'simulateDLL'
         """
-        super(CameraDLL, self).__init__()
+        super().__init__()
 
         cameradir = Path(__file__).parent
 
@@ -87,7 +87,7 @@ class CameraDLL(object):
 
         try:
             lib = ctypes.cdll.LoadLibrary(str(libpath))
-        except WindowsError as e:
+        except OSError as e:
             print(e)
             raise RuntimeError(f"Cannot load DLL: {libpath}")
 

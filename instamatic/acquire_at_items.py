@@ -1,6 +1,4 @@
-
-
-class AcquireAtItems(object):
+class AcquireAtItems:
     """Class to automated acquisition at many stage locations.
 
     Parameters
@@ -31,7 +29,7 @@ class AcquireAtItems(object):
                  pre_acquire=None,
                  post_acquire=None,
                  backlash: bool = True):
-        super(AcquireAtItems, self).__init__()
+        super().__init__()
 
         self.nav_items = nav_items
         self.ctrl = ctrl

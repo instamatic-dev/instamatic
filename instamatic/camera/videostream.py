@@ -3,11 +3,11 @@ from .camera import Camera
 import atexit
 
 
-class ImageGrabber(object):
+class ImageGrabber:
     """docstring for ImageGrabber"""
 
     def __init__(self, cam, callback, frametime=0.05):
-        super(ImageGrabber, self).__init__()
+        super().__init__()
 
         self.callback = callback
         self.cam = cam

@@ -15,7 +15,7 @@ def read(fname):
 
 try:
     long_description = read('README.rst')
-except IOError:
+except OSError:
     long_description = read('README.md')
 
 setup(

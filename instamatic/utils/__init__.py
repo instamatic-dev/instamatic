@@ -1,4 +1,3 @@
-
 def is_admin():
     """Check if the current python instance has admin rights"""
     import ctypes

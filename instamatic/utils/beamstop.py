@@ -27,7 +27,7 @@ def minimum_bounding_rectangle(points):
     edges = np.zeros((len(hull_points) - 1, 2))
     edges = hull_points[1:] - hull_points[:-1]
 
-    angles = np.zeros((len(edges)))
+    angles = np.zeros(len(edges))
     angles = np.arctan2(edges[:, 1], edges[:, 0])
 
     angles = np.abs(np.mod(angles, pi2))

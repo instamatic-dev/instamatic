@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CalibBrightness(object):
+class CalibBrightness:
     """docstring for calib_brightness"""
 
     def __init__(self, slope, intercept):
@@ -50,9 +50,9 @@ class CalibBrightness(object):
         import pickle
         try:
             return pickle.load(open(fn, "rb"))
-        except IOError as e:
+        except OSError as e:
             prog = "instamatic.calibrate_brightness"
-            raise IOError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
 
     def to_file(self, fn=CALIB_BRIGHTNESS):
         pickle.dump(self, open(fn, "wb"))
@@ -121,7 +121,7 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
 
         size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
 
-        print("Brightness: {:.f}, equivalent diameter: {:.1f}".format(brightness, size))
+        print(f"Brightness: {brightness:.f}, equivalent diameter: {size:.1f}")
         values.append((brightness, size))
 
     values = np.array(values)

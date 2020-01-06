@@ -71,7 +71,7 @@ StagePositionTuple = namedtuple("StagePositionTuple", ["x", "y", "z", "a", "b"])
 DeflectorTuple = namedtuple("DeflectorTuple", ["x", "y"])
 
 
-class Deflector(object):
+class Deflector:
     """Generic microscope deflector object defined by X/Y values
     Must be subclassed to set the self._getter, self._setter functions"""
 
@@ -127,7 +127,7 @@ class Deflector(object):
         self._tem.setNeutral(self.key)
 
 
-class Lens(object):
+class Lens:
     """Generic microscope lens object defined by one value
     Must be subclassed to set the self._getter, self._setter functions"""
 
@@ -335,7 +335,7 @@ class ImageShift2(Deflector):
         self.key = "IS2"
 
 
-class Stage(object):
+class Stage:
     """Stage control"""
 
     def __init__(self, tem):
@@ -657,7 +657,7 @@ class Stage(object):
             time.sleep(settle_delay)
 
 
-class TEMController(object):
+class TEMController:
     """
     TEMController object that enables access to all defined microscope controls
 
@@ -666,7 +666,7 @@ class TEMController(object):
     """
 
     def __init__(self, tem, cam=None):
-        super(TEMController, self).__init__()
+        super().__init__()
 
         self.tem = tem
         self.cam = cam

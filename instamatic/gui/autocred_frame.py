@@ -1,6 +1,7 @@
 from .base_module import BaseModule
 from tkinter import *
 from tkinter.ttk import *
+import threading
 import os
 import pickle
 from instamatic.calibrate.filenames import *
@@ -255,7 +256,7 @@ class ExperimentalautocRED(LabelFrame):
         print(path)
         try:
             c = CalibBeamShift.from_file(path)
-        except IOError as e:
+        except OSError as e:
             print(e)
         else:
             c.plot()
@@ -278,7 +279,7 @@ class ExperimentalautocRED(LabelFrame):
         try:
             with open(path, 'rb') as f:
                 t, c = pickle.load(f)
-        except IOError as e:
+        except OSError as e:
             print(e)
         else:
             plt.scatter(*c[1].T, marker=">", label="Observed pixel shifts")

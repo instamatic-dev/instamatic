@@ -334,7 +334,7 @@ def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res
     plt.show()
 
 
-class Montage(object):
+class Montage:
     """This class is used to stitch together a set of images to make a larger image
 
     Parameters
@@ -658,7 +658,7 @@ class Montage(object):
         vects = self.get_montage_coords()
 
         # determine which frames items have neighbours
-        has_neighbours = set([i for key in difference_vectors.keys() for i in key])
+        has_neighbours = {i for key in difference_vectors.keys() for i in key}
 
         # setup parameters
         params = lmfit.Parameters()

@@ -114,7 +114,7 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
     ax3 = plt.subplot(133, title="Diffraction pattern")
     im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
 
-    class plt_diff(object):
+    class plt_diff:
         center, = ax3.plot([], [], "o", color="red", lw=0)
         data = None
 
