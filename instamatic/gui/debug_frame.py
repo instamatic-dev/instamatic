@@ -16,10 +16,6 @@ VM_SERVER_EXE = config.cfg.VM_server_exe
 VMHOST = config.cfg.VM_server_host
 VMPORT = config.cfg.VM_server_port
 
-use_shelxt = False
-compos = None
-spgr = None
-unitcell = None
 
 class DebugFrame(LabelFrame):
     """docstring for DebugFrame"""
@@ -75,17 +71,17 @@ class DebugFrame(LabelFrame):
         self.use_shelxt_check = Checkbutton(frame, text="Use SHELXT for online structure solution", variable = self.var_use_shelxt, command=self.toggle_use_shelxt)
         self.use_shelxt_check.grid(row=4, column=0, sticky="W")
 
-        Label(frame, text="Composition: ").grid(row=4, column=2, sticky="EW")
-        self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=DISABLED)
-        self.e_compo.grid(row=4, column=3, sticky="EW")
-
-        Label(frame, text="Space group: ").grid(row=5, column=2, sticky="EW")
+        Label(frame, text="Space group: ").grid(row=4, column=2, sticky="EW")
         self.e_sg = Entry(frame, textvariable=self.var_e_sg, width=15, state=DISABLED)
-        self.e_sg.grid(row=5, column=3, sticky="EW")
+        self.e_sg.grid(row=5, column=3, sticky="EW", columnspan=2)
 
-        Label(frame, text="Unit cell: ").grid(row=6, column=2, sticky="EW")
+        Label(frame, text="Unit cell: ").grid(row=5, column=2, sticky="EW")
         self.e_uc = Entry(frame, textvariable=self.var_e_uc, width=15, state=DISABLED)
         self.e_uc.grid(row=6, column=3, sticky="EW")
+
+        Label(frame, text="Composition: ").grid(row=6, column=2, sticky="EW")
+        self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=DISABLED)
+        self.e_compo.grid(row=4, column=3, sticky="EW", columnspan=1)
 
         frame.columnconfigure(0, weight=1)
         frame.pack(side="top", fill="x", padx=10, pady=10)
@@ -159,18 +155,18 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def start_server_xdsVM(self):
-        global compos
-        global unitcell
-        global spgr
-        global use_shelxt
         compos = self.var_e_compo.get()
         unitcell = self.var_e_uc.get()
         spgr = self.var_e_sg.get()
         use_shelxt = self.var_use_shelxt.get()
 
-        print(use_shelxt, spgr)
+        print(f"Use ShelXT: {use_shelxt}; Space group: {spgr}")
 
-        self.q.put(("autoindex_xdsVM", {"task": "start_server_xdsVM"}))
+        self.q.put(("autoindex_xdsVM", {"task": "start_server_xdsVM",
+                                        "compos": compos,
+                                        "unitcell": unitcell,
+                                        "spgr": spgr,
+                                        "use_shelxt": use_shelxt }))
         self.triggerEvent.set()
 
     def register_server_xdsVM(self):
@@ -299,12 +295,18 @@ def autoindex(controller, **kwargs):
     if task == "kill":
         del controller.indexing_server_process
 
+
 def autoindex_xdsVM(controller, **kwargs):
     import socket
 
     task = kwargs.get("task")
     if task == "start_server_xdsVM":
         import subprocess as sp
+
+        compos = kwargs.get("compos")
+        unitcell = kwargs.get("unitcell")
+        spgr = kwargs.get("spgr")
+        use_shelxt = kwargs.get("use_shelxt")
 
         cmd = f"start {VM_SERVER_EXE}"
         if use_shelxt:
