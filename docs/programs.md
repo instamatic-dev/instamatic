@@ -87,7 +87,7 @@ Usage:
 
 ### instamatic.VMserver
 
-The script sets up socket connection between `instamatic` and [`VirtualBox`](https://www.virtualbox.org/wiki/Downloads) software via [`virtualbox python API`](https://www.virtualbox.org/wiki/Downloads). Therefore, `VirtualBox` and the corresponding SDK need to be installed before running this command. This script is developed particularly for the possibility of running software [`XDS`](http://xds.mpimf-heidelberg.mpg.de/html_doc/downloading.html) under windows 7, a system which a lot of TEM computers may be using.
+The script sets up socket connection between `instamatic` and [`VirtualBox`](https://www.virtualbox.org/wiki/Downloads) software via [`virtualbox python API`](https://www.virtualbox.org/sdkref/). Therefore, `VirtualBox` and the corresponding SDK need to be installed before running this command. This script is developed particularly for the possibility of running software [`XDS`](http://xds.mpimf-heidelberg.mpg.de/html_doc/downloading.html) under windows 7 or newer, a system which a lot of TEM computers may be using.
 
 After installation of `VirtualBox` and the corresponding SDK, `XDS` needs to be installed correctly in the guest Ubuntu system. In addition, a shared folder between `VirtualBox` and windows system needs to be set up properly in order for the server to work.
 

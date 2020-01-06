@@ -322,8 +322,6 @@ def autoindex_xdsVM(controller, **kwargs):
             else:
                 print("No composition information provided. SHELXT cannot run.")
 
-        #print(cmd)
-
         controller.indexing_server_process = sp.call(cmd, shell=True)
         print(f"Indexing server `{VM_SERVER_EXE}` started on {VMHOST}:{VMPORT}")
         controller.use_indexing_server = True
@@ -352,6 +350,7 @@ def autoindex_xdsVM(controller, **kwargs):
 
     if task == "kill":
         del controller.indexing_server_process
+
 
 def collect_flatfield(controller, **kwargs):
     from instamatic.processing import flatfield
