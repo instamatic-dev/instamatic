@@ -2,17 +2,14 @@ import datetime
 import time
 from instamatic import config, version
 from pathlib import Path
-from instamatic.tools import get_acquisition_time
-import time
 from instamatic.formats import write_tiff
 import numpy as np
 from scipy.interpolate import interp1d
 import pickle
-from instamatic import serialem
 import msvcrt
 
 
-class Experiment(object):
+class Experiment:
     """Class to control data collection through DM to collect
     continuous rotation electron diffraction data
 
@@ -26,13 +23,14 @@ class Experiment(object):
         Exposure time in ms
     mode: str
     """
-    def __init__(self, ctrl, 
-                 path: str=None, 
-                 log=None, 
-                 track: str=None, 
-                 exposure: float=400, 
-                 mode: str="diff", 
-                 rotation_speed: int=None):
+
+    def __init__(self, ctrl,
+                 path: str = None,
+                 log=None,
+                 track: str = None,
+                 exposure: float = 400,
+                 mode: str = "diff",
+                 rotation_speed: int = None):
         super().__init__()
 
         self.ctrl = ctrl
@@ -46,7 +44,7 @@ class Experiment(object):
         self.mode = mode
 
         self.rotation_speed = rotation_speed
-        
+
         if track:
             self.load_tracking_file(track)
             self.track = True
@@ -58,25 +56,25 @@ class Experiment(object):
         if trackfile.suffix == ".pickle":
             print(f"(autotracking) Loading tracking file: {trackfile}")
             dct = pickle.load(open(trackfile, "rb"))
-    
+
             self.track_func = dct["y_offset"]
             self.x_offset = dct["x_offset"]
             self.start_x = dct["x_center"]
             self.start_y = dct["y_center"]
             self.start_z = dct["z_pos"]
-    
+
             self.min_angle = dct["angle_min"]
             self.max_angle = dct["angle_max"]
 
             self.crystal_number = dct["i"]
 
             self.trackfile = trackfile
-    
+
             self.track_interval = 2
             self.track_relative = False
-        
+
         else:
-            raise IOError("I don't know how to read file `{trackfile}`")
+            raise OSError("I don't know how to read file `{trackfile}`")
 
     def prepare_tracking(self):
         if self.track:
@@ -92,12 +90,12 @@ class Experiment(object):
                 start_angle, target_angle = min_angle, max_angle
 
             print(f"(autotracking) Overriding angle range: {start_angle:.0f} -> {target_angle:.0f}")
-            
+
             y_offset = int(self.track_func(start_angle))
             x_offset = self.x_offset
 
             print(f"(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}")
-            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x+x_offset, y=self.start_y+y_offset, step=10000)
+            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x + x_offset, y=self.start_y + y_offset, step=10000)
             self.ctrl.stage.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
@@ -115,9 +113,9 @@ class Experiment(object):
         self.beamblank_is_on = self.ctrl.beamblank
         if not self.beamblank_is_on:
             self.ctrl.beamblank_on()
-        
+
         self.ctrl.screen_up()
-    
+
         if self.ctrl.mode != self.mode:
             print(f"Switching to {self.mode} mode")
             self.ctrl.mode = self.mode
@@ -126,7 +124,7 @@ class Experiment(object):
             self.ctrl.difffocus.refocus()
 
         spotsize = self.ctrl.spotsize
-    
+
         self.cam.set_tag("exp_directory", str(self.path))
         self.cam.get_ready_for_record()
         print("Ready...")
@@ -136,14 +134,14 @@ class Experiment(object):
 
         print("Waiting for rotation to start...", end=' ')
         a0 = a = self.ctrl.stage.a
-        while abs(a - a0) < ACTIVATION_THRESHOLD:           
+        while abs(a - a0) < ACTIVATION_THRESHOLD:
             a = self.ctrl.stage.a
 
         print("Rotation started...")
 
         return a
 
-    def start_collection(self, target_angle: float, start_angle: float=None, manual_control: bool=False):
+    def start_collection(self, target_angle: float, start_angle: float = None, manual_control: bool = False):
         """
         manual_control : bool
             Control the rotation using the buttons or pedals
@@ -157,7 +155,7 @@ class Experiment(object):
 
         if self.track:
             start_angle, target_angle = self.prepare_tracking()
-        
+
         if start_angle:
             print(f"Going to starting angle: {start_angle:.1f}")
             self.ctrl.stage.a = start_angle
@@ -166,14 +164,14 @@ class Experiment(object):
         start_angle = self.start_position.a
 
         if self.track:
-            ### Center crystal position
+            # Center crystal position
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
-    
+
             input("Move SAED aperture to crystal and press <ENTER> to measure! ")
 
-            ## cannot do this while lieview is running
+            # cannot do this while lieview is running
             # img1 = self.ctrl.getRawImage()
             # write_tiff(self.path / "image_before.tiff", img1)
 
@@ -181,7 +179,7 @@ class Experiment(object):
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
             time.sleep(3)
-        
+
         self.ctrl.beamblank_off(delay=0.2)  # give the beamblank some time to dissappear to avoid weak first frame
 
         if manual_control:
@@ -195,7 +193,7 @@ class Experiment(object):
         self.cam.start_record()  # start recording
 
         t0 = time.perf_counter()
-        t_delta = t0       
+        t_delta = t0
 
         n = 0
 
@@ -228,7 +226,7 @@ class Experiment(object):
 
                 if self.track:
                     self.track_crystal(n=n, angle=a)
-            
+
             # Stop/interrupt and go to next crystal
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode()
@@ -247,7 +245,7 @@ class Experiment(object):
             self.ctrl.beamblank_on()
 
         self.end_position = self.ctrl.stage.get()
-        end_angle = self.end_position.a      
+        end_angle = self.end_position.a
 
         self.t_start = t0
         self.t_end = t1
@@ -258,20 +256,20 @@ class Experiment(object):
             time.sleep(0.2)
 
         self.gatan_readout = self.cam.readout()
-        
+
         self.nframes = nframes = self.gatan_readout["nframes"]
         if nframes < 1:
             print("No frames measured??")
             return
 
         self.osc_angle = abs(end_angle - start_angle) / nframes
-        
+
         # acquisition_time = total_time / nframes
         self.total_angle = abs(end_angle - start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
         self.camera_length = int(self.ctrl.magnification.get())
         self.spotsize = self.ctrl.spotsize
-        self.rotation_speed = (end_angle-start_angle) / self.total_time
+        self.rotation_speed = (end_angle - start_angle) / self.total_time
         # self.exposure_time = self.cam.get_exposure()
         self.start_angle, self.end_angle = start_angle, end_angle
 
@@ -283,20 +281,20 @@ class Experiment(object):
         path_data.mkdir(exist_ok=True, parents=True)
 
         if self.track:
-            ### Center crystal position
+            # Center crystal position
             if self.mode == "diff":
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
-    
+
             img2 = self.ctrl.getRawImage()
             write_tiff(self.path / "image_after.tiff", img2)
-    
+
             self.ctrl.beamblank_on()
             if self.mode == "diff":
                 self.ctrl.difffocus.refocus()
 
         print(f"Wrote {nframes} images to {path_data}")
-        
+
         if self.track:
             print(f"Done with this crystal (number #{self.crystal_number})!")
         else:
@@ -306,15 +304,15 @@ class Experiment(object):
         wavelength = config.microscope.wavelength
 
         try:
-            pixelsize = config.calibration.pixelsize_diff[self.camera_length] # px / Angstrom
+            pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
         except KeyError:
             print(f"Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0")
             pixelsize = 1.0
 
-        physical_pixelsize = config.camera.physical_pixelsize # mm
+        physical_pixelsize = config.camera.physical_pixelsize  # mm
 
         d = self.gatan_readout
-        
+
         bin_x, bin_y = d["bin_x"], d["bin_y"]
         image_dimensions_x, image_dimensions_y = d["image_res_x"], d["image_res_y"]
         camera_dimensions_x, camera_dimensions_y = d["cam_res_x"], d["cam_res_y"]
@@ -379,7 +377,7 @@ class Experiment(object):
             print("# timestamp x y z a b", file=f)
             for t, (x, y, z, a, b) in self.stage_positions:
                 print(t, x, y, z, a, b, file=f)
-        
+
         print(f"Wrote file {f.name}")
 
         if self.mode != "diff":
@@ -387,27 +385,27 @@ class Experiment(object):
                 print("Not enough stage positions for interpolation")
             else:
                 pos = np.array([p[1] for p in self.stage_positions])  # (t, (x y z a b))
-                idx = np.argmin(np.abs(pos[:,3]))
-                x_center = pos[:,0].mean()
-                y_center = pos[idx,1]
-                z_pos = pos[0:,2].mean()
-                f = interp1d(pos[:,3], pos[:,1]-y_center, fill_value="extrapolate", kind="quadratic")
-    
+                idx = np.argmin(np.abs(pos[:, 3]))
+                x_center = pos[:, 0].mean()
+                y_center = pos[idx, 1]
+                z_pos = pos[0:, 2].mean()
+                f = interp1d(pos[:, 3], pos[:, 1] - y_center, fill_value="extrapolate", kind="quadratic")
+
                 d = {}
                 d["y_offset"] = f
                 d["x_offset"] = 0
                 d["x_center"] = x_center
                 d["y_center"] = y_center
                 d["z_pos"] = z_pos
-    
+
                 d["angle_min"] = self.start_angle
                 d["angle_max"] = self.end_angle
-    
+
                 d["i"] = 0
-    
+
                 fn = self.path / f"track.pickle"
                 pickle.dump(d, open(fn, "wb"))
-    
+
                 print(f"Wrote file {fn.name}")
 
 
@@ -421,12 +419,11 @@ if __name__ == '__main__':
 
     ctrl = TEMController.initialize()
 
-    import time
     time.sleep(1)
 
     expdir = get_new_work_subdirectory()
     expdir.mkdir(exist_ok=True, parents=True)
-    
+
     exp = Experiment(ctrl=ctrl, path=expdir)
     exp.get_ready()
     exp.start_collection(100)

@@ -25,23 +25,23 @@ This panel deals with input and output of the experimental data.
 Root directory to work in. By default this is C:/instamatic/work_$date/
 
 **Sample name and number**  
-This determines the subdirectory where experimental data are stored. 
+This determines the subdirectory where experimental data are stored.
 The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
 
 **Flatfield**  
-Here the path to the flatfield image can be specified. The default 
+Here the path to the flatfield image can be specified. The default
 value is read from `config/global.yaml` and can be left blank if no flatfield should be used.
 
 **Open work directory**  
-Open the current work directory, which is a combination of the root 
+Open the current work directory, which is a combination of the root
 directory, sample name, and experiment number. In this case `C:/instamatic/work_2017-11-19/experiment_1`. All experimental data for the current experiment will be saved here.
 
 **Open config directory**  
-By default `%APPDATA%/instamatic/`. The configuration files for the 
+By default `%APPDATA%/instamatic/`. The configuration files for the
 microscope, camera, and calibration files go here.
 
 **Delete last experiment**  
-Sometimes, a data collection will go wrong... Pressing this button will 
+Sometimes, a data collection will go wrong... Pressing this button will
 mark the last experiment directy for deletion. It will not actually delete anything.
 
 
@@ -85,27 +85,27 @@ The data collection procedure can be initiated by pressing ‘Start Collection�
 change the data collection time for each image.
 
 **Beam unblanker**  
-If this option is selected, the beam will be automatically unblanked 
+If this option is selected, the beam will be automatically unblanked
 when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
 
 
 ### Image interval
 
-With this feature, an image of the crystal will be shown every N frames. This is useful to control the position of the crystal in the beam for more reliable and reproducable data collections. This is achieved by applying a small defocus (diffraction focus) to every Nth image. a small defocus of the diffraction focus. If the defocus is large enough, this will show a view of the crystal in the aperture. 
+With this feature, an image of the crystal will be shown every N frames. This is useful to control the position of the crystal in the beam for more reliable and reproducable data collections. This is achieved by applying a small defocus (diffraction focus) to every Nth image. a small defocus of the diffraction focus. If the defocus is large enough, this will show a view of the crystal in the aperture.
 
 **Enable Image interval**  
 This option will enable the image interval.
 
 **Image interval**  
-Change the interval at which the image will be defocused. For example, 
+Change the interval at which the image will be defocused. For example,
 if the value is 10, then every 10th image will be defocused.
 
 **Diff. defocus**  
-This is the defocus value to apply. It is better not to make this value 
-too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example). 
+This is the defocus value to apply. It is better not to make this value
+too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example).
 
 **Toggle defocus**  
-This toggle applies the defocus value, which is used for checking. It 
+This toggle applies the defocus value, which is used for checking. It
 does not affect the data collection.
 
 Other specific cRED modules: `cred_fei`, `cred_tvips`, `autocred`
@@ -149,7 +149,7 @@ This module allows some control over the microscope from the GUI and is updated 
 
 ## Advanced
 
-This module gives access to several debugging functions, as well as more advanced features. 
+This module gives access to several debugging functions, as well as more advanced features.
 
 It also gives the option to run custom python scripts from the GUI. The scripts give access to the `ctrl` variable, an instance of TEMController. The scripts are picked up from the directory `%APPDATA/Instamatic/scripts` or as defined by the `Instamatic` environment variable.
 
@@ -157,9 +157,9 @@ It is also possible to associate an indexing server with the data collection (cu
 
 There are also functions to collect a flatfield image.
 
-`Report status` will report the current status of the microscope to the command line. 
+`Report status` will report the current status of the microscope to the command line.
 
-`Close down` will close down the microscope. It is associated to the script `close_down.py` in the scripts directory. It is meant to put the microscope in a state so that the sample can be removed, this means it will neutralize the sample stage, put down the fluorescence screen, maximize the brightness, etc. 
+`Close down` will close down the microscope. It is associated to the script `close_down.py` in the scripts directory. It is meant to put the microscope in a state so that the sample can be removed, this means it will neutralize the sample stage, put down the fluorescence screen, maximize the brightness, etc.
 
 `Open IPython shell` will open an IPython shell, so that the program state or microscope can be directly interacted with.
 

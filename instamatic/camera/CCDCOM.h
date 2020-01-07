@@ -22,13 +22,13 @@
 // Example code:
 
 //Initialization. 20120101 is a magic number. result = 1 on successful return.
-int result = initCCDCOM(20120101); 
+int result = initCCDCOM(20120101);
 
-//pdata is a pointer to a pointer pointing the data. Memory is allocated and returned by the function and needs to be freed outside. See below 
-result = acquireImageNewFloat(0, 0, 2048, 2048, 1, 0.5, false, &pdata, &pnWidth, &pnHeight); 
+//pdata is a pointer to a pointer pointing the data. Memory is allocated and returned by the function and needs to be freed outside. See below
+result = acquireImageNewFloat(0, 0, 2048, 2048, 1, 0.5, false, &pdata, &pnWidth, &pnHeight);
 
 //Free the memory returned by the previous function call
 CCDCOM2_release(pdata);
 
-//Close dll. 
+//Close dll.
 releaseCCDCOM();

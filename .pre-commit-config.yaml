@@ -4,7 +4,8 @@ repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
     hooks:
-    # -   id: trailing-whitespace
+    -   id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
     -   id: end-of-file-fixer
     -   id: check-yaml
     # -   id: check-json

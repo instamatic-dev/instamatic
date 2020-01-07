@@ -1,3 +1,7 @@
+from instamatic.camera.gatansocket3 import GatanSocket
+import sys
+from instamatic import config
+import atexit
 from pathlib import Path
 
 import time
@@ -5,18 +9,11 @@ import numpy as np
 import logging
 logger = logging.getLogger(__name__)
 
-import atexit
 
-from instamatic import config
-
-import sys
-from instamatic.camera.gatansocket3 import GatanSocket
-
-
-class CameraGatan2(object):
+class CameraGatan2:
     """docstring for CameraGatan2"""
 
-    def __init__(self, interface: str="gatan2"):
+    def __init__(self, interface: str = "gatan2"):
         """Initialize camera module """
         super().__init__()
 
@@ -125,7 +122,7 @@ class CameraGatan2(object):
     def stop_liveview(self) -> None:
         raise NotImplementedError
 
-    def start_liveview(self, delay: float=3.0) -> None:
+    def start_liveview(self, delay: float = 3.0) -> None:
         raise NotImplementedError
 
     def set_exposure(self, exposure_time: int) -> None:
@@ -138,7 +135,7 @@ class CameraGatan2(object):
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera"""
-        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released" 
+        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released"
         # print(msg)
         logger.info(msg)
 
@@ -150,11 +147,12 @@ class CameraGatan2(object):
         else:
             set_tag = f'SetPersistentNumberNote("{key}", {value})'
         self.g.ExecuteScript(set_tag)
-        
-    def get_tag(self, key: str, delete: bool=False) -> float:
+
+    def get_tag(self, key: str, delete: bool = False) -> float:
         """Get the tag given by `key`. Clear the tag if `delete` is specfified`
         get_tag = f'number value\nGetPersistentNumberNote("{key}", value)\nExit(value)'
         value = self.g.ExecuteGetDoubleScript(get_tag)
+        """
 
         if delete:
             self.delete_tag(key)
@@ -169,14 +167,14 @@ class CameraGatan2(object):
     def readout(self) -> dict:
         """Readout tag structure with metadata from last cRED experiment"""
         d = {}
-    
-        keys = ("nframes", "bin_x", "bin_y", "cam_res_x", "cam_res_y", "image_res_x", "image_res_y", "pixelsize_x", "pixelsize_y", 
-               "phys_pixelsize_x", "phys_pixelsize_y", "total_time", "exposure")
-    
+
+        keys = ("nframes", "bin_x", "bin_y", "cam_res_x", "cam_res_y", "image_res_x", "image_res_y", "pixelsize_x", "pixelsize_y",
+                "phys_pixelsize_x", "phys_pixelsize_y", "total_time", "exposure")
+
         for key in keys:
             value = self.get_tag(key, delete=True)
             d[key] = value
-    
+
         return d
 
 

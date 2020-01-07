@@ -14,7 +14,7 @@ Examples of configuration files can be found [here](https://github.com/stefsmeet
 
 ## global.yaml
 
-This is the global configuration file for `instamatic`. It defines which microscope / camera setup to use through the `microscope`, `camera`, and `calibration` settings. 
+This is the global configuration file for `instamatic`. It defines which microscope / camera setup to use through the `microscope`, `camera`, and `calibration` settings.
 
 **microscope**  
 name of the microscope calibration file use. For example, if this is set to `jeol-2100`, instamatic will look for the config file `jeol-2100.yaml` in the `config/microscope` directory.
@@ -32,7 +32,7 @@ Default path to where data should be stored, i.e. `C:/instamatic`
 Path to tiff file containing flatfield, i.e. `C:/instamatic/flatfield.tiff`. Leave blank if  no flatfield should be applied.
 
 **use_tem_server**  
-use the tem server with the given host/port below. If instamatic cannot find the tem server, it will start a new temserver in a subprocess. The tem server can be started using `instamatic.temserver.exe`. This helps to isolate the microscope communication. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread. 
+use the tem server with the given host/port below. If instamatic cannot find the tem server, it will start a new temserver in a subprocess. The tem server can be started using `instamatic.temserver.exe`. This helps to isolate the microscope communication. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread.
 
 **tem_server_host**  
 Set this to `localhost` if the TEM server is run locally. To make a remote connection over the network, use `'0.0.0.0'` on the server, and the ip address of the server on the client.
@@ -66,7 +66,7 @@ List of modules to load for the GUI, must be one of {`cred`, `cred_tvips`, `cred
 
 ## calibration.yaml
 
-In this file the calibration of the pixelsizes can be specified, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `global.yaml`. To begin with, the values can be safely set to 1.0, as their importance depends on the experiment you are running. 
+In this file the calibration of the pixelsizes can be specified, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `global.yaml`. To begin with, the values can be safely set to 1.0, as their importance depends on the experiment you are running.
 
 **name**  
 Name of the corresponding camera interface. This variable is not used currently in the code at present.
@@ -74,7 +74,7 @@ Name of the corresponding camera interface. This variable is not used currently 
 **pixelsize_diff**  
 Give here a list of camera lengths (as reported by the TEM) and the corresponding pixel dimensions in reciprocal angstrom, separated by a `:`, for example:
 ```
-  150: 0.02942304 
+  150: 0.02942304
   200: 0.02206728
   250: 0.017653824
 ...
@@ -145,7 +145,7 @@ The physical size of a pixel in micrometer, for example: `0.055`
 Give here a list of possible binnings, for example: `[1]` or `[1, 2, 4]`
 
 **camera_rotation_vs_stage_xy**  
-In radians, give here the rotation of the position of the rotation axis with respect to the 
+In radians, give here the rotation of the position of the rotation axis with respect to the
 horizontal. Corresponds to the rotation axis in RED and PETS, for example: `-2.24`. You can find the rotation axis for your setup using the script `edtools.find_rotation_axis` available from [here](https://github.com/stefsmeets/edtools#find_rotation_axispy).
 
 **stretch_amplitude**  
@@ -183,10 +183,10 @@ The wavelength of the microscope in Ansgtroms. This is used to generate some of 
 **range_diff**  
 List here the available camera lengts available on the microscope in ascending order
 ```
-range_diff: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 
+range_diff: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200,
 1500, 2000, 2500, 3000, 3500, 4000, 4500]
 ```
-  
+
 **range_mag1**, **range_lowmag**, **range_mag2**, **range_samag**  
 List here the available magnifications available on the microscope in ascending order, for example:
 ```

@@ -1,6 +1,6 @@
 name: simulate
 # same as timepix
-pixelsize_diff: 
+pixelsize_diff:
   150: 0.00838
   200: 0.00623
   250: 0.00499
@@ -73,4 +73,3 @@ pixelsize_lowmag:
   -1: -1
 stagematrix_lowmag:
   -1: [   ]
-  

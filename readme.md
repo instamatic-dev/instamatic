@@ -6,7 +6,7 @@ Instamatic is a Python program that is being developed with the aim to automate 
 
 Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/stefsmeets/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
 
-Electron microscopes supported: 
+Electron microscopes supported:
 
 - JEOL microscopes with the TEMCOM library
 - FEI microscopes via the scripting interface
@@ -27,7 +27,7 @@ If you find this software useful, please consider citing one of the references b
 
 - S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, and W. Wan, (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
 
-Some of the methods implemented in Instamatic are described in: 
+Some of the methods implemented in Instamatic are described in:
 
 - B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 1-14
 
@@ -73,7 +73,7 @@ Requirements can be installed via:
 The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
 Alternatively, the latest development version can always be obtained via:
-    
+
     https://github.com/stefsmeets/instamatic/archive/master.zip
 
 To install:
