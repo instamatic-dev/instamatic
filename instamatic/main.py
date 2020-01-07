@@ -6,13 +6,13 @@ import sys
 from instamatic import config
 
 
-def locate(name, open=False):
+def locate(name, show=False):
     """Locate the directory given by `name`
 
     Parameters
     ----------
     name : str
-    open : bool
+    show : bool
         Open the directory in `File Explorer`
 
     Returns
@@ -34,7 +34,7 @@ def locate(name, open=False):
     else:
         raise ValueError(f'No such directory: `{name}`')
 
-    if open:
+    if show:
         try:
             os.startfile(drc)
         except FileNotFoundError:
@@ -69,7 +69,7 @@ def main():
                         help="Locate a requested directory and exit, i.e. `config`, `data`, `scripts`, `base`, 'work`, `logs`")
 
     parser.add_argument('-o', '--open',
-                        action='store', type=str, dest='open',
+                        action='store', type=str, dest='show',
                         help='Open the requested directory and exit, see `--locate`.')
 
     parser.set_defaults(script=None,
@@ -77,7 +77,7 @@ def main():
                         nav_file=None,
                         start_gui=True,
                         locate=None,
-                        open=False,
+                        show=False,
                         )
 
     options = parser.parse_args()
@@ -85,8 +85,8 @@ def main():
     if options.locate:
         locate(options.locate)
         exit()
-    if options.open:
-        locate(options.open, open=True)
+    if options.show:
+        locate(options.show, show=True)
         exit()
 
     from instamatic.utils import high_precision_timers
