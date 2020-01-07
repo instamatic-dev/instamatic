@@ -1,8 +1,10 @@
-from .base_module import BaseModule
 from tkinter import *
-from tkinter.ttk import *
 from tkinter import Label as tkLabel
-from tkinter.font import Font, nametofont
+from tkinter.font import Font
+from tkinter.font import nametofont
+from tkinter.ttk import *
+
+from .base_module import BaseModule
 from instamatic import version
 
 

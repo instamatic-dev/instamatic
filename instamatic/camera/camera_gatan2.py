@@ -1,12 +1,13 @@
-from instamatic.camera.gatansocket3 import GatanSocket
-import sys
-from instamatic import config
 import atexit
+import logging
+import sys
+import time
 from pathlib import Path
 
-import time
 import numpy as np
-import logging
+
+from instamatic import config
+from instamatic.camera.gatansocket3 import GatanSocket
 logger = logging.getLogger(__name__)
 
 

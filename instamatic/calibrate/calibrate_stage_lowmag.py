@@ -1,16 +1,15 @@
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-
-from instamatic.tools import *
-from skimage.feature import register_translation
-from instamatic.TEMController import initialize
-from .fit import fit_affine_transformation
-from .filenames import *
-
-import pickle
-
 import logging
+import pickle
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+from skimage.feature import register_translation
+
+from .filenames import *
+from .fit import fit_affine_transformation
+from instamatic.TEMController import initialize
+from instamatic.tools import *
 logger = logging.getLogger(__name__)
 
 

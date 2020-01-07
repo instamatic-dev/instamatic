@@ -1,11 +1,14 @@
-from instamatic.formats import adscimage
-import sys
 import glob
-import numpy as np
-import matplotlib.pyplot as plt
+import sys
 from pathlib import Path
-from instamatic.tools import find_beam_center, find_subranges
+
+import matplotlib.pyplot as plt
+import numpy as np
 import tqdm
+
+from instamatic.formats import adscimage
+from instamatic.tools import find_beam_center
+from instamatic.tools import find_subranges
 
 
 def insert_nan(arr, interval=10):

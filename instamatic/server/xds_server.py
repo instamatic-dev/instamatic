@@ -1,11 +1,11 @@
-import subprocess as sp
-from socket import *
 import datetime
-
-from instamatic import config
 import logging
+import subprocess as sp
 import threading
 from pathlib import Path
+from socket import *
+
+from instamatic import config
 
 HOST = config.cfg.indexing_server_host
 PORT = config.cfg.indexing_server_port

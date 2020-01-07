@@ -1,6 +1,5 @@
 # https://github.com/ezralanglois/arachnid/blob/master/arachnid/core/image/formats/mrc.py
 # Licenced under GPL
-
 """Read and write images in the MRC format
 
 .. todo:: define arachnid header and map to mrc
@@ -14,11 +13,12 @@
 .. Created on Aug 9, 2012
 .. codeauthor:: Robert Langlois <rl2528@columbia.edu>
 """
-
-import numpy
-import sys
 import logging
 import os
+import sys
+
+import numpy
+
 from . import util
 # import util
 

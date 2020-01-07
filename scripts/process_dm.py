@@ -1,8 +1,10 @@
-from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
 import sys
 from pathlib import Path
-from PIL import Image
+
 import numpy as np
+from PIL import Image
+
+from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
 
 # Script to process cRED data collecting using the DigitalMicrograph script `insteaDMatic`
 # https://github.com/stefsmeets/instamatic/tree/master/dmscript

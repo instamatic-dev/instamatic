@@ -1,13 +1,14 @@
+import math
 import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.widgets import Slider
-
+from scipy.ndimage import interpolation
+from scipy.ndimage import morphology
 from skimage.feature import canny
-from skimage.measure import label, regionprops
-from scipy.ndimage import morphology, interpolation
-import math
+from skimage.measure import label
+from skimage.measure import regionprops
 
 from instamatic.formats import read_tiff
 from instamatic.tools import autoscale

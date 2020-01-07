@@ -1,15 +1,23 @@
-from instamatic import config
-import time
 import atexit
 import ctypes
-from ctypes import c_int, c_long, c_float, c_double, c_bool, c_wchar_p
-from ctypes import POINTER, create_unicode_buffer, byref, addressof
-
+import logging
+import platform
+import time
+from ctypes import addressof
+from ctypes import byref
+from ctypes import c_bool
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_long
+from ctypes import c_wchar_p
+from ctypes import create_unicode_buffer
+from ctypes import POINTER
 from pathlib import Path
 
 import numpy as np
-import platform
-import logging
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 

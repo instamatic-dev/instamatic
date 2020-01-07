@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages
+from setuptools import setup
 
 packages = find_packages(exclude=["scripts"])
 

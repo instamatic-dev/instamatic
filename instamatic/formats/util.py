@@ -3,12 +3,13 @@
 .. Created on Jul 18, 2013
 .. codeauthor:: Robert Langlois <rl2528@columbia.edu>
 '''
-import numpy
-import os
 import bz2
 import logging
-from scipy import ndimage
+import os
+
+import numpy
 import numpy as np
+from scipy import ndimage
 
 
 _logger = logging.getLogger(__name__)

@@ -1,9 +1,11 @@
-from instamatic.tools import relativistic_wavelength
-import yaml
-from instamatic import config
-from pathlib import Path
 import shutil
+from pathlib import Path
+
 import numpy as np
+import yaml
+
+from instamatic import config
+from instamatic.tools import relativistic_wavelength
 
 
 def list_representer(dumper, data):

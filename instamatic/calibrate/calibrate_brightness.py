@@ -1,16 +1,14 @@
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-
-from instamatic.tools import *
-from instamatic.TEMController import initialize
-from .filenames import *
-
-from instamatic.processing.find_holes import find_holes
-
-import pickle
-
 import logging
+import pickle
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from .filenames import *
+from instamatic.processing.find_holes import find_holes
+from instamatic.TEMController import initialize
+from instamatic.tools import *
 logger = logging.getLogger(__name__)
 
 

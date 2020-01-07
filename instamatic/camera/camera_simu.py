@@ -1,9 +1,10 @@
-from instamatic import config
 import atexit
-
-import time
-import numpy as np
 import logging
+import time
+
+import numpy as np
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 

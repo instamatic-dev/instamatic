@@ -1,12 +1,14 @@
-from .microscope import Microscope
+import time
 from collections import namedtuple
 from contextlib import contextmanager
+from typing import Tuple
+
+import numpy as np
+
+from .microscope import Microscope
 from instamatic import config
 from instamatic.camera import Camera
 from instamatic.formats import write_tiff
-from typing import Tuple
-import numpy as np
-import time
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 

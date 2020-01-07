@@ -1,10 +1,10 @@
-from instamatic.calibrate.fit import fit_affine_transformation
-from skimage.feature import register_translation
-import numpy as np
+import logging
 
+import numpy as np
+from skimage.feature import register_translation
 from tqdm import tqdm
 
-import logging
+from instamatic.calibrate.fit import fit_affine_transformation
 logger = logging.getLogger(__name__)
 
 

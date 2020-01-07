@@ -1,9 +1,10 @@
-from .base_module import BaseModule
+import threading
 from tkinter import *
 from tkinter.ttk import *
-import threading
-from instamatic.utils.spinbox import Spinbox
+
+from .base_module import BaseModule
 from instamatic import config
+from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalCtrl(LabelFrame):

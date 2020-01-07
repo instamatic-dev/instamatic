@@ -1,18 +1,17 @@
-import matplotlib
-import matplotlib.pyplot as plt
-from instamatic.formats import *
+import argparse
+import glob
 import os
 import sys
-import glob
-import numpy as np
 from pathlib import Path
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
 from scipy import ndimage
 
-import argparse
-import tqdm
-
 from instamatic import neural_network
+from instamatic.formats import *
 
 CMAP = "gray"  # "viridis", "gray"
 

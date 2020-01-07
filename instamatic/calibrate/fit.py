@@ -1,5 +1,5 @@
-import numpy as np
 import lmfit
+import numpy as np
 
 
 def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, verbose=False, **x0):

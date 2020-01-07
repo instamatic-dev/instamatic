@@ -1,11 +1,12 @@
-import comtypes.client
-from instamatic import config
 import atexit
+import logging
+import time
 from pathlib import Path
 
-import time
+import comtypes.client
 import numpy as np
-import logging
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 

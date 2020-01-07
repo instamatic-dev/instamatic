@@ -1,16 +1,17 @@
-from .base_module import BaseModule
-from tkinter import *
-from tkinter.ttk import *
-import threading
+import datetime
 import os
 import pickle
-from instamatic.calibrate.filenames import *
-from instamatic.calibrate import CalibBeamShift
+import threading
 from pathlib import Path
+from tkinter import *
+from tkinter.ttk import *
+
 import matplotlib.pyplot as plt
 
+from .base_module import BaseModule
 from instamatic import config
-import datetime
+from instamatic.calibrate import CalibBeamShift
+from instamatic.calibrate.filenames import *
 
 
 class ExperimentalautocRED(LabelFrame):

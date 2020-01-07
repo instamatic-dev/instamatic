@@ -1,12 +1,15 @@
 import datetime
+import msvcrt
+import pickle
 import time
-from instamatic import config, version
 from pathlib import Path
-from instamatic.formats import write_tiff
+
 import numpy as np
 from scipy.interpolate import interp1d
-import pickle
-import msvcrt
+
+from instamatic import config
+from instamatic import version
+from instamatic.formats import write_tiff
 
 
 class Experiment:

@@ -1,7 +1,7 @@
-from pathlib import Path
-from instamatic import config
-
 import logging
+from pathlib import Path
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 __all__ = ["Camera"]

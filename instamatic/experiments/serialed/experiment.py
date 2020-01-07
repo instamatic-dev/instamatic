@@ -1,18 +1,20 @@
-import numpy as np
 import json
+import logging
+import time
+from pathlib import Path
 
 import matplotlib.pyplot as plt
-
-from instamatic.formats import *
-from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
-from instamatic.processing.flatfield import remove_deadpixels, apply_flatfield_correction
-from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
-from instamatic import config
-
-import time
-import logging
+import numpy as np
 from tqdm import tqdm
-from pathlib import Path
+
+from instamatic import config
+from instamatic.calibrate import CalibBeamShift
+from instamatic.calibrate import CalibDirectBeam
+from instamatic.formats import *
+from instamatic.processing.find_crystals import find_crystals
+from instamatic.processing.find_crystals import find_crystals_timepix
+from instamatic.processing.flatfield import apply_flatfield_correction
+from instamatic.processing.flatfield import remove_deadpixels
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):

@@ -1,14 +1,13 @@
-from tkinter import *
-from tkinter.ttk import *
-
-from instamatic.formats import *
 import atexit
 import queue
 import sys
 import threading
 import traceback
+from tkinter import *
+from tkinter.ttk import *
 
 from .modules import MODULES
+from instamatic.formats import *
 
 job_dict = {}
 

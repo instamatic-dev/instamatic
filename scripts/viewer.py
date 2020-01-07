@@ -1,6 +1,8 @@
-from instamatic.formats import read_image
-import matplotlib.pyplot as plt
 import sys
+
+import matplotlib.pyplot as plt
+
+from instamatic.formats import read_image
 
 
 def main():

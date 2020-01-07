@@ -1,18 +1,17 @@
+import logging
 import sys
 import time
+
 import numpy as np
-
-from instamatic.tools import *
-from instamatic.io import get_new_work_subdirectory
 from skimage.feature import register_translation
-from instamatic.TEMController import initialize
-from .filenames import *
+
 from .calibrate_stage_lowmag import CalibStage
-from instamatic.formats import read_image
-
+from .filenames import *
 from instamatic import config
-
-import logging
+from instamatic.formats import read_image
+from instamatic.io import get_new_work_subdirectory
+from instamatic.TEMController import initialize
+from instamatic.tools import *
 logger = logging.getLogger(__name__)
 
 

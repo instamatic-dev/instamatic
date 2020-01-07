@@ -1,11 +1,13 @@
-from functools import wraps
-from instamatic import config
-from pywinauto import Application
 import atexit
 import pickle
 import socket
 import subprocess as sp
 import time
+from functools import wraps
+
+from pywinauto import Application
+
+from instamatic import config
 
 GONIOTOOL_EXE = "C:\\JEOL\\TOOL\\GonioTool.exe"
 DEFAULT_SPEED = 12

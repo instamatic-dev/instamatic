@@ -1,12 +1,12 @@
-import sys
-import os
-
-import subprocess as sp
 import glob
+import os
+import subprocess as sp
+import sys
 
-from instamatic.formats import read_tiff
 import matplotlib.pyplot as plt
 import numpy as np
+
+from instamatic.formats import read_tiff
 
 
 def printer(data):

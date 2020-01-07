@@ -1,10 +1,11 @@
-from instamatic import config
-import comtypes.client
 import atexit
-import time
-import random
-
 import logging
+import random
+import time
+
+import comtypes.client
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 

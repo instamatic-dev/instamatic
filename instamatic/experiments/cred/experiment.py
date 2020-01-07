@@ -1,11 +1,13 @@
 import datetime
-import numpy as np
 import time
-from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
-from instamatic import config
-from instamatic.formats import write_tiff
 from pathlib import Path
+
+import numpy as np
+
+from instamatic import config
 from instamatic import version
+from instamatic.formats import write_tiff
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2

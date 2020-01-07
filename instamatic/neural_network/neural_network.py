@@ -1,6 +1,7 @@
-import numpy as np
 import pickle
 from pathlib import Path
+
+import numpy as np
 
 with open(Path(__file__).parent / "weights-py3.p", "rb") as p_file:
     weights = pickle.load(p_file)

@@ -1,13 +1,15 @@
-from instamatic.imreg import translation
-from instamatic.tools import bin_ndarray
-from scipy import ndimage
-from skimage import filters
-from skimage.feature import register_translation
+from pathlib import Path
+
 import lmfit
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
+from scipy import ndimage
+from skimage import filters
+from skimage.feature import register_translation
+
+from instamatic.imreg import translation
+from instamatic.tools import bin_ndarray
 
 
 def sorted_grid_indices(grid):

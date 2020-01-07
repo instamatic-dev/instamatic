@@ -1,10 +1,11 @@
-from .base_module import BaseModule
+from pathlib import Path
 from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import *
-from instamatic.utils.spinbox import Spinbox
-from pathlib import Path
+
+from .base_module import BaseModule
 from instamatic import config
+from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalTVIPS(LabelFrame):

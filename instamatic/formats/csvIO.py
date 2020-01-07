@@ -1,7 +1,8 @@
-import yaml
-from collections import OrderedDict
-import pandas as pd
 import io
+from collections import OrderedDict
+
+import pandas as pd
+import yaml
 
 
 def results2df(results, sort=True):

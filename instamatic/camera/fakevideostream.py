@@ -1,6 +1,8 @@
 import threading
-from .camera import Camera
+
 import numpy as np
+
+from .camera import Camera
 from instamatic.tools import autoscale
 
 

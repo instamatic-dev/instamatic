@@ -1,12 +1,13 @@
-import threading
+import datetime
+import logging
+import pickle
 import queue
 import socket
-import pickle
-import logging
-import datetime
+import threading
+import traceback
+
 from instamatic import config
 from instamatic.goniotool import GonioToolWrapper
-import traceback
 
 # import sys
 # sys.setswitchinterval(0.001)  # seconds

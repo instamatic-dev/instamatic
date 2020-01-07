@@ -1,10 +1,12 @@
-from instamatic import neural_network
-from instamatic.formats import *
-from pathlib import Path
 import csv
 import glob
 import sys
+from pathlib import Path
+
 import tqdm
+
+from instamatic import neural_network
+from instamatic.formats import *
 
 
 def closest_distance(node, nodes):

@@ -1,14 +1,15 @@
-from .base_module import BaseModule
-from tkinter import *
-from tkinter.ttk import *
+import json
 import tkinter.messagebox
 from pathlib import Path
-import json
+from tkinter import *
+from tkinter.ttk import *
 
+from .base_module import BaseModule
+from instamatic.calibrate import CalibDirectBeam
+from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.calibrate.filenames import CALIB_DIRECTBEAM
 # import matplotlib
 # matplotlib.use('TkAgg')
-from instamatic.calibrate import CalibDirectBeam
-from instamatic.calibrate.filenames import CALIB_DIRECTBEAM, CALIB_BEAMSHIFT
 
 
 PARAMS = {

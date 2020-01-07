@@ -1,14 +1,17 @@
-from instamatic import config, version
-from instamatic import serialem
-from instamatic.formats import write_tiff
-from instamatic.tools import get_acquisition_time
-from pathlib import Path
-from scipy.interpolate import interp1d
 import datetime
 import msvcrt
-import numpy as np
 import pickle
 import time
+from pathlib import Path
+
+import numpy as np
+from scipy.interpolate import interp1d
+
+from instamatic import config
+from instamatic import serialem
+from instamatic import version
+from instamatic.formats import write_tiff
+from instamatic.tools import get_acquisition_time
 
 
 class SerialExperiment:

@@ -2,14 +2,14 @@
 Utility script to enable rotation control from a dmscript
 See `https://github.com/stefsmeets/instamatic/tree/master/dmscript` for usage
 """
-
-import subprocess as sp
-from socket import *
 import datetime
+import logging
+import subprocess as sp
+import threading
+from socket import *
+
 from instamatic import config
 from instamatic import TEMController
-import threading
-import logging
 
 ctrl = TEMController.initialize()
 

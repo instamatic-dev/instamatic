@@ -1,6 +1,8 @@
-import numpy as np
 import time
+
+import numpy as np
 from skimage.feature import register_translation
+
 from instamatic.processing.find_crystals import find_crystals_timepix
 
 

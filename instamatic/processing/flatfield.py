@@ -1,13 +1,15 @@
-import os
-import numpy as np
-import time
-from instamatic.formats import *
-from instamatic import TEMController
 import glob
-from tqdm import tqdm
-from pathlib import Path
+import os
+import time
 import warnings
+from pathlib import Path
+
+import numpy as np
+from tqdm import tqdm
+
 from instamatic import config
+from instamatic import TEMController
+from instamatic.formats import *
 
 
 def apply_corrections(img, deadpixels=None):

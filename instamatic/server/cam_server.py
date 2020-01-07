@@ -1,13 +1,13 @@
-import threading
+import datetime
+import logging
+import pickle
 import queue
 import socket
-import pickle
-import logging
-import datetime
-from instamatic import config
-from instamatic.camera import Camera
+import threading
 import traceback
 
+from instamatic import config
+from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 

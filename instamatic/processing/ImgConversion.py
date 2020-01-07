@@ -1,15 +1,22 @@
-import numpy as np
-from datetime import datetime
-import time
-from instamatic.formats import read_tiff, write_tiff, write_mrc, write_adsc
-from instamatic.processing.flatfield import apply_flatfield_correction
-from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
-from instamatic import config
-from instamatic.tools import find_beam_center, find_subranges
-from instamatic.tools import find_beam_center_with_beamstop, to_xds_untrusted_area
-from math import cos
 import collections
 import logging
+import time
+from datetime import datetime
+from math import cos
+
+import numpy as np
+
+from instamatic import config
+from instamatic.formats import read_tiff
+from instamatic.formats import write_adsc
+from instamatic.formats import write_mrc
+from instamatic.formats import write_tiff
+from instamatic.processing.flatfield import apply_flatfield_correction
+from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
+from instamatic.tools import find_beam_center
+from instamatic.tools import find_beam_center_with_beamstop
+from instamatic.tools import find_subranges
+from instamatic.tools import to_xds_untrusted_area
 logger = logging.getLogger(__name__)
 
 

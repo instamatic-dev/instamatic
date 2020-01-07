@@ -1,12 +1,11 @@
-from instamatic import config
-
 import atexit
-import comtypes.client
+import logging
 import time
-
 from typing import Tuple
 
-import logging
+import comtypes.client
+
+from instamatic import config
 logger = logging.getLogger(__name__)
 
 NTRLMAPPING = {

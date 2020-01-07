@@ -1,6 +1,7 @@
-import threading
-from .camera import Camera
 import atexit
+import threading
+
+from .camera import Camera
 
 
 class ImageGrabber:

@@ -1,9 +1,10 @@
-from .base_module import BaseModule
+import tkinter.filedialog
+from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
-import tkinter.filedialog
+
+from .base_module import BaseModule
 from instamatic import config
-from pathlib import Path
 
 scripts_drc = config.scripts_drc
 

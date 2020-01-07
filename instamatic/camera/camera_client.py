@@ -1,9 +1,10 @@
-import socket
-import pickle
-import time
 import atexit
-from functools import wraps
+import pickle
+import socket
 import subprocess as sp
+import time
+from functools import wraps
+
 from instamatic import config
 
 # HOST = 'localhost'

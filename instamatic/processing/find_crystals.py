@@ -1,19 +1,18 @@
-from scipy.cluster.vq import kmeans2
-from scipy._lib._util import _asarray_validated
-from scipy import ndimage
+import sys
+from collections import namedtuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
-
-from skimage import morphology
+from scipy import ndimage
+from scipy._lib._util import _asarray_validated
+from scipy.cluster.vq import kmeans2
 from skimage import filters
-from skimage import segmentation
 from skimage import measure
+from skimage import morphology
+from skimage import segmentation
 
-from instamatic.tools import autoscale
 from instamatic.config import calibration
-from collections import namedtuple
+from instamatic.tools import autoscale
 
 
 CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel', ])

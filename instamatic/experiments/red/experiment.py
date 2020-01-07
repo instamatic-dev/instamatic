@@ -1,9 +1,11 @@
+import datetime
 import os
 import time
-import datetime
-import tqdm
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import tqdm
+
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion

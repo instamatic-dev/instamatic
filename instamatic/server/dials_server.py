@@ -1,12 +1,13 @@
-from instamatic import config
-from pathlib import Path
-from socket import *
 import ast
 import datetime
 import logging
 import subprocess as sp
 import sys
 import threading
+from pathlib import Path
+from socket import *
+
+from instamatic import config
 
 
 try:

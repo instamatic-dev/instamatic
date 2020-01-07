@@ -1,7 +1,8 @@
-from instamatic import config
-from typing import Tuple
-import time
 import random
+import time
+from typing import Tuple
+
+from instamatic import config
 
 
 NTRLMAPPING = {

@@ -1,9 +1,11 @@
-from instamatic.formats import read_tiff
-from instamatic.tools import find_beam_center_with_beamstop
 from pathlib import Path
+
+import numpy as np
 from skimage import morphology
 from skimage.measure import find_contours
-import numpy as np
+
+from instamatic.formats import read_tiff
+from instamatic.tools import find_beam_center_with_beamstop
 
 
 def minimum_bounding_rectangle(points):

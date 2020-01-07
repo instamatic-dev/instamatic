@@ -1,11 +1,13 @@
-import sys
-import os
-import numpy as np
 import glob
+import os
+import sys
+from pathlib import Path
+
+import numpy as np
+from scipy import interpolate
+from scipy import ndimage
 from skimage import exposure
 from skimage.measure import regionprops
-from scipy import ndimage, interpolate
-from pathlib import Path
 
 
 def find_script(script: str):

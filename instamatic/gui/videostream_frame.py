@@ -1,14 +1,18 @@
+import datetime
+import threading
+import time
 from tkinter import *
 from tkinter.ttk import *
-from instamatic.utils.spinbox import Spinbox
-import time
-from PIL import Image, ImageEnhance
-from PIL import ImageTk
+
 import numpy as np
-import threading
-import datetime
-from instamatic.formats import write_tiff, read_tiff
+from PIL import Image
+from PIL import ImageEnhance
+from PIL import ImageTk
+
+from instamatic.formats import read_tiff
+from instamatic.formats import write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
+from instamatic.utils.spinbox import Spinbox
 
 
 class VideoStreamFrame(Frame):

@@ -24,11 +24,11 @@
 #  - If the connection does not work, debugging output can be obtained on both sides by:
 #      - Adding a line to SerialEMproperties.txt: 'DebugOutput K' (or adjusting an existing entry there to include 'K').
 #      - Setting an environment variable SERIALEMCCD_DEBUG with the value of 1 or 2.  2 will give more verbose output related to the socket operations.
-
 import os
 import socket
-import numpy as np
 import time
+
+import numpy as np
 
 # set this to a file name to log some socket debug messages.
 # Set to None to avoid saving a log.

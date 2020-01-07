@@ -1,5 +1,6 @@
-from instamatic import config
 from pathlib import Path
+
+from instamatic import config
 
 
 def get_new_work_subdirectory(stem="experiment", drc=None, number=1, mkdir=True):

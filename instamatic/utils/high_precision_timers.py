@@ -1,6 +1,6 @@
-from ctypes import wintypes
-import ctypes
 import atexit
+import ctypes
+from ctypes import wintypes
 
 winmm = ctypes.WinDLL('winmm')
 

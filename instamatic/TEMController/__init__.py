@@ -1,2 +1,3 @@
-from .TEMController import initialize, get_instance
 from .microscope import Microscope
+from .TEMController import get_instance
+from .TEMController import initialize

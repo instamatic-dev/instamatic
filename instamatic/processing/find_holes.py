@@ -1,19 +1,16 @@
-#!/usr/bin/env python
-
-from instamatic.tools import *
-from instamatic.config import calibration
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy import ndimage
-
 from skimage import color
 from skimage import filters
+from skimage import measure
 from skimage import morphology
 from skimage import segmentation
-from skimage import measure
+
+from instamatic.config import calibration
+from instamatic.tools import *
 
 plt.rcParams['image.cmap'] = 'gray'
 

@@ -12,14 +12,14 @@ Defaults to `cred_log.txt` in the current directory if left blank.
 If the first argument is given as `all`, the script will look for
 all `cred_log.txt` files in the subdirectories, and iterate over those.
 """
-
-from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
-from instamatic.formats import read_tiff
 import sys
 from pathlib import Path
-import numpy as np
 
 import matplotlib.pyplot as plt
+import numpy as np
+
+from instamatic.formats import read_tiff
+from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
 def mark_cross(img, mask_value=0):

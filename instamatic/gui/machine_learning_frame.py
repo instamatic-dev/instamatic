@@ -1,14 +1,14 @@
-from .base_module import BaseModule
+import tkinter.filedialog
+from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
-import tkinter.filedialog
 
-from instamatic.formats import read_image
-import numpy as np
 import matplotlib.pyplot as plt
-from .mpl_frame import ShowMatplotlibFig
+import numpy as np
 
-from pathlib import Path
+from .base_module import BaseModule
+from .mpl_frame import ShowMatplotlibFig
+from instamatic.formats import read_image
 
 
 def treeview_sort_column(tv, col, reverse):

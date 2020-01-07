@@ -1,12 +1,13 @@
-from .base_module import BaseModule
+import datetime
+import os
+import tkinter.filedialog
+from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
-import tkinter.filedialog
-import os
-import datetime
+
+from .base_module import BaseModule
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
-from pathlib import Path
 
 
 class IOFrame(LabelFrame):

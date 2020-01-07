@@ -1,17 +1,15 @@
+import atexit
+import ctypes
 import os
 import sys
-import ctypes
+import time
+import traceback
 from ctypes import *
 from pathlib import Path
 
 import numpy as np
 
-import time
-import traceback
-import atexit
-
 from instamatic import config
-
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 

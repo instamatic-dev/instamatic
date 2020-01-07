@@ -1,11 +1,13 @@
-import subprocess as sp
+import glob
 import os
+import subprocess as sp
+
 import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
+
 from instamatic.formats import read_image
 from instamatic.tools import get_files
-import tqdm
-import glob
-import numpy as np
 
 plt.rcParams["figure.figsize"] = 10, 10
 plt.rcParams["image.cmap"] = "gray"
