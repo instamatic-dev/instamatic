@@ -381,6 +381,10 @@ class JeolMicroscope:
             if b is not None and abs(nb - b) > 0.057:
                 logger.warning(f'stage.b -> requested: {b}, got: {nb}')
 
+    def is_goniotool_available(self):
+        """Return goniotool status."""
+        return self.goniotool_available
+
     def getRotationSpeed(self) -> int:
         if self.goniotool_available:
             self.goniotool.get_rate()

@@ -66,6 +66,7 @@ class MicroscopeClient:
                     break
 
         self._init_dict()
+        self.check_goniotool()
 
         atexit.register(self.s.close)
 
@@ -116,6 +117,12 @@ class MicroscopeClient:
 
     def __dir__(self):
         return self._dct.keys()
+
+    def check_goniotool(self):
+        """Check whether goniotool is available and update the config as
+        necessary."""
+        if config.cfg.use_goniotool:
+            config.cfg.use_goniotool = self.is_goniotool_available()
 
 
 class TraceVariable:

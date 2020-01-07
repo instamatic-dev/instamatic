@@ -142,6 +142,21 @@ class SimuMicroscope:
                 't0': 0.0,
             }
 
+        self.goniotool_available = config.cfg.use_goniotool
+        if self.goniotool_available:
+            from instamatic.goniotool import GonioToolClient
+            try:
+                self.goniotool = GonioToolClient()
+            except Exception as e:
+                print('GonioToolClient:', e)
+                print('Could not connect to GonioToolServer, goniotool unavailable!')
+                self.goniotool_available = False
+                config.cfg.use_goniotool = False
+
+    def is_goniotool_available(self):
+        """Return goniotool status."""
+        return self.goniotool_available
+
     def _StagePositionSetter(self, var: str, val: float) -> None:
         """General stage position setter, models stage movement speed."""
         d = self._stage_dict[var]
