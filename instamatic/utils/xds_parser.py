@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def volume(cell):
-    """Returns volume for the general case from cell parameters"""
+    """Returns volume for the general case from cell parameters."""
     a, b, c, al, be, ga = cell
     al = radians(al)
     be = radians(be)
@@ -19,7 +19,7 @@ def volume(cell):
 
 
 class xds_parser:
-    """docstring for xds_parser"""
+    """docstring for xds_parser."""
 
     def __init__(self, filename):
         super().__init__()
@@ -180,9 +180,8 @@ class xds_parser:
 
 
 def cells_to_excel(ps, out="cells.xlsx"):
-    """Takes a list of `xds_parser` instances and writes the cell
-    parameters to an excel file `cells.xlsx`.
-    """
+    """Takes a list of `xds_parser` instances and writes the cell parameters to
+    an excel file `cells.xlsx`."""
     d = {}
     for i, p in enumerate(ps):
         d[i] = p.cell_as_dict()
@@ -195,10 +194,8 @@ def cells_to_excel(ps, out="cells.xlsx"):
 
 
 def cells_to_cellparm(ps):
-    """Takes a list of `xds_parser` instances and writes the cell
-    parameters to an instruction file `CELLPARM.INP` for the program
-    `cellparm`.
-    """
+    """Takes a list of `xds_parser` instances and writes the cell parameters to
+    an instruction file `CELLPARM.INP` for the program `cellparm`."""
     # write cellparm input file
     with open("CELLPARM.INP", "w") as f:
         for i, p in enumerate(ps):
@@ -211,9 +208,11 @@ def cells_to_cellparm(ps):
 
 
 def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
-    """Takes a list of `xds_parser` instances and gathers the
-    corresponding `XDS_ASCII.HKL` files into the current directory.
-    The data source and numbering scheme is summarized in the file `filelist.txt`.
+    """Takes a list of `xds_parser` instances and gathers the corresponding
+    `XDS_ASCII.HKL` files into the current directory.
+
+    The data source and numbering scheme is summarized in the file
+    `filelist.txt`.
     """
     # gather xds_ascii and prepare filelist
     with open("filelist.txt", "w") as f:
@@ -238,7 +237,7 @@ def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
 
 
 def parse_fns(fns):
-    """Parse list of filenames"""
+    """Parse list of filenames."""
     new_fns = []
     for fn in fns:
         if fn.is_dir():

@@ -20,9 +20,7 @@ def swap_needed(header: dict) -> bool:
 
 
 def write_adsc(fname: str, data: np.array, header: dict = {}):
-    """
-    Write adsc format
-    """
+    """Write adsc format."""
     out = b'{\n'
     for key in header:
         out += "{:}={:};\n".format(key, header[key]).encode()
@@ -48,7 +46,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
 
 
 def readheader(infile):
-    """ read an adsc header """
+    """read an adsc header."""
     header = {}
     line = infile.readline()
     bytesread = len(line)
@@ -65,7 +63,7 @@ def readheader(infile):
 
 
 def read_adsc(fname: str) -> (np.array, dict):
-    """ read in the file """
+    """read in the file."""
     with open(fname, "rb", buffering=0) as infile:
         try:
             header = readheader(infile)

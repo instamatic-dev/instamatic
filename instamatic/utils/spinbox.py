@@ -4,18 +4,17 @@ from tkinter.ttk import Entry
 
 
 class Spinbox(Entry):
-    """Ttk Spinbox is an Entry with increment and decrement arrows
-    It is commonly used for number entry or to select from a list of
-    string values.
-    """
+    """Ttk Spinbox is an Entry with increment and decrement arrows It is
+    commonly used for number entry or to select from a list of string
+    values."""
 
     def __init__(self, master=None, **kw):
         """Construct a Ttk Spinbox widget with the parent master.
-        STANDARD OPTIONS
-            class, cursor, style, takefocus, validate,
-            validatecommand, xscrollcommand, invalidcommand
-        WIDGET-SPECIFIC OPTIONS
-            to, from_, increment, values, wrap, format, command
+
+        STANDARD OPTIONS: class, cursor, style, takefocus, validate,
+        validatecommand, xscrollcommand, invalidcommand
+
+        WIDGET-SPECIFIC OPTIONS: to, from_, increment, values, wrap, format, command
         """
         Entry.__init__(self, master, "ttk::spinbox", **kw)
 

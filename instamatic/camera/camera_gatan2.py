@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class CameraGatan2:
-    """docstring for CameraGatan2"""
+    """docstring for CameraGatan2."""
 
     def __init__(self, interface: str = "gatan2"):
-        """Initialize camera module """
+        """Initialize camera module."""
         super().__init__()
 
         self.name = interface
@@ -41,44 +41,46 @@ class CameraGatan2:
         self.streamable = False
 
     def getCameraType(self) -> str:
-        """Get the name of the camera currently in use"""
+        """Get the name of the camera currently in use."""
         raise NotImplementedError
 
     def getDMVersion(self) -> str:
-        """Get the version number of DM"""
+        """Get the version number of DM."""
         return self.g.GetDMVersion()
 
     def getDimensions(self) -> (int, int):
-        """alias to getImageDimensions"""
+        """alias to getImageDimensions."""
         return self.getImageDimensions()
 
     def getCameraDimensions(self) -> (int, int):
-        """Get the maximum dimensions reported by the camera"""
+        """Get the maximum dimensions reported by the camera."""
         raise NotImplementedError
 
     def getImageDimensions(self) -> (int, int):
-        """Get the dimensions of the image"""
+        """Get the dimensions of the image."""
         bin_x, bin_y = self.getBinning()
         raise NotImplementedError
 
     def getPhysicalPixelsize(self) -> (int, int):
-        """Returns the physical pixel size of the camera nanometers"""
+        """Returns the physical pixel size of the camera nanometers."""
         raise NotImplementedError
 
     def getBinning(self) -> (int, int):
-        """Returns the binning corresponding to the currently selected camera config"""
+        """Returns the binning corresponding to the currently selected camera
+        config."""
         raise NotImplementedError
 
     def getCameraName(self) -> str:
-        """Get the name reported by the camera"""
+        """Get the name reported by the camera."""
         return self.name
 
     def writeTiff(self, filename: str) -> None:
-        """Write tiff file using the DM machinery"""
+        """Write tiff file using the DM machinery."""
         raise NotImplementedError
 
     def writeTiffs(self) -> None:
-        """Write a series of data in tiff format and writes them to the given `path`"""
+        """Write a series of data in tiff format and writes them to the given
+        `path`"""
         raise NotImplementedError
 
         path = Path(path)
@@ -87,11 +89,11 @@ class CameraGatan2:
         print(f"Wrote {i+1} images to {path}")
 
     def getImage(self, **kwargs) -> "np.array":
-        """Acquire image through EMMENU and return data as np array"""
+        """Acquire image through EMMENU and return data as np array."""
         raise NotImplementedError
 
     def acquireImage(self, **kwargs) -> int:
-        """Acquire image through DM"""
+        """Acquire image through DM."""
         raise NotImplementedError
 
     def get_ready_for_record(self) -> None:
@@ -127,21 +129,21 @@ class CameraGatan2:
         raise NotImplementedError
 
     def set_exposure(self, exposure_time: int) -> None:
-        """Set exposure time in ms"""
+        """Set exposure time in ms."""
         raise NotImplementedError
 
     def get_exposure(self) -> int:
-        """Return exposure time in ms"""
+        """Return exposure time in ms."""
         raise NotImplementedError
 
     def releaseConnection(self) -> None:
-        """Release the connection to the camera"""
+        """Release the connection to the camera."""
         msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released"
         # print(msg)
         logger.info(msg)
 
     def set_tag(self, key: str, value: float) -> None:
-        """Set the tag `key` in the DM persistent parameters"""
+        """Set the tag `key` in the DM persistent parameters."""
         if isinstance(value, str):
             value = value.replace('\\', '\\\\')
             set_tag = f'SetPersistentStringNote("{key}", "{value}")'
@@ -150,7 +152,9 @@ class CameraGatan2:
         self.g.ExecuteScript(set_tag)
 
     def get_tag(self, key: str, delete: bool = False) -> float:
-        """Get the tag given by `key`. Clear the tag if `delete` is specfified`
+        """Get the tag given by `key`.
+
+        Clear the tag if `delete` is specfified`
         get_tag = f'number value\nGetPersistentNumberNote("{key}", value)\nExit(value)'
         value = self.g.ExecuteGetDoubleScript(get_tag)
         """
@@ -161,12 +165,12 @@ class CameraGatan2:
         return value
 
     def delete_tag(self, key: str) -> None:
-        """Delete the tag `key` in DM"""
+        """Delete the tag `key` in DM."""
         delete_tag = f'DeletePersistentNote("{key}")'
         self.g.ExecuteScript(delete_tag)
 
     def readout(self) -> dict:
-        """Readout tag structure with metadata from last cRED experiment"""
+        """Readout tag structure with metadata from last cRED experiment."""
         d = {}
 
         keys = ("nframes", "bin_x", "bin_y", "cam_res_x", "cam_res_y", "image_res_x", "image_res_y", "pixelsize_x", "pixelsize_y",

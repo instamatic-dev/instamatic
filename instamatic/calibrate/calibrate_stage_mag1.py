@@ -41,8 +41,7 @@ def plot_it(arr1, arr2, params):
 
 
 def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True, save_images=False, **kwargs):
-    """
-    Calibrate pixel->stageposition coordinates live on the microscope
+    """Calibrate pixel->stageposition coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
@@ -175,8 +174,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
 
 def calibrate_mag1_from_image_fn(center_fn, other_fn):
-    """
-    Calibrate pixel->stageposition coordinates from a set of images
+    """Calibrate pixel->stageposition coordinates from a set of images.
 
     center_fn: `str`
         Reference image at the center of the grid (with the clover in the middle)

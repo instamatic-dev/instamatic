@@ -1,6 +1,6 @@
 # https://github.com/ezralanglois/arachnid/blob/master/arachnid/core/image/formats/mrc.py
 # Licenced under GPL
-"""Read and write images in the MRC format
+"""Read and write images in the MRC format.
 
 .. todo:: define arachnid header and map to mrc
 
@@ -91,7 +91,7 @@ mrc_defaults = dict(alpha=90, beta=90, gamma=90, mapc=1, mapr=2, maps=3, map='MA
 
 
 def _gen_header():
-    """Create the header for an MRC image and stack
+    """Create the header for an MRC image and stack.
 
     .. note::
 
@@ -170,7 +170,7 @@ ara2mrc = {val: key for key, val in mrc2ara.items()}
 
 
 def create_header(shape, dtype, order='C', header=None):
-    """Create a header for the MRC image format
+    """Create a header for the MRC image format.
 
     @todo support header parameters
 
@@ -192,7 +192,7 @@ def create_header(shape, dtype, order='C', header=None):
 
 
 def array_from_header(header):
-    """Convert header information to array parameters
+    """Convert header information to array parameters.
 
     :Parameters:
 
@@ -219,7 +219,7 @@ def array_from_header(header):
 
 
 def cache_data():
-    """Get keywords to be added as data cache
+    """Get keywords to be added as data cache.
 
     :Returns:
 
@@ -231,7 +231,7 @@ def cache_data():
 
 
 def is_format_header(h):
-    """Test if the given header has the proper format
+    """Test if the given header has the proper format.
 
     :Parameters:
 
@@ -251,7 +251,7 @@ bad_mrc_header = False
 
 
 def is_readable(filename, no_strict_mrc=False):
-    """Test if the file read has a valid MRC header
+    """Test if the file read has a valid MRC header.
 
     :Parameters:
 
@@ -317,7 +317,7 @@ def is_readable(filename, no_strict_mrc=False):
 
 
 def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
-    """Read the MRC header
+    """Read the MRC header.
 
     :Parameters:
 
@@ -352,7 +352,7 @@ def read_header(filename, index=None, no_strict_mrc=False, force_volume=False):
 
 
 def read_mrc_header(filename, index=None, no_strict_mrc=False):
-    """Read the MRC header
+    """Read the MRC header.
 
     :Parameters:
 
@@ -393,7 +393,7 @@ def is_volume(filename):
 
 
 def count_images(filename, no_strict_mrc=False):
-    """Count the number of images in the file
+    """Count the number of images in the file.
 
     :Parameters:
 
@@ -418,7 +418,7 @@ def count_images(filename, no_strict_mrc=False):
 
 
 def iter_images(filename, index=None, header=None, no_strict_mrc=False):
-    """Read a set of SPIDER images
+    """Read a set of SPIDER images.
 
     :Parameters:
 
@@ -479,7 +479,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
 
 
 def valid_image(filename, no_strict_mrc=False):
-    """Test if the image is valid
+    """Test if the image is valid.
 
     :Parameters:
 
@@ -507,7 +507,7 @@ def valid_image(filename, no_strict_mrc=False):
 
 
 def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volume=False):
-    """Read an image from the specified file in the MRC format
+    """Read an image from the specified file in the MRC format.
 
     :Parameters:
 
@@ -559,7 +559,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
 
 
 def reshape_data(out, h, index, count, force_volume=False):
-    """Reshape the data to the proper dimensions
+    """Reshape the data to the proper dimensions.
 
     :Parameters:
 
@@ -576,7 +576,6 @@ def reshape_data(out, h, index, count, force_volume=False):
 
     out : array
           Array with image information from the file
-
     """
 
     if index is None and int(h['nz'][0]) > 1 and (count == h['nx'][0] or force_volume):
@@ -601,8 +600,8 @@ def file_size(fileobject):
 
 
 def is_writable(filename):
-    """Test if the image extension of the given filename is understood
-    as a writable format.
+    """Test if the image extension of the given filename is understood as a
+    writable format.
 
     :Parameters:
 
@@ -622,7 +621,7 @@ def is_writable(filename):
 
 
 def write_image(filename, img, index=None, header=None, inplace=False):
-    """Write an image array to a file in the MRC format
+    """Write an image array to a file in the MRC format.
 
     :Parameters:
 

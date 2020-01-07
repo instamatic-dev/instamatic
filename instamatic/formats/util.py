@@ -1,8 +1,8 @@
-'''  Defines a set of utility functions
+"""Defines a set of utility functions.
 
-.. Created on Jul 18, 2013
-.. codeauthor:: Robert Langlois <rl2528@columbia.edu>
-'''
+.. Created on Jul 18, 2013 .. codeauthor:: Robert Langlois
+<rl2528@columbia.edu>
+"""
 import bz2
 import logging
 import os
@@ -17,15 +17,13 @@ _logger.setLevel(logging.DEBUG)
 
 
 class InvalidHeaderException(Exception):
-    ''' Thrown when the image file has an invalid header
-    '''
+    """Thrown when the image file has an invalid header."""
 
     pass
 
 
 def fromfile(fin, dtype, count, sep=''):
-    '''
-    '''
+    """"""
 
     if hasattr(fin, 'fileno'):
         return np.fromfile(fin, dtype, count, sep)
@@ -34,7 +32,7 @@ def fromfile(fin, dtype, count, sep=''):
 
 
 def uopen(filename, mode):
-    ''' Open a stream to filename
+    """Open a stream to filename.
 
     :Parameters:
 
@@ -47,7 +45,7 @@ def uopen(filename, mode):
 
     fd : File
          File descriptor
-    '''
+    """
 
     try:
         os.fspath(filename)
@@ -66,20 +64,20 @@ def uopen(filename, mode):
 
 
 def close(filename, fd):
-    ''' Close the file descriptor (if it was opened by caller)
+    """Close the file descriptor (if it was opened by caller)
 
     filename : str
                Name of the file
     fd : File
          File descriptor
-    '''
+    """
 
     if fd != filename:
         fd.close()
 
 
 def update_header(dest, source, header_map, tag=None):
-    ''' Map values from or to the format and the internal header
+    """Map values from or to the format and the internal header.
 
     :Parameters:
 
@@ -96,7 +94,7 @@ def update_header(dest, source, header_map, tag=None):
 
     dest : array or dict
            Destination of the header values
-    '''
+    """
 
     if source is None:
         return dest
@@ -115,7 +113,7 @@ def update_header(dest, source, header_map, tag=None):
 
 
 def read_image(f, header, dtype, dlen, shape, swap, order='C'):
-    ''' Read an image from a file using random file acess
+    """Read an image from a file using random file acess.
 
     :Parameters:
 
@@ -138,7 +136,7 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
 
     out : ndarray
           Array of image data
-    '''
+    """
 
     out = np.fromfile(f, dtype=dtype, count=dlen)
     out.shape = shape

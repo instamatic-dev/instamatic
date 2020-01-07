@@ -31,7 +31,7 @@ MIN = 0
 
 
 class SimuMicroscope:
-    """docstring for microscope"""
+    """docstring for microscope."""
 
     def __init__(self, name: str = "simulate"):
         super().__init__()
@@ -143,7 +143,7 @@ class SimuMicroscope:
             }
 
     def _StagePositionSetter(self, var: str, val: float) -> None:
-        """General stage position setter, models stage movement speed"""
+        """General stage position setter, models stage movement speed."""
         d = self._stage_dict[var]
         current = d["current"]
         direction = +1 if (val > current) else -1
@@ -155,7 +155,7 @@ class SimuMicroscope:
         d["direction"] = direction
 
     def _StagePositionGetter(self, var: str) -> float:
-        """General stage position getter, models stage movement speed"""
+        """General stage position getter, models stage movement speed."""
         d = self._stage_dict[var]
         is_moving = d["is_moving"]
         if is_moving:
@@ -414,12 +414,12 @@ class SimuMicroscope:
         self._stage_dict["a"]["speed"] = 10.0 * (value / 12)
 
     def getFunctionMode(self) -> str:
-        """mag1, mag2, lowmag, samag, diff"""
+        """mag1, mag2, lowmag, samag, diff."""
         mode = self.FunctionMode_value
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value: int):
-        """mag1, mag2, lowmag, samag, diff"""
+        """mag1, mag2, lowmag, samag, diff."""
         if isinstance(value, str):
             try:
                 value = FUNCTION_MODES.index(value)
@@ -433,17 +433,17 @@ class SimuMicroscope:
         return self.DiffractionFocus_value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
-        """IL1"""
+        """IL1."""
         if not self.getFunctionMode() == "diff":
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.DiffractionFocus_value = value
 
     def setIntermediateLens1(self, value: int):
-        """IL1"""
+        """IL1."""
         self.IntermediateLens1_value = value
 
     def getIntermediateLens1(self):
-        """IL1"""
+        """IL1."""
         return self.IntermediateLens1_value
 
     def getDiffShift(self) -> Tuple[int, int]:
@@ -460,7 +460,7 @@ class SimuMicroscope:
         return self.beamblank
 
     def setBeamBlank(self, mode: bool):
-        """True/False or 1/0"""
+        """True/False or 1/0."""
         self.beamblank = mode
 
     def getCondensorLensStigmator(self) -> Tuple[int, int]:
@@ -485,7 +485,7 @@ class SimuMicroscope:
         self.objectivelensstigmator_y = y
 
     def getSpotSize(self) -> int:
-        """0-based indexing for GetSpotSize, add 1 for consistency"""
+        """0-based indexing for GetSpotSize, add 1 for consistency."""
         return self.spotsize
 
     def getScreenPosition(self) -> str:

@@ -47,8 +47,9 @@ class Experiment:
         self.buffer = []
 
     def start_collection(self, exposure_time: float, tilt_range: float, stepsize: float):
-        """Start or continue data collection for `tilt_range` degrees with steps given by `stepsize`,
-        To finalize data collection and write data files, run `self.finalize`.
+        """Start or continue data collection for `tilt_range` degrees with
+        steps given by `stepsize`, To finalize data collection and write data
+        files, run `self.finalize`.
 
         The number of images collected is defined by `tilt_range / stepsize`.
 
@@ -58,7 +59,6 @@ class Experiment:
             Tilt range starting from the current angle in degrees. Must be positive.
         stepsize:
             Step size for the angle in degrees, controls the direction and can be positive or negative
-
         """
         self.spotsize = self.ctrl.spotsize
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -128,6 +128,7 @@ class Experiment:
 
     def finalize(self):
         """Finalize data collection after `self.start_collection` has been run.
+
         Write data in `self.buffer` to path given by `self.path`.
         """
         self.logger.info(f"Data saving path: {self.path}")

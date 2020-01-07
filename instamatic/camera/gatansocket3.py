@@ -85,10 +85,10 @@ sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 
 class Message:
-    """
-    Information packet to send and receive on the socket.
-    Initialize with the sequences of args (longs, bools, doubles)
-    and optional long array.
+    """Information packet to send and receive on the socket.
+
+    Initialize with the sequences of args (longs, bools, doubles) and
+    optional long array.
     """
 
     def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
@@ -120,18 +120,14 @@ class Message:
         # self.longarray = np.asarray(longarray, dtype=np.int_)
 
     def pack(self):
-        """
-        Serialize the data
-        """
+        """Serialize the data."""
         data_size = self.array.data.itemsize
         if self.array.data.itemsize > ARGS_BUFFER_SIZE:
             raise RuntimeError(f'Message packet size {data_size} is larger than maximum {ARGS_BUFFER_SIZE}')
         return self.array.data
 
     def unpack(self, buf):
-        """
-        unpack buffer into our data structure
-        """
+        """unpack buffer into our data structure."""
         self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
 
@@ -147,7 +143,7 @@ def log(message):
 
 
 def logwrap(func):
-    """Decorator for socket send and recv calls, so they can make log"""
+    """Decorator for socket send and recv calls, so they can make log."""
     def newfunc(*args, **kwargs):
         log(f'{func}\t{args}\t{kwargs}')
         try:
@@ -258,7 +254,7 @@ class GatanSocket:
         log(f'Func: {sendargs[0]}, Code: {recvargs[0]}')
 
     def GetLong(self, funcName):
-        """Common class of function that gets a single long"""
+        """Common class of function that gets a single long."""
         funcCode = enum_gs[funcName]
         message_send = Message(longargs=(funcCode,))
         # First recieved message longargs is error code
@@ -268,8 +264,8 @@ class GatanSocket:
         return result
 
     def SendLongGetLong(self, funcName, longarg):
-        """Common class of function with one long arg
-        that returns a single long"""
+        """Common class of function with one long arg that returns a single
+        long."""
         funcCode = enum_gs[funcName]
         message_send = Message(longargs=(funcCode, longarg))
         # First recieved message longargs is error code
@@ -538,9 +534,8 @@ class GatanSocket:
         return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
 
     def ExecuteGetLongCameraObjectFunction(self, function_name, camera_id=0):
-        """
-        Execute DM script function that requires camera object as input and output one long integer.
-        """
+        """Execute DM script function that requires camera object as input and
+        output one long integer."""
         recv_longargs_init = (0,)
         result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_longargs_init=recv_longargs_init)
         if result is False:
@@ -548,9 +543,8 @@ class GatanSocket:
         return result.array['longargs'][0]
 
     def ExecuteGetDoubleCameraObjectFunction(self, function_name, camera_id=0):
-        """
-        Execute DM script function that requires camera object as input and output double floating point number.
-        """
+        """Execute DM script function that requires camera object as input and
+        output double floating point number."""
         recv_dblargs_init = (0,)
         result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_dblargs_init=recv_dblargs_init)
         if result is False:
@@ -558,9 +552,7 @@ class GatanSocket:
         return result.array['dblargs'][0]
 
     def ExecuteCameraObjectFunction(self, function_name, camera_id=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-        """
-        Execute DM script function that requires camera object as input.
-        """
+        """Execute DM script function that requires camera object as input."""
         if not self.hasScriptFunction(function_name):
             # unsuccessful
             return False
@@ -578,16 +570,12 @@ class GatanSocket:
         return result.array['longargs'][0]
 
     def ExecuteGetLongScript(self, command_line, select_camera=0):
-        """
-        Execute DM script and return the result as integer
-        """
+        """Execute DM script and return the result as integer."""
         # SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
         return int(self.ExecuteGetDoubleScript(command_line, select_camera))
 
     def ExecuteGetDoubleScript(self, command_line, select_camera=0):
-        """
-        Execute DM script that gets one double float number
-        """
+        """Execute DM script that gets one double float number."""
         recv_dblargs_init = (0.0,)
         result = self.ExecuteScript(command_line, select_camera, recv_dblargs_init=recv_dblargs_init)
         return result.array['dblargs'][0]
@@ -608,8 +596,7 @@ class GatanSocket:
         return message_recv
 
     def RunScript(self, fn: str, background: bool = False):
-        """
-        Run a DM script
+        """Run a DM script.
 
         fn: str
                 Path to the script to run

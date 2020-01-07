@@ -16,7 +16,7 @@ MAX = 1.0
 
 
 class FEISimuMicroscope:
-    """docstring for FEI microscope"""
+    """docstring for FEI microscope."""
 
     def __init__(self, name="fei_simu"):
         super().__init__()
@@ -269,7 +269,7 @@ class FEISimuMicroscope:
         return self.tom.Projection.Defocus
 
     def setDiffFocus(self, value):
-        """IC1"""
+        """IC1."""
         self.tom.Projection.Defocus = value
 
     def resetDiffFocus(self):
@@ -292,7 +292,7 @@ class FEISimuMicroscope:
         return self.beamblank
 
     def setBeamBlank(self, mode):
-        """True/False or 1/0"""
+        """True/False or 1/0."""
         self.beamblank = mode
 
     def getCondensorLensStigmator(self):
@@ -303,7 +303,7 @@ class FEISimuMicroscope:
         self.tom.Illumination.CondenserStigmator.Y = y
 
     def getIntermediateLensStigmator(self):
-        """diffraction stigmator"""
+        """diffraction stigmator."""
         return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x, y):
@@ -318,7 +318,7 @@ class FEISimuMicroscope:
         self.tom.Illumination.ObjectiveStigmator.Y = y
 
     def getSpotSize(self):
-        """0-based indexing for GetSpotSize, add 1 for consistency"""
+        """0-based indexing for GetSpotSize, add 1 for consistency."""
         return self.tom.Illumination.SpotsizeIndex
 
     def setSpotSize(self, value):

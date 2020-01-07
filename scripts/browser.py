@@ -49,7 +49,7 @@ def get_stage_coords(fns, return_ims=False):
 
 def lst2colormap(lst):
     """Turn list of values into matplotlib colormap
-    http://stackoverflow.com/a/26552429"""
+    http://stackoverflow.com/a/26552429."""
     n = matplotlib.colors.Normalize(vmin=min(lst), vmax=max(lst))
     m = matplotlib.cm.ScalarMappable(norm=n)
     colormap = m.to_rgba(lst)

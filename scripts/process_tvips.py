@@ -1,5 +1,5 @@
-"""
-Script to process cRED data collecting using instamatic with the EMMENU plugin
+"""Script to process cRED data collecting using instamatic with the EMMENU
+plugin.
 
 To use:
     Run `python process_tvips.py cred_log.txt`

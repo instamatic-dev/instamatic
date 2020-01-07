@@ -9,8 +9,7 @@ from instamatic.tools import find_beam_center_with_beamstop
 
 
 def minimum_bounding_rectangle(points):
-    """
-    # From https://stackoverflow.com/a/33619018
+    """# From https://stackoverflow.com/a/33619018.
 
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
@@ -105,7 +104,7 @@ def radial_average(z, center, as_radial_map=False):
 
 
 def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc="."):
-    """Find rectangle fitting the beamstop
+    """Find rectangle fitting the beamstop.
 
     1. Radially scale the image (divide each point in the image by the radial average)
     2. Segment the image via thresholding. The beamstop is identified by the area where the image < radially scaled image

@@ -19,9 +19,12 @@ CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_cluste
 
 
 def isedge(prop):
-    """Simple edge detection routine. Checks if the bbox of the prop matches the shape of the array.
-    Uses a histogram to determine if an edge is detected. If the lowest bin is the dominant one,
-    assume black area is measured (the edge)"""
+    """Simple edge detection routine.
+
+    Checks if the bbox of the prop matches the shape of the array. Uses
+    a histogram to determine if an edge is detected. If the lowest bin
+    is the dominant one, assume black area is measured (the edge)
+    """
     if (prop._slice[0].start == 0) or \
         (prop._slice[1].start == 0) or \
         (prop._slice[0].stop == prop._intensity_image.shape[0]) or \
@@ -35,10 +38,8 @@ def isedge(prop):
 
 
 def whiten(obs, check_finite=False):
-    """
-    Adapted from c:/python27/lib/site-packages/skimage/filters/thresholding.py
-        to return array and std_dev
-    """
+    """Adapted from c:/python27/lib/site-
+    packages/skimage/filters/thresholding.py to return array and std_dev."""
     obs = _asarray_validated(obs, check_finite=check_finite)
     std_dev = np.std(obs, axis=0)
     zero_std_mask = std_dev == 0
@@ -97,7 +98,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
 
 
 def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
-    """Specialized function with better defaults for timepix camera"""
+    """Specialized function with better defaults for timepix camera."""
     r = kwargs.get("r", 75)
 
     # 'offset' determines sensitivity of thresholding
@@ -117,10 +118,10 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
 
 
 def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
-    """Function for finding crystals in a low contrast images.
-    Used adaptive thresholds to find local features.
-    Edges are detected, and rejected, on the basis of a histogram.
-    Kmeans clustering is used to spread points over the segmented area.
+    """Function for finding crystals in a low contrast images. Used adaptive
+    thresholds to find local features. Edges are detected, and rejected, on the
+    basis of a histogram. Kmeans clustering is used to spread points over the
+    segmented area.
 
     img: 2d np.ndarray
         Input image to locate crystals on

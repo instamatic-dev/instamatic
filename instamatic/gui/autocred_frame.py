@@ -15,7 +15,7 @@ from instamatic.calibrate.filenames import *
 
 
 class ExperimentalautocRED(LabelFrame):
-    """docstring for ExperimentalautocRED"""
+    """docstring for ExperimentalautocRED."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial Rotation Electron Diffraction (SerialRED)")

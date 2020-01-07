@@ -323,7 +323,8 @@ class Experiment:
             return 1
 
     def center_particle_ofinterest(self, pos_arr, transform_stagepos):
-        """Used to center the particle of interest in the view to minimize usage of lens"""
+        """Used to center the particle of interest in the view to minimize
+        usage of lens."""
         transform_stagepos_ = np.linalg.inv(transform_stagepos)
         if pos_arr[0] < 200 or pos_arr[0] > 316 or pos_arr[1] < 200 or pos_arr[1] > 316:
 

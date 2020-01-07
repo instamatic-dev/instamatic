@@ -16,7 +16,7 @@ plt.rcParams['image.cmap'] = 'gray'
 
 
 def plot_features(img, segmented):
-    """Take image and plot segments on top of them"""
+    """Take image and plot segments on top of them."""
     labels, numlabels = ndimage.label(segmented)
     image_label_overlay = color.label2rgb(labels, image=img, bg_label=0)
 
@@ -41,7 +41,7 @@ def plot_features(img, segmented):
 
 
 def plot_props(img, props, fname=None, scale=1):
-    """Take image and plot props on top of them"""
+    """Take image and plot props on top of them."""
     from matplotlib.patches import Rectangle
 
     fig = plt.figure(figsize=(15, 10))
@@ -77,7 +77,7 @@ def plot_props(img, props, fname=None, scale=1):
 
 
 def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=True):
-    """Get markers using simple thresholds"""
+    """Get markers using simple thresholds."""
     background = 1
     features = 2
 
@@ -101,7 +101,7 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
 
 
 def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
-    """Approximate the size of the feature to locate
+    """Approximate the size of the feature to locate.
 
     diameter: float,
         target diameter of feature to locate (in micrometer)
@@ -125,7 +125,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
 
 
 def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricity=0.4):
-    """Hole size as diameter in micrometer
+    """Hole size as diameter in micrometer.
 
     img: np.ndarray,
         image as 2d numpy array
@@ -141,7 +141,6 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     Returns:
         props: list,
             list of props of the objects found
-
     """
     otsu = filters.threshold_otsu(img)
     n = 0.25

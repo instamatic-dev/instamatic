@@ -4,7 +4,7 @@ from .montage import *
 
 
 class GridMontage:
-    """Set up an automated montage map"""
+    """Set up an automated montage map."""
 
     def __init__(self, ctrl):
         super().__init__()
@@ -128,9 +128,8 @@ class GridMontage:
         return m
 
     def save(self, drc: str = None):
-        """Save the data to the given directory,
-        defaults to the instamatic data directory defined in the config
-        """
+        """Save the data to the given directory, defaults to the instamatic
+        data directory defined in the config."""
         from instamatic.formats import write_tiff
         from instamatic.io import get_new_work_subdirectory
 

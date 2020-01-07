@@ -11,7 +11,7 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class IOFrame(LabelFrame):
-    """docstring for ExperimentalSED"""
+    """docstring for ExperimentalSED."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Input/Output")

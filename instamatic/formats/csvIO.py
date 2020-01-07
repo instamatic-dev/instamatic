@@ -6,7 +6,7 @@ import yaml
 
 
 def results2df(results, sort=True):
-    """Convert a list of IndexingResult objects to pandas DataFrame"""
+    """Convert a list of IndexingResult objects to pandas DataFrame."""
     import pandas as pd
     df = pd.DataFrame(results).T
     df.columns = list(results.values())[0]._fields
@@ -16,9 +16,8 @@ def results2df(results, sort=True):
 
 
 def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
-    """
-    Maintain order when saving data to yaml file
-    http://stackoverflow.com/a/21912744
+    """Maintain order when saving data to yaml file
+    http://stackoverflow.com/a/21912744.
 
     obj: object to serialize
     f: file-like object or str path to file
@@ -38,9 +37,8 @@ def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
 
 
 def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    """
-    Maintain order when reading yaml file
-    http://stackoverflow.com/a/21912744
+    """Maintain order when reading yaml file
+    http://stackoverflow.com/a/21912744.
 
     f: file-like object or str path to file
     """
@@ -60,14 +58,14 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 
 
 def write_csv(f, results):
-    """Write a list of IndexingResult objects to a csv file"""
+    """Write a list of IndexingResult objects to a csv file."""
     if not hasattr(results, "to_csv"):
         results = results2df(results)
     results.to_csv(f)
 
 
 def read_csv(f):
-    """Read a csv file into a pandas DataFrame"""
+    """Read a csv file into a pandas DataFrame."""
     if isinstance(f, (list, tuple)):
         return pd.concat(read_csv(csv) for csv in f)
     else:
@@ -75,9 +73,8 @@ def read_csv(f):
 
 
 def read_ycsv(f):
-    """
-    read file in ycsv format:
-    https://blog.datacite.org/using-yaml-frontmatter-with-csv/
+    """read file in ycsv format: https://blog.datacite.org/using-yaml-
+    frontmatter-with-csv/
 
     format:
         ---
@@ -124,9 +121,8 @@ def read_ycsv(f):
 
 
 def write_ycsv(f, data, metadata):
-    """
-    write file in ycsv format:
-    https://blog.datacite.org/using-yaml-frontmatter-with-csv/
+    """write file in ycsv format: https://blog.datacite.org/using-yaml-
+    frontmatter-with-csv/
 
     format:
         ---

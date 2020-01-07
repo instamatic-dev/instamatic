@@ -15,7 +15,7 @@ rlock = threading.RLock()
 
 
 def parse_xds(path):
-    """Parse the XDS output file `CORRECT.LP` and print a summary"""
+    """Parse the XDS output file `CORRECT.LP` and print a summary."""
     from instamatic.utils.xds_parser import xds_parser
 
     fn = Path(path) / "CORRECT.LP"
@@ -44,7 +44,10 @@ def parse_xds(path):
 
 
 def run_xds_indexing(path):
-    """Call XDS on the given `path`. Uses WSL (Windows 10 only)."""
+    """Call XDS on the given `path`.
+
+    Uses WSL (Windows 10 only).
+    """
     p = sp.Popen("bash -c xds_par 2>&1 >/dev/null", cwd=path)
     p.wait()
 

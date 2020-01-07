@@ -6,7 +6,7 @@ __all__ = ["Microscope"]
 
 
 def get_tem(name: str):
-    """Grab tem class"""
+    """Grab tem class."""
 
     if config.cfg.tem_require_admin:
         from instamatic import admin
@@ -28,7 +28,7 @@ def get_tem(name: str):
 
 
 def Microscope(name: str = None, use_server: bool = False):
-    """Generic class to load microscope interface class
+    """Generic class to load microscope interface class.
 
     name: str
         Specify which microscope to use, must be one of `jeol`, `fei_simu`, `simulate`

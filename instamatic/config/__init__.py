@@ -10,8 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 def initialize_in_appData():
-    """Initialize the configuration directory on first run
-    Default to %appdata%/instamatic"""
+    """Initialize the configuration directory on first run Default to.
+
+    %appdata%/instamatic.
+    """
     src = Path(__file__).parent
     dst = Path(os.environ["AppData"]) / "instamatic"
     dst.mkdir(exist_ok=True, parents=True)
@@ -37,7 +39,7 @@ def initialize_in_appData():
 
 
 def get_base_drc():
-    """Figure out where configuration files for instamatic are stored"""
+    """Figure out where configuration files for instamatic are stored."""
     try:
         search = Path(os.environ["instamatic"])  # if installed in portable way
         logger.debug("Search directory:", search)
@@ -52,8 +54,9 @@ def get_base_drc():
 
 
 def get_alignments() -> dict:
-    """
-    Get alignments from the alignment directory and return them as a dict of dicts.
+    """Get alignments from the alignment directory and return them as a dict of
+    dicts.
+
     Use `ctrl.from_dict` to load the alignments
     """
     fns = alignments_drc.glob("*.yaml")
@@ -62,7 +65,7 @@ def get_alignments() -> dict:
 
 
 class ConfigObject:
-    """Namespace for configuration (maps dict items to attributes"""
+    """Namespace for configuration (maps dict items to attributes."""
 
     def __init__(self, d):
         super().__init__()
@@ -76,14 +79,14 @@ class ConfigObject:
 
     @classmethod
     def from_file(cls, path):
-        """Read configuration from yaml file, returns namespace"""
+        """Read configuration from yaml file, returns namespace."""
         return cls(yaml.load(open(path, "r"), Loader=yaml.Loader))
 
 
 def load(microscope_name=None, calibration_name=None, camera_name=None):
-    """Load the global.yaml file and microscope/calib/camera configs
-    The config files to load can be overridden by specifying
-        microscope_name/calibration_name/camera_name"""
+    """Load the global.yaml file and microscope/calib/camera configs The config
+    files to load can be overridden by specifying
+    microscope_name/calibration_name/camera_name."""
 
     global microscope
     global calibration

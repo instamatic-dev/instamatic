@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class CameraSimu:
-    """docstring for CameraSimu"""
+    """docstring for CameraSimu."""
 
     def __init__(self, name="simulate"):
-        """Initialize camera module """
+        """Initialize camera module."""
         super().__init__()
 
         self.name = name
@@ -41,7 +41,7 @@ class CameraSimu:
         self.streamable = True
 
     def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine
+        """Image acquisition routine.
 
         exposure: exposure time in seconds
         binsize: which binning to use
@@ -59,33 +59,33 @@ class CameraSimu:
         return arr
 
     def isCameraInfoAvailable(self) -> bool:
-        """Check if the camera is available"""
+        """Check if the camera is available."""
         return True
 
     def getDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera"""
+        """Get the dimensions reported by the camera."""
         return self.dimensions
 
     def getImageDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera"""
+        """Get the dimensions reported by the camera."""
         return self.dimensions
 
     def getCameraDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera"""
+        """Get the dimensions reported by the camera."""
         return self.dimensions
 
     def getName(self) -> str:
-        """Get the name reported by the camera"""
+        """Get the name reported by the camera."""
         return self.name
 
     def establishConnection(self) -> None:
-        """Establish connection to the camera"""
+        """Establish connection to the camera."""
         res = 1
         if res != 1:
             raise RuntimeError(f"Could not establish camera connection to {self.name}")
 
     def releaseConnection(self) -> None:
-        """Release the connection to the camera"""
+        """Release the connection to the camera."""
         name = self.getName()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)

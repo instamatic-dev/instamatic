@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class CalibBrightness:
-    """docstring for calib_brightness"""
+    """docstring for calib_brightness."""
 
     def __init__(self, slope, intercept):
         self.slope = slope
@@ -73,8 +73,7 @@ class CalibBrightness:
 
 
 def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
-    """
-    Calibrate pixel->brightness coordinates live on the microscope
+    """Calibrate pixel->brightness coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
@@ -133,8 +132,7 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
 
 
 def calibrate_brightness_from_image_fn(fns):
-    """
-    Calibrate pixel->brightness (size of beam) from a set of images
+    """Calibrate pixel->brightness (size of beam) from a set of images.
 
     fns: `str`
         Set of images to determine size of beam from

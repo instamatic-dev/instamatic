@@ -13,16 +13,13 @@ from instamatic.tools import bin_ndarray
 
 
 def sorted_grid_indices(grid):
-    """
-    Sorts 2d the grid by its values, and returns an array
-    with the indices (i.e. np.argsort on 2d arrays)
-    https://stackoverflow.com/a/30577520
-    """
+    """Sorts 2d the grid by its values, and returns an array with the indices
+    (i.e. np.argsort on 2d arrays) https://stackoverflow.com/a/30577520."""
     return np.dstack(np.unravel_index(np.argsort(grid.ravel()), grid.shape))[0]
 
 
 def weight_map(shape, method="block", plot=False):
-    """Generate a weighting map for the given shape
+    """Generate a weighting map for the given shape.
 
     shape : tuple
         Shape defines the 2 integers defining the shape of the image
@@ -64,7 +61,7 @@ def weight_map(shape, method="block", plot=False):
 
 
 def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, flip: bool = False) -> "np.array":
-    """Defines the grid montage collection scheme
+    """Defines the grid montage collection scheme.
 
     Parameters
     ----------
@@ -113,7 +110,7 @@ def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, 
 
 
 def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = False) -> dict:
-    """Make slices for left/right/top/bottom image
+    """Make slices for left/right/top/bottom image.
 
     Parameters
     ----------
@@ -157,10 +154,10 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = F
 
 
 def define_directions(pairs: list):
-    """Define pairwise relations between indices
+    """Define pairwise relations between indices.
 
-    Takes a list of index pair dicts, and determines on which side
-    they are overlapping. The dictionary is updated with the keywords
+    Takes a list of index pair dicts, and determines on which side they
+    are overlapping. The dictionary is updated with the keywords
     `side0`/`side1`.
     """
     for pair in pairs:
@@ -188,10 +185,11 @@ def define_directions(pairs: list):
 
 
 def define_pairs(grid: "np.ndarray"):
-    """Take a sequence grid and return all pairs of neighbours
+    """Take a sequence grid and return all pairs of neighbours.
 
     Returns a list of dictionaries containing the indices of the pairs
-    (neighbouring only), and the corresponding sequence numbers (corresponding to the image array)
+    (neighbouring only), and the corresponding sequence numbers
+    (corresponding to the image array)
     """
     nx, ny = grid.shape
 
@@ -231,7 +229,7 @@ def define_pairs(grid: "np.ndarray"):
 
 
 def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
-    """Disambiguate the shifts obtained from cross correlation"""
+    """Disambiguate the shifts obtained from cross correlation."""
     shift_x, shift_y = shift
 
     best_sum = np.inf
@@ -337,7 +335,8 @@ def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res
 
 
 class Montage:
-    """This class is used to stitch together a set of images to make a larger image
+    """This class is used to stitch together a set of images to make a larger
+    image.
 
     Parameters
     ----------
@@ -370,7 +369,7 @@ class Montage:
 
     @classmethod
     def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = "leftright", zigzag: bool = True):
-        """Load a montage object from a SerialEM file image stack
+        """Load a montage object from a SerialEM file image stack.
 
         Parameters
         ----------
@@ -386,7 +385,6 @@ class Montage:
         Returns
         -------
         Montage object constructed from the given images
-
         """
         import mrcfile
         from instamatic.serialem import read_mdoc_file
@@ -427,14 +425,13 @@ class Montage:
         return m
 
     def update_gridspec(self, **gridspec):
-        """Update the grid specification"""
+        """Update the grid specification."""
         self.gridspec.update(gridspec)
         self.grid = make_grid(**self.gridspec)
 
     @classmethod
     def from_montage_yaml(cls, filename: str = "montage.yaml"):
-        """Load montage from a series of tiff files + `montage.yaml`)
-        """
+        """Load montage from a series of tiff files + `montage.yaml`)"""
         import yaml
         from instamatic.formats import read_tiff
 
@@ -461,7 +458,7 @@ class Montage:
 
     def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float = 1.0, verbose: bool = False):
         """Calculate the pixel distance between 2 images using the calculate
-        pixel shift from cross correlation
+        pixel shift from cross correlation.
 
         Parameters
         ----------
@@ -498,10 +495,10 @@ class Montage:
     def get_difference_vectors(self, threshold: float = 0.02, overlap_k: float = 1.0,
                                method: str = "imreg", segment: bool = False,
                                plot: bool = False, verbose: bool = True):
-        """Get the difference vectors between the neighbouring images
-        The images are overlapping by some amount defined using `overlap`.
-        These strips are compared with cross correlation to calculate the
-        shift offset between the images.
+        """Get the difference vectors between the neighbouring images The
+        images are overlapping by some amount defined using `overlap`. These
+        strips are compared with cross correlation to calculate the shift
+        offset between the images.
 
         Parameters
         ----------
@@ -610,7 +607,8 @@ class Montage:
         return difference_vectors
 
     def get_montage_coords(self):
-        """Get the coordinates for each section based on the gridspec only (not optimized)
+        """Get the coordinates for each section based on the gridspec only (not
+        optimized)
 
         Returns
         -------
@@ -638,7 +636,8 @@ class Montage:
 
     def get_optimized_montage_coords(self, difference_vectors, method: str = "leastsq", verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
-        the optimal coordinates for each section using least-squares minimization
+        the optimal coordinates for each section using least-squares
+        minimization.
 
         Parameters
         ----------
@@ -708,7 +707,7 @@ class Montage:
 
     def stitch(self, coords: "np.array[-1, 2]", method: str = None, binning: int = 1, plot: bool = False, ax=None):
         """Stitch the images together using the given list of pixel coordinates
-        for each section
+        for each section.
 
         Parameters
         ----------
@@ -796,7 +795,7 @@ class Montage:
 
     def plot(self, coords: "np.array[-1, 2]", ax=None):
         """Stitch the images together using the given list of pixel coordinates
-        for each section
+        for each section.
 
         Parameters
         ----------
@@ -806,7 +805,8 @@ class Montage:
         self.stitch(coords, plot=True, ax=ax)
 
     def pixel_to_stagecoord(self, px_coord: tuple, stagematrix=None) -> tuple:
-        """Takes a pixel coordinate and transforms it into a stage coordinate"""
+        """Takes a pixel coordinate and transforms it into a stage
+        coordinate."""
         if stagematrix is None:
             stagematrix = self.stagematrix
 
@@ -826,7 +826,8 @@ class Montage:
         return stage_coord
 
     def stage_to_pixelcoord(self, stage_coord: tuple, stagematrix=None) -> tuple:
-        """Takes a stage coordinate and transforms it into a pixel coordinate"""
+        """Takes a stage coordinate and transforms it into a pixel
+        coordinate."""
         if stagematrix is None:
             stagematrix = self.stagematrix
 
@@ -852,7 +853,7 @@ class Montage:
 
     def find_holes(self, stitched, diameter: float = 40e3, tolerance: float = 0.1,
                    pixelsize: float = None, plot: bool = False) -> tuple:
-        """Find grid holes in the montage image
+        """Find grid holes in the montage image.
 
         Parameters
         ----------

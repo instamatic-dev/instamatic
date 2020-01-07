@@ -26,10 +26,13 @@ BUFSIZE = 1024
 
 
 class GonioToolServer(threading.Thread):
-    """GonioTool communcation server. Takes a logger object `log`, command queue `q`, and
-    name of the microscope `name` that is used to initialize the connection to the microscope.
-    Start the server using `GonioToolServer.run` which will wait for items to appear on `q` and
-    execute them on the specified microscope instance.
+    """GonioTool communcation server.
+
+    Takes a logger object `log`, command queue `q`, and name of the
+    microscope `name` that is used to initialize the connection to the
+    microscope. Start the server using `GonioToolServer.run` which will
+    wait for items to appear on `q` and execute them on the specified
+    microscope instance.
     """
 
     def __init__(self, log=None, q=None, name=None):
@@ -42,7 +45,7 @@ class GonioToolServer(threading.Thread):
         self._name = name
 
     def run(self):
-        """Start the server thread"""
+        """Start the server thread."""
         self.goniotool = GonioToolWrapper(barrier=barrier)
         print(f"Initialized connection to GonioTool")
 
@@ -71,7 +74,10 @@ class GonioToolServer(threading.Thread):
                 print(f"{now} | {status} {func_name}: {ret}")
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
-        """Evaluate the function `func_name` on `self.tem` with *args and **kwargs."""
+        """Evaluate the function `func_name` on `self.tem` with *args and.
+
+        **kwargs.
+        """
         # print(func_name, args, kwargs)
         f = getattr(self.goniotool, func_name)
         ret = f(*args, **kwargs)
@@ -79,8 +85,8 @@ class GonioToolServer(threading.Thread):
 
 
 def handle(conn, q):
-    """Handle incoming connection, put command on the Queue `q`,
-    which is then handled by GonioToolServer."""
+    """Handle incoming connection, put command on the Queue `q`, which is then
+    handled by GonioToolServer."""
     with conn:
         while True:
             data = conn.recv(BUFSIZE)

@@ -13,8 +13,8 @@ from instamatic.formats import write_tiff
 
 
 class Experiment:
-    """Class to control data collection through DM to collect
-    continuous rotation electron diffraction data
+    """Class to control data collection through DM to collect continuous
+    rotation electron diffraction data.
 
     ctrl: `TEMController`
         Instance of instamatic.TEMController.TEMController

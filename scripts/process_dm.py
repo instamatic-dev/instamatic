@@ -22,9 +22,8 @@ from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversi
 
 
 def relativistic_wavelength(voltage: float = 200):
-    """Calculate the relativistic wavelength of electrons
-    Voltage in kV
-    Return wavelength in Angstrom"""
+    """Calculate the relativistic wavelength of electrons Voltage in kV Return
+    wavelength in Angstrom."""
     voltage *= 1000  # -> V
 
     h = 6.626070150e-34  # planck constant J.s

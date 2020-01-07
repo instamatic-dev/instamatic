@@ -23,8 +23,8 @@ refine_params = {
 
 
 def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
-    """Function to optimize the diffraction focus live on the microscope
-    It does so by minimizing the halfwidth of the primary beam"""
+    """Function to optimize the diffraction focus live on the microscope It
+    does so by minimizing the halfwidth of the primary beam."""
 
     for step in steps:
         current = ctrl.difffocus.value
@@ -51,7 +51,7 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
 
 class CalibDirectBeam:
-    """docstring for CalibDirectBeam"""
+    """docstring for CalibDirectBeam."""
 
     def __init__(self, dct={}):
         super().__init__()
@@ -143,7 +143,7 @@ class CalibDirectBeam:
                 return c
 
     def to_file(self, fn=CALIB_DIRECTBEAM, outdir="."):
-        """Save calibration to file"""
+        """Save calibration to file."""
         fout = os.path.join(outdir, fn)
         pickle.dump(self, open(fout, "wb"))
 
@@ -175,8 +175,7 @@ class CalibDirectBeam:
 
 
 def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):
-    """
-    Calibrate pixel->beamshift coordinates live on the microscope
+    """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface

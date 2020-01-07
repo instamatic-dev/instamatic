@@ -32,9 +32,10 @@ def start_server_in_subprocess():
 
 
 class CamClient:
-    """
-    Simulates a Camera object and synchronizes calls over a socket server.
-    For documentation, see the actual python interface to the camera API.
+    """Simulates a Camera object and synchronizes calls over a socket server.
+
+    For documentation, see the actual python interface to the camera
+    API.
     """
 
     def __init__(self, name):
@@ -95,7 +96,7 @@ class CamClient:
         return wrapper
 
     def _eval_dct(self, dct):
-        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
+        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         # t0 = time.perf_counter()
 
         self.s.send(pickle.dumps(dct))
@@ -119,7 +120,8 @@ class CamClient:
             raise ConnectionError(f"Unknown status code: {status}")
 
     def _init_dict(self):
-        """Get list of functions and their doc strings from the uninitialized class"""
+        """Get list of functions and their doc strings from the uninitialized
+        class."""
         from instamatic.camera.camera import get_cam
         cam = get_cam(self.name)
 
@@ -127,7 +129,7 @@ class CamClient:
         self._dct["get_attrs"] = None
 
     def _init_attr_dict(self):
-        """Get list of attrs and their types"""
+        """Get list of attrs and their types."""
         self._attr_dct = self.get_attrs()
 
     def __dir__(self):

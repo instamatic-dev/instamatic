@@ -69,10 +69,10 @@ else:
 
 
 class CameraDLL:
-    """docstring for Camera"""
+    """docstring for Camera."""
 
     def __init__(self, name="gatan"):
-        """Initialize camera module
+        """Initialize camera module.
 
         name:
             'gatan'
@@ -147,7 +147,7 @@ class CameraDLL:
         self.streamable = False
 
     def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine
+        """Image acquisition routine.
 
         exposure: exposure time in seconds
         binsize: which binning to use
@@ -193,30 +193,30 @@ class CameraDLL:
         return arr
 
     def isCameraInfoAvailable(self) -> bool:
-        """Return the status of the camera"""
+        """Return the status of the camera."""
         return self._isCameraInfoAvailable()
 
     def getDimensions(self) -> (int, int):
-        """Return the dimensions reported by the camera"""
+        """Return the dimensions reported by the camera."""
         pnWidth = c_int(0)
         pnHeight = c_int(0)
         self._cameraDimensions(byref(pnWidth), byref(pnHeight))
         return pnWidth.value, pnHeight.value
 
     def getName(self) -> str:
-        """Return the name reported by the camera"""
+        """Return the name reported by the camera."""
         buf = create_unicode_buffer(20)
         self._cameraName(buf, 20)
         return buf.value
 
     def establishConnection(self) -> None:
-        """Establish connection to the camera"""
+        """Establish connection to the camera."""
         res = self._initCCDCOM(20120101)
         if res != 1:
             raise RuntimeError(f"Could not establish camera connection to {self.name}")
 
     def releaseConnection(self) -> None:
-        """Release the connection to the camera"""
+        """Release the connection to the camera."""
         name = self.getName()
         self._releaseCCDCOM()
         msg = f"Connection to camera {name} released"

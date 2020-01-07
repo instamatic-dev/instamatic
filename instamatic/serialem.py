@@ -88,8 +88,7 @@ UNDEFINED = ()
 
 
 class NavItem:
-    """
-    DataClass for SerialEM Nav items
+    """DataClass for SerialEM Nav items.
 
     Type:
         0: Marker
@@ -141,7 +140,7 @@ class NavItem:
         return self.StageXYZ[0:2]
 
     def to_string(self) -> str:
-        """Convert nav item to string that can be printed to .nav file"""
+        """Convert nav item to string that can be printed to .nav file."""
         s = f"[Item = {self.tag}]\n"
 
         d = self.to_dict()
@@ -169,12 +168,12 @@ class NavItem:
         return s
 
     def to_dict(self) -> dict:
-        """Convert nav item back to dictionary"""
+        """Convert nav item back to dictionary."""
         return {key: self.__dict__[key] for key in self._keys}
 
 
 class ClassName:
-    """docstring for ClassName"""
+    """docstring for ClassName."""
 
     def __init__(self, arg):
         super().__init__()
@@ -182,7 +181,7 @@ class ClassName:
 
 
 class MapItem(NavItem):
-    """Adds some extra methods for map items"""
+    """Adds some extra methods for map items."""
 
     GROUP_ID_ITERATOR = random.randint(1, 90000)
 
@@ -200,11 +199,11 @@ class MapItem(NavItem):
 
     @property
     def stagematrix(self) -> "np.array":
-        """Alias for map_scale_matrix"""
+        """Alias for map_scale_matrix."""
         return self.map_scale_matrix
 
     def pixel_to_stagecoords(self, coords: list) -> "np.array":
-        """Convert from pixel coordinates to stage coordinates"""
+        """Convert from pixel coordinates to stage coordinates."""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
         cs = np.array(self.StageXYZ)[0:2]
@@ -213,7 +212,7 @@ class MapItem(NavItem):
         return np.dot(coords - cp, mati) + cs
 
     def stage_to_pixelcoords(self, coords: list) -> "np.array":
-        """Convert from stage coordinates to pixel coordinates"""
+        """Convert from stage coordinates to pixel coordinates."""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
         cs = np.array(self.StageXYZ)[0:2]
@@ -222,7 +221,7 @@ class MapItem(NavItem):
         return np.dot(coords - cs, mat) + cp
 
     def load_image(self, drc: str = None) -> "np.array":
-        """Loads the image corresponding to this item"""
+        """Loads the image corresponding to this item."""
         import mrcfile
 
         if not drc:
@@ -270,7 +269,7 @@ class MapItem(NavItem):
             plt.plot(px, py, "ro", markerfacecolor='none', markersize=20, markeredgewidth=2)
 
     def add_marker(self, coord, tag=None, acquire=True) -> "NavItem":
-        """Add pixel coordinate (numpy) as marker to a map item"""
+        """Add pixel coordinate (numpy) as marker to a map item."""
 
         # assuming pixel coords from numpy
         py, px = coord
@@ -302,9 +301,9 @@ class MapItem(NavItem):
         return item
 
     def add_marker_group(self, coords, acquire=True, replace=True) -> list:
-        """Add pixel coordinates (numpy) as markers to a map item
-        If `replace==True`, replace the entire list of existing markers
-        on the map item."""
+        """Add pixel coordinates (numpy) as markers to a map item If
+        `replace==True`, replace the entire list of existing markers on the map
+        item."""
         if replace:
             self.markers = {}
 
@@ -319,21 +318,21 @@ class MapItem(NavItem):
         return ret
 
     def update_markers(self, *items):
-        """Update the list of markers belonging to this `Map` with
-        the given items."""
+        """Update the list of markers belonging to this `Map` with the given
+        items."""
         for item in items:
             self.markers[item.tag] = item
 
     def set_markers(self, *items):
-        """Replace the list of markers belonging to this `Map` with
-        the given items."""
+        """Replace the list of markers belonging to this `Map` with the given
+        items."""
         self.markers = {}
         self.update_markers(*items)
 
 
 def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
-    dictionary"""
+    dictionary."""
     patt_split = re.compile(r"\s?=\s?")
     d = {}
 
@@ -386,9 +385,8 @@ def block2nav(block: list, tag=None) -> "NavItem":
 
 
 def read_nav_file(fn: str, acquire_only: bool = False) -> list:
-    """
-    Reads a SerialEM .nav file and returns a list of dictionaries
-    containing nav item data.
+    """Reads a SerialEM .nav file and returns a list of dictionaries containing
+    nav item data.
 
     acquire_only: bool
         read only files with the Acquire tag set
@@ -450,8 +448,8 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
 
 
 def write_nav_file(fn: str, *items, mode="w") -> None:
-    """
-    Write list of nav items to a navigator file with filename `fn` to be read by SerialEM
+    """Write list of nav items to a navigator file with filename `fn` to be
+    read by SerialEM.
 
     `items` must be a list of NavItem / MapItem objects
 
@@ -471,8 +469,7 @@ def write_nav_file(fn: str, *items, mode="w") -> None:
 
 
 def read_mdoc_file(fn: str, only_kind: str = None) -> list:
-    """
-    Reads a SerialEM .mdoc file and returns a list of dictionaries
+    """Reads a SerialEM .mdoc file and returns a list of dictionaries
     containing supporting data.
 
     Parameters

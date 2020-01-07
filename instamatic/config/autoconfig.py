@@ -9,7 +9,7 @@ from instamatic.tools import relativistic_wavelength
 
 
 def list_representer(dumper, data):
-    """For cleaner printing of lists in yaml files"""
+    """For cleaner printing of lists in yaml files."""
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
 
 
@@ -17,7 +17,7 @@ yaml.representer.Representer.add_representer(list, list_representer)
 
 
 def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
-    """Loop over magnification ranges and return calibrations from EMMENU"""
+    """Loop over magnification ranges and return calibrations from EMMENU."""
 
     if mode == "diff":
         print("Warning: Pixelsize can be a factor 10 off in diff mode (bug in EMMENU)")
@@ -48,7 +48,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 
 
 def choice_prompt(choices: list = [], default=None, question: str = "Which one?"):
-    """Simple cli to prompt for a list of choices"""
+    """Simple cli to prompt for a list of choices."""
     print()
 
     try:
@@ -75,11 +75,9 @@ def choice_prompt(choices: list = [], default=None, question: str = "Which one?"
 
 
 def main():
-    """
-    This tool will help to set up the configuration files for `instamatic`
-    It establishes a connection to the microscope and reads out the camera lengths
-    and magnification ranges
-    """
+    """This tool will help to set up the configuration files for `instamatic`
+    It establishes a connection to the microscope and reads out the camera
+    lengths and magnification ranges."""
 
     # Connect to microscope
 

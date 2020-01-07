@@ -13,7 +13,7 @@ from instamatic.formats import *
 
 
 def apply_corrections(img, deadpixels=None):
-    """Apply image corrections"""
+    """Apply image corrections."""
     if deadpixels is None:
         deadpixels = get_deadpixels(img)
     img = remove_deadpixels(img, deadpixels)
@@ -22,7 +22,8 @@ def apply_corrections(img, deadpixels=None):
 
 
 def remove_deadpixels(img, deadpixels, d=1):
-    """Remove dead pixels from the images by replacing them with the average of neighbouring pixels"""
+    """Remove dead pixels from the images by replacing them with the average of
+    neighbouring pixels."""
     d = 1
     for (i, j) in deadpixels:
         neighbours = img[i - d:i + d + 1, j - d:j + d + 1].flatten()
@@ -31,18 +32,18 @@ def remove_deadpixels(img, deadpixels, d=1):
 
 
 def get_deadpixels(img):
-    """Get coordinates of dead pixels in the image"""
+    """Get coordinates of dead pixels in the image."""
     return np.argwhere(img == 0)
 
 
 def apply_center_pixel_correction(img, k=1.19870594245):
-    """Correct the intensity of the center pixels"""
+    """Correct the intensity of the center pixels."""
     img[255:261, 255:261] = img[255:261, 255:261] * k
     return img
 
 
 def get_center_pixel_correction(img):
-    """Get the correction factor for the center pixels"""
+    """Get the correction factor for the center pixels."""
     center = np.sum(img[255:261, 255:261])
     edge = np.sum(img[254:262, 254:262]) - center
 
@@ -55,10 +56,10 @@ def get_center_pixel_correction(img):
 
 
 def apply_flatfield_correction(img, flatfield, darkfield=None):
-    """
-    Apply flatfield correction to image
+    """Apply flatfield correction to image.
 
-    https://en.wikipedia.org/wiki/Flat-field_correction"""
+    https://en.wikipedia.org/wiki/Flat-field_correction
+    """
 
     if flatfield.shape != img.shape:
         msg = f"Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes."

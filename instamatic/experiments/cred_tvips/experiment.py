@@ -15,7 +15,7 @@ from instamatic.tools import get_acquisition_time
 
 
 class SerialExperiment:
-    """docstring for SerialExperiment"""
+    """docstring for SerialExperiment."""
 
     def __init__(self, ctrl,
                  path: str = None,
@@ -50,7 +50,7 @@ class SerialExperiment:
         raise RuntimeError(f"`{self.__class__.__name__}` has not been initialized.")
 
     def run_from_nav_file(self):
-        """Run serial RED on all the coordinates from the `.nav` file"""
+        """Run serial RED on all the coordinates from the `.nav` file."""
         start_angle = self.start_angle
         end_angle = self.end_angle
         path = self.path
@@ -144,8 +144,8 @@ class SerialExperiment:
 
 
 class Experiment:
-    """Class to control data collection through EMMenu to collect
-    continuous rotation electron diffraction data
+    """Class to control data collection through EMMenu to collect continuous
+    rotation electron diffraction data.
 
     ctrl: `TEMController`
         Instance of instamatic.TEMController.TEMController

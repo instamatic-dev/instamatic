@@ -21,9 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
-    """Convert rotation axis angle to XYZ vector compatible with 'xds', or 'dials'
-    Set invert to 'True' for anti-clockwise rotation
-    """
+    """Convert rotation axis angle to XYZ vector compatible with 'xds', or
+    'dials' Set invert to 'True' for anti-clockwise rotation."""
     if invert:
         rotation_axis += np.pi
 
@@ -40,8 +39,8 @@ def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
 
 
 def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
-    """Export variables for DIALS to account for missing frames
-    writes dials_variables.sh (bash) and dials_variables.bat (cmd)
+    """Export variables for DIALS to account for missing frames writes
+    dials_variables.sh (bash) and dials_variables.bat (cmd)
 
     `sequence` is a tuple of sequence numbers of the data frames
     `missing `is a tuple of sequence numbers of the missing frames
@@ -89,8 +88,11 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
 
 def get_calibrated_rotation_speed(val):
     """Correct for the overestimation of the oscillation angle if the rotation
-    was stopped before interrupting the data collection. It uses calibrated values for the
-    rotation speeds of the microscope, and matches them to the observed one"""
+    was stopped before interrupting the data collection.
+
+    It uses calibrated values for the rotation speeds of the microscope,
+    and matches them to the observed one
+    """
 
     rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
     calibrated_value = min(rotation_speeds, key=lambda x: abs(x - val))
@@ -99,12 +101,12 @@ def get_calibrated_rotation_speed(val):
 
 
 class ImgConversion:
-    """This class is for post RED/cRED data collection image conversion.
-    Files can be generated for REDp, DIALS, XDS, and PETS.
+    """This class is for post RED/cRED data collection image conversion. Files
+    can be generated for REDp, DIALS, XDS, and PETS.
 
-    The image buffer is passed as a list of tuples, where each tuple contains the
-    index (int), image data (2D numpy array), metadata/header (dict).
-    The buffer index must start at 1.
+    The image buffer is passed as a list of tuples, where each tuple
+    contains the index (int), image data (2D numpy array),
+    metadata/header (dict). The buffer index must start at 1.
     """
 
     def __init__(self,
@@ -177,9 +179,10 @@ class ImgConversion:
         logger.debug(f"Primary beam at: {self.mean_beam_center}")
 
     def check_settings(self) -> None:
-        """
-        Check for the presence of all required attributes.
-        If possible, optional missing attributes are set to their defaults.
+        """Check for the presence of all required attributes.
+
+        If possible, optional missing attributes are set to their
+        defaults.
         """
 
         kw_attrs = {
@@ -225,9 +228,8 @@ class ImgConversion:
                 raise AttributeError(f"`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`")
 
     def get_beam_centers(self, invert_x: bool = False, invert_y: bool = False) -> (float, float):
-        """Obtain beam centers from the diffraction data
-        Returns a tuple with the median beam center and its standard deviation
-        """
+        """Obtain beam centers from the diffraction data Returns a tuple with
+        the median beam center and its standard deviation."""
         shape_x, shape_y = self.data_shape
         centers = []
         for i, h in self.headers.items():
@@ -253,8 +255,8 @@ class ImgConversion:
         return median_center, std_center
 
     def write_geometric_correction_files(self, path) -> None:
-        """Make geometric correction images for XDS
-        Writes files XCORR.cbf and YCORR.cbf to `path`
+        """Make geometric correction images for XDS Writes files XCORR.cbf and
+        YCORR.cbf to `path`
 
         To use:
             DETECTOR= PILATUS     ! fake being a PILATUS detector
@@ -327,9 +329,11 @@ class ImgConversion:
         logger.debug(f"MRC files created in folder: {path}")
 
     def threadpoolwriter(self, tiff_path: str = None, smv_path: str = None, mrc_path: str = None, workers: int = 8) -> None:
-        """Efficiently write all data to the specified formats using a threadpool.
-        If a path is given, write data in the corresponding format, i.e. if `tiff_path` is specified TIFF
-        files are written to that path.
+        """Efficiently write all data to the specified formats using a
+        threadpool.
+
+        If a path is given, write data in the corresponding format, i.e.
+        if `tiff_path` is specified TIFF files are written to that path.
         """
         write_tiff = tiff_path is not None
         write_smv = smv_path is not None
@@ -365,6 +369,7 @@ class ImgConversion:
 
     def to_dials(self, smv_path: str) -> None:
         """Convert the buffer to output compatible with DIALS.
+
         Files are written to the path given by `smv_path`.
         """
         observed_range = self.observed_range
@@ -397,8 +402,11 @@ class ImgConversion:
             del self.headers[n]
 
     def write_tiff(self, path: str, i: int) -> str:
-        """Write the image+header with sequence number `i` to the directory `path` in TIFF format.
-        Returns the path to the written image."""
+        """Write the image+header with sequence number `i` to the directory
+        `path` in TIFF format.
+
+        Returns the path to the written image.
+        """
         img = self.data[i]
         h = self.headers[i]
 
@@ -410,8 +418,11 @@ class ImgConversion:
         return fn
 
     def write_smv(self, path: str, i: int) -> str:
-        """Write the image+header with sequence number `i` to the directory `path` in SMV format.
-        Returns the path to the written image."""
+        """Write the image+header with sequence number `i` to the directory
+        `path` in SMV format.
+
+        Returns the path to the written image.
+        """
         img = self.data[i]
         h = self.headers[i]
 
@@ -461,8 +472,11 @@ class ImgConversion:
         return fn
 
     def write_mrc(self, path: str, i: int) -> str:
-        """Write the image+header with sequence number `i` to the directory `path` in TIFF format.
-        Returns the path to the written image."""
+        """Write the image+header with sequence number `i` to the directory
+        `path` in TIFF format.
+
+        Returns the path to the written image.
+        """
         img = self.data[i]
 
         fn = path / f"{i:05d}.mrc"
@@ -644,5 +658,5 @@ class ImgConversion:
                 print(f"{i:4d}{0:8.2f}{0:8.2f}", file=f)
 
     def add_beamstop(self, rect):
-        """rect must be a 2x4 coordinate array"""
+        """rect must be a 2x4 coordinate array."""
         self.untrusted_areas.append(("quadrilateral", rect))

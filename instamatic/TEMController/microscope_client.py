@@ -35,9 +35,11 @@ def start_server_in_subprocess():
 
 
 class MicroscopeClient:
-    """
-    Simulates a Microscope object and synchronizes calls over a socket server.
-    For documentation, see the actual python interface to the microscope API.
+    """Simulates a Microscope object and synchronizes calls over a socket
+    server.
+
+    For documentation, see the actual python interface to the microscope
+    API.
     """
 
     def __init__(self, name):
@@ -89,7 +91,7 @@ class MicroscopeClient:
         return wrapper
 
     def _eval_dct(self, dct):
-        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
+        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         # t0 = time.perf_counter()
 
         self.s.send(pickle.dumps(dct))
@@ -117,7 +119,7 @@ class MicroscopeClient:
 
 
 class TraceVariable:
-    """docstring for Tracer"""
+    """docstring for Tracer."""
 
     def __init__(self, func, interval=1.0, name="variable", verbose=False):
         super().__init__()

@@ -8,7 +8,7 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalCtrl(LabelFrame):
-    """docstring for ExperimentalCtrl"""
+    """docstring for ExperimentalCtrl."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Stage Control")

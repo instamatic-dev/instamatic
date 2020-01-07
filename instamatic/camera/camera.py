@@ -31,10 +31,9 @@ def get_cam(name: str = None):
 
 
 def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
-    """Initialize the camera identified by the 'name' parameter
-    if `as_stream` is True, it will return a VideoStream object
-    if `as_stream` is False, it will return the raw Camera object
-    """
+    """Initialize the camera identified by the 'name' parameter if `as_stream`
+    is True, it will return a VideoStream object if `as_stream` is False, it
+    will return the raw Camera object."""
     if name is None:
         name = default_cam
     elif name != config.cfg.camera:

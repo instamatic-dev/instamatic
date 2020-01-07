@@ -5,7 +5,7 @@ from .camera import Camera
 
 
 class ImageGrabber:
-    """docstring for ImageGrabber"""
+    """docstring for ImageGrabber."""
 
     def __init__(self, cam, callback, frametime=0.05):
         super().__init__()
@@ -58,7 +58,7 @@ class ImageGrabber:
 
 
 class VideoStream(threading.Thread):
-    """docstring for VideoStream"""
+    """docstring for VideoStream."""
 
     def __init__(self, cam="simulate"):
         threading.Thread.__init__(self)
@@ -84,7 +84,7 @@ class VideoStream(threading.Thread):
         self.start()
 
     def __getattr__(self, attrname):
-        """Pass attribute lookups to self.cam to prevent AttributeError"""
+        """Pass attribute lookups to self.cam to prevent AttributeError."""
         try:
             return object.__getattribute__(self, attrname)
         except AttributeError as e:
@@ -149,9 +149,8 @@ class VideoStream(threading.Thread):
         self.grabber.continuousCollectionEvent.clear()
 
     def continuous_collection(self, exposure=0.1, n=100, callback=None):
-        """
-        Function to continuously collect data
-        Blocks the videostream while collecting data, and only shows collected images
+        """Function to continuously collect data Blocks the videostream while
+        collecting data, and only shows collected images.
 
         exposure: float
             exposure time

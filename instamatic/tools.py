@@ -11,9 +11,8 @@ from skimage.measure import regionprops
 
 
 def find_script(script: str):
-    """Resolves the script name
-    Looks in the local directory, absolute directory and in the scripts directory
-    """
+    """Resolves the script name Looks in the local directory, absolute
+    directory and in the scripts directory."""
     from pathlib import Path
     from instamatic import config
 
@@ -30,9 +29,8 @@ def find_script(script: str):
 
 
 def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.array":
-    """
-    Prepare a list of grid coordinates nx by ny in size.
-    The grid is centered at the center of the grid
+    """Prepare a list of grid coordinates nx by ny in size. The grid is
+    centered at the center of the grid.
 
     nx, ny: int,
         Defines the grid in x and y direction.
@@ -90,9 +88,8 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
 
 
 def find_subranges(lst: list) -> (int, int):
-    """Takes a range of sequential numbers (possibly with gaps) and
-    splits them in sequential sub-ranges defined by the minimum and maximum value.
-    """
+    """Takes a range of sequential numbers (possibly with gaps) and splits them
+    in sequential sub-ranges defined by the minimum and maximum value."""
     from operator import itemgetter
     from itertools import groupby
 
@@ -102,8 +99,8 @@ def find_subranges(lst: list) -> (int, int):
 
 
 def autoscale(img: np.ndarray, maxdim: int = 512) -> (np.ndarray, float):
-    """Scale the image to fit the maximum dimension given by `maxdim`
-    Returns the scaled image, and the image scale"""
+    """Scale the image to fit the maximum dimension given by `maxdim` Returns
+    the scaled image, and the image scale."""
     if maxdim:
         scale = float(maxdim) / max(img.shape)
 
@@ -111,7 +108,7 @@ def autoscale(img: np.ndarray, maxdim: int = 512) -> (np.ndarray, float):
 
 
 def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
-    """Scale the image by the given scale"""
+    """Scale the image by the given scale."""
     if scale == 1:
         return img
     return ndimage.zoom(img, scale, order=1)
@@ -119,7 +116,9 @@ def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
 
 def denoise(img: np.ndarray, sigma: int = 3, method: str = "median") -> np.ndarray:
     """Denoises the image using a gaussian or median filter.
-    median filter is better at preserving edges"""
+
+    median filter is better at preserving edges
+    """
     if method == "gaussian":
         return ndimage.gaussian_filter(img, sigma)
     else:
@@ -127,16 +126,21 @@ def denoise(img: np.ndarray, sigma: int = 3, method: str = "median") -> np.ndarr
 
 
 def enhance_contrast(img: np.ndarray) -> np.ndarray:
-    """Enhance contrast by histogram equalization"""
+    """Enhance contrast by histogram equalization."""
     return exposure.equalize_hist(img)
 
 
 def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3) -> (float, float):
-    """Find the index of the pixel corresponding to peak maximum in 1D pattern `arr`
-    First, the pattern is smoothed using a gaussian filter with standard deviation `sigma`
-    The initial guess takes the position corresponding to the largest value in the resulting pattern
-    A window of size 2*w+1 around this guess is taken and expanded by factor `m` to to interpolate the
-    pattern to get the peak maximum position with subpixel precision."""
+    """Find the index of the pixel corresponding to peak maximum in 1D pattern
+    `arr`.
+
+    First, the pattern is smoothed using a gaussian filter with standard
+    deviation `sigma` The initial guess takes the position corresponding
+    to the largest value in the resulting pattern A window of size 2*w+1
+    around this guess is taken and expanded by factor `m` to to
+    interpolate the pattern to get the peak maximum position with
+    subpixel precision.
+    """
     y1 = ndimage.filters.gaussian_filter1d(arr, sigma)
     c1 = np.argmax(y1)  # initial guess for beam center
 
@@ -155,10 +159,13 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: i
 
 
 def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int = 3) -> (float, float):
-    """Find the center of the primary beam in the image `img`
-    The position is determined by summing along X/Y directions and finding the position along the two
-    directions independently. Uses interpolation by factor `m` to find the coordinates of the pimary
-    beam with subpixel accuracy."""
+    """Find the center of the primary beam in the image `img` The position is
+    determined by summing along X/Y directions and finding the position along
+    the two directions independently.
+
+    Uses interpolation by factor `m` to find the coordinates of the
+    pimary beam with subpixel accuracy.
+    """
     xx = np.sum(img, axis=1)
     yy = np.sum(img, axis=0)
 
@@ -182,7 +189,8 @@ def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=Fal
     beam center.
 
     z = thresh: percentile to segment the image at (99)
-        gauss: standard deviation for the gaussian blurring (50)"""
+        gauss: standard deviation for the gaussian blurring (50)
+    """
 
     if method == "gauss":
         if not z:
@@ -228,9 +236,8 @@ def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=Fal
 
 
 def bin_ndarray(ndarray, new_shape, operation='mean'):
-    """
-    Bins an ndarray in all axes based on the target shape, by summing or
-        averaging.
+    """Bins an ndarray in all axes based on the target shape, by summing or
+    averaging.
 
     Number of output dimensions must match number of input dimensions and
         new axes must divide old ones.
@@ -246,7 +253,6 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
      [182 190 198 206 214]
      [262 270 278 286 294]
      [342 350 358 366 374]]
-
     """
     operation = operation.lower()
     if operation not in ['sum', 'mean']:
@@ -264,7 +270,7 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
 
 
 def get_files(file_pat: str) -> list:
-    """Grab files from globbing pattern or stream file"""
+    """Grab files from globbing pattern or stream file."""
     from instamatic.formats import read_ycsv
     if os.path.exists(file_pat):
         root, ext = os.path.splitext(file_pat)
@@ -284,13 +290,13 @@ def get_files(file_pat: str) -> list:
 
 
 def printer(data) -> None:
-    """Print things to stdout on one line dynamically"""
+    """Print things to stdout on one line dynamically."""
     sys.stdout.write("\r\x1b[K" + data.__str__())
     sys.stdout.flush()
 
 
 def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
-    """Find the center of a defocused diffraction pattern"""
+    """Find the center of a defocused diffraction pattern."""
     X = np.mean(image, axis=0)
     Y = np.mean(image, axis=1)
     im_mean = np.mean(X)
@@ -304,7 +310,7 @@ def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
 
 
 def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None) -> object:
-    """take a list of timestamps and return the acquisition time and overhead
+    """take a list of timestamps and return the acquisition time and overhead.
 
     Parameters
     ----------
@@ -352,8 +358,8 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
 
 
 def relativistic_wavelength(voltage: float = 200_000) -> float:
-    """
-    Calculate the relativistic wavelength of electrons from the accelarating voltage
+    """Calculate the relativistic wavelength of electrons from the accelarating
+    voltage.
 
     Input: Voltage in V
     Output: Wavelength in Angstrom

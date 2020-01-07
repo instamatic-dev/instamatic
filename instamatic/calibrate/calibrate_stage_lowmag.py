@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class CalibStage:
-    """Simple class to hold the methods to perform transformations from one setting to another
-    based on calibration results"""
+    """Simple class to hold the methods to perform transformations from one
+    setting to another based on calibration results."""
 
     def __init__(self, rotation, camera_dimensions, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
         super().__init__()
@@ -29,8 +29,7 @@ class CalibStage:
         return f"CalibStage(rotation=\n{self.rotation},\n translation=\n{self.translation},\n reference_position=\n{self.reference_position})"
 
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, t, reference_pos):
-        """
-        Function to transform stage position to pixel coordinates
+        """Function to transform stage position to pixel coordinates.
 
         px_ref: `list`
             stage position (x,y) to transform to pixel coordinates on
@@ -58,8 +57,8 @@ class CalibStage:
         return px
 
     def _pixelcoord_to_reference_setting(self, px, image_pos, r, t, reference_pos):
-        """
-        Function to transform pixel coordinates to pixel coordinates in reference setting
+        """Function to transform pixel coordinates to pixel coordinates in
+        reference setting.
 
         px: `list`
             image pixel coordinates to transform to stage position
@@ -86,8 +85,7 @@ class CalibStage:
         return px_ref
 
     def _pixelcoord_to_stagepos(self, px, image_pos, r, t, reference_pos):
-        """
-        Function to transform pixel coordinates to stage position
+        """Function to transform pixel coordinates to stage position.
 
         px: `list`
             image pixel coordinates to transform to stage position
@@ -107,8 +105,7 @@ class CalibStage:
         return stagepos
 
     def _stagepos_to_pixelcoord(self, stagepos, image_pos, r, t, reference_pos):
-        """
-        Function to transform pixel coordinates to stage position
+        """Function to transform pixel coordinates to stage position.
 
         px: `list`
             image pixel coordinates to transform to stage position
@@ -133,31 +130,27 @@ class CalibStage:
         return px
 
     def reference_setting_to_pixelcoord(self, px_ref, image_pos):
-        """
-        Function to transform pixel coordinates in reference setting to current frame
-        """
+        """Function to transform pixel coordinates in reference setting to
+        current frame."""
         return self._reference_setting_to_pixelcoord(px_ref, image_pos, self.rotation, self.translation, self.reference_position)
 
     def pixelcoord_to_reference_setting(self, px, image_pos):
-        """
-        Function to transform pixel coordinates in current frame to reference setting
-        """
+        """Function to transform pixel coordinates in current frame to
+        reference setting."""
         return self._pixelcoord_to_reference_setting(px, image_pos, self.rotation, self.translation, self.reference_position)
 
     def pixelcoord_to_stagepos(self, px, image_pos):
-        """
-        Function to transform pixel coordinates to stage position coordinates
-        """
+        """Function to transform pixel coordinates to stage position
+        coordinates."""
         return self._pixelcoord_to_stagepos(px, image_pos, self.rotation, self.translation, self.reference_position)
 
     def stagepos_to_pixelcoord(self, stagepos, image_pos):
-        """
-        Function to stage position coordinates to pixel coordinates on current frame
-        """
+        """Function to stage position coordinates to pixel coordinates on
+        current frame."""
         return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
 
     def pixelshift_to_stageshift(self, pixelshift, binsize=1):
-        """Convert from a pixel distance to a stage shift"""
+        """Convert from a pixel distance to a stage shift."""
         dx, dy = pixelshift
         dx = (dx * binsize) + self.center_pixel[0]
         dy = (dy * binsize) + self.center_pixel[1]
@@ -214,8 +207,7 @@ class CalibStage:
 
 
 def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=False, **kwargs):
-    """
-    Calibrate pixel->stageposition coordinates live on the microscope
+    """Calibrate pixel->stageposition coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
@@ -302,8 +294,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
 
 def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
-    """
-    Calibrate pixel->stageposition coordinates from a set of images
+    """Calibrate pixel->stageposition coordinates from a set of images.
 
     center_fn: `str`
         Reference image at the center of the grid (with the clover in the middle)

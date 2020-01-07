@@ -103,7 +103,7 @@ class Experiment:
         self.stage_positions = []
 
     def log_start_status(self):
-        """Log the starting parameters"""
+        """Log the starting parameters."""
         self.now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.logger.info(f"Data recording started at: {self.now}")
         self.logger.info(f"Data collection exposure time: {self.exposure} s")
@@ -160,20 +160,21 @@ class Experiment:
             print(" -", version.__citation_cred__, file=f)
 
     def setup_paths(self):
-        """Set up the paths for saving the data to"""
+        """Set up the paths for saving the data to."""
         print(f"\nOutput directory: {self.path}")
         self.tiff_path = self.path / "tiff" if self.write_tiff else None
         self.smv_path = self.path / "SMV" if (self.write_xds or self.write_dials) else None
         self.mrc_path = self.path / "RED" if self.write_red else None
 
     def start_rotation(self) -> float:
-        """Controls the starting of the rotation of the experiment
+        """Controls the starting of the rotation of the experiment.
 
         In the default mode, wait for rotation to start (i.e. controlled via the pedals)
         In `footfree` mode, initialize rotation from current angle to target angle.
         In `simulate` mode, simulate the start condition.
 
-        Returns the starting value for the rotation."""
+        Returns the starting value for the rotation.
+        """
         self.start_position = self.ctrl.stage.get()
         self.stage_positions.append((0, self.start_position))
         a = self.start_position[3]
@@ -207,7 +208,8 @@ class Experiment:
         return start_angle
 
     def relax_beam(self, n_cycles: int = 5):
-        """Relax the beam prior to the experiment by toggling between the defocused/focused states."""
+        """Relax the beam prior to the experiment by toggling between the
+        defocused/focused states."""
         print(f"Relaxing beam ({n_cycles} cycles)", end='')
 
         for i in range(n_cycles):
@@ -221,9 +223,8 @@ class Experiment:
         print("Done.")
 
     def start_collection(self) -> bool:
-        """Main experimental function,
-        returns True if experiment runs normally, False if it is interrupted for whatever reason.
-        """
+        """Main experimental function, returns True if experiment runs
+        normally, False if it is interrupted for whatever reason."""
         self.setup_paths()
         self.log_start_status()
 
@@ -350,7 +351,8 @@ class Experiment:
         The image buffer is passed as a list of tuples, where each tuple contains the
         index (int), image data (2D numpy array), metadata/header (dict).
 
-        The buffer index must start at 1."""
+        The buffer index must start at 1.
+        """
 
         img_conv = ImgConversion(buffer=buffer,
                                  osc_angle=self.osc_angle,
@@ -386,8 +388,11 @@ class Experiment:
 
     def write_image_data(self, buffer: list):
         """Write image data in the buffer.
-        The image buffer is passed as a list of tuples, where each tuple contains the
-        index (int), image data (2D numpy array), metadata/header (dict)."""
+
+        The image buffer is passed as a list of tuples, where each tuple
+        contains the index (int), image data (2D numpy array),
+        metadata/header (dict).
+        """
         if buffer:
             drc = self.path / "tiff_image"
             drc.mkdir(exist_ok=True)

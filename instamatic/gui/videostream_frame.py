@@ -16,7 +16,7 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class VideoStreamFrame(Frame):
-    """docstring for VideoStreamFrame"""
+    """docstring for VideoStreamFrame."""
 
     def __init__(self, parent, stream, app=None):
         super().__init__()
@@ -179,7 +179,7 @@ class VideoStreamFrame(Frame):
             pass
 
     def saveImage(self):
-        """Dump the current frame to a file"""
+        """Dump the current frame to a file."""
         outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
 
         if self.app:
@@ -272,8 +272,8 @@ class VideoStreamFrame(Frame):
 
 
 def start_gui(stream):
-    """Pass a camera stream object, and open a simple live-view window
-    This is meant to be used in an interactive python shell"""
+    """Pass a camera stream object, and open a simple live-view window This is
+    meant to be used in an interactive python shell."""
     root = Tk()
     vsframe = VideoStreamFrame(root, stream=stream)
     vsframe.pack(side="top", fill="both", expand=True)
@@ -282,7 +282,7 @@ def start_gui(stream):
 
 
 def ipy_embed(*args, **kwargs):
-    """Embed an ipython terminal"""
+    """Embed an ipython terminal."""
     import IPython
     IPython.embed(*args, **kwargs)
 

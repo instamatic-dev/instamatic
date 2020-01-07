@@ -13,7 +13,7 @@ job_dict = {}
 
 
 class DataCollectionController(threading.Thread):
-    """docstring for DataCollectionController"""
+    """docstring for DataCollectionController."""
 
     def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, log=None):
         super().__init__()
@@ -77,7 +77,7 @@ class DataCollectionController(threading.Thread):
 
 
 class ModuleFrame(Frame):
-    """docstring for DataCollectionGUI"""
+    """docstring for DataCollectionGUI."""
 
     def __init__(self, parent, modules=()):
         super().__init__()
@@ -121,7 +121,7 @@ class ModuleFrame(Frame):
 
 
 class MainFrame:
-    """docstring for MainFrame"""
+    """docstring for MainFrame."""
 
     def __init__(self, root, cam, modules=()):
         super().__init__()
@@ -153,9 +153,8 @@ class MainFrame:
 
 
 def start_gui(ctrl, log=None):
-    """Function to start the gui, to be imported and run elsewhere when ctrl is initialized
-    Requires the `ctrl` object to be passed.
-    """
+    """Function to start the gui, to be imported and run elsewhere when ctrl is
+    initialized Requires the `ctrl` object to be passed."""
     root = Tk()
 
     gui = MainFrame(root, cam=ctrl.cam, modules=MODULES)

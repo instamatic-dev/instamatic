@@ -18,14 +18,12 @@ STARTER = b"\x0c\x1a\x04\xd5"
 
 
 def compByteOffset(data):
-    """
-    Compress a dataset into a string using the byte_offet algorithm
+    """Compress a dataset into a string using the byte_offet algorithm.
 
     :param data: ndarray
     :return: string/bytes with compressed data
 
     test = np.array([0,1,2,127,0,1,2,128,0,1,2,32767,0,1,2,32768,0,1,2,2147483647,0,1,2,2147483648,0,1,2,128,129,130,32767,32768,128,129,130,32768,2147483647,2147483648])
-
     """
     flat = np.ascontiguousarray(data.ravel(), np.int64)
     delta = np.zeros_like(flat)
@@ -69,8 +67,8 @@ def compByteOffset(data):
 
 
 def write(fname, data, header={}):
-    """
-    write the file in CBF format
+    """write the file in CBF format.
+
     :param str fname: name of the file
     """
     if data is not None:

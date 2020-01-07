@@ -9,7 +9,7 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalTVIPS(LabelFrame):
-    """docstring for ExperimentalRED"""
+    """docstring for ExperimentalRED."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction (TVIPS)")

@@ -10,14 +10,16 @@ from instamatic.formats import *
 
 
 def closest_distance(node, nodes):
-    "Get shortest between a node and a list of nodes (that includes the given node)"
+    """Get shortest between a node and a list of nodes (that includes the given
+    node)"""
     nodes = np.asarray(nodes)
     dist_2 = np.sum((nodes - node)**2, axis=1)
     return np.sort(dist_2)[1]**0.5
 
 
 def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
-    """Find crystals that are at least `min_separation` in micrometers away from other crystals"""
+    """Find crystals that are at least `min_separation` in micrometers away
+    from other crystals."""
     isolated = []
 
     for fn in fns:

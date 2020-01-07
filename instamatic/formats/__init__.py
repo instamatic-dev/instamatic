@@ -26,7 +26,7 @@ with warnings.catch_warnings():
 
 
 def read_image(fname: str) -> (np.array, dict):
-    """Guess filetype by extension"""
+    """Guess filetype by extension."""
     ext = Path(fname).suffix.lower()
     if ext in (".tif", ".tiff"):
         img, h = read_tiff(fname)
@@ -42,7 +42,7 @@ def read_image(fname: str) -> (np.array, dict):
 
 
 def write_tiff(fname: str, data, header: dict = None):
-    """Simple function to write a tiff file
+    """Simple function to write a tiff file.
 
     fname: str,
         path or filename to which the image should be saved
@@ -64,7 +64,7 @@ def write_tiff(fname: str, data, header: dict = None):
 
 
 def read_tiff(fname: str) -> (np.array, dict):
-    """Simple function to read a tiff file
+    """Simple function to read a tiff file.
 
     fname: str,
         path or filename to image which should be opened
@@ -89,7 +89,7 @@ def read_tiff(fname: str) -> (np.array, dict):
 
 
 def write_hdf5(fname: str, data, header: dict = None):
-    """Simple function to write data to hdf5 format using h5py
+    """Simple function to write data to hdf5 format using h5py.
 
     fname: str,
         path or filename to which the image should be saved
@@ -98,7 +98,7 @@ def write_hdf5(fname: str, data, header: dict = None):
     header: dict,
         dictionary containing the metadata that should be saved
         key/value pairs are stored as attributes on the data
-        """
+    """
     fname = Path(fname).with_suffix(".h5")
 
     f = h5py.File(fname, "w")
@@ -109,7 +109,7 @@ def write_hdf5(fname: str, data, header: dict = None):
 
 
 def read_hdf5(fname: str) -> (np.array, dict):
-    """Simple function to read a hdf5 file written by Instamatic
+    """Simple function to read a hdf5 file written by Instamatic.
 
     fname: str,
         path or filename to image which should be opened
@@ -126,5 +126,5 @@ def read_hdf5(fname: str) -> (np.array, dict):
 
 
 def read_cbf(fname: str):
-    """CBF reader not implemented"""
+    """CBF reader not implemented."""
     raise NotImplementedError("CBF reader not implemented.")

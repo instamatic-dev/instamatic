@@ -23,7 +23,7 @@ class LockingError(RuntimeError):
 
 
 def arrangeData(raw, out=None):
-    """10000 loops, best of 3: 81.3 s per loop"""
+    """10000 loops, best of 3: 81.3 s per loop."""
     s = 256 * 256
     q1 = raw[0:s].reshape(256, 256)
     q2 = raw[s:2 * s].reshape(256, 256)
@@ -41,7 +41,7 @@ def arrangeData(raw, out=None):
 
 
 def correctCross(raw, factor=2.15):
-    """100000 loops, best of 3: 18 us per loop"""
+    """100000 loops, best of 3: 18 us per loop."""
     raw[255:258] = raw[255] / factor
     raw[:, 255:258] = raw[:, 255:256] / factor
 
@@ -93,7 +93,7 @@ class CameraTPX:
         self.lib.EMCameraObj_Init(self.obj)
 
     def uninit(self):
-        """Doesn't do anything"""
+        """Doesn't do anything."""
         self.lib.EMCameraObj_UnInit(self.obj)
 
     def connect(self, hwId):
@@ -121,7 +121,7 @@ class CameraTPX:
         return self.lib.EMCameraObj_getFrameSize(self.obj)
 
     def readRealDacs(self, filename):
-        "std::string filename"
+        """std::string filename."""
         if not os.path.exists(filename):
             raise OSError(f"Cannot find `RealDacs` file: {filename}")
 
@@ -137,7 +137,7 @@ class CameraTPX:
             sys.exit()
 
     def readHwDacs(self, filename):
-        "std::string filename"
+        """std::string filename."""
         if not os.path.exists(filename):
             raise OSError(f"Cannot find `HwDacs` file: {filename}")
 
@@ -153,7 +153,7 @@ class CameraTPX:
             sys.exit()
 
     def readPixelsCfg(self, filename):
-        "std::string filename"
+        """std::string filename."""
         "int mode = TPX_MODE_DONT_SET  ->  set in header file"
         if not os.path.exists(filename):
             raise OSError(f"Cannot find `PixelsCfg` file: {filename}")
@@ -170,7 +170,7 @@ class CameraTPX:
             sys.exit()
 
     def processRealDac(self, chipnr=None, index=None, key=None, value=None):
-        "int *chipnr"
+        """int *chipnr."""
         "int *index"
         "std::string *key"
         "std::string *value"
@@ -183,7 +183,7 @@ class CameraTPX:
         self.lib.EMCameraObj_processRealDac(self.obj, byref(chipnr), byref(index), key, value)
 
     def processHwDac(self, key, value):
-        "std::string *key"
+        """std::string *key."""
         "std::string *value"
 
         key = create_unicode_buffer(20)
@@ -199,10 +199,13 @@ class CameraTPX:
         self.lib.EMCameraObj_stopAcquisition(self.obj)
 
     def openShutter(self):
-        """Opens the Relaxd shutter under software control. Note
-        that opening and closing the shutter under software control does
-        not give a good control over the timing and should only be used
-        for debugging or very long exposures where timing is less important."""
+        """Opens the Relaxd shutter under software control.
+
+        Note that opening and closing the shutter under software control
+        does not give a good control over the timing and should only be
+        used for debugging or very long exposures where timing is less
+        important.
+        """
         self.lib.EMCameraObj_openShutter(self.obj)
 
     def closeShutter(self):
@@ -210,11 +213,11 @@ class CameraTPX:
         self.lib.EMCameraObj_closeShutter(self.obj)
 
     def readMatrix(self, arr=None, sz=512 * 512):
-        """Reads a frame from all connected devices, decodes the data
-        and stores the pixel counts in array data.
+        """Reads a frame from all connected devices, decodes the data and
+        stores the pixel counts in array data.
 
-        i16 *data # data storage array
-        u32 sz    # size of array"""
+        i16 *data # data storage array u32 sz    # size of array
+        """
 
         if arr is None:
             arr = np.empty(sz, dtype=np.int16)
@@ -229,13 +232,14 @@ class CameraTPX:
         return arr
 
     def enableTimer(self, enable, us):
-        """Disables (enable is false) or enables the timer and sets the timer time-out
-        to us microseconds. Note that the timer resolution is 10 us. After the Relaxd
-        shutter opens (either explicitly by software or by an external trigger),
-        it closes again after the set time.
+        """Disables (enable is false) or enables the timer and sets the timer
+        time-out to us microseconds. Note that the timer resolution is 10 us.
+        After the Relaxd shutter opens (either explicitly by software or by an
+        external trigger), it closes again after the set time.
 
         bool enable
-        int us = 10 # microseconds"""
+        int us = 10 # microseconds
+        """
 
         enable = c_bool(enable)
         us = c_int(us)
@@ -249,14 +253,14 @@ class CameraTPX:
         return self.lib.EMCameraObj_timerExpired(self.obj)
 
     def setAcqPars(self, pars):
-        "AcqParams *pars"
+        """AcqParams *pars."""
 
         raise NotImplementedError
         pars = AcqParams
         self.lib.EMCameraObj_setAcqPars(self.obj, byref(pars))
 
     def isBusy(self, busy):
-        "bool *busy"
+        """bool *busy."""
 
         busy = c_bool(busy)
         self.lib.EMCameraObj_isBusy(self.obj, byref(busy))

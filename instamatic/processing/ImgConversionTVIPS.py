@@ -2,12 +2,12 @@ from .ImgConversion import *
 
 
 class ImgConversionTVIPS(ImgConversion):
-    """This class is for converting data collected with a TVIPS camera
-    Files can be generated for REDp, DIALS, XDS, and PETS.
+    """This class is for converting data collected with a TVIPS camera Files
+    can be generated for REDp, DIALS, XDS, and PETS.
 
-    The image buffer is passed as a list of tuples, where each tuple contains the
-    index (int), image data (2D numpy array), metadata/header (dict).
-    The buffer index must start at 1.
+    The image buffer is passed as a list of tuples, where each tuple
+    contains the index (int), image data (2D numpy array),
+    metadata/header (dict). The buffer index must start at 1.
     """
 
     def __init__(self,

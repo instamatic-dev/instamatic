@@ -1,5 +1,5 @@
-"""
-Script to re-process cRED data collecting using instamatic with a Timepix camera
+"""Script to re-process cRED data collecting using instamatic with a Timepix
+camera.
 
 To use:
     Run `python process_tpx.py cred_log.txt`

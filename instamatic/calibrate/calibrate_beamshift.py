@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class CalibBeamShift:
-    """Simple class to hold the methods to perform transformations from one setting to another
-    based on calibration results"""
+    """Simple class to hold the methods to perform transformations from one
+    setting to another based on calibration results."""
 
     def __init__(self, transform, reference_shift, reference_pixel):
         super().__init__()
@@ -32,13 +32,13 @@ class CalibBeamShift:
         return f"CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})"
 
     def beamshift_to_pixelcoord(self, beamshift):
-        """Converts from beamshift x,y to pixel coordinates"""
+        """Converts from beamshift x,y to pixel coordinates."""
         r_i = np.linalg.inv(self.transform)
         pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
         return pixelcoord
 
     def pixelcoord_to_beamshift(self, pixelcoord):
-        """Converts from pixel coordinates to beamshift x,y"""
+        """Converts from pixel coordinates to beamshift x,y."""
         r = self.transform
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
         return beamshift.astype(int)
@@ -57,7 +57,7 @@ class CalibBeamShift:
 
     @classmethod
     def from_file(cls, fn=CALIB_BEAMSHIFT):
-        """Read calibration from file"""
+        """Read calibration from file."""
         import pickle
         try:
             return pickle.load(open(fn, "rb"))
@@ -73,7 +73,7 @@ class CalibBeamShift:
                 return c
 
     def to_file(self, fn=CALIB_BEAMSHIFT, outdir="."):
-        """Save calibration to file"""
+        """Save calibration to file."""
         fout = os.path.join(outdir, fn)
         pickle.dump(self, open(fout, "wb"))
 
@@ -101,7 +101,7 @@ class CalibBeamShift:
             plt.show()
 
     def center(self, ctrl):
-        """Return beamshift values to center the beam in the frame"""
+        """Return beamshift values to center the beam in the frame."""
         pixel_center = [val / 2.0 for val in ctrl.cam.dimensions]
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
@@ -112,8 +112,7 @@ class CalibBeamShift:
 
 
 def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):
-    """
-    Calibrate pixel->beamshift coordinates live on the microscope
+    """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
@@ -203,8 +202,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
 
 def calibrate_beamshift_from_image_fn(center_fn, other_fn):
-    """
-    Calibrate pixel->beamshift coordinates from a set of images
+    """Calibrate pixel->beamshift coordinates from a set of images.
 
     center_fn: `str`
         Reference image with the beam at the center of the image

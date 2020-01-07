@@ -44,7 +44,7 @@ MIN = 0
 
 
 class JeolMicroscope:
-    """docstring for microscope"""
+    """docstring for microscope."""
 
     def __init__(self, name: str = "jeol"):
         super().__init__()
@@ -133,24 +133,24 @@ class JeolMicroscope:
         comtypes.CoUninitialize()
 
     def setNeutral(self, *args):
-        """Neutralize given deflectors"""
+        """Neutralize given deflectors."""
         for arg in args:
             if isinstance(arg, str):
                 arg = self.NTRLMAPPING[arg]
             self.def3.setNTRL(arg)
 
     def getHTValue(self) -> int:
-        """Get the accelaration voltage in V"""
+        """Get the accelaration voltage in V."""
         value, status = self.ht3.GetHTValue()
         return value
 
     def getHTRange(self) -> list:
-        """Get accelation voltage range (max, min) in V"""
+        """Get accelation voltage range (max, min) in V."""
         *value, status = self.ht3.GetHtRange()
         return value
 
     def getCurrentDensity(self) -> float:
-        """Get the current density from the fluorescence screen in pA/cm2"""
+        """Get the current density from the fluorescence screen in pA/cm2."""
         value, status = self.camera3.GetCurrentDensity()
         return value / 10_000
 
@@ -159,7 +159,7 @@ class JeolMicroscope:
         self.feg3.SetBeamValve(switch)
 
     def getBeamValve(self) -> bool:
-        """Get the beam valve status"""
+        """Get the beam valve status."""
         value, result = self.feg3.GetBeamValve()
         return bool(value)
 
@@ -232,17 +232,17 @@ class JeolMicroscope:
         self.eos3.SetSelector(index)
 
     def increaseMagnificationIndex(self) -> int:
-        """Increment the magnification index, status==0 on success"""
+        """Increment the magnification index, status==0 on success."""
         status = self.eos3.UpSelector()
         return status
 
     def decreaseMagnificationIndex(self) -> int:
-        """Decrement the magnification index, status==0 on success"""
+        """Decrement the magnification index, status==0 on success."""
         status = self.eos3.DownSelector()
         return status
 
     def getMagnificationRanges(self) -> dict:
-        """Get the magnification range for setting up the config"""
+        """Get the magnification range for setting up the config."""
         mag_ranges = {}
         for i, mode in enumerate(self.FUNCTION_MODES):
             self.eos3.SelectFunctionMode(i)
@@ -300,10 +300,7 @@ class JeolMicroscope:
         self.def3.SetIS2(x, y)
 
     def getStagePosition(self) -> Tuple[int, int, int, int, int]:
-        """
-        x, y, z in nanometer
-        a and b in degrees
-        """
+        """x, y, z in nanometer a and b in degrees."""
         x, y, z, a, b, result = self.stage3.GetPos()
         return x, y, z, a, b
 
@@ -397,7 +394,7 @@ class JeolMicroscope:
             raise OSError("Goniotool connection is not available.")
 
     def resetStage(self):
-        """Move stage to origin"""
+        """Move stage to origin."""
         self.stage3.SetOrg()
 
     def stopStageMV(self):
@@ -405,12 +402,12 @@ class JeolMicroscope:
         print("Goniometer stopped moving.")
 
     def getFunctionMode(self) -> str:
-        """mag1, mag2, lowmag, samag, diff"""
+        """mag1, mag2, lowmag, samag, diff."""
         mode, name, result = self.eos3.GetFunctionMode()
         return self.FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value: int):
-        """mag1, mag2, lowmag, samag, diff"""
+        """mag1, mag2, lowmag, samag, diff."""
         if isinstance(value, str):
             try:
                 value = self.FUNCTION_MODES.index(value)
@@ -425,13 +422,13 @@ class JeolMicroscope:
         return value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
-        """IL1"""
+        """IL1."""
         if confirm_mode and (not self.getFunctionMode() == "diff"):
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.lens3.setDiffFocus(value)
 
     def setIntermediateLens1(self, value: int):
-        """IL1"""
+        """IL1."""
         mode = self.getFunctionMode()
         if mode == 'diff':
             self.setDiffFocus(value, confirm_mode=False)
@@ -439,7 +436,7 @@ class JeolMicroscope:
             self.lens3.setILFocus(value)
 
     def getIntermediateLens1(self):
-        """IL1"""
+        """IL1."""
         value, result = self.lens3.GetIL1()
         return value
 
@@ -484,12 +481,13 @@ class JeolMicroscope:
         self.def3.SetOLs(x, y)
 
     def getSpotSize(self) -> int:
-        """0-based indexing for GetSpotSize, add 1 to be consistent with JEOL software"""
+        """0-based indexing for GetSpotSize, add 1 to be consistent with JEOL
+        software."""
         value, result = self.eos3.GetSpotSize()
         return value + 1
 
     def setSpotSize(self, value: int):
-        """Set the spotsize"""
+        """Set the spotsize."""
         self.eos3.selectSpotSize(value - 1)
 
     def setProbeMode(self, mode: str):

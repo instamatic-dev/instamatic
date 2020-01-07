@@ -34,9 +34,11 @@ def start_server_in_subprocess():
 
 
 class GonioToolClient:
-    """
-    Simulates a GonioToolWrapper object and synchronizes calls over a socket server.
-    For documentation, see the actual python interface to the GonioToolWrapper API.
+    """Simulates a GonioToolWrapper object and synchronizes calls over a socket
+    server.
+
+    For documentation, see the actual python interface to the
+    GonioToolWrapper API.
     """
 
     def __init__(self, name="GonioTool"):
@@ -90,7 +92,7 @@ class GonioToolClient:
         return wrapper
 
     def _eval_dct(self, dct):
-        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'"""
+        """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
 
         self.s.send(pickle.dumps(dct))
         response = self.s.recv(BUFSIZE)
@@ -116,7 +118,7 @@ class GonioToolClient:
 
 
 class GonioToolWrapper:
-    """docstring for GonioToolWrapper
+    """docstring for GonioToolWrapper.
 
     barrier: threading.Barrier
         Synchronization primitive to synch with parent process
@@ -133,7 +135,7 @@ class GonioToolWrapper:
             barrier.wait()
 
     def startup(self):
-        """Initialize and start up the GonioTool interface"""
+        """Initialize and start up the GonioTool interface."""
         self.f1rate = self.app.TMainForm["f1/rate"]
 
         self.f1 = self.app.TMainForm.f1
@@ -148,38 +150,38 @@ class GonioToolWrapper:
         self.edit = self.app.TMainForm.f1.Edit7
 
     def closedown(self):
-        """Set default speed and close the program"""
+        """Set default speed and close the program."""
         self.set_rate(DEFAULT_SPEED)
         self.click_tkb()
         time.sleep(1)
         self.app.kill()
 
     def list_f1rate(self):
-        """List GUI control identifiers for `f1/rate` tab"""
+        """List GUI control identifiers for `f1/rate` tab."""
         self.f1rate.print_control_identifiers()
 
     def list_f1(self):
-        """List GUI control identifiers for `f1` box"""
+        """List GUI control identifiers for `f1` box."""
         self.f1.print_control_identifiers()
 
     def click_get_button(self):
-        """Click GET button"""
+        """Click GET button."""
         self.get_button.click()
 
     def click_set_button(self):
-        """Click SET button"""
+        """Click SET button."""
         self.set_button.click()
 
     def click_tkb(self):
-        """Select TKB radio button"""
+        """Select TKB radio button."""
         self.rb_tkb.click()
 
     def click_cmd(self):
-        """Select CMD radio button"""
+        """Select CMD radio button."""
         self.rb_cmd.click()
 
     def set_rate(self, speed: int):
-        """Set rate value for TX"""
+        """Set rate value for TX."""
         assert isinstance(speed, int), f"Variable `speed` must be of type `int`, is `{type(speed)}`"
         assert 0 < speed <= 12, f"Variable `speed` must have a value of 1 to 12."
 
@@ -188,7 +190,7 @@ class GonioToolWrapper:
         self.click_set_button()
 
     def get_rate(self) -> int:
-        """Get current rate value for TX"""
+        """Get current rate value for TX."""
         s = self.edit.select()
         val = s.text_block()
         return int(val)

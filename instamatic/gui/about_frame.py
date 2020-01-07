@@ -9,7 +9,8 @@ from instamatic import version
 
 
 def get_background_of_widget(widget):
-    """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-button/"""
+    """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-
+    button/"""
     try:
         # We assume first tk widget
         background = widget.cget("background")
@@ -27,7 +28,8 @@ def get_background_of_widget(widget):
 
 
 class Link_Button(tkLabel):
-    """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-button/"""
+    """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-
+    button/"""
 
     def __init__(self, master, text, background=None, font=None, familiy=None, size=None, underline=True, visited_fg="#551A8B", normal_fg="#0000EE", visited=False, action=None):
         self._visited_fg = visited_fg
@@ -83,7 +85,7 @@ class Link_Button(tkLabel):
 
 
 class About(LabelFrame):
-    """docstring for About"""
+    """docstring for About."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="About instamatic")

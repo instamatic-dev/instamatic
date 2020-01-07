@@ -17,8 +17,7 @@ from instamatic.tools import autoscale
 def apply_transform_to_image(img, transform, center=None):
     """Applies transformation matrix to image and recenters it
     http://docs.sunpy.org/en/stable/_modules/sunpy/image/transform.html
-    http://stackoverflow.com/q/20161175
-    """
+    http://stackoverflow.com/q/20161175."""
 
     if center is None:
         center = (np.array(img.shape)[::-1] - 1) / 2.0
@@ -72,7 +71,7 @@ def affine_transform_circle_to_ellipse(azimuth: float, amplitude: float):
 
 
 def apply_stretch_correction(z, center=None, azimuth: float = 0, amplitude: float = 0):
-    """Apply stretch correction to image using calibrated values
+    """Apply stretch correction to image using calibrated values.
 
     center: list of floats
         pixel coordinates of the center of the direct beam
@@ -92,7 +91,7 @@ def apply_stretch_correction(z, center=None, azimuth: float = 0, amplitude: floa
 
 
 def make_title(prop):
-    """Make the title for the plot"""
+    """Make the title for the plot."""
     azimuth = np.degrees(prop.orientation)
     amplitude = -1 + prop.major_axis_length / prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
@@ -101,7 +100,8 @@ def make_title(prop):
 
 
 def get_sigma_interactive(img, sigma=20):
-    """Interactive function to get the sigma threshold value for the edge detection"""
+    """Interactive function to get the sigma threshold value for the edge
+    detection."""
     edges = canny(img, sigma=sigma, low_threshold=None, high_threshold=None)
 
     fig, ax = plt.subplots()
@@ -146,7 +146,7 @@ def get_sigma_interactive(img, sigma=20):
 
 
 def plot_props(edges, props):
-    """Plot the ring structures"""
+    """Plot the ring structures."""
     plt.imshow(edges)
     for prop in props:
         print("centroid = ({:.2f}, {:.2f})".format(*prop.centroid))
@@ -175,7 +175,7 @@ def plot_props(edges, props):
 
 
 def get_ring_props(edges):
-    """Get the rings with low eccentricity from the edge structures"""
+    """Get the rings with low eccentricity from the edge structures."""
     # label edges
     labeled = label(edges)
 

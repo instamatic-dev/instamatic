@@ -49,19 +49,19 @@ class AcquireAtItems:
         self.backlash = backlash
 
     def pre_acquire(self, ctrl):
-        """Function called after the last NavItem"""
+        """Function called after the last NavItem."""
         pass
 
     def post_acquire(self, ctrl):
-        """Function called before the first NavItem"""
+        """Function called before the first NavItem."""
         pass
 
     def acquire(self, ctrl):
-        """Function to call at each stage position"""
+        """Function to call at each stage position."""
         print("Acquirement function has not been set.")
 
     def move_to_item(self, item):
-        """Move the stage to the stage coordinates given by the NavItem"""
+        """Move the stage to the stage coordinates given by the NavItem."""
         try:
             x = item.stage_x * 1000  # um -> nm
             y = item.stage_y * 1000  # um -> nm
@@ -86,7 +86,7 @@ class AcquireAtItems:
         set_xy(x=x, y=y)
 
     def start(self):
-        """Start serial acquisition protocol"""
+        """Start serial acquisition protocol."""
         import time
         import msvcrt
 

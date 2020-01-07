@@ -18,7 +18,8 @@ from instamatic.processing.flatfield import remove_deadpixels
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):
-    """Divide the stage up in a grid, starting at 'startpoint' ending at 'endpoint'"""
+    """Divide the stage up in a grid, starting at 'startpoint' ending at
+    'endpoint'."""
     stepsize = np.array((0.016 * 512, 0.016 * 512))
 
     x1, y1 = pos1 = np.array((0, 0))
@@ -134,7 +135,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
 
 
 class Experiment:
-    """docstring for Experiment"""
+    """docstring for Experiment."""
 
     def __init__(self, ctrl, params, scan_radius=None, begin_here=False, expdir=None, log=None):
         super().__init__()
@@ -173,7 +174,7 @@ class Experiment:
         return self.expdir
 
     def load_calibration(self, **kwargs):
-        """Load user specified config and calibration files"""
+        """Load user specified config and calibration files."""
 
         self.ctrl.mode_mag1()
         self.ctrl.brightness.max()
@@ -276,7 +277,7 @@ class Experiment:
         json.dump(kwargs, open(self.expdir / "params_out.json", "w"), indent=2)
 
     def initialize_microscope(self):
-        """Intialize microscope"""
+        """Intialize microscope."""
 
         import atexit
         atexit.register(self.ctrl.restore)
@@ -297,7 +298,8 @@ class Experiment:
         self.ctrl.tem.setSpotSize(self.image_spotsize)
 
     def image_mode(self, delay=0.2):
-        """Switch to image mode (mag1), reset beamshift/diffshift, spread beam"""
+        """Switch to image mode (mag1), reset beamshift/diffshift, spread
+        beam."""
 
         # self.log.debug("Switching back to image mode")
         time.sleep(delay)
@@ -311,8 +313,8 @@ class Experiment:
         self.ctrl.brightness.max()
 
     def diffraction_mode(self, delay=0.2):
-        """Switch to diffraction mode, focus the beam, and set the correct focus
-        """
+        """Switch to diffraction mode, focus the beam, and set the correct
+        focus."""
         # self.log.debug("Switching to diffraction mode")
         time.sleep(delay)
 
@@ -321,7 +323,7 @@ class Experiment:
         self.ctrl.difffocus.value = self.diff_difffocus  # difffocus must be set AFTER switching to diffraction mode
 
     def report_status(self):
-        """Report experiment status"""
+        """Report experiment status."""
 
         print()
         print(f"Output directory:\n{self.expdir}")
@@ -336,8 +338,8 @@ class Experiment:
         print(f"              spotsize = {self.diff_spotsize}")
 
     def loop_centers(self):
-        """Loop over scan centers defined
-        Move the stage to all positions defined in centers
+        """Loop over scan centers defined Move the stage to all positions
+        defined in centers.
 
         Return
             di: dict, contains information on scan areas
@@ -357,8 +359,8 @@ class Experiment:
                 yield i, (x, y)
 
     def loop_positions(self, delay=0.05):
-        """Loop over positions defined
-        Move the stage to each of the positions in self.offsets
+        """Loop over positions defined Move the stage to each of the positions
+        in self.offsets.
 
         Return
             dct: dict, contains information on positions
@@ -386,12 +388,11 @@ class Experiment:
                     yield dct
 
     def loop_crystals(self, crystal_coords, delay=0):
-        """Loop over crystal coordinates (pixels)
-        Switch to diffraction mode, and shift the beam to be on the crystal
+        """Loop over crystal coordinates (pixels) Switch to diffraction mode,
+        and shift the beam to be on the crystal.
 
         Return
             dct: dict, contains information on beam/diffshift
-
         """
         ncrystals = len(crystal_coords)
         if ncrystals == 0:
@@ -435,7 +436,7 @@ class Experiment:
         return img, h
 
     def run(self, ctrl=None, **kwargs):
-        """Run serial electron diffraction experiment"""
+        """Run serial electron diffraction experiment."""
 
         self.initialize_microscope()
 

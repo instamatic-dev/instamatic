@@ -26,10 +26,13 @@ BUFSIZE = 4096
 
 
 class CamServer(threading.Thread):
-    """Camera communcation server. Takes a logger object `log`, command queue `q`, and
-    name of the camera `name` that is used to initialize the connection to the camera.
-    Start the server using `CamServer.run` which will wait for items to appear on `q` and
-    execute them on the specified camera instance.
+    """Camera communcation server.
+
+    Takes a logger object `log`, command queue `q`, and name of the
+    camera `name` that is used to initialize the connection to the
+    camera. Start the server using `CamServer.run` which will wait for
+    items to appear on `q` and execute them on the specified camera
+    instance.
     """
 
     def __init__(self, log=None, q=None, name=None):
@@ -42,7 +45,7 @@ class CamServer(threading.Thread):
         self._name = name
 
     def run(self):
-        """Start server thread"""
+        """Start server thread."""
         self.cam = Camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
@@ -73,7 +76,10 @@ class CamServer(threading.Thread):
                 print(f"{now} | {status} {attr_name}: {ret}")
 
     def evaluate(self, attr_name: str, args: list, kwargs: dict):
-        """Evaluate the function `attr_name` on `self.cam` with *args and **kwargs."""
+        """Evaluate the function `attr_name` on `self.cam` with *args and.
+
+        **kwargs.
+        """
         # print(attr_name, args, kwargs)
         f = getattr(self.cam, attr_name)
         if callable(f):
@@ -83,7 +89,7 @@ class CamServer(threading.Thread):
         return ret
 
     def get_attrs(self):
-        """Get attributes from cam object to update __dict__ on client side"""
+        """Get attributes from cam object to update __dict__ on client side."""
         attrs = {}
         for item in dir(self.cam):
             if item.startswith("_"):
@@ -96,8 +102,8 @@ class CamServer(threading.Thread):
 
 
 def handle(conn, q):
-    """Handle incoming connection, put command on the Queue `q`,
-    which is then handled by TEMServer."""
+    """Handle incoming connection, put command on the Queue `q`, which is then
+    handled by TEMServer."""
     with conn:
         while True:
             data = conn.recv(BUFSIZE)

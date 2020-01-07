@@ -10,7 +10,7 @@ from instamatic.formats import read_tiff
 
 
 def printer(data):
-    """Print things to stdout on one line dynamically"""
+    """Print things to stdout on one line dynamically."""
     sys.stdout.write("\r\x1b[K" + data.__str__())
     sys.stdout.flush()
 

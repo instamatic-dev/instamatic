@@ -7,8 +7,8 @@ from instamatic.processing.find_crystals import find_crystals_timepix
 
 
 def reject_outlier(data, m=2):
-    """Reject outliers if they are outside of m standard deviations from
-    the mean value"""
+    """Reject outliers if they are outside of m standard deviations from the
+    mean value."""
     m = 2
     u = np.mean(data)
     s = np.std(data)
@@ -27,7 +27,7 @@ def eliminate_backlash_in_tiltx(ctrl):
 
 
 def center_z_height(ctrl, verbose=False):
-    """Automated routine to find the z-height
+    """Automated routine to find the z-height.
 
     Koster, A. J., et al. "Automated microscopy for electron tomography."
     Ultramicroscopy 46.1-4 (1992): 207-227.
@@ -102,8 +102,10 @@ def find_crystal_max(img, magnification, spread, offset):
 
 def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset=10, verbose=False):
     """Hongyi's empirical method for centering z height on our JEOL LAB6.
-    Rotate the stage positively. If the particle moves upwards, adjust height to be higher.
-    Vice versa."""
+
+    Rotate the stage positively. If the particle moves upwards, adjust
+    height to be higher. Vice versa.
+    """
 
     print("\033[k", "Finding eucentric height...", end="\r")
     if ctrl.mode != 'mag1':

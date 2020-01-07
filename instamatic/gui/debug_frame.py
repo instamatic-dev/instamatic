@@ -15,7 +15,7 @@ BUFSIZE = 1024
 
 
 class DebugFrame(LabelFrame):
-    """docstring for DebugFrame"""
+    """docstring for DebugFrame."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="For debugging, be careful!")

@@ -48,7 +48,7 @@ Press <OK> to start"""
 
 
 class ExperimentalSED(LabelFrame):
-    """docstring for ExperimentalSED"""
+    """docstring for ExperimentalSED."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Serial electron diffraction")

@@ -1,4 +1,4 @@
-"""https://stackoverflow.com/q/6760685"""
+"""https://stackoverflow.com/q/6760685."""
 
 
 class Singleton(type):

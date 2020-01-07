@@ -12,7 +12,7 @@ from instamatic.formats import read_image
 
 
 def treeview_sort_column(tv, col, reverse):
-    """https://stackoverflow.com/a/22032582"""
+    """https://stackoverflow.com/a/22032582."""
     lst = [(tv.set(k, col), k) for k in tv.get_children('')]
     lst.sort(key=lambda t: float(t[0]), reverse=reverse)
 
@@ -23,7 +23,7 @@ def treeview_sort_column(tv, col, reverse):
 
 
 class MachineLearningFrame(LabelFrame):
-    """docstring for MachineLearningFrame"""
+    """docstring for MachineLearningFrame."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text="Neural Network")
