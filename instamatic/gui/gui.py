@@ -30,7 +30,7 @@ class DataCollectionController(threading.Thread):
         self.q = queue.LifoQueue(maxsize=1)
         self.triggerEvent = threading.Event()
 
-        self.module_io = self.app.get_module("io")
+        self.module_io = self.app.get_module('io')
 
         for name, module in self.app.modules.items():
             try:
@@ -57,8 +57,8 @@ class DataCollectionController(threading.Thread):
             try:
                 func = job_dict[job]
             except KeyError:
-                print(f"Unknown job: {job}")
-                print(f"Kwargs:\n{kwargs}")
+                print(f'Unknown job: {job}')
+                print(f'Kwargs:\n{kwargs}')
                 continue
 
             try:
@@ -92,7 +92,7 @@ class ModuleFrame(Frame):
 
     def load_modules(self, master):
         frame = Frame(master)
-        frame.pack(side="right", fill="both", expand="yes")
+        frame.pack(side='right', fill='both', expand='yes')
 
         make_notebook = any(module.tabbed for module in self._modules)
         if make_notebook:
@@ -102,17 +102,17 @@ class ModuleFrame(Frame):
             if module.tabbed:
                 page = Frame(self.nb)
                 module_frame = module.tk_frame(page)
-                module_frame.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+                module_frame.pack(side='top', fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
                 self.nb.add(page, text=module.display_name)
             else:
                 module_frame = module.tk_frame(frame)
-                module_frame.pack(side="top", fill="both", expand="yes", padx=10, pady=10)
+                module_frame.pack(side='top', fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
             job_dict.update(module.commands)
 
         if make_notebook:
-            self.nb.pack(fill="both", expand="yes")
+            self.nb.pack(fill='both', expand='yes')
 
         self._modules_have_loaded = True
 
@@ -129,18 +129,18 @@ class MainFrame:
         self.root = root
 
         self.app = ModuleFrame(root, modules=modules)
-        self.app.pack(side="top", fill="both", expand=True)
+        self.app.pack(side='top', fill='both', expand=True)
 
         if cam and cam.streamable:
             from .videostream_frame import VideoStreamFrame
 
             self.stream_frame = VideoStreamFrame(root, stream=cam, app=self.app)
-            self.stream_frame.pack(side="top", fill="both", expand=True)
+            self.stream_frame.pack(side='top', fill='both', expand=True)
 
         from instamatic import version
 
         self.root.wm_title(version.__long_title__)
-        self.root.wm_protocol("WM_DELETE_WINDOW", self.close)
+        self.root.wm_protocol('WM_DELETE_WINDOW', self.close)
 
         self.root.bind('<Escape>', self.close)
 

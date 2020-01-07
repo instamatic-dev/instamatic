@@ -45,17 +45,17 @@ class TemServer(threading.Thread):
     def run(self):
         """Start the server thread."""
         self.tem = Microscope(name=self._name, use_server=False)
-        print(f"Initialized connection to microscope: {self.tem.name}")
+        print(f'Initialized connection to microscope: {self.tem.name}')
 
         while True:
-            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+            now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
             cmd = self.q.get()
 
             with condition:
-                func_name = cmd["func_name"]
-                args = cmd.get("args", ())
-                kwargs = cmd.get("kwargs", {})
+                func_name = cmd['func_name']
+                args = cmd.get('args', ())
+                kwargs = cmd.get('kwargs', {})
 
                 try:
                     ret = self.evaluate(func_name, args, kwargs)
@@ -69,7 +69,7 @@ class TemServer(threading.Thread):
 
                 box.append((status, ret))
                 condition.notify()
-                print(f"{now} | {status} {func_name}: {ret}")
+                print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
         """Evaluate the function `func_name` on `self.tem` with *args and.
@@ -93,10 +93,10 @@ def handle(conn, q):
 
             data = pickle.loads(data)
 
-            if data == "exit":
+            if data == 'exit':
                 break
 
-            if data == "kill":
+            if data == 'kill':
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
@@ -118,16 +118,16 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--microscope", action="store", dest="microscope",
+    parser.add_argument('-t', '--microscope', action='store', dest='microscope',
                         help="""Override microscope to use""")
 
     parser.set_defaults(microscope=None)
     options = parser.parse_args()
     microscope = options.microscope
 
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_TEMServer_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    logfile = config.logs_drc / f'instamatic_TEMServer_{date}.log'
+    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
@@ -142,8 +142,8 @@ def main():
     s.bind((HOST, PORT))
     s.listen(5)
 
-    log.info(f"Server listening on {HOST}:{PORT}")
-    print(f"Server listening on {HOST}:{PORT}")
+    log.info(f'Server listening on {HOST}:{PORT}')
+    print(f'Server listening on {HOST}:{PORT}')
 
     with s:
         while True:

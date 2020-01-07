@@ -79,15 +79,15 @@ intbyteorder = {
 }
 byteorderint = {
     'big': 0x11110000,
-    'little': 0x44410000
+    'little': 0x44410000,
 }
 byteorderint2 = {
     'big': 286326784,
-    'little': 1145110528
+    'little': 1145110528,
 }
 
 
-mrc_defaults = dict(alpha=90, beta=90, gamma=90, mapc=1, mapr=2, maps=3, map='MAP ', byteorder=byteorderint[sys.byteorder])
+mrc_defaults = {'alpha': 90, 'beta': 90, 'gamma': 90, 'mapc': 1, 'mapr': 2, 'maps': 3, 'map': 'MAP ', 'byteorder': byteorderint[sys.byteorder]}
 
 
 def _gen_header():
@@ -227,7 +227,7 @@ def cache_data():
             Keyword arguments
     """
 
-    return dict(header=None, no_strict_mrc=False, force_volume=False)
+    return {'header': None, 'no_strict_mrc': False, 'force_volume': False}
 
 
 def is_format_header(h):
@@ -273,22 +273,22 @@ def is_readable(filename, no_strict_mrc=False):
     if hasattr(filename, 'dtype'):
         h = filename
         if not is_format_header(h):
-            raise ValueError("Array dtype incorrect")
+            raise ValueError('Array dtype incorrect')
     else:
         try:
             h = read_mrc_header(filename)
         except BaseException:
             return False
     if _logger.isEnabledFor(logging.DEBUG):
-        _logger.debug("Mode: %d - %d" % (h['mode'][0], (h['mode'][0] not in mrc2numpy)))
-        _logger.debug("Byteorder: %d - %d" % (h['byteorder'][0], ((h['byteorder'][0] & -65536) not in intbyteorder)))
-        _logger.debug("Byteorder-swap: %d - %d" % ((h['byteorder'][0].byteswap() & -65536), ((h['byteorder'][0].byteswap() & -65536) not in intbyteorder)))
+        _logger.debug('Mode: %d - %d' % (h['mode'][0], (h['mode'][0] not in mrc2numpy)))
+        _logger.debug('Byteorder: %d - %d' % (h['byteorder'][0], ((h['byteorder'][0] & -65536) not in intbyteorder)))
+        _logger.debug('Byteorder-swap: %d - %d' % ((h['byteorder'][0].byteswap() & -65536), ((h['byteorder'][0].byteswap() & -65536) not in intbyteorder)))
         for name in ('alpha', 'beta', 'gamma'):
-            _logger.debug("%s: %f - %d" % (name, h[name][0], (h[name][0] != 90.0)))
+            _logger.debug('%s: %f - %d' % (name, h[name][0], (h[name][0] != 90.0)))
         for name in ('nx', 'ny', 'nz'):
-            _logger.debug("%s: %d - %d" % (name, h[name][0], (h[name][0] > 0)))
+            _logger.debug('%s: %d - %d' % (name, h[name][0], (h[name][0] > 0)))
     if h['mode'][0] not in mrc2numpy:
-        _logger.debug("Failed to read proper mode - not MRC!")
+        _logger.debug('Failed to read proper mode - not MRC!')
         return False
 
     if (h['byteorder'][0] & -65536) not in intbyteorder and \
@@ -297,9 +297,9 @@ def is_readable(filename, no_strict_mrc=False):
             if not bad_mrc_header:
                 bad_mrc_header = True
                 if not no_strict_mrc and 1 == 0:
-                    _logger.warn("This image could be MRC format likely this image came from EPU. Use --no-strict-mrc to read this image")
+                    _logger.warn('This image could be MRC format likely this image came from EPU. Use --no-strict-mrc to read this image')
                     return False
-                _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from EPU)")
+                _logger.warn('Assuming image is MRC format - format is not correct (Likely this image came from EPU)')
         elif h['alpha'][0] == 90.0 and h['beta'][0] == 90.0 and h['gamma'][0] == 90.0:  # this line hack for non-standard writers
             if not bad_mrc_header:
                 bad_mrc_header = True
@@ -308,10 +308,10 @@ def is_readable(filename, no_strict_mrc=False):
                     return False
                 _logger.warn("Assuming image is MRC format - format is not correct (Likely this image came from Yifan's GPU alignment)")
         else:
-            _logger.debug("Failed to read proper machine stamp - not MRC!")
+            _logger.debug('Failed to read proper machine stamp - not MRC!')
             # return False
     if not numpy.alltrue([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]):
-        _logger.debug("Failed to read proper dimensions - not MRC!")
+        _logger.debug('Failed to read proper dimensions - not MRC!')
         return False
     return True
 
@@ -378,7 +378,7 @@ def read_mrc_header(filename, index=None, no_strict_mrc=False):
         if not is_readable(h, no_strict_mrc):
             h = h.newbyteorder()
         if not is_readable(h, no_strict_mrc):
-            raise OSError("Not MRC header")
+            raise OSError('Not MRC header')
     finally:
         util.close(filename, f)
     return h
@@ -455,7 +455,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         try:
             f.seek(int(offset))
         except BaseException:
-            _logger.error("{} -- {}".format(str(offset), str(offset.__class__.__name__)))
+            _logger.error('{} -- {}'.format(str(offset), str(offset.__class__.__name__)))
             raise
         if not hasattr(index, '__iter__'):
             index = range(index, count)
@@ -464,7 +464,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         last = 0
         total = file_size(f)
         if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize):
-            raise util.InvalidHeaderException("file size != header: %d != %d -- %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), int(h['nsymbt'])))
+            raise util.InvalidHeaderException('file size != header: %d != %d -- %d' % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), int(h['nsymbt'])))
         for i in index:
             if i != (last + 1):
                 f.seek(int(1024 + int(h['nsymbt']) + i * d_len * dtype.itemsize))
@@ -536,7 +536,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         header = read_header(h, force_volume=force_volume)
         count = count_images(h)
         if idx >= count:
-            raise OSError("Index exceeds number of images in stack: %d < %d" % (idx, count))
+            raise OSError('Index exceeds number of images in stack: %d < %d' % (idx, count))
         if index is None and (count == h['nx'][0] or force_volume):
             d_len = h['nx'][0] * h['ny'][0] * h['nz'][0]
         else:
@@ -545,7 +545,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         offset = 1024 + int(h['nsymbt']) + idx * d_len * dtype.itemsize
         total = file_size(f)
         if total != (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize):
-            raise util.InvalidHeaderException("file size != header: %d != %d -- %s, %d" % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), str(idx), int(h['nsymbt'])))
+            raise util.InvalidHeaderException('file size != header: %d != %d -- %s, %d' % (total, (1024 + int(h['nsymbt']) + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize), str(idx), int(h['nsymbt'])))
         f.seek(int(offset))
         out = util.fromfile(f, dtype=dtype, count=d_len)
         out = reshape_data(out, h, index, count, force_volume)
@@ -642,7 +642,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
     try:
         img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
     except BaseException:
-        raise TypeError("Unsupported type for MRC writing: %s" % str(img.dtype))
+        raise TypeError('Unsupported type for MRC writing: %s' % str(img.dtype))
 
     mode = 'rb+' if index is not None and (index > 0 or inplace and index > -1) else 'wb+'
     f = util.uopen(filename, mode)
@@ -711,7 +711,7 @@ if __name__ == '__main__':
 
     from pathlib import Path
 
-    fn = Path("test.mrc")
+    fn = Path('test.mrc')
     img = (np.random.random((512, 512)) * 100000).astype(np.uint16)
 
     header = {}
@@ -719,15 +719,15 @@ if __name__ == '__main__':
     header['SIZE2'] = 512
 
     write_image(fn, img, header=header)
-    print("writing:", img.shape)
-    print("header:", header)
+    print('writing:', img.shape)
+    print('header:', header)
     print()
 
     arr, h = read_image(fn)
-    print("reading", arr.shape, arr.dtype)
-    print("header", h)
+    print('reading', arr.shape, arr.dtype)
+    print('header', h)
 
     print()
-    print("allclose:", np.allclose(img, arr))
+    print('allclose:', np.allclose(img, arr))
 
     print(len(header_image_dtype))

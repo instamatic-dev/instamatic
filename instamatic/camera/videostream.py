@@ -60,7 +60,7 @@ class ImageGrabber:
 class VideoStream(threading.Thread):
     """docstring for VideoStream."""
 
-    def __init__(self, cam="simulate"):
+    def __init__(self, cam='simulate'):
         threading.Thread.__init__(self)
 
         if isinstance(cam, str):
@@ -190,7 +190,7 @@ class VideoStream(threading.Thread):
 
 
 if __name__ == '__main__':
-    stream = VideoStream(cam="timepix")
+    stream = VideoStream(cam='timepix')
     from IPython import embed
     embed()
     stream.stop()

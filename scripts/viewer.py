@@ -9,7 +9,7 @@ def main():
     try:
         fn = sys.argv[1]
     except BaseException:
-        print("Usage: instamatic.viewer IMG.tiff")
+        print('Usage: instamatic.viewer IMG.tiff')
         exit()
 
     img, h = read_image(fn)
@@ -21,13 +21,13 @@ def main():
        dtype: {img.dtype}
 """)
 
-    max_len = max([len(s) for s in h.keys()])
+    max_len = max(len(s) for s in h.keys())
 
-    fmt = f"{{:{max_len}s}} = {{}}"
+    fmt = f'{{:{max_len}s}} = {{}}'
     for key in sorted(h.keys()):
         print(fmt.format(key, h[key]))
 
-    plt.imshow(img, cmap="gray")
+    plt.imshow(img, cmap='gray')
     plt.title(fn)
     plt.show()
 

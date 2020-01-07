@@ -58,7 +58,7 @@ def uopen(filename, mode):
             try:
                 f = open(filename, mode)
             except BaseException:
-                _logger.error("Mode: %s" % str(mode))
+                _logger.error('Mode: %s' % str(mode))
                 raise
     return f
 
@@ -106,7 +106,7 @@ def update_header(dest, source, header_map, tag=None):
         except BaseException:
             if tag is not None:
                 try:
-                    dest[key] = source[tag + "_" + key]
+                    dest[key] = source[tag + '_' + key]
                 except BaseException:
                     pass
     return dest

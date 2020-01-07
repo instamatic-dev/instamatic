@@ -9,7 +9,7 @@ from pywinauto import Application
 
 from instamatic import config
 
-GONIOTOOL_EXE = "C:\\JEOL\\TOOL\\GonioTool.exe"
+GONIOTOOL_EXE = 'C:\\JEOL\\TOOL\\GonioTool.exe'
 DEFAULT_SPEED = 12
 
 HOST = config.cfg.goniotool_server_host
@@ -27,9 +27,9 @@ def kill_server(p):
 
 
 def start_server_in_subprocess():
-    cmd = "instamatic.goniotool.exe"
+    cmd = 'instamatic.goniotool.exe'
     p = sp.Popen(cmd, stdout=sp.DEVNULL)
-    print(f"Starting GonioTool server ({HOST}:{PORT} on pid={p.pid})")
+    print(f'Starting GonioTool server ({HOST}:{PORT} on pid={p.pid})')
     atexit.register(kill_server, p)
 
 
@@ -41,7 +41,7 @@ class GonioToolClient:
     GonioToolWrapper API.
     """
 
-    def __init__(self, name="GonioTool"):
+    def __init__(self, name='GonioTool'):
         super().__init__()
 
         self.name = name
@@ -61,9 +61,9 @@ class GonioToolClient:
                 except ConnectionRefusedError:
                     time.sleep(1)
                     if t > 3:
-                        print("Waiting for server")
+                        print('Waiting for server')
                     if t > 30:
-                        raise RuntimeError("Cannot establish server connection (timeout)")
+                        raise RuntimeError('Cannot establish server connection (timeout)')
                 else:
                     break
 
@@ -74,19 +74,19 @@ class GonioToolClient:
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to GonioTool server ({HOST}:{PORT})")
+        print(f'Connected to GonioTool server ({HOST}:{PORT})')
 
     def __getattr__(self, func_name):
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
-            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{func_name}`') from e
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {"func_name": func_name,
-                   "args": args,
-                   "kwargs": kwargs}
+            dct = {'func_name': func_name,
+                   'args': args,
+                   'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -106,12 +106,12 @@ class GonioToolClient:
             raise data
 
         else:
-            raise ConnectionError(f"Unknown status code: {status}")
+            raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self):
         gtw = GonioToolWrapper
 
-        self._dct = {key: value for key, value in gtw.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in gtw.__dict__.items() if not key.startswith('_')}
 
     def __dir__(self):
         return self._dct.keys()
@@ -128,7 +128,7 @@ class GonioToolWrapper:
         super().__init__()
 
         self.app = Application().start(GONIOTOOL_EXE)
-        input("Enter password and press <ENTER> to continue...")  # delay for password, TODO: automate
+        input('Enter password and press <ENTER> to continue...')  # delay for password, TODO: automate
         self.startup()
 
         if barrier:
@@ -136,7 +136,7 @@ class GonioToolWrapper:
 
     def startup(self):
         """Initialize and start up the GonioTool interface."""
-        self.f1rate = self.app.TMainForm["f1/rate"]
+        self.f1rate = self.app.TMainForm['f1/rate']
 
         self.f1 = self.app.TMainForm.f1
         self.rb_cmd = self.f1.CMDRadioButton
@@ -182,8 +182,8 @@ class GonioToolWrapper:
 
     def set_rate(self, speed: int):
         """Set rate value for TX."""
-        assert isinstance(speed, int), f"Variable `speed` must be of type `int`, is `{type(speed)}`"
-        assert 0 < speed <= 12, f"Variable `speed` must have a value of 1 to 12."
+        assert isinstance(speed, int), f'Variable `speed` must be of type `int`, is `{type(speed)}`'
+        assert 0 < speed <= 12, f'Variable `speed` must have a value of 1 to 12.'
 
         s = self.edit.select()
         s.set_text(speed)

@@ -28,9 +28,9 @@ def kill_server(p):
 
 
 def start_server_in_subprocess():
-    cmd = "instamatic.temserver.exe"
+    cmd = 'instamatic.temserver.exe'
     p = sp.Popen(cmd, stdout=sp.DEVNULL)
-    print(f"Starting TEM server ({HOST}:{PORT} on pid={p.pid})")
+    print(f'Starting TEM server ({HOST}:{PORT} on pid={p.pid})')
     atexit.register(kill_server, p)
 
 
@@ -59,9 +59,9 @@ class MicroscopeClient:
                 except ConnectionRefusedError:
                     time.sleep(1)
                     if t > 3:
-                        print("Waiting for server")
+                        print('Waiting for server')
                     if t > 30:
-                        raise RuntimeError("Cannot establish server connection (timeout)")
+                        raise RuntimeError('Cannot establish server connection (timeout)')
                 else:
                     break
 
@@ -72,20 +72,20 @@ class MicroscopeClient:
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to TEM server ({HOST}:{PORT})")
+        print(f'Connected to TEM server ({HOST}:{PORT})')
 
     def __getattr__(self, func_name):
 
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
-            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{func_name}`") from e
+            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{func_name}`') from e
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {"func_name": func_name,
-                   "args": args,
-                   "kwargs": kwargs}
+            dct = {'func_name': func_name,
+                   'args': args,
+                   'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -106,13 +106,13 @@ class MicroscopeClient:
             raise data
 
         else:
-            raise ConnectionError(f"Unknown status code: {status}")
+            raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
         tem = get_tem(self.name)
 
-        self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith("_")}
+        self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith('_')}
 
     def __dir__(self):
         return self._dct.keys()
@@ -121,7 +121,7 @@ class MicroscopeClient:
 class TraceVariable:
     """docstring for Tracer."""
 
-    def __init__(self, func, interval=1.0, name="variable", verbose=False):
+    def __init__(self, func, interval=1.0, name='variable', verbose=False):
         super().__init__()
         self.name = name
         self.func = func
@@ -131,23 +131,23 @@ class TraceVariable:
         self._traced = []
 
     def start(self):
-        print(f"Trace started: {self.name}")
+        print(f'Trace started: {self.name}')
         self.update()
 
     def stop(self):
         self._timer.cancel()
 
-        print(f"Trace canceled: {self.name}")
+        print(f'Trace canceled: {self.name}')
 
         return self._traced
 
     def update(self):
         ret = self.func()
 
-        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
         if self.verbose:
-            print(f"{now} | Trace {self.name}: {ret}")
+            print(f'{now} | Trace {self.name}: {ret}')
 
         self._traced.append((now, ret))
 

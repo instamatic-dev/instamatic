@@ -21,14 +21,14 @@ def find_script(script: str):
     if not script.exists():
         test_location = config.scripts_drc / script
         if not test_location.exists():
-            raise OSError(f"No such script: {script}")
+            raise OSError(f'No such script: {script}')
         else:
             script = test_location
 
     return script
 
 
-def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> "np.array":
+def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> 'np.array':
     """Prepare a list of grid coordinates nx by ny in size. The grid is
     centered at the center of the grid.
 
@@ -59,32 +59,32 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
 
     `coords` corresponds to a list of (x, y) coordinates of the corners of the quadrilateral / rectangle
     """
-    if kind == "quadrilateral":
+    if kind == 'quadrilateral':
         coords = np.round(coords).astype(int)
-        s = "UNTRUSTED_QUADRILATERAL="
+        s = 'UNTRUSTED_QUADRILATERAL='
         for x, y in coords:
-            s += f" {y} {x}"  # coords are flipped in XDS
+            s += f' {y} {x}'  # coords are flipped in XDS
 
         return s
 
-    elif kind == "rectangle":
+    elif kind == 'rectangle':
         coords = np.round(coords).astype(int)
-        s = "UNTRUSTED_RECTANGLE="
+        s = 'UNTRUSTED_RECTANGLE='
         (x1, y1), (x2, y2) = coords
-        s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
+        s += f' {y1} {y2} {x1} {x2}'  # coords are flipped in XDS
 
         return s
 
-    elif kind == "ellipse":
+    elif kind == 'ellipse':
         coords = np.round(coords).astype(int)
-        s = "UNTRUSTED_ELLIPSE="
+        s = 'UNTRUSTED_ELLIPSE='
         (x1, y1), (x2, y2) = coords
-        s += f" {y1} {y2} {x1} {x2}"  # coords are flipped in XDS
+        s += f' {y1} {y2} {x1} {x2}'  # coords are flipped in XDS
 
         return s
 
     else:
-        raise ValueError("Only quadrilaterals are supported for now")
+        raise ValueError('Only quadrilaterals are supported for now')
 
 
 def find_subranges(lst: list) -> (int, int):
@@ -114,12 +114,12 @@ def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
     return ndimage.zoom(img, scale, order=1)
 
 
-def denoise(img: np.ndarray, sigma: int = 3, method: str = "median") -> np.ndarray:
+def denoise(img: np.ndarray, sigma: int = 3, method: str = 'median') -> np.ndarray:
     """Denoises the image using a gaussian or median filter.
 
     median filter is better at preserving edges
     """
-    if method == "gaussian":
+    if method == 'gaussian':
         return ndimage.gaussian_filter(img, sigma)
     else:
         return ndimage.median_filter(img, sigma)
@@ -176,7 +176,7 @@ def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int =
     return center
 
 
-def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=False) -> (float, float):
+def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=False) -> (float, float):
     """Find the beam center when a beam stop is present.
 
     methods: gauss, thresh
@@ -192,13 +192,13 @@ def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=Fal
         gauss: standard deviation for the gaussian blurring (50)
     """
 
-    if method == "gauss":
+    if method == 'gauss':
         if not z:
             z = 50
         blurred = ndimage.filters.gaussian_filter(img, z)
         cx, cy = np.unravel_index(blurred.argmax(), blurred.shape)
 
-    elif method == "thresh":
+    elif method == 'thresh':
         if not z:
             z = 99
         seg = img > np.percentile(img, z)
@@ -223,7 +223,7 @@ def find_beam_center_with_beamstop(img, z: int = None, method="thresh", plot=Fal
             ax1.scatter(dy, dx)
             ax2.scatter(dy, dx)
 
-            plt.title(f"Beam center: {dx:.2f} {dy:.2f}")
+            plt.title(f'Beam center: {dx:.2f} {dy:.2f}')
 
             minr, minc, maxr, maxc = prop.bbox
 
@@ -256,9 +256,9 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
     """
     operation = operation.lower()
     if operation not in ['sum', 'mean']:
-        raise ValueError("Operation not supported.")
+        raise ValueError('Operation not supported.')
     if ndarray.ndim != len(new_shape):
-        raise ValueError(f"Shape mismatch: {ndarray.shape} -> {new_shape}")
+        raise ValueError(f'Shape mismatch: {ndarray.shape} -> {new_shape}')
     compression_pairs = [(d, c // d) for d, c in zip(new_shape,
                                                      ndarray.shape)]
     flattened = [l for p in compression_pairs for l in p]
@@ -274,12 +274,12 @@ def get_files(file_pat: str) -> list:
     from instamatic.formats import read_ycsv
     if os.path.exists(file_pat):
         root, ext = os.path.splitext(file_pat)
-        if ext.lower() == ".ycsv":
+        if ext.lower() == '.ycsv':
             df, d = read_ycsv(file_pat)
             fns = df.index.tolist()
         else:
-            f = open(file_pat, "r")
-            fns = [line.split("#")[0].strip() for line in f if not line.startswith("#")]
+            f = open(file_pat, 'r')
+            fns = [line.split('#')[0].strip() for line in f if not line.startswith('#')]
     else:
         fns = glob.glob(file_pat)
 
@@ -291,7 +291,7 @@ def get_files(file_pat: str) -> list:
 
 def printer(data) -> None:
     """Print things to stdout on one line dynamically."""
-    sys.stdout.write("\r\x1b[K" + data.__str__())
+    sys.stdout.write('\r\x1b[K' + data.__str__())
     sys.stdout.flush()
 
 
@@ -343,18 +343,18 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
 
     if savefig:
         import matplotlib
-        matplotlib.use("pdf")  # use non-interactive backend (agg/ps/pdf/svg/cairo/gdk)
+        matplotlib.use('pdf')  # use non-interactive backend (agg/ps/pdf/svg/cairo/gdk)
         import matplotlib.pyplot as plt
-        plt.plot(x, y, color="red")
-        plt.scatter(x, timestamps, color="blue", marker="+")
-        plt.title(f"f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms")
-        plt.xlabel("Frame number")
-        plt.ylabel("Timestamp (s)")
-        fn = Path(drc) / "acquisition_time.png"
+        plt.plot(x, y, color='red')
+        plt.scatter(x, timestamps, color='blue', marker='+')
+        plt.title(f'f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms')
+        plt.xlabel('Frame number')
+        plt.ylabel('Timestamp (s)')
+        fn = Path(drc) / 'acquisition_time.png'
         plt.savefig(fn, dpi=150)
         plt.clf()
 
-    return SimpleNamespace(acquisition_time=acq_time / 1000, exposure_time=exp_time / 1000, overhead=overhead / 1000, units="s")
+    return SimpleNamespace(acquisition_time=acq_time / 1000, exposure_time=exp_time / 1000, overhead=overhead / 1000, units='s')
 
 
 def relativistic_wavelength(voltage: float = 200_000) -> float:

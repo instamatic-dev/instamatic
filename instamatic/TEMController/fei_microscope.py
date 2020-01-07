@@ -120,7 +120,7 @@ CameraLengthMapping = {
 class FEIMicroscope:
     """docstring for FEI microscope."""
 
-    def __init__(self, name="fei"):
+    def __init__(self, name='fei'):
         super().__init__()
 
         try:
@@ -128,13 +128,13 @@ class FEIMicroscope:
         except OSError:
             comtypes.CoInitialize()
 
-        print("FEI Themis Z initializing...")
+        print('FEI Themis Z initializing...')
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
         # tecnai does similar things as tem; the difference is not clear for now
-        self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
+        self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
-        self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
+        self.tom = comtypes.client.CreateObject('TEM.Instrument.1', comtypes.CLSCTX_ALL)
 
         # TEM Status constants
         self.tem_constant = comtypes.client.Constants(self.tem)
@@ -149,11 +149,11 @@ class FEIMicroscope:
             time.sleep(1)
             t += 1
             if t > 3:
-                print(f"Waiting for microscope, t = {t}s")
+                print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError("Cannot establish microscope connection (timeout).")
+                raise RuntimeError('Cannot establish microscope connection (timeout).')
 
-        logger.info("Microscope connection established")
+        logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
 
         self.name = name
@@ -162,17 +162,17 @@ class FEIMicroscope:
         self.FunctionMode_value = 0
 
         for mode in self.FUNCTION_MODES.values():
-            attrname = f"range_{mode}"
+            attrname = f'range_{mode}'
             try:
                 rng = getattr(config.microscope, attrname)
             except AttributeError:
-                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
             else:
                 setattr(self, attrname, rng)
 
         self.goniostopped = self.stage.Status
 
-        input("Please select the type of sample stage before moving on.\nPress <ENTER> to continue...")
+        input('Please select the type of sample stage before moving on.\nPress <ENTER> to continue...')
 
     def getHTValue(self):
         return self.tem.GUN.HTValue
@@ -212,7 +212,7 @@ class FEIMicroscope:
     def setStageSpeed(self, value):
         """Value be 0 - 1"""
         if value > 1 or value < 0:
-            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {value}")
+            raise ValueError(f'setStageSpeed value must be between 0 and 1. Input: {value}')
 
         self.tom.Stage.Speed = value
 
@@ -229,7 +229,7 @@ class FEIMicroscope:
         axis = 0
 
         if speed > 1 or speed < 0:
-            raise ValueError(f"setStageSpeed value must be between 0 and 1. Input: {speed}")
+            raise ValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 
         self.tom.Stage.Speed = speed
         goniospeed = self.tom.Stage.Speed
@@ -273,7 +273,7 @@ class FEIMicroscope:
         """x y can only be float numbers between -1 and 1."""
         gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f"GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            raise ValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             gs.X = x
@@ -290,7 +290,7 @@ class FEIMicroscope:
     def setGunTilt(self, x, y):
         gt = self.tecnai.Gun.Tilt
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f"GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            raise ValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             gt.X = x
@@ -301,7 +301,7 @@ class FEIMicroscope:
 
     def getBeamShift(self):
         """User Shift."""
-        "1.19 ms in communication. Super fast!"
+        '1.19 ms in communication. Super fast!'
         x = self.tom.Illumination.BeamShift.X
         y = self.tom.Illumination.BeamShift.Y
         return x, y
@@ -310,7 +310,7 @@ class FEIMicroscope:
         """User Shift."""
         bs = self.tom.Illumination.BeamShift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
+            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
             return
 
         if x is not None:
@@ -329,7 +329,7 @@ class FEIMicroscope:
         """Align Shift."""
         bs = self.tom.Illumination.BeamAlignShift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f"BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            raise ValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             bs.X = x
@@ -349,11 +349,11 @@ class FEIMicroscope:
 
         if x is not None:
             if abs(x) > 1:
-                raise ValueError(f"BeamTilt x must be a floating number between -1 an 1. Input: x={x}")
+                raise ValueError(f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}')
             bt.X = x
         if y is not None:
             if abs(y) > 1:
-                raise ValueError(f"BeamTilt y must be a floating number between -1 an 1. Input: y={y}")
+                raise ValueError(f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}')
             bt.Y = y
         self.tom.Illumination.BeamAlignmentTilt = bt
 
@@ -364,7 +364,7 @@ class FEIMicroscope:
     def setImageShift1(self, x, y):
         is1 = self.tom.Projection.ImageShift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f"ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}")
+            raise ValueError(f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             is1.X = x
@@ -386,7 +386,7 @@ class FEIMicroscope:
     def setImageBeamShift(self, x, y):
         is1 = self.tom.Projection.ImageBeamShift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
+            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
             return
 
         if x is not None:
@@ -417,7 +417,7 @@ class FEIMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f"Unrecognized function mode: {value}")
+                raise ValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getHolderType(self):
@@ -467,7 +467,7 @@ class FEIMicroscope:
     def setDiffShift(self, x, y):
         ds1 = self.tem.Projection.DiffractionShift
         if abs(x) > 1 or abs(y) > 1:
-            print("Invalid gunshift setting: can only be float numbers between -1 and 1.")
+            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
             return
 
         if x is not None:
@@ -479,8 +479,8 @@ class FEIMicroscope:
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
-        logger.info("Connection to microscope released")
-        print("Connection to microscope released")
+        logger.info('Connection to microscope released')
+        print('Connection to microscope released')
 
     def isBeamBlanked(self):
         """to be tested."""

@@ -167,9 +167,9 @@ class GatanSocket:
 
         self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
         if self.debug:
-            print("host", repr(self.host))
-            print("port", self.port)
-            print("debug mode", os.environ['SERIALEMCCD_DEBUG'])
+            print('host', repr(self.host))
+            print('port', self.port)
+            print('debug mode', os.environ['SERIALEMCCD_DEBUG'])
 
         self.save_frames = False
         self.num_grab_sum = 0
@@ -358,12 +358,12 @@ class GatanSocket:
             flag = 128 * int(doEarlyReturn) + 8 * int(lzwtiff)
             numGrabSum = self.getNumGrabSum()
             # set values to pass
-            longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag, ]
-            dbls = [pixelSize, numGrabSum, 0., 0., 0., ]
+            longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag]
+            dbls = [pixelSize, numGrabSum, 0., 0., 0.]
         else:
-            longs = [enum_gs['GS_SetupFileSaving'], rotationFlip, ]
-            dbls = [pixelSize, ]
-        bools = [filePerImage, ]
+            longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
+            dbls = [pixelSize]
+        bools = [filePerImage]
         names_str = dirname + '\0' + rootname + '\0'
         extra = len(names_str) % 4
         if extra:
@@ -556,10 +556,10 @@ class GatanSocket:
         if not self.hasScriptFunction(function_name):
             # unsuccessful
             return False
-        fullcommand = (f"Object manager = CM_GetCameraManager();\n"
-                       f"Object cameraList = CM_GetCameras(manager);\n"
-                       f"Object camera = ObjectAt(cameraList,{camera_id});\n"
-                       f"{function_name}(camera);\n")
+        fullcommand = (f'Object manager = CM_GetCameraManager();\n'
+                       f'Object cameraList = CM_GetCameras(manager);\n'
+                       f'Object camera = ObjectAt(cameraList,{camera_id});\n'
+                       f'{function_name}(camera);\n')
         result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
         return result
 
@@ -605,9 +605,9 @@ class GatanSocket:
                 and make it non-blocking.
         """
 
-        bkg = r"// $BACKGROUND$\n\n"
+        bkg = r'// $BACKGROUND$\n\n'
 
-        with open(fn, "r") as f:
+        with open(fn, 'r') as f:
             cmd_str = ''.join(f.readlines())
 
         if background:

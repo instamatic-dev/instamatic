@@ -103,7 +103,7 @@ def radial_average(z, center, as_radial_map=False):
         return averaged
 
 
-def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc="."):
+def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc='.'):
     """Find rectangle fitting the beamstop.
 
     1. Radially scale the image (divide each point in the image by the radial average)
@@ -163,7 +163,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     if savefig:
         import matplotlib
-        matplotlib.use("pdf")
+        matplotlib.use('pdf')
         import matplotlib.pyplot as plt
 
         fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, figsize=(16, 8))
@@ -171,30 +171,30 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
             ax.axis('off')
 
         ax1.imshow(radial_scaled, vmax=np.percentile(radial_scaled, 99))
-        ax1.set_title("Radially scaled image")
+        ax1.set_title('Radially scaled image')
 
         cx, cy = center
-        ax1.scatter(cy, cx, marker="+", color="red")
+        ax1.scatter(cy, cx, marker='+', color='red')
 
         ax2.imshow(seg)
-        ax2.set_title("Segmented image")
+        ax2.set_title('Segmented image')
 
         ax3.imshow(img, vmax=np.percentile(img, 99))
-        ax3.set_title("Mean image showing beamstop")
-        ax3.scatter(cy, cx, marker="+")
+        ax3.set_title('Mean image showing beamstop')
+        ax3.scatter(cy, cx, marker='+')
 
         bx, by = np.vstack((rect, rect[0])).T
-        ax3.plot(by, bx, "r-o")
+        ax3.plot(by, bx, 'r-o')
 
-        fn = Path(drc) / "beamstop.png"
+        fn = Path(drc) / 'beamstop.png'
         plt.savefig(fn, dpi=150, bbox_inches='tight', pad_inches=0.1)
 
     return rect
 
 
 if __name__ == '__main__':
-    drc = "."
-    fns = list(Path(drc).glob("raw/*.tif"))
+    drc = '.'
+    fns = list(Path(drc).glob('raw/*.tif'))
 
     print(len(fns))
 
@@ -208,6 +208,6 @@ if __name__ == '__main__':
 
     from instamatic.tools import to_xds_untrusted_area
 
-    xds_quad = to_xds_untrusted_area("quadrilateral", beamstop_rect)
+    xds_quad = to_xds_untrusted_area('quadrilateral', beamstop_rect)
 
     print(xds_quad)

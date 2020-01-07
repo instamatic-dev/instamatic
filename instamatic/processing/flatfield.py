@@ -51,7 +51,7 @@ def get_center_pixel_correction(img):
     avg2 = edge / 28.0
     k = avg2 / avg1
 
-    print("timepix central pixel correction factor:", k)
+    print('timepix central pixel correction factor:', k)
     return k
 
 
@@ -62,7 +62,7 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     """
 
     if flatfield.shape != img.shape:
-        msg = f"Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes."
+        msg = f'Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes.'
         warnings.warn(msg)
         return img
 
@@ -76,7 +76,7 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     return ret
 
 
-def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc=".", **kwargs):
+def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc='.', **kwargs):
     """Routine to collect flatfield correction files.
 
     Spread the beam and focus on an a vacuum area
@@ -89,40 +89,40 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     `collect_darkfield`: additionally collect darkfield correction (by blanking the beam)
     `drc`: output directory
     """
-    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
-    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
-    confirm = kwargs.get("confirm", True)
-    date = time.strftime("%Y-%m-%d")
+    exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
+    binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
+    confirm = kwargs.get('confirm', True)
+    date = time.strftime('%Y-%m-%d')
 
     drc = Path(drc).absolute()
 
     # ctrl.brightness.max()
     if confirm:
-        input(f"\n >> Press <ENTER> to continue to collect {frames} flat field images")
+        input(f'\n >> Press <ENTER> to continue to collect {frames} flat field images')
 
     img, h = ctrl.getImage(exposure=exposure, binsize=binsize, header_keys=None)
 
     exposure = exposure * (config.camera.dynamic_range / 10.0) / img.mean()
-    print("exposure:", exposure)
+    print('exposure:', exposure)
 
     ctrl.cam.block()
 
     buffer = []
 
-    print("\nCollecting flatfield images")
+    print('\nCollecting flatfield images')
     for n in tqdm(range(frames)):
-        outfile = drc / f"flatfield_{n:04d}.tiff" if save_images else None
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Flat field #{n:04d}", header_keys=None)
+        outfile = drc / f'flatfield_{n:04d}.tiff' if save_images else None
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f'Flat field #{n:04d}', header_keys=None)
         buffer.append(img)
 
     f = np.mean(buffer, axis=0)
     deadpixels = get_deadpixels(f)
     get_center_pixel_correction(f)
     f = remove_deadpixels(f, deadpixels=deadpixels)
-    ff = drc / f"flatfield_{ctrl.cam.name}_{date}.tiff"
-    write_tiff(ff, f, header={"deadpixels": deadpixels})
+    ff = drc / f'flatfield_{ctrl.cam.name}_{date}.tiff'
+    write_tiff(ff, f, header={'deadpixels': deadpixels})
 
-    fp = drc / f"deadpixels_tpx_{date}.npy"
+    fp = drc / f'deadpixels_tpx_{date}.npy'
     np.save(fp, deadpixels)
 
     if collect_darkfield:
@@ -130,10 +130,10 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
         buffer = []
 
-        print("\nCollecting darkfield images")
+        print('\nCollecting darkfield images')
         for n in tqdm(range(frames)):
-            outfile = drc / f"darkfield_{n:04d}.tiff" if save_images else None
-            img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f"Dark field #{n:04d}", header_keys=None)
+            outfile = drc / f'darkfield_{n:04d}.tiff' if save_images else None
+            img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=f'Dark field #{n:04d}', header_keys=None)
             buffer.append(img)
 
         d = np.mean(buffer, axis=0)
@@ -141,12 +141,12 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
         ctrl.beamblank = False
 
-        fd = drc / f"darkfield_{ctrl.cam.name}_{date}.tiff"
-        write_tiff(fd, d, header={"deadpixels": deadpixels})
+        fd = drc / f'darkfield_{ctrl.cam.name}_{date}.tiff'
+        write_tiff(fd, d, header={'deadpixels': deadpixels})
 
     ctrl.cam.unblock()
 
-    print(f"\nFlatfield collection finished ({drc}).")
+    print(f'\nFlatfield collection finished ({drc}).')
 
 
 def main_entry():
@@ -157,30 +157,30 @@ def main_entry():
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("args",
-                        type=str, nargs="*", metavar="image.tiff",
-                        help="Image file paths/pattern")
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='image.tiff',
+                        help='Image file paths/pattern')
 
-    parser.add_argument("-f", "--flatfield",
-                        action="store", type=str, metavar="flatfield.tiff", dest="flatfield",
+    parser.add_argument('-f', '--flatfield',
+                        action='store', type=str, metavar='flatfield.tiff', dest='flatfield',
                         help="""Path to flatfield file""")
 
-    parser.add_argument("-d", "--darkfield",
-                        action="store", type=str, metavar="darkfield.tiff", dest="darkfield",
+    parser.add_argument('-d', '--darkfield',
+                        action='store', type=str, metavar='darkfield.tiff', dest='darkfield',
                         help="""Path to darkfield file""")
 
-    parser.add_argument("-o", "--output",
-                        action="store", type=str, metavar="DRC", dest="drc",
+    parser.add_argument('-o', '--output',
+                        action='store', type=str, metavar='DRC', dest='drc',
                         help="""Output directory for image files""")
 
-    parser.add_argument("-c", "--collect",
-                        action="store_true", dest="collect",
+    parser.add_argument('-c', '--collect',
+                        action='store_true', dest='collect',
                         help="""Collect flatfield/darkfield images on microscope""")
 
     parser.set_defaults(
         flatfield=None,
         darkfield=None,
-        drc="corrected",
+        drc='corrected',
         collect=False,
     )
 
@@ -195,9 +195,9 @@ def main_entry():
 
     if options.flatfield:
         flatfield, h = read_tiff(options.flatfield)
-        deadpixels = h["deadpixels"]
+        deadpixels = h['deadpixels']
     else:
-        print("No flatfield file specified")
+        print('No flatfield file specified')
         exit()
 
     if options.darkfield:
@@ -222,7 +222,7 @@ def main_entry():
         name = Path(f).name
         fout = drc / name
 
-        print(name, "->", fout)
+        print(name, '->', fout)
         write_tiff(fout, img, header=h)
 
 

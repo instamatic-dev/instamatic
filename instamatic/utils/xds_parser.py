@@ -33,7 +33,7 @@ class xds_parser:
 
         fn = self.filename
 
-        f = open(fn, "r")
+        f = open(fn, 'r')
 
         in_block = False
         block = []
@@ -41,39 +41,39 @@ class xds_parser:
         d = {}
 
         for line in f:
-            if line.startswith(" SUBSET OF INTENSITY DATA WITH SIGNAL/NOISE >= -3.0 AS FUNCTION OF RESOLUTION"):
+            if line.startswith(' SUBSET OF INTENSITY DATA WITH SIGNAL/NOISE >= -3.0 AS FUNCTION OF RESOLUTION'):
                 in_block = True
                 block = []
-            elif line.startswith("    total"):
-                block.append(line.strip("\n"))
+            elif line.startswith('    total'):
+                block.append(line.strip('\n'))
                 in_block = False
-            elif line.startswith(" UNIT CELL PARAMETERS"):
-                cell = list(map(float, line.strip("\n").split()[3:9]))
-            elif line.endswith("as used by INTEGRATE\n"):
-                raw_cell = list(map(float, line.strip("\n").split()[1:7]))
-            elif line.startswith(" SPACE GROUP NUMBER"):
-                spgr = int(line.strip("\n").split()[-1])
-            elif line.startswith("     a        b          ISa"):
+            elif line.startswith(' UNIT CELL PARAMETERS'):
+                cell = list(map(float, line.strip('\n').split()[3:9]))
+            elif line.endswith('as used by INTEGRATE\n'):
+                raw_cell = list(map(float, line.strip('\n').split()[1:7]))
+            elif line.startswith(' SPACE GROUP NUMBER'):
+                spgr = int(line.strip('\n').split()[-1])
+            elif line.startswith('     a        b          ISa'):
                 line = next(f)
                 inp = line.split()
                 ISa = float(inp[2])
-            elif line.startswith("   WILSON LINE (using all data)"):
+            elif line.startswith('   WILSON LINE (using all data)'):
                 inp = line.split()
                 Boverall = float(inp[-3])
-            elif line.startswith("   --------------------------------------------------------------------------"):
+            elif line.startswith('   --------------------------------------------------------------------------'):
                 line = next(f)
                 inp = line.split()
                 resolution_range = float(inp[0]), float(inp[1])
 
             if in_block:
                 if line:
-                    block.append(line.strip("\n"))
+                    block.append(line.strip('\n'))
 
         vol = volume(cell)
         raw_vol = volume(raw_cell)
 
-        d["ISa"] = ISa
-        d["Boverall"] = Boverall
+        d['ISa'] = ISa
+        d['Boverall'] = Boverall
 
         dmin = 999
 
@@ -86,100 +86,100 @@ class xds_parser:
                 res = float(inp[0])
             except ValueError:
                 res = inp[0]
-                if res != "total":
+                if res != 'total':
                     continue
 
-            res = float(inp[0]) if inp[0] != "total" else inp[0]
-            ntot, nuniq, completeness = int(inp[1]), int(inp[2]), float(inp[4].strip("%"))
-            ios, rmeas, cchalf = float(inp[8]), float(inp[9].strip("%")), float(inp[10].strip("*"))
+            res = float(inp[0]) if inp[0] != 'total' else inp[0]
+            ntot, nuniq, completeness = int(inp[1]), int(inp[2]), float(inp[4].strip('%'))
+            ios, rmeas, cchalf = float(inp[8]), float(inp[9].strip('%')), float(inp[10].strip('*'))
 
-            if ios < ios_threshold and res != "total":
+            if ios < ios_threshold and res != 'total':
                 continue
 
-            if (res != "total") and (res < dmin):
+            if (res != 'total') and (res < dmin):
                 shell = (dmin, res)
                 dmin = res
 
-            d[res] = {"ntot": ntot, "nuniq": nuniq, "completeness": completeness, "ios": ios, "rmeas": rmeas, "cchalf": cchalf}
+            d[res] = {'ntot': ntot, 'nuniq': nuniq, 'completeness': completeness, 'ios': ios, 'rmeas': rmeas, 'cchalf': cchalf}
 
         if dmin == 999:
             return
 
-        d["outer"] = dmin
-        d["outer_shell"] = shell
-        d["res_range"] = resolution_range
-        d["volume"] = vol
-        d["cell"] = cell
-        d["raw_cell"] = raw_cell
-        d["raw_volume"] = raw_vol
-        d["spgr"] = spgr
-        d["fn"] = fn
+        d['outer'] = dmin
+        d['outer_shell'] = shell
+        d['res_range'] = resolution_range
+        d['volume'] = vol
+        d['cell'] = cell
+        d['raw_cell'] = raw_cell
+        d['raw_volume'] = raw_vol
+        d['spgr'] = spgr
+        d['fn'] = fn
 
         return d
 
     def info_header(self):
-        s = "  #   dmax  dmin    ntot   nuniq   compl   i/sig   rmeas CC(1/2)     ISa   B(ov)\n"
-        s += "--------------------------------------------------------------------------------\n"
+        s = '  #   dmax  dmin    ntot   nuniq   compl   i/sig   rmeas CC(1/2)     ISa   B(ov)\n'
+        s += '--------------------------------------------------------------------------------\n'
         return s
 
     def print_filename(self):
-        print("#", self.filename)
+        print('#', self.filename)
 
     def cell_info(self, sequence=0):
         d = self.d
         i = sequence
         fn = self.filename
-        s = f"{i: 3d}: {fn.parents[0]} # {time.ctime(os.path.getmtime(fn))}\n"
-        s += "Spgr {: 4d} - Cell {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} - Vol {:10.2f}\n".format(d["spgr"], *d["cell"], d["volume"])
+        s = f'{i: 3d}: {fn.parents[0]} # {time.ctime(os.path.getmtime(fn))}\n'
+        s += 'Spgr {: 4d} - Cell {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} - Vol {:10.2f}\n'.format(d['spgr'], *d['cell'], d['volume'])
         return s
 
     def integration_info(self, sequence=0, outer_shell=True, filename=False):
         d = self.d
         k = sequence
 
-        s = ""
+        s = ''
 
         if k == 0:
             s += self.info_header()
 
-        dmax, dmin = d["res_range"]
+        dmax, dmin = d['res_range']
 
-        s += "{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}".format(
-            k=k, dmax=dmax, dmin=dmin, **d["total"], **d)
+        s += '{k: 3d} {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}{ISa: 8.2f}{Boverall: 8.2f}'.format(
+            k=k, dmax=dmax, dmin=dmin, **d['total'], **d)
 
         if filename:
             s += f"  # {d['fn']}\n"
         else:
-            s += "\n"
+            s += '\n'
 
         if outer_shell:
-            outer = d["outer"]
-            dmax_sh, dmin_sh = d["outer_shell"]
-            s += "  - {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}\n".format(
+            outer = d['outer']
+            dmax_sh, dmin_sh = d['outer_shell']
+            s += '  - {dmax: 6.2f}{dmin: 6.2f}{ntot: 8d}{nuniq: 8d}{completeness: 8.1f}{ios: 8.2f}{rmeas: 8.1f}{cchalf: 8.1f}\n'.format(
                 k=k, dmax=dmax_sh, dmin=dmin_sh, **d[outer])
 
         return s
 
     @property
     def volume(self):
-        return self.d["volume"]
+        return self.d['volume']
 
     @property
     def unit_cell(self):
-        return self.d["cell"]
+        return self.d['cell']
 
     @property
     def space_group(self):
-        return self.d["spgr"]
+        return self.d['spgr']
 
     def cell_as_dict(self):
-        d = dict(zip("a b c al be ga".split(), self.unit_cell))
-        d["volume"] = self.volume
-        d["spgr"] = self.space_group
+        d = dict(zip('a b c al be ga'.split(), self.unit_cell))
+        d['volume'] = self.volume
+        d['spgr'] = self.space_group
         return d
 
 
-def cells_to_excel(ps, out="cells.xlsx"):
+def cells_to_excel(ps, out='cells.xlsx'):
     """Takes a list of `xds_parser` instances and writes the cell parameters to
     an excel file `cells.xlsx`."""
     d = {}
@@ -188,7 +188,7 @@ def cells_to_excel(ps, out="cells.xlsx"):
 
     import pandas as pd
     df = pd.DataFrame(d).T
-    df = df["spgr a b c al be ga volume".split()]
+    df = df['spgr a b c al be ga volume'.split()]
     if not os.path.exists(out):
         df.to_excel(out)
 
@@ -197,14 +197,14 @@ def cells_to_cellparm(ps):
     """Takes a list of `xds_parser` instances and writes the cell parameters to
     an instruction file `CELLPARM.INP` for the program `cellparm`."""
     # write cellparm input file
-    with open("CELLPARM.INP", "w") as f:
+    with open('CELLPARM.INP', 'w') as f:
         for i, p in enumerate(ps):
             fn = p.filename
             cell = p.unit_cell
             # cell = p.d["raw_cell"]
-            ntot = p.d["total"]["ntot"]
-            print(f"! {i: 3d} from {fn}", file=f)
-            print("UNIT_CELL_CONSTANTS= {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} WEIGHT= {ntot}".format(*cell, ntot=ntot), file=f)
+            ntot = p.d['total']['ntot']
+            print(f'! {i: 3d} from {fn}', file=f)
+            print('UNIT_CELL_CONSTANTS= {:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f}{:10.2f} WEIGHT= {ntot}'.format(*cell, ntot=ntot), file=f)
 
 
 def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
@@ -215,11 +215,11 @@ def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
     `filelist.txt`.
     """
     # gather xds_ascii and prepare filelist
-    with open("filelist.txt", "w") as f:
+    with open('filelist.txt', 'w') as f:
         for i, p in enumerate(ps):
 
-            completeness = p.d["total"]["completeness"]
-            cchalf = p.d["total"]["cchalf"]
+            completeness = p.d['total']['completeness']
+            cchalf = p.d['total']['cchalf']
 
             if cchalf < min_cchalf:
                 continue
@@ -228,12 +228,12 @@ def gather_xds_ascii(ps, min_completeness=10.0, min_cchalf=90.0):
                 continue
 
             fn = p.filename
-            src = fn.with_name("XDS_ASCII.HKL")
-            dst = f"{i:02d}_XDS_ASCII.HKL"
+            src = fn.with_name('XDS_ASCII.HKL')
+            dst = f'{i:02d}_XDS_ASCII.HKL'
             shutil.copy(src, dst)
 
-            dmax, dmin = p.d["res_range"]
-            print(f" {i: 3d} {dst} {dmax:8.2f} {dmin:8.2f}  # {fn}", file=f)
+            dmax, dmin = p.d['res_range']
+            print(f' {i: 3d} {dst} {dmax:8.2f} {dmin:8.2f}  # {fn}', file=f)
 
 
 def parse_fns(fns):
@@ -241,7 +241,7 @@ def parse_fns(fns):
     new_fns = []
     for fn in fns:
         if fn.is_dir():
-            new_fns.extend(list(fn.glob("**/CORRECT.LP")))
+            new_fns.extend(list(fn.glob('**/CORRECT.LP')))
         else:
             new_fns.append(fn)
     # new_fns = [fn for fn in new_fns if "reprocessed" in str(fn)]
@@ -253,12 +253,12 @@ def main():
     fns = sys.argv[1:]
 
     if not fns:
-        fns = [Path(".")]
+        fns = [Path('.')]
     else:
         fns = [Path(fn) for fn in fns]
 
     fns = parse_fns(fns)
-    print(f"Found {len(fns)} files matching CORRECT.LP\n")
+    print(f'Found {len(fns)} files matching CORRECT.LP\n')
 
     xdsall = []
     for fn in fns:

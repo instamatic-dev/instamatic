@@ -26,7 +26,7 @@ class CalibStage:
         self.center_pixel = np.array(camera_dimensions) / 2.0
 
     def __repr__(self):
-        return f"CalibStage(rotation=\n{self.rotation},\n translation=\n{self.translation},\n reference_position=\n{self.reference_position})"
+        return f'CalibStage(rotation=\n{self.rotation},\n translation=\n{self.translation},\n reference_position=\n{self.reference_position})'
 
     def _reference_setting_to_pixelcoord(self, px_ref, image_pos, r, t, reference_pos):
         """Function to transform stage position to pixel coordinates.
@@ -162,7 +162,7 @@ class CalibStage:
 
         if not camera_dimensions:
             if header:
-                camera_dimensions = header["ImageCameraDimensions"]
+                camera_dimensions = header['ImageCameraDimensions']
             else:
                 raise NameError("name 'camera_dimensions' is not defined.")
 
@@ -177,13 +177,13 @@ class CalibStage:
     @classmethod
     def from_file(cls, fn=CALIB_STAGE_LOWMAG):
         try:
-            return pickle.load(open(fn, "rb"))
+            return pickle.load(open(fn, 'rb'))
         except OSError as e:
-            prog = "instamatic.calibrate_stage_lowmag/mag1"
-            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            prog = 'instamatic.calibrate_stage_lowmag/mag1'
+            raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     def to_file(self, fn=CALIB_STAGE_LOWMAG):
-        pickle.dump(self, open(fn, "wb"))
+        pickle.dump(self, open(fn, 'wb'))
 
     def plot(self):
         if not self.has_data:
@@ -196,8 +196,8 @@ class CalibStage:
 
         stagepos_ = np.dot(stagepos - self.translation, r_i)
 
-        plt.scatter(*shifts.T, label="Observed pixel shifts")
-        plt.scatter(*stagepos_.T, label="Positions in pixel coords")
+        plt.scatter(*shifts.T, label='Observed pixel shifts')
+        plt.scatter(*stagepos_.T, label='Positions in pixel coords')
 
         for i, (x, y) in enumerate(shifts):
             plt.text(x + 5, y + 5, str(i), size=14)
@@ -223,16 +223,16 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         instance of Calibration class with conversion methods
     """
 
-    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
-    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
+    exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
+    binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
-    outfile = "calib_start" if save_images else None
+    outfile = 'calib_start' if save_images else None
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment="Center image (start)")
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
 
-    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent['StagePosition']
     xy_cent = np.array([x_cent, y_cent])
 
     img_cent, scale = autoscale(img_cent)
@@ -247,27 +247,27 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     i = 0
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         print()
-        print(f"Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}")
+        print(f'Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}')
 
         ctrl.stage.set(x=x_cent + dx, y=y_cent + dy)
         print(ctrl.stage)
 
-        outfile = f"calib_{i:04d}" if save_images else None
+        outfile = f'calib_{i:04d}' if save_images else None
 
         comment = comment
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys="StagePosition")
+        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='StagePosition')
 
         img = imgscale(img, scale)
 
         shift = register_translation(img_cent, img, upsample_factor=10)
 
-        xobs, yobs, _, _, _ = h["StagePosition"]
+        xobs, yobs, _, _, _ = h['StagePosition']
         stagepos.append((xobs, yobs))
         shifts.append(shift)
 
         i += 1
 
-    print(" >> Reset to center")
+    print(' >> Reset to center')
     ctrl.stage.set(x=x_cent, y=y_cent)
     ctrl.stage.reset_xy()
 
@@ -277,17 +277,17 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     m = gridsize**2 // 2
     if gridsize % 2 and stagepos[m].max() > 50:
-        print(f" >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.")
-        print("    Difference:", stagepos[m])
+        print(f' >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.')
+        print('    Difference:', stagepos[m])
         print()
 
     if save_images:
-        ctrl.getImage(exposure=exposure, binsize=binsize, out="calib_end", comment="Center image (end)")
+        ctrl.getImage(exposure=exposure, binsize=binsize, out='calib_end', comment='Center image (end)')
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
 
     # Calling c.plot with videostream crashes program
-    if not hasattr(ctrl.cam, "VideoLoop"):
+    if not hasattr(ctrl.cam, 'VideoLoop'):
         c.plot(key)
 
     return c
@@ -308,13 +308,13 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    x_cent, y_cent, _, _, _ = h_cent["StagePosition"]
+    x_cent, y_cent, _, _, _ = h_cent['StagePosition']
     xy_cent = np.array([x_cent, y_cent])
-    print("Center:", center_fn)
-    print("Stageposition: x={:.0f} | y={:.0f}".format(*xy_cent))
+    print('Center:', center_fn)
+    print('Stageposition: x={:.0f} | y={:.0f}'.format(*xy_cent))
     print()
 
-    binsize = h_cent["ImageBinSize"]
+    binsize = h_cent['ImageBinSize']
 
     shifts = []
     stagepos = []
@@ -330,9 +330,9 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
         img = imgscale(img, scale)
 
-        xobs, yobs, _, _, _ = h["StagePosition"]
-        print("Image:", fn)
-        print(f"Stageposition: x={xobs:.0f} | y={yobs:.0f}")
+        xobs, yobs, _, _, _ = h['StagePosition']
+        print('Image:', fn)
+        print(f'Stageposition: x={xobs:.0f} | y={yobs:.0f}')
         print()
 
         shift = register_translation(img_cent, img, upsample_factor=10)
@@ -352,7 +352,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
 
 def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not input("\n >> Go to 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): """) == "go":
+        if confirm and not input("\n >> Go to 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): "'') == 'go':
             return
         else:
             calib = calibrate_stage_lowmag_live(ctrl, save_images=True)
@@ -366,7 +366,7 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
 
 def main_entry():
 
-    if "help" in sys.argv:
+    if 'help' in sys.argv:
         print("""
 Program to calibrate lowmag (100x) of microscope
 

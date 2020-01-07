@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 refine_params = {
-    "DiffShift": {"rotation": True, "translation": False, "shear": False},
-    "BeamShift": {"rotation": True, "translation": False, "shear": False}
+    'DiffShift': {'rotation': True, 'translation': False, 'shear': False},
+    'BeamShift': {'rotation': True, 'translation': False, 'shear': False},
 }
 
 
@@ -45,7 +45,7 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
         newval = current + best_delta
         ctrl.difffocus.set(newval)
-        logger.info("Best diff_focus (step=%d): %d, score: %d", step, best_score, newval)
+        logger.info('Best diff_focus (step=%d): %d, score: %d', step, best_score, newval)
 
     return newval
 
@@ -58,13 +58,13 @@ class CalibDirectBeam:
         self._dct = dct
 
     def __repr__(self):
-        ret = "CalibDirectBeam("
+        ret = 'CalibDirectBeam('
         for key in self._dct.keys():
-            r = self._dct[key]["r"]
-            t = self._dct[key]["t"]
+            r = self._dct[key]['r']
+            t = self._dct[key]['t']
 
-            ret += f"\n {key}(rotation=\n{r},\n  translation={t})"
-        ret += ")"
+            ret += f'\n {key}(rotation=\n{r},\n  translation={t})'
+        ret += ')'
         return ret
 
     @classmethod
@@ -72,8 +72,8 @@ class CalibDirectBeam:
         return cls({k: v for c in lst for k, v in c._dct.items()})
 
     def any2pixelshift(self, shift, key):
-        r = self._dct[key]["r"]
-        t = self._dct[key]["t"]
+        r = self._dct[key]['r']
+        t = self._dct[key]['t']
 
         shift = np.array(shift)
         r_i = np.linalg.inv(r)
@@ -81,47 +81,47 @@ class CalibDirectBeam:
         return pixelshift
 
     def pixelshift2any(self, pixelshift, key):
-        r = self._dct[key]["r"]
-        t = self._dct[key]["t"]
+        r = self._dct[key]['r']
+        t = self._dct[key]['t']
 
         pixelshift = np.array(pixelshift)
         shift = np.dot(pixelshift, r) + t
         return shift
 
     def beamshift2pixelshift(self, beamshift):
-        return self.any2pixelshift(shift=beamshift, key="BeamShift")
+        return self.any2pixelshift(shift=beamshift, key='BeamShift')
 
     def diffshift2pixelshift(self, diffshift):
-        return self.any2pixelshift(shift=diffshift, key="DiffShift")
+        return self.any2pixelshift(shift=diffshift, key='DiffShift')
 
     def imageshift2pixelshift(self, imageshift):
-        return self.any2pixelshift(shift=imageshift, key="ImageShift")
+        return self.any2pixelshift(shift=imageshift, key='ImageShift')
 
     def imagetilt2pixelshift(self, imagetilt):
-        return self.any2pixelshift(shift=imagetilt, key="ImageTilt")
+        return self.any2pixelshift(shift=imagetilt, key='ImageTilt')
 
     def pixelshift2beamshift(self, pixelshift):
-        return self.pixelshift2any(pixelshift=pixelshift, key="BeamShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key='BeamShift')
 
     def pixelshift2diffshift(self, pixelshift):
-        return self.pixelshift2any(pixelshift=pixelshift, key="DiffShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key='DiffShift')
 
     def pixelshift2imageshift(self, pixelshift):
-        return self.pixelshift2any(pixelshift=pixelshift, key="ImageShift")
+        return self.pixelshift2any(pixelshift=pixelshift, key='ImageShift')
 
     def pixelshift2imagetilt(self, pixelshift):
-        return self.pixelshift2any(pixelshift=pixelshift, key="ImageTilt")
+        return self.pixelshift2any(pixelshift=pixelshift, key='ImageTilt')
 
     @classmethod
     def from_data(cls, shifts, readout, key, header=None, **dct):
         r, t = fit_affine_transformation(shifts, readout, **dct)
 
         d = {
-            "header": header,
-            "data_shifts": shifts,
-            "data_readout": readout,
-            "r": r,
-            "t": t
+            'header': header,
+            'data_shifts': shifts,
+            'data_readout': readout,
+            'r': r,
+            't': t,
         }
 
         return cls({key: d})
@@ -130,22 +130,22 @@ class CalibDirectBeam:
     def from_file(cls, fn=CALIB_DIRECTBEAM):
         import pickle
         try:
-            return pickle.load(open(fn, "rb"))
+            return pickle.load(open(fn, 'rb'))
         except OSError as e:
-            prog = "instamatic.calibrate_directbeam"
-            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            prog = 'instamatic.calibrate_directbeam'
+            raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir="."):
+    def live(cls, ctrl, outdir='.'):
         while True:
             c = calibrate_directbeam(ctrl=ctrl, save_images=True, outdir=outdir)
-            if input(" >> Accept? [y/n] ") == "y":
+            if input(' >> Accept? [y/n] ') == 'y':
                 return c
 
-    def to_file(self, fn=CALIB_DIRECTBEAM, outdir="."):
+    def to_file(self, fn=CALIB_DIRECTBEAM, outdir='.'):
         """Save calibration to file."""
         fout = os.path.join(outdir, fn)
-        pickle.dump(self, open(fout, "wb"))
+        pickle.dump(self, open(fout, 'wb'))
 
     def add(self, key, dct):
         """Add calibrations to self._dct
@@ -154,18 +154,18 @@ class CalibDirectBeam:
         """
         self._dct[key] = dct
 
-    def plot(self, key, to_file=None, outdir=""):
-        data_shifts = self._dct[key]["data_shifts"]   # pixelshifts
-        data_readout = self._dct[key]["data_readout"]  # microscope readout
+    def plot(self, key, to_file=None, outdir=''):
+        data_shifts = self._dct[key]['data_shifts']   # pixelshifts
+        data_readout = self._dct[key]['data_readout']  # microscope readout
 
         if to_file:
-            to_file = f"calib_db_{key}.png"
+            to_file = f'calib_db_{key}.png'
 
         shifts_ = self.any2pixelshift(shift=data_readout, key=key)
 
-        plt.scatter(*data_shifts.T, marker=">", label="Observed pixel shifts")
-        plt.scatter(*shifts_.T, marker="<", label="Calculated shift from readout")
-        plt.title(key + " vs. Direct beam position (Diffraction)")
+        plt.scatter(*data_shifts.T, marker='>', label='Observed pixel shifts')
+        plt.scatter(*shifts_.T, marker='<', label='Calculated shift from readout')
+        plt.title(key + ' vs. Direct beam position (Diffraction)')
         plt.legend()
         if to_file:
             plt.savefig(os.path.join(outdir, to_file))
@@ -174,7 +174,7 @@ class CalibDirectBeam:
             plt.show()
 
 
-def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=None, save_images=False, outdir=".", **kwargs):
+def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs):
     """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
@@ -195,27 +195,27 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         instance of Calibration class with conversion methods
     """
 
-    if not ctrl.mode == "diff":
-        print(" >> Switching to diffraction mode")
+    if not ctrl.mode == 'diff':
+        print(' >> Switching to diffraction mode')
         ctrl.mode_diffraction()
 
-    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
-    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
+    exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
+    binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = config.camera.calib_directbeam.get(key, {}).get("gridsize", 5)    # dat syntax...
+        gridsize = config.camera.calib_directbeam.get(key, {}).get('gridsize', 5)    # dat syntax...
     if not stepsize:
-        stepsize = config.camera.calib_directbeam.get(key, {}).get("stepsize", 750)  # just to fit everything on 1 line =)
+        stepsize = config.camera.calib_directbeam.get(key, {}).get('stepsize', 750)  # just to fit everything on 1 line =)
 
     attr = getattr(ctrl, key.lower())
 
-    outfile = os.path.join(outdir, f"calib_db_{key}_0000") if save_images else None
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment="Beam in center of image", out=outfile)
+    outfile = os.path.join(outdir, f'calib_db_{key}_0000') if save_images else None
+    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment='Beam in center of image', out=outfile)
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent)
 
-    print("{}: x={} | y={}".format(key, *readout_cent))
+    print('{}: x={} | y={}'.format(key, *readout_cent))
 
     shifts = []
     readouts = []
@@ -229,11 +229,11 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
 
         attr.set(x=x_cent + dx, y=y_cent + dy)
 
-        printer(f"Position: {i}/{tot}: {attr}")
+        printer(f'Position: {i}/{tot}: {attr}')
 
-        outfile = os.path.join(outdir, f"calib_db_{key}_{i:04d}") if save_images else None
+        outfile = os.path.join(outdir, f'calib_db_{key}_{i:04d}') if save_images else None
 
-        comment = f"Calib image {i}: dx={dx} - dy={dy}"
+        comment = f'Calib image {i}: dx={dx} - dy={dy}'
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
@@ -243,7 +243,7 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
         readouts.append(readout)
         shifts.append(shift)
 
-    print("")
+    print('')
     # print "\nReset to center"
     attr.set(*readout_cent)
 
@@ -260,18 +260,18 @@ def calibrate_directbeam_live(ctrl, key="DiffShift", gridsize=None, stepsize=Non
     return c
 
 
-def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
+def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
     print()
-    print("Center:", center_fn)
+    print('Center:', center_fn)
 
     img_cent, h_cent = load_img(center_fn)
     readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    binsize = h_cent["ImageBinSize"]
+    binsize = h_cent['ImageBinSize']
 
-    print("{}: x={} | y={}".format(key, *readout_cent))
+    print('{}: x={} | y={}'.format(key, *readout_cent))
 
     shifts = []
     readouts = []
@@ -283,8 +283,8 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
 
         readout = np.array(h[key])
         print()
-        print("Image:", fn)
-        print("{}: dx={} | dy={}".format(key, *readout))
+        print('Image:', fn)
+        print('{}: dx={} | dy={}'.format(key, *readout))
 
         shift = register_translation(img_cent, img, upsample_factor=10)
 
@@ -301,9 +301,9 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key="DiffShift"):
     return c
 
 
-def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir=".", confirm=True, auto_diff_focus=False):
+def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir='.', confirm=True, auto_diff_focus=False):
     import glob
-    keys = ("BeamShift", "DiffShift")
+    keys = ('BeamShift', 'DiffShift')
     if not patterns:
         if confirm and input("""
 Calibrate direct beam position
@@ -316,10 +316,10 @@ Calibrate direct beam position
             return
         else:
             if auto_diff_focus:
-                print("Optimizing diffraction focus")
+                print('Optimizing diffraction focus')
                 current_difffocus = ctrl.difffocus.value
                 difffocus = optimize_diffraction_focus(ctrl)
-                logger.info("Optimized diffraction focus from %s to %s", current_difffocus, difffocus)
+                logger.info('Optimized diffraction focus from %s to %s', current_difffocus, difffocus)
 
             cs = []
             for key in keys:
@@ -329,8 +329,8 @@ Calibrate direct beam position
     else:
         cs = []
         for pattern in patterns:
-            key, pattern = pattern.split(":")
-            assert key in keys, f"Unknown key: {key}"
+            key, pattern = pattern.split(':')
+            assert key in keys, f'Unknown key: {key}'
             fns = glob.glob(pattern)
             center_fn = fns[0]
             other_fn = fns[1:]
@@ -348,7 +348,7 @@ Calibrate direct beam position
 
 
 def main_entry():
-    if "help" in sys.argv:
+    if 'help' in sys.argv:
         print("""
 Program to calibrate PLA to compensate for beamshift movements
 

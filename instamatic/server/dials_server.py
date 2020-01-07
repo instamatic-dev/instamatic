@@ -23,14 +23,14 @@ BUFF = 1024
 
 
 def run_dials_indexing(data):
-    path = data["path"]
-    rotrange = data["rotrange"]
-    nframes = data["nframes"]
-    osc = data["osc"]
+    path = data['path']
+    rotrange = data['rotrange']
+    nframes = data['nframes']
+    osc = data['osc']
 
     cmd = [str(EXE), path]
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    fn = config.logs_drc / f"Dials_indexing_{date}.log"
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    fn = config.logs_drc / f'Dials_indexing_{date}.log'
     unitcelloutput = []
 
     p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
@@ -40,18 +40,18 @@ def run_dials_indexing(data):
             unitcelloutput = line
 
     if unitcelloutput:
-        with open(fn, "a") as f:
-            f.write(f"\nData Path: {path}\n")
-            f.write("{}".format(unitcelloutput[4:].decode('utf-8')))
-            f.write(f"Rotation range: {rotrange} degrees\n")
-            f.write(f"Number of frames: {nframes}\n")
-            f.write(f"Oscillation angle: {osc} deg\n\n\n\n")
-            print(f"Indexing result written to dials indexing log file; path: {path}")
+        with open(fn, 'a') as f:
+            f.write(f'\nData Path: {path}\n')
+            f.write('{}'.format(unitcelloutput[4:].decode('utf-8')))
+            f.write(f'Rotation range: {rotrange} degrees\n')
+            f.write(f'Number of frames: {nframes}\n')
+            f.write(f'Oscillation angle: {osc} deg\n\n\n\n')
+            print(f'Indexing result written to dials indexing log file; path: {path}')
 
     p.wait()
     unitcelloutput = []
-    now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    print(f"{now} | DIALS indexing has finished")
+    now = datetime.datetime.now().strftime('%H:%M:%S.%f')
+    print(f'{now} | DIALS indexing has finished')
 
 
 def handle(conn):
@@ -61,36 +61,36 @@ def handle(conn):
     while True:
         data = conn.recv(BUFF).decode()
         data = ast.literal_eval(data)
-        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
         if not data:
             break
 
-        print(f"{now} | {data}")
-        if data == "close":
-            print(f"{now} | Closing connection")
+        print(f'{now} | {data}')
+        if data == 'close':
+            print(f'{now} | Closing connection')
             break
 
-        elif data == "kill":
-            print(f"{now} | Killing server")
+        elif data == 'kill':
+            print(f'{now} | Killing server')
             ret = 1
             break
 
         else:
-            conn.send(b"OK")
+            conn.send(b'OK')
             run_dials_indexing(data)
 
-    conn.send(b"Connection closed")
+    conn.send(b'Connection closed')
     conn.close()
-    print("Connection closed")
+    print('Connection closed')
 
     return ret
 
 
 def main():
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
+    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
@@ -100,10 +100,10 @@ def main():
     s.bind((HOST, PORT))
     s.listen(5)
 
-    log.info(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
-    log.info(f"Running command: {EXE}")
-    print(f"Indexing server (DIALS) listening on {HOST}:{PORT}")
-    print(f"Running command: {EXE}")
+    log.info(f'Indexing server (DIALS) listening on {HOST}:{PORT}')
+    log.info(f'Running command: {EXE}')
+    print(f'Indexing server (DIALS) listening on {HOST}:{PORT}')
+    print(f'Running command: {EXE}')
 
     with s:
         while True:

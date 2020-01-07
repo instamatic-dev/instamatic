@@ -47,43 +47,43 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
     """
     scanranges = find_subranges(sequence)
 
-    scanrange = " ".join(f"scan_range={i},{j}" for i, j in scanranges)
-    excludeimages = ",".join(str(n) for n in missing)
+    scanrange = ' '.join(f'scan_range={i},{j}' for i, j in scanranges)
+    excludeimages = ','.join(str(n) for n in missing)
 
     if rotation_xyz:
         rot_x, rot_y, rot_z = rotation_xyz
 
     # newline='\n' to have unix line endings
-    with open(path / "dials_variables.sh", "w", newline='\n') as f:
-        print(f"#!/usr/bin/env bash", file=f)
+    with open(path / 'dials_variables.sh', 'w', newline='\n') as f:
+        print(f'#!/usr/bin/env bash', file=f)
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
         if rotation_xyz:
             print(f"rotation_axis='geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}'", file=f)
-        print("#", file=f)
-        print("# To run:", file=f)
-        print("#     source dials_variables.sh", file=f)
-        print("#", file=f)
-        print("# and:", file=f)
-        print("#     dials.import directory=data $rotation_axis", file=f)
-        print("#     dials.find_spots datablock.json $scan_range", file=f)
-        print("#     dials.integrate $exclude_images refined.pickle refined.json", file=f)
-        print("#", file=f)
+        print('#', file=f)
+        print('# To run:', file=f)
+        print('#     source dials_variables.sh', file=f)
+        print('#', file=f)
+        print('# and:', file=f)
+        print('#     dials.import directory=data $rotation_axis', file=f)
+        print('#     dials.find_spots datablock.json $scan_range', file=f)
+        print('#     dials.integrate $exclude_images refined.pickle refined.json', file=f)
+        print('#', file=f)
 
-    with open(path / "dials_variables.bat", "w", newline='\n') as f:
-        print("@echo off", file=f)
-        print("", file=f)
-        print(f"set scan_range={scanrange}", file=f)
-        print(f"set exclude_images=exclude_images={excludeimages}", file=f)
+    with open(path / 'dials_variables.bat', 'w', newline='\n') as f:
+        print('@echo off', file=f)
+        print('', file=f)
+        print(f'set scan_range={scanrange}', file=f)
+        print(f'set exclude_images=exclude_images={excludeimages}', file=f)
         if rotation_xyz:
-            print(f"set rotation_axis=geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}", file=f)
-        print("", file=f)
-        print(":: To run:", file=f)
-        print("::     call dials_variables.bat", file=f)
-        print("::", file=f)
-        print("::     dials.import directory=data %rotation_axis%", file=f)
-        print("::     dials.find_spots datablock.json %scan_range%", file=f)
-        print("::     dials.integrate %exclude_images% refined.pickle refined.json", file=f)
+            print(f'set rotation_axis=geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}', file=f)
+        print('', file=f)
+        print(':: To run:', file=f)
+        print('::     call dials_variables.bat', file=f)
+        print('::', file=f)
+        print('::     dials.import directory=data %rotation_axis%', file=f)
+        print('::     dials.find_spots datablock.json %scan_range%', file=f)
+        print('::     dials.integrate %exclude_images% refined.pickle refined.json', file=f)
 
 
 def get_calibrated_rotation_speed(val):
@@ -94,9 +94,9 @@ def get_calibrated_rotation_speed(val):
     and matches them to the observed one
     """
 
-    rotation_speeds = set(config.microscope.rotation_speeds["coarse"] + config.microscope.rotation_speeds["fine"])
+    rotation_speeds = set(config.microscope.rotation_speeds['coarse'] + config.microscope.rotation_speeds['fine'])
     calibrated_value = min(rotation_speeds, key=lambda x: abs(x - val))
-    logger.info(f"Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}")
+    logger.info(f'Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}')
     return calibrated_value
 
 
@@ -117,7 +117,7 @@ class ImgConversion:
                  end_angle: float,               # degrees, end angle of the rotation
                  rotation_axis: float,           # radians, specifies the position of the rotation axis
                  acquisition_time: float,        # seconds, acquisition time (exposure time + overhead)
-                 flatfield: str = 'flatfield.tiff'
+                 flatfield: str = 'flatfield.tiff',
                  ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -126,7 +126,7 @@ class ImgConversion:
         self.headers = {}
         self.data = {}
 
-        self.smv_subdrc = "data"
+        self.smv_subdrc = 'data'
 
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)
@@ -149,8 +149,8 @@ class ImgConversion:
             self.pixelsize = config.calibration.pixelsize_diff[camera_length]  # px / Angstrom
         except KeyError:
             self.pixelsize = 1
-            print(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
-            logger.warning(f"No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.")
+            print(f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.')
+            logger.warning(f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.')
 
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
@@ -168,7 +168,7 @@ class ImgConversion:
         self.acquisition_time = acquisition_time
         # self.rotation_speed = get_calibrated_rotation_speed(osc_angle / self.acquisition_time)
 
-        self.name = "Instamatic"
+        self.name = 'Instamatic'
 
         from .XDS_template import XDS_template  # hook XDS_template here, because it is difficult to override as a global
         self.XDS_template = XDS_template
@@ -176,7 +176,7 @@ class ImgConversion:
         self.check_settings()  # check if all required parameters are present, and fill default values if needed
 
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
-        logger.debug(f"Primary beam at: {self.mean_beam_center}")
+        logger.debug(f'Primary beam at: {self.mean_beam_center}')
 
     def check_settings(self) -> None:
         """Check for the presence of all required attributes.
@@ -186,46 +186,46 @@ class ImgConversion:
         """
 
         kw_attrs = {
-            "name": "instamatic",
-            "use_beamstop": False,
-            "untrusted_areas": [],
-            "smv_subdrc": "data",
-            "do_stretch_correction": False
+            'name': 'instamatic',
+            'use_beamstop': False,
+            'untrusted_areas': [],
+            'smv_subdrc': 'data',
+            'do_stretch_correction': False,
         }
 
         for attr, default in kw_attrs.items():
             if not hasattr(self, attr):
-                print(f"self.{attr} = {default}")
+                print(f'self.{attr} = {default}')
                 setattr(self, attr, default)
 
         attrs = [
             # "rotation_speed",
-            "acquisition_time",
-            "start_angle",
-            "end_angle",
-            "osc_angle",
-            "distance",
-            "mean_beam_center",
-            "wavelength",
-            "physical_pixelsize",
-            "pixelsize",
-            "data_shape",
-            "missing_range",
-            "complete_range",
-            "observed_range",
-            "headers",
-            "data",
-            "XDS_template"
+            'acquisition_time',
+            'start_angle',
+            'end_angle',
+            'osc_angle',
+            'distance',
+            'mean_beam_center',
+            'wavelength',
+            'physical_pixelsize',
+            'pixelsize',
+            'data_shape',
+            'missing_range',
+            'complete_range',
+            'observed_range',
+            'headers',
+            'data',
+            'XDS_template',
         ]
 
         for attr in attrs:
             if not hasattr(self, attr):
-                raise AttributeError(f"`{self.__class__.__name__}` has no attribute `{attr}`")
+                raise AttributeError(f'`{self.__class__.__name__}` has no attribute `{attr}`')
 
         if self.do_stretch_correction:
-            stretch_attrs = ("stretch_amplitude", "stretch_azimuth")
+            stretch_attrs = ('stretch_amplitude', 'stretch_azimuth')
             if not all(hasattr(self, attr) for attr in stretch_attrs):
-                raise AttributeError(f"`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`")
+                raise AttributeError(f'`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`')
 
     def get_beam_centers(self, invert_x: bool = False, invert_y: bool = False) -> (float, float):
         """Obtain beam centers from the diffraction data Returns a tuple with
@@ -243,7 +243,7 @@ class ImgConversion:
             if invert_y:
                 cy = shape_y - cy
 
-            h["beam_center"] = (cx, cy)
+            h['beam_center'] = (cx, cy)
             centers.append((cx, cy))
 
         self._beam_centers = beam_centers = np.array(centers)
@@ -291,23 +291,23 @@ class ImgConversion:
 
         # In XDS, the geometrically corrected coordinates of a pixel at IX,IY
         # are found by adding the table_value(IX,IY)/100.0 for the X- and Y-tables, respectively.
-        write_cbf(path / "XCORR.cbf", np.int32(xcorr * 100))
-        write_cbf(path / "YCORR.cbf", np.int32(ycorr * 100))
+        write_cbf(path / 'XCORR.cbf', np.int32(xcorr * 100))
+        write_cbf(path / 'YCORR.cbf', np.int32(ycorr * 100))
 
     def tiff_writer(self, path: str) -> None:
         """Write all data as tiff files to given `path`"""
-        print("\033[k", "Writing TIFF files......", end="\r")
+        print('\033[k', 'Writing TIFF files......', end='\r')
 
         path.mkdir(exist_ok=True)
 
         for i in self.observed_range:
             self.write_tiff(path, i)
 
-        logger.debug(f"Tiff files saved in folder: {path}")
+        logger.debug(f'Tiff files saved in folder: {path}')
 
     def smv_writer(self, path: str) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
-        print("\033[k", "Writing SMV files......", end="\r")
+        print('\033[k', 'Writing SMV files......', end='\r')
 
         path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
@@ -315,18 +315,18 @@ class ImgConversion:
         for i in self.observed_range:
             self.write_smv(path, i)
 
-        logger.debug(f"SMV files saved in folder: {path}")
+        logger.debug(f'SMV files saved in folder: {path}')
 
     def mrc_writer(self, path: str) -> None:
         """Write all data as mrc files to `path`"""
-        print("\033[k", "Writing MRC files......", end="\r")
+        print('\033[k', 'Writing MRC files......', end='\r')
 
         path.mkdir(exist_ok=True)
 
         for i in self.observed_range:
             self.write_mrc(path, i)
 
-        logger.debug(f"MRC files created in folder: {path}")
+        logger.debug(f'MRC files created in folder: {path}')
 
     def threadpoolwriter(self, tiff_path: str = None, smv_path: str = None, mrc_path: str = None, workers: int = 8) -> None:
         """Efficiently write all data to the specified formats using a
@@ -342,15 +342,15 @@ class ImgConversion:
         if write_smv:
             smv_path = smv_path / self.smv_subdrc
             smv_path.mkdir(exist_ok=True, parents=True)
-            logger.debug(f"SMV files saved in folder: {smv_path}")
+            logger.debug(f'SMV files saved in folder: {smv_path}')
 
         if write_tiff:
             tiff_path.mkdir(exist_ok=True, parents=True)
-            logger.debug(f"Tiff files saved in folder: {tiff_path}")
+            logger.debug(f'Tiff files saved in folder: {tiff_path}')
 
         if write_mrc:
             mrc_path.mkdir(exist_ok=True, parents=True)
-            logger.debug(f"MRC files saved in folder: {mrc_path}")
+            logger.debug(f'MRC files saved in folder: {mrc_path}')
 
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
@@ -386,11 +386,11 @@ class ImgConversion:
         empty = np.zeros_like(self.data[i])
         # copy header from first frame
         h = self.headers[i].copy()
-        h["ImageGetTime"] = time.time()
+        h['ImageGetTime'] = time.time()
 
         # add data to self.data/self.headers so that existing functions can be used
         # make sure to remove them afterwards, not to interfere with other data writing
-        logger.debug(f"Writing missing files for DIALS: {self.missing_range}")
+        logger.debug(f'Writing missing files for DIALS: {self.missing_range}')
 
         for n in self.missing_range:
             self.data[n] = empty
@@ -413,7 +413,7 @@ class ImgConversion:
         # PETS reads only 16bit unsignt integer TIFF
         img = np.round(img, 0).astype(np.uint16)
 
-        fn = path / f"{i:05d}.tiff"
+        fn = path / f'{i:05d}.tiff'
         write_tiff(fn, img, header=h)
         return fn
 
@@ -436,38 +436,38 @@ class ImgConversion:
         mean_beam_center = self.mean_beam_center
 
         try:
-            date = str(datetime.fromtimestamp(h["ImageGetTime"]))
+            date = str(datetime.fromtimestamp(h['ImageGetTime']))
         except BaseException:
-            date = "0"
+            date = '0'
 
         header = collections.OrderedDict()
         header['HEADER_BYTES'] = 512
         header['DIM'] = 2
-        header['BYTE_ORDER'] = "little_endian"
-        header['TYPE'] = "unsigned_short"
+        header['BYTE_ORDER'] = 'little_endian'
+        header['TYPE'] = 'unsigned_short'
         header['SIZE1'] = shape_x
         header['SIZE2'] = shape_y
         header['PIXEL_SIZE'] = self.physical_pixelsize
-        header['BIN'] = "1x1"
-        header['BIN_TYPE'] = "HW"
-        header['ADC'] = "fast"
+        header['BIN'] = '1x1'
+        header['BIN_TYPE'] = 'HW'
+        header['ADC'] = 'fast'
         header['CREV'] = 1
         header['BEAMLINE'] = self.name      # special ID for DIALS
         header['DETECTOR_SN'] = 901         # special ID for DIALS
         header['DATE'] = date
-        header['TIME'] = str(h["ImageExposureTime"])
-        header['DISTANCE'] = f"{self.distance:.4f}"
+        header['TIME'] = str(h['ImageExposureTime'])
+        header['DISTANCE'] = f'{self.distance:.4f}'
         header['TWOTHETA'] = 0.00
-        header['PHI'] = "{phi:.4f}"
-        header['OSC_START'] = f"{phi:.4f}"
-        header['OSC_RANGE'] = f"{self.osc_angle:.4f}"
-        header['WAVELENGTH'] = f"{self.wavelength:.4f}"
+        header['PHI'] = '{phi:.4f}'
+        header['OSC_START'] = f'{phi:.4f}'
+        header['OSC_RANGE'] = f'{self.osc_angle:.4f}'
+        header['WAVELENGTH'] = f'{self.wavelength:.4f}'
         # reverse XY coordinates for XDS
-        header['BEAM_CENTER_X'] = f"{mean_beam_center[1]:.4f}"
-        header['BEAM_CENTER_Y'] = f"{mean_beam_center[0]:.4f}"
-        header['DENZO_X_BEAM'] = f"{mean_beam_center[0]*self.physical_pixelsize:.4f}"
-        header['DENZO_Y_BEAM'] = f"{mean_beam_center[1]*self.physical_pixelsize:.4f}"
-        fn = path / f"{i:05d}.img"
+        header['BEAM_CENTER_X'] = f'{mean_beam_center[1]:.4f}'
+        header['BEAM_CENTER_Y'] = f'{mean_beam_center[0]:.4f}'
+        header['DENZO_X_BEAM'] = f'{mean_beam_center[0]*self.physical_pixelsize:.4f}'
+        header['DENZO_Y_BEAM'] = f'{mean_beam_center[1]*self.physical_pixelsize:.4f}'
+        fn = path / f'{i:05d}.img'
         write_adsc(fn, img, header=header)
         return fn
 
@@ -479,7 +479,7 @@ class ImgConversion:
         """
         img = self.data[i]
 
-        fn = path / f"{i:05d}.mrc"
+        fn = path / f'{i:05d}.mrc'
 
         # for RED these need to be as integers
         dtype = np.uint16
@@ -515,26 +515,26 @@ class ImgConversion:
         else:
             sign = 1
 
-        with open(path / "1.ed3d", 'w') as f:
-            print(f"WAVELENGTH    {self.wavelength}", file=f)
-            print(f"ROTATIONAXIS    {omega:5f}", file=f)
-            print(f"CCDPIXELSIZE    {self.pixelsize:5f}", file=f)
-            print(f"GONIOTILTSTEP    {self.osc_angle:5f}", file=f)
-            print(f"BEAMTILTSTEP    0", file=f)
-            print(f"BEAMTILTRANGE    0.000", file=f)
-            print(f"STRETCHINGMP    0.0", file=f)
-            print(f"STRETCHINGAZIMUTH    0.0", file=f)
-            print(f"", file=f)
-            print(f"FILELIST", file=f)
+        with open(path / '1.ed3d', 'w') as f:
+            print(f'WAVELENGTH    {self.wavelength}', file=f)
+            print(f'ROTATIONAXIS    {omega:5f}', file=f)
+            print(f'CCDPIXELSIZE    {self.pixelsize:5f}', file=f)
+            print(f'GONIOTILTSTEP    {self.osc_angle:5f}', file=f)
+            print(f'BEAMTILTSTEP    0', file=f)
+            print(f'BEAMTILTRANGE    0.000', file=f)
+            print(f'STRETCHINGMP    0.0', file=f)
+            print(f'STRETCHINGAZIMUTH    0.0', file=f)
+            print(f'', file=f)
+            print(f'FILELIST', file=f)
 
             for i in self.observed_range:
-                fn = f"{i:05d}.mrc"
+                fn = f'{i:05d}.mrc'
                 angle = self.start_angle + sign * self.osc_angle * i
-                print(f"FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}", file=f)
+                print(f'FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}', file=f)
 
-            print(f"ENDFILELIST", file=f)
+            print(f'ENDFILELIST', file=f)
 
-        logger.debug(f"ED3D file created in path: {path}")
+        logger.debug(f'ED3D file created in path: {path}')
 
     def write_xds_inp(self, path: str) -> None:
         """Write XDS.INP input file for XDS in directory `path`"""
@@ -550,19 +550,19 @@ class ImgConversion:
 
         if self.do_stretch_correction:
             self.write_geometric_correction_files(path)
-            stretch_correction = "DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections\nX-GEO_CORR= XCORR.cbf  ! X stretch correction\nY-GEO_CORR= YCORR.cbf  ! Y stretch correction\n"
+            stretch_correction = 'DETECTOR= PILATUS      ! Pretend to be PILATUS detector to enable geometric corrections\nX-GEO_CORR= XCORR.cbf  ! X stretch correction\nY-GEO_CORR= YCORR.cbf  ! Y stretch correction\n'
         else:
-            stretch_correction = ""
+            stretch_correction = ''
 
         if self.missing_range:
-            exclude = "\n".join([f"EXCLUDE_DATA_RANGE={i} {j}" for i, j in find_subranges(self.missing_range)])
+            exclude = '\n'.join([f'EXCLUDE_DATA_RANGE={i} {j}' for i, j in find_subranges(self.missing_range)])
         else:
-            exclude = "!EXCLUDE_DATA_RANGE="
+            exclude = '!EXCLUDE_DATA_RANGE='
 
-        untrusted_areas = ""
+        untrusted_areas = ''
 
         for kind, coords in self.untrusted_areas:
-            untrusted_areas += to_xds_untrusted_area(kind, coords) + "\n"
+            untrusted_areas += to_xds_untrusted_area(kind, coords) + '\n'
 
         s = self.XDS_template.format(
             date=str(time.ctime()),
@@ -579,32 +579,32 @@ class ImgConversion:
             untrusted_areas=untrusted_areas,
             NX=shape_y,
             NY=shape_x,
-            sign="+",
+            sign='+',
             detector_distance=self.distance,
             QX=self.physical_pixelsize,
             QY=self.physical_pixelsize,
             osc_angle=self.osc_angle,
             rot_x=rot_x,
             rot_y=rot_y,
-            rot_z=rot_z
+            rot_z=rot_z,
         )
 
         with open(path / 'XDS.INP', 'w') as f:
             print(s, file=f)
 
-        logger.info("XDS INP file created.")
+        logger.info('XDS INP file created.')
 
     def write_beam_centers(self, path: str) -> None:
         """Write list of beam centers to file `beam_centers.txt` in `path`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
         for i, h in self.headers.items():
-            centers[i - 1] = h["beam_center"]
+            centers[i - 1] = h['beam_center']
         for i in self.missing_range:
             centers[i - 1] = [np.NaN, np.NaN]
 
-        np.savetxt(path / "beam_centers.txt", centers, fmt="%10.4f")
+        np.savetxt(path / 'beam_centers.txt', centers, fmt='%10.4f')
 
-    def write_pets_inp(self, path: str, tiff_path: str = "tiff") -> None:
+    def write_pets_inp(self, path: str, tiff_path: str = 'tiff') -> None:
         """Write PETS input file `pets.pts` in directory `path`"""
         if self.start_angle > self.end_angle:
             sign = -1
@@ -619,44 +619,44 @@ class ImgConversion:
         elif omega > 360:
             omega -= 360
 
-        with open(path / "pets.pts", "w") as f:
+        with open(path / 'pets.pts', 'w') as f:
             date = str(time.ctime())
-            print("# PETS input file for Rotation Electron Diffraction generated by `instamatic`", file=f)
-            print(f"# {date}", file=f)
-            print("# For definitions of input parameters, see:", file=f)
-            print("# http://pets.fzu.cz/ ", file=f)
-            print("", file=f)
-            print(f"lambda {self.wavelength}", file=f)
-            print(f"Aperpixel {self.pixelsize}", file=f)
-            print(f"phi 0.0", file=f)
-            print(f"omega {omega}", file=f)
-            print(f"bin 1", file=f)
-            print(f"reflectionsize 20", file=f)
-            print(f"noiseparameters 3.5 38", file=f)
-            print("", file=f)
+            print('# PETS input file for Rotation Electron Diffraction generated by `instamatic`', file=f)
+            print(f'# {date}', file=f)
+            print('# For definitions of input parameters, see:', file=f)
+            print('# http://pets.fzu.cz/ ', file=f)
+            print('', file=f)
+            print(f'lambda {self.wavelength}', file=f)
+            print(f'Aperpixel {self.pixelsize}', file=f)
+            print(f'phi 0.0', file=f)
+            print(f'omega {omega}', file=f)
+            print(f'bin 1', file=f)
+            print(f'reflectionsize 20', file=f)
+            print(f'noiseparameters 3.5 38', file=f)
+            print('', file=f)
             # print("reconstructions", file=f)
             # print("endreconstructions", file=f)
             # print("", file=f)
             # print("distortions", file=f)
             # print("enddistortions", file=f)
             # print("", file=f)
-            print("imagelist", file=f)
+            print('imagelist', file=f)
             for i in self.observed_range:
-                fn = f"{i:05d}.tiff"
+                fn = f'{i:05d}.tiff'
                 angle = self.start_angle + sign * self.osc_angle * i
-                print(f"{tiff_path}/{fn} {angle:10.4f} 0.00", file=f)
-            print("endimagelist", file=f)
+                print(f'{tiff_path}/{fn} {angle:10.4f} 0.00', file=f)
+            print('endimagelist', file=f)
 
     def write_REDp_shiftcorrection(self, path: str) -> None:
         """Write .sc (shift correction) file for REDp in directory `path`"""
         path.mkdir(exist_ok=True)
 
         cx, cy = self.mean_beam_center
-        with open(path / "shifts.sc", "w") as f:
-            print(f" {cy:.2f} {cx:.2f}", file=f)  # cx/cy must be switched around, y first
+        with open(path / 'shifts.sc', 'w') as f:
+            print(f' {cy:.2f} {cx:.2f}', file=f)  # cx/cy must be switched around, y first
             for i in self.observed_range:
-                print(f"{i:4d}{0:8.2f}{0:8.2f}", file=f)
+                print(f'{i:4d}{0:8.2f}{0:8.2f}', file=f)
 
     def add_beamstop(self, rect):
         """rect must be a 2x4 coordinate array."""
-        self.untrusted_areas.append(("quadrilateral", rect))
+        self.untrusted_areas.append(('quadrilateral', rect))

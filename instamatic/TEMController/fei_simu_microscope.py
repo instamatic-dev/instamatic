@@ -18,7 +18,7 @@ MAX = 1.0
 class FEISimuMicroscope:
     """docstring for FEI microscope."""
 
-    def __init__(self, name="fei_simu"):
+    def __init__(self, name='fei_simu'):
         super().__init__()
 
         try:
@@ -26,13 +26,13 @@ class FEISimuMicroscope:
         except OSError:
             comtypes.CoInitialize()
 
-        print("BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU")
+        print('BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU')
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject("TEMScripting.Instrument.1", comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
         # tecnai does similar things as tem; the difference is not clear for now
-        self.tecnai = comtypes.client.CreateObject("Tecnai.Instrument", comtypes.CLSCTX_ALL)
+        self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
-        self.tom = comtypes.client.CreateObject("TEM.Instrument.1", comtypes.CLSCTX_ALL)
+        self.tom = comtypes.client.CreateObject('TEM.Instrument.1', comtypes.CLSCTX_ALL)
 
         self.stage = self.tem.Stage
         self.proj = self.tom.Projection
@@ -44,11 +44,11 @@ class FEISimuMicroscope:
             time.sleep(1)
             t += 1
             if t > 3:
-                print(f"Waiting for microscope, t = {t}s")
+                print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError("Cannot establish microscope connection (timeout).")
+                raise RuntimeError('Cannot establish microscope connection (timeout).')
 
-        logger.info("Microscope connection established")
+        logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
 
         self.name = name
@@ -62,11 +62,11 @@ class FEISimuMicroscope:
         self.DiffractionShift_y = random.randint(MIN, MAX)
 
         for mode in self.FUNCTION_MODES:
-            attrname = f"range_{mode}"
+            attrname = f'range_{mode}'
             try:
                 rng = getattr(config.microscope, attrname)
             except AttributeError:
-                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
             else:
                 setattr(self, attrname, rng)
 
@@ -202,27 +202,27 @@ class FEISimuMicroscope:
     def setStageX_nw(self, value, wait=True):
         self.stage.Position.X = value
         if not wait:
-            print("Not waiting for stage movement to be done.")
+            print('Not waiting for stage movement to be done.')
 
     def setStageY_nw(self, value, wait=True):
         self.stage.Position.Y = value
         if not wait:
-            print("Not waiting for stage movement to be done.")
+            print('Not waiting for stage movement to be done.')
 
     def setStageZ_nw(self, value, wait=True):
         self.stage.Position.Z = value
         if not wait:
-            print("Not waiting for stage movement to be done.")
+            print('Not waiting for stage movement to be done.')
 
     def setStageA_nw(self, value, wait=True):
         self.stage.Position.A = value
         if not wait:
-            print("Not waiting for stage movement to be done.")
+            print('Not waiting for stage movement to be done.')
 
     def setStageB_nw(self, value, wait=True):
         self.stage.Position.B = value
         if not wait:
-            print("Not waiting for stage movement to be done.")
+            print('Not waiting for stage movement to be done.')
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
         if z is not None:
@@ -249,7 +249,7 @@ class FEISimuMicroscope:
             self.setStageY_nw(y, wait)
 
     def stopStageMV(self):
-        print("Goniometer stopped moving.")
+        print('Goniometer stopped moving.')
 
     def getFunctionMode(self):
         """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'}"""
@@ -262,7 +262,7 @@ class FEISimuMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f"Unrecognized function mode: {value}")
+                raise ValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getDiffFocus(self):
@@ -285,8 +285,8 @@ class FEISimuMicroscope:
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
-        logger.info("Connection to microscope released")
-        print("Connection to microscope released")
+        logger.info('Connection to microscope released')
+        print('Connection to microscope released')
 
     def isBeamBlanked(self, value):
         return self.beamblank

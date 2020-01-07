@@ -24,14 +24,14 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
 
     for fn in fns:
         img, h = read_hdf5(fn)
-        coords = h["exp_crystal_coords"]
+        coords = h['exp_crystal_coords']
 
         if len(coords) == 0:
             continue
 
         # apply calibration
-        shape = h["ImageCameraDimensions"]
-        dimensions = h["ImageDimensions"]
+        shape = h['ImageCameraDimensions']
+        dimensions = h['ImageDimensions']
         calibrated_coords = np.multiply(coords, dimensions / shape)
 
         boundary_px = shape * boundary / dimensions
@@ -48,16 +48,16 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
             x, y = coord
 
             if not (boundary_px[0] < x < shape[0] - boundary_px[0]):
-                objects.append((x, y, "orange"))
+                objects.append((x, y, 'orange'))
             elif not (boundary_px[1] < y < shape[1] - boundary_px[1]):
-                objects.append((x, y, "orange"))
+                objects.append((x, y, 'orange'))
             elif min_dist > min_separation:
-                objects.append((x, y, "red"))
+                objects.append((x, y, 'red'))
                 n_isolated += 1
                 p = Path(fn)
-                isolated.append(p.parents[1] / "data" / f"{p.stem}_{i:04d}{p.suffix}")
+                isolated.append(p.parents[1] / 'data' / f'{p.stem}_{i:04d}{p.suffix}')
             else:
-                objects.append((x, y, "blue"))
+                objects.append((x, y, 'blue'))
 
         if plot and n_isolated:
             import matplotlib.pyplot as plt
@@ -72,7 +72,7 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
             # ax2.imshow(diff_img, vmax=np.percentile(diff_img, 99))
             # ax2.axis("off")
 
-            ax.axis("off")
+            ax.axis('off')
             ax.set_title(fn)
             plt.show()
 
@@ -81,10 +81,10 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
 
 def main(file_pattern):
     image_fns = glob.glob(file_pattern)
-    print(len(image_fns), "Images")
+    print(len(image_fns), 'Images')
 
     diff_fns = find_isolated_crystals(image_fns)
-    print(len(diff_fns), "Patterns from isolated crystals")
+    print(len(diff_fns), 'Patterns from isolated crystals')
 
     lst = []
     for fn in tqdm.tqdm(diff_fns):
@@ -101,17 +101,17 @@ def main(file_pattern):
             continue
 
         try:
-            size = h["total_area_micrometer"] / h["crystal_clusters"]  # micrometer^2
+            size = h['total_area_micrometer'] / h['crystal_clusters']  # micrometer^2
         except KeyError:
             # old data formats don't have this information
             size = 0.0
 
         try:
-            dx, dy = h["exp_hole_offset"]
-            cx, cy = h["exp_hole_center"]
+            dx, dy = h['exp_hole_offset']
+            cx, cy = h['exp_hole_center']
         except KeyError:
-            dx, dy = h["exp_scan_offset"]
-            cx, cy = h["exp_scan_center"]
+            dx, dy = h['exp_scan_offset']
+            cx, cy = h['exp_scan_center']
 
         prediction = round(prediction, 4)
         size = round(size, 4)
@@ -120,7 +120,7 @@ def main(file_pattern):
 
         lst.append((fn.absolute(), frame, number, prediction, size, x, y))
 
-    with open('learning.csv', 'w', newline="") as csvfile:
+    with open('learning.csv', 'w', newline='') as csvfile:
         # writer = csv.DictWriter(csvfile, fieldnames=["filename", "frame", "number", "quality", "size", "xpos", "ypos"])
         # writer.writeheader()
         writer = csv.writer(csvfile)
@@ -131,7 +131,7 @@ def main_entry():
     if len(sys.argv) > 1:
         pattern = sys.argv[1]
     else:
-        pattern = "images/*.h5"
+        pattern = 'images/*.h5'
 
     main(pattern)
 

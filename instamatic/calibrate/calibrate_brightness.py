@@ -21,7 +21,7 @@ class CalibBrightness:
         self.has_data = False
 
     def __repr__(self):
-        return f"CalibBrightness(slope={self.slope}, intercept={self.intercept})"
+        return f'CalibBrightness(slope={self.slope}, intercept={self.intercept})'
 
     def brightness_to_pixelsize(self, val):
         return self.slope * val + self.intercept
@@ -33,8 +33,8 @@ class CalibBrightness:
     def from_data(cls, brightness, pixeldiameter, header=None):
         slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
         print()
-        print(f"r_value: {r_value:.4f}")
-        print(f"p_value: {p_value:.4f}")
+        print(f'r_value: {r_value:.4f}')
+        print(f'p_value: {p_value:.4f}')
 
         c = cls(slope=slope, intercept=intercept)
         c.data_brightness = brightness
@@ -47,13 +47,13 @@ class CalibBrightness:
     def from_file(cls, fn=CALIB_BRIGHTNESS):
         import pickle
         try:
-            return pickle.load(open(fn, "rb"))
+            return pickle.load(open(fn, 'rb'))
         except OSError as e:
-            prog = "instamatic.calibrate_brightness"
-            raise OSError(f"{e.strerror}: {fn}. Please run {prog} first.")
+            prog = 'instamatic.calibrate_brightness'
+            raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     def to_file(self, fn=CALIB_BRIGHTNESS):
-        pickle.dump(self, open(fn, "wb"))
+        pickle.dump(self, open(fn, 'wb'))
 
     def plot(self):
         if not self.has_data:
@@ -65,9 +65,9 @@ class CalibBrightness:
         x = np.linspace(mn - extend, mx + extend)
         y = self.brightness_to_pixelsize(x)
 
-        plt.plot(x, y, "r-", label="linear regression")
+        plt.plot(x, y, 'r-', label='linear regression')
         plt.scatter(self.data_brightness, self.data_pixeldiameter)
-        plt.title("Fit brightness")
+        plt.title('Fit brightness')
         plt.legend()
         plt.show()
 
@@ -89,10 +89,10 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
         instance of CalibBrightness class with conversion methods
     """
 
-    raise NotImplementedError("calibrate_brightness_live function needs fixing...")
+    raise NotImplementedError('calibrate_brightness_live function needs fixing...')
 
-    exposure = kwargs.get("exposure", ctrl.cam.default_exposure)
-    binsize = kwargs.get("binsize", ctrl.cam.default_binsize)
+    exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
+    binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
     values = []
     start = ctrl.brightness.value
@@ -101,31 +101,31 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
         target = start + i * step
         ctrl.brightness.value = int(target)
 
-        outfile = f"calib_brightness_{i:04d}" if save_images else None
+        outfile = f'calib_brightness_{i:04d}' if save_images else None
 
-        comment = f"Calib image {i}: brightness={target}"
-        img, h = ctrl.getImage(exposure=exposure, out=outfile, comment=comment, header_keys="Brightness")
+        comment = f'Calib image {i}: brightness={target}'
+        img, h = ctrl.getImage(exposure=exposure, out=outfile, comment=comment, header_keys='Brightness')
 
         img, scale = autoscale(img)
 
-        brightness = float(h["Brightness"])
+        brightness = float(h['Brightness'])
 
         holes = find_holes(img, plot=False, verbose=False, max_eccentricity=0.8)
 
         if len(holes) == 0:
-            print(" >> No holes found, continuing...")
+            print(' >> No holes found, continuing...')
             continue
 
-        size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
+        size = max(hole.equivalent_diameter for hole in holes) * binsize / scale
 
-        print(f"Brightness: {brightness:.f}, equivalent diameter: {size:.1f}")
+        print(f'Brightness: {brightness:.f}, equivalent diameter: {size:.1f}')
         values.append((brightness, size))
 
     values = np.array(values)
     c = CalibBrightness.from_data(*values.T)
 
     # Calling c.plot with videostream crashes program
-    if not hasattr(ctrl.cam, "VideoLoop"):
+    if not hasattr(ctrl.cam, 'VideoLoop'):
         c.plot()
 
     return c
@@ -145,18 +145,18 @@ def calibrate_brightness_from_image_fn(fns):
 
     for fn in fns:
         print()
-        print("Image:", fn)
+        print('Image:', fn)
         img, h = load_img(fn)
-        brightness = float(h["Brightness"])
-        binsize = float(h["ImageBinSize"])
+        brightness = float(h['Brightness'])
+        binsize = float(h['ImageBinSize'])
 
         img, scale = autoscale(img)
 
         holes = find_holes(img, plot=False, fname=None, verbose=False, max_eccentricity=0.8)
 
-        size = max([hole.equivalent_diameter for hole in holes]) * binsize / scale
+        size = max(hole.equivalent_diameter for hole in holes) * binsize / scale
 
-        print(f"Brightness: {brightness:.0f}, equivalent diameter: {size:.1f}px")
+        print(f'Brightness: {brightness:.0f}, equivalent diameter: {size:.1f}px')
         values.append((brightness, size))
 
     values = np.array(values)
@@ -168,7 +168,7 @@ def calibrate_brightness_from_image_fn(fns):
 
 def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     if not fns:
-        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): """) == "go":
+        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): "'') == 'go':
             return
         else:
             calib = calibrate_brightness_live(ctrl, save_images=True)
@@ -181,7 +181,7 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
 
 
 def main_entry():
-    if "help" in sys.argv:
+    if 'help' in sys.argv:
         print("""
 Program to calibrate brightness of microscope
 

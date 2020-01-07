@@ -47,17 +47,17 @@ class GonioToolServer(threading.Thread):
     def run(self):
         """Start the server thread."""
         self.goniotool = GonioToolWrapper(barrier=barrier)
-        print(f"Initialized connection to GonioTool")
+        print(f'Initialized connection to GonioTool')
 
         while True:
-            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+            now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
             cmd = self.q.get()
 
             with condition:
-                func_name = cmd["func_name"]
-                args = cmd.get("args", ())
-                kwargs = cmd.get("kwargs", {})
+                func_name = cmd['func_name']
+                args = cmd.get('args', ())
+                kwargs = cmd.get('kwargs', {})
 
                 try:
                     ret = self.evaluate(func_name, args, kwargs)
@@ -71,7 +71,7 @@ class GonioToolServer(threading.Thread):
 
                 box.append((status, ret))
                 condition.notify()
-                print(f"{now} | {status} {func_name}: {ret}")
+                print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
         """Evaluate the function `func_name` on `self.tem` with *args and.
@@ -95,10 +95,10 @@ def handle(conn, q):
 
             data = pickle.loads(data)
 
-            if data == "exit":
+            if data == 'exit':
                 break
 
-            if data == "kill":
+            if data == 'kill':
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
@@ -111,9 +111,9 @@ def handle(conn, q):
 
 
 def main():
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_goniotool_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    logfile = config.logs_drc / f'instamatic_goniotool_{date}.log'
+    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
@@ -130,8 +130,8 @@ def main():
     s.bind((HOST, PORT))
     s.listen(5)
 
-    log.info(f"Server listening on {HOST}:{PORT}")
-    print(f"Server listening on {HOST}:{PORT}")
+    log.info(f'Server listening on {HOST}:{PORT}')
+    print(f'Server listening on {HOST}:{PORT}')
 
     with s:
         while True:

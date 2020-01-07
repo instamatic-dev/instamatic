@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import lmfit
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import patches
 from scipy import ndimage
 from skimage import filters
 from skimage.feature import register_translation
@@ -18,7 +18,7 @@ def sorted_grid_indices(grid):
     return np.dstack(np.unravel_index(np.argsort(grid.ravel()), grid.shape))[0]
 
 
-def weight_map(shape, method="block", plot=False):
+def weight_map(shape, method='block', plot=False):
     """Generate a weighting map for the given shape.
 
     shape : tuple
@@ -41,15 +41,15 @@ def weight_map(shape, method="block", plot=False):
 
     a, b = np.meshgrid(np.arange(-c_x, c_x + 1), np.arange(-c_y, c_y + 1))
 
-    if method == "block":
+    if method == 'block':
         a2 = c_x - np.abs(a)
         b2 = c_y - np.abs(b)
 
         d = np.min(np.stack((a2, b2)), axis=0)
-    elif method == "circle":
+    elif method == 'circle':
         d = corner - np.sqrt(a**2 + b**2)
     else:
-        raise ValueError(f"No such method: `{method}`")
+        raise ValueError(f'No such method: `{method}`')
 
     # scale to 1
     d = d / d.max()
@@ -60,7 +60,7 @@ def weight_map(shape, method="block", plot=False):
     return d
 
 
-def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, flip: bool = False) -> "np.array":
+def make_grid(gridshape: tuple, direction: str = 'updown', zigzag: bool = True, flip: bool = False) -> 'np.array':
     """Defines the grid montage collection scheme.
 
     Parameters
@@ -86,25 +86,25 @@ def make_grid(gridshape: tuple, direction: str = "updown", zigzag: bool = True, 
     if zigzag:
         grid[1::2] = np.fliplr(grid[1::2])
 
-    if direction == "updown":
+    if direction == 'updown':
         pass
         if flip:
             grid = np.fliplr(grid)
-    elif direction == "downup":
+    elif direction == 'downup':
         grid = np.flipud(grid)
         if flip:
             grid = np.fliplr(grid)
-    elif direction == "rightleft":
+    elif direction == 'rightleft':
         grid = grid.T
         grid = np.fliplr(grid)
         if flip:
             grid = np.flipud(grid)
-    elif direction == "leftright":
+    elif direction == 'leftright':
         grid = grid.T
         if flip:
             grid = np.flipud(grid)
     else:
-        raise ValueError(f"Invalid direction: {direction}")
+        raise ValueError(f'Invalid direction: {direction}')
 
     return grid
 
@@ -134,7 +134,7 @@ def make_slices(overlap_x: int, overlap_y: int, shape=(512, 512), plot: bool = F
     s_bottom = np.s_[-overlap_y:]
 
     slices = (s_right, s_left, s_top, s_bottom)
-    labels = ("right", "left", "top", "bottom")
+    labels = ('right', 'left', 'top', 'bottom')
 
     d = dict(zip(labels, slices))
 
@@ -161,30 +161,30 @@ def define_directions(pairs: list):
     `side0`/`side1`.
     """
     for pair in pairs:
-        i0, j0 = pair["idx0"]
-        i1, j1 = pair["idx1"]
+        i0, j0 = pair['idx0']
+        i1, j1 = pair['idx1']
 
         # checked 21-11-2019 for 'leftright' config
         if j0 == j1:
             if i1 > i0:
-                side0, side1 = "bottom", "top"
+                side0, side1 = 'bottom', 'top'
             else:
-                side0, side1 = "top", "bottom"
+                side0, side1 = 'top', 'bottom'
         else:
             if j1 > j0:
-                side0, side1 = "right", "left"
+                side0, side1 = 'right', 'left'
             else:
-                side0, side1 = "left", "right"
+                side0, side1 = 'left', 'right'
 
         # print(i0, j0, i1, j1, side0, side1)
 
-        pair["side0"] = side0
-        pair["side1"] = side1
+        pair['side0'] = side0
+        pair['side1'] = side1
 
     return pairs
 
 
-def define_pairs(grid: "np.ndarray"):
+def define_pairs(grid: 'np.ndarray'):
     """Take a sequence grid and return all pairs of neighbours.
 
     Returns a list of dictionaries containing the indices of the pairs
@@ -198,8 +198,8 @@ def define_pairs(grid: "np.ndarray"):
                           [0, 1, 0]])
 
     shape = np.array(footprint.shape)
-    assert shape[0] == shape[1], "Axes must be equal"
-    assert shape[0] % 2 == 1, "Axis length must be odd"
+    assert shape[0] == shape[1], 'Axes must be equal'
+    assert shape[0] % 2 == 1, 'Axis length must be odd'
     center = shape // 2
 
     connected = np.argwhere(footprint == 1) - center
@@ -217,12 +217,12 @@ def define_pairs(grid: "np.ndarray"):
                 pass
             else:
                 assert i0 == grid[idx0]
-                d = dict(
-                    seq0=grid[idx0],
-                    seq1=grid[neighbour],
-                    idx0=idx0,
-                    idx1=neighbour
-                )
+                d = {
+                    'seq0': grid[idx0],
+                    'seq1': grid[neighbour],
+                    'idx0': idx0,
+                    'idx1': neighbour,
+                }
                 pairs.append(d)
 
     return pairs
@@ -242,13 +242,13 @@ def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
             offset = strip1_offset - strip0.astype(float)
             sum_score = np.abs(offset).sum()
             if verbose:
-                print(f"{i:2d} {j:2d} -> {sum_score:10.0f}  {new_shift}")
+                print(f'{i:2d} {j:2d} -> {sum_score:10.0f}  {new_shift}')
             if sum_score < best_sum:
                 best_sum = sum_score
                 best_shift = new_shift
 
     if verbose:
-        print("Disambiguated shift:", best_shift)
+        print('Disambiguated shift:', best_shift)
 
     return best_shift
 
@@ -258,10 +258,10 @@ def plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1):
     ax0, ax1 = axes.flatten()
 
     ax0.imshow(im0)
-    ax0.set_title(f"{seq0} {idx0} {side0}")
+    ax0.set_title(f'{seq0} {idx0} {side0}')
     ax0.set_axis_off()
     ax1.imshow(im1)
-    ax1.set_title(f"{seq1} {idx1} {side1}")
+    ax1.set_title(f'{seq1} {idx1} {side1}')
     ax1.set_axis_off()
     plt.tight_layout()
     plt.show()
@@ -289,14 +289,14 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     strip1_shifted = ndimage.shift(strip1, (shift_x, shift_y))
     difference = strip1_shifted - strip0.astype(float)
 
-    ax0.imshow(strip0, interpolation="nearest")
-    ax0.set_title(f"{side0}")
-    ax1.imshow(strip1, interpolation="nearest")
-    ax1.set_title(f"{side1}")
-    ax2.imshow(difference, interpolation="nearest")
-    ax2.set_title("Abs(Difference)")
+    ax0.imshow(strip0, interpolation='nearest')
+    ax0.set_title(f'{side0}')
+    ax1.imshow(strip1, interpolation='nearest')
+    ax1.set_title(f'{side1}')
+    ax2.imshow(difference, interpolation='nearest')
+    ax2.set_title('Abs(Difference)')
     ax3.imshow(fft, vmin=np.percentile(fft, 50.00), vmax=np.percentile(fft, 99.99))
-    ax3.set_title(f"Cross correlation (max={fft.max():.4f})")
+    ax3.set_title(f'Cross correlation (max={fft.max():.4f})')
 
     plt.subplots_adjust(hspace=0.0)
     plt.show()
@@ -311,9 +311,9 @@ def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res
     coord0 = (center - difference_vector / 2 - origin).astype(int)
     coord1 = (center + difference_vector / 2 - origin).astype(int)
 
-    print(f"Coord0: {coord0} | Coord1: {coord1}")
+    print(f'Coord0: {coord0} | Coord1: {coord1}')
 
-    txt = f"Difference vector\n#{seq0}:{idx0} -> #{seq1}:{idx1} = {difference_vector}"
+    txt = f'Difference vector\n#{seq0}:{idx0} -> #{seq1}:{idx1} = {difference_vector}'
 
     blank[coord0[0]: coord0[0] + res_x, coord0[1]: coord0[1] + res_y] += im0
     blank[coord1[0]: coord1[0] + res_x, coord1[1]: coord1[1] + res_y] += im1
@@ -354,7 +354,7 @@ class Montage:
     def __init__(self,
                  images: list,
                  gridspec: dict,
-                 overlap=0.1
+                 overlap=0.1,
                  ):
         super().__init__()
 
@@ -368,7 +368,7 @@ class Montage:
         self.overlap_y = int(res_y * overlap)
 
     @classmethod
-    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = "leftright", zigzag: bool = True):
+    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = 'leftright', zigzag: bool = True):
         """Load a montage object from a SerialEM file image stack.
 
         Parameters
@@ -392,29 +392,29 @@ class Montage:
         images = gm.data
 
         # is the mdoc needed?
-        mdoc = read_mdoc_file(filename + ".mdoc", only_kind="zvalue")
+        mdoc = read_mdoc_file(filename + '.mdoc', only_kind='zvalue')
         assert len(mdoc) == len(images)
 
         gridspec = {
-            "gridshape": gridshape,
-            "direction": direction,
-            "zigzag": zigzag,
-            "flip": False
+            'gridshape': gridshape,
+            'direction': direction,
+            'zigzag': zigzag,
+            'flip': False,
         }
 
         m = cls(images=images, gridspec=gridspec)
         m.mdoc = mdoc
         m.filename = filename
-        m.stagecoords = np.array([d["StagePosition"] for d in m.mdoc]) * 1000  # um->nm
-        c1 = np.array([d["PieceCoordinates"][0:2] for d in m.mdoc])
+        m.stagecoords = np.array([d['StagePosition'] for d in m.mdoc]) * 1000  # um->nm
+        c1 = np.array([d['PieceCoordinates'][0:2] for d in m.mdoc])
         m.piececoords = c1[:, ::-1]  # flip coordinates
-        c2 = np.array([d["AlignedPieceCoords"][0:2] for d in m.mdoc])
+        c2 = np.array([d['AlignedPieceCoords'][0:2] for d in m.mdoc])
         c2 = c2[:, ::-1]  # flip coordinates
         c2 -= c2.min(axis=0)  # set minval to 0
         m.alignedpiececoords = c2
 
         try:
-            c3 = np.array([d["AlignedPieceCoordsVS"][0:2] for d in m.mdoc])
+            c3 = np.array([d['AlignedPieceCoordsVS'][0:2] for d in m.mdoc])
         except KeyError:
             pass
         else:
@@ -430,7 +430,7 @@ class Montage:
         self.grid = make_grid(**self.gridspec)
 
     @classmethod
-    def from_montage_yaml(cls, filename: str = "montage.yaml"):
+    def from_montage_yaml(cls, filename: str = 'montage.yaml'):
         """Load montage from a series of tiff files + `montage.yaml`)"""
         import yaml
         from instamatic.formats import read_tiff
@@ -438,21 +438,21 @@ class Montage:
         p = Path(filename)
         drc = p.parent
 
-        d = yaml.safe_load(open(p, "r"))
-        fns = (drc / fn for fn in d["filenames"])
-        overlap = d["overlap"]
+        d = yaml.safe_load(open(p, 'r'))
+        fns = (drc / fn for fn in d['filenames'])
+        overlap = d['overlap']
 
         images = [read_tiff(fn)[0] for fn in fns]
 
-        gridspec = {k: v for k, v in d.items() if k in ("gridshape", "direction", "zigzag", "flip")}
+        gridspec = {k: v for k, v in d.items() if k in ('gridshape', 'direction', 'zigzag', 'flip')}
 
         m = cls(images=images, gridspec=gridspec, overlap=overlap)
-        m.update_gridspec(flip=not d["flip"])  # BUG: Work-around for gridspec madness
+        m.update_gridspec(flip=not d['flip'])  # BUG: Work-around for gridspec madness
         # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
-        m.stagecoords = np.array(d["stagecoords"])
-        m.stagematrix = np.array(d["stagematrix"])
-        m.mode = d["mode"]
-        m.magnification = d["magnification"]
+        m.stagecoords = np.array(d['stagecoords'])
+        m.stagematrix = np.array(d['stagematrix'])
+        m.mode = d['mode']
+        m.magnification = d['magnification']
 
         return m
 
@@ -486,14 +486,14 @@ class Montage:
         difference_vector = vect + shift
 
         if verbose:
-            print(f"Vector from indices: {vect}")
-            print(f"Shift: {shift}")
-            print(f"Difference vector: {difference_vector}")
+            print(f'Vector from indices: {vect}')
+            print(f'Shift: {shift}')
+            print(f'Difference vector: {difference_vector}')
 
         return difference_vector
 
     def get_difference_vectors(self, threshold: float = 0.02, overlap_k: float = 1.0,
-                               method: str = "imreg", segment: bool = False,
+                               method: str = 'imreg', segment: bool = False,
                                plot: bool = False, verbose: bool = True):
         """Get the difference vectors between the neighbouring images The
         images are overlapping by some amount defined using `overlap`. These
@@ -541,22 +541,22 @@ class Montage:
         difference_vectors = {}
         for i, pair in enumerate(pairs):
             if verbose:
-                print("---")
+                print('---')
 
-            seq0 = pair["seq0"]
-            seq1 = pair["seq1"]
+            seq0 = pair['seq0']
+            seq1 = pair['seq1']
 
-            side0 = pair["side0"]
-            side1 = pair["side1"]
-            idx0 = pair["idx0"]
-            idx1 = pair["idx1"]
+            side0 = pair['side0']
+            side1 = pair['side1']
+            idx0 = pair['idx0']
+            idx1 = pair['idx1']
             im0 = images[seq0]
             im1 = images[seq1]
 
             if (seq1, seq0) in difference_vectors:
                 difference_vector = -difference_vectors[seq1, seq0]
                 if verbose:
-                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}")
+                    print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}')
                 difference_vectors[seq0, seq1] = difference_vector
                 continue
 
@@ -573,7 +573,7 @@ class Montage:
                 strip1 = strip1 > t1
                 # print(f"Thresholds: {t1} {t1}")
 
-            if method == "imreg":
+            if method == 'imreg':
                 shift, fft = translation(strip0, strip1, return_fft=True)
                 score = fft.max()
             else:  # method = skimage.feature.register_translation
@@ -588,11 +588,11 @@ class Montage:
 
             if score < threshold:
                 if verbose:
-                    print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!")
+                    print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!')
                 shift = np.array((0, 0))
                 continue
             if verbose:
-                print(f"Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}")
+                print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}')
 
             # pairwise difference vector
             difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
@@ -634,7 +634,7 @@ class Montage:
 
         return vects
 
-    def get_optimized_montage_coords(self, difference_vectors, method: str = "leastsq", verbose: bool = False):
+    def get_optimized_montage_coords(self, difference_vectors, method: str = 'leastsq', verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares
         minimization.
@@ -670,8 +670,8 @@ class Montage:
                 vary = False
             else:
                 vary = (i != middle_i)  # anchor on middle frame
-            params.add(f"C{i}{0}", value=row[0], vary=vary, min=row[0] - res_x / 2, max=row[0] + res_x / 2)
-            params.add(f"C{i}{1}", value=row[1], vary=vary, min=row[1] - res_y / 2, max=row[1] + res_y / 2)
+            params.add(f'C{i}{0}', value=row[0], vary=vary, min=row[0] - res_x / 2, max=row[0] + res_x / 2)
+            params.add(f'C{i}{1}', value=row[1], vary=vary, min=row[1] - res_y / 2, max=row[1] + res_y / 2)
 
         def obj_func(params, diff_vects):
             V = np.array([p.value for p in params.values()]).reshape(-1, 2)
@@ -694,7 +694,7 @@ class Montage:
 
             return np.array(new)
 
-        args = difference_vectors,
+        args = (difference_vectors,)
         res = lmfit.minimize(obj_func, params, args=args, method=method)
 
         lmfit.report_fit(res, show_correl=verbose, min_correl=0.8)
@@ -705,7 +705,7 @@ class Montage:
 
         return coords
 
-    def stitch(self, coords: "np.array[-1, 2]", method: str = None, binning: int = 1, plot: bool = False, ax=None):
+    def stitch(self, coords: 'np.array[-1, 2]', method: str = None, binning: int = 1, plot: bool = False, ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
@@ -738,11 +738,11 @@ class Montage:
 
         stitched = np.zeros((int(stitched_x / binning), int(stitched_y / binning)), dtype=np.int32)
 
-        if method in ("average", "weighted"):
+        if method in ('average', 'weighted'):
             n_images = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
 
-            if method == "weighted":
-                weight = weight_map(self.image_shape, method="circle")
+            if method == 'weighted':
+                weight = weight_map(self.image_shape, method='circle')
 
         if plot and not ax:
             fig, ax = plt.subplots(figsize=(10, 10))
@@ -760,24 +760,24 @@ class Montage:
 
             # print(f"{x0:10d} {x1:10d} {y0:10d} {y1:10d}")
 
-            if method == "average":
+            if method == 'average':
                 stitched[x0:x1, y0:y1] += im
                 n_images[x0:x1, y0:y1] += 1
-            if method == "weighted":
+            if method == 'weighted':
                 stitched[x0:x1, y0:y1] += im * weight
                 n_images[x0:x1, y0:y1] += weight
             else:
                 stitched[x0:x1, y0:y1] = im
 
             if plot:
-                txt = f"{i}\n{idx}"
+                txt = f'{i}\n{idx}'
 
                 # NOTE that y/x are flipped for display in matplotlib ONLY
-                ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color="red", fontsize=18, ha='center', va='center')
+                ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color='red', fontsize=18, ha='center', va='center')
                 rect = patches.Rectangle([y0, x0], res_x / binning, res_y / binning, linewidth=0.5, edgecolor='r', facecolor='none')
                 ax.add_patch(rect)
 
-        if method in ("average", "weighted"):
+        if method in ('average', 'weighted'):
             n_images = np.where(n_images == 0, 1, n_images)
             stitched /= n_images
 
@@ -793,7 +793,7 @@ class Montage:
 
         return stitched
 
-    def plot(self, coords: "np.array[-1, 2]", ax=None):
+    def plot(self, coords: 'np.array[-1, 2]', ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
@@ -889,7 +889,7 @@ class Montage:
         if not pixelsize:
             # attempt to get pixelsize from config
             from instamatic import config
-            pixelsize = getattr(config.calibration, f"pixelsize_{self.mode}")[self.magnification] * binning
+            pixelsize = getattr(config.calibration, f'pixelsize_{self.mode}')[self.magnification] * binning
         else:
             pixelsize *= binning
 
@@ -906,7 +906,7 @@ class Montage:
             d = (prop.area ** 0.5) * pixelsize
 
             if abs(d - diameter) < max_val:
-                ax1.scatter(y, x, marker="+")
+                ax1.scatter(y, x, marker='+')
                 stagecoord = self.pixel_to_stagecoord((x, y))
                 stagecoords.append(stagecoord)
                 imagecoords.append((x, y))

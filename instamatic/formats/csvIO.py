@@ -11,7 +11,7 @@ def results2df(results, sort=True):
     df = pd.DataFrame(results).T
     df.columns = list(results.values())[0]._fields
     if sort:
-        df = df.sort_values("score", ascending=False)
+        df = df.sort_values('score', ascending=False)
     return df
 
 
@@ -23,7 +23,7 @@ def yaml_ordered_dump(obj, f=None, Dumper=yaml.Dumper, **kwds):
     f: file-like object or str path to file
     """
     if isinstance(f, str):
-        f = open(f, "w")
+        f = open(f, 'w')
 
     class OrderedDumper(Dumper):
         pass
@@ -43,7 +43,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     f: file-like object or str path to file
     """
     if isinstance(f, str):
-        f = open(f, "r")
+        f = open(f, 'r')
 
     class OrderedLoader(Loader):
         pass
@@ -59,7 +59,7 @@ def yaml_ordered_load(f, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 
 def write_csv(f, results):
     """Write a list of IndexingResult objects to a csv file."""
-    if not hasattr(results, "to_csv"):
+    if not hasattr(results, 'to_csv'):
         results = results2df(results)
     results.to_csv(f)
 
@@ -84,7 +84,7 @@ def read_ycsv(f):
     """
 
     if isinstance(f, str):
-        f = open(f, "r")
+        f = open(f, 'r')
 
     first_line = f.tell()
 
@@ -93,7 +93,7 @@ def read_ycsv(f):
     yaml_block = []
 
     for line in f:
-        if line.strip() == "---":
+        if line.strip() == '---':
             if not in_yaml_block:
                 in_yaml_block = True
             else:
@@ -105,7 +105,7 @@ def read_ycsv(f):
             yaml_block.append(line)
 
     # white space is important when reading yaml
-    d = yaml_ordered_load(io.StringIO("".join(yaml_block)))
+    d = yaml_ordered_load(io.StringIO(''.join(yaml_block)))
 
     # workaround to fix pandas crash when it is not at the first line for some reason
     f.seek(first_line)
@@ -132,10 +132,10 @@ def write_ycsv(f, data, metadata):
     """
 
     if isinstance(f, str):
-        f = open(f, "w")
+        f = open(f, 'w')
 
-    f.write("---\n")
+    f.write('---\n')
     yaml_ordered_dump(metadata, f, default_flow_style=False)
 
-    f.write("---\n")
+    f.write('---\n')
     write_csv(f, data)

@@ -35,15 +35,15 @@ class AcquireAtItems:
         self.ctrl = ctrl
 
         if pre_acquire:
-            print("Pre-acquire: OK")
+            print('Pre-acquire: OK')
             self.pre_acquire = pre_acquire
 
         if acquire:
-            print("Acquire: OK")
+            print('Acquire: OK')
             self.acquire = acquire
 
         if post_acquire:
-            print("Post-acquire: OK")
+            print('Post-acquire: OK')
             self.post_acquire = post_acquire
 
         self.backlash = backlash
@@ -58,7 +58,7 @@ class AcquireAtItems:
 
     def acquire(self, ctrl):
         """Function to call at each stage position."""
-        print("Acquirement function has not been set.")
+        print('Acquirement function has not been set.')
 
     def move_to_item(self, item):
         """Move the stage to the stage coordinates given by the NavItem."""
@@ -73,7 +73,7 @@ class AcquireAtItems:
             elif len(item) == 3:
                 x, y, z = item
             else:
-                raise IndexError(f"Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}")
+                raise IndexError(f'Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}')
 
         if z is not None:
             self.ctrl.stage.set(z=z)
@@ -95,8 +95,8 @@ class AcquireAtItems:
 
         ntot = len(nav_items)
 
-        print(f"\nAcquiring on {ntot} items.")
-        print("Press <Q> to interrupt.\n")
+        print(f'\nAcquiring on {ntot} items.')
+        print('Press <Q> to interrupt.\n')
 
         self.move_to_item(nav_items[0])  # pre-move
         self.pre_acquire(ctrl)
@@ -109,14 +109,14 @@ class AcquireAtItems:
             ctrl.current_item = item
             ctrl.current_i = i
 
-            print(f"{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)")
+            print(f'{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)')
 
             self.move_to_item(item)
 
             try:
                 self.acquire(ctrl)
             except InterruptedError:
-                print(f"\nAcquisition was interrupted during item `{item}`!")
+                print(f'\nAcquisition was interrupted during item `{item}`!')
                 break
 
             # calculate remaining time
@@ -129,8 +129,8 @@ class AcquireAtItems:
             # Stop/interrupt acquisition
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode()
-                if key == "q":
-                    print(f"\nAcquisition was interrupted after item `{item}`!")
+                if key == 'q':
+                    print(f'\nAcquisition was interrupted after item `{item}`!')
                     break
 
         t1 = time.perf_counter()
@@ -139,5 +139,5 @@ class AcquireAtItems:
 
         dt = t1 - t0
         n_items = i + 1
-        print(f"Total time taken: {dt:.0f} s for {n_items} items ({dt/n_items:.2f} s/item)")
-        print("\nAll done!")
+        print(f'Total time taken: {dt:.0f} s for {n_items} items ({dt/n_items:.2f} s/item)')
+        print('\nAll done!')

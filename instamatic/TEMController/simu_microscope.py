@@ -6,20 +6,20 @@ from instamatic import config
 
 
 NTRLMAPPING = {
-    "GUN1": 0,
-    "GUN2": 1,
-    "CLA1": 2,
-    "CLA2": 3,
-    "SHIFT": 4,
-    "TILT": 5,
-    "ANGLE": 6,
-    "CLS": 7,
-    "IS1": 8,
-    "IS2": 9,
-    "SPOT": 10,
-    "PLA": 11,
-    "OLS": 12,
-    "ILS": 13
+    'GUN1': 0,
+    'GUN2': 1,
+    'CLA1': 2,
+    'CLA2': 3,
+    'SHIFT': 4,
+    'TILT': 5,
+    'ANGLE': 6,
+    'CLS': 7,
+    'IS1': 8,
+    'IS2': 9,
+    'SPOT': 10,
+    'PLA': 11,
+    'OLS': 12,
+    'ILS': 13,
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
@@ -33,7 +33,7 @@ MIN = 0
 class SimuMicroscope:
     """docstring for microscope."""
 
-    def __init__(self, name: str = "simulate"):
+    def __init__(self, name: str = 'simulate'):
         super().__init__()
 
         self.CurrentDensity_value = 100_000.0
@@ -73,11 +73,11 @@ class SimuMicroscope:
         self.NTRLMAPPING = NTRLMAPPING
 
         for mode in self.FUNCTION_MODES:
-            attrname = f"range_{mode}"
+            attrname = f'range_{mode}'
             try:
                 rng = getattr(config.microscope, attrname)
             except AttributeError:
-                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
             else:
                 setattr(self, attrname, rng)
 
@@ -120,106 +120,106 @@ class SimuMicroscope:
         self._StagePosition_b = 0.0  # random.randint(-40, 40)
 
         self._stage_dict = {}
-        for key in ("a", "b", "x", "y", "z"):
-            if key in ("a", "b"):
+        for key in ('a', 'b', 'x', 'y', 'z'):
+            if key in ('a', 'b'):
                 speed = 10.0  # degree / sec
                 current = random.randint(-40, 40)
-            elif key in ("x", "y"):
+            elif key in ('x', 'y'):
                 speed = 100_000.0  # nm / sec
                 current = random.randint(-100000, 100000)
-            elif key == "z":
+            elif key == 'z':
                 speed = 10_000.0  # nm / sec
                 current = random.randint(-10000, 10000)
 
             self._stage_dict[key] = {
-                "current": current,
-                "is_moving": False,
-                "speed": speed,
-                "speed_setting": 12,
-                "direction": +1,
-                "start": 0.0,
-                "end": 0.0,
-                "t0": 0.0
+                'current': current,
+                'is_moving': False,
+                'speed': speed,
+                'speed_setting': 12,
+                'direction': +1,
+                'start': 0.0,
+                'end': 0.0,
+                't0': 0.0,
             }
 
     def _StagePositionSetter(self, var: str, val: float) -> None:
         """General stage position setter, models stage movement speed."""
         d = self._stage_dict[var]
-        current = d["current"]
+        current = d['current']
         direction = +1 if (val > current) else -1
 
-        d["is_moving"] = True
-        d["start"] = current
-        d["end"] = val
-        d["t0"] = time.clock()
-        d["direction"] = direction
+        d['is_moving'] = True
+        d['start'] = current
+        d['end'] = val
+        d['t0'] = time.clock()
+        d['direction'] = direction
 
     def _StagePositionGetter(self, var: str) -> float:
         """General stage position getter, models stage movement speed."""
         d = self._stage_dict[var]
-        is_moving = d["is_moving"]
+        is_moving = d['is_moving']
         if is_moving:
-            dt = time.clock() - d["t0"]
-            direction = d["direction"]
-            speed = d["speed"]
-            start = d["start"]
-            end = d["end"]
+            dt = time.clock() - d['t0']
+            direction = d['direction']
+            speed = d['speed']
+            start = d['start']
+            end = d['end']
             val = start + direction * dt * speed
 
             if abs(val - start) > abs(end - start):
-                d["current"] = end
-                d["is_moving"] = False
+                d['current'] = end
+                d['is_moving'] = False
                 ret = end
             else:
                 ret = val
         else:
-            ret = d["current"]
+            ret = d['current']
 
         return ret
 
     @property
     def StagePosition_a(self):
-        return self._StagePositionGetter("a")
+        return self._StagePositionGetter('a')
 
     @StagePosition_a.setter
     def StagePosition_a(self, value):
-        self._StagePositionSetter("a", value)
+        self._StagePositionSetter('a', value)
 
     @property
     def StagePosition_b(self):
-        return self._StagePositionGetter("b")
+        return self._StagePositionGetter('b')
 
     @StagePosition_b.setter
     def StagePosition_b(self, value):
-        self._StagePositionSetter("b", value)
+        self._StagePositionSetter('b', value)
 
     @property
     def StagePosition_x(self):
-        return self._StagePositionGetter("x")
+        return self._StagePositionGetter('x')
 
     @StagePosition_x.setter
     def StagePosition_x(self, value):
-        self._StagePositionSetter("x", value)
+        self._StagePositionSetter('x', value)
 
     @property
     def StagePosition_y(self):
-        return self._StagePositionGetter("y")
+        return self._StagePositionGetter('y')
 
     @StagePosition_y.setter
     def StagePosition_y(self, value):
-        self._StagePositionSetter("y", value)
+        self._StagePositionSetter('y', value)
 
     @property
     def StagePosition_z(self):
-        return self._StagePositionGetter("z")
+        return self._StagePositionGetter('z')
 
     @StagePosition_z.setter
     def StagePosition_z(self, value):
-        self._StagePositionSetter("z", value)
+        self._StagePositionSetter('z', value)
 
     @property
     def _is_moving(self) -> bool:
-        return any([self._stage_dict[key]["is_moving"] for key in self._stage_dict.keys()])
+        return any(self._stage_dict[key]['is_moving'] for key in self._stage_dict.keys())
 
     def getHTValue(self) -> float:
         return self._HT
@@ -235,13 +235,13 @@ class SimuMicroscope:
         self.Brightness_value = value
 
     def getMagnification(self) -> int:
-        if self.getFunctionMode() == "diff":
+        if self.getFunctionMode() == 'diff':
             return self.Magnification_value_diff
         else:
             return self.Magnification_value
 
     def setMagnification(self, value: int):
-        if self.getFunctionMode() == "diff":
+        if self.getFunctionMode() == 'diff':
             self.Magnification_value_diff = value
         else:
             self.Magnification_value = value
@@ -250,15 +250,15 @@ class SimuMicroscope:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
 
-        if current_mode == "diff":
+        if current_mode == 'diff':
             selector = self.range_diff.index(value)
-        elif current_mode == "lowmag":
+        elif current_mode == 'lowmag':
             selector = self.range_lowmag.index(value)
-        elif current_mode == "samag":
+        elif current_mode == 'samag':
             selector = self.range_samag.index(value)
-        elif current_mode == "mag1":
+        elif current_mode == 'mag1':
             selector = self.range_mag1.index(value)
-        elif current_mode == "mag2":
+        elif current_mode == 'mag2':
             selector = self.range_mag2.index(value)
 
         return selector
@@ -267,17 +267,17 @@ class SimuMicroscope:
         current_mode = self.getFunctionMode()
 
         if index < 0:
-            raise ValueError(f"Cannot lower magnification (index={index})")
+            raise ValueError(f'Cannot lower magnification (index={index})')
 
-        if current_mode == "diff":
+        if current_mode == 'diff':
             value = self.range_diff[index]
-        elif current_mode == "lowmag":
+        elif current_mode == 'lowmag':
             value = self.range_lowmag[index]
-        elif current_mode == "samag":
+        elif current_mode == 'samag':
             value = self.range_samag[index]
-        elif current_mode == "mag1":
+        elif current_mode == 'mag1':
             value = self.range_mag1[index]
-        elif current_mode == "mag2":
+        elif current_mode == 'mag2':
             value = self.range_mag2[index]
 
         self.setMagnification(value)
@@ -296,7 +296,7 @@ class SimuMicroscope:
         mag_ranges = {}
         for i, mode in enumerate(self.FUNCTION_MODES):
             try:
-                mag_ranges[mode] = getattr(self, f"range_{mode}")
+                mag_ranges[mode] = getattr(self, f'range_{mode}')
             except AttributeError:
                 pass
 
@@ -407,11 +407,11 @@ class SimuMicroscope:
                 self.setStageY(y, wait=wait)
 
     def getRotationSpeed(self) -> int:
-        return self._stage_dict["a"]["speed_setting"]
+        return self._stage_dict['a']['speed_setting']
 
     def setRotationSpeed(self, value: int):
-        self._stage_dict["a"]["speed_setting"] = value
-        self._stage_dict["a"]["speed"] = 10.0 * (value / 12)
+        self._stage_dict['a']['speed_setting'] = value
+        self._stage_dict['a']['speed'] = 10.0 * (value / 12)
 
     def getFunctionMode(self) -> str:
         """mag1, mag2, lowmag, samag, diff."""
@@ -424,17 +424,17 @@ class SimuMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f"Unrecognized function mode: {value}")
+                raise ValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getDiffFocus(self, confirm_mode: bool = True) -> int:
-        if not self.getFunctionMode() == "diff":
+        if not self.getFunctionMode() == 'diff':
             raise ValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
         """IL1."""
-        if not self.getFunctionMode() == "diff":
+        if not self.getFunctionMode() == 'diff':
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.DiffractionFocus_value = value
 
@@ -454,7 +454,7 @@ class SimuMicroscope:
         self.DiffractionShift_y = y
 
     def releaseConnection(self):
-        print("Connection to microscope released")
+        print('Connection to microscope released')
 
     def isBeamBlanked(self) -> bool:
         return self.beamblank

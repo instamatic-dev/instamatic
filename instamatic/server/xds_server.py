@@ -18,26 +18,26 @@ def parse_xds(path):
     """Parse the XDS output file `CORRECT.LP` and print a summary."""
     from instamatic.utils.xds_parser import xds_parser
 
-    fn = Path(path) / "CORRECT.LP"
+    fn = Path(path) / 'CORRECT.LP'
 
     # rlock prevents messages getting mangled with
     # simultaneous print statements from different threads
     with rlock:
         if not fn.exists():
-            print(f"FAIL: Cannot find file `{fn.name}`, was the indexing successful??")
-            msg = f"{path}: Automatic indexing failed..."
+            print(f'FAIL: Cannot find file `{fn.name}`, was the indexing successful??')
+            msg = f'{path}: Automatic indexing failed...'
         else:
             try:
                 p = xds_parser(fn)
             except UnboundLocalError:
-                msg = f"{path}: Automatic indexing completed but no cell reported..."
-                print(f"FAIL: `{fn.name}` found, but could not be parsed...")
+                msg = f'{path}: Automatic indexing completed but no cell reported...'
+                print(f'FAIL: `{fn.name}` found, but could not be parsed...')
             else:
-                msg = "\n"
+                msg = '\n'
                 msg += p.cell_info()
-                msg += "\n"
+                msg += '\n'
                 msg += p.integration_info()
-                msg += "\n"
+                msg += '\n'
                 print(msg)
 
     return msg
@@ -48,13 +48,13 @@ def run_xds_indexing(path):
 
     Uses WSL (Windows 10 only).
     """
-    p = sp.Popen("bash -c xds_par 2>&1 >/dev/null", cwd=path)
+    p = sp.Popen('bash -c xds_par 2>&1 >/dev/null', cwd=path)
     p.wait()
 
     msg = parse_xds(path)
 
-    now = datetime.datetime.now().strftime("%H:%M:%S.%f")
-    print(f"{now} | XDS indexing has finished")
+    now = datetime.datetime.now().strftime('%H:%M:%S.%f')
+    print(f'{now} | XDS indexing has finished')
 
     return msg
 
@@ -65,37 +65,37 @@ def handle(conn):
 
     while True:
         data = conn.recv(BUFF).decode()
-        now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+        now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
         if not data:
             break
 
-        print(f"{now} | {data}")
-        if data == "close":
-            print(f"{now} | Closing connection")
+        print(f'{now} | {data}')
+        if data == 'close':
+            print(f'{now} | Closing connection')
             break
 
-        elif data == "kill":
-            print(f"{now} | Killing server")
+        elif data == 'kill':
+            print(f'{now} | Killing server')
             ret = 1
             break
 
         else:
-            conn.send(b"OK")
+            conn.send(b'OK')
             msg = run_xds_indexing(data)
             conn.send(msg.encode())
 
-    conn.send(b"Connection closed")
+    conn.send(b'Connection closed')
     conn.close()
-    print("Connection closed")
+    print('Connection closed')
 
     return ret
 
 
 def main():
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_indexing_server_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
+    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
@@ -105,8 +105,8 @@ def main():
     s.bind((HOST, PORT))
     s.listen(5)
 
-    log.info(f"Indexing server (XDS) listening on {HOST}:{PORT}")
-    print(f"Indexing server (XDS) listening on {HOST}:{PORT}")
+    log.info(f'Indexing server (XDS) listening on {HOST}:{PORT}')
+    print(f'Indexing server (XDS) listening on {HOST}:{PORT}')
 
     with s:
         while True:

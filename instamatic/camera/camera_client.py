@@ -25,9 +25,9 @@ def kill_server(p):
 
 
 def start_server_in_subprocess():
-    cmd = "instamatic.camserver.exe"
+    cmd = 'instamatic.camserver.exe'
     p = sp.Popen(cmd, stdout=sp.DEVNULL)
-    print(f"Starting CAM server ({HOST}:{PORT} on pid={p.pid})")
+    print(f'Starting CAM server ({HOST}:{PORT} on pid={p.pid})')
     atexit.register(kill_server, p)
 
 
@@ -56,9 +56,9 @@ class CamClient:
                 except ConnectionRefusedError:
                     time.sleep(1)
                     if t > 3:
-                        print("Waiting for server")
+                        print('Waiting for server')
                     if t > 30:
-                        raise RuntimeError("Cannot establish server connection (timeout)")
+                        raise RuntimeError('Cannot establish server connection (timeout)')
                 else:
                     break
 
@@ -74,23 +74,23 @@ class CamClient:
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
-        print(f"Connected to CAM server ({HOST}:{PORT})")
+        print(f'Connected to CAM server ({HOST}:{PORT})')
 
     def __getattr__(self, attr_name):
 
         if attr_name in self._dct:
             wrapped = self._dct[attr_name]
         elif attr_name in self._attr_dct:
-            dct = {"attr_name": attr_name}
+            dct = {'attr_name': attr_name}
             return self._eval_dct(dct)
         else:
-            raise AttributeError(f"`{self.__class__.__name__}` object has no attribute `{attr_name}`")
+            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{attr_name}`')
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {"attr_name": attr_name,
-                   "args": args,
-                   "kwargs": kwargs}
+            dct = {'attr_name': attr_name,
+                   'args': args,
+                   'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -101,7 +101,7 @@ class CamClient:
 
         self.s.send(pickle.dumps(dct))
 
-        if dct["attr_name"] == "getImage":
+        if dct['attr_name'] == 'getImage':
             # approximately 2-3 ms for the interface
             response = self.s.recv(self.imagebufsize)
         else:
@@ -117,7 +117,7 @@ class CamClient:
             raise data
 
         else:
-            raise ConnectionError(f"Unknown status code: {status}")
+            raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self):
         """Get list of functions and their doc strings from the uninitialized
@@ -125,8 +125,8 @@ class CamClient:
         from instamatic.camera.camera import get_cam
         cam = get_cam(self.name)
 
-        self._dct = {key: value for key, value in cam.__dict__.items() if not key.startswith("_")}
-        self._dct["get_attrs"] = None
+        self._dct = {key: value for key, value in cam.__dict__.items() if not key.startswith('_')}
+        self._dct['get_attrs'] = None
 
     def _init_attr_dict(self):
         """Get list of attrs and their types."""

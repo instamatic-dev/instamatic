@@ -19,13 +19,13 @@ yaml.representer.Representer.add_representer(list, list_representer)
 def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     """Loop over magnification ranges and return calibrations from EMMENU."""
 
-    if mode == "diff":
-        print("Warning: Pixelsize can be a factor 10 off in diff mode (bug in EMMENU)")
+    if mode == 'diff':
+        print('Warning: Pixelsize can be a factor 10 off in diff mode (bug in EMMENU)')
 
     calib_range = {}
 
     BinX, BinY = ctrl.cam.getBinning()
-    assert BinX == BinY, "Binnings differ in X and Y direction?! (X: {BinX} | Y: {BinY})"
+    assert BinX == BinY, 'Binnings differ in X and Y direction?! (X: {BinX} | Y: {BinY})'
 
     ctrl.mode(mode)
 
@@ -33,11 +33,11 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         ctrl.magnification.set(mag)
         d = ctrl.cam.getCurrentCameraInfo()
 
-        PixelSizeX = d["PixelSizeX"]
-        PixelSizeY = d["PixelSizeY"]
-        assert PixelSizeX == PixelSizeY, "Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})"
+        PixelSizeX = d['PixelSizeX']
+        PixelSizeY = d['PixelSizeY']
+        assert PixelSizeX == PixelSizeY, 'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
 
-        if mode == "diff":
+        if mode == 'diff':
             pixelsize = np.sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
         else:
             pixelsize = PixelSizeX
@@ -47,21 +47,21 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     return calib_range
 
 
-def choice_prompt(choices: list = [], default=None, question: str = "Which one?"):
+def choice_prompt(choices: list = [], default=None, question: str = 'Which one?'):
     """Simple cli to prompt for a list of choices."""
     print()
 
     try:
         default_choice = choices.index(default)
-        suffix = f" [{default}]"
+        suffix = f' [{default}]'
     except ValueError:
         default_choice = 0
-        suffix = f""
+        suffix = f''
 
     for i, choice in enumerate(choices):
-        print(f"{i+1: 2d}: {choice}")
+        print(f'{i+1: 2d}: {choice}')
 
-    q = input(f"\n{question}{suffix} >> ")
+    q = input(f'\n{question}{suffix} >> ')
     if not q:
         q = default_choice
     else:
@@ -81,25 +81,25 @@ def main():
 
     # Connect to microscope
 
-    tem_name = choice_prompt(choices="jeol fei simulate".split(),
-                             default="simulate",
-                             question="Which microscope can I connect to?")
+    tem_name = choice_prompt(choices='jeol fei simulate'.split(),
+                             default='simulate',
+                             question='Which microscope can I connect to?')
 
     # Connect to camera
 
-    cam_name = choice_prompt(choices="None gatan tvips simulate".split(),
-                             default="simulate",
-                             question="Which camera can I connect to?")
+    cam_name = choice_prompt(choices='None gatan tvips simulate'.split(),
+                             default='simulate',
+                             question='Which camera can I connect to?')
 
     # Fetch camera config
 
     drc = Path(__file__).parent
-    choices = list(drc.glob("camera/*.yaml"))
+    choices = list(drc.glob('camera/*.yaml'))
     choices.append(None)
 
     cam_config = choice_prompt(choices=choices,
                                default=None,
-                               question="Which camera type do you want to use (select closest one and modify if needed)?")
+                               question='Which camera type do you want to use (select closest one and modify if needed)?')
 
     # Instantiate microscope / camera connection
 
@@ -114,7 +114,7 @@ def main():
     try:
         ranges = ctrl.magnification.get_ranges()
     except BaseException:
-        print("Warning: Cannot access magnification ranges")
+        print('Warning: Cannot access magnification ranges')
         ranges = {}
 
     ht = ctrl.high_tension  # in V
@@ -122,55 +122,55 @@ def main():
     wavelength = relativistic_wavelength(ht)
 
     tem_config = {}
-    tem_config["name"] = tem_name
-    tem_config["wavelength"] = wavelength
+    tem_config['name'] = tem_name
+    tem_config['wavelength'] = wavelength
 
     for mode, rng in ranges.items():
-        tem_config["range_" + mode] = rng
+        tem_config['range_' + mode] = rng
 
     calib_config = {}
-    calib_config["name"] = tem_name
+    calib_config['name'] = tem_name
 
     # Find magnification ranges
 
     for mode, rng in ranges.items():
-        if cam_name == "tvips":
+        if cam_name == 'tvips':
             pixelsizes = get_tvips_calibs(ctrl=ctrl, rng=rng, mode=mode, wavelength=wavelength)
         else:
             pixelsizes = {r: 1.0 for r in rng}
-        calib_config["pixelsize_" + mode] = pixelsizes
+        calib_config['pixelsize_' + mode] = pixelsizes
 
         stagematrices = {r: [1, 0, 0, 1] for r in rng}
 
-        calib_config["stagematrix_" + mode] = stagematrices
+        calib_config['stagematrix_' + mode] = stagematrices
 
     # Write/copy configs
 
-    tem_config_fn = f"{tem_name}_tem.yaml"
-    calib_config_fn = f"{tem_name}_calib.yaml"
+    tem_config_fn = f'{tem_name}_tem.yaml'
+    calib_config_fn = f'{tem_name}_calib.yaml'
     if cam_config:
-        cam_config_fn = f"{cam_name}_cam.yaml"
+        cam_config_fn = f'{cam_name}_cam.yaml'
         shutil.copyfile(cam_config, cam_config_fn)
 
-    yaml.dump(tem_config, open(tem_config_fn, "w"), sort_keys=False)
-    yaml.dump(calib_config, open(calib_config_fn, "w"), sort_keys=False)
+    yaml.dump(tem_config, open(tem_config_fn, 'w'), sort_keys=False)
+    yaml.dump(calib_config, open(calib_config_fn, 'w'), sort_keys=False)
 
     print()
-    print(f"Wrote files config files:")
-    print(f"    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`")
-    print(f"    Copy {calib_config_fn} -> `{config.config_drc / calib_config_fn}`")
+    print(f'Wrote files config files:')
+    print(f'    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`')
+    print(f'    Copy {calib_config_fn} -> `{config.config_drc / calib_config_fn}`')
     if cam_config:
-        print(f"    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`")
+        print(f'    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`')
     print()
     print(f"In `{config.config_drc / 'global.yaml'}`:")
-    print(f"    microscope: {tem_name}_tem")
-    print(f"    calibration: {tem_name}_calib")
+    print(f'    microscope: {tem_name}_tem')
+    print(f'    calibration: {tem_name}_calib')
     if cam_config:
-        print(f"    camera: {cam_name}_cam")
+        print(f'    camera: {cam_name}_cam')
     print()
-    print(f"Todo: Check and update the pixelsizes in `{calib_config_fn}`")
-    print("    In real space, pixelsize in nm")
-    print("    In reciprocal space, pixelsize in px/Angstrom")
+    print(f'Todo: Check and update the pixelsizes in `{calib_config_fn}`')
+    print('    In real space, pixelsize in nm')
+    print('    In reciprocal space, pixelsize in px/Angstrom')
 
 
 if __name__ == '__main__':

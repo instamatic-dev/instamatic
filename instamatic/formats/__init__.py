@@ -21,23 +21,23 @@ from .xdscbf import write as write_cbf
 with warnings.catch_warnings():
     # TODO: remove me later
     # Catch annoying futurewarning on import
-    warnings.simplefilter("ignore")
+    warnings.simplefilter('ignore')
     import h5py
 
 
 def read_image(fname: str) -> (np.array, dict):
     """Guess filetype by extension."""
     ext = Path(fname).suffix.lower()
-    if ext in (".tif", ".tiff"):
+    if ext in ('.tif', '.tiff'):
         img, h = read_tiff(fname)
-    elif ext in (".h5", ".hdf5"):
+    elif ext in ('.h5', '.hdf5'):
         img, h = read_hdf5(fname)
-    elif ext in (".img", ".smv"):
+    elif ext in ('.img', '.smv'):
         img, h = read_adsc(fname)
-    elif ext in (".mrc"):
+    elif ext in ('.mrc'):
         img, h = read_mrc(fname)
     else:
-        raise OSError(f"Cannot open file {fname}, unknown extension: {ext}")
+        raise OSError(f'Cannot open file {fname}, unknown extension: {ext}')
     return img, h
 
 
@@ -55,12 +55,12 @@ def write_tiff(fname: str, data, header: dict = None):
     if isinstance(header, dict):
         header = yaml.dump(header)
     if not header:
-        header = ""
+        header = ''
 
-    fname = Path(fname).with_suffix(".tiff")
+    fname = Path(fname).with_suffix('.tiff')
 
     with tifffile.TiffWriter(fname) as f:
-        f.save(data=data, software="instamatic", description=header)
+        f.save(data=data, software='instamatic', description=header)
 
 
 def read_tiff(fname: str) -> (np.array, dict):
@@ -79,7 +79,7 @@ def read_tiff(fname: str) -> (np.array, dict):
     img = page.asarray()
 
     if page.software == 'instamatic':
-        header = yaml.load(page.tags["ImageDescription"].value, Loader=yaml.Loader)
+        header = yaml.load(page.tags['ImageDescription'].value, Loader=yaml.Loader)
     elif tiff.is_tvips:
         header = tiff.tvips_metadata
     else:
@@ -99,10 +99,10 @@ def write_hdf5(fname: str, data, header: dict = None):
         dictionary containing the metadata that should be saved
         key/value pairs are stored as attributes on the data
     """
-    fname = Path(fname).with_suffix(".h5")
+    fname = Path(fname).with_suffix('.h5')
 
-    f = h5py.File(fname, "w")
-    h5data = f.create_dataset("data", data=data)
+    f = h5py.File(fname, 'w')
+    h5data = f.create_dataset('data', data=data)
     if header:
         h5data.attrs.update(header)
     f.close()
@@ -122,9 +122,9 @@ def read_hdf5(fname: str) -> (np.array, dict):
         raise FileNotFoundError(f"No such file: '{fname}'")
 
     f = h5py.File(fname)
-    return np.array(f["data"]), dict(f["data"].attrs)
+    return np.array(f['data']), dict(f['data'].attrs)
 
 
 def read_cbf(fname: str):
     """CBF reader not implemented."""
-    raise NotImplementedError("CBF reader not implemented.")
+    raise NotImplementedError('CBF reader not implemented.')

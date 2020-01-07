@@ -15,25 +15,25 @@ def initialize_in_appData():
     %appdata%/instamatic.
     """
     src = Path(__file__).parent
-    dst = Path(os.environ["AppData"]) / "instamatic"
+    dst = Path(os.environ['AppData']) / 'instamatic'
     dst.mkdir(exist_ok=True, parents=True)
 
-    print(f"No config directory found, creating new one in {dst}")
+    print(f'No config directory found, creating new one in {dst}')
 
-    config_drc = dst / "config"
-    for sub_drc in ("microscope", "calibration", "camera"):
+    config_drc = dst / 'config'
+    for sub_drc in ('microscope', 'calibration', 'camera'):
         shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
-    shutil.copy(src / "global.yaml", config_drc / "global.yaml")
+    shutil.copy(src / 'global.yaml', config_drc / 'global.yaml')
 
-    os.mkdir(dst / "logs")
+    os.mkdir(dst / 'logs')
 
-    for sub_drc in ("scripts", "alignments"):
+    for sub_drc in ('scripts', 'alignments'):
         shutil.copytree(src / sub_drc, dst / sub_drc)
 
-    print("Configuration directory has been initialized.")
-    print(f"Directory: {dst}")
-    print("Please review and restart the program.")
+    print('Configuration directory has been initialized.')
+    print(f'Directory: {dst}')
+    print('Please review and restart the program.')
     os.startfile(dst)
     sys.exit()
 
@@ -41,11 +41,11 @@ def initialize_in_appData():
 def get_base_drc():
     """Figure out where configuration files for instamatic are stored."""
     try:
-        search = Path(os.environ["instamatic"])  # if installed in portable way
-        logger.debug("Search directory:", search)
+        search = Path(os.environ['instamatic'])  # if installed in portable way
+        logger.debug('Search directory:', search)
     except KeyError:
-        search = Path(os.environ["AppData"]) / "instamatic"
-        logger.debug("Search directory:", search)
+        search = Path(os.environ['AppData']) / 'instamatic'
+        logger.debug('Search directory:', search)
 
     if search.exists():
         return search
@@ -59,7 +59,7 @@ def get_alignments() -> dict:
 
     Use `ctrl.from_dict` to load the alignments
     """
-    fns = alignments_drc.glob("*.yaml")
+    fns = alignments_drc.glob('*.yaml')
     alignments = {fn.name: yaml.full_load(open(fn)) for fn in fns}
     return alignments
 
@@ -80,7 +80,7 @@ class ConfigObject:
     @classmethod
     def from_file(cls, path):
         """Read configuration from yaml file, returns namespace."""
-        return cls(yaml.load(open(path, "r"), Loader=yaml.Loader))
+        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader))
 
 
 def load(microscope_name=None, calibration_name=None, camera_name=None):
@@ -93,7 +93,7 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     global camera
     global cfg
 
-    cfg = ConfigObject.from_file(base_drc / "config" / "global.yaml")
+    cfg = ConfigObject.from_file(base_drc / 'config' / 'global.yaml')
 
     if not microscope_name:
         microscope_name = cfg.microscope
@@ -104,9 +104,9 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
 
     # print(f"Microscope->{microscope_name}; Calibration->{calibration_name}; Camera->{camera_name}")
 
-    microscope_cfg = ConfigObject.from_file(base_drc / "config" / "microscope" / f"{microscope_name}.yaml")
-    calibration_cfg = ConfigObject.from_file(base_drc / "config" / "calibration" / f"{calibration_name}.yaml")
-    camera_cfg = ConfigObject.from_file(base_drc / "config" / "camera" / f"{camera_name}.yaml")
+    microscope_cfg = ConfigObject.from_file(base_drc / 'config' / 'microscope' / f'{microscope_name}.yaml')
+    calibration_cfg = ConfigObject.from_file(base_drc / 'config' / 'calibration' / f'{calibration_name}.yaml')
+    camera_cfg = ConfigObject.from_file(base_drc / 'config' / 'camera' / f'{camera_name}.yaml')
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg
@@ -120,23 +120,23 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
 
     cfg.data_directory = Path(cfg.data_directory)
 
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    cfg.work_directory = cfg.data_directory / f"{today}"
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    cfg.work_directory = cfg.data_directory / f'{today}'
 
 
 base_drc = get_base_drc()
-config_drc = base_drc / "config"
+config_drc = base_drc / 'config'
 
-assert config_drc.exists(), f"Configuration directory `{config_drc}` does not exist."
+assert config_drc.exists(), f'Configuration directory `{config_drc}` does not exist.'
 
-scripts_drc = base_drc / "scripts"
-logs_drc = base_drc / "logs"
-alignments_drc = base_drc / "alignments"
+scripts_drc = base_drc / 'scripts'
+logs_drc = base_drc / 'logs'
+alignments_drc = base_drc / 'alignments'
 
 scripts_drc.mkdir(exist_ok=True)
 logs_drc.mkdir(exist_ok=True)
 
-print(f"Config directory: {config_drc}")
+print(f'Config directory: {config_drc}')
 
 cfg = None
 microscope = None

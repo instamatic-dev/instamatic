@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class CameraGatan2:
     """docstring for CameraGatan2."""
 
-    def __init__(self, interface: str = "gatan2"):
+    def __init__(self, interface: str = 'gatan2'):
         """Initialize camera module."""
         super().__init__()
 
@@ -26,7 +26,7 @@ class CameraGatan2:
 
         self.load_defaults()
 
-        msg = f"Camera `{self.getCameraName()}` ({self.name}) initialized"
+        msg = f'Camera `{self.getCameraName()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
 
@@ -86,9 +86,9 @@ class CameraGatan2:
         path = Path(path)
         i = 0
 
-        print(f"Wrote {i+1} images to {path}")
+        print(f'Wrote {i+1} images to {path}')
 
-    def getImage(self, **kwargs) -> "np.array":
+    def getImage(self, **kwargs) -> 'np.array':
         """Acquire image through EMMENU and return data as np array."""
         raise NotImplementedError
 
@@ -100,19 +100,19 @@ class CameraGatan2:
         self.reset_record_vars()
 
         while True:
-            ready_for_acquire = self.get_tag("ready_for_acquire")
+            ready_for_acquire = self.get_tag('ready_for_acquire')
             if ready_for_acquire:
                 break
             time.sleep(0.5)
 
-        self.set_tag("ready_for_acquire", 0)
+        self.set_tag('ready_for_acquire', 0)
 
     def reset_record_vars(self):
-        self.set_tag("start_acquire", 0)
-        self.set_tag("stop_acquire", 0)
-        self.set_tag("ready_for_acquire", 0)
-        self.set_tag("prepare_acquire", 1)
-        self.set_tag("finish_acquire", 0)
+        self.set_tag('start_acquire', 0)
+        self.set_tag('stop_acquire', 0)
+        self.set_tag('ready_for_acquire', 0)
+        self.set_tag('prepare_acquire', 1)
+        self.set_tag('finish_acquire', 0)
 
     def start_record(self) -> None:
         cmd = 'SetPersistentNumberNote("start_acquire", 1)'
@@ -138,7 +138,7 @@ class CameraGatan2:
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
-        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released"
+        msg = f'Connection to camera `{self.getCameraName()}` ({self.name}) released'
         # print(msg)
         logger.info(msg)
 
@@ -173,8 +173,8 @@ class CameraGatan2:
         """Readout tag structure with metadata from last cRED experiment."""
         d = {}
 
-        keys = ("nframes", "bin_x", "bin_y", "cam_res_x", "cam_res_y", "image_res_x", "image_res_y", "pixelsize_x", "pixelsize_y",
-                "phys_pixelsize_x", "phys_pixelsize_y", "total_time", "exposure")
+        keys = ('nframes', 'bin_x', 'bin_y', 'cam_res_x', 'cam_res_y', 'image_res_x', 'image_res_y', 'pixelsize_x', 'pixelsize_y',
+                'phys_pixelsize_x', 'phys_pixelsize_y', 'total_time', 'exposure')
 
         for key in keys:
             value = self.get_tag(key, delete=True)

@@ -13,16 +13,16 @@ from instamatic.calibrate.filenames import CALIB_DIRECTBEAM
 
 
 PARAMS = {
-    "flatfield": "C:/instamatic/flatfield.tiff",
-    "diff_binsize": 1,
-    "diff_brightness": 39422,
-    "diff_exposure": 0.1,
-    "diff_spotsize": 4,
-    "image_binsize": 1,
-    "image_exposure": 0.5,
-    "image_spotsize": 4,
-    "image_threshold": 10,
-    "crystal_spread": 0.6
+    'flatfield': 'C:/instamatic/flatfield.tiff',
+    'diff_binsize': 1,
+    'diff_brightness': 39422,
+    'diff_exposure': 0.1,
+    'diff_spotsize': 4,
+    'image_binsize': 1,
+    'image_exposure': 0.5,
+    'image_spotsize': 4,
+    'image_threshold': 10,
+    'crystal_spread': 0.6,
 }
 
 
@@ -51,59 +51,59 @@ class ExperimentalSED(LabelFrame):
     """docstring for ExperimentalSED."""
 
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Serial electron diffraction")
+        LabelFrame.__init__(self, parent, text='Serial electron diffraction')
         self.parent = parent
 
-        self.calib_path = Path("")
+        self.calib_path = Path('')
 
         self.init_vars()
 
         frame = Frame(self)
 
-        Label(frame, text="Scan area (um)").grid(row=5, column=0, sticky="W")
+        Label(frame, text='Scan area (um)').grid(row=5, column=0, sticky='W')
         self.e_start_x = Entry(frame, width=20, textvariable=self.var_scan_radius)
         self.e_start_x.grid(row=5, column=1, padx=10)
 
-        Label(frame, text="Exp. time image:").grid(row=6, column=0, sticky="W")
+        Label(frame, text='Exp. time image:').grid(row=6, column=0, sticky='W')
         self.e_exp_time_image = Entry(frame, width=20, textvariable=self.var_image_exposure)
         self.e_exp_time_image.grid(row=6, column=1, padx=10)
 
-        Label(frame, text="Exp. time diff:").grid(row=7, column=0, sticky="W")
+        Label(frame, text='Exp. time diff:').grid(row=7, column=0, sticky='W')
         self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_diff_exposure)
         self.e_exp_time_diff.grid(row=7, column=1, padx=10)
 
-        Label(frame, text="Brightness:").grid(row=6, column=2, sticky="W")
+        Label(frame, text='Brightness:').grid(row=6, column=2, sticky='W')
         self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_diff_brightness)
         self.e_exp_time_diff.grid(row=6, column=3, padx=10)
 
-        Label(frame, text="Spot size:").grid(row=7, column=2, sticky="W")
+        Label(frame, text='Spot size:').grid(row=7, column=2, sticky='W')
         self.e_exp_time_diff = Entry(frame, width=20, textvariable=self.var_image_spotsize)
         self.e_exp_time_diff.grid(row=7, column=3, padx=10)
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(2, weight=1)
 
-        frame.pack(side="top", fill="x", padx=10, pady=10)
+        frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        self.ShowCalibBeamshift = Button(frame, text="Show calib beamshift", command=self.show_calib_beamshift, state=NORMAL)
-        self.ShowCalibBeamshift.grid(row=1, column=0, sticky="EW")
+        self.ShowCalibBeamshift = Button(frame, text='Show calib beamshift', command=self.show_calib_beamshift, state=NORMAL)
+        self.ShowCalibBeamshift.grid(row=1, column=0, sticky='EW')
 
-        self.ShowCalibDirectBeam1 = Button(frame, text="Show calib directbeam1", command=self.show_calib_directbeam1, state=NORMAL)
-        self.ShowCalibDirectBeam1.grid(row=1, column=1, sticky="EW")
+        self.ShowCalibDirectBeam1 = Button(frame, text='Show calib directbeam1', command=self.show_calib_directbeam1, state=NORMAL)
+        self.ShowCalibDirectBeam1.grid(row=1, column=1, sticky='EW')
 
-        self.ShowCalibDirectBeam2 = Button(frame, text="Show calib directbeam2", command=self.show_calib_directbeam2, state=NORMAL)
-        self.ShowCalibDirectBeam2.grid(row=1, column=2, sticky="EW")
+        self.ShowCalibDirectBeam2 = Button(frame, text='Show calib directbeam2', command=self.show_calib_directbeam2, state=NORMAL)
+        self.ShowCalibDirectBeam2.grid(row=1, column=2, sticky='EW')
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
-        frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+        frame.pack(side='top', fill='both', expand=True, padx=10, pady=10)
 
         frame = Frame(self)
 
-        self.CollectionButton = Button(frame, text="Start Collection", command=self.start_collection, state=NORMAL)
-        self.CollectionButton.pack(side="bottom", fill="both")
+        self.CollectionButton = Button(frame, text='Start Collection', command=self.start_collection, state=NORMAL)
+        self.CollectionButton.pack(side='bottom', fill='both')
 
-        frame.pack(side="bottom", fill="both", padx=10, pady=10)
+        frame.pack(side='bottom', fill='both', padx=10, pady=10)
 
     def init_vars(self):
         self.var_scan_radius = DoubleVar(value=100)
@@ -117,10 +117,10 @@ class ExperimentalSED(LabelFrame):
         self.q = q
 
     def start_collection(self):
-        okay = tkinter.messagebox.askokcancel("Start experiment", message3, icon='warning')
+        okay = tkinter.messagebox.askokcancel('Start experiment', message3, icon='warning')
         if okay:
             params = self.get_params()
-            self.q.put(("sed", params))
+            self.q.put(('sed', params))
             self.triggerEvent.set()
 
     def show_calib_beamshift(self):
@@ -141,7 +141,7 @@ class ExperimentalSED(LabelFrame):
         except OSError as e:
             print(e)
         else:
-            c.plot("DiffShift")
+            c.plot('DiffShift')
 
     def show_calib_directbeam2(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
@@ -151,53 +151,53 @@ class ExperimentalSED(LabelFrame):
         except OSError as e:
             print(e)
         else:
-            c.plot("BeamShift")
+            c.plot('BeamShift')
 
     def get_params(self):
-        params = {"image_exposure": self.var_image_exposure.get(),
-                  "image_spotsize": self.var_image_spotsize.get(),
-                  "diff_exposure": self.var_diff_exposure.get(),
-                  "diff_spotsize": self.var_image_spotsize.get(),
-                  "diff_brightness": self.var_diff_brightness.get(),
-                  "scan_radius": self.var_scan_radius.get()}
+        params = {'image_exposure': self.var_image_exposure.get(),
+                  'image_spotsize': self.var_image_spotsize.get(),
+                  'diff_exposure': self.var_diff_exposure.get(),
+                  'diff_spotsize': self.var_image_spotsize.get(),
+                  'diff_brightness': self.var_diff_brightness.get(),
+                  'scan_radius': self.var_scan_radius.get()}
         return params
 
 
 def acquire_data_SED(controller, **kwargs):
-    controller.log.info("Start serialED experiment")
+    controller.log.info('Start serialED experiment')
     from instamatic.experiments import serialED
 
     workdir = controller.module_io.get_working_directory()
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
 
-    params = workdir / "params.json"
+    params = workdir / 'params.json'
     try:
-        params = json.load(open(params, "r"))
+        params = json.load(open(params, 'r'))
     except OSError:
         params = PARAMS
 
     params.update(kwargs)
-    params["flatfield"] = controller.module_io.get_flatfield()
+    params['flatfield'] = controller.module_io.get_flatfield()
 
-    scan_radius = kwargs["scan_radius"]
+    scan_radius = kwargs['scan_radius']
 
-    controller.app.get_module("sed").calib_path = expdir / "calib"
+    controller.app.get_module('sed').calib_path = expdir / 'calib'
 
     exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log,
                               scan_radius=scan_radius, begin_here=True)
     exp.report_status()
     exp.run()
 
-    controller.log.info("Finish serialED experiment")
+    controller.log.info('Finish serialED experiment')
 
 
-module = BaseModule("sed", "serialED", True, ExperimentalSED, commands={
-    "sed": acquire_data_SED
+module = BaseModule('sed', 'serialED', True, ExperimentalSED, commands={
+    'sed': acquire_data_SED,
 })
 
 
 if __name__ == '__main__':
     root = Tk()
-    ExperimentalSED(root).pack(side="top", fill="both", expand=True)
+    ExperimentalSED(root).pack(side='top', fill='both', expand=True)
     root.mainloop()

@@ -32,7 +32,7 @@ def print_subranges(data, n=100, step=50):
         pos = np.nanmean(r, axis=0).tolist()
         std = np.nanstd(r, axis=0).tolist()
 
-        print(f"{i:4d} - {j:4d}    {pos[0]:8.2f}  {pos[1]:8.2f}   {std[0]:6.2f}  {std[1]:6.2f}   {vect[0]:6.2f}  {vect[1]:6.2f}")
+        print(f'{i:4d} - {j:4d}    {pos[0]:8.2f}  {pos[1]:8.2f}   {std[0]:6.2f}  {std[1]:6.2f}   {vect[0]:6.2f}  {vect[1]:6.2f}')
 
         if i + n >= len(data):
             break
@@ -86,11 +86,11 @@ if __name__ == '__main__':
     except IndexError:
         interval = None
 
-    if Path(filepat).suffix == ".npy":
+    if Path(filepat).suffix == '.npy':
         xy = np.load(filepat)
-    elif Path(filepat).suffix == ".txt":
+    elif Path(filepat).suffix == '.txt':
         xy = np.loadtxt(filepat)
-    elif Path(filepat).suffix == ".sc":
+    elif Path(filepat).suffix == '.sc':
         with open(filepat) as f:
             first = np.array([float(val) for val in f.readline().split()])
             xy = np.loadtxt(f, usecols=(1, 2))
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         centers = (find_beam_center(img, 10, m=50, kind=3) for img in imgs)
         xy = np.array(list(centers))
 
-        np.savetxt(Path(fns[0]).parents[0] / "beam_centers.txt", xy, fmt="%10.4f")
+        np.savetxt(Path(fns[0]).parents[0] / 'beam_centers.txt', xy, fmt='%10.4f')
 
     if interval:
         xy = insert_nan(xy, interval=10)
@@ -113,17 +113,17 @@ if __name__ == '__main__':
     xy[i] = np.NaN
 
     print()
-    print("                   mean            std dev             diff        ")
-    print("      Range           X         Y        X       Y        X       Y")
+    print('                   mean            std dev             diff        ')
+    print('      Range           X         Y        X       Y        X       Y')
     print_subranges(xy, n=len(xy))
-    print("")
+    print('')
     print_subranges(xy, n=50, step=50)
 
     drifts = get_drifts_per_scan_range(xy)
     if len(drifts) > 1:
         print()
-        print(f"Mean scan range beam drift: {drifts.mean():.4f} px")
-        print(f"(std: {drifts.std():.4f} | min: {drifts.min():.4f} | max: {drifts.max():.4f})")
+        print(f'Mean scan range beam drift: {drifts.mean():.4f} px')
+        print(f'(std: {drifts.std():.4f} | min: {drifts.min():.4f} | max: {drifts.max():.4f})')
 
     median_x, median_y = np.nanmedian(xy, axis=0)
     std_x, std_y = np.nanstd(xy, axis=0)
@@ -132,19 +132,19 @@ if __name__ == '__main__':
 
     f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=False)
 
-    ax1.set_title("Frame number vs. Position of direct beam")
+    ax1.set_title('Frame number vs. Position of direct beam')
 
-    ax1.plot([start, end], [median_x, median_x], c="C0", ls=":", label=f"Median(X)={median_x:.2f}, Std(X)={std_x:.2f}")
-    ax2.plot([start, end], [median_y, median_y], c="C1", ls=":", label=f"Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}")
+    ax1.plot([start, end], [median_x, median_x], c='C0', ls=':', label=f'Median(X)={median_x:.2f}, Std(X)={std_x:.2f}')
+    ax2.plot([start, end], [median_y, median_y], c='C1', ls=':', label=f'Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}')
 
     # plt.title("Frame number vs. Position of direct beam")
-    ax2.set_xlabel("Frame number")
+    ax2.set_xlabel('Frame number')
 
-    ax1.set_ylabel("Pixel number")
-    ax2.set_ylabel("Pixel number")
+    ax1.set_ylabel('Pixel number')
+    ax2.set_ylabel('Pixel number')
 
-    ax1.plot(xy[:, 0], c="C0")
-    ax2.plot(xy[:, 1], c="C1")
+    ax1.plot(xy[:, 0], c='C0')
+    ax2.plot(xy[:, 1], c='C1')
 
     m_x = median_x
     m_y = median_y

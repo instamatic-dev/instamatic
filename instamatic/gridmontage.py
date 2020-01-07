@@ -9,17 +9,17 @@ class GridMontage:
     def __init__(self, ctrl):
         super().__init__()
         self.ctrl = ctrl
-        self.direction = "updown"
+        self.direction = 'updown'
         self.zigzag = True
         self.flip = False
 
     @property
     def gridspec(self):
         gridspec = {
-            "gridshape": (self.nx, self.ny),
-            "direction": self.direction,
-            "zigzag": self.zigzag,
-            "flip": self.flip
+            'gridshape': (self.nx, self.ny),
+            'direction': self.direction,
+            'zigzag': self.zigzag,
+            'flip': self.flip,
         }
         return gridspec
 
@@ -27,7 +27,7 @@ class GridMontage:
               nx: int, ny: int,
               overlap: float = 0.1,
               stage_shift: tuple = (0.0, 0.0),
-              binning: int = None) -> "np.array":
+              binning: int = None) -> 'np.array':
         """Set up the experiment, run `GridMontage.start` to acquire data.
 
         Parameters
@@ -78,15 +78,15 @@ class GridMontage:
         self.magnification = self.ctrl.magnification.value
         self.spotsize = self.ctrl.spotsize
 
-        print("Setting up gridscan.")
-        print("  Mag:", self.magnification)
-        print("  Mode:", self.mode)
-        print("  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip:, {self.flip}")
-        print("  Overlap:", self.overlap)
+        print('Setting up gridscan.')
+        print('  Mag:', self.magnification)
+        print('  Mode:', self.mode)
+        print('  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip:, {self.flip}')
+        print('  Overlap:', self.overlap)
         print()
-        print("  Image shape:", res_x, res_y)
-        print("  Pixel center:", px_center)
-        print("  Spot size:", self.spotsize)
+        print('  Image shape:', res_x, res_y)
+        print('  Pixel center:', px_center)
+        print('  Spot size:', self.spotsize)
 
         # return coords
 
@@ -97,7 +97,7 @@ class GridMontage:
         buffer = []
 
         def pre_acquire(ctrl):
-            print("Attempt to eliminate backlash.")
+            print('Attempt to eliminate backlash.')
             ctrl.stage.eliminate_backlash_xy()
 
         def acquire(ctrl):
@@ -105,7 +105,7 @@ class GridMontage:
             buffer.append((img, h))
 
         def post_acquire(ctrl):
-            print("Post-acquire: done!")
+            print('Post-acquire: done!')
 
         ctrl.acquire_at_items(self.stagecoords,
                               acquire=acquire,
@@ -134,35 +134,35 @@ class GridMontage:
         from instamatic.io import get_new_work_subdirectory
 
         if not drc:
-            drc = get_new_work_subdirectory("montage")
+            drc = get_new_work_subdirectory('montage')
 
         fns = []
         for i, (img, h) in enumerate(self.buffer):
-            name = f"mont_{i:04d}.tiff"
+            name = f'mont_{i:04d}.tiff'
             write_tiff(drc / name, img, header=h)
             fns.append(name)
 
         d = {}
-        d["stagecoords"] = self.stagecoords.tolist()
-        d["stagematrix"] = self.stagematrix.tolist()
-        d["gridshape"] = [self.nx, self.ny]
-        d["direction"] = self.direction
-        d["zigzag"] = self.zigzag
-        d["overlap"] = self.overlap
-        d["filenames"] = fns
-        d["magnification"] = self.magnification
-        d["mode"] = self.mode
-        d["spotsize"] = self.spotsize
+        d['stagecoords'] = self.stagecoords.tolist()
+        d['stagematrix'] = self.stagematrix.tolist()
+        d['gridshape'] = [self.nx, self.ny]
+        d['direction'] = self.direction
+        d['zigzag'] = self.zigzag
+        d['overlap'] = self.overlap
+        d['filenames'] = fns
+        d['magnification'] = self.magnification
+        d['mode'] = self.mode
+        d['spotsize'] = self.spotsize
 
         import yaml
-        yaml.dump(d, stream=open(drc / "montage.yaml", "w"))
-        print(f" >> Wrote {len(self.stagecoords)} montage images to {drc}")
+        yaml.dump(d, stream=open(drc / 'montage.yaml', 'w'))
+        print(f' >> Wrote {len(self.stagecoords)} montage images to {drc}')
 
 
 if __name__ == '__main__':
     from instamatic import TEMController
     ctrl = TEMController.initialize()
-    ctrl.mode = "lowmag"
+    ctrl.mode = 'lowmag'
     ctrl.magnification.value = 100
 
     gm = GridMontage(ctrl)

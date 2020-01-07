@@ -29,7 +29,7 @@ class ImgConversionTVIPS(ImgConversion):
         self.headers = {}
         self.data = {}
 
-        self.smv_subdrc = "data"
+        self.smv_subdrc = 'data'
 
         while len(buffer) != 0:
             i, img, h = buffer.pop(0)
@@ -65,9 +65,9 @@ class ImgConversionTVIPS(ImgConversion):
         self.acquisition_time = acquisition_time
         self.rotation_speed = 0  # n/a
 
-        logger.debug(f"Primary beam at: {self.mean_beam_center}")
+        logger.debug(f'Primary beam at: {self.mean_beam_center}')
 
-        self.name = "TVIPS F416"
+        self.name = 'TVIPS F416'
 
         from .XDS_templateTVIPS import XDS_template
         self.XDS_template = XDS_template

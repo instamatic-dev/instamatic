@@ -27,7 +27,7 @@ def apply_transform_to_image(img, transform, center=None):
     shift = center - displacement
 
     # order=1; linear interpolation, anything higher may introduce artifacts
-    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode="constant", order=1, cval=0.0)
+    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode='constant', order=1, cval=0.0)
     return img_tf
 
 
@@ -95,7 +95,7 @@ def make_title(prop):
     azimuth = np.degrees(prop.orientation)
     amplitude = -1 + prop.major_axis_length / prop.minor_axis_length
     minlen, maxlen = prop.minor_axis_length, prop.major_axis_length
-    s = f"Azimuth: {azimuth:.2f}, amplitude: {amplitude:.2%}\nmin/max length: {minlen:.1f}, {maxlen:.1f}"
+    s = f'Azimuth: {azimuth:.2f}, amplitude: {amplitude:.2%}\nmin/max length: {minlen:.1f}, {maxlen:.1f}'
     return s
 
 
@@ -111,7 +111,7 @@ def get_sigma_interactive(img, sigma=20):
         prop = get_ring_props(edges)[0]
         ax.set_title(make_title(prop))
     except IndexError:
-        ax.set_title("No rings")
+        ax.set_title('No rings')
 
     im1 = ax.imshow(img, interpolation=None)
     im2 = ax.imshow(edges, alpha=0.5, interpolation=None)
@@ -134,7 +134,7 @@ def get_sigma_interactive(img, sigma=20):
             prop = get_ring_props(edges)[0]
             ax.set_title(make_title(prop))
         except IndexError:
-            ax.set_title("No rings")
+            ax.set_title('No rings')
         fig.canvas.draw()
 
     slsigma.on_changed(update_sigma)
@@ -149,12 +149,12 @@ def plot_props(edges, props):
     """Plot the ring structures."""
     plt.imshow(edges)
     for prop in props:
-        print("centroid = ({:.2f}, {:.2f})".format(*prop.centroid))
-        print(f"eccentricity = {prop.eccentricity:.2f}")
-        print(f"stretch azimuth = {np.degrees(prop.orientation):.2f} degrees")
-        print(f"stretch amplitude = {-1 + prop.major_axis_length/prop.minor_axis_length:.2%}")
-        print(f"min/max lengths = ({prop.minor_axis_length:.2f}, {prop.major_axis_length:.2f})")
-        print(f"avg. diameter = {prop.equivalent_diameter:.2f}")
+        print('centroid = ({:.2f}, {:.2f})'.format(*prop.centroid))
+        print(f'eccentricity = {prop.eccentricity:.2f}')
+        print(f'stretch azimuth = {np.degrees(prop.orientation):.2f} degrees')
+        print(f'stretch amplitude = {-1 + prop.major_axis_length/prop.minor_axis_length:.2%}')
+        print(f'min/max lengths = ({prop.minor_axis_length:.2f}, {prop.major_axis_length:.2f})')
+        print(f'avg. diameter = {prop.equivalent_diameter:.2f}')
         print()
         y0, x0 = prop.centroid
         orientation = prop.orientation
@@ -199,9 +199,9 @@ def get_ring_props(edges):
 
 def main_entry(sigma=None):
     if len(sys.argv) != 2:
-        print("Program to find microscope stretch amplitude/azimuth from a powder pattern")
+        print('Program to find microscope stretch amplitude/azimuth from a powder pattern')
         print()
-        print("Usage: python find_stretch_correction.py powder_pattern.tiff")
+        print('Usage: python find_stretch_correction.py powder_pattern.tiff')
         exit()
 
     fname = sys.argv[1]
@@ -209,7 +209,7 @@ def main_entry(sigma=None):
 
     if max(img.shape) > 1024:
         img, scale = autoscale(img, 1024)
-        print(f"Downsampling to {img.shape}")
+        print(f'Downsampling to {img.shape}')
 
     if not sigma:
         sigma = get_sigma_interactive(img)

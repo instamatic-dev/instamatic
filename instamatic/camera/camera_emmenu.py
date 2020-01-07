@@ -11,18 +11,18 @@ logger = logging.getLogger(__name__)
 
 
 type_dict = {
-    1: "GetDataByte",
-    2: "GetDataUShort",
-    3: "GetDataShort",
-    4: "GetDataLong",
-    5: "GetDataFloat",
-    6: "GetDataDouble",
-    7: "GetDataComplex",
-    8: "IMG_STRING",  # no method on EMImage
-    9: "GetDataBinary",
-    10: "GetDataRGB8",
-    11: "GetDataRGB16",
-    12: "IMG_EMVECTOR"  # no method on EMImage
+    1: 'GetDataByte',
+    2: 'GetDataUShort',
+    3: 'GetDataShort',
+    4: 'GetDataLong',
+    5: 'GetDataFloat',
+    6: 'GetDataDouble',
+    7: 'GetDataComplex',
+    8: 'IMG_STRING',  # no method on EMImage
+    9: 'GetDataBinary',
+    10: 'GetDataRGB8',
+    11: 'GetDataRGB16',
+    12: 'IMG_EMVECTOR',  # no method on EMImage
 }
 
 
@@ -30,7 +30,7 @@ def EMVector2dict(vec):
     """Convert EMVector object to a Python dictionary."""
     d = {}
     for k in dir(vec):
-        if k.startswith("_"):
+        if k.startswith('_'):
             continue
         v = getattr(vec, k)
         if isinstance(v, int):
@@ -50,7 +50,7 @@ def EMVector2dict(vec):
 class CameraEMMENU:
     """docstring for CameraEMMENU."""
 
-    def __init__(self, drc_name: str = "Diffraction", interface: str = "emmenu"):
+    def __init__(self, drc_name: str = 'Diffraction', interface: str = 'emmenu'):
         """Initialize camera module."""
         super().__init__()
 
@@ -61,7 +61,7 @@ class CameraEMMENU:
 
         self.name = interface
 
-        self._obj = comtypes.client.CreateObject("EMMENU4.EMMENUApplication.1", comtypes.CLSCTX_ALL)
+        self._obj = comtypes.client.CreateObject('EMMENU4.EMMENUApplication.1', comtypes.CLSCTX_ALL)
 
         self._recording = False
 
@@ -70,10 +70,10 @@ class CameraEMMENU:
 
         # hi-jack first viewport
         self._vp = self._obj.Viewports.Item(1)
-        self._vp.SetCaption("Instamatic viewport")  # 2.5 ms
+        self._vp.SetCaption('Instamatic viewport')  # 2.5 ms
         self._vp.FlapState = 2  # pull out the flap, because we can :-) [0, 1, 2]
 
-        self._obj.Option("ClearBufferOnDeleteImage")   # `Delete` -> Clear buffer (preferable)
+        self._obj.Option('ClearBufferOnDeleteImage')   # `Delete` -> Clear buffer (preferable)
         # other choices: DeleteBufferOnDeleteImage / Default
 
         # Image manager for managing image buffers (left panel)
@@ -91,12 +91,12 @@ class CameraEMMENU:
 
         # check if exists
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            if self.getEMMenuVersion().startswith("4."):
+            if self.getEMMenuVersion().startswith('4.'):
                 self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
             else:
                 # creating new subdirectories is bugged in EMMENU 5.0.9.0/5.0.10.0
                 # No work-around -> raise exception for now until it is fixed
-                raise ValueError(f"Directory `{drc_name}` does not exist in the EMMENU Image manager.")
+                raise ValueError(f'Directory `{drc_name}` does not exist in the EMMENU Image manager.')
 
         self.drc_name = drc_name
         self.drc_index = self._immgr.DirectoryHandleFromName(drc_name)
@@ -105,7 +105,7 @@ class CameraEMMENU:
 
         self.load_defaults()
 
-        msg = f"Camera `{self.getCameraName()}` ({self.name}) initialized"
+        msg = f'Camera `{self.getCameraName()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
 
@@ -121,15 +121,15 @@ class CameraEMMENU:
 
     def listConfigs(self) -> list:
         """List the configs from the Configuration Manager."""
-        print(f"Configurations for camera {self.name}")
+        print(f'Configurations for camera {self.name}')
         current = self._vp.Configuration
 
         lst = []
 
         for i, cfg in enumerate(self._obj.CameraConfigurations):
             is_selected = (current == cfg.Name)
-            end = " (selected)" if is_selected else ""
-            print(f"{i+1:2d} - {cfg.Name}{end}")
+            end = ' (selected)' if is_selected else ''
+            print(f'{i+1:2d} - {cfg.Name}{end}')
             lst.append(cfg.Name)
 
         return lst
@@ -152,51 +152,51 @@ class CameraEMMENU:
 
         if as_dict:
             d = {}
-            d["Name"] = cfg.Name  # str
-            d["CCDOffsetX"] = cfg.CCDOffsetX  # int
-            d["CCDOffsetY"] = cfg.CCDOffsetY  # int
-            d["DimensionX"] = cfg.DimensionX  # int
-            d["DimensionY"] = cfg.DimensionY  # int
-            d["BinningX"] = cfg.BinningX  # int
-            d["BinningY"] = cfg.BinningY  # int
-            d["CameraType"] = cfg.CameraType  # str
-            d["GainValue"] = cfg.GainValue  # float
-            d["SpeedValue"] = cfg.SpeedValue  # int
-            d["FlatMode"] = cfg.FlatMode  # int
-            d["FlatModeStr"] = ("Uncorrected", "Dark subtracted", None, "Gain corrected")[cfg.FlatMode]  # str, 2 undefined
-            d["PreExposureTime"] = cfg.PreExposureTime  # int
-            d["UsePreExposure"] = bool(cfg.UsePreExposure)
-            d["ReadoutMode"] = cfg.ReadoutMode  # int
-            d["ReadoutModeStr"] = (None, "Normal", "Frame transfer", "Rolling shutter")[cfg.ReadoutMode]  # str, 0 undefined
-            d["UseRollingAverage"] = bool(cfg.UseRollingAverage)
-            d["RollingAverageValue"] = cfg.RollingAverageValue  # int
-            d["UseRollingShutter"] = bool(cfg.UseRollingShutter)
-            d["UseScriptPreExposure"] = bool(cfg.UseScriptPreExposure)
-            d["UseScriptPostExposure"] = bool(cfg.UseScriptPostExposure)
-            d["UseScriptPreContinuous"] = bool(cfg.UseScriptPreContinuous)
-            d["UseScriptPostContinuous"] = bool(cfg.UseScriptPostContinuous)
-            d["ScriptPathPostExposure"] = cfg.ScriptPathPostExposure  # str
-            d["ScriptPathPreContinuous"] = cfg.ScriptPathPreContinuous  # str
-            d["ScriptPathPostContinuous"] = cfg.ScriptPathPostContinuous  # str
-            d["ScriptPathBeforeSeries"] = cfg.ScriptPathBeforeSeries  # str
-            d["ScriptPathWithinSeries"] = cfg.ScriptPathWithinSeries  # str
-            d["ScriptPathAfterSeries"] = cfg.ScriptPathAfterSeries  # str
-            d["SCXAmplifier"] = cfg.SCXAmplifier  # int
-            d["SCXAmplifierStr"] = ("Unknown", "Low noise", "High capacity")[cfg.SCXAmplifier]  # str
-            d["CenterOnChip"] = bool(cfg.CenterOnChip)
-            d["SeriesType"] = cfg.SeriesType  # int
-            d["SeriesTypeStr"] = ("Single image", "Delay series", "Script series")[cfg.SeriesType]  # str
-            d["SeriesNumberOfImages"] = cfg.SeriesNumberOfImages
-            d["SeriesDelay"] = cfg.SeriesDelay  # int
-            d["SeriesAlignImages"] = bool(cfg.SeriesAlignImages)
-            d["SeriesIntegrateImages"] = bool(cfg.SeriesIntegrateImages)
-            d["SeriesAverageImages"] = bool(cfg.SeriesAverageImages)
-            d["SeriesDiscardIndividualImages"] = bool(cfg.SeriesDiscardIndividualImages)
-            d["UseScriptBeforeSeries"] = bool(cfg.UseScriptBeforeSeries)
-            d["UseScriptWithinSeries"] = bool(cfg.UseScriptWithinSeries)
-            d["UseScriptAfterSeries"] = bool(cfg.UseScriptAfterSeries)
-            d["ShutterMode"] = cfg.ShutterMode  # int
-            d["ShutterModeStr"] = ("None", "SH", "BB", "SH/BB", "Dark/SH", "Dark/BB", "Dark/SH/BB")[cfg.ShutterMode]  # str
+            d['Name'] = cfg.Name  # str
+            d['CCDOffsetX'] = cfg.CCDOffsetX  # int
+            d['CCDOffsetY'] = cfg.CCDOffsetY  # int
+            d['DimensionX'] = cfg.DimensionX  # int
+            d['DimensionY'] = cfg.DimensionY  # int
+            d['BinningX'] = cfg.BinningX  # int
+            d['BinningY'] = cfg.BinningY  # int
+            d['CameraType'] = cfg.CameraType  # str
+            d['GainValue'] = cfg.GainValue  # float
+            d['SpeedValue'] = cfg.SpeedValue  # int
+            d['FlatMode'] = cfg.FlatMode  # int
+            d['FlatModeStr'] = ('Uncorrected', 'Dark subtracted', None, 'Gain corrected')[cfg.FlatMode]  # str, 2 undefined
+            d['PreExposureTime'] = cfg.PreExposureTime  # int
+            d['UsePreExposure'] = bool(cfg.UsePreExposure)
+            d['ReadoutMode'] = cfg.ReadoutMode  # int
+            d['ReadoutModeStr'] = (None, 'Normal', 'Frame transfer', 'Rolling shutter')[cfg.ReadoutMode]  # str, 0 undefined
+            d['UseRollingAverage'] = bool(cfg.UseRollingAverage)
+            d['RollingAverageValue'] = cfg.RollingAverageValue  # int
+            d['UseRollingShutter'] = bool(cfg.UseRollingShutter)
+            d['UseScriptPreExposure'] = bool(cfg.UseScriptPreExposure)
+            d['UseScriptPostExposure'] = bool(cfg.UseScriptPostExposure)
+            d['UseScriptPreContinuous'] = bool(cfg.UseScriptPreContinuous)
+            d['UseScriptPostContinuous'] = bool(cfg.UseScriptPostContinuous)
+            d['ScriptPathPostExposure'] = cfg.ScriptPathPostExposure  # str
+            d['ScriptPathPreContinuous'] = cfg.ScriptPathPreContinuous  # str
+            d['ScriptPathPostContinuous'] = cfg.ScriptPathPostContinuous  # str
+            d['ScriptPathBeforeSeries'] = cfg.ScriptPathBeforeSeries  # str
+            d['ScriptPathWithinSeries'] = cfg.ScriptPathWithinSeries  # str
+            d['ScriptPathAfterSeries'] = cfg.ScriptPathAfterSeries  # str
+            d['SCXAmplifier'] = cfg.SCXAmplifier  # int
+            d['SCXAmplifierStr'] = ('Unknown', 'Low noise', 'High capacity')[cfg.SCXAmplifier]  # str
+            d['CenterOnChip'] = bool(cfg.CenterOnChip)
+            d['SeriesType'] = cfg.SeriesType  # int
+            d['SeriesTypeStr'] = ('Single image', 'Delay series', 'Script series')[cfg.SeriesType]  # str
+            d['SeriesNumberOfImages'] = cfg.SeriesNumberOfImages
+            d['SeriesDelay'] = cfg.SeriesDelay  # int
+            d['SeriesAlignImages'] = bool(cfg.SeriesAlignImages)
+            d['SeriesIntegrateImages'] = bool(cfg.SeriesIntegrateImages)
+            d['SeriesAverageImages'] = bool(cfg.SeriesAverageImages)
+            d['SeriesDiscardIndividualImages'] = bool(cfg.SeriesDiscardIndividualImages)
+            d['UseScriptBeforeSeries'] = bool(cfg.UseScriptBeforeSeries)
+            d['UseScriptWithinSeries'] = bool(cfg.UseScriptWithinSeries)
+            d['UseScriptAfterSeries'] = bool(cfg.UseScriptAfterSeries)
+            d['ShutterMode'] = cfg.ShutterMode  # int
+            d['ShutterModeStr'] = ('None', 'SH', 'BB', 'SH/BB', 'Dark/SH', 'Dark/BB', 'Dark/SH/BB')[cfg.ShutterMode]  # str
             return d
         else:
             return cfg
@@ -205,7 +205,7 @@ class CameraEMMENU:
         """Select config by name."""
         cfgs = self.listConfigs()
         if config not in cfgs:
-            raise ValueError(f"No such config: {config} -> must be one of {cfgs}")
+            raise ValueError(f'No such config: {config} -> must be one of {cfgs}')
 
         raise NotImplementedError
 
@@ -214,19 +214,19 @@ class CameraEMMENU:
         cam = self._cam
 
         d = {}
-        d["RealSizeX"] = cam.RealSizeX  # int
-        d["RealSizeY"] = cam.RealSizeY  # int
-        d["MaximumSizeX"] = cam.MaximumSizeX  # int
-        d["MaximumSizeY"] = cam.MaximumSizeY  # int
-        d["NumberOfGains"] = cam.NumberOfGains  # int
-        d["GainValues"] = [cam.GainValue(val) for val in range(cam.NumberOfGains + 1)]
-        d["NumberOfSpeeds"] = cam.NumberOfSpeeds  # int
-        d["SpeedValues"] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds + 1)]
-        d["PixelSizeX"] = cam.PixelSizeX  # int
-        d["PixelSizeY"] = cam.PixelSizeY  # int
-        d["Dynamic"] = cam.Dynamic  # int
-        d["PostMag"] = cam.PostMag  # float
-        d["CamCGroup"] = cam.CamCGroup  # int
+        d['RealSizeX'] = cam.RealSizeX  # int
+        d['RealSizeY'] = cam.RealSizeY  # int
+        d['MaximumSizeX'] = cam.MaximumSizeX  # int
+        d['MaximumSizeY'] = cam.MaximumSizeY  # int
+        d['NumberOfGains'] = cam.NumberOfGains  # int
+        d['GainValues'] = [cam.GainValue(val) for val in range(cam.NumberOfGains + 1)]
+        d['NumberOfSpeeds'] = cam.NumberOfSpeeds  # int
+        d['SpeedValues'] = [cam.SpeedValue(val) for val in range(cam.NumberOfSpeeds + 1)]
+        d['PixelSizeX'] = cam.PixelSizeX  # int
+        d['PixelSizeY'] = cam.PixelSizeY  # int
+        d['Dynamic'] = cam.Dynamic  # int
+        d['PostMag'] = cam.PostMag  # float
+        d['CamCGroup'] = cam.CamCGroup  # int
         return d
 
     def getCameraType(self) -> str:
@@ -256,7 +256,7 @@ class CameraEMMENU:
         """List subdirectories of the top directory."""
         top_j = self._immgr.TopDirectory
         top_name = self._immgr.FullDirectoryName(top_j)
-        print(f"{top_name} ({top_j})")
+        print(f'{top_name} ({top_j})')
 
         drc_j = self._immgr.SubDirectory(top_j)
 
@@ -264,7 +264,7 @@ class CameraEMMENU:
 
         while drc_j:
             drc_name = self._immgr.FullDirectoryName(drc_j)
-            print(f"{drc_j} - {drc_name} ")
+            print(f'{drc_j} - {drc_name} ')
 
             d[drc_j] = drc_name
 
@@ -286,7 +286,7 @@ class CameraEMMENU:
                 self._emi.DeleteImage(p)
             except BaseException:
                 # sometimes EMMenu also loses track of image pointers...
-                print(f"Failed to delete buffer {i} ({p})")
+                print(f'Failed to delete buffer {i} ({p})')
 
     def deleteImageByIndex(self, img_index: int, drc_index: int = None) -> int:
         """Delete the image from EMMENU by its index."""
@@ -306,7 +306,7 @@ class CameraEMMENU:
 
         return p
 
-    def getImageDataByIndex(self, img_index: int, drc_index: int = None) -> "np.array":
+    def getImageDataByIndex(self, img_index: int, drc_index: int = None) -> 'np.array':
         """Grab data from the image manager by index.
 
         Return numpy 2D array
@@ -371,13 +371,13 @@ class CameraEMMENU:
         drc_index = self.drc_index
 
         if stop_index <= start_index:
-            raise IndexError(f"`stop_index`: {stop_index} >= `start_index`: {start_index}")
+            raise IndexError(f'`stop_index`: {stop_index} >= `start_index`: {start_index}')
 
         for i, image_index in enumerate(range(start_index, stop_index + 1)):
             p = self.getImageByIndex(image_index, drc_index)
 
-            fn = str(path / f"{i:04d}.tiff")
-            print(f"Image #{image_index} -> {fn}")
+            fn = str(path / f'{i:04d}.tiff')
+            print(f'Image #{image_index} -> {fn}')
 
             # TODO: wrap writeTiff in try/except
             # writeTiff causes vague error if image does not exist
@@ -388,9 +388,9 @@ class CameraEMMENU:
                 # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
                 self._emi.DeleteImage(p)  # also clears from buffer
 
-        print(f"Wrote {i+1} images to {path}")
+        print(f'Wrote {i+1} images to {path}')
 
-    def getImage(self, **kwargs) -> "np.array":
+    def getImage(self, **kwargs) -> 'np.array':
         """Acquire image through EMMENU and return data as np array."""
         self._vp.AcquireAndDisplayImage()
         i = self.get_image_index()
@@ -421,31 +421,31 @@ class CameraEMMENU:
 
     def stop_record(self) -> int:
         i = self.get_image_index()
-        print(f"Stop recording (Image index={i})")
+        print(f'Stop recording (Image index={i})')
         self._vp.StopRecorder()
         self._recording = False
         return i
 
     def start_record(self) -> int:
         i = self.get_image_index()
-        print(f"Start recording (Image index={i})")
+        print(f'Start recording (Image index={i})')
         self._vp.StartRecorder()
         self._recording = True
         return i
 
     def stop_liveview(self) -> None:
-        print("Stop live view")
+        print('Stop live view')
         self._vp.StopContinuous()
         self._recording = False
         # StopRecorder normally defaults to top directory
         self._vp.DirectoryHandle = self.drc_index
 
     def start_liveview(self, delay: float = 3.0) -> None:
-        print("Start live view")
+        print('Start live view')
         try:
             self._vp.StartContinuous()
         except comtypes.COMError as e:
-            print(f"{e.details[1]}: {e.details[0]}")
+            print(f'{e.details[1]}: {e.details[0]}')
         else:
             # sleep for a few seconds to ensure live view is running
             time.sleep(delay)
@@ -480,11 +480,11 @@ class CameraEMMENU:
         self.stop_liveview()
 
         self._vp.DirectoryHandle = self.top_drc_index
-        self._vp.SetCaption("Image")
+        self._vp.SetCaption('Image')
         self.set_image_index(0)
         # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
 
-        msg = f"Connection to camera `{self.getCameraName()}` ({self.name}) released"
+        msg = f'Connection to camera `{self.getCameraName()}` ({self.name}) released'
         # print(msg)
         logger.info(msg)
 

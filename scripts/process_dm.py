@@ -36,55 +36,55 @@ def relativistic_wavelength(voltage: float = 200):
     return round(wl * 1e10, 6)  # m -> Angstrom
 
 
-def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
+def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
     credlog = Path(credlog)
     drc = credlog.parent
 
-    image_fns = list(drc.glob("tiff/*.tif"))
+    image_fns = list(drc.glob('tiff/*.tif'))
 
     n = len(image_fns)
     if n == 0:
-        print(f"No files found matching `tiff/*.tif`")
+        print(f'No files found matching `tiff/*.tif`')
         exit()
     else:
         print(n)
 
     buffer = []
 
-    with open(credlog, "r") as f:
+    with open(credlog, 'r') as f:
         for line in f:
-            if line.startswith("Data Collection Time"):
-                timestamp = line.split(":", 1)[-1].strip()
-            if line.startswith("Camera length (mm):"):
+            if line.startswith('Data Collection Time'):
+                timestamp = line.split(':', 1)[-1].strip()
+            if line.startswith('Camera length (mm):'):
                 camera_length = float(line.split()[-1])
-            if line.startswith("Oscillation angle"):
+            if line.startswith('Oscillation angle'):
                 osc_angle = float(line.split()[-1])
-            if line.startswith("High tension (kV):"):
+            if line.startswith('High tension (kV):'):
                 high_tension = float(line.split()[-1])
-            if line.startswith("Starting angle"):
+            if line.startswith('Starting angle'):
                 start_angle = float(line.split()[-1])
-            if line.startswith("Ending angle"):
+            if line.startswith('Ending angle'):
                 end_angle = float(line.split()[-1])
-            if line.startswith("Rotation axis"):
+            if line.startswith('Rotation axis'):
                 rotation_axis = float(line.split()[-1])
-            if line.startswith("Acquisition time"):
+            if line.startswith('Acquisition time'):
                 acquisition_time = float(line.split()[-1])
-            if line.startswith("Exposure Time"):
+            if line.startswith('Exposure Time'):
                 exposure_time = float(line.split()[-1])
-            if line.startswith("Image pixelsize x/y (1/nm):"):
+            if line.startswith('Image pixelsize x/y (1/nm):'):
                 inp = line.split()
                 pixelsize = (float(inp[-2]), float(inp[-1]))
-            if line.startswith("Image physical pixelsize x/y (um):"):
+            if line.startswith('Image physical pixelsize x/y (um):'):
                 inp = line.split()
                 physical_pixelsize = (float(inp[-2]), float(inp[-1]))
-            if line.startswith("Binsize:"):
+            if line.startswith('Binsize:'):
                 binsize = float(line.split()[-1])
-            if line.startswith("Image resolution x/y (px):"):
+            if line.startswith('Image resolution x/y (px):'):
                 inp = line.split()
                 resolution = (int(inp[-2]), int(inp[-1]))
-            if line.startswith("Camera:"):
+            if line.startswith('Camera:'):
                 camera = line.split()[-1]
-            if line.startswith("Resolution:"):
+            if line.startswith('Resolution:'):
                 resolution = line.split()[-1]
 
     wavelength = relativistic_wavelength(high_tension)
@@ -99,23 +99,23 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
     # for themisZ/Oneview: -171.0; for 2100LaB6/Orius: 53.0; otherwise: 0.0
     rotation_axis = np.radians(rotation_axis)
 
-    print("timestamp:", timestamp)
-    print("Wavelength:", wavelength)
-    print("Camera:", camera)
-    print("Resolution (px):", resolution)
-    print("TEM Camera length (mm):", camera_length)
-    print("Pixelsize (1/Angstrom):", pixelsize)
-    print("Physical pixelsize (um):", physical_pixelsize)
-    print("Starting angle (deg.):", start_angle)
-    print("Ending angle (deg.):", end_angle)
-    print("Oscillation angle (deg./frame):", osc_angle)
-    print("Acquisition time (s/frame):", acquisition_time)
-    print("Rotation axis (rad.):", rotation_axis)
+    print('timestamp:', timestamp)
+    print('Wavelength:', wavelength)
+    print('Camera:', camera)
+    print('Resolution (px):', resolution)
+    print('TEM Camera length (mm):', camera_length)
+    print('Pixelsize (1/Angstrom):', pixelsize)
+    print('Physical pixelsize (um):', physical_pixelsize)
+    print('Starting angle (deg.):', start_angle)
+    print('Ending angle (deg.):', end_angle)
+    print('Oscillation angle (deg./frame):', osc_angle)
+    print('Acquisition time (s/frame):', acquisition_time)
+    print('Rotation axis (rad.):', rotation_axis)
     # print("Binsize:", binsize)
 
     def extract_image_number(s):
         p = Path(s)
-        return int(p.stem.split("_")[-1])
+        return int(p.stem.split('_')[-1])
 
     for i, fn in enumerate(image_fns):
         j = extract_image_number(fn)
@@ -125,7 +125,7 @@ def img_convert(credlog, tiff_path="tiff2", mrc_path="RED", smv_path="SMV"):
             # cast to 16 bit uint16
             img = (2**16 - 1) * (img - img.min()) / (img.max() - img.min())
 
-        h = {"ImageGetTime": timestamp, "ImageExposureTime": exposure_time}
+        h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
         buffer.append((j, img, h))
 
     img_conv = ImgConversion(buffer=buffer,
@@ -166,10 +166,10 @@ def main():
     try:
         credlog = sys.argv[1]
     except IndexError:
-        credlog = "cRED_log.txt"
+        credlog = 'cRED_log.txt'
 
-    if credlog == "all":
-        fns = Path(".").glob("**/cRED_log.txt")
+    if credlog == 'all':
+        fns = Path('.').glob('**/cRED_log.txt')
 
         for fn in fns:
             print(fn)

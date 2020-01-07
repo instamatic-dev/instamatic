@@ -13,7 +13,7 @@ from scipy import ndimage
 from instamatic import neural_network
 from instamatic.formats import *
 
-CMAP = "gray"  # "viridis", "gray"
+CMAP = 'gray'  # "viridis", "gray"
 
 ANGLE = -0.88 + np.pi / 2
 R = np.array([
@@ -24,21 +24,21 @@ R = np.array([
 def get_stage_coords(fns, return_ims=False):
     coords = []
     has_crystals = []
-    t = tqdm.tqdm(fns, desc="Parsing files")
+    t = tqdm.tqdm(fns, desc='Parsing files')
 
     imgs = []
 
     for fn in t:
         img, h = read_image(fn)
         try:
-            dx, dy = h["exp_hole_offset"]
-            cx, cy = h["exp_hole_center"]
+            dx, dy = h['exp_hole_offset']
+            cx, cy = h['exp_hole_center']
         except KeyError:
-            dx, dy = h["exp_scan_offset"]
-            cx, cy = h["exp_scan_center"]
+            dx, dy = h['exp_scan_offset']
+            cx, cy = h['exp_scan_center']
         coords.append((cx + dx, cy + dy))
 
-        has_crystals.append(len(h["exp_crystal_coords"]) > 0)
+        has_crystals.append(len(h['exp_crystal_coords']) > 0)
         if return_ims:
             img = ndimage.zoom(img, 0.0969)
             imgs.append(img)
@@ -56,7 +56,7 @@ def lst2colormap(lst):
     return colormap
 
 
-def run(filepat="images/image_*.tiff", results=None, stitch=False):
+def run(filepat='images/image_*.tiff', results=None, stitch=False):
     # use relpath to normalizes path
     fns = [Path(fn).absolute() for fn in glob.glob(filepat)]
 
@@ -64,31 +64,31 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
         sys.exit()
 
     if stitch:
-        coord_color = "none"
+        coord_color = 'none'
     else:
-        coord_color = "red"
-    picked_color = "blue"
+        coord_color = 'red'
+    picked_color = 'blue'
 
     if results:
         df, d = read_ycsv(results)
         df.index = df.index.map(os.path.relpath)
-        if isinstance(d["cell"], (tuple, list)):
-            pixelsize = d["experiment"]["pixelsize"]
-            indexer = IndexerMulti.from_cells(d["cell"], pixelsize=pixelsize, **d["projections"])
+        if isinstance(d['cell'], (tuple, list)):
+            pixelsize = d['experiment']['pixelsize']
+            indexer = IndexerMulti.from_cells(d['cell'], pixelsize=pixelsize, **d['projections'])
         else:
-            projector = Projector.from_parameters(thickness=d["projections"]["thickness"], **d["cell"])
-            indexer = Indexer.from_projector(projector, pixelsize=d["experiment"]["pixelsize"])
+            projector = Projector.from_parameters(thickness=d['projections']['thickness'], **d['cell'])
+            indexer = Indexer.from_projector(projector, pixelsize=d['experiment']['pixelsize'])
 
     coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
 
     fn = fns[0]
     img, h = read_image(fn)
-    imdim_x, imdim_y = np.array(h["ImageDimensions"]) / 2
+    imdim_x, imdim_y = np.array(h['ImageDimensions']) / 2
 
     fig = plt.figure()
     fig.canvas.set_window_title('instamatic.browser')
 
-    ax1 = plt.subplot(131, title="Stage map", aspect="equal")
+    ax1 = plt.subplot(131, title='Stage map', aspect='equal')
     # plt_coords, = ax1.plot(coords[:,0], coords[:,1], marker="+", picker=8, c=has_crystals)
 
     coords = np.dot(coords, R)
@@ -98,23 +98,23 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             sx, sy = coord
             ax1.imshow(mini_img, interpolation='bilinear', extent=[sx - imdim_x, sx + imdim_x, sy - imdim_y, sy + imdim_y], cmap=CMAP)
 
-    ax1.scatter(coords[has_crystals, 0], coords[has_crystals, 1], marker="o", facecolor=coord_color)
-    ax1.scatter(coords[:, 0], coords[:, 1], marker=".", color=coord_color, picker=8)
-    highlight1, = ax1.plot([], [], marker="o", color=picked_color)
+    ax1.scatter(coords[has_crystals, 0], coords[has_crystals, 1], marker='o', facecolor=coord_color)
+    ax1.scatter(coords[:, 0], coords[:, 1], marker='.', color=coord_color, picker=8)
+    highlight1, = ax1.plot([], [], marker='o', color=picked_color)
 
-    ax1.set_xlabel("Stage X")
-    ax1.set_ylabel("Stage Y")
+    ax1.set_xlabel('Stage X')
+    ax1.set_ylabel('Stage Y')
 
-    ax2 = plt.subplot(132, title=f"{fn}\nx={0}, y={0}")
+    ax2 = plt.subplot(132, title=f'{fn}\nx={0}, y={0}')
     im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
-    plt_crystals, = ax2.plot([], [], marker="+", color="red", mew=2, picker=8, lw=0)
-    highlight2, = ax2.plot([], [], marker="+", color="blue", mew=2)
+    plt_crystals, = ax2.plot([], [], marker='+', color='red', mew=2, picker=8, lw=0)
+    highlight2, = ax2.plot([], [], marker='+', color='blue', mew=2)
 
-    ax3 = plt.subplot(133, title="Diffraction pattern")
+    ax3 = plt.subplot(133, title='Diffraction pattern')
     im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
 
     class plt_diff:
-        center, = ax3.plot([], [], "o", color="red", lw=0)
+        center, = ax3.plot([], [], 'o', color='red', lw=0)
         data = None
 
     def onclick(event):
@@ -130,24 +130,24 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
             im2.set_data(img)
             im2.set_clim(vmax=np.percentile(img, 99.5))
 
-            stage_x, stage_y = h.get("exp_stage_position", (0, 0))
-            ax2.set_xlabel("x={stage_x:.0f} y={stage_y:.0f}")
+            stage_x, stage_y = h.get('exp_stage_position', (0, 0))
+            ax2.set_xlabel('x={stage_x:.0f} y={stage_y:.0f}')
             ax2.set_title(fn)
-            crystal_coords = np.array(h["exp_crystal_coords"])
+            crystal_coords = np.array(h['exp_crystal_coords'])
 
             if results:
-                crystal_fns = [fn.parents[1] / "data" / f"{fn.stem}_{i:04d}{fn.suffix}" for i in range(len(crystal_coords))]
+                crystal_fns = [fn.parents[1] / 'data' / f'{fn.stem}_{i:04d}{fn.suffix}' for i in range(len(crystal_coords))]
                 df.ix[crystal_fns]
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
                     try:
-                        phase, score = df.ix[crystal_fn, "phase"], df.ix[crystal_fn, "score"]
+                        phase, score = df.ix[crystal_fn, 'phase'], df.ix[crystal_fn, 'score']
 
                     except KeyError:  # if crystal_fn not in df.index
                         pass
                     else:
                         if score > 10:
-                            text = f" {phase}\n {score:.0f}"
+                            text = f' {phase}\n {score:.0f}'
                             ax2.text(coord[1], coord[0], text)
 
             if len(crystal_coords) > 0:
@@ -170,13 +170,13 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
 
         if axes == ax2:
             fn = Path(ax2.get_title())
-            fn_diff = fn.parents[1] / "data" / f"{fn.stem}_{ind:04d}{fn.suffix}"
+            fn_diff = fn.parents[1] / 'data' / f'{fn.stem}_{ind:04d}{fn.suffix}'
 
             img, h = read_image(fn_diff)
 
             img_processed = neural_network.preprocess(img.astype(np.float))
             quality = neural_network.predict(img_processed)
-            ax3.set_xlabel(f"Crystal quality: {quality:.2%}")
+            ax3.set_xlabel(f'Crystal quality: {quality:.2%}')
 
             im3.set_data(img)
             im3.set_clim(vmax=np.percentile(img, 99.5))
@@ -207,14 +207,14 @@ def run(filepat="images/image_*.tiff", results=None, stitch=False):
                     plt_diff.center.set_xdata(r.center_y)
                     plt_diff.center.set_ydata(r.center_x)
 
-                    plt_diff.data = ax3.scatter(j, i, c=shape_vector, marker="+")
+                    plt_diff.data = ax3.scatter(j, i, c=shape_vector, marker='+')
 
         if axes == ax3:
             pass
 
         fig.canvas.draw()
 
-    fig.canvas.mpl_connect("pick_event", onclick)
+    fig.canvas.mpl_connect('pick_event', onclick)
 
     plt.show()
 
@@ -228,27 +228,27 @@ Usage: instamatic.browser images/*.tiff -r results.csv
 
     parser = argparse.ArgumentParser(  # usage=usage,
         description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument("args",
-                        type=str, metavar="FILE", nargs="?",
-                        help="File pattern to image files")
+    parser.add_argument('args',
+                        type=str, metavar='FILE', nargs='?',
+                        help='File pattern to image files')
 
-    parser.add_argument("-s", "--stitch",
-                        action="store_true", dest="stitch",
-                        help="Stitch images together.")
+    parser.add_argument('-s', '--stitch',
+                        action='store_true', dest='stitch',
+                        help='Stitch images together.')
 
     parser.set_defaults(results=None,
-                        stitch=False
+                        stitch=False,
                         )
 
     options = parser.parse_args()
     arg = options.args
 
     if not arg:
-        if os.path.exists("images"):
-            arg = "images/*.h5"
+        if os.path.exists('images'):
+            arg = 'images/*.h5'
         else:
             parser.print_help()
             sys.exit()

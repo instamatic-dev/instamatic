@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class CameraSimu:
     """docstring for CameraSimu."""
 
-    def __init__(self, name="simulate"):
+    def __init__(self, name='simulate'):
         """Initialize camera module."""
         super().__init__()
 
@@ -21,7 +21,7 @@ class CameraSimu:
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
@@ -82,7 +82,7 @@ class CameraSimu:
         """Establish connection to the camera."""
         res = 1
         if res != 1:
-            raise RuntimeError(f"Could not establish camera connection to {self.name}")
+            raise RuntimeError(f'Could not establish camera connection to {self.name}')
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
@@ -93,13 +93,13 @@ class CameraSimu:
     # Mimic EMMENU API
 
     def getEMMenuVersion(self) -> str:
-        return "simu"
+        return 'simu'
 
     def getCameraType(self) -> str:
-        return "SimuType"
+        return 'SimuType'
 
     def getCurrentConfigName(self) -> str:
-        return "SimuCfg"
+        return 'SimuCfg'
 
     def set_autoincrement(self, value):
         self._autoincrement = value
@@ -120,7 +120,7 @@ class CameraSimu:
             n_images = int((t2 - t1) / self._exposure)
             new_index = self.get_image_index() + n_images
             self.set_image_index(new_index)
-            print("stop_record", t1, t2, self._exposure, new_index)
+            print('stop_record', t1, t2, self._exposure, new_index)
             self._start_record_time = -1
         else:
             pass

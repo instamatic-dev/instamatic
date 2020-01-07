@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 SYMBOLS = {}
 
 if platform.architecture()[0] == '32bit':
-    DLLPATH_SIMU = "CCDCOM2_x86_simulation.dll"
-    DLLPATH_GATAN = "CCDCOM2_x86_gatan.dll"
+    DLLPATH_SIMU = 'CCDCOM2_x86_simulation.dll'
+    DLLPATH_GATAN = 'CCDCOM2_x86_gatan.dll'
 
-    SYMBOLS["actual"] = {
+    SYMBOLS['actual'] = {
         'acquireImageNewFloat': 'acquireImageNewFloat',
         'acquireImageNewInt': 'acquireImageNewInt',
         'cameraCount': None,
@@ -36,9 +36,9 @@ if platform.architecture()[0] == '32bit':
         'CCDCOM2_release': 'CCDCOM2_release',
         'initCCDCOM': 'initCCDCOM',
         'isCameraInfoAvailable': 'isCameraInfoAvailable',
-        'releaseCCDCOM': 'releaseCCDCOM'
+        'releaseCCDCOM': 'releaseCCDCOM',
     }
-    SYMBOLS["simu"] = {
+    SYMBOLS['simu'] = {
         'acquireImageNewFloat': '?acquireImageNewFloat@@YAHHHHHHN_NPAPAMPAH2@Z',
         'acquireImageNewInt': '?acquireImageNewInt@@YAHHHHHPAH00HN_N@Z',
         'cameraCount': '?cameraCount@@YAHXZ',
@@ -47,13 +47,13 @@ if platform.architecture()[0] == '32bit':
         'CCDCOM2_release': '?CCDCOM2_release@@YAXPAM@Z',
         'initCCDCOM': '?initCCDCOM@@YAHH@Z',
         'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
-        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
+        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ',
     }
 else:
-    DLLPATH_SIMU = "CCDCOM2_x64_simulation.dll"
-    DLLPATH_GATAN = "CCDCOM2_x64_gatan.dll"
+    DLLPATH_SIMU = 'CCDCOM2_x64_simulation.dll'
+    DLLPATH_GATAN = 'CCDCOM2_x64_gatan.dll'
 
-    SYMBOLS["actual"] = {
+    SYMBOLS['actual'] = {
         'acquireImageNewFloat': '?acquireImageNewFloat@@YAHHHHHHN_NPEAPEAMPEAH2@Z',
         'acquireImageNewInt': '?acquireImageNewInt@@YAHHHHHPEAH00HN_N@Z',
         'cameraCount': '?cameraCount@@YAHXZ',
@@ -62,16 +62,16 @@ else:
         'CCDCOM2_release': '?CCDCOM2_release@@YAXPEAM@Z',
         'initCCDCOM': '?initCCDCOM@@YAHH@Z',
         'isCameraInfoAvailable': '?isCameraInfoAvailable@@YA_NXZ',
-        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ'
+        'releaseCCDCOM': '?releaseCCDCOM@@YAXXZ',
     }
 
-    SYMBOLS["simu"] = SYMBOLS["actual"]
+    SYMBOLS['simu'] = SYMBOLS['actual']
 
 
 class CameraDLL:
     """docstring for Camera."""
 
-    def __init__(self, name="gatan"):
+    def __init__(self, name='gatan'):
         """Initialize camera module.
 
         name:
@@ -82,14 +82,14 @@ class CameraDLL:
 
         cameradir = Path(__file__).parent
 
-        if name == "simulateDLL":
+        if name == 'simulateDLL':
             libpath = cameradir / DLLPATH_SIMU
-            symbols = SYMBOLS["simu"]
-        elif name == "gatan":
+            symbols = SYMBOLS['simu']
+        elif name == 'gatan':
             libpath = cameradir / DLLPATH_GATAN
-            symbols = SYMBOLS["actual"]
+            symbols = SYMBOLS['actual']
         else:
-            raise ValueError(f"No such camera: {name}")
+            raise ValueError(f'No such camera: {name}')
 
         self.name = name
 
@@ -97,7 +97,7 @@ class CameraDLL:
             lib = ctypes.cdll.LoadLibrary(str(libpath))
         except OSError as e:
             print(e)
-            raise RuntimeError(f"Cannot load DLL: {libpath}")
+            raise RuntimeError(f'Cannot load DLL: {libpath}')
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, symbols['acquireImageNewFloat'])
@@ -129,7 +129,7 @@ class CameraDLL:
 
         self.load_defaults()
 
-        msg = f"Camera {self.getName()} initialized"
+        msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
         # dim_x, dim_y = self.getDimensions()
@@ -160,15 +160,15 @@ class CameraDLL:
         if not binsize:
             binsize = self.default_binsize
 
-        xmin = kwargs.get("xmin", 0)
-        xmax = kwargs.get("xmax", self.dimensions[0])
-        ymin = kwargs.get("ymin", 0)
-        ymax = kwargs.get("ymax", self.dimensions[1])
-        showindm = kwargs.get("showindm", False)
+        xmin = kwargs.get('xmin', 0)
+        xmax = kwargs.get('xmax', self.dimensions[0])
+        ymin = kwargs.get('ymin', 0)
+        ymax = kwargs.get('ymax', self.dimensions[1])
+        showindm = kwargs.get('showindm', False)
 
         if binsize not in self.possible_binsizes:
             raise ValueError(
-                f"Cannot use binsize={binsize}..., should be one of {self.possible_binsizes}")
+                f'Cannot use binsize={binsize}..., should be one of {self.possible_binsizes}')
 
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
@@ -177,7 +177,7 @@ class CameraDLL:
             pdata), byref(pnImgWidth), byref(pnImgHeight))
         xres = pnImgWidth.value
         yres = pnImgHeight.value
-        print(f"shape: {xres} {yres}, binsize: {binsize}")
+        print(f'shape: {xres} {yres}, binsize: {binsize}')
         arr = np.ctypeslib.as_array(
             (c_float * xres * yres).from_address(addressof(pdata.contents)))
         # memory is not shared between python and C, so we need to copy array
@@ -185,7 +185,7 @@ class CameraDLL:
         # next we can release pdata memory so that it isn't kept in memory
         self._CCDCOM2release(pdata)
 
-        if self.name == "simulateDLL":
+        if self.name == 'simulateDLL':
             # add some noise to static simulated images
             arr *= np.random.random((xres, yres)) + 0.5
             time.sleep(exposure)
@@ -213,11 +213,11 @@ class CameraDLL:
         """Establish connection to the camera."""
         res = self._initCCDCOM(20120101)
         if res != 1:
-            raise RuntimeError(f"Could not establish camera connection to {self.name}")
+            raise RuntimeError(f'Could not establish camera connection to {self.name}')
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
         name = self.getName()
         self._releaseCCDCOM()
-        msg = f"Connection to camera {name} released"
+        msg = f'Connection to camera {name} released'
         logger.info(msg)

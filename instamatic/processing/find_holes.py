@@ -35,7 +35,7 @@ def plot_features(img, segmented):
     ax2.axis('off')
     ax2.set_adjustable('box-forced')
 
-    margins = dict(hspace=0.01, wspace=0.01, top=1, bottom=0, left=0, right=1)
+    margins = {'hspace': 0.01, 'wspace': 0.01, 'top': 1, 'bottom': 0, 'left': 0, 'right': 1}
     fig.subplots_adjust(**margins)
     plt.show()
 
@@ -46,12 +46,12 @@ def plot_props(img, props, fname=None, scale=1):
 
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111)
-    plt.imshow(img, interpolation="none")
+    plt.imshow(img, interpolation='none')
 
     for i, prop in enumerate(props):
         y1, x1, y2, x2 = [x * scale for x in prop.bbox]
 
-        color = "red"
+        color = 'red'
 
         rect = Rectangle((x1 - 1, y1 - 1), x2 - x1 + 1,
                          y2 - y1 + 1, fc='none', ec=color, lw=2)
@@ -60,8 +60,8 @@ def plot_props(img, props, fname=None, scale=1):
         cy, cx = prop.weighted_centroid * scale
         plt.scatter([cx], [cy], c=color, s=10, edgecolor='none')
 
-        s = f" {i}:\n {cx:d}\n {cy:d}"
-        plt.text(x2, y2, s=s, color="red", size=15)
+        s = f' {i}:\n {cx:d}\n {cy:d}'
+        plt.text(x2, y2, s=s, color='red', size=15)
 
     ymax, xmax = img.shape
     plt.axis('off')
@@ -83,7 +83,7 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
 
     markers = np.zeros_like(img)
     if verbose:
-        print("\nbounds:", lower, upper)
+        print('\nbounds:', lower, upper)
 
     if dark_on_bright:
         markers[img < lower] = features
@@ -93,9 +93,9 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
         markers[img > upper] = features
 
     if verbose:
-        print(f"\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}")
-        print(f"background {1.0*np.sum(markers == background) / markers.size:6.2%}")
-        print(f"features   {1.0*np.sum(markers == features) / markers.size:6.2%}")
+        print(f'\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}')
+        print(f'background {1.0*np.sum(markers == background) / markers.size:6.2%}')
+        print(f'features   {1.0*np.sum(markers == features) / markers.size:6.2%}')
 
     return markers
 
@@ -147,8 +147,8 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
     lower = otsu - (otsu - np.min(img)) * n
     upper = otsu + (np.max(img) - otsu) * n
     if verbose:
-        print(f"img range: {img.min()} - {img.max()}")
-        print(f"otsu: {otsu:.0f} ({lower:.0f} - {i:.0f})")
+        print(f'img range: {img.min()} - {img.max()}')
+        print(f'otsu: {otsu:.0f} ({lower:.0f} - {i:.0f})')
 
     markers = get_markers_bounds(img, lower=lower, upper=upper, dark_on_bright=False, verbose=verbose)
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
@@ -174,7 +174,7 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
 
         newprops.append(prop)
 
-    print(f" >> {len(newprops)} holes found in {numlabels} objects.")
+    print(f' >> {len(newprops)} holes found in {numlabels} objects.')
 
     if plot:
         plot_props(img, newprops)
@@ -192,8 +192,8 @@ def find_holes_entry():
 
         img_zoomed, scale = autoscale(img, maxdim=512)
 
-        binsize = h["ImageBinSize"]
-        magnification = h["Magnification"]
+        binsize = h['ImageBinSize']
+        magnification = h['Magnification']
         d = 150
 
         area = calculate_hole_area(d, magnification, img_scale=scale, binsize=binsize)
@@ -205,7 +205,7 @@ def find_holes_entry():
             px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
             area = hole.area * px * py / scale**2
             d = 2 * (area / np.pi)**0.5
-            print(f"x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um")
+            print(f'x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um')
 
 
 if __name__ == '__main__':

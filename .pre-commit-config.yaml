@@ -13,15 +13,15 @@ repos:
     -   id: check-ast
     -   id: check-merge-conflict
     -   id: debug-statements
-    # -   id: double-quote-string-fixer
+    -   id: double-quote-string-fixer
     # -   id: check-json
     # -   id: check-added-large-files
 -   repo: https://github.com/myint/docformatter
-    rev: ''
+    rev: v1.3.1
     hooks:
     -   id: docformatter
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.4.0
+    rev: v1.8.0
     hooks:
     -   id: reorder-python-imports
         args: [--py3-plus]
@@ -40,3 +40,12 @@ repos:
     hooks:
     -   id: flake8
         args: ['--statistics', '--ignore=F401,F403,F405,F821,F841,E265,E501']
+        additional_dependencies: [
+          'flake8-blind-except',
+          'flake8-commas',
+          'flake8-comprehensions',
+          'flake8-deprecated',
+          'flake8-mutable',
+          'flake8-quotes',
+          'flake8-tidy-imports',
+          ]

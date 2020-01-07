@@ -9,20 +9,20 @@ from instamatic import config
 logger = logging.getLogger(__name__)
 
 NTRLMAPPING = {
-    "GUN1": 0,
-    "GUN2": 1,
-    "CLA1": 2,
-    "CLA2": 3,
-    "SHIFT": 4,
-    "TILT": 5,
-    "ANGLE": 6,
-    "CLS": 7,
-    "IS1": 8,
-    "IS2": 9,
-    "SPOT": 10,
-    "PLA": 11,
-    "OLS": 12,
-    "ILS": 13
+    'GUN1': 0,
+    'GUN2': 1,
+    'CLA1': 2,
+    'CLA2': 3,
+    'SHIFT': 4,
+    'TILT': 5,
+    'ANGLE': 6,
+    'CLS': 7,
+    'IS1': 8,
+    'IS2': 9,
+    'SPOT': 10,
+    'PLA': 11,
+    'OLS': 12,
+    'ILS': 13,
 }
 
 FUNCTION_MODES = ('mag1', 'mag2', 'lowmag', 'samag', 'diff')
@@ -46,7 +46,7 @@ MIN = 0
 class JeolMicroscope:
     """docstring for microscope."""
 
-    def __init__(self, name: str = "jeol"):
+    def __init__(self, name: str = 'jeol'):
         super().__init__()
 
         # initial COM in multithread mode if not initialized otherwise
@@ -80,8 +80,8 @@ class JeolMicroscope:
             try:
                 self.goniotool = GonioToolClient()
             except Exception as e:
-                print("GonioToolClient:", e)
-                print("Could not connect to GonioToolServer, goniotool unavailable!")
+                print('GonioToolClient:', e)
+                print('Could not connect to GonioToolServer, goniotool unavailable!')
                 self.goniotool_available = False
                 config.cfg.use_goniotool = False
 
@@ -99,11 +99,11 @@ class JeolMicroscope:
             time.sleep(1)
             t += 1
             if t > 3:
-                print(f"Waiting for microscope, t = {t}s")
+                print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError("Cannot establish microscope connection (timeout).")
+                raise RuntimeError('Cannot establish microscope connection (timeout).')
 
-        logger.info("Microscope connection established")
+        logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
 
         self._x_direction = 0
@@ -115,11 +115,11 @@ class JeolMicroscope:
         self.NTRLMAPPING = NTRLMAPPING
 
         for mode in self.FUNCTION_MODES:
-            attrname = f"range_{mode}"
+            attrname = f'range_{mode}'
             try:
                 rng = getattr(config.microscope, attrname)
             except AttributeError:
-                print(f"Warning: No magnfication ranges were found for mode `{mode}` in the config file")
+                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
             else:
                 setattr(self, attrname, rng)
 
@@ -186,25 +186,25 @@ class JeolMicroscope:
     def setMagnification(self, value: int):
         current_mode = self.getFunctionMode()
 
-        if current_mode == "diff":
+        if current_mode == 'diff':
             if value not in self.range_diff:
-                raise IndexError(f"No such camera length: {value}")
+                raise IndexError(f'No such camera length: {value}')
             selector = self.range_diff.index(value)
-        elif current_mode == "lowmag":
+        elif current_mode == 'lowmag':
             if value not in self.range_lowmag:
-                raise IndexError(f"No such `lowmag` magnification: {value}")
+                raise IndexError(f'No such `lowmag` magnification: {value}')
             selector = self.range_lowmag.index(value)
-        elif current_mode == "samag":
+        elif current_mode == 'samag':
             if value not in self.range_samag:
-                raise IndexError(f"No such `samag` magnification: {value}")
+                raise IndexError(f'No such `samag` magnification: {value}')
             selector = self.range_samag.index(value)
-        elif current_mode == "mag1":
+        elif current_mode == 'mag1':
             if value not in self.range_mag1:
-                raise IndexError(f"No such `mag1` magnification: {value}")
+                raise IndexError(f'No such `mag1` magnification: {value}')
             selector = self.range_mag1.index(value)
-        elif current_mode == "mag2":
+        elif current_mode == 'mag2':
             if value not in self.range_mag2:
-                raise IndexError(f"No such `mag2` magnification: {value}")
+                raise IndexError(f'No such `mag2` magnification: {value}')
             selector = self.range_mag2.index(value)
         self.eos3.SetSelector(selector)
 
@@ -212,22 +212,22 @@ class JeolMicroscope:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
 
-        if current_mode == "diff":
+        if current_mode == 'diff':
             selector = self.range_diff.index(value)
-        elif current_mode == "lowmag":
+        elif current_mode == 'lowmag':
             selector = self.range_lowmag.index(value)
-        elif current_mode == "samag":
+        elif current_mode == 'samag':
             selector = self.range_samag.index(value)
-        elif current_mode == "mag1":
+        elif current_mode == 'mag1':
             selector = self.range_mag1.index(value)
-        elif current_mode == "mag2":
+        elif current_mode == 'mag2':
             selector = self.range_mag2.index(value)
 
         return selector
 
     def setMagnificationIndex(self, index: int):
         if index < 0:
-            raise ValueError(f"Cannot lower magnification (index={index})")
+            raise ValueError(f'Cannot lower magnification (index={index})')
 
         self.eos3.SetSelector(index)
 
@@ -371,27 +371,27 @@ class JeolMicroscope:
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()
             if x is not None and abs(nx - x) > 150:
-                logger.warning(f"stage.x -> requested: {x:.1f}, got: {nx:.1f}")
+                logger.warning(f'stage.x -> requested: {x:.1f}, got: {nx:.1f}')
             if y is not None and abs(ny - y) > 150:
-                logger.warning(f"stage.y -> requested: {y:.1f}, got: {ny:.1f}")
+                logger.warning(f'stage.y -> requested: {y:.1f}, got: {ny:.1f}')
             if z is not None and abs(nz - z) > 500:
-                logger.warning(f"stage.z -> requested: {z}, got: {nz}")
+                logger.warning(f'stage.z -> requested: {z}, got: {nz}')
             if a is not None and abs(na - a) > 0.057:
-                logger.warning(f"stage.a -> requested: {a}, got: {na}")
+                logger.warning(f'stage.a -> requested: {a}, got: {na}')
             if b is not None and abs(nb - b) > 0.057:
-                logger.warning(f"stage.b -> requested: {b}, got: {nb}")
+                logger.warning(f'stage.b -> requested: {b}, got: {nb}')
 
     def getRotationSpeed(self) -> int:
         if self.goniotool_available:
             self.goniotool.get_rate()
         else:
-            raise OSError("Goniotool connection is not available.")
+            raise OSError('Goniotool connection is not available.')
 
     def setRotationSpeed(self, value: int):
         if self.goniotool_available:
             self.goniotool.set_rate(value)
         else:
-            raise OSError("Goniotool connection is not available.")
+            raise OSError('Goniotool connection is not available.')
 
     def resetStage(self):
         """Move stage to origin."""
@@ -399,7 +399,7 @@ class JeolMicroscope:
 
     def stopStageMV(self):
         self.stage3.Stop()
-        print("Goniometer stopped moving.")
+        print('Goniometer stopped moving.')
 
     def getFunctionMode(self) -> str:
         """mag1, mag2, lowmag, samag, diff."""
@@ -412,18 +412,18 @@ class JeolMicroscope:
             try:
                 value = self.FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f"Unrecognized function mode: {value}")
+                raise ValueError(f'Unrecognized function mode: {value}')
         self.eos3.SelectFunctionMode(value)
 
     def getDiffFocus(self, confirm_mode: bool = True) -> int:
-        if confirm_mode and (not self.getFunctionMode() == "diff"):
+        if confirm_mode and (not self.getFunctionMode() == 'diff'):
             raise ValueError("Must be in 'diff' mode to get DiffFocus")
         value, result = self.lens3.GetIL1()
         return value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
         """IL1."""
-        if confirm_mode and (not self.getFunctionMode() == "diff"):
+        if confirm_mode and (not self.getFunctionMode() == 'diff'):
             raise ValueError("Must be in 'diff' mode to set DiffFocus")
         self.lens3.setDiffFocus(value)
 
@@ -449,7 +449,7 @@ class JeolMicroscope:
 
     def releaseConnection(self):
         comtypes.CoUninitialize()
-        logger.info("Connection to microscope released")
+        logger.info('Connection to microscope released')
 
     def isBeamBlanked(self) -> bool:
         value, result = self.def3.GetBeamBlank()
@@ -493,14 +493,14 @@ class JeolMicroscope:
     def setProbeMode(self, mode: str):
         """Set the probe mode
         0: TEM, 1: EDS, 2: NBD, 3:CBD"""
-        value = {"TEM": 0, "EDS": 1, "NBD": 2, "CBD": 3}[mode]
+        value = {'TEM': 0, 'EDS': 1, 'NBD': 2, 'CBD': 3}[mode]
         self.eos3.selectProbeMode(value)
 
     def getProbeMode(self) -> str:
         """Gets the probe mode
         0: TEM, 1: EDS, 2: NBD, 3:CBD"""
         value, name, status = self.eos3.GetProbeMode()
-        return ("TEM", "EDS", "NBD", "CBD")[value]
+        return ('TEM', 'EDS', 'NBD', 'CBD')[value]
 
     def getScreenPosition(self) -> str:
         value = self.screen2.GetAngle()[0]
@@ -520,7 +520,7 @@ class JeolMicroscope:
         elif value == 'down':
             self.screen2.SelectAngle(DOWN)
         else:
-            raise ValueError("No such screen position:", value, "(must be 'up'/'down')")
+            raise ValueError('No such screen position:', value, "(must be 'up'/'down')")
 
     def getCondensorLens1(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG
@@ -553,40 +553,40 @@ class JeolMicroscope:
         return value
 
     def getAll(self):
-        print("## lens3")
-        print("CL1", self.lens3.GetCL1())  # condensor lens
-        print("CL2", self.lens3.GetCL2())  # condensor lens
-        print("CL3", self.lens3.GetCL3())  # brightness
-        print("CM", self.lens3.GetCM())   # condensor mini lens
-        print("FLc", self.lens3.GetFLc())  # ?? -> self.lens3.SetFLc()
-        print("FLf", self.lens3.GetFLf())  # ?? -> self.lens3.SetFLf()
-        print("FLcomp1", self.lens3.GetFLcomp1())  # ??, no setter
-        print("FLcomp2", self.lens3.GetFLcomp2())  # ??, no setter
-        print("IL1", self.lens3.GetIL1())  # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
-        print("IL2", self.lens3.GetIL2())  # intermediate lens, no setter
-        print("IL3", self.lens3.GetIL3())  # intermediate lens, no setter
-        print("IL4", self.lens3.GetIL4())  # intermediate lens, no setter
-        print("OLc", self.lens3.GetOLc())  # objective focus coarse, SetOLc
-        print("OLf", self.lens3.GetOLf())  # objective focus fine, SetOLf
-        print("OM", self.lens3.GetOM())   # Objective mini lens
-        print("OM2", self.lens3.GetOM2())  # Objective mini lens
-        print("OM2Flag", self.lens3.GetOM2Flag())  # Objective mini lens 2 flag ??
-        print("PL1", self.lens3.GetPL1())  # projector lens, SetPLFocus
-        print("PL2", self.lens3.GetPL2())  # n/a
-        print("PL3", self.lens3.GetPL3())  # n/a
+        print('## lens3')
+        print('CL1', self.lens3.GetCL1())  # condensor lens
+        print('CL2', self.lens3.GetCL2())  # condensor lens
+        print('CL3', self.lens3.GetCL3())  # brightness
+        print('CM', self.lens3.GetCM())   # condensor mini lens
+        print('FLc', self.lens3.GetFLc())  # ?? -> self.lens3.SetFLc()
+        print('FLf', self.lens3.GetFLf())  # ?? -> self.lens3.SetFLf()
+        print('FLcomp1', self.lens3.GetFLcomp1())  # ??, no setter
+        print('FLcomp2', self.lens3.GetFLcomp2())  # ??, no setter
+        print('IL1', self.lens3.GetIL1())  # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        print('IL2', self.lens3.GetIL2())  # intermediate lens, no setter
+        print('IL3', self.lens3.GetIL3())  # intermediate lens, no setter
+        print('IL4', self.lens3.GetIL4())  # intermediate lens, no setter
+        print('OLc', self.lens3.GetOLc())  # objective focus coarse, SetOLc
+        print('OLf', self.lens3.GetOLf())  # objective focus fine, SetOLf
+        print('OM', self.lens3.GetOM())   # Objective mini lens
+        print('OM2', self.lens3.GetOM2())  # Objective mini lens
+        print('OM2Flag', self.lens3.GetOM2Flag())  # Objective mini lens 2 flag ??
+        print('PL1', self.lens3.GetPL1())  # projector lens, SetPLFocus
+        print('PL2', self.lens3.GetPL2())  # n/a
+        print('PL3', self.lens3.GetPL3())  # n/a
         print()
-        print("## def3")
-        print("CLA1", self.def3.GetCLA1())  # beam shift
-        print("CLA2", self.def3.GetCLA2())  # beam tilt
-        print("CLs", self.def3.GetCLs())   # condensor lens stigmator
-        print("FLA1", self.def3.GetFLA1())
-        print("FLA2", self.def3.GetFLA2())
-        print("FLs1", self.def3.GetFLs1())
-        print("FLs2", self.def3.GetFLs2())
-        print("GUNA1", self.def3.GetGUNA1())  # gunshift
-        print("GUNA2", self.def3.GetGUNA2())  # guntilt
-        print("ILs", self.def3.GetILs())     # intermediate lens stigmator
-        print("IS1", self.def3.GetIS1())     # image shift 1
-        print("IS2", self.def3.GetIS2())     # image shift 2
-        print("OLs", self.def3.GetOLs())     # objective lens stigmator
-        print("PLA", self.def3.GetPLA())     # projector lens alignment
+        print('## def3')
+        print('CLA1', self.def3.GetCLA1())  # beam shift
+        print('CLA2', self.def3.GetCLA2())  # beam tilt
+        print('CLs', self.def3.GetCLs())   # condensor lens stigmator
+        print('FLA1', self.def3.GetFLA1())
+        print('FLA2', self.def3.GetFLA2())
+        print('FLs1', self.def3.GetFLs1())
+        print('FLs2', self.def3.GetFLs2())
+        print('GUNA1', self.def3.GetGUNA1())  # gunshift
+        print('GUNA2', self.def3.GetGUNA2())  # guntilt
+        print('ILs', self.def3.GetILs())     # intermediate lens stigmator
+        print('IS1', self.def3.GetIS1())     # image shift 1
+        print('IS2', self.def3.GetIS2())     # image shift 2
+        print('OLs', self.def3.GetOLs())     # objective lens stigmator
+        print('PLA', self.def3.GetPLA())     # projector lens alignment

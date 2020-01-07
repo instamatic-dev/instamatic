@@ -15,7 +15,7 @@ from instamatic.config import calibration
 from instamatic.tools import autoscale
 
 
-CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel', ])
+CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel'])
 
 
 def isedge(prop):
@@ -45,7 +45,7 @@ def whiten(obs, check_finite=False):
     zero_std_mask = std_dev == 0
     if zero_std_mask.any():
         std_dev[zero_std_mask] = 1.0
-        raise RuntimeWarning("Some columns have standard deviation zero. The values of these columns will not change.")
+        raise RuntimeWarning('Some columns have standard deviation zero. The values of these columns will not change.')
     return obs / std_dev, std_dev
 
 
@@ -66,7 +66,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     img = img * (1.0 / img.max())
 
     # adaptive thresholding, because contrast is not equal over image
-    arr = img > filters.threshold_local(img, r, method="mean", offset=offset)
+    arr = img > filters.threshold_local(img, r, method='mean', offset=offset)
     arr = np.invert(arr)
     # arr = morphology.binary_opening(arr, morphology.disk(3))
 
@@ -99,13 +99,13 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
 
 def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     """Specialized function with better defaults for timepix camera."""
-    r = kwargs.get("r", 75)
+    r = kwargs.get('r', 75)
 
     # 'offset' determines sensitivity of thresholding
     #   higher = less sensitive to noise
     #   lower = more sensitive to noise
-    offset = kwargs.get("offset", 15)
-    footprint = kwargs.get("footprint", 3)
+    offset = kwargs.get('offset', 15)
+    footprint = kwargs.get('footprint', 3)
 
     return find_crystals(img=img,
                          magnification=magnification,
@@ -181,10 +181,10 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
 
     if plot:
         plt.imshow(img)
-        plt.contour(seg, [0.5], linewidths=1.2, colors="yellow")
+        plt.contour(seg, [0.5], linewidths=1.2, colors='yellow')
         if len(crystals) > 0:
             x, y = np.array([(crystal.x * scale, crystal.y * scale) for crystal in crystals]).T
-            plt.scatter(y, x, color="red")
+            plt.scatter(y, x, color='red')
         ax = plt.axes()
         ax.set_axis_off()
         plt.show()
@@ -200,7 +200,7 @@ def main_entry():
     for fn in sys.argv[1:]:
         img, h = read_image(fn)
 
-        crystals = find_crystals_timepix(img, h["exp_magnification"], plot=True)
+        crystals = find_crystals_timepix(img, h['exp_magnification'], plot=True)
 
         for crystal in crystals:
             print(crystal)

@@ -23,7 +23,7 @@ class TEMControllerException(Exception):
     pass
 
 
-def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> "TEMController":
+def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> 'TEMController':
     """Initialize TEMController object giving access to the TEM and Camera
     interfaces.
 
@@ -43,7 +43,7 @@ def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream:
         else:
             cam_tag = ''
 
-        print(f"Camera    : {cam_name}{cam_tag}")
+        print(f'Camera    : {cam_name}{cam_tag}')
 
         cam = Camera(cam_name, as_stream=stream, use_server=use_cam_server)
     else:
@@ -55,7 +55,7 @@ def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream:
     return ctrl
 
 
-def get_instance() -> "TEMController":
+def get_instance() -> 'TEMController':
     """Gets the current `ctrl` instance if it has been initialized, otherwise
     initialize it using default parameters."""
 
@@ -70,8 +70,8 @@ def get_instance() -> "TEMController":
 
 
 # namedtuples to store results from .get()
-StagePositionTuple = namedtuple("StagePositionTuple", ["x", "y", "z", "a", "b"])
-DeflectorTuple = namedtuple("DeflectorTuple", ["x", "y"])
+StagePositionTuple = namedtuple('StagePositionTuple', ['x', 'y', 'z', 'a', 'b'])
+DeflectorTuple = namedtuple('DeflectorTuple', ['x', 'y'])
 
 
 class Deflector:
@@ -83,11 +83,11 @@ class Deflector:
         self._tem = tem
         self._getter = None
         self._setter = None
-        self.key = "def"
+        self.key = 'def'
 
     def __repr__(self):
         x, y = self.get()
-        return f"{self.name}(x={x}, y={y})"
+        return f'{self.name}(x={x}, y={y})'
 
     @property
     def name(self) -> str:
@@ -139,14 +139,14 @@ class Lens:
         self._tem = tem
         self._getter = None
         self._setter = None
-        self.key = "lens"
+        self.key = 'lens'
 
     def __repr__(self):
         try:
             value = self.value
         except ValueError:
-            value = "n/a"
-        return f"{self.name}(value={value})"
+            value = 'n/a'
+        return f'{self.name}(value={value})'
 
     @property
     def name(self) -> str:
@@ -188,18 +188,18 @@ class DiffFocus(Lens):
         """Apply a defocus to the IL1 lens, use `.refocus` to restore the
         previous setting."""
         if self.is_defocused:
-            raise TEMControllerException(f"{self.__class__.__name__} is already defocused!")
+            raise TEMControllerException(f'{self.__class__.__name__} is already defocused!')
 
         try:
             self._focused_value = current = self.get()
         except ValueError:
-            self._tem.setFunctionMode("diff")
+            self._tem.setFunctionMode('diff')
             self._focused_value = current = self.get()
 
         target = current + offset
         self.set(target)
         self.is_defocused = True
-        print(f"Defocusing from {current} to {target}")
+        print(f'Defocusing from {current} to {target}')
 
     def refocus(self):
         """Restore the IL1 lens to the focused condition a defocus has been
@@ -208,7 +208,7 @@ class DiffFocus(Lens):
             target = self._focused_value
             self.set(target)
             self.is_defocused = False
-            print(f"Refocusing to {target}")
+            print(f'Refocusing to {target}')
 
 
 class Brightness(Lens):
@@ -243,7 +243,7 @@ class Magnification(Lens):
     def __repr__(self):
         value = self.value
         index = self.index
-        return f"Magnification(value={value}, index={index})"
+        return f'Magnification(value={value}, index={index})'
 
     @property
     def index(self) -> int:
@@ -257,13 +257,13 @@ class Magnification(Lens):
         try:
             self.index += 1
         except ValueError:
-            print(f"Error: Cannot change magnficication index (current={self.value}).")
+            print(f'Error: Cannot change magnficication index (current={self.value}).')
 
     def decrease(self) -> None:
         try:
             self.index -= 1
         except ValueError:
-            print(f"Error: Cannot change magnficication index (current={self.value}).")
+            print(f'Error: Cannot change magnficication index (current={self.value}).')
 
     def get_ranges(self) -> dict:
         """Runs through all modes and fetches all the magnification settings
@@ -278,7 +278,7 @@ class GunShift(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setGunShift
         self._getter = self._tem.getGunShift
-        self.key = "GUN1"
+        self.key = 'GUN1'
 
 
 class GunTilt(Deflector):
@@ -289,7 +289,7 @@ class GunTilt(Deflector):
         self._setter = self._tem.setGunTilt
         self._getter = self._tem.getGunTilt
         self._tem = tem
-        self.key = "GUN2"
+        self.key = 'GUN2'
 
 
 class BeamShift(Deflector):
@@ -299,7 +299,7 @@ class BeamShift(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamShift
         self._getter = self._tem.getBeamShift
-        self.key = "CLA1"
+        self.key = 'CLA1'
 
 
 class BeamTilt(Deflector):
@@ -309,7 +309,7 @@ class BeamTilt(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setBeamTilt
         self._getter = self._tem.getBeamTilt
-        self.key = "CLA2"
+        self.key = 'CLA2'
 
 
 class DiffShift(Deflector):
@@ -319,7 +319,7 @@ class DiffShift(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setDiffShift
         self._getter = self._tem.getDiffShift
-        self.key = "PLA"
+        self.key = 'PLA'
 
 
 class ImageShift1(Deflector):
@@ -329,7 +329,7 @@ class ImageShift1(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift1
         self._getter = self._tem.getImageShift1
-        self.key = "IS1"
+        self.key = 'IS1'
 
 
 class ImageShift2(Deflector):
@@ -339,7 +339,7 @@ class ImageShift2(Deflector):
         super().__init__(tem=tem)
         self._setter = self._tem.setImageShift2
         self._getter = self._tem.getImageShift2
-        self.key = "IS2"
+        self.key = 'IS2'
 
 
 class Stage:
@@ -354,7 +354,7 @@ class Stage:
 
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return f"{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})"
+        return f'{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})'
 
     @property
     def name(self) -> str:
@@ -546,7 +546,7 @@ class Stage:
 
         print(f"Restoring 'alpha': {a_center:.2f}")
         self.a = a_center
-        print(f"Print z={self.z:.2f}")
+        print(f'Print z={self.z:.2f}')
 
     def relax_xy(self, step: int = 100) -> None:
         """Relax the stage by moving it in the opposite direction from the last
@@ -700,22 +700,22 @@ class TEMController:
         self.store()
 
     def __repr__(self):
-        return (f"Mode: {self.tem.getFunctionMode()}\n"
-                f"High tension: {self.high_tension/1000:.0f} kV\n"
-                f"Current density: {self.current_density:.2f} pA/cm2\n"
-                f"{self.gunshift}\n"
-                f"{self.guntilt}\n"
-                f"{self.beamshift}\n"
-                f"{self.beamtilt}\n"
-                f"{self.imageshift1}\n"
-                f"{self.imageshift2}\n"
-                f"{self.diffshift}\n"
-                f"{self.stage}\n"
-                f"{self.magnification}\n"
-                f"{self.difffocus}\n"
-                f"{self.brightness}\n"
-                f"SpotSize({self.spotsize})\n"
-                f"Saved alignments: {tuple(self._saved_alignments.keys())}\n")
+        return (f'Mode: {self.tem.getFunctionMode()}\n'
+                f'High tension: {self.high_tension/1000:.0f} kV\n'
+                f'Current density: {self.current_density:.2f} pA/cm2\n'
+                f'{self.gunshift}\n'
+                f'{self.guntilt}\n'
+                f'{self.beamshift}\n'
+                f'{self.beamtilt}\n'
+                f'{self.imageshift1}\n'
+                f'{self.imageshift2}\n'
+                f'{self.diffshift}\n'
+                f'{self.stage}\n'
+                f'{self.magnification}\n'
+                f'{self.difffocus}\n'
+                f'{self.brightness}\n'
+                f'SpotSize({self.spotsize})\n'
+                f'Saved alignments: {tuple(self._saved_alignments.keys())}\n')
 
     @property
     def high_tension(self) -> float:
@@ -736,16 +736,16 @@ class TEMController:
         self.tem.setSpotSize(value)
 
     def mode_lowmag(self):
-        self.tem.setFunctionMode("lowmag")
+        self.tem.setFunctionMode('lowmag')
 
     def mode_mag1(self):
-        self.tem.setFunctionMode("mag1")
+        self.tem.setFunctionMode('mag1')
 
     def mode_samag(self):
-        self.tem.setFunctionMode("samag")
+        self.tem.setFunctionMode('samag')
 
     def mode_diffraction(self):
-        self.tem.setFunctionMode("diff")
+        self.tem.setFunctionMode('diff')
 
     @property
     def screen(self):
@@ -759,11 +759,11 @@ class TEMController:
 
     def screen_up(self):
         """Raise the fluorescence screen."""
-        self.tem.setScreenPosition("up")
+        self.tem.setScreenPosition('up')
 
     def screen_down(self):
         """Lower the fluorescence screen."""
-        self.tem.setScreenPosition("down")
+        self.tem.setScreenPosition('down')
 
     def beamblank_on(self):
         """Turn the beamblank on."""
@@ -825,17 +825,17 @@ class TEMController:
         script = find_script(script)
 
         import importlib.util
-        spec = importlib.util.spec_from_file_location("acquire", script)
+        spec = importlib.util.spec_from_file_location('acquire', script)
         acquire = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(acquire)
 
         ntot = len(nav_items)
 
-        print(f"Running script: {script} on {ntot} items.")
+        print(f'Running script: {script} on {ntot} items.')
 
-        pre_acquire = getattr(acquire, "pre_acquire", None)
-        post_acquire = getattr(acquire, "post_acquire", None)
-        acquire = getattr(acquire, "acquire", None)
+        pre_acquire = getattr(acquire, 'pre_acquire', None)
+        post_acquire = getattr(acquire, 'post_acquire', None)
+        acquire = getattr(acquire, 'acquire', None)
 
         self.acquire_at_items(nav_items,
                               acquire=acquire,
@@ -853,14 +853,14 @@ class TEMController:
         script = find_script(script)
 
         if verbose:
-            print(f"Executing script: {script}\n")
+            print(f'Executing script: {script}\n')
 
         t0 = time.perf_counter()
         exec(open(script).read())
         t1 = time.perf_counter()
 
         if verbose:
-            print(f"\nScript finished in {t1-t0:.4f} s")
+            print(f'\nScript finished in {t1-t0:.4f} s')
 
     def get_stagematrix(self, binning: int = None, mag: int = None, mode: int = None):
         """Helper function to get the stage matrix from the config file. The
@@ -890,13 +890,13 @@ class TEMController:
         if not binning:
             binning = self.cam.getBinning()
 
-        stagematrix = getattr(config.calibration, f"stagematrix_{mode}")[mag]
+        stagematrix = getattr(config.calibration, f'stagematrix_{mode}')[mag]
 
         stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning[0])  # um -> nm
 
         return stagematrix
 
-    def align_to(self, ref_img: "np.array",
+    def align_to(self, ref_img: 'np.array',
                  apply: bool = True) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of
@@ -917,7 +917,7 @@ class TEMController:
         from skimage.feature import register_translation
 
         current_x, current_y = self.stage.xy
-        print(f"Current stage position: {current_x:.0f} {current_y:.0f}")
+        print(f'Current stage position: {current_x:.0f} {current_y:.0f}')
         stagematrix = self.get_stagematrix()
         mati = np.linalg.inv(stagematrix)
 
@@ -927,11 +927,11 @@ class TEMController:
 
         stage_shift = np.dot(pixel_shift, mati)
 
-        print(f"Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}")
+        print(f'Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}')
 
         new_x = current_x - stage_shift[0]
         new_y = current_y + stage_shift[1]
-        print(f"New stage position: {new_x:.0f} {new_y:.0f}")
+        print(f'New stage position: {new_x:.0f} {new_y:.0f}')
         if apply:
             self.stage.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
@@ -994,7 +994,7 @@ class TEMController:
         # self.stage.z = 0 # for testing
 
         zc = self.stage.z
-        print(f"Current z = {zc:.1f} nm")
+        print(f'Current z = {zc:.1f} nm')
 
         zs = zc + np.linspace(-dz, dz, steps)
         shifts = []
@@ -1004,7 +1004,7 @@ class TEMController:
         for i, z in enumerate(zs):
             self.stage.z = z
             if verbose:
-                print(f"z = {z:.1f} nm")
+                print(f'z = {z:.1f} nm')
 
             di = one_cycle(tilt=tilt, sign=sign)
             shifts.append(di)
@@ -1020,7 +1020,7 @@ class TEMController:
 
         z0 = -beta / alpha
 
-        print(f"alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm")
+        print(f'alpha={alpha:.2f} | beta={beta:.2f} => z0={z0:.1f} nm')
         if apply:
             self.stage.set(a=0, z=z0)
 
@@ -1054,12 +1054,12 @@ class TEMController:
             'Magnification': self.magnification.get,
             'DiffFocus': self.difffocus.get,
             'Brightness': self.brightness.get,
-            'SpotSize': self.tem.getSpotSize
+            'SpotSize': self.tem.getSpotSize,
         }
 
         dct = {}
 
-        if "all" in keys or not keys:
+        if 'all' in keys or not keys:
             keys = funcs.keys()
 
         for key in keys:
@@ -1087,10 +1087,10 @@ class TEMController:
             'Magnification': self.magnification.set,
             'DiffFocus': self.difffocus.set,
             'Brightness': self.brightness.set,
-            'SpotSize': self.tem.setSpotSize
+            'SpotSize': self.tem.setSpotSize,
         }
 
-        mode = dct["FunctionMode"]
+        mode = dct['FunctionMode']
         self.tem.setFunctionMode(mode)
 
         for k, v in dct.items():
@@ -1109,7 +1109,7 @@ class TEMController:
         raw data array."""
         return self.cam.getImage(exposure=exposure, binsize=binsize)
 
-    def getImage(self, exposure: float = 0.5, binsize: int = 1, comment: str = "", out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = "all") -> Tuple[np.ndarray, dict]:
+    def getImage(self, exposure: float = 0.5, binsize: int = 1, comment: str = '', out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = 'all') -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera.
 
         Parameters:
@@ -1145,25 +1145,25 @@ class TEMController:
         if self.autoblank and self.beamblank:
             self.beamblank = False
 
-        h["ImageGetTimeStart"] = time.perf_counter()
+        h['ImageGetTimeStart'] = time.perf_counter()
 
         arr = self.cam.getImage(exposure=exposure, binsize=binsize)
 
-        h["ImageGetTimeEnd"] = time.perf_counter()
+        h['ImageGetTimeEnd'] = time.perf_counter()
 
         if self.autoblank:
             self.beamblank = True
 
-        h["ImageGetTime"] = time.time()
-        h["ImageExposureTime"] = exposure
-        h["ImageBinSize"] = binsize
-        h["ImageResolution"] = arr.shape
-        h["ImageComment"] = comment
-        h["ImageCameraName"] = self.cam.name
-        h["ImageCameraDimensions"] = self.cam.dimensions
+        h['ImageGetTime'] = time.time()
+        h['ImageExposureTime'] = exposure
+        h['ImageBinSize'] = binsize
+        h['ImageResolution'] = arr.shape
+        h['ImageComment'] = comment
+        h['ImageCameraName'] = self.cam.name
+        h['ImageCameraDimensions'] = self.cam.dimensions
 
         if verbose:
-            print(f"Image acquired - shape: {arr.shape}, size: {arr.nbytes / 1024:.0f} kB")
+            print(f'Image acquired - shape: {arr.shape}, size: {arr.nbytes / 1024:.0f} kB')
 
         if out:
             write_tiff(out, arr, header=h)
@@ -1175,19 +1175,19 @@ class TEMController:
 
         return arr, h
 
-    def store_diff_beam(self, name: str = "beam", save_to_file: bool = False):
+    def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for
         dose control), diffraction focus, spot size, brightness, and the
         function mode.
 
         Restore the alignment using:     `ctrl.restore("beam")`
         """
-        if not self.mode == "diff":
-            raise TEMControllerException("Microscope is not in `diffraction mode`")
-        keys = "FunctionMode", "Brightness", "GunTilt", "DiffFocus", "SpotSize"
+        if not self.mode == 'diff':
+            raise TEMControllerException('Microscope is not in `diffraction mode`')
+        keys = 'FunctionMode', 'Brightness', 'GunTilt', 'DiffFocus', 'SpotSize'
         self.store(name=name, keys=keys, save_to_file=save_to_file)
 
-    def store(self, name: str = "stash", keys: tuple = None, save_to_file: bool = False):
+    def store(self, name: str = 'stash', keys: tuple = None, save_to_file: bool = False):
         """Stores current settings to dictionary.
 
         Multiple settings can be stored under different names. Specify
@@ -1196,16 +1196,16 @@ class TEMController:
         if not keys:
             keys = ()
         d = self.to_dict(*keys)
-        d.pop("StagePosition", None)
+        d.pop('StagePosition', None)
         self._saved_alignments[name] = d
 
         if save_to_file:
             import yaml
-            fn = config.alignments_drc / (name + ".yaml")
-            yaml.dump(d, stream=open(fn, "w"))
-            print(f"Saved alignment to file `{fn}`")
+            fn = config.alignments_drc / (name + '.yaml')
+            yaml.dump(d, stream=open(fn, 'w'))
+            print(f'Saved alignment to file `{fn}`')
 
-    def restore(self, name: str = "stash"):
+    def restore(self, name: str = 'stash'):
         """Restores alignment from dictionary by the given name."""
         d = self._saved_alignments[name]
         self.from_dict(d)
@@ -1223,7 +1223,7 @@ class TEMController:
         try:
             self.cam.show_stream()
         except AttributeError:
-            print("Cannot open live view. The camera interface must be initialized as a stream object.")
+            print('Cannot open live view. The camera interface must be initialized as a stream object.')
 
 
 def main_entry():
@@ -1238,20 +1238,20 @@ def main_entry():
     #                     type=str, metavar="FILE",
     #                     help="Path to save cif")
 
-    parser.add_argument("-u", "--simulate",
-                        action="store_true", dest="simulate",
+    parser.add_argument('-u', '--simulate',
+                        action='store_true', dest='simulate',
                         help="""Simulate microscope connection (default False)""")
 
     parser.set_defaults(
         simulate=False,
-        tem="simtem",
+        tem='simtem',
     )
 
     options = parser.parse_args()
     ctrl = initialize()
 
     from IPython import embed
-    embed(banner1="\nAssuming direct control.\n")
+    embed(banner1='\nAssuming direct control.\n')
     ctrl.close()
 
 
@@ -1259,6 +1259,6 @@ if __name__ == '__main__':
     from IPython import embed
     ctrl = initialize()
 
-    embed(banner1="\nAssuming direct control.\n")
+    embed(banner1='\nAssuming direct control.\n')
 
     ctrl.close()

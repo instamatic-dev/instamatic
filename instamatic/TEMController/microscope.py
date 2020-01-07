@@ -2,7 +2,7 @@ from instamatic import config
 
 default_tem = config.microscope.name
 
-__all__ = ["Microscope"]
+__all__ = ['Microscope']
 
 
 def get_tem(name: str):
@@ -11,18 +11,18 @@ def get_tem(name: str):
     if config.cfg.tem_require_admin:
         from instamatic import admin
         if not admin.is_admin():
-            raise PermissionError("Access to the TEM interface requires admin rights.")
+            raise PermissionError('Access to the TEM interface requires admin rights.')
 
-    if name == "jeol":
+    if name == 'jeol':
         from .jeol_microscope import JeolMicroscope as cls
-    elif name == "fei":
+    elif name == 'fei':
         from .fei_microscope import FEIMicroscope as cls
-    elif name == "fei_simu":
+    elif name == 'fei_simu':
         from .fei_simu_microscope import FEISimuMicroscope as cls
-    elif name == "simulate":
+    elif name == 'simulate':
         from .simu_microscope import SimuMicroscope as cls
     else:
-        raise ValueError(f"No such microscope: `{name}`")
+        raise ValueError(f'No such microscope: `{name}`')
 
     return cls
 

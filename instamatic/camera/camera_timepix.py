@@ -15,7 +15,7 @@ high_precision_timers.enable()
 
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
 # Save updated config for timepix camera
-CONFIG_PYTIMEPIX = "tpx"
+CONFIG_PYTIMEPIX = 'tpx'
 
 
 class LockingError(RuntimeError):
@@ -53,10 +53,10 @@ class CameraTPX:
     def __init__(self):
         libdrc = Path(__file__).parent
 
-        self.lockfile = libdrc / "timepix.lockfile"
+        self.lockfile = libdrc / 'timepix.lockfile'
         self.acquire_lock()
 
-        libpath = libdrc / "EMCameraObj.dll"
+        libpath = libdrc / 'EMCameraObj.dll'
         curdir = Path.cwd()
 
         os.chdir(libdrc)
@@ -80,7 +80,7 @@ class CameraTPX:
             os.rename(self.lockfile, self.lockfile)
             # WinError 32 if file is open by the same/another process
         except PermissionError:
-            raise LockingError(f"Cannot establish lock to {self.lockfile} because it is used by another process")
+            raise LockingError(f'Cannot establish lock to {self.lockfile} because it is used by another process')
         else:
             self._lock = open(self.lockfile)
 
@@ -101,9 +101,9 @@ class CameraTPX:
         ret = self.lib.EMCameraObj_Connect(self.obj, hwId)
         if ret:
             self.is_connected = True
-            print(f"Camera connected (hwId={hwId.value})")
+            print(f'Camera connected (hwId={hwId.value})')
         else:
-            raise OSError("Could not establish connection to camera.")
+            raise OSError('Could not establish connection to camera.')
         return ret
 
     def disconnect(self):
@@ -112,9 +112,9 @@ class CameraTPX:
         ret = self.lib.EMCameraObj_Disconnect(self.obj)
         if ret:
             self.is_connected = False
-            print("Camera disconnected")
+            print('Camera disconnected')
         else:
-            print("Camera disconnect failed...")
+            print('Camera disconnect failed...')
         return ret
 
     def getFrameSize(self):
@@ -123,7 +123,7 @@ class CameraTPX:
     def readRealDacs(self, filename):
         """std::string filename."""
         if not os.path.exists(filename):
-            raise OSError(f"Cannot find `RealDacs` file: {filename}")
+            raise OSError(f'Cannot find `RealDacs` file: {filename}')
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -139,7 +139,7 @@ class CameraTPX:
     def readHwDacs(self, filename):
         """std::string filename."""
         if not os.path.exists(filename):
-            raise OSError(f"Cannot find `HwDacs` file: {filename}")
+            raise OSError(f'Cannot find `HwDacs` file: {filename}')
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -154,9 +154,9 @@ class CameraTPX:
 
     def readPixelsCfg(self, filename):
         """std::string filename."""
-        "int mode = TPX_MODE_DONT_SET  ->  set in header file"
+        'int mode = TPX_MODE_DONT_SET  ->  set in header file'
         if not os.path.exists(filename):
-            raise OSError(f"Cannot find `PixelsCfg` file: {filename}")
+            raise OSError(f'Cannot find `PixelsCfg` file: {filename}')
 
         filename = str(filename).encode()
         buffer = create_string_buffer(filename)
@@ -171,9 +171,9 @@ class CameraTPX:
 
     def processRealDac(self, chipnr=None, index=None, key=None, value=None):
         """int *chipnr."""
-        "int *index"
-        "std::string *key"
-        "std::string *value"
+        'int *index'
+        'std::string *key'
+        'std::string *value'
 
         chipnr = c_int(0)
         index = c_int(0)
@@ -184,7 +184,7 @@ class CameraTPX:
 
     def processHwDac(self, key, value):
         """std::string *key."""
-        "std::string *value"
+        'std::string *value'
 
         key = create_unicode_buffer(20)
         value = create_unicode_buffer(20)
@@ -294,7 +294,7 @@ class CameraTPX:
         return self.acquireData(exposure=exposure)
 
     def getName(self):
-        return "timepix"
+        return 'timepix'
 
     def getDimensions(self):
         return self.dimensions
@@ -314,16 +314,16 @@ def initialize(config):
     base = Path(config).parent
 
     # read config.txt
-    with open(config, "r") as f:
+    with open(config, 'r') as f:
         for line in f:
             inp = line.split()
-            if inp[0] == "HWID":
+            if inp[0] == 'HWID':
                 hwId = int(inp[1])
-            if inp[0] == "HWDACS":
+            if inp[0] == 'HWDACS':
                 hwDacs = base / inp[1]
-            if inp[0] == "PIXELDACS":
+            if inp[0] == 'PIXELDACS':
                 realDacs = base / inp[1]
-            if inp[0] == "PIXELBPC":
+            if inp[0] == 'PIXELBPC':
                 pixelsCfg = base / inp[1]
 
     cam = CameraTPX()
@@ -335,7 +335,7 @@ def initialize(config):
     cam.readPixelsCfg(pixelsCfg)
     cam.readRealDacs(realDacs)
 
-    print(f"Camera {cam.getName()} initialized (resolution: {cam.getDimensions()})")
+    print(f'Camera {cam.getName()} initialized (resolution: {cam.getDimensions()})')
 
     return cam
 
@@ -349,12 +349,12 @@ if __name__ == '__main__':
             ./startcooling
     """
 
-    base = (Path(__file__).parent / "tpx").resolve()
+    base = (Path(__file__).parent / 'tpx').resolve()
 
     print(base)
     print()
 
-    tpx_config_file = base / "config.txt"
+    tpx_config_file = base / 'config.txt'
 
     cam = initialize(tpx_config_file)
 
@@ -363,12 +363,12 @@ if __name__ == '__main__':
         n = 100
 
         arr = cam.acquireData(t)
-        print(f"[ py hardware timer] -> shape: {arr.shape}")
+        print(f'[ py hardware timer] -> shape: {arr.shape}')
         t0 = time.perf_counter()
         for x in range(n):
             cam.acquireData(t)
         dt = time.perf_counter() - t0
-        print(f"Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms")
+        print(f'Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms')
 
     embed(banner1='')
 

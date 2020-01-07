@@ -26,7 +26,7 @@ class MachineLearningFrame(LabelFrame):
     """docstring for MachineLearningFrame."""
 
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Neural Network")
+        LabelFrame.__init__(self, parent, text='Neural Network')
         self.parent = parent
 
         self.init_vars()
@@ -52,23 +52,23 @@ class MachineLearningFrame(LabelFrame):
         tv.grid(sticky=(N, S, W, E))
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
-        frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+        frame.pack(side='top', fill='both', expand=True, padx=10, pady=10)
 
         frame = Frame(self)
 
-        self.BrowseButton = Button(frame, text="Load data", command=self.load_table)
-        self.BrowseButton.grid(row=1, column=0, sticky="EW")
+        self.BrowseButton = Button(frame, text='Load data', command=self.load_table)
+        self.BrowseButton.grid(row=1, column=0, sticky='EW')
 
-        self.ShowButton = Button(frame, text="Show image", command=self.show_image)
-        self.ShowButton.grid(row=1, column=1, sticky="EW")
+        self.ShowButton = Button(frame, text='Show image', command=self.show_image)
+        self.ShowButton.grid(row=1, column=1, sticky='EW')
 
-        self.GoButton = Button(frame, text="Go to crystal", command=self.go_to_crystal)
-        self.GoButton.grid(row=1, column=2, sticky="EW")
+        self.GoButton = Button(frame, text='Go to crystal', command=self.go_to_crystal)
+        self.GoButton.grid(row=1, column=2, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
-        frame.pack(side="bottom", fill="x", padx=10, pady=10)
+        frame.pack(side='bottom', fill='x', padx=10, pady=10)
 
     def init_vars(self):
         self.fns = {}
@@ -79,7 +79,7 @@ class MachineLearningFrame(LabelFrame):
         self.q = q
 
     def load_table(self):
-        fn = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title="Select crystal data")
+        fn = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title='Select crystal data')
         if not fn:
             return
         fn = Path(fn).resolve()
@@ -95,72 +95,72 @@ class MachineLearningFrame(LabelFrame):
                 self.tv.insert('', 'end', text=fn_patt, values=(frame, number, prediction, size, stage_x, stage_y))
                 self.fns[(int(frame), int(number))] = fn
 
-        print(f"CSV data `{fn}` loaded")
+        print(f'CSV data `{fn}` loaded')
 
     def go_to_crystal(self):
         row = self.tv.item(self.tv.focus())
         try:
-            frame, number, prediction, size, stage_x, stage_y = row["values"]
+            frame, number, prediction, size, stage_x, stage_y = row['values']
         except ValueError:  # no row selected
-            print("No row selected")
+            print('No row selected')
             return
 
-        self.q.put(("ctrl", {"task": "stage.set",
-                             "x": float(stage_x),
-                             "y": float(stage_y)}))
+        self.q.put(('ctrl', {'task': 'stage.set',
+                             'x': float(stage_x),
+                             'y': float(stage_y)}))
         self.triggerEvent.set()
 
     def show_image(self):
         row = self.tv.item(self.tv.focus())
         try:
-            frame, number, prediction, size, stage_x, stage_y = row["values"]
+            frame, number, prediction, size, stage_x, stage_y = row['values']
         except ValueError:  # no row selected
-            print("No row selected")
+            print('No row selected')
             return
 
-        fn = Path(row["text"])
+        fn = Path(row['text'])
 
         root = fn.parents[1]
-        name = fn.stem.rsplit("_", 1)[0]  # strip crystal number
-        image_fn = root / "images" / f"{name}{fn.suffix}"
+        name = fn.stem.rsplit('_', 1)[0]  # strip crystal number
+        image_fn = root / 'images' / f'{name}{fn.suffix}'
 
         if not fn.exists():
-            print(f"No such file: {fn}")
+            print(f'No such file: {fn}')
             return
 
         if not image_fn.exists():
-            print(f"No such file: {image_fn}")
+            print(f'No such file: {image_fn}')
             return
 
         data, data_h = read_image(fn)
         img, img_h = read_image(image_fn)
 
-        cryst_x, cryst_y = img_h["exp_crystal_coords"][number]
+        cryst_x, cryst_y = img_h['exp_crystal_coords'][number]
 
         fig = plt.figure()
-        ax1 = plt.subplot(121, title=f"Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})", aspect="equal")
-        ax2 = plt.subplot(122, title=f"Diffraction pattern\nprediction={prediction}", aspect="equal")
+        ax1 = plt.subplot(121, title=f'Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})', aspect='equal')
+        ax2 = plt.subplot(122, title=f'Diffraction pattern\nprediction={prediction}', aspect='equal')
 
         # img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates
 
-        coords = img_h["exp_crystal_coords"]
+        coords = img_h['exp_crystal_coords']
         for c_x, c_y in coords:
             c_y, c_x = img.shape[0] - c_x, c_y
-            ax1.plot(c_y, c_x, marker="+", color="blue", mew=2)
+            ax1.plot(c_y, c_x, marker='+', color='blue', mew=2)
 
         ax1.imshow(img, vmax=np.percentile(img, 99.5))
-        ax1.plot(cryst_y, cryst_x, marker="+", color="red", mew=2)
+        ax1.plot(cryst_y, cryst_x, marker='+', color='red', mew=2)
 
         ax2.imshow(data, vmax=np.percentile(data, 99.5))
 
         ShowMatplotlibFig(self, fig, title=fn)
 
 
-module = BaseModule("learning", "learning", True, MachineLearningFrame, commands={})
+module = BaseModule('learning', 'learning', True, MachineLearningFrame, commands={})
 
 
 if __name__ == '__main__':
     root = Tk()
-    MachineLearningFrame(root).pack(side="top", fill="both", expand=True)
+    MachineLearningFrame(root).pack(side='top', fill='both', expand=True)
     root.mainloop()

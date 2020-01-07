@@ -33,7 +33,7 @@ def center_z_height(ctrl, verbose=False):
     Ultramicroscopy 46.1-4 (1992): 207-227.
     http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
     """
-    print("\033[k", "Finding eucentric height...", end="\r")
+    print('\033[k', 'Finding eucentric height...', end='\r')
     if ctrl.mode != 'mag1':
         ctrl.mode = 'mag1'
 
@@ -52,17 +52,17 @@ def center_z_height(ctrl, verbose=False):
     for i in range(0, 10):
         z1 = ctrl.stage.z
         ctrl.stage.set(a=a0)
-        img0, h = ctrl.getImage(exposure=0.01, comment="z height finding")
+        img0, h = ctrl.getImage(exposure=0.01, comment='z height finding')
         z.append(z0 + i * 1000)
         ctrl.stage.set(a=a0 + 10)
-        img1, h = ctrl.getImage(exposure=0.01, comment="z height finding")
+        img1, h = ctrl.getImage(exposure=0.01, comment='z height finding')
         shift = register_translation(img0, img1, upsample_factor=10)
         d1 = np.linalg.norm(shift)
         if shift[0] < 0:
             d1 = -d1
         d.append(d1)
         if verbose:
-            print(f"Step {i}: z = {z1}, d = {np.linalg.norm(shift)}")
+            print(f'Step {i}: z = {z1}, d = {np.linalg.norm(shift)}')
         ctrl.stage.set(z=z1 + 1000)
         time.sleep(1)
 
@@ -72,11 +72,11 @@ def center_z_height(ctrl, verbose=False):
         z_f.append(z[d.index(e)])
     p = np.polyfit(z, d, 1)
     z_center = -p[1] / p[0]
-    satisfied = input(f"Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.")
-    if satisfied == "x":
+    satisfied = input(f'Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.')
+    if satisfied == 'x':
         ctrl.stage.set(a=a0, z=z0)
         if verbose:
-            print("Did not find proper eucentric height...")
+            print('Did not find proper eucentric height...')
     else:
         if z_center > ctrl.stage.z:
             ctrl.stage.set(a=a0, z=z_center - 2000)
@@ -85,7 +85,7 @@ def center_z_height(ctrl, verbose=False):
             ctrl.stage.set(a=a0, z=z_center + 2000)
             ctrl.stage.set(a=a0, z=z_center)
 
-        print("\033[k", "Eucentric height set. Find the crystal again and start data collection!", end="\r")
+        print('\033[k', 'Eucentric height set. Find the crystal again and start data collection!', end='\r')
 
 
 def find_crystal_max(img, magnification, spread, offset):
@@ -107,7 +107,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     height to be higher. Vice versa.
     """
 
-    print("\033[k", "Finding eucentric height...", end="\r")
+    print('\033[k', 'Finding eucentric height...', end='\r')
     if ctrl.mode != 'mag1':
         ctrl.mode = 'mag1'
 
@@ -116,14 +116,14 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     magnification = ctrl.magnification.value
 
     x0, y0, z0, a0, b0 = ctrl.stage.get()
-    img0, h = ctrl.getImage(exposure=0.01, comment="z height finding HY")
+    img0, h = ctrl.getImage(exposure=0.01, comment='z height finding HY')
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread=spread, offset=offset)
         if verbose:
-            print(f"Feature Captured. Area: {crystal_inter} pixels")
+            print(f'Feature Captured. Area: {crystal_inter} pixels')
     except BaseException:
         if verbose:
-            print("No crystals found. Please find another area for z height adjustment.")
+            print('No crystals found. Please find another area for z height adjustment.')
 
     rotation_dir = eliminate_backlash_in_tiltx(ctrl)
     if rotation_dir == 0:
@@ -138,7 +138,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
             break
 
     while ctrl.stage.is_moving():
-        img, h = ctrl.getImage(exposure=0.01, comment="z height finding HY")
+        img, h = ctrl.getImage(exposure=0.01, comment='z height finding HY')
         try:
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread=spread, offset=offset)
 
@@ -168,7 +168,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
                     return 999999, 999999
         except BaseException:
             if verbose:
-                print("No crystal found. Finding another area for z height adjustment.")
+                print('No crystal found. Finding another area for z height adjustment.')
             ctrl.stage.stop()
             return 999999, 999999
 
@@ -179,6 +179,6 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
         ctrl.stage.set(a=endangle, wait=False)
         time.sleep(0.5)
 
-    print("\033[k", f"Z height adjustment done and eucentric z height found at: {z0}", end="\r")
+    print('\033[k', f'Z height adjustment done and eucentric z height found at: {z0}', end='\r')
     x, y, z, a, b = ctrl.stage.get()
     return x, y

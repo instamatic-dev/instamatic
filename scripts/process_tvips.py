@@ -25,14 +25,14 @@ from instamatic.tools import relativistic_wavelength
 
 def extract_image_number(s):
     p = Path(s)
-    return int(p.stem.split("_")[-1])
+    return int(p.stem.split('_')[-1])
 
 
-def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
+def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
     credlog = Path(credlog)
     drc = credlog.parent
 
-    pattern = "tiff/*.tif*"
+    pattern = 'tiff/*.tif*'
 
     image_fns = list(drc.glob(pattern))
 
@@ -42,7 +42,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
 
     nframes = len(image_fns)
     if nframes == 0:
-        print(f"No files found matching `{pattern}`")
+        print(f'No files found matching `{pattern}`')
         exit()
     else:
         print(nframes)
@@ -50,36 +50,36 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
     ims = [tifffile.TiffFile(fn) for fn in image_fns]
     hs = [im.tvips_metadata for im in ims]
 
-    ts = [h["Time"] for h in hs]  # sort by timestamps
+    ts = [h['Time'] for h in hs]  # sort by timestamps
 
     h0 = hs[0]
-    exposure_time = h0["ExposureTime"]
+    exposure_time = h0['ExposureTime']
 
     res = get_acquisition_time(timestamps=ts, exp_time=exposure_time, savefig=True, drc=drc)
     acquisition_time = res.acquisition_time
     overhead = res.overhead
 
-    with open(credlog, "r") as f:
+    with open(credlog, 'r') as f:
         for line in f:
-            if line.startswith("Data Collection Time"):
-                timestamp = line.split(":", 1)[-1].strip()
-            if line.startswith("Starting angle"):
+            if line.startswith('Data Collection Time'):
+                timestamp = line.split(':', 1)[-1].strip()
+            if line.startswith('Starting angle'):
                 start_angle = float(line.split()[2])
-            if line.startswith("Ending angle"):
+            if line.startswith('Ending angle'):
                 end_angle = float(line.split()[2])
-            if line.startswith("Rotation axis"):
+            if line.startswith('Rotation axis'):
                 rotation_axis = float(line.split()[2])
-            if line.startswith("Rotation speed"):
+            if line.startswith('Rotation speed'):
                 rotation_speed = float(line.split()[2])
-            if line.startswith("Beam stopper:"):
-                beamstop = "yes" in line.split()[2]
-            if line.startswith("Camera length:"):
+            if line.startswith('Beam stopper:'):
+                beamstop = 'yes' in line.split()[2]
+            if line.startswith('Camera length:'):
                 camera_length = float(line.split()[2])
-            if line.startswith("Pixelsize:"):
+            if line.startswith('Pixelsize:'):
                 pixelsize = float(line.split()[1])
-            if line.startswith("Physical pixelsize:"):
+            if line.startswith('Physical pixelsize:'):
                 physical_pixelsize = float(line.split()[2])
-            if line.startswith("Wavelength:"):
+            if line.startswith('Wavelength:'):
                 wavelength = float(line.split()[1])
 
     beamstop = True
@@ -92,64 +92,64 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
 
     # from header
 
-    high_tension = h0["TemHighTension"]  # ev
-    camera = h0["CameraType"]
+    high_tension = h0['TemHighTension']  # ev
+    camera = h0['CameraType']
 
     # It seems that this number cannot be trusted, either in cm or mm, depending on the mode used
-    camera_length_tvips = int(h0["TemMagnification"])
+    camera_length_tvips = int(h0['TemMagnification'])
 
     wavelength_tvips = relativistic_wavelength(high_tension)
 
-    binning_x = h0["BinningX"]
-    binning_y = h0["BinningY"]
+    binning_x = h0['BinningX']
+    binning_y = h0['BinningY']
 
-    physical_pixelsize_x_tvips = binning_x * h0["PhysicalPixelSizeX"] / 1_000_000  # nm -> mm
-    physical_pixelsize_y_tvips = binning_y * h0["PhysicalPixelSizeY"] / 1_000_000  # nm -> mm
+    physical_pixelsize_x_tvips = binning_x * h0['PhysicalPixelSizeX'] / 1_000_000  # nm -> mm
+    physical_pixelsize_y_tvips = binning_y * h0['PhysicalPixelSizeY'] / 1_000_000  # nm -> mm
 
     # pixelsize can be a factor 10 off, depending on the mode used
-    pixelsize_x_tvips = np.sin(h0["PixelSizeX"] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
-    pixelsize_y_tvips = np.sin(h0["PixelSizeY"] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
+    pixelsize_x_tvips = np.sin(h0['PixelSizeX'] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
+    pixelsize_y_tvips = np.sin(h0['PixelSizeY'] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
 
-    image_res_x_tvips = h0["ImageSizeX"]
-    image_res_y_tvips = h0["ImageSizeY"]
+    image_res_x_tvips = h0['ImageSizeX']
+    image_res_y_tvips = h0['ImageSizeY']
 
-    print(f"Number of frames: {nframes}")
+    print(f'Number of frames: {nframes}')
     print()
-    print("# cRED_log.txt")
-    print(f"Timestamp:                {timestamp}")
-    print(f"Start angle:              {start_angle:.2f} degrees")
-    print(f"End angle:                {end_angle:.2f} degrees")
-    print(f"Oscillation angle:        {osc_angle:.2f} degrees")
-    print(f"Rotation speed:           {rotation_speed:.2f} degrees/s")
-    print(f"Rotation axis at:         {rotation_axis:.2f} radians ({np.degrees(rotation_axis):.2f} degrees)")
-    print(f"Beamstop:                 {beamstop}")
-    print(f"Pixelsize:                {pixelsize} px/Ångstrom")
-    print(f"Physical Pixelsize:       {physical_pixelsize} mm")
-    print(f"Wavelength:               {wavelength} Ångstrom")
-    print(f"TEM Camera length:        {camera_length:.1f} cm")
+    print('# cRED_log.txt')
+    print(f'Timestamp:                {timestamp}')
+    print(f'Start angle:              {start_angle:.2f} degrees')
+    print(f'End angle:                {end_angle:.2f} degrees')
+    print(f'Oscillation angle:        {osc_angle:.2f} degrees')
+    print(f'Rotation speed:           {rotation_speed:.2f} degrees/s')
+    print(f'Rotation axis at:         {rotation_axis:.2f} radians ({np.degrees(rotation_axis):.2f} degrees)')
+    print(f'Beamstop:                 {beamstop}')
+    print(f'Pixelsize:                {pixelsize} px/Ångstrom')
+    print(f'Physical Pixelsize:       {physical_pixelsize} mm')
+    print(f'Wavelength:               {wavelength} Ångstrom')
+    print(f'TEM Camera length:        {camera_length:.1f} cm')
 
     print()
-    print("# TVIPS header")
-    print(f"Camera:                   {camera}")
-    print(f"Acquisition time:         {acquisition_time:.3f} s")
-    print(f"Exposure time:            {exposure_time/1000:.3f} s")
-    print(f"Overhead time:            {overhead:.3f} s")
-    print(f"Binning (X/Y):            {binning_x} {binning_y} px/bin")
-    print(f"Image resolution (X/Y):   {image_res_x_tvips} {image_res_y_tvips} pixels")
-    print(f"Pixelsize (X/Y):          {pixelsize_x_tvips:.5f} {pixelsize_y_tvips:.5f} px/Ångstrom???")
-    print(f"Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm")
-    print(f"High tension:             {high_tension/1000} kV")
-    print(f"Wavelength:               {wavelength_tvips} Ångstrom")
-    print(f"Camera length:            {camera_length_tvips} cm")
+    print('# TVIPS header')
+    print(f'Camera:                   {camera}')
+    print(f'Acquisition time:         {acquisition_time:.3f} s')
+    print(f'Exposure time:            {exposure_time/1000:.3f} s')
+    print(f'Overhead time:            {overhead:.3f} s')
+    print(f'Binning (X/Y):            {binning_x} {binning_y} px/bin')
+    print(f'Image resolution (X/Y):   {image_res_x_tvips} {image_res_y_tvips} pixels')
+    print(f'Pixelsize (X/Y):          {pixelsize_x_tvips:.5f} {pixelsize_y_tvips:.5f} px/Ångstrom???')
+    print(f'Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm')
+    print(f'High tension:             {high_tension/1000} kV')
+    print(f'Wavelength:               {wavelength_tvips} Ångstrom')
+    print(f'Camera length:            {camera_length_tvips} cm')
 
     # implement this later if it turns out to be necessary
-    assert pixelsize_x_tvips == pixelsize_y_tvips, "Pixelsize is different in X / Y direction"
-    assert physical_pixelsize_x_tvips == physical_pixelsize_y_tvips, "Physical pixelsize is different in X / Y direction"
+    assert pixelsize_x_tvips == pixelsize_y_tvips, 'Pixelsize is different in X / Y direction'
+    assert physical_pixelsize_x_tvips == physical_pixelsize_y_tvips, 'Physical pixelsize is different in X / Y direction'
 
     buffer = []
 
     print()
-    print("Reading data")
+    print('Reading data')
     for i, fn in enumerate(image_fns):
         j = i + 1  # j must be 1-indexed
 
@@ -162,13 +162,13 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
             if img.min() >= 0 and img.max() < 2**16:
                 img = img.astype(np.uint16)
 
-        assert img.dtype.type is np.uint16, f"Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)"
+        assert img.dtype.type is np.uint16, f'Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)'
 
-        h = {"ImageGetTime": timestamp, "ImageExposureTime": exposure_time}
+        h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
 
         buffer.append((j, img, h))
 
-    print("Setting up image conversion")
+    print('Setting up image conversion')
     img_conv = ImgConversion(buffer=buffer,
                              osc_angle=osc_angle,
                              start_angle=start_angle,
@@ -182,7 +182,7 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
 
     if beamstop:
         from instamatic.utils.beamstop import find_beamstop_rect
-        print("Finding beam stop")
+        print('Finding beam stop')
         stack_mean = np.mean(tuple(img_conv.data.values()), axis=0)
         img_conv.mean_beam_center
         beamstop_rect = find_beamstop_rect(stack_mean, img_conv.mean_beam_center, pad=1, savefig=True, drc=drc)
@@ -196,13 +196,13 @@ def img_convert(credlog, tiff_path=None, mrc_path="RED", smv_path="SMV"):
         tiff_drc_name = tiff_path
         tiff_path = drc / tiff_path
 
-    print("Writing data")
+    print('Writing data')
     img_conv.threadpoolwriter(tiff_path=tiff_path,
                               mrc_path=mrc_path,
                               smv_path=smv_path,
                               workers=8)
 
-    print("Writing input files")
+    print('Writing input files')
     if mrc_path:
         img_conv.write_ed3d(mrc_path)
         img_conv.write_REDp_shiftcorrection(mrc_path)
@@ -220,10 +220,10 @@ def main():
     try:
         credlog = sys.argv[1]
     except IndexError:
-        credlog = "cRED_log.txt"
+        credlog = 'cRED_log.txt'
 
-    if credlog == "all":
-        fns = Path(".").glob("**/cRED_log.txt")
+    if credlog == 'all':
+        fns = Path('.').glob('**/cRED_log.txt')
 
         for fn in fns:
             print(fn)

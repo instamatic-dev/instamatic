@@ -47,7 +47,7 @@ if __name__ == '__main__':
     stmt = 'time.sleep(0.001)'
     print(timeit.timeit(stmt, setup, number=1000))
 
-    print("change time period")
+    print('change time period')
     enable(1)
 
     setup = 'import time'

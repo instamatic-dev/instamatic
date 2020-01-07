@@ -49,17 +49,17 @@ class CamServer(threading.Thread):
         self.cam = Camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
-        print(f"Initialized connection to camera: {self.cam.name}")
+        print(f'Initialized connection to camera: {self.cam.name}')
 
         while True:
-            now = datetime.datetime.now().strftime("%H:%M:%S.%f")
+            now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
             cmd = self.q.get()
 
             with condition:
-                attr_name = cmd["attr_name"]
-                args = cmd.get("args", ())
-                kwargs = cmd.get("kwargs", {})
+                attr_name = cmd['attr_name']
+                args = cmd.get('args', ())
+                kwargs = cmd.get('kwargs', {})
 
                 try:
                     ret = self.evaluate(attr_name, args, kwargs)
@@ -73,7 +73,7 @@ class CamServer(threading.Thread):
 
                 box.append((status, ret))
                 condition.notify()
-                print(f"{now} | {status} {attr_name}: {ret}")
+                print(f'{now} | {status} {attr_name}: {ret}')
 
     def evaluate(self, attr_name: str, args: list, kwargs: dict):
         """Evaluate the function `attr_name` on `self.cam` with *args and.
@@ -92,7 +92,7 @@ class CamServer(threading.Thread):
         """Get attributes from cam object to update __dict__ on client side."""
         attrs = {}
         for item in dir(self.cam):
-            if item.startswith("_"):
+            if item.startswith('_'):
                 continue
             obj = getattr(self.cam, item)
             if not callable(obj):
@@ -112,10 +112,10 @@ def handle(conn, q):
 
             data = pickle.loads(data)
 
-            if data == "exit":
+            if data == 'exit':
                 break
 
-            if data == "kill":
+            if data == 'kill':
                 # killEvent.set() ?
                 # s.shutdown() ?
                 break
@@ -132,16 +132,16 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--camera", action="store", dest="camera",
+    parser.add_argument('-c', '--camera', action='store', dest='camera',
                         help="""Override camera to use""")
 
     parser.set_defaults(camera=None)
     options = parser.parse_args()
     camera = options.camera
 
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logfile = config.logs_drc / f"instamatic_CAMServer_{date}.log"
-    logging.basicConfig(format="%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s",
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    logfile = config.logs_drc / f'instamatic_CAMServer_{date}.log'
+    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
     logging.captureWarnings(True)
@@ -156,8 +156,8 @@ def main():
     s.bind((HOST, PORT))
     s.listen(5)
 
-    log.info(f"Server listening on {HOST}:{PORT}")
-    print(f"Server listening on {HOST}:{PORT}")
+    log.info(f'Server listening on {HOST}:{PORT}')
+    print(f'Server listening on {HOST}:{PORT}')
 
     with s:
         while True:

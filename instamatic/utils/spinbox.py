@@ -16,8 +16,8 @@ class Spinbox(Entry):
 
         WIDGET-SPECIFIC OPTIONS: to, from_, increment, values, wrap, format, command
         """
-        Entry.__init__(self, master, "ttk::spinbox", **kw)
+        Entry.__init__(self, master, 'ttk::spinbox', **kw)
 
     def set(self, value):
         """Sets the value of the Spinbox to value."""
-        self.tk.call(self._w, "set", value)
+        self.tk.call(self._w, 'set', value)

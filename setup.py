@@ -3,7 +3,7 @@ import os
 from setuptools import find_packages
 from setuptools import setup
 
-packages = find_packages(exclude=["scripts"])
+packages = find_packages(exclude=['scripts'])
 
 # grab __version__, __author__, etc.
 exec(open('instamatic/version.py').read())
@@ -38,7 +38,7 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces',
         'Topic :: Scientific/Engineering :: Chemistry',
-        'Topic :: Software Development :: Libraries'
+        'Topic :: Software Development :: Libraries',
     ],
 
     packages=packages,
@@ -56,7 +56,8 @@ setup(
                       'h5py',
                       'tifffile',
                       'IPython',
-                      'pywinauto'],
+                      'pywinauto',
+                      ],
 
     include_package_data=True,
 
@@ -91,7 +92,7 @@ setup(
             'instamatic.temserver_fei                 = instamatic.server.TEMServer_FEI:main',
             'instamatic.goniotoolserver               = instamatic.server.goniotool_server:main',
             # setup
-            'instamatic.autoconfig                    = instamatic.config.autoconfig:main'
-        ]
-    }
+            'instamatic.autoconfig                    = instamatic.config.autoconfig:main',
+        ],
+    },
 )

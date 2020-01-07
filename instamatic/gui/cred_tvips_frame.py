@@ -12,7 +12,7 @@ class ExperimentalTVIPS(LabelFrame):
     """docstring for ExperimentalRED."""
 
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text="Continuous rotation electron diffraction (TVIPS)")
+        LabelFrame.__init__(self, parent, text='Continuous rotation electron diffraction (TVIPS)')
         self.parent = parent
 
         sbwidth = 10
@@ -20,101 +20,101 @@ class ExperimentalTVIPS(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
-        Label(frame, text="Target angle (degrees):").grid(row=4, column=0, sticky="W")
+        Label(frame, text='Target angle (degrees):').grid(row=4, column=0, sticky='W')
         self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=NORMAL)
-        self.e_target_angle.grid(row=4, column=1, sticky="W", padx=10)
+        self.e_target_angle.grid(row=4, column=1, sticky='W', padx=10)
 
-        self.InvertAngleButton = Button(frame, text="Invert", command=self.invert_angle)
-        self.InvertAngleButton.grid(row=4, column=2, sticky="EW")
+        self.InvertAngleButton = Button(frame, text='Invert', command=self.invert_angle)
+        self.InvertAngleButton.grid(row=4, column=2, sticky='EW')
 
-        self.c_toggle_manual_control = Checkbutton(frame, text="Manual rotation control", variable=self.var_toggle_manual_control, command=self.toggle_manual_control)
-        self.c_toggle_manual_control.grid(row=4, column=3, sticky="W")
+        self.c_toggle_manual_control = Checkbutton(frame, text='Manual rotation control', variable=self.var_toggle_manual_control, command=self.toggle_manual_control)
+        self.c_toggle_manual_control.grid(row=4, column=3, sticky='W')
 
         # defocus button
-        Label(frame, text="Diff defocus:").grid(row=6, column=0, sticky="W")
+        Label(frame, text='Diff defocus:').grid(row=6, column=0, sticky='W')
         self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100)
-        self.e_diff_defocus.grid(row=6, column=1, sticky="W", padx=10)
+        self.e_diff_defocus.grid(row=6, column=1, sticky='W', padx=10)
 
-        Label(frame, text="Exposure (ms):").grid(row=7, column=0, sticky="W")
+        Label(frame, text='Exposure (ms):').grid(row=7, column=0, sticky='W')
         self.e_exposure = Spinbox(frame, textvariable=self.var_exposure, width=sbwidth, from_=0, to=10000, increment=100)
-        self.e_exposure.grid(row=7, column=1, sticky="W", padx=10)
+        self.e_exposure.grid(row=7, column=1, sticky='W', padx=10)
 
-        Label(frame, text="Mode:").grid(row=8, column=0, sticky="W")
+        Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
         self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag')
-        self.o_mode.grid(row=8, column=1, sticky="W", padx=10)
+        self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
 
         if config.cfg.use_goniotool:
-            Label(frame, text="Rot. Speed", width=20).grid(row=10, column=0, sticky="W")
+            Label(frame, text='Rot. Speed', width=20).grid(row=10, column=0, sticky='W')
             self.o_goniotool_tx = OptionMenu(frame, self.var_goniotool_tx, 1, *list(range(1, 13)))
-            self.o_goniotool_tx.grid(row=10, column=1, sticky="W", padx=10)
+            self.o_goniotool_tx.grid(row=10, column=1, sticky='W', padx=10)
 
-        self.b_reset_defocus = Button(frame, text="Reset", command=self.reset_diff_defocus, state=DISABLED)
-        self.b_reset_defocus.grid(row=6, column=2, sticky="EW")
+        self.b_reset_defocus = Button(frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED)
+        self.b_reset_defocus.grid(row=6, column=2, sticky='EW')
 
-        self.c_toggle_diffraction = Checkbutton(frame, text="Toggle DIFF", variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
-        self.c_toggle_diffraction.grid(row=7, column=3, sticky="W")
+        self.c_toggle_diffraction = Checkbutton(frame, text='Toggle DIFF', variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
+        self.c_toggle_diffraction.grid(row=7, column=3, sticky='W')
 
-        self.c_toggle_screen = Checkbutton(frame, text="Toggle screen", variable=self.var_toggle_screen, command=self.toggle_screen)
-        self.c_toggle_screen.grid(row=8, column=3, sticky="W")
+        self.c_toggle_screen = Checkbutton(frame, text='Toggle screen', variable=self.var_toggle_screen, command=self.toggle_screen)
+        self.c_toggle_screen.grid(row=8, column=3, sticky='W')
 
-        self.b_start_liveview = Button(frame, text="Start live view", command=self.start_liveview)
-        self.b_start_liveview.grid(row=7, column=2, sticky="EW")
+        self.b_start_liveview = Button(frame, text='Start live view', command=self.start_liveview)
+        self.b_start_liveview.grid(row=7, column=2, sticky='EW')
 
-        self.b_stop_liveview = Button(frame, text="Stop live view", command=self.stop_liveview)
-        self.b_stop_liveview.grid(row=8, column=2, sticky="EW")
+        self.b_stop_liveview = Button(frame, text='Stop live view', command=self.stop_liveview)
+        self.b_stop_liveview.grid(row=8, column=2, sticky='EW')
 
-        self.c_toggle_beamblank = Checkbutton(frame, text="Toggle beamblank", variable=self.var_toggle_beamblank, command=self.toggle_beamblank)
-        self.c_toggle_beamblank.grid(row=10, column=3, sticky="W")
+        self.c_toggle_beamblank = Checkbutton(frame, text='Toggle beamblank', variable=self.var_toggle_beamblank, command=self.toggle_beamblank)
+        self.c_toggle_beamblank.grid(row=10, column=3, sticky='W')
 
-        frame.pack(side="top", fill="x", padx=10, pady=10)
+        frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
 
         self.e_instructions = Entry(frame, width=50, textvariable=self.var_instruction_file)
-        self.e_instructions.grid(row=4, column=1, sticky="EW")
-        self.BrowseTrackButton = Button(frame, text="Browse..", command=self.browse_instructions)
-        self.BrowseTrackButton.grid(row=4, column=2, sticky="EW")
-        Label(frame, text="Instruction file:").grid(row=4, column=0, sticky="W")
-        frame.pack(side="top", fill="x", padx=10, pady=10)
+        self.e_instructions.grid(row=4, column=1, sticky='EW')
+        self.BrowseTrackButton = Button(frame, text='Browse..', command=self.browse_instructions)
+        self.BrowseTrackButton.grid(row=4, column=2, sticky='EW')
+        Label(frame, text='Instruction file:').grid(row=4, column=0, sticky='W')
+        frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        self.SearchButton = Button(frame, text="Search", command=self.search)
-        self.SearchButton.grid(row=1, column=0, sticky="EW")
+        self.SearchButton = Button(frame, text='Search', command=self.search)
+        self.SearchButton.grid(row=1, column=0, sticky='EW')
 
-        self.FocusButton = Button(frame, text="Focus", command=self.focus)
-        self.FocusButton.grid(row=1, column=1, sticky="EW")
+        self.FocusButton = Button(frame, text='Focus', command=self.focus)
+        self.FocusButton.grid(row=1, column=1, sticky='EW')
 
-        self.GetImageButton = Button(frame, text="Get image", command=self.get_image)
-        self.GetImageButton.grid(row=1, column=2, sticky="EW")
+        self.GetImageButton = Button(frame, text='Get image', command=self.get_image)
+        self.GetImageButton.grid(row=1, column=2, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
 
-        frame.pack(fill="x", padx=10, pady=10)
+        frame.pack(fill='x', padx=10, pady=10)
 
         frame = Frame(self)
 
-        self.SerialButton = Button(frame, text="Start serial acquisition", width=25, command=self.serial_collection)
-        self.SerialButton.grid(row=1, column=0, sticky="EW")
+        self.SerialButton = Button(frame, text='Start serial acquisition', width=25, command=self.serial_collection)
+        self.SerialButton.grid(row=1, column=0, sticky='EW')
 
-        frame.pack(fill="x", padx=10, pady=10)
+        frame.pack(fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        self.GetReadyButton = Button(frame, text="Get Ready", command=self.prime_collection)
-        self.GetReadyButton.grid(row=1, column=0, sticky="EW")
+        self.GetReadyButton = Button(frame, text='Get Ready', command=self.prime_collection)
+        self.GetReadyButton.grid(row=1, column=0, sticky='EW')
 
-        self.AcquireButton = Button(frame, text="Acquire", command=self.start_collection, state=DISABLED)
-        self.AcquireButton.grid(row=1, column=1, sticky="EW")
+        self.AcquireButton = Button(frame, text='Acquire', command=self.start_collection, state=DISABLED)
+        self.AcquireButton.grid(row=1, column=1, sticky='EW')
 
-        self.FinalizeButton = Button(frame, text="Finalize", command=self.stop_collection, state=DISABLED)
-        self.FinalizeButton.grid(row=1, column=2, sticky="EW")
+        self.FinalizeButton = Button(frame, text='Finalize', command=self.stop_collection, state=DISABLED)
+        self.FinalizeButton.grid(row=1, column=2, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
 
-        frame.pack(side="bottom", fill="x", padx=10, pady=10)
+        frame.pack(side='bottom', fill='x', padx=10, pady=10)
 
         from instamatic import TEMController
         self.ctrl = TEMController.get_instance()
@@ -134,8 +134,8 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_screen = BooleanVar(value=False)
         self.var_toggle_manual_control = BooleanVar(value=False)
 
-        self.var_instruction_file = StringVar(value="")
-        self.var_mode = StringVar(value="diff")
+        self.var_instruction_file = StringVar(value='')
+        self.var_mode = StringVar(value='diff')
 
         self.var_goniotool_tx = IntVar(value=1)
 
@@ -177,30 +177,30 @@ class ExperimentalTVIPS(LabelFrame):
     def prime_collection(self):
         self.disable_ui()
         # self.e_target_angle.config(state=DISABLED)
-        params = self.get_params(task="get_ready")
-        self.q.put(("cred_tvips", params))
+        params = self.get_params(task='get_ready')
+        self.q.put(('cred_tvips', params))
         self.triggerEvent.set()
 
     def start_collection(self):
         self.AcquireButton.config(state=DISABLED)
-        params = self.get_params(task="acquire")
-        self.q.put(("cred_tvips", params))
+        params = self.get_params(task='acquire')
+        self.q.put(('cred_tvips', params))
         self.triggerEvent.set()
 
     def stop_collection(self):
         self.enable_ui()
-        params = self.get_params(task="stop")
-        self.q.put(("cred_tvips", params))
+        params = self.get_params(task='stop')
+        self.q.put(('cred_tvips', params))
         self.triggerEvent.set()
 
     def serial_collection(self):
         self.disable_ui()
-        params = self.get_params(task="serial")
-        self.q.put(("cred_tvips", params))
+        params = self.get_params(task='serial')
+        self.q.put(('cred_tvips', params))
         self.triggerEvent.set()
 
     def browse_instructions(self):
-        fn = filedialog.askopenfilename(parent=self.parent, initialdir=None, title="Select instruction file")
+        fn = filedialog.askopenfilename(parent=self.parent, initialdir=None, title='Select instruction file')
         if not fn:
             return
         fn = Path(fn).absolute()
@@ -208,13 +208,13 @@ class ExperimentalTVIPS(LabelFrame):
         return fn
 
     def get_params(self, task=None):
-        params = {"target_angle": self.var_target_angle.get(),
-                  "instruction_file": self.var_instruction_file.get(),
-                  "exposure": self.var_exposure.get(),
-                  "mode": self.var_mode.get(),
-                  "rotation_speed": self.var_goniotool_tx.get(),
-                  "manual_control": self.var_toggle_manual_control.get(),
-                  "task": task}
+        params = {'target_angle': self.var_target_angle.get(),
+                  'instruction_file': self.var_instruction_file.get(),
+                  'exposure': self.var_exposure.get(),
+                  'mode': self.var_mode.get(),
+                  'rotation_speed': self.var_goniotool_tx.get(),
+                  'manual_control': self.var_toggle_manual_control.get(),
+                  'task': task}
         return params
 
     def toggle_manual_control(self):
@@ -271,29 +271,29 @@ class ExperimentalTVIPS(LabelFrame):
         self.var_toggle_diff_defocus.set(False)
 
     def search(self):
-        self.ctrl.run_script("search_mode.py")
+        self.ctrl.run_script('search_mode.py')
 
     def focus(self):
-        self.ctrl.run_script("focus_mode.py")
+        self.ctrl.run_script('focus_mode.py')
 
     def get_image(self):
         self.ctrl.cam.acquireImage()
 
 
 def acquire_data_CRED_TVIPS(controller, **kwargs):
-    controller.log.info("Start cRED (TVIPS) experiment")
+    controller.log.info('Start cRED (TVIPS) experiment')
     from instamatic.experiments import cRED_tvips
 
-    task = kwargs["task"]
+    task = kwargs['task']
 
-    target_angle = kwargs["target_angle"]
-    instruction_file = kwargs["instruction_file"]
-    exposure = kwargs["exposure"]
-    manual_control = kwargs["manual_control"]
-    rotation_speed = kwargs["rotation_speed"]
-    mode = kwargs["mode"]
+    target_angle = kwargs['target_angle']
+    instruction_file = kwargs['instruction_file']
+    exposure = kwargs['exposure']
+    manual_control = kwargs['manual_control']
+    rotation_speed = kwargs['rotation_speed']
+    mode = kwargs['mode']
 
-    if task == "get_ready":
+    if task == 'get_ready':
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
 
@@ -302,10 +302,10 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
                                                           track=instruction_file, exposure=exposure,
                                                           rotation_speed=rotation_speed)
         controller.cred_tvips_exp.get_ready()
-    elif task == "acquire":
+    elif task == 'acquire':
         controller.cred_tvips_exp.start_collection(target_angle=target_angle,
                                                    manual_control=manual_control)
-    elif task == "serial":
+    elif task == 'serial':
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
 
@@ -314,16 +314,16 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
                                                      instruction_file=instruction_file, exposure=exposure,
                                                      target_angle=target_angle, rotation_speed=rotation_speed)
         cred_tvips_exp.run()
-    elif task == "stop":
+    elif task == 'stop':
         pass
 
 
-module = BaseModule("tvips", "TVIPS", True, ExperimentalTVIPS, commands={
-    "cred_tvips": acquire_data_CRED_TVIPS,
+module = BaseModule('tvips', 'TVIPS', True, ExperimentalTVIPS, commands={
+    'cred_tvips': acquire_data_CRED_TVIPS,
 })
 
 
 if __name__ == '__main__':
     root = Tk()
-    ExperimentalTVIPS(root).pack(side="top", fill="both", expand=True)
+    ExperimentalTVIPS(root).pack(side='top', fill='both', expand=True)
     root.mainloop()

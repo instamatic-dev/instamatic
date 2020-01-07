@@ -12,4 +12,4 @@ def is_admin():
 
 
 def run_as_admin(fn):
-    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, fn, None, 1)
+    ctypes.windll.shell32.ShellExecuteW(None, 'runas', sys.executable, fn, None, 1)

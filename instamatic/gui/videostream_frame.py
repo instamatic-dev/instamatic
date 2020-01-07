@@ -53,8 +53,8 @@ class VideoStreamFrame(Frame):
         self.header(self.parent)
         self.makepanel(self.parent)
 
-        self.parent.wm_title("Video stream")
-        self.parent.wm_protocol("WM_DELETE_WINDOW", self.close)
+        self.parent.wm_title('Video stream')
+        self.parent.wm_protocol('WM_DELETE_WINDOW', self.close)
 
         self.parent.bind('<Escape>', self.close)
 
@@ -67,24 +67,24 @@ class VideoStreamFrame(Frame):
 
         self.var_frametime = DoubleVar()
         self.var_frametime.set(self.frametime)
-        self.var_frametime.trace_add("write", self.update_frametime)
+        self.var_frametime.trace_add('write', self.update_frametime)
 
         self.var_brightness = DoubleVar(value=self.brightness)
-        self.var_brightness.trace_add("write", self.update_brightness)
+        self.var_brightness.trace_add('write', self.update_brightness)
 
         self.var_display_range = DoubleVar(value=self.display_range_default)
-        self.var_display_range.trace_add("write", self.update_display_range)
+        self.var_display_range.trace_add('write', self.update_display_range)
 
         self.var_resize_image = BooleanVar(value=self.resize_image)
-        self.var_resize_image.trace_add("write", self.update_resize_image)
+        self.var_resize_image.trace_add('write', self.update_resize_image)
 
         self.var_auto_contrast = BooleanVar(value=self.auto_contrast)
-        self.var_auto_contrast.trace_add("write", self.update_auto_contrast)
+        self.var_auto_contrast.trace_add('write', self.update_auto_contrast)
 
     def buttonbox(self, master):
-        btn = Button(master, text="Save image",
+        btn = Button(master, text='Save image',
                      command=self.saveImage)
-        btn.pack(side="bottom", fill="both", padx=10, pady=10)
+        btn.pack(side='bottom', fill='both', padx=10, pady=10)
 
     def header(self, master):
         ewidth = 8
@@ -92,19 +92,19 @@ class VideoStreamFrame(Frame):
 
         frame = Frame(master)
 
-        self.cb_resize = Checkbutton(frame, text="Increase size", variable=self.var_resize_image)
+        self.cb_resize = Checkbutton(frame, text='Increase size', variable=self.var_resize_image)
         self.cb_resize.grid(row=1, column=4)
 
-        self.cb_contrast = Checkbutton(frame, text="Auto contrast", variable=self.var_auto_contrast)
+        self.cb_contrast = Checkbutton(frame, text='Auto contrast', variable=self.var_auto_contrast)
         self.cb_contrast.grid(row=1, column=5)
 
         self.e_fps = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
         self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
 
-        Label(frame, width=lwidth, text="fps:").grid(row=1, column=0)
+        Label(frame, width=lwidth, text='fps:').grid(row=1, column=0)
         self.e_fps.grid(row=1, column=1, sticky='we')
-        Label(frame, width=lwidth, text="interval (ms):").grid(row=1, column=2)
+        Label(frame, width=lwidth, text='interval (ms):').grid(row=1, column=2)
         self.e_interval.grid(row=1, column=3, sticky='we')
         # Label(frame, width=lwidth, text="overhead (ms):").grid(row=1, column=4)
         # self.e_overhead.grid(row=1, column=5)
@@ -115,15 +115,15 @@ class VideoStreamFrame(Frame):
 
         self.e_frametime = Spinbox(frame, width=ewidth, textvariable=self.var_frametime, from_=0.0, to=1.0, increment=0.01)
 
-        Label(frame, width=lwidth, text="exposure (s)").grid(row=1, column=0)
+        Label(frame, width=lwidth, text='exposure (s)').grid(row=1, column=0)
         self.e_frametime.grid(row=1, column=1)
 
         self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
 
-        Label(frame, width=lwidth, text="Brightness").grid(row=1, column=2)
+        Label(frame, width=lwidth, text='Brightness').grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
 
-        Label(frame, width=lwidth, text="DisplayRange").grid(row=1, column=4)
+        Label(frame, width=lwidth, text='DisplayRange').grid(row=1, column=4)
         self.e_display_range = Spinbox(frame, width=ewidth, textvariable=self.var_display_range, from_=1, to=self.display_range_default, increment=1000)
         self.e_display_range.grid(row=1, column=5)
 
@@ -136,7 +136,7 @@ class VideoStreamFrame(Frame):
 
             self.panel = Label(image=image)
             self.panel.image = image
-            self.panel.pack(side="left", padx=10, pady=10)
+            self.panel.pack(side='left', padx=10, pady=10)
 
     def setup_stream(self):
         pass
@@ -180,10 +180,10 @@ class VideoStreamFrame(Frame):
 
     def saveImage(self):
         """Dump the current frame to a file."""
-        outfile = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f") + ".tiff"
+        outfile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f') + '.tiff'
 
         if self.app:
-            module_io = self.app.get_module("io")
+            module_io = self.app.get_module('io')
 
             drc = module_io.get_experiment_directory()
             drc.mkdir(exist_ok=True, parents=True)
@@ -201,7 +201,7 @@ class VideoStreamFrame(Frame):
             h = {}
 
         write_tiff(outfile, frame, header=h)
-        print(" >> Wrote file:", outfile)
+        print(' >> Wrote file:', outfile)
 
     def close(self):
         self.stream.close()
@@ -231,7 +231,7 @@ class VideoStreamFrame(Frame):
             image = Image.fromarray(frame)
 
         if self.brightness != 1:
-            image = ImageEnhance.Brightness(image.convert("L")).enhance(self.brightness)
+            image = ImageEnhance.Brightness(image.convert('L')).enhance(self.brightness)
             # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
 
         if self.resize_image:
@@ -276,7 +276,7 @@ def start_gui(stream):
     meant to be used in an interactive python shell."""
     root = Tk()
     vsframe = VideoStreamFrame(root, stream=stream)
-    vsframe.pack(side="top", fill="both", expand=True)
+    vsframe.pack(side='top', fill='both', expand=True)
     root.mainloop()
     root.destroy()
 

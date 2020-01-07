@@ -31,5 +31,5 @@ def preprocess(image, n_std=4):
     if div == 0:
         div = 1
     s_image = (s_image - np.min(s_image)) / div
-    red_s_image = resize(s_image, [150, 150], mode="constant")
+    red_s_image = resize(s_image, [150, 150], mode='constant')
     return red_s_image.reshape((150, 150, 1))

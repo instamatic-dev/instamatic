@@ -7,81 +7,81 @@ import numpy as np
 
 
 # int
-INTEGER = ("Color", "NumPts", "Draw", "Regis",
-           "MapMontage", "MapSection", "MapBinning", "MapMagInd",
-           "MapCamera", "ShutterMode", "MapSpotSize",
-           "MapSlitIn", "ImageType", "MontUseStage",
-           "MapProbeMode", "MapLDConSet", "Type", "GroupID",
-           "MapID", "PieceOn", "Acquire", "DrawnID",
-           "MontBinning", "SamePosId", "OrigReg",
+INTEGER = ('Color', 'NumPts', 'Draw', 'Regis',
+           'MapMontage', 'MapSection', 'MapBinning', 'MapMagInd',
+           'MapCamera', 'ShutterMode', 'MapSpotSize',
+           'MapSlitIn', 'ImageType', 'MontUseStage',
+           'MapProbeMode', 'MapLDConSet', 'Type', 'GroupID',
+           'MapID', 'PieceOn', 'Acquire', 'DrawnID',
+           'MontBinning', 'SamePosId', 'OrigReg',
            # mdoc
-           "SpotSize",
-           "Binning", "CameraIndex", "DividedBy2", "MagIndex",
-           "Magnification", "ProbeMode", "MoveStage",
-           "Alpha", "ImageSize", "DataMode", "Montage",
-           "ImageSeries", "UsingCDS", "LowDoseConSet", "NumSubFrames",
+           'SpotSize',
+           'Binning', 'CameraIndex', 'DividedBy2', 'MagIndex',
+           'Magnification', 'ProbeMode', 'MoveStage',
+           'Alpha', 'ImageSize', 'DataMode', 'Montage',
+           'ImageSeries', 'UsingCDS', 'LowDoseConSet', 'NumSubFrames',
            # other
-           "Corner", "Imported", "K2ReadMode", "MapAlpha",
-           "PolyID", "RealignReg", "RealignedID", "RegPt",
-           "RegisteredToID", "RotOnLoad",
+           'Corner', 'Imported', 'K2ReadMode', 'MapAlpha',
+           'PolyID', 'RealignReg', 'RealignedID', 'RegPt',
+           'RegisteredToID', 'RotOnLoad',
            # DE-12
-           "DE12-TotalNumberOfFrames",
-           "DE12-FramesPerSecond",
-           "DE12-CameraPosition",
-           "DE12-ProtectionCoverMode",
-           "DE12-ProtectionCoverOpenDelay(ms)",
-           "DE12-TemperatureDetector(C)",
-           "DE12-SensorModuleSerialNumber",
-           "DE12-SensorReadoutDelay(ms)",
-           "DE12-IgnoredFramesInSummedImage",
+           'DE12-TotalNumberOfFrames',
+           'DE12-FramesPerSecond',
+           'DE12-CameraPosition',
+           'DE12-ProtectionCoverMode',
+           'DE12-ProtectionCoverOpenDelay(ms)',
+           'DE12-TemperatureDetector(C)',
+           'DE12-SensorModuleSerialNumber',
+           'DE12-SensorReadoutDelay(ms)',
+           'DE12-IgnoredFramesInSummedImage',
            )
 
 # float
-FLOAT = ("MapExposure", "MapIntensity", "MapTiltAngle", "MapSettling",
+FLOAT = ('MapExposure', 'MapIntensity', 'MapTiltAngle', 'MapSettling',
          # .mdoc
-         "StageZ", "PixelSpacing", "Defocus", "RotationAngle",
-         "CountsPerElectron", "TargetDefocus", "TiltAngle", "ExposureTime",
-         "DriftSettling", "Intensity", "ExposureDose", "PriorRecordDose",
+         'StageZ', 'PixelSpacing', 'Defocus', 'RotationAngle',
+         'CountsPerElectron', 'TargetDefocus', 'TiltAngle', 'ExposureTime',
+         'DriftSettling', 'Intensity', 'ExposureDose', 'PriorRecordDose',
          # other
-         "DefocusOffset", "FocusAxisPos", "MapSlitWidth",
+         'DefocusOffset', 'FocusAxisPos', 'MapSlitWidth',
          # DE-12
-         "DE12-ServerSoftwareVersion",
-         "DE12-PreexposureTime(s)",
-         "DE12-FaradayPlatePeakReading(pA/cm2)",
+         'DE12-ServerSoftwareVersion',
+         'DE12-PreexposureTime(s)',
+         'DE12-FaradayPlatePeakReading(pA/cm2)',
          )
 
 # str
-STRING = ("MapFile", "Note",
+STRING = ('MapFile', 'Note',
           # .mdoc
-          "DateTime", "ImageFile", "NavigatorLabel",
-          "SubFramePath", "ChannelName",
+          'DateTime', 'ImageFile', 'NavigatorLabel',
+          'SubFramePath', 'ChannelName',
           )
 
 # list, float
-FLOAT_LIST = ("StageXYZ", "RawStageXY", "MapScaleMat", "XYinPc",
-              "PtsX", "PtsY", "StageXYZ", "MapMinMaxScale",
+FLOAT_LIST = ('StageXYZ', 'RawStageXY', 'MapScaleMat', 'XYinPc',
+              'PtsX', 'PtsY', 'StageXYZ', 'MapMinMaxScale',
               # .mdoc
-              "StagePosition", "MinMaxMean", "XedgeDxyVS", "YedgeDxyVS",
-              "XedgeDxy", "YedgeDxy", "ImageShift", "BufISXY",
+              'StagePosition', 'MinMaxMean', 'XedgeDxyVS', 'YedgeDxyVS',
+              'XedgeDxy', 'YedgeDxy', 'ImageShift', 'BufISXY',
               # other
-              "BklshXY", "FocusOffsets", "LocalErrXY", "NetViewShiftXY",
-              "RealignErrXY", "ViewBeamShiftXY", "ViewBeamTiltXY",
-              "SuperMontCoords", "StageOffsets", "FrameDosesAndNumbers",
-              "FilterSlitAndLoss",
+              'BklshXY', 'FocusOffsets', 'LocalErrXY', 'NetViewShiftXY',
+              'RealignErrXY', 'ViewBeamShiftXY', 'ViewBeamTiltXY',
+              'SuperMontCoords', 'StageOffsets', 'FrameDosesAndNumbers',
+              'FilterSlitAndLoss',
               # external
-              "CoordsInMap", "CoordsInAliMont", "CoordsInAliMontVS", "CoordsInPiece",
+              'CoordsInMap', 'CoordsInAliMont', 'CoordsInAliMontVS', 'CoordsInPiece',
               )
 
 # list, int
-INTEGER_LIST = ("MapWidthHeight", "MapFramesXY",
+INTEGER_LIST = ('MapWidthHeight', 'MapFramesXY',
                 # .mdoc
-                "PieceCoordinates", "AlignedPieceCoordsVS",
-                "AlignedPieceCoords", "MontBacklash",
-                "ValidBacklash", "CameraModes", "FilterState",
-                "ConSetUsed", "MultishotHoleAndPosition",
+                'PieceCoordinates', 'AlignedPieceCoordsVS',
+                'AlignedPieceCoords', 'MontBacklash',
+                'ValidBacklash', 'CameraModes', 'FilterState',
+                'ConSetUsed', 'MultishotHoleAndPosition',
                 # other
-                "HoleArray", "LDAxisAngle", "SkipHoles",
-                "SuperMontXY",
+                'HoleArray', 'LDAxisAngle', 'SkipHoles',
+                'SuperMontXY',
                 )
 
 UNDEFINED = ()
@@ -111,17 +111,17 @@ class NavItem:
         self.__dict__.update(d)
 
         if not tag:
-            tag = f"Item-{NavItem.TAG_ID_ITERATOR}"
+            tag = f'Item-{NavItem.TAG_ID_ITERATOR}'
             NavItem.TAG_ID_ITERATOR += 1
 
         self.tag = tag
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.kind}[Item = {self.tag}])"
+        return f'{self.__class__.__name__}({self.kind}[Item = {self.tag}])'
 
     @property
     def kind(self) -> str:
-        return ("Marker", "Polygon", "Map")[self.Type]
+        return ('Marker', 'Polygon', 'Map')[self.Type]
 
     @property
     def stage_x(self) -> float:
@@ -141,7 +141,7 @@ class NavItem:
 
     def to_string(self) -> str:
         """Convert nav item to string that can be printed to .nav file."""
-        s = f"[Item = {self.tag}]\n"
+        s = f'[Item = {self.tag}]\n'
 
         d = self.to_dict()
 
@@ -154,16 +154,16 @@ class NavItem:
                 elif key in FLOAT:
                     val = str(val)
                 elif key in FLOAT_LIST:
-                    val = " ".join([str(x) for x in val])
+                    val = ' '.join([str(x) for x in val])
                 elif key in INTEGER_LIST:
-                    val = " ".join([str(x) for x in val])
+                    val = ' '.join([str(x) for x in val])
             except TypeError as e:
                 print(e)
                 print(key, val)
 
-            s += f"{key} = {val}\n"
+            s += f'{key} = {val}\n'
 
-        s += ""
+        s += ''
 
         return s
 
@@ -191,18 +191,18 @@ class MapItem(NavItem):
         self.markers = {}
 
     @property
-    def map_scale_matrix(self) -> "np.array":
+    def map_scale_matrix(self) -> 'np.array':
         MapBinning = self.MapBinning
         MontBinning = self.MontBinning
         mat = (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
         return mat.T
 
     @property
-    def stagematrix(self) -> "np.array":
+    def stagematrix(self) -> 'np.array':
         """Alias for map_scale_matrix."""
         return self.map_scale_matrix
 
-    def pixel_to_stagecoords(self, coords: list) -> "np.array":
+    def pixel_to_stagecoords(self, coords: list) -> 'np.array':
         """Convert from pixel coordinates to stage coordinates."""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
@@ -211,7 +211,7 @@ class MapItem(NavItem):
 
         return np.dot(coords - cp, mati) + cs
 
-    def stage_to_pixelcoords(self, coords: list) -> "np.array":
+    def stage_to_pixelcoords(self, coords: list) -> 'np.array':
         """Convert from stage coordinates to pixel coordinates."""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
@@ -220,12 +220,12 @@ class MapItem(NavItem):
 
         return np.dot(coords - cs, mat) + cp
 
-    def load_image(self, drc: str = None) -> "np.array":
+    def load_image(self, drc: str = None) -> 'np.array':
         """Loads the image corresponding to this item."""
         import mrcfile
 
         if not drc:
-            drc = "."
+            drc = '.'
         drc = Path(drc)
 
         map_file = Path(self.MapFile)
@@ -266,9 +266,9 @@ class MapItem(NavItem):
 
         if coords:
             px, py = np.array(coords).T
-            plt.plot(px, py, "ro", markerfacecolor='none', markersize=20, markeredgewidth=2)
+            plt.plot(px, py, 'ro', markerfacecolor='none', markersize=20, markeredgewidth=2)
 
-    def add_marker(self, coord, tag=None, acquire=True) -> "NavItem":
+    def add_marker(self, coord, tag=None, acquire=True) -> 'NavItem':
         """Add pixel coordinate (numpy) as marker to a map item."""
 
         # assuming pixel coords from numpy
@@ -279,20 +279,20 @@ class MapItem(NavItem):
 
         d = {}
         try:
-            d["BklshXY"] = self.BklshXY
+            d['BklshXY'] = self.BklshXY
         except AttributeError:
-            d["BklshXY"] = 10, -10
-        d["Color"] = 0
-        d["DrawnID"] = self.MapID
-        d["GroupID"] = MapItem.GROUP_ID_ITERATOR
+            d['BklshXY'] = 10, -10
+        d['Color'] = 0
+        d['DrawnID'] = self.MapID
+        d['GroupID'] = MapItem.GROUP_ID_ITERATOR
         # d["MapID"] = 1 + self.i  # must be a unique ID under 100000 [optional, default=0]
-        d["Acquire"] = int(acquire)
-        d["NumPts"] = 1
-        d["PtsX"] = [stage_x]
-        d["PtsY"] = [stage_y]
-        d["Regis"] = self.Regis
-        d["StageXYZ"] = [stage_x, stage_y, self.stage_z]
-        d["Type"] = 0
+        d['Acquire'] = int(acquire)
+        d['NumPts'] = 1
+        d['PtsX'] = [stage_x]
+        d['PtsY'] = [stage_y]
+        d['Regis'] = self.Regis
+        d['StageXYZ'] = [stage_x, stage_y, self.stage_z]
+        d['Type'] = 0
 
         item = NavItem(d, tag=tag)
 
@@ -309,7 +309,7 @@ class MapItem(NavItem):
 
         ret = []
         for i, coord in enumerate(coords):
-            tag = f"{self.tag}-{i}"
+            tag = f'{self.tag}-{i}'
             item = self.add_marker(coord, tag=tag, acquire=True)
             ret.append(item)
 
@@ -333,7 +333,7 @@ class MapItem(NavItem):
 def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
     """Takes a text block from a SerialEM .nav file and converts it into a
     dictionary."""
-    patt_split = re.compile(r"\s?=\s?")
+    patt_split = re.compile(r'\s?=\s?')
     d = {}
 
     for item in block:
@@ -353,7 +353,7 @@ def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
             elif key in UNDEFINED:
                 print(item)
             else:
-                print("Unknown item:", item)
+                print('Unknown item:', item)
         except Exception as e:
             print(e)
             print(item)
@@ -363,18 +363,18 @@ def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
         d[key] = value
 
     if sequence >= 0:
-        d["sequence"] = sequence
+        d['sequence'] = sequence
     if kind:
-        d["kind"] = kind
+        d['kind'] = kind
 
     return d
 
 
-def block2nav(block: list, tag=None) -> "NavItem":
+def block2nav(block: list, tag=None) -> 'NavItem':
     """Takes a text block from a SerialEM .nav file and converts it into a
     instance of `NavItem` or `MapItem`"""
     d = block2dict(block)
-    kind = d["Type"]
+    kind = d['Type']
 
     if kind == 2:
         ret = MapItem(d, tag=tag)
@@ -393,14 +393,14 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
     """
 
     # https://regex101.com/
-    patt_match = re.compile(r"\[Item\s?=\s?([a-zA-Z0-9_-]*)\]")
+    patt_match = re.compile(r'\[Item\s?=\s?([a-zA-Z0-9_-]*)\]')
 
     capture = False
     block = []
     items = []
-    tag = ""
+    tag = ''
 
-    f = open(fn, "r")
+    f = open(fn, 'r')
     for line in f:
         line = line.strip()
         if not line:
@@ -419,9 +419,9 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
         elif capture:
             block.append(line)
         else:
-            if line.startswith("AdocVersion"):
+            if line.startswith('AdocVersion'):
                 pass
-            elif line.startswith("LastSavedAs"):
+            elif line.startswith('LastSavedAs'):
                 pass
             else:
                 print(line)
@@ -432,8 +432,8 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
         items = [item for item in items if item.Acquire]
 
     # associate markers with map items
-    map_items = (item for item in items if item.kind == "Map")
-    markers = (item for item in items if item.kind == "Marker")
+    map_items = (item for item in items if item.kind == 'Map')
+    markers = (item for item in items if item.kind == 'Marker')
 
     d = defaultdict(list)
 
@@ -447,7 +447,7 @@ def read_nav_file(fn: str, acquire_only: bool = False) -> list:
     return items
 
 
-def write_nav_file(fn: str, *items, mode="w") -> None:
+def write_nav_file(fn: str, *items, mode='w') -> None:
     """Write list of nav items to a navigator file with filename `fn` to be
     read by SerialEM.
 
@@ -457,12 +457,12 @@ def write_nav_file(fn: str, *items, mode="w") -> None:
     items to an existing file
     """
     f = open(fn, mode) if fn else None
-    version = "2.00"
+    version = '2.00'
 
-    if mode == "w":
-        print(f"AdocVersion = {version}", file=f)
-        print(f"LastSavedAs = {fn}", file=f)
-        print("", file=f)
+    if mode == 'w':
+        print(f'AdocVersion = {version}', file=f)
+        print(f'LastSavedAs = {fn}', file=f)
+        print('', file=f)
 
     for item in items:
         print(item.to_string(), file=f)
@@ -483,7 +483,7 @@ def read_mdoc_file(fn: str, only_kind: str = None) -> list:
     """
 
     # https://regex101.com/
-    patt_match = re.compile(r"\[([a-zA-Z]+)\s?=\s?([0-9]+)\]")
+    patt_match = re.compile(r'\[([a-zA-Z]+)\s?=\s?([0-9]+)\]')
 
     capture = False
     block = []
@@ -491,7 +491,7 @@ def read_mdoc_file(fn: str, only_kind: str = None) -> list:
     kind = None
     sequence = 0
 
-    f = open(fn, "r")
+    f = open(fn, 'r')
     for line in f:
         line = line.strip()
         if not line:
@@ -518,13 +518,13 @@ def read_mdoc_file(fn: str, only_kind: str = None) -> list:
 
     if only_kind:
         only_kind = only_kind.lower()
-        items = [item for item in items if item["kind"].lower() == only_kind]
+        items = [item for item in items if item['kind'].lower() == only_kind]
 
     return items
 
 
 if __name__ == '__main__':
-    fn = "C:/s/work_2019-06-26/navs2.nav"
+    fn = 'C:/s/work_2019-06-26/navs2.nav'
     items = read_nav_file(fn)
 
     from IPython import embed
