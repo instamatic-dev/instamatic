@@ -51,6 +51,9 @@ class ExperimentalTVIPS(LabelFrame):
         self.b_reset_defocus = Button(frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED)
         self.b_reset_defocus.grid(row=6, column=2, sticky='EW')
 
+        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
+        self.c_toggle_defocus.grid(row=6, column=3, sticky='W')
+
         self.c_toggle_diffraction = Checkbutton(frame, text='Toggle DIFF', variable=self.var_toggle_diff_mode, command=self.toggle_diff_mode)
         self.c_toggle_diffraction.grid(row=7, column=3, sticky='W')
 
