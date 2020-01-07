@@ -1,3 +1,4 @@
+import threading
 from pathlib import Path
 from tkinter import *
 from tkinter import filedialog
@@ -6,6 +7,8 @@ from tkinter.ttk import *
 from .base_module import BaseModule
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
+
+barrier = threading.Barrier(2, timeout=60)
 
 
 class ExperimentalTVIPS(LabelFrame):
@@ -153,7 +156,7 @@ class ExperimentalTVIPS(LabelFrame):
     def disable_ui(self):
         self.InvertAngleButton.config(state=DISABLED)
         self.GetReadyButton.config(state=DISABLED)
-        self.AcquireButton.config(state=NORMAL)
+        self.AcquireButton.config(state=DISABLED)
         self.FinalizeButton.config(state=NORMAL)
         self.SerialButton.config(state=DISABLED)
         self.e_target_angle.config(state=DISABLED)
@@ -183,6 +186,13 @@ class ExperimentalTVIPS(LabelFrame):
         params = self.get_params(task='get_ready')
         self.q.put(('cred_tvips', params))
         self.triggerEvent.set()
+
+        def worker(button=None, state=None):
+            barrier.wait()  # wait for experiment to be primed
+            button.config(state=state)
+
+        t = threading.Thread(target=worker, kwargs={'button': self.AcquireButton, 'state': NORMAL})
+        t.start()
 
     def start_collection(self):
         self.AcquireButton.config(state=DISABLED)
@@ -305,6 +315,8 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
                                                           track=instruction_file, exposure=exposure,
                                                           rotation_speed=rotation_speed)
         controller.cred_tvips_exp.get_ready()
+
+        barrier.wait()  # synchronize with GUI
     elif task == 'acquire':
         controller.cred_tvips_exp.start_collection(target_angle=target_angle,
                                                    manual_control=manual_control)
