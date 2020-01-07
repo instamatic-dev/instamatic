@@ -529,4 +529,5 @@ if __name__ == '__main__':
     fn = "C:/s/work_2019-06-26/navs2.nav"
     items = read_nav_file(fn)
 
-    breakpoint()
+    from IPython import embed
+    embed()

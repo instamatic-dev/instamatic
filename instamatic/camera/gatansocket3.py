@@ -639,8 +639,8 @@ def test1():
     s = 'Result("Hello world\\n")'
     g.ExecuteScript(s)
 
-    breakpoint()
-    exit()
+    from IPython import embed
+    embed()
 
 
 if __name__ == '__main__':

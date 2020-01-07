@@ -1,3 +1,8 @@
+"""
+Utility script to enable rotation control from a dmscript
+See `https://github.com/stefsmeets/instamatic/tree/master/dmscript` for usage
+"""
+
 import subprocess as sp
 from socket import *
 import datetime
@@ -5,11 +10,6 @@ from instamatic import config
 from instamatic import TEMController
 import threading
 import logging
-
-"""
-Utility script to enable rotation control from a dmscript
-See `https://github.com/stefsmeets/instamatic/tree/master/dmscript` for usage
-"""
 
 ctrl = TEMController.initialize()
 

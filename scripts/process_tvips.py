@@ -1,11 +1,3 @@
-from instamatic.processing.ImgConversionTVIPS import ImgConversionTVIPS as ImgConversion
-import sys
-from pathlib import Path
-import numpy as np
-import tifffile
-from instamatic.tools import get_acquisition_time, relativistic_wavelength
-
-
 """
 Script to process cRED data collecting using instamatic with the EMMENU plugin
 
@@ -20,6 +12,13 @@ Defaults to `cred_log.txt` in the current directory if left blank.
 If the first argument is given as `all`, the script will look for
 all `cred_log.txt` files in the subdirectories, and iterate over those.
 """
+
+from instamatic.processing.ImgConversionTVIPS import ImgConversionTVIPS as ImgConversion
+import sys
+from pathlib import Path
+import numpy as np
+import tifffile
+from instamatic.tools import get_acquisition_time, relativistic_wavelength
 
 
 def extract_image_number(s):
