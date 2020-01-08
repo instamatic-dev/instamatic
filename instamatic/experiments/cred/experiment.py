@@ -1,4 +1,6 @@
 import datetime
+import json
+import socket
 import time
 from pathlib import Path
 
@@ -11,6 +13,8 @@ from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConver
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
+
+use_vm = config.cfg.use_VM_server_exe
 
 
 def print_and_log(msg, logger=None):
@@ -101,6 +105,18 @@ class Experiment:
 
         self.track_stage_position = config.cfg.cred_track_stage_positions
         self.stage_positions = []
+
+        if use_vm:
+            self.s2 = socket.socket()
+            vm_host = config.cfg.VM_server_host
+            vm_port = config.cfg.VM_server_port
+        try:
+            self.s2.connect((vm_host, vm_port))
+            print('VirtualBox server connected for autocRED.')
+            self.s2_c = 1
+        except BaseException:
+            print('Is VM server running? Connection failed.')
+            self.s2_c = 0
 
     def log_start_status(self):
         """Log the starting parameters."""
@@ -343,6 +359,18 @@ class Experiment:
         self.write_image_data(image_buffer)
 
         print('Data Collection and Conversion Done.')
+
+        pathsmv_str = str(self.smv_path)
+        msg = {'path': pathsmv_str,
+               'rotrange': self.total_angle,
+               'nframes': self.nframes,
+               'osc': self.osc_angle}
+        msg_tosend = json.dumps(msg).encode('utf8')
+
+        if self.s2_c:
+            self.s2.send(msg_tosend)
+            print('SMVs sent to XDS for processing.')
+
         return True
 
     def write_data(self, buffer: list):

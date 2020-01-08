@@ -52,15 +52,8 @@ if not os.path.isfile(log_rotaterange):
     with open(log_rotaterange, 'a') as f:
         f.write('x\ty\tz\trotation range\n')
 
-s = socket.socket()
-dials_host = 'localhost'
-dials_port = 8089
-try:
-    s.connect((dials_host, dials_port))
-    print('DIALS server connected for autocRED.')
-    s_c = 1
-except BaseException:
-    s_c = 0
+use_dials = config.cfg.use_indexing_server_exe
+use_vm = config.cfg.use_VM_server_exe
 
 
 def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
@@ -84,8 +77,12 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         return 0
 
     try:
-        with open(log_iscalibs / file, 'rb') as f:
-            transform_imgshift, c = pickle.load(f)
+        if imageshift == 'S':
+            with open(config.logs_drc / file, 'rb') as f:
+                transform_imgshift, c = pickle.load(f)
+        else:
+            with open(log_iscalibs / file, 'rb') as f:
+                transform_imgshift, c = pickle.load(f)
     except BaseException:
         print(f'No {imageshift}, defocus = {diff_defocus} calibration found. Choose the desired defocus value.')
         inp = input('Press ENTER when ready.')
@@ -224,6 +221,30 @@ class Experiment:
 
         if self.verbose:
             print(msg)
+
+        if use_dials:
+            self.s = socket.socket()
+            dials_host = config.cfg.indexing_server_host
+            dials_port = config.cfg.indexing_server_port
+            try:
+                self.s.connect((dials_host, dials_port))
+                print('DIALS server connected for autocRED.')
+                self.s_c = 1
+            except BaseException:
+                print('Is DIALS server running? Connection failed.')
+                self.s_c = 0
+
+        if use_vm:
+            self.s2 = socket.socket()
+            vm_host = config.cfg.VM_server_host
+            vm_port = config.cfg.VM_server_port
+            try:
+                self.s2.connect((vm_host, vm_port))
+                print('VirtualBox server connected for autocRED.')
+                self.s2_c = 1
+            except BaseException:
+                print('Is VM server running? Connection failed.')
+                self.s2_c = 0
 
     def image_cropper(self, img, window_size=0):
         crystal_pos, r = find_defocused_image_center(img)  # find_defocused_image_center crystal position (y,x)
@@ -893,11 +914,15 @@ class Experiment:
                'osc': osangle}
         msg_tosend = json.dumps(msg).encode('utf8')
 
-        if s_c:
-            s.send(msg_tosend)
+        if self.s_c:
+            self.s.send(msg_tosend)
             self.print_and_del('SMVs sent to DIALS for processing.')
 
-        # self.logger.info("XDS INP file created.")
+        if self.s2_c:
+            self.s2.send(msg_tosend)
+            self.print_and_del('SMVs sent to XDS for processing.')
+
+        #self.logger.info("XDS INP file created.")
 
         if image_buffer:
             drc = os.path.join(path, 'tiff_image')

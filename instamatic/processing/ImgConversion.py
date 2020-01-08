@@ -17,6 +17,7 @@ from instamatic.tools import find_beam_center
 from instamatic.tools import find_beam_center_with_beamstop
 from instamatic.tools import find_subranges
 from instamatic.tools import to_xds_untrusted_area
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +27,7 @@ def rotation_axis_to_xyz(rotation_axis, invert=False, setting='xds'):
     if invert:
         rotation_axis += np.pi
 
-    rot_x = cos(rotation_axis)
+    rot_x = np.cos(rotation_axis)
     rot_y = np.sin(rotation_axis)
     rot_z = 0
 
