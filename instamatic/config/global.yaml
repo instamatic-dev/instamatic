@@ -6,27 +6,34 @@ data_directory: C:/instamatic
 #flatfield: C:/instamatic/flatfield.tiff
 flatfield:
 
+# Run the TEM connection in a different process (recommended)
 use_tem_server: True
 tem_server_host: 'localhost'
 tem_server_port: 8088
 tem_require_admin: False
 
+# Run the Camera connection in a different process
 use_cam_server: False
 cam_server_host: 'localhost'
 cam_server_port: 8087
 
+# Submit collected data to an indexing server (CRED only)
 use_indexing_server_exe: False
 indexing_server_exe: 'instamatic.dialsserver.exe'
 indexing_server_host: 'localhost'
 indexing_server_port: 8089
+dials_script: 'E:/cctbx/dials_script.bat'
 
+# JEOL only, automatically set the rotation speed via Goniotool (instamatic.goniotool)
 use_goniotool: True
 goniotool_server_host: 'localhost'
 goniotool_server_port: 8090
 
+# For InsteaDMatic to control the rotation speed on a FEI/TFS system
 fei_server_host: '192.168.12.1'
 fei_server_port: 8091
 
+# Automatically submit the data to an indexing server running in a VM (VirtualBox)
 use_VM_server_exe: True
 VM_server_exe: 'instamatic.VMserver.exe'
 VM_server_host: 'localhost'
@@ -38,11 +45,11 @@ VM_STARTUP_DELAY: 50
 VM_DESKTOP_DELAY: 20
 VM_SHARED_FOLDER: F:\SharedWithVM
 
-dials_script: 'E:/cctbx/dials_script.bat'
-
+# Testing variables
 cred_relax_beam_before_experiment: false
 cred_track_stage_positions: false
 
+# Here the panels for the GUI can be turned on/off/reordered
 modules:
   - 'cred'
   - 'cred_tvips'

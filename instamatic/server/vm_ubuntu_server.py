@@ -20,6 +20,7 @@ VM_SF = config.cfg.VM_SHARED_FOLDER
 #ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
 BUFF = 1024
 
+
 def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mode="headless"):
     """mode can be either gui or headless"""
     try:
@@ -48,6 +49,7 @@ def vm_ubuntu_start_terminal(session):
     """type ctrl+alt+t to bring up terminal in the ubuntu machine"""
     session.console.keyboard.put_keys(press_keys="t", hold_keys=["CTRL","ALT"])
 
+
 def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachine_pwd=VM_PWD, time_delay=30, script_path="/usr/loca/bin/xds"):
     try:
         vbox = virtualbox.VirtualBox()
@@ -65,6 +67,7 @@ def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachi
 
     process, stdout, stderr = gs.execute(script_path)
     print(stdout)
+
 
 def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composition):
     """incoming conn should contain a path that is shared already between VBox and windows"""
@@ -122,8 +125,10 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
     conn.close()
     print("Connection closed")
 
+
 def close_down_vm_process(session):
     session.console.power_down()
+
 
 def generate_shelxt_input(unitcell, spgr, composition, path):
     from edtools.make_shelx import comp2dict, get_latt_symm_cards, get_sfac
@@ -188,6 +193,7 @@ FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
 
     print(f"Wrote xdsconv input file at {path}.")
 
+
 def solve_structure_shelxt(path, ins_name = "shelx"):
     CWD = str(path)
     cmd = ["shelxt", ins_name]
@@ -199,6 +205,7 @@ def solve_structure_shelxt(path, ins_name = "shelx"):
 
     p.wait()
     print("Shelxt finished running.")
+
 
 def main():
     """if ENABLE_SHELXT:
@@ -278,6 +285,7 @@ def main():
     #close_down_vm_process(session)
     #time.sleep(5)
     #print("VM server closed down safely!")
+
 
 if __name__ == '__main__':
     main()
