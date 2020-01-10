@@ -18,14 +18,14 @@ class Writer:
         Tkinter text / scrolledtext widget to redirect stdout to
     """
 
-    def __init__(self, text):
-        self.terminal = sys.stdout
+    def __init__(self, text, add_timestamp=False):
+        self.terminal = sys.__stdout__
         self.text = text
-        self._timestamp = False
+        self._add_timestamp = add_timestamp
 
     def write(self, message):
         self.terminal.write(message)
-        if self._timestamp and message != '\n':
+        if self._add_timestamp and message != '\n':
             now = time.strftime('%H:%M:%S')
             self.text.insert(END, f'[{now}] {message}')
         else:
@@ -36,7 +36,7 @@ class Writer:
         self.terminal.flush(*args, **kwargs)
 
     def timestamp(self, toggle):
-        self._timestamp = toggle
+        self._add_timestamp = toggle
 
 
 class Console(LabelFrame):
@@ -61,27 +61,26 @@ class Console(LabelFrame):
         self.TestButton = Button(frame, text='Test', command=self.write)
         self.TestButton.grid(row=1, column=0, sticky='EW')
 
-        self.CaptureButton = Button(frame, text='Capture', command=self.redirect_stdout)
-        self.CaptureButton.grid(row=1, column=1, sticky='EW')
-
-        self.ResetButton = Button(frame, text='Reset', command=self.reset_stdout)
-        self.ResetButton.grid(row=1, column=2, sticky='EW')
+        # self.ResetButton = Button(frame, text='Reset', command=self.reset_stdout)
+        # self.ResetButton.grid(row=1, column=2, sticky='EW')
 
         self.ClearButton = Button(frame, text='Clear', command=self.clear_text)
-        self.ClearButton.grid(row=1, column=3, sticky='EW')
+        self.ClearButton.grid(row=1, column=1, sticky='EW')
 
         self.ExportButton = Button(frame, text='Export', command=self.export_text)
-        self.ExportButton.grid(row=1, column=4, sticky='EW')
+        self.ExportButton.grid(row=1, column=2, sticky='EW')
+
+        self.CaptureButton = Checkbutton(frame, text='Capture', variable=self.var_toggle_capture, command=self.toggle_capture)
+        self.CaptureButton.grid(row=1, column=3, sticky='EW')
 
         self.TimestampButton = Checkbutton(frame, text='Timestamp', variable=self.var_toggle_timestamp, command=self.toggle_timestamp)
-        self.TimestampButton.grid(row=1, column=5, sticky='EW')
+        self.TimestampButton.grid(row=1, column=4, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=1)
         frame.columnconfigure(3, weight=1)
         frame.columnconfigure(4, weight=1)
-        frame.columnconfigure(5, weight=1)
 
         frame.pack(side='top', fill='x')
 
@@ -89,6 +88,7 @@ class Console(LabelFrame):
 
     def init_vars(self):
         self.var_toggle_timestamp = BooleanVar(value=False)
+        self.var_toggle_capture = BooleanVar(value=True)
 
     def write(self, text=None):
         """Test write a line to the console."""
@@ -96,17 +96,27 @@ class Console(LabelFrame):
             text = str(datetime.datetime.now())
         print(text)
 
+    def toggle_capture(self):
+        """Toggle for redirecting stdout to the console."""
+        toggle = self.var_toggle_capture.get()
+        if toggle:
+            self.redirect_stdout()
+        else:
+            self.reset_stdout()
+
     def redirect_stdout(self):
         """Redirect stdout to print also to the console."""
-        self.writer = Writer(self.text)
-        self.regular_stdout = sys.stdout
+        add_timestamp = self.var_toggle_timestamp.get()
+        self.writer = Writer(self.text, add_timestamp=add_timestamp)
         sys.stdout = self.writer
+        sys.stderr = self.writer
 
     def reset_stdout(self):
         """Stop logging text and restore normal stdout."""
-        sys.stdout = self.regular_stdout
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
 
-    def clear_text(self, show=10):
+    def clear_text(self):
         """Clear the text in the console."""
         self.text.delete('0.0', END)
 
