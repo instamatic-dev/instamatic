@@ -1,6 +1,6 @@
-microscope: simulate
+microscope: jeol_tem
 camera: simulate
-calibration: simulate
+calibration: jeol_calib 
 
 data_directory: C:/instamatic
 #flatfield: C:/instamatic/flatfield.tiff

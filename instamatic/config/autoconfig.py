@@ -27,7 +27,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     BinX, BinY = ctrl.cam.getBinning()
     assert BinX == BinY, 'Binnings differ in X and Y direction?! (X: {BinX} | Y: {BinY})'
 
-    ctrl.mode(mode)
+    ctrl.mode = mode
 
     for mag in rng:
         ctrl.magnification.set(mag)
@@ -42,7 +42,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         else:
             pixelsize = PixelSizeX
 
-        calib_range[mode] = pixelsize
+        calib_range[mag] = pixelsize
 
     return calib_range
 
@@ -87,7 +87,7 @@ def main():
 
     # Connect to camera
 
-    cam_name = choice_prompt(choices='None gatan tvips simulate'.split(),
+    cam_name = choice_prompt(choices=[None, 'gatan', 'tvips', 'simulate'],
                              default='simulate',
                              question='Which camera can I connect to?')
 
@@ -107,7 +107,10 @@ def main():
     from instamatic.camera.camera import get_cam
     from instamatic.TEMController.TEMController import TEMController
 
-    cam = get_cam(cam_name)() if cam_name else None
+    if cam_name:
+        cam = get_cam(cam_name)()
+    else:
+        cam = None
     tem = get_tem(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)
