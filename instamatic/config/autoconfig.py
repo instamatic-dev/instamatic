@@ -107,10 +107,7 @@ def main():
     from instamatic.camera.camera import get_cam
     from instamatic.TEMController.TEMController import TEMController
 
-    if cam_name:
-        cam = get_cam(cam_name)()
-    else:
-        cam = None
+    cam = get_cam(cam_name)() if cam_name else None
     tem = get_tem(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)
