@@ -78,11 +78,11 @@ class DebugFrame(LabelFrame):
 
         Label(frame, text='Unit cell: ').grid(row=5, column=2, sticky='EW')
         self.e_uc = Entry(frame, textvariable=self.var_e_uc, width=15, state=DISABLED)
-        self.e_uc.grid(row=5, column=3, sticky='EW')
+        self.e_uc.grid(row=5, column=3, sticky='EW', columnspan=2)
 
         Label(frame, text='Composition: ').grid(row=6, column=2, sticky='EW')
         self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=DISABLED)
-        self.e_compo.grid(row=6, column=3, sticky='EW', columnspan=1)
+        self.e_compo.grid(row=6, column=3, sticky='EW', columnspan=2)
 
         frame.columnconfigure(0, weight=1)
         frame.pack(side='top', fill='x', padx=10, pady=10)
