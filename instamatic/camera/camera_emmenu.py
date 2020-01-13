@@ -451,7 +451,11 @@ class CameraEMMENU:
             time.sleep(delay)
 
     def set_exposure(self, exposure_time: int) -> None:
-        """Set exposure time in ms. It will be set to the lowest allowed value by EMMenu if the given exposure time is too low."""
+        """Set exposure time in ms.
+
+        It will be set to the lowest allowed value by EMMenu if the
+        given exposure time is too low.
+        """
         self._vp.ExposureTime = exposure_time
 
     def get_exposure(self) -> int:

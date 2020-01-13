@@ -1,7 +1,7 @@
 import shutil
+from math import sin
 from pathlib import Path
 
-from math import sin
 import yaml
 
 from instamatic import config
