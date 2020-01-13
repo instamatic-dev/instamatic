@@ -25,7 +25,7 @@ indexing_server_port: 8089
 dials_script: 'E:/cctbx/dials_script.bat'
 
 # JEOL only, automatically set the rotation speed via Goniotool (instamatic.goniotool)
-use_goniotool: True
+use_goniotool: False
 goniotool_server_host: 'localhost'
 goniotool_server_port: 8090
 
@@ -34,7 +34,7 @@ fei_server_host: '192.168.12.1'
 fei_server_port: 8091
 
 # Automatically submit the data to an indexing server running in a VM (VirtualBox)
-use_VM_server_exe: True
+use_VM_server_exe: False
 VM_server_exe: 'instamatic.VMserver.exe'
 VM_server_host: 'localhost'
 VM_server_port: 8092

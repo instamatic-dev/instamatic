@@ -209,19 +209,7 @@ class JeolMicroscope:
         self.eos3.SetSelector(selector)
 
     def getMagnificationIndex(self) -> int:
-        value = self.getMagnification()
-        current_mode = self.getFunctionMode()
-
-        if current_mode == 'diff':
-            selector = self.range_diff.index(value)
-        elif current_mode == 'lowmag':
-            selector = self.range_lowmag.index(value)
-        elif current_mode == 'samag':
-            selector = self.range_samag.index(value)
-        elif current_mode == 'mag1':
-            selector = self.range_mag1.index(value)
-        elif current_mode == 'mag2':
-            selector = self.range_mag2.index(value)
+        selector, mag, status = self.eos3.GetCurrentMagSelectorID()
 
         return selector
 

@@ -29,8 +29,8 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 
     ctrl.mode = mode
 
-    for mag in rng:
-        ctrl.magnification.set(mag)
+    for i, mag in enumerate(rng):
+        ctrl.magnification.index = i
         d = ctrl.cam.getCurrentCameraInfo()
 
         PixelSizeX = d['PixelSizeX']
@@ -69,7 +69,8 @@ def choice_prompt(choices: list = [], default=None, question: str = 'Which one?'
 
     picked = choices[q]
 
-    print(choices, picked)
+    # print(choices, picked)
+    print(picked)
 
     return picked
 
@@ -111,6 +112,7 @@ def main():
     tem = get_tem(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)
+
     try:
         ranges = ctrl.magnification.get_ranges()
     except BaseException:
