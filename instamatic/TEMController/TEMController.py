@@ -855,6 +855,8 @@ class TEMController:
         if verbose:
             print(f'Executing script: {script}\n')
 
+        ctrl = self
+        
         t0 = time.perf_counter()
         exec(open(script).read())
         t1 = time.perf_counter()
