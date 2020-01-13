@@ -375,7 +375,7 @@ class JeolMicroscope:
 
     def getRotationSpeed(self) -> int:
         if self.goniotool_available:
-            self.goniotool.get_rate()
+            return self.goniotool.get_rate()
         else:
             raise OSError('Goniotool connection is not available.')
 
