@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-import numpy as np
+from math import sin
 import yaml
 
 from instamatic import config
@@ -33,16 +33,23 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         ctrl.magnification.index = i
         d = ctrl.cam.getCurrentCameraInfo()
 
-        PixelSizeX = d['PixelSizeX']
-        PixelSizeY = d['PixelSizeY']
+        img = ctrl.getImage(exposure=10)  # set to minimum allowed value
+        index = ctrl.cam.get_image_index()
+        v = ctrl.cam.getEMVectorByIndex(index)
+
+        PixelSizeX = v['fImgDistX']
+        PixelSizeY = v['fImgDistY']
+
         assert PixelSizeX == PixelSizeY, 'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
 
         if mode == 'diff':
-            pixelsize = np.sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
+            pixelsize = sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
         else:
             pixelsize = PixelSizeX
 
         calib_range[mag] = pixelsize
+
+        # print("mode", mode, "mag", mag, "pixelsize", pixelsize)
 
     return calib_range
 
