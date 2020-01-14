@@ -131,7 +131,7 @@ class About(LabelFrame):
 
 
 module = BaseModule(name='about', display_name='about', tk_frame=About,
-                    commands={}, location='side_bot')
+                    commands={}, location='bottom')
 
 
 if __name__ == '__main__':

@@ -133,7 +133,7 @@ module = BaseModule(name='red', display_name='RED', tk_frame=ExperimentalRED,
                     commands={
                         'red': acquire_data_RED,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 
 if __name__ == '__main__':

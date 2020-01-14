@@ -111,7 +111,7 @@ module = BaseModule(name='credfei', display_name='cRED_FEI', tk_frame=Experiment
                     commands={
                         'credfei': acquire_data_cREDfei,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 
 if __name__ == '__main__':

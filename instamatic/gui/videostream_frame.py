@@ -9,17 +9,20 @@ from PIL import Image
 from PIL import ImageEnhance
 from PIL import ImageTk
 
+from .base_module import BaseModule
 from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 
-class VideoStreamFrame(Frame):
+class VideoStreamFrame(LabelFrame):
     """docstring for VideoStreamFrame."""
 
     def __init__(self, parent, stream, app=None):
-        super().__init__()
+        LabelFrame.__init__(self, parent, text='Stream')
+
+        self.parent = parent
 
         self.stream = stream
         self.app = app
@@ -49,12 +52,15 @@ class VideoStreamFrame(Frame):
         self.parent = parent
 
         self.init_vars()
-        self.buttonbox(self.parent)
-        self.header(self.parent)
-        self.makepanel(self.parent)
+        self.buttonbox(self)
+        self.header(self)
+        self.makepanel(self)
 
-        self.parent.wm_title('Video stream')
-        self.parent.wm_protocol('WM_DELETE_WINDOW', self.close)
+        try:
+            self.parent.wm_title('Video stream')
+            self.parent.wm_protocol('WM_DELETE_WINDOW', self.close)
+        except AttributeError:
+            pass
 
         self.parent.bind('<Escape>', self.close)
 
@@ -134,7 +140,7 @@ class VideoStreamFrame(Frame):
             image = Image.fromarray(np.zeros(resolution))
             image = ImageTk.PhotoImage(image)
 
-            self.panel = Label(image=image)
+            self.panel = Label(master, image=image)
             self.panel.image = image
             self.panel.pack(side='left', padx=10, pady=10)
 
@@ -211,7 +217,7 @@ class VideoStreamFrame(Frame):
 
     def start_stream(self):
         self.stream.update_frametime(self.frametime)
-        self.parent.after(500, self.on_frame)
+        self.after(500, self.on_frame)
 
     def on_frame(self, event=None):
         self.stream.lock.acquire(True)
@@ -246,7 +252,7 @@ class VideoStreamFrame(Frame):
         self.update_frametimes()
         # self.parent.update_idletasks()
 
-        self.parent.after(self.frame_delay, self.on_frame)
+        self.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
         self.current = time.perf_counter()
@@ -269,6 +275,10 @@ class VideoStreamFrame(Frame):
             self.last_interval = interval
         else:
             self.nframes += 1
+
+
+module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFrame,
+                    commands={}, location='left')
 
 
 def start_gui(stream):

@@ -158,7 +158,7 @@ class MachineLearningFrame(LabelFrame):
 
 
 module = BaseModule(name='learning', display_name='learning', tk_frame=MachineLearningFrame,
-                    commands={}, location='side_bot')
+                    commands={}, location='bottom')
 
 
 if __name__ == '__main__':

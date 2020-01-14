@@ -243,7 +243,7 @@ module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCt
                     commands={
                         'ctrl': microscope_control,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 
 if __name__ == '__main__':

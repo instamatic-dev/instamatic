@@ -196,7 +196,7 @@ module = BaseModule(name='sed', display_name='serialED', tk_frame=ExperimentalSE
                     commands={
                         'sed': acquire_data_SED,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 
 if __name__ == '__main__':

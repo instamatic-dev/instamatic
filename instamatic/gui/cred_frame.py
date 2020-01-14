@@ -254,7 +254,7 @@ module = BaseModule(name='cred', display_name='cRED', tk_frame=ExperimentalcRED,
                         'toggle_difffocus': toggle_difffocus,
                         'relax_beam': relax_beam,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 
 if __name__ == '__main__':

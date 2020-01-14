@@ -344,7 +344,7 @@ module = BaseModule(name='autocred', display_name='autocRED', tk_frame=Experimen
                     commands={
                         'autocred': acquire_data_autocRED,
                     },
-                    location='side_bot')
+                    location='bottom')
 
 if __name__ == '__main__':
     root = Tk()

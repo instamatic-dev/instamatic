@@ -372,7 +372,7 @@ module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame,
                         'autoindex_xdsVM': autoindex_xdsVM,
                         'flatfield': collect_flatfield,
                     },
-                    location='side_bot',
+                    location='bottom',
                     )
 
 

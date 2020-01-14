@@ -7,7 +7,9 @@ from tkinter import *
 from tkinter.ttk import *
 
 from .modules import MODULES
+from instamatic import version
 from instamatic.formats import *
+
 
 job_dict = {}
 
@@ -76,32 +78,33 @@ class DataCollectionController(threading.Thread):
                 pass
 
 
-class ModuleFrame(Frame):
-    """docstring for DataCollectionGUI."""
+class AppLoader:
+    """Loader for the main App.
 
-    def __init__(self, parent, modules=()):
+    Initializes all the modules specified in `global.yaml`
+    """
+
+    def __init__(self):
         super().__init__()
-        self._modules = modules
         self.modules = {}
+        self.locations = ['left', 'top', 'bottom', 'right']
 
-        self.parent = parent
+    def load(self, modules, master):
 
-        self.load_modules(parent)
+        panels = {}
 
-    def load_modules(self, master):
-        frame = Frame(master)
-        frame.pack(side='right', fill='both', expand='yes')
-
-        locations = ['side_top', 'side_bot']
-
-        for location in locations:
-            selected_modules = [module for module in self._modules if module.location == location]
+        for location in self.locations:
+            selected_modules = [module for module in modules if module.location == location]
 
             is_group = len(selected_modules) > 1
 
             if is_group:
-                nb = Notebook(frame, padding=10)
-                nb.pack(fill='both', expand='yes')
+                if location in panels:
+                    nb = panels[location]
+                else:
+                    nb = Notebook(master, padding=10)
+                    nb.pack(side=location, fill='both', expand='yes')
+                    panels[location] = nb
 
             for module in selected_modules:
                 if is_group:
@@ -109,10 +112,10 @@ class ModuleFrame(Frame):
                     nb.add(page, text=module.display_name)
                     parent = page
                 else:
-                    parent = frame
+                    parent = master
 
-                module_frame = module.tk_frame(parent)
-                module_frame.pack(side='top', fill='both', expand='yes', padx=10, pady=10)
+                module_frame = module.initialize(parent)
+                module_frame.pack(side=location, fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
 
                 job_dict.update(module.commands)
@@ -124,21 +127,24 @@ class ModuleFrame(Frame):
 class MainFrame:
     """docstring for MainFrame."""
 
-    def __init__(self, root, cam, modules=()):
+    def __init__(self, root, cam, modules=[]):
         super().__init__()
 
         self.root = root
 
-        self.app = ModuleFrame(root, modules=modules)
-        self.app.pack(side='top', fill='both', expand=True)
+        self.module_frame = Frame(root)
+        self.module_frame.pack(side='top', fill='both', expand=True)
 
+        self.app = AppLoader()
+
+        # the stream window is a special case, because it needs access
+        # to the cam module and the app to save the data
         if cam and cam.streamable:
-            from .videostream_frame import VideoStreamFrame
+            from .videostream_frame import module as stream_module
+            stream_module.set_kwargs(stream=cam, app=self.app)
+            modules.insert(0, stream_module)
 
-            self.stream_frame = VideoStreamFrame(root, stream=cam, app=self.app)
-            self.stream_frame.pack(side='top', fill='both', expand=True)
-
-        from instamatic import version
+        self.app.load(modules, self.module_frame)
 
         self.root.wm_title(version.__long_title__)
         self.root.wm_protocol('WM_DELETE_WINDOW', self.close)

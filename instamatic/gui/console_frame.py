@@ -148,7 +148,7 @@ class Console(LabelFrame):
 
 
 module = BaseModule(name='console', display_name='console', tk_frame=Console,
-                    commands={}, location='side_bot')
+                    commands={}, location='left')
 
 if __name__ == '__main__':
     root = Tk()
