@@ -50,7 +50,7 @@ class Console(LabelFrame):
 
         frame = Frame(self)
 
-        self.text = ScrolledText(frame, width=20)
+        self.text = ScrolledText(frame, width=20, height=5)
         self.text.grid(sticky=(N, S, W, E))
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
@@ -144,13 +144,11 @@ class Console(LabelFrame):
     def toggle_timestamp(self):
         """Print a timestamp at the beginning of each new line."""
         toggle = self.var_toggle_timestamp.get()
-        if toggle:
-            self.writer.timestamp(toggle)
-        else:
-            self.writer.timestamp(toggle)
+        self.writer.timestamp(toggle)
 
 
-module = BaseModule('console', 'console', True, Console, commands={})
+module = BaseModule(name='console', display_name='console', tk_frame=Console,
+                    commands={}, location='side_bot')
 
 if __name__ == '__main__':
     root = Tk()

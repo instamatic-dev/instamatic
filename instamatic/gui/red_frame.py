@@ -129,9 +129,11 @@ def acquire_data_RED(controller, **kwargs):
         del controller.red_exp
 
 
-module = BaseModule('red', 'RED', True, ExperimentalRED, commands={
-    'red': acquire_data_RED,
-})
+module = BaseModule(name='red', display_name='RED', tk_frame=ExperimentalRED,
+                    commands={
+                        'red': acquire_data_RED,
+                    },
+                    location='side_bot')
 
 
 if __name__ == '__main__':

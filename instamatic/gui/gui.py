@@ -81,9 +81,7 @@ class ModuleFrame(Frame):
 
     def __init__(self, parent, modules=()):
         super().__init__()
-        # super(DataCollectionGUI, self).__init__(cam=cam)
         self._modules = modules
-        self._modules_have_loaded = False
         self.modules = {}
 
         self.parent = parent
@@ -94,27 +92,30 @@ class ModuleFrame(Frame):
         frame = Frame(master)
         frame.pack(side='right', fill='both', expand='yes')
 
-        make_notebook = any(module.tabbed for module in self._modules)
-        if make_notebook:
-            self.nb = Notebook(frame, padding=10)
+        locations = ['side_top', 'side_bot']
 
-        for module in self._modules:
-            if module.tabbed:
-                page = Frame(self.nb)
-                module_frame = module.tk_frame(page)
+        for location in locations:
+            selected_modules = [module for module in self._modules if module.location == location]
+
+            is_group = len(selected_modules) > 1
+
+            if is_group:
+                nb = Notebook(frame, padding=10)
+                nb.pack(fill='both', expand='yes')
+
+            for module in selected_modules:
+                if is_group:
+                    page = Frame(nb)
+                    nb.add(page, text=module.display_name)
+                    parent = page
+                else:
+                    parent = frame
+
+                module_frame = module.tk_frame(parent)
                 module_frame.pack(side='top', fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
-                self.nb.add(page, text=module.display_name)
-            else:
-                module_frame = module.tk_frame(frame)
-                module_frame.pack(side='top', fill='both', expand='yes', padx=10, pady=10)
-                self.modules[module.name] = module_frame
-            job_dict.update(module.commands)
 
-        if make_notebook:
-            self.nb.pack(fill='both', expand='yes')
-
-        self._modules_have_loaded = True
+                job_dict.update(module.commands)
 
     def get_module(self, module):
         return self.modules[module]

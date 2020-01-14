@@ -130,7 +130,8 @@ class About(LabelFrame):
         webbrowser.open_new(version.__url__)
 
 
-module = BaseModule('about', 'about', True, About, commands={})
+module = BaseModule(name='about', display_name='about', tk_frame=About,
+                    commands={}, location='side_bot')
 
 
 if __name__ == '__main__':

@@ -239,9 +239,11 @@ def microscope_control(controller, **kwargs):
     f(**kwargs)
 
 
-module = BaseModule('ctrl', 'control', True, ExperimentalCtrl, commands={
-    'ctrl': microscope_control,
-})
+module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCtrl,
+                    commands={
+                        'ctrl': microscope_control,
+                    },
+                    location='side_bot')
 
 
 if __name__ == '__main__':

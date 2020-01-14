@@ -59,7 +59,7 @@ modules:
   - 'red'
   - 'machine_learning'
   - 'ctrl'
-  - 'console'
   - 'debug'
   - 'about'
+  - 'console'
   - 'io'

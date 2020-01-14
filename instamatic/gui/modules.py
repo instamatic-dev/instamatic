@@ -11,8 +11,9 @@ try:
 except AttributeError:
     modules = []
 else:
-    modules.append('io')  # io is always needed
-    modules = list(dict.fromkeys(modules))  # remove duplicates, but preserve order
+    if 'io' not in modules:
+        modules.insert(0, 'io')  # io is always needed
+        modules = list(dict.fromkeys(modules))  # remove duplicates, but preserve order
 
 if not modules:
     modules = all_modules

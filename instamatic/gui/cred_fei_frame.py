@@ -107,9 +107,11 @@ def acquire_data_cREDfei(controller, **kwargs):
         f(**kwargs)
 
 
-module = BaseModule('credfei', 'cRED_FEI', True, ExperimentalcRED_FEI, commands={
-    'credfei': acquire_data_cREDfei,
-})
+module = BaseModule(name='credfei', display_name='cRED_FEI', tk_frame=ExperimentalcRED_FEI,
+                    commands={
+                        'credfei': acquire_data_cREDfei,
+                    },
+                    location='side_bot')
 
 
 if __name__ == '__main__':

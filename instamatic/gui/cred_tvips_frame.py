@@ -333,9 +333,10 @@ def acquire_data_CRED_TVIPS(controller, **kwargs):
         pass
 
 
-module = BaseModule('tvips', 'TVIPS', True, ExperimentalTVIPS, commands={
+module = BaseModule(name='tvips', display_name='TVIPS', tk_frame=ExperimentalTVIPS, commands={
     'cred_tvips': acquire_data_CRED_TVIPS,
-})
+},
+    location='side_bot')
 
 
 if __name__ == '__main__':

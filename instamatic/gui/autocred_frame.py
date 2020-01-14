@@ -340,9 +340,11 @@ def acquire_data_autocRED(controller, **kwargs):
     controller.log.info('Finish autocRED experiment')
 
 
-module = BaseModule('autocred', 'autocRED', True, ExperimentalautocRED, commands={
-    'autocred': acquire_data_autocRED,
-})
+module = BaseModule(name='autocred', display_name='autocRED', tk_frame=ExperimentalautocRED,
+                    commands={
+                        'autocred': acquire_data_autocRED,
+                    },
+                    location='side_bot')
 
 if __name__ == '__main__':
     root = Tk()

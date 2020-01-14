@@ -248,11 +248,13 @@ def acquire_data_cRED(controller, **kwargs):
         controller.triggerEvent.set()
 
 
-module = BaseModule('cred', 'cRED', True, ExperimentalcRED, commands={
-    'cred': acquire_data_cRED,
-    'toggle_difffocus': toggle_difffocus,
-    'relax_beam': relax_beam,
-})
+module = BaseModule(name='cred', display_name='cRED', tk_frame=ExperimentalcRED,
+                    commands={
+                        'cred': acquire_data_cRED,
+                        'toggle_difffocus': toggle_difffocus,
+                        'relax_beam': relax_beam,
+                    },
+                    location='side_bot')
 
 
 if __name__ == '__main__':

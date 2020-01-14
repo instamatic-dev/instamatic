@@ -365,12 +365,15 @@ def collect_flatfield(controller, **kwargs):
     flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
 
 
-module = BaseModule('debug', 'advanced', True, DebugFrame, commands={
-    'debug': debug,
-    'autoindex': autoindex,
-    'autoindex_xdsVM': autoindex_xdsVM,
-    'flatfield': collect_flatfield,
-})
+module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame,
+                    commands={
+                        'debug': debug,
+                        'autoindex': autoindex,
+                        'autoindex_xdsVM': autoindex_xdsVM,
+                        'flatfield': collect_flatfield,
+                    },
+                    location='side_bot',
+                    )
 
 
 if __name__ == '__main__':
