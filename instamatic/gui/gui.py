@@ -129,6 +129,12 @@ class MainFrame:
 
     def __init__(self, root, cam, modules=[]):
         super().__init__()
+        # the stream window is a special case, because it needs access
+        # to the cam module
+        if cam and cam.streamable:
+            from .videostream_frame import module as stream_module
+            stream_module.set_kwargs(stream=cam)
+            modules.insert(0, stream_module)
 
         self.root = root
 
@@ -136,14 +142,6 @@ class MainFrame:
         self.module_frame.pack(side='top', fill='both', expand=True)
 
         self.app = AppLoader()
-
-        # the stream window is a special case, because it needs access
-        # to the cam module and the app to save the data
-        if cam and cam.streamable:
-            from .videostream_frame import module as stream_module
-            stream_module.set_kwargs(stream=cam, app=self.app)
-            modules.insert(0, stream_module)
-
         self.app.load(modules, self.module_frame)
 
         self.root.wm_title(version.__long_title__)

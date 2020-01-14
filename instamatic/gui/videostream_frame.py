@@ -1,6 +1,6 @@
-import datetime
 import threading
 import time
+from datetime import datetime
 from tkinter import *
 from tkinter.ttk import *
 
@@ -186,28 +186,12 @@ class VideoStreamFrame(LabelFrame):
 
     def saveImage(self):
         """Dump the current frame to a file."""
-        outfile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f') + '.tiff'
+        self.q.put(('save_image', {'frame': self.frame}))
+        self.triggerEvent.set()
 
-        if self.app:
-            module_io = self.app.get_module('io')
-
-            drc = module_io.get_experiment_directory()
-            drc.mkdir(exist_ok=True, parents=True)
-
-            outfile = drc / outfile
-
-            try:
-                flatfield, h = read_tiff(module_io.get_flatfield())
-                frame = apply_flatfield_correction(self.frame, flatfield)
-            except BaseException:
-                frame = self.frame
-                h = {}
-        else:
-            frame = self.frame
-            h = {}
-
-        write_tiff(outfile, frame, header=h)
-        print(' >> Wrote file:', outfile)
+    def set_trigger(self, trigger=None, q=None):
+        self.triggerEvent = trigger
+        self.q = q
 
     def close(self):
         self.stream.close()
@@ -277,8 +261,33 @@ class VideoStreamFrame(LabelFrame):
             self.nframes += 1
 
 
+def save_image(controller, **kwargs):
+    frame = kwargs.get('frame')
+
+    module_io = controller.app.get_module('io')
+
+    drc = module_io.get_experiment_directory()
+    drc.mkdir(exist_ok=True, parents=True)
+
+    timestamp = datetime.now().strftime('%H-%M-%S.%f')[:-3]  # cut last 3 digits for ms resolution
+    outfile = drc / f'frame_{timestamp}.tiff'
+
+    try:
+        flatfield, h = read_tiff(module_io.get_flatfield())
+        frame = apply_flatfield_correction(frame, flatfield)
+    except BaseException:
+        frame = frame
+        h = {}
+
+    write_tiff(outfile, frame, header=h)
+    print('Wrote file:', outfile)
+
+
 module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFrame,
-                    commands={}, location='left')
+                    commands={
+                        'save_image': save_image,
+                    },
+                    location='left')
 
 
 def start_gui(stream):
