@@ -78,7 +78,14 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
     #path = "/media/sf_SharedWithVM/test_vm_server"
 
     while True:
-        data = conn.recv(BUFF).decode()
+
+        try:
+            data = conn.recv(BUFF).decode()
+        except ConnectionResetError:
+            print("cRED experiment ended and connection was forcely closed.")
+            print("A new cRED experiment will build a new connection.")
+            break
+
         now = datetime.datetime.now().strftime('%H:%M:%S.%f')
 
         if not data:
@@ -87,11 +94,15 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
         print(f'{now} | {data}')
         if data == 'close':
             print(f'{now} | closing connection')
+            conn.send(b'Connection closed')
+            conn.close()
             break
         elif data == 'kill':
             print(f'{now} | closing down VM')
             close_down_vm_process(session)
             print('VM closed down safely!')
+            conn.send(b'Connection closed')
+            conn.close()
             break
         else:
             conn.send(b'OK')
@@ -124,8 +135,6 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
                     print(e)
                     print('Because of the error auto structure solution could not be performed.')
 
-    conn.send(b'Connection closed')
-    conn.close()
     print('Connection closed')
 
 
