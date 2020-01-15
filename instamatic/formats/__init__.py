@@ -2,6 +2,7 @@ import os
 import warnings
 from pathlib import Path
 
+import h5py
 import numpy as np
 import tifffile
 import yaml
@@ -17,12 +18,6 @@ from .csvIO import yaml_ordered_load
 from .mrc import read_image as read_mrc
 from .mrc import write_image as write_mrc
 from .xdscbf import write as write_cbf
-
-with warnings.catch_warnings():
-    # TODO: remove me later
-    # Catch annoying futurewarning on import
-    warnings.simplefilter('ignore')
-    import h5py
 
 
 def read_image(fname: str) -> (np.array, dict):
