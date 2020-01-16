@@ -303,7 +303,7 @@ class CameraTPX:
         if self.name != config.cfg.camera:
             config.load(camera_name=self.name)
 
-        self.__dict__.update(config.camera.d)
+        self.__dict__.update(config.camera.mapping)
 
         self.streamable = True
 

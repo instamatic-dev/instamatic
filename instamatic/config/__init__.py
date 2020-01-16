@@ -9,26 +9,37 @@ import yaml
 logger = logging.getLogger(__name__)
 
 
+_global_yaml = 'global.yaml'
+_logs = 'logs'
+_config = 'config'
+_microscope = 'microscope'
+_calibration = 'calibration'
+_camera = 'camera'
+_scripts = 'scripts'
+_alignments = 'alignments'
+_instamatic = 'instamatic'
+
+
 def initialize_in_appData():
     """Initialize the configuration directory on first run Default to.
 
     %appdata%/instamatic.
     """
     src = Path(__file__).parent
-    dst = Path(os.environ['AppData']) / 'instamatic'
+    dst = Path(os.environ['AppData']) / _instamatic
     dst.mkdir(exist_ok=True, parents=True)
 
     print(f'No config directory found, creating new one in {dst}')
 
-    config_drc = dst / 'config'
-    for sub_drc in ('microscope', 'calibration', 'camera'):
+    config_drc = dst / _config
+    for sub_drc in (_microscope, _calibration, _camera):
         shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
-    shutil.copy(src / 'global.yaml', config_drc / 'global.yaml')
+    shutil.copy(src / _global_yaml, config_drc / _global_yaml)
 
-    os.mkdir(dst / 'logs')
+    os.mkdir(dst / _logs)
 
-    for sub_drc in ('scripts', 'alignments'):
+    for sub_drc in (_scripts, _alignments):
         shutil.copytree(src / sub_drc, dst / sub_drc)
 
     print('Configuration directory has been initialized.')
@@ -41,10 +52,10 @@ def initialize_in_appData():
 def get_base_drc():
     """Figure out where configuration files for instamatic are stored."""
     try:
-        search = Path(os.environ['instamatic'])  # if installed in portable way
+        search = Path(os.environ[_instamatic])  # if installed in portable way
         logger.debug('Search directory:', search)
     except KeyError:
-        search = Path(os.environ['AppData']) / 'instamatic'
+        search = Path(os.environ['AppData']) / _instamatic
         logger.debug('Search directory:', search)
 
     if search.exists():
@@ -65,22 +76,32 @@ def get_alignments() -> dict:
 
 
 class ConfigObject:
-    """Namespace for configuration (maps dict items to attributes."""
+    """Namespace for configuration (maps dict items to attributes)."""
 
-    def __init__(self, d):
+    def __init__(self, mapping: dict, tag='config'):
         super().__init__()
-        self.d = d
-
-        for key, value in d.items():
-            setattr(self, key, value)
+        self.tag = tag
+        self.mapping = {}
+        self.update(mapping)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}('{self.name}')"
+        return f"{self.__class__.__name__}('{self.tag}')"
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path: str):
         """Read configuration from yaml file, returns namespace."""
-        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader))
+        tag = Path(path).stem
+        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), tag=tag)
+
+    def update_from_file(self, path: str) -> None:
+        """Update configuration from yaml file."""
+        self.update(yaml.load(open(path, 'r'), Loader=yaml.Loader))
+
+    def update(self, mapping: dict):
+        for key, value in mapping.items():
+            setattr(self, key, value)
+
+        self.mapping.update(mapping)
 
 
 def load(microscope_name=None, calibration_name=None, camera_name=None):
@@ -93,7 +114,8 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     global camera
     global cfg
 
-    cfg = ConfigObject.from_file(base_drc / 'config' / 'global.yaml')
+    cfg = ConfigObject.from_file(Path(__file__).parent / _global_yaml)  # load defaults
+    cfg.update_from_file(base_drc / _config / _global_yaml)             # update user parameters
 
     if not microscope_name:
         microscope_name = cfg.microscope
@@ -102,11 +124,9 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     if not camera_name:
         camera_name = cfg.camera
 
-    # print(f"Microscope->{microscope_name}; Calibration->{calibration_name}; Camera->{camera_name}")
-
-    microscope_cfg = ConfigObject.from_file(base_drc / 'config' / 'microscope' / f'{microscope_name}.yaml')
-    calibration_cfg = ConfigObject.from_file(base_drc / 'config' / 'calibration' / f'{calibration_name}.yaml')
-    camera_cfg = ConfigObject.from_file(base_drc / 'config' / 'camera' / f'{camera_name}.yaml')
+    microscope_cfg = ConfigObject.from_file(base_drc / _config / _microscope / f'{microscope_name}.yaml')
+    calibration_cfg = ConfigObject.from_file(base_drc / _config / _calibration / f'{calibration_name}.yaml')
+    camera_cfg = ConfigObject.from_file(base_drc / _config / _camera / f'{camera_name}.yaml')
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg
@@ -125,13 +145,13 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
 
 
 base_drc = get_base_drc()
-config_drc = base_drc / 'config'
+config_drc = base_drc / _config
 
 assert config_drc.exists(), f'Configuration directory `{config_drc}` does not exist.'
 
-scripts_drc = base_drc / 'scripts'
-logs_drc = base_drc / 'logs'
-alignments_drc = base_drc / 'alignments'
+scripts_drc = base_drc / _scripts
+logs_drc = base_drc / _logs
+alignments_drc = base_drc / _alignments
 
 scripts_drc.mkdir(exist_ok=True)
 logs_drc.mkdir(exist_ok=True)
