@@ -390,19 +390,23 @@ class Stage:
     @contextmanager
     def rotating_speed(self, speed: int):
         """Context manager that sets the rotation speed for the duration of the
-        `with` statement.
+        `with` statement (JEOL only).
 
         Usage:
-            with ctrl.stage.rotating_speed():
+            with ctrl.stage.rotating_speed(1):
                 ctrl.stage.a = 40.0
         """
-        current_speed = self._tem.getRotationSpeed()
-        if current_speed != speed:
-            self.set_rotation_speed(speed)
-            yield
-            self.set_rotation_speed(current_speed)
+        try:
+            current_speed = self._tem.getRotationSpeed()
+        except BaseException:
+            yield  # on error
         else:
-            yield
+            if current_speed != speed:
+                self.set_rotation_speed(speed)
+                yield  # default flow
+                self.set_rotation_speed(current_speed)
+            else:
+                yield  # if requested speed is the same as current
 
     def get(self) -> Tuple[int, int, int, int, int]:
         """Get stage positions; x, y, z, and status of the rotation axes; a,
