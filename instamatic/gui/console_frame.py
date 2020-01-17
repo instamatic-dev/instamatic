@@ -50,7 +50,7 @@ class Console(LabelFrame):
 
         frame = Frame(self)
 
-        self.text = ScrolledText(frame, width=20, height=5)
+        self.text = ScrolledText(frame, width=80, height=5, font=('Consolas', 8))
         self.text.grid(sticky=(N, S, W, E))
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
@@ -58,7 +58,7 @@ class Console(LabelFrame):
 
         frame = Frame(self)
 
-        self.TestButton = Button(frame, text='Test', command=self.write)
+        self.TestButton = Button(frame, text='Test', command=self.test_write)
         self.TestButton.grid(row=1, column=0, sticky='EW')
 
         # self.ResetButton = Button(frame, text='Reset', command=self.reset_stdout)
@@ -84,6 +84,7 @@ class Console(LabelFrame):
 
         frame.pack(side='top', fill='x')
 
+        self.test_write()
         self.redirect_stdout()
 
     def init_vars(self):
@@ -92,9 +93,13 @@ class Console(LabelFrame):
 
     def write(self, text=None):
         """Test write a line to the console."""
-        if not text:
+        if text is None:
             text = str(datetime.datetime.now())
-        print(text)
+        self.text.insert(END, text)
+
+    def test_write(self, text=None):
+        from instamatic.version import thank_you_message
+        thank_you_message(self.write)
 
     def toggle_capture(self):
         """Toggle for redirecting stdout to the console."""

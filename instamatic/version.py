@@ -1,3 +1,4 @@
+__banner__ = r"""
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #    _           _                        _   _         #
 #   (_)_ __  ___| |_ __ _ _ __ ___   __ _| |_(_) ___    #
@@ -6,6 +7,7 @@
 #   |_|_| |_|___/\__\__,_|_| |_| |_|\__,_|\__|_|\___|   #
 #                                                       #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+"""
 
 tag = ''
 VERSION = (1, 1, 0, tag)
@@ -25,19 +27,19 @@ __citation_serialed__ = 'J. Appl. Cryst. (2018). 51, 1262–1273, https://doi.or
 __citation_serialred__ = 'IUCrJ. (2019). 6(5), 854-867, https://doi.org/10.1107/S2052252519007681'
 
 
-def register_thank_you_message():
-    import atexit
+def thank_you_message(print_func=print, length: int = 70) -> None:
     import textwrap
+    msg = f'Thank you for using {__long_title__}. If you found this software useful, please consider citing it: {__citation__}'
 
-    def message():
-        msg = f'Thank you for using {__long_title__}. If you found this software useful, please consider citing it: {__citation__}'
+    h = '+' * length
+    textwidth = length - 4
+    lines = [line.ljust(textwidth) for line in textwrap.wrap(msg, width=textwidth)]
+    lines = [f'+ {line} +' for line in lines]
+    msg = '\n'.join(['', h, *lines, h, ''])
 
-        h = '+' * 74
-        lines = [f'+ {line:70} +' for line in textwrap.wrap(msg)]
+    print_func(msg)
 
-        msg = textwrap.fill(msg)
 
-        for line in ['', h, *lines, h, '']:
-            print(line)
-
-    atexit.register(message)
+def register_thank_you_message() -> None:
+    import atexit
+    atexit.register(thank_you_message)
