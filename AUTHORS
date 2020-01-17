@@ -1,15 +1,24 @@
 * Stef Smeets <stef.smeets@tudelft.nl>
+
   Main developer
 
 * Bin Wang <bin.wang@mmk.su.se>
-  cRED integration, automated screening and cRED data collection
+
+  Many small tweaks and bug fixes
+  FEI/TFS API implementation
+  cRED integration and automated tracking
+  SerialRED automated data collection
 
 * Magdalena O. Cichocka <magdalena.cichocka@mmk.su.se>
-  Testing, feedback, bug finding
-  Suggestions for improvements (image interval in cRED)
+
+  Testing and feedback
+  Suggestions for improvements for cRED module
 
 * Jonas Ångström <jonas.angstrom@mmk.su.se>
-  Neural network implementation, early scripts for data processing
+
+  Neural network implementation
+  Early scripts for data processing
 
 * Wei Wan
+
   DLLs for timepix/orius camera interface
