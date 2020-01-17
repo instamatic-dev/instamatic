@@ -84,7 +84,7 @@ class Link_Button(tkLabel):
             self._action()
 
 
-class About(LabelFrame):
+class AboutFrame(LabelFrame):
     """docstring for About."""
 
     def __init__(self, parent):
@@ -130,8 +130,8 @@ class About(LabelFrame):
         webbrowser.open_new(version.__url__)
 
 
-module = BaseModule(name='about', display_name='about', tk_frame=About,
-                    commands={}, location='bottom')
+module = BaseModule(name='about', display_name='about', tk_frame=AboutFrame, location='bottom')
+commands = {}
 
 
 if __name__ == '__main__':

@@ -355,26 +355,12 @@ def autoindex_xdsVM(controller, **kwargs):
         del controller.indexing_server_process
 
 
-def collect_flatfield(controller, **kwargs):
-    from instamatic.processing import flatfield
-
-    workdir = controller.module_io.get_working_directory()
-    drc = workdir / 'flatfield'
-    drc.mkdir(exist_ok=True, parents=True)
-
-    flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
-
-
-module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame,
-                    commands={
-                        'debug': debug,
-                        'autoindex': autoindex,
-                        'autoindex_xdsVM': autoindex_xdsVM,
-                        'flatfield': collect_flatfield,
-                    },
-                    location='bottom',
-                    )
-
+module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame, location='bottom')
+commands = {
+    'debug': debug,
+    'autoindex': autoindex,
+    'autoindex_xdsVM': autoindex_xdsVM,
+}
 
 if __name__ == '__main__':
     root = Tk()

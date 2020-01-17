@@ -9,7 +9,6 @@ class BaseModule:
                  name: str,
                  tk_frame: 'tkinter.Frame',
                  display_name: str = None,
-                 commands: dict = {},
                  location: str = 'top',
                  **kwargs):
         super().__init__()
@@ -17,7 +16,6 @@ class BaseModule:
         self.name = name
         self.display_name = display_name if display_name else name
         self.tk_frame = tk_frame
-        self.commands = commands
         self.location = location
         self.kwargs = kwargs
 

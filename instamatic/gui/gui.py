@@ -6,12 +6,10 @@ import traceback
 from tkinter import *
 from tkinter.ttk import *
 
+from .modules import JOBS
 from .modules import MODULES
 from instamatic import version
 from instamatic.formats import *
-
-
-job_dict = {}
 
 
 class DataCollectionController(threading.Thread):
@@ -57,7 +55,7 @@ class DataCollectionController(threading.Thread):
             job, kwargs = self.q.get()
 
             try:
-                func = job_dict[job]
+                func = JOBS[job]
             except KeyError:
                 print(f'Unknown job: {job}')
                 print(f'Kwargs:\n{kwargs}')
@@ -117,8 +115,6 @@ class AppLoader:
                 module_frame = module.initialize(parent)
                 module_frame.pack(side=location, fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
-
-                job_dict.update(module.commands)
 
     def get_module(self, module):
         return self.modules[module]

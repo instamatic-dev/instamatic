@@ -261,33 +261,8 @@ class VideoStreamFrame(LabelFrame):
             self.nframes += 1
 
 
-def save_image(controller, **kwargs):
-    frame = kwargs.get('frame')
-
-    module_io = controller.app.get_module('io')
-
-    drc = module_io.get_experiment_directory()
-    drc.mkdir(exist_ok=True, parents=True)
-
-    timestamp = datetime.now().strftime('%H-%M-%S.%f')[:-3]  # cut last 3 digits for ms resolution
-    outfile = drc / f'frame_{timestamp}.tiff'
-
-    try:
-        flatfield, h = read_tiff(module_io.get_flatfield())
-        frame = apply_flatfield_correction(frame, flatfield)
-    except BaseException:
-        frame = frame
-        h = {}
-
-    write_tiff(outfile, frame, header=h)
-    print('Wrote file:', outfile)
-
-
-module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFrame,
-                    commands={
-                        'save_image': save_image,
-                    },
-                    location='left')
+module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFrame, location='left')
+commands = {}
 
 
 def start_gui(stream):

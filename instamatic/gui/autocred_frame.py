@@ -296,24 +296,6 @@ class ExperimentalautocRED(LabelFrame):
             plt.show()
 
 
-def toggle_difffocus(controller, **kwargs):
-    toggle = kwargs['toggle']
-
-    if toggle:
-        try:
-            controller._difffocus_proper = controller.ctrl.difffocus.value
-        except ValueError:
-            controller.ctrl.mode_diffraction()
-            controller._difffocus_proper = controller.ctrl.difffocus.value
-
-        value = controller._difffocus_proper + kwargs['value']
-        print(f'Defocusing from {controller._difffocus_proper} to {value}')
-    else:
-        value = controller._difffocus_proper
-
-    controller.ctrl.difffocus.set(value=value)
-
-
 def acquire_data_autocRED(controller, **kwargs):
     controller.log.info('Starting automatic cRED experiment')
     from instamatic.experiments import autocRED
@@ -340,11 +322,8 @@ def acquire_data_autocRED(controller, **kwargs):
     controller.log.info('Finish autocRED experiment')
 
 
-module = BaseModule(name='autocred', display_name='autocRED', tk_frame=ExperimentalautocRED,
-                    commands={
-                        'autocred': acquire_data_autocRED,
-                    },
-                    location='bottom')
+module = BaseModule(name='autocred', display_name='autocRED', tk_frame=ExperimentalautocRED, location='bottom')
+commands = {'autocred': acquire_data_autocRED}
 
 if __name__ == '__main__':
     root = Tk()

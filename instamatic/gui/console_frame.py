@@ -152,8 +152,9 @@ class Console(LabelFrame):
         self.writer.timestamp(toggle)
 
 
-module = BaseModule(name='console', display_name='console', tk_frame=Console,
-                    commands={}, location='left')
+module = BaseModule(name='console', display_name='console', tk_frame=Console, location='left')
+commands = {}
+
 
 if __name__ == '__main__':
     root = Tk()

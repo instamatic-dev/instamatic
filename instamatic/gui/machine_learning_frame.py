@@ -157,8 +157,8 @@ class MachineLearningFrame(LabelFrame):
         ShowMatplotlibFig(self, fig, title=fn)
 
 
-module = BaseModule(name='learning', display_name='learning', tk_frame=MachineLearningFrame,
-                    commands={}, location='bottom')
+module = BaseModule(name='learning', display_name='learning', tk_frame=MachineLearningFrame, location='bottom')
+commands = {}
 
 
 if __name__ == '__main__':

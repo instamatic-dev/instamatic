@@ -192,11 +192,8 @@ def acquire_data_SED(controller, **kwargs):
     controller.log.info('Finish serialED experiment')
 
 
-module = BaseModule(name='sed', display_name='serialED', tk_frame=ExperimentalSED,
-                    commands={
-                        'sed': acquire_data_SED,
-                    },
-                    location='bottom')
+module = BaseModule(name='sed', display_name='serialED', tk_frame=ExperimentalSED, location='bottom')
+commands = {'sed': acquire_data_SED}
 
 
 if __name__ == '__main__':

@@ -151,7 +151,8 @@ class IOFrame(LabelFrame):
         os.startfile(drc)
 
 
-module = BaseModule(name='io', display_name='i/o', tk_frame=IOFrame, commands={}, location='top')
+module = BaseModule(name='io', display_name='i/o', tk_frame=IOFrame, location='top')
+commands = {}
 
 
 if __name__ == '__main__':

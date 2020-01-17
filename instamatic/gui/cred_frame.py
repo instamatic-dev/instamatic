@@ -199,34 +199,6 @@ class ExperimentalcRED(LabelFrame):
         self.triggerEvent.set()
 
 
-def relax_beam(controller, **kwargs):
-    import time
-    n_cycles = 4
-    print(f'Relaxing beam ({n_cycles} cycles)')
-
-    controller.ctrl.mode_diffraction()
-
-    offset = kwargs['value']
-
-    for i in range(n_cycles):
-        controller.ctrl.difffocus.defocus(offset=offset)
-        time.sleep(0.25)
-        controller.ctrl.difffocus.refocus()
-        time.sleep(0.25)
-
-    print('Done.')
-
-
-def toggle_difffocus(controller, **kwargs):
-    toggle = kwargs['toggle']
-
-    if toggle:
-        offset = kwargs['value']
-        controller.ctrl.difffocus.defocus(offset=offset)
-    else:
-        controller.ctrl.difffocus.refocus()
-
-
 def acquire_data_cRED(controller, **kwargs):
     controller.log.info('Start cRED experiment')
     from instamatic.experiments import cRED
@@ -248,13 +220,8 @@ def acquire_data_cRED(controller, **kwargs):
         controller.triggerEvent.set()
 
 
-module = BaseModule(name='cred', display_name='cRED', tk_frame=ExperimentalcRED,
-                    commands={
-                        'cred': acquire_data_cRED,
-                        'toggle_difffocus': toggle_difffocus,
-                        'relax_beam': relax_beam,
-                    },
-                    location='bottom')
+module = BaseModule(name='cred', display_name='cRED', tk_frame=ExperimentalcRED, location='bottom')
+commands = {'cred': acquire_data_cRED}
 
 
 if __name__ == '__main__':

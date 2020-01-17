@@ -230,20 +230,8 @@ class ExperimentalCtrl(LabelFrame):
         self.triggerEvent.set()
 
 
-def microscope_control(controller, **kwargs):
-    from operator import attrgetter
-
-    task = kwargs.pop('task')
-
-    f = attrgetter(task)(controller.ctrl)  # nested getattr
-    f(**kwargs)
-
-
-module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCtrl,
-                    commands={
-                        'ctrl': microscope_control,
-                    },
-                    location='bottom')
+module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCtrl, location='bottom')
+commands = {}
 
 
 if __name__ == '__main__':
