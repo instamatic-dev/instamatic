@@ -263,10 +263,12 @@ class ExperimentalTVIPS(LabelFrame):
             self.ctrl.screen_down()
 
     def start_liveview(self):
-        self.ctrl.cam.start_liveview()
+        self.q.put(('ctrl', {'task': 'cam.start_liveview'}))
+        self.triggerEvent.set()
 
     def stop_liveview(self):
-        self.ctrl.cam.stop_liveview()
+        self.q.put(('ctrl', {'task': 'cam.stop_liveview'}))
+        self.triggerEvent.set()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()

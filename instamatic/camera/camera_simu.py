@@ -130,9 +130,11 @@ class CameraSimu:
 
     def stop_liveview(self) -> None:
         self.stop_record()
+        print('Liveview stopped')
 
     def start_liveview(self, delay=3.0) -> None:
-        pass
+        time.sleep(delay)
+        print('Liveview started')
 
     def set_exposure(self, exposure_time: int) -> None:
         self._exposure = exposure_time / 1000
