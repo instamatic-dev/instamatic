@@ -7,6 +7,8 @@ import threading
 import time
 from functools import wraps
 
+from .exceptions import TEMCommunicationError
+from .exceptions import TEMValueError
 from instamatic import config
 
 
@@ -61,7 +63,7 @@ class MicroscopeClient:
                     if t > 3:
                         print('Waiting for server')
                     if t > 30:
-                        raise RuntimeError('Cannot establish server connection (timeout)')
+                        raise TEMCommunicationError('Cannot establish server connection (timeout)')
                 else:
                     break
 

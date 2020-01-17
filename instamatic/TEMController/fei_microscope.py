@@ -5,6 +5,8 @@ import time
 import comtypes.client
 from numpy import pi
 
+from .exceptions import FEIValueError
+from .exceptions import TEMCommunicationError
 from instamatic import config
 logger = logging.getLogger(__name__)
 
@@ -151,7 +153,7 @@ class FEIMicroscope:
             if t > 3:
                 print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError('Cannot establish microscope connection (timeout).')
+                raise TEMCommunicationError('Cannot establish microscope connection (timeout).')
 
         logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
@@ -212,7 +214,7 @@ class FEIMicroscope:
     def setStageSpeed(self, value):
         """Value be 0 - 1"""
         if value > 1 or value < 0:
-            raise ValueError(f'setStageSpeed value must be between 0 and 1. Input: {value}')
+            raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {value}')
 
         self.tom.Stage.Speed = value
 
@@ -229,7 +231,7 @@ class FEIMicroscope:
         axis = 0
 
         if speed > 1 or speed < 0:
-            raise ValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
+            raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 
         self.tom.Stage.Speed = speed
         goniospeed = self.tom.Stage.Speed
@@ -273,7 +275,7 @@ class FEIMicroscope:
         """x y can only be float numbers between -1 and 1."""
         gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             gs.X = x
@@ -290,7 +292,7 @@ class FEIMicroscope:
     def setGunTilt(self, x, y):
         gt = self.tecnai.Gun.Tilt
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             gt.X = x
@@ -329,7 +331,7 @@ class FEIMicroscope:
         """Align Shift."""
         bs = self.tom.Illumination.BeamAlignShift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             bs.X = x
@@ -349,11 +351,11 @@ class FEIMicroscope:
 
         if x is not None:
             if abs(x) > 1:
-                raise ValueError(f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}')
+                raise FEIValueError(f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}')
             bt.X = x
         if y is not None:
             if abs(y) > 1:
-                raise ValueError(f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}')
+                raise FEIValueError(f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}')
             bt.Y = y
         self.tom.Illumination.BeamAlignmentTilt = bt
 
@@ -364,7 +366,7 @@ class FEIMicroscope:
     def setImageShift1(self, x, y):
         is1 = self.tom.Projection.ImageShift
         if abs(x) > 1 or abs(y) > 1:
-            raise ValueError(f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
             is1.X = x
@@ -417,7 +419,7 @@ class FEIMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f'Unrecognized function mode: {value}')
+                raise FEIValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getHolderType(self):
@@ -444,7 +446,7 @@ class FEIMicroscope:
         elif aperture == 'C2':
             return self.tom.Illumination.C2ApertureSize * 1e3
         else:
-            raise ValueError("aperture must be specified as 'C1' or 'C2'.")
+            raise FEIValueError("aperture must be specified as 'C1' or 'C2'.")
 
     def getDarkFieldTilt(self):
         return self.tom.Illumination.DarkfieldTilt.X, self.tom.Illumination.DarkfieldTilt.Y

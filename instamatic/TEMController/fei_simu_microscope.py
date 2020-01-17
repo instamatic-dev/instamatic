@@ -5,6 +5,8 @@ import time
 
 import comtypes.client
 
+from .exceptions import FEIValueError
+from .exceptions import TEMCommunicationError
 from instamatic import config
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ class FEISimuMicroscope:
             if t > 3:
                 print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError('Cannot establish microscope connection (timeout).')
+                raise TEMCommunicationError('Cannot establish microscope connection (timeout).')
 
         logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
@@ -262,7 +264,7 @@ class FEISimuMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f'Unrecognized function mode: {value}')
+                raise FEIValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getDiffFocus(self):

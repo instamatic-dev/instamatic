@@ -5,6 +5,8 @@ from typing import Tuple
 
 import comtypes.client
 
+from .exceptions import JEOLValueError
+from .exceptions import TEMCommunicationError
 from instamatic import config
 logger = logging.getLogger(__name__)
 
@@ -101,7 +103,7 @@ class JeolMicroscope:
             if t > 3:
                 print(f'Waiting for microscope, t = {t}s')
             if t > 30:
-                raise RuntimeError('Cannot establish microscope connection (timeout).')
+                raise TEMCommunicationError('Cannot establish microscope connection (timeout).')
 
         logger.info('Microscope connection established')
         atexit.register(self.releaseConnection)
@@ -188,23 +190,23 @@ class JeolMicroscope:
 
         if current_mode == 'diff':
             if value not in self.range_diff:
-                raise IndexError(f'No such camera length: {value}')
+                raise JEOLValueError(f'No such camera length: {value}')
             selector = self.range_diff.index(value)
         elif current_mode == 'lowmag':
             if value not in self.range_lowmag:
-                raise IndexError(f'No such `lowmag` magnification: {value}')
+                raise JEOLValueError(f'No such `lowmag` magnification: {value}')
             selector = self.range_lowmag.index(value)
         elif current_mode == 'samag':
             if value not in self.range_samag:
-                raise IndexError(f'No such `samag` magnification: {value}')
+                raise JEOLValueError(f'No such `samag` magnification: {value}')
             selector = self.range_samag.index(value)
         elif current_mode == 'mag1':
             if value not in self.range_mag1:
-                raise IndexError(f'No such `mag1` magnification: {value}')
+                raise JEOLValueError(f'No such `mag1` magnification: {value}')
             selector = self.range_mag1.index(value)
         elif current_mode == 'mag2':
             if value not in self.range_mag2:
-                raise IndexError(f'No such `mag2` magnification: {value}')
+                raise JEOLValueError(f'No such `mag2` magnification: {value}')
             selector = self.range_mag2.index(value)
         self.eos3.SetSelector(selector)
 
@@ -215,7 +217,7 @@ class JeolMicroscope:
 
     def setMagnificationIndex(self, index: int):
         if index < 0:
-            raise ValueError(f'Cannot lower magnification (index={index})')
+            raise JEOLValueError(f'Cannot lower magnification (index={index})')
 
         self.eos3.SetSelector(index)
 
@@ -377,13 +379,13 @@ class JeolMicroscope:
         if self.goniotool_available:
             return self.goniotool.get_rate()
         else:
-            raise OSError('Goniotool connection is not available.')
+            raise TEMCommunicationError('Goniotool connection is not available.')
 
     def setRotationSpeed(self, value: int):
         if self.goniotool_available:
             self.goniotool.set_rate(value)
         else:
-            raise OSError('Goniotool connection is not available.')
+            raise TEMCommunicationError('Goniotool connection is not available.')
 
     def resetStage(self):
         """Move stage to origin."""
@@ -404,19 +406,19 @@ class JeolMicroscope:
             try:
                 value = self.FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f'Unrecognized function mode: {value}')
+                raise JEOLValueError(f'Unrecognized function mode: {value}')
         self.eos3.SelectFunctionMode(value)
 
     def getDiffFocus(self, confirm_mode: bool = True) -> int:
         if confirm_mode and (not self.getFunctionMode() == 'diff'):
-            raise ValueError("Must be in 'diff' mode to get DiffFocus")
+            raise JEOLValueError("Must be in 'diff' mode to get DiffFocus")
         value, result = self.lens3.GetIL1()
         return value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
         """IL1."""
         if confirm_mode and (not self.getFunctionMode() == 'diff'):
-            raise ValueError("Must be in 'diff' mode to set DiffFocus")
+            raise JEOLValueError("Must be in 'diff' mode to set DiffFocus")
         self.lens3.setDiffFocus(value)
 
     def setIntermediateLens1(self, value: int):
@@ -512,7 +514,7 @@ class JeolMicroscope:
         elif value == 'down':
             self.screen2.SelectAngle(DOWN)
         else:
-            raise ValueError('No such screen position:', value, "(must be 'up'/'down')")
+            raise JEOLValueError('No such screen position:', value, "(must be 'up'/'down')")
 
     def getCondensorLens1(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG

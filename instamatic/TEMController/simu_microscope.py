@@ -282,7 +282,7 @@ class SimuMicroscope:
         current_mode = self.getFunctionMode()
 
         if index < 0:
-            raise ValueError(f'Cannot lower magnification (index={index})')
+            raise TEMValueError(f'Cannot lower magnification (index={index})')
 
         if current_mode == 'diff':
             value = self.range_diff[index]
@@ -439,18 +439,18 @@ class SimuMicroscope:
             try:
                 value = FUNCTION_MODES.index(value)
             except ValueError:
-                raise ValueError(f'Unrecognized function mode: {value}')
+                raise TEMValueError(f'Unrecognized function mode: {value}')
         self.FunctionMode_value = value
 
     def getDiffFocus(self, confirm_mode: bool = True) -> int:
         if not self.getFunctionMode() == 'diff':
-            raise ValueError("Must be in 'diff' mode to get DiffFocus")
+            raise TEMValueError("Must be in 'diff' mode to get DiffFocus")
         return self.DiffractionFocus_value
 
     def setDiffFocus(self, value: int, confirm_mode: bool = True):
         """IL1."""
         if not self.getFunctionMode() == 'diff':
-            raise ValueError("Must be in 'diff' mode to set DiffFocus")
+            raise TEMValueError("Must be in 'diff' mode to set DiffFocus")
         self.DiffractionFocus_value = value
 
     def setIntermediateLens1(self, value: int):

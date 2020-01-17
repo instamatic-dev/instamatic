@@ -5,6 +5,7 @@ from typing import Tuple
 
 import numpy as np
 
+from .exceptions import TEMControllerError
 from .microscope import Microscope
 from instamatic import config
 from instamatic.camera import Camera
@@ -17,10 +18,6 @@ default_tem = config.microscope.name
 
 use_tem_server = config.cfg.use_tem_server
 use_cam_server = config.cfg.use_cam_server
-
-
-class TEMControllerException(Exception):
-    pass
 
 
 def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> 'TEMController':
@@ -188,7 +185,7 @@ class DiffFocus(Lens):
         """Apply a defocus to the IL1 lens, use `.refocus` to restore the
         previous setting."""
         if self.is_defocused:
-            raise TEMControllerException(f'{self.__class__.__name__} is already defocused!')
+            raise TEMControllerError(f'{self.__class__.__name__} is already defocused!')
 
         try:
             self._focused_value = current = self.get()
@@ -1189,7 +1186,7 @@ class TEMController:
         Restore the alignment using:     `ctrl.restore("beam")`
         """
         if not self.mode == 'diff':
-            raise TEMControllerException('Microscope is not in `diffraction mode`')
+            raise TEMControllerError('Microscope is not in `diffraction mode`')
         keys = 'FunctionMode', 'Brightness', 'GunTilt', 'DiffFocus', 'SpotSize'
         self.store(name=name, keys=keys, save_to_file=save_to_file)
 
