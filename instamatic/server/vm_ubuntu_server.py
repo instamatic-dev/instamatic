@@ -119,7 +119,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
             session.console.keyboard.put_keys(['ENTER'])
 
             """Not sure if I should put some delay here, but just to avoid neglected communication"""
-            # time.sleep(60)
+            time.sleep(90)
 
             if shelxt:
                 try:
