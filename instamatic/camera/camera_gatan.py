@@ -69,9 +69,9 @@ else:
 
 
 class CameraDLL:
-    """docstring for Camera."""
+    """Interface with the CCDCOM DLLs to connect to the gatan software."""
 
-    def __init__(self, name='gatan'):
+    def __init__(self, name: str = 'gatan'):
         """Initialize camera module.
 
         name:

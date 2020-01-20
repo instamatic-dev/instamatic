@@ -13,7 +13,13 @@ from instamatic.formats import *
 
 
 class DataCollectionController(threading.Thread):
-    """docstring for DataCollectionController."""
+    """Event loop for the GUI.
+
+    This class interfaces between the GUI and the underlying
+    experiments. It runs in a separate thread and uses a queue to
+    communicate tasks from the GUI to the instrument interface. This is
+    important to keep the GUI responsive for long-running experiments.
+    """
 
     def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, log=None):
         super().__init__()
@@ -121,9 +127,12 @@ class AppLoader:
 
 
 class MainFrame:
-    """docstring for MainFrame."""
+    """This class defines the main GUI panel.
 
-    def __init__(self, root, cam, modules=[]):
+    Modules are loaded as defined through the `modules` variable.
+    """
+
+    def __init__(self, root, cam, modules: list = []):
         super().__init__()
         # the stream window is a special case, because it needs access
         # to the cam module

@@ -9,7 +9,7 @@ ENABLE_FOOTFREE_OPTION = False
 
 
 class ExperimentalcRED(LabelFrame):
-    """docstring for ExperimentalSED."""
+    """GUI panel for doing cRED experiments on a Timepix camera."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Continuous rotation electron diffraction')

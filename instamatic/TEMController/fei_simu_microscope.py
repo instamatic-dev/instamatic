@@ -18,7 +18,8 @@ MAX = 1.0
 
 
 class FEISimuMicroscope:
-    """docstring for FEI microscope."""
+    """Python bindings to the FEI simulated microscope using the COM
+    interface."""
 
     def __init__(self, name='fei_simu'):
         super().__init__()

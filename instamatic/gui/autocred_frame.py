@@ -15,7 +15,12 @@ from instamatic.calibrate.filenames import *
 
 
 class ExperimentalautocRED(LabelFrame):
-    """docstring for ExperimentalautocRED."""
+    """Data collection protocol for SerialRED data collection on a high-speed
+    Timepix camera using automated screening and crystal tracking.
+
+    Related publication:     IUCrJ (2019). 6(5), 854-867
+    https://doi.org/10.1107/S2052252519007681 .
+    """
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Serial Rotation Electron Diffraction (SerialRED)')

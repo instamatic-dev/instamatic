@@ -7,7 +7,9 @@ from instamatic.tools import autoscale
 
 
 class VideoStream(threading.Thread):
-    """docstring for VideoStream."""
+    """This class mimicks the VideoStream interface (API compatible), but
+    allows for displaying the image in the GUI by faking a 'continuous'
+    signal."""
 
     def __init__(self, cam='simulate'):
         threading.Thread.__init__(self)

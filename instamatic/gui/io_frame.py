@@ -11,7 +11,8 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class IOFrame(LabelFrame):
-    """docstring for ExperimentalSED."""
+    """Simple interface to set the working directory and experiment
+    name/numbering, and access the configs/work directory."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Input/Output')

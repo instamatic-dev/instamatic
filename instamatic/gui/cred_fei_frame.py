@@ -6,7 +6,8 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalcRED_FEI(LabelFrame):
-    """docstring for ExperimentalcRED on FEI."""
+    """Simple panel to assist cRED data collection (mainly rotation control) on
+    a FEI microscope."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='cRED_FEI')

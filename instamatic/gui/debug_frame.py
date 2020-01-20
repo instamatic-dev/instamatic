@@ -19,7 +19,7 @@ VMPORT = config.cfg.VM_server_port
 
 
 class DebugFrame(LabelFrame):
-    """docstring for DebugFrame."""
+    """GUI panel with advanced / debugging functions."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='For debugging, be careful!')

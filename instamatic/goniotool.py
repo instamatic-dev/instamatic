@@ -118,7 +118,11 @@ class GonioToolClient:
 
 
 class GonioToolWrapper:
-    """docstring for GonioToolWrapper.
+    """Interfaces with Goniotool to automate setting the rotation speed on a
+    JEOL microscope by adjusting the stepping frequency of the motor. The
+    values can be set from 1 to 12, where 12 is maximum speed and 1 is the
+    slowest. The speed is linear up the maximum speed, where 1 is approximately
+    50 degrees/minute.
 
     barrier: threading.Barrier
         Synchronization primitive to synch with parent process

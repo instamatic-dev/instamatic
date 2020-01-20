@@ -120,7 +120,7 @@ CameraLengthMapping = {
 
 
 class FEIMicroscope:
-    """docstring for FEI microscope."""
+    """Python bindings to the FEI microscope using the COM interface."""
 
     def __init__(self, name='fei'):
         super().__init__()

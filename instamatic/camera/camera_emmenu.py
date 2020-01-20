@@ -48,7 +48,15 @@ def EMVector2dict(vec):
 
 
 class CameraEMMENU:
-    """docstring for CameraEMMENU."""
+    """Software interface for the EMMENU program.
+
+    Communicates with EMMENU over the COM interface defined by TVIPS
+
+    drc_name : str
+        Set the default folder to store data in
+    interface : str
+        Name of the interface
+    """
 
     def __init__(self, drc_name: str = 'Diffraction', interface: str = 'emmenu'):
         """Initialize camera module."""

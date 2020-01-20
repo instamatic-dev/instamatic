@@ -172,14 +172,6 @@ class NavItem:
         return {key: self.__dict__[key] for key in self._keys}
 
 
-class ClassName:
-    """docstring for ClassName."""
-
-    def __init__(self, arg):
-        super().__init__()
-        self.arg = arg
-
-
 class MapItem(NavItem):
     """Adds some extra methods for map items."""
 

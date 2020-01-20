@@ -127,9 +127,22 @@ class MicroscopeClient:
 
 
 class TraceVariable:
-    """docstring for Tracer."""
+    """Simple class to trace a variable over time.
 
-    def __init__(self, func, interval=1.0, name='variable', verbose=False):
+    Usage:
+        t = TraceVariable(ctrl.stage.get, verbose=True)
+        t.start()
+        t.stage.set(x=0, y=0, wait=False)
+        ...
+        values = t.stop()
+    """
+
+    def __init__(self,
+                 func,
+                 interval: float = 1.0,
+                 name: str = 'variable',
+                 verbose: bool = False,
+                 ):
         super().__init__()
         self.name = name
         self.func = func

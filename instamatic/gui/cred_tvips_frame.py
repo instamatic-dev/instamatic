@@ -12,7 +12,7 @@ barrier = threading.Barrier(2, timeout=60)
 
 
 class ExperimentalTVIPS(LabelFrame):
-    """docstring for ExperimentalRED."""
+    """GUI panel for doing cRED / SerialRED experiments on a TVIPS camera."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Continuous rotation electron diffraction (TVIPS)')

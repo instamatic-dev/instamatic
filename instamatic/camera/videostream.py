@@ -5,9 +5,14 @@ from .camera import Camera
 
 
 class ImageGrabber:
-    """docstring for ImageGrabber."""
+    """Continuously read out the camera for continuous acquisition.
 
-    def __init__(self, cam, callback, frametime=0.05):
+    When the continousCollectionEvent is set, the camera will set the exposure to `frametime`, otherwise, the default camera exposure is used.
+
+    The callback function is used to send the frame back to the parent routine.
+    """
+
+    def __init__(self, cam, callback, frametime: float = 0.05):
         super().__init__()
 
         self.callback = callback
@@ -58,7 +63,7 @@ class ImageGrabber:
 
 
 class VideoStream(threading.Thread):
-    """docstring for VideoStream."""
+    """Handle the continuous stream of incoming data from the ImageGrabber."""
 
     def __init__(self, cam='simulate'):
         threading.Thread.__init__(self)

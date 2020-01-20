@@ -32,7 +32,12 @@ MIN = 0
 
 
 class SimuMicroscope:
-    """docstring for microscope."""
+    """Simulates a microscope connection.
+
+    Has the same variables as the real JEOL/FEI equivalents, but does
+    not make any function calls. The initial lens/deflector/stage values
+    are randomized based on the config file loaded.
+    """
 
     def __init__(self, name: str = 'simulate'):
         super().__init__()

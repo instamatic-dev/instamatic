@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class CalibBrightness:
-    """docstring for calib_brightness."""
+    """Brightness calibration routine."""
 
     def __init__(self, slope, intercept):
         self.slope = slope

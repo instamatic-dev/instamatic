@@ -19,9 +19,10 @@ def volume(cell):
 
 
 class xds_parser:
-    """docstring for xds_parser."""
+    """Parser for XDS output files to obtain the lattice parameters, space
+    group, and integration criteria."""
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         super().__init__()
         self.ios_threshold = 0.8
 

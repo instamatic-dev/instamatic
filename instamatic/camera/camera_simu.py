@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class CameraSimu:
-    """docstring for CameraSimu."""
+    """Simple class that simulates the camera interface and mocks the method
+    calls."""
 
     def __init__(self, name='simulate'):
         """Initialize camera module."""

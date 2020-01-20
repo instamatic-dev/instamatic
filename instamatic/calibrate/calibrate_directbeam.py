@@ -51,7 +51,8 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
 
 class CalibDirectBeam:
-    """docstring for CalibDirectBeam."""
+    """Calibration routine for the position of the direct beam in diffraction
+    space."""
 
     def __init__(self, dct={}):
         super().__init__()

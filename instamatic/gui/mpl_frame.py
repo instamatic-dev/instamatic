@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class ShowMatplotlibFig(Toplevel):
-    """docstring for ShowMatplotlibFig."""
+    """Simple class to load a matplotlib figure in a new top level panel."""
 
     def __init__(self, parent, fig, title='figure'):
         Toplevel.__init__(self, parent)

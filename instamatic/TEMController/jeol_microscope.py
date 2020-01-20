@@ -46,7 +46,7 @@ MIN = 0
 
 
 class JeolMicroscope:
-    """docstring for microscope."""
+    """Python bindings to the JEOL microscope using the COM interface."""
 
     def __init__(self, name: str = 'jeol'):
         super().__init__()

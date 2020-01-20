@@ -135,7 +135,11 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
 
 
 class Experiment:
-    """docstring for Experiment."""
+    """Data collection protocol for serial electron diffraction.
+
+    Related publication:     J. Appl. Cryst. (2018). 51, 1262-1273
+    https://doi.org/10.1107/S1600576718009500.
+    """
 
     def __init__(self, ctrl, params, scan_radius=None, begin_here=False, expdir=None, log=None):
         super().__init__()

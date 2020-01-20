@@ -6,7 +6,8 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalRED(LabelFrame):
-    """docstring for ExperimentalRED."""
+    """GUI panel to perform a simple RED experiment using discrete rotation
+    steps."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Rotation electron diffraction')

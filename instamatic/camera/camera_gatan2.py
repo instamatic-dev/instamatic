@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class CameraGatan2:
-    """docstring for CameraGatan2."""
+    """Connect to Digital Microsgraph using the SerialEM Plugin."""
 
     def __init__(self, interface: str = 'gatan2'):
         """Initialize camera module."""

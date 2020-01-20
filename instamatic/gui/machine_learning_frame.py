@@ -23,7 +23,8 @@ def treeview_sort_column(tv, col, reverse):
 
 
 class MachineLearningFrame(LabelFrame):
-    """docstring for MachineLearningFrame."""
+    """GUI Panel to read in the results from the machine learning algorithm to
+    identify good/poor crystals based on their diffraction pattern."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Neural Network')

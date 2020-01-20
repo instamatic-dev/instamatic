@@ -8,7 +8,8 @@ from instamatic.utils.spinbox import Spinbox
 
 
 class ExperimentalCtrl(LabelFrame):
-    """docstring for ExperimentalCtrl."""
+    """This panel holds some frequently used functions to control the electron
+    microscope."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Stage Control')

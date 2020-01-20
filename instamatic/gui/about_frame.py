@@ -85,7 +85,7 @@ class Link_Button(tkLabel):
 
 
 class AboutFrame(LabelFrame):
-    """docstring for About."""
+    """`About` panel for the GUI."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='About instamatic')

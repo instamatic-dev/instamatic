@@ -40,7 +40,7 @@ class Writer:
 
 
 class Console(LabelFrame):
-    """Docstring for Console."""
+    """`Consol` panel for the GUI."""
 
     def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Console')

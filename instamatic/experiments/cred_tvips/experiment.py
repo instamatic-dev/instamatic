@@ -15,7 +15,7 @@ from instamatic.tools import get_acquisition_time
 
 
 class SerialExperiment:
-    """docstring for SerialExperiment."""
+    """Class to handle serial red data acquisition using a TVIPS camera."""
 
     def __init__(self, ctrl,
                  path: str = None,
