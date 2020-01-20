@@ -327,12 +327,12 @@ def autoindex_xdsVM(controller, **kwargs):
 
         controller.indexing_server_process = sp.call(cmd, shell=True)
         print(f'Indexing server `{VM_SERVER_EXE}` started on {VMHOST}:{VMPORT}')
-        controller.use_indexing_server = True
+        #controller.use_indexing_server_xds = True
         print('VM XDS Indexing server registered')
         return
 
     elif task == 'register_server_xdsVM':
-        controller.use_indexing_server = True
+        #controller.use_indexing_server_xds = True
         print('VM XDS Indexing server registered')
         return
 
@@ -346,8 +346,6 @@ def autoindex_xdsVM(controller, **kwargs):
         print('Sending job to server...', end=' ')
         s.connect((VMHOST, VMPORT))
         s.send(payload)
-        data = s.recv(BUFSIZE).decode()
-        print(data)
         data = s.recv(BUFSIZE).decode()
         print(data)
 
