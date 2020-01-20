@@ -2,6 +2,7 @@ import random
 import time
 from typing import Tuple
 
+from .exceptions import TEMValueError
 from instamatic import config
 
 

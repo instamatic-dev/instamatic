@@ -8,7 +8,6 @@ import time
 from functools import wraps
 
 from .exceptions import TEMCommunicationError
-from .exceptions import TEMValueError
 from instamatic import config
 
 
