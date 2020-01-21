@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .montage import *
@@ -157,6 +158,17 @@ class GridMontage:
         import yaml
         yaml.dump(d, stream=open(drc / 'montage.yaml', 'w'))
         print(f' >> Wrote {len(self.stagecoords)} montage images to {drc}')
+
+    def plot(self):
+        """Simple plot of the stage coordinates."""
+        coords = self.stagecoords / 1000  # nm -> μm
+        plt.scatter(*coords.T, marker='.', color='red')
+        for i, coord in enumerate(coords):
+            plt.text(*coord, s=f' {i}')
+        plt.axis('equal')
+        plt.title('Stage coordinates for grid montage')
+        plt.xlabel('x (μm)')
+        plt.ylabel('y (μm)')
 
 
 if __name__ == '__main__':
