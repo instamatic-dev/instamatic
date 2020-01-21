@@ -1,3 +1,6 @@
+from instamatic.utils.progress import Progress
+
+
 class AcquireAtItems:
     """Class to automated acquisition at many stage locations.
 
@@ -101,15 +104,15 @@ class AcquireAtItems:
         self.move_to_item(nav_items[0])  # pre-move
         self.pre_acquire(ctrl)
 
-        t0 = t_last = time.perf_counter()
-        eta = 0
-        last_interval = interval = 1
+        p = Progress(total=ntot, interval=5)
+        t0 = p.start_time
 
         for i, item in enumerate(nav_items):
             ctrl.current_item = item
             ctrl.current_i = i
 
-            print(f'{i}/{ntot} - `{item}` -> (ETA: {eta:.0f} min)')
+            eta = p.remaining_dt()  # s -> min
+            print(f'{i:3} [eta {eta}] -> {item}')
 
             self.move_to_item(item)
 
@@ -120,11 +123,7 @@ class AcquireAtItems:
                 break
 
             # calculate remaining time
-            t = time.perf_counter()
-            interval = t - t_last
-            last_interval = interval = (interval * 0.20) + (last_interval * 0.80)
-            eta = ((ntot - i) * interval) / 60  # min
-            t_last = t
+            p.update()
 
             # Stop/interrupt acquisition
             if msvcrt.kbhit():
