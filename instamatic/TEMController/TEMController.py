@@ -1029,7 +1029,16 @@ class TEMController:
 
         return z0
 
-    def montage(self):
+    def grid_montage(self):
+        """Create an instance of `gridmontage.GridMontage` using the current
+        magnification/mode.
+
+        Usage:
+            gm = GridMontage(ctrl)
+            pos = m.setup(5, 5)
+            m = gm.to_montage()
+            coords = m.get_montage_coords(optimize=True)
+        """
         from instamatic.gridmontage import GridMontage
         gm = GridMontage(self)
         return gm

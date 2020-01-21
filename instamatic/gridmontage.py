@@ -38,7 +38,7 @@ class GridMontage:
         overlap : float
             How much the images should overlap to calculate the shift between the images.
         stage_shift : tuple
-            Apply a shift to the calculated stage coordinates.
+            Apply a shift to the calculated stage coordinates. For example, to set the origin. Otherwise, the origin is taken at x=0, y=0.
         binning : int
             Binning for the images.
 
@@ -80,16 +80,14 @@ class GridMontage:
         self.spotsize = self.ctrl.spotsize
 
         print('Setting up gridscan.')
-        print('  Mag:', self.magnification)
-        print('  Mode:', self.mode)
-        print('  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip:, {self.flip}')
-        print('  Overlap:', self.overlap)
+        print(f'  Mag: {self.magnification}x')
+        print(f'  Mode: `{self.mode}`')
+        print(f'  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip:, {self.flip}')
+        print(f'  Overlap: {self.overlap}')
         print()
-        print('  Image shape:', res_x, res_y)
-        print('  Pixel center:', px_center)
-        print('  Spot size:', self.spotsize)
-
-        # return coords
+        print(f'  Image shape: {res_x} x {res_y}')
+        print(f'  Pixel center: {px_center}')
+        print(f'  Spot size: {self.spotsize}')
 
     def start(self):
         """Start the experiment."""
@@ -129,8 +127,11 @@ class GridMontage:
         return m
 
     def save(self, drc: str = None):
-        """Save the data to the given directory, defaults to the instamatic
-        data directory defined in the config."""
+        """Save the data to the given directory.
+
+        drc : str
+            Path of the output directory. If `None`, it defaults to the instamatic data directory defined in the config.
+        """
         from instamatic.formats import write_tiff
         from instamatic.io import get_new_work_subdirectory
 
@@ -143,17 +144,19 @@ class GridMontage:
             write_tiff(drc / name, img, header=h)
             fns.append(name)
 
-        d = {}
-        d['stagecoords'] = self.stagecoords.tolist()
-        d['stagematrix'] = self.stagematrix.tolist()
-        d['gridshape'] = [self.nx, self.ny]
-        d['direction'] = self.direction
-        d['zigzag'] = self.zigzag
-        d['overlap'] = self.overlap
-        d['filenames'] = fns
-        d['magnification'] = self.magnification
-        d['mode'] = self.mode
-        d['spotsize'] = self.spotsize
+        d = {
+            'stagecoords': self.stagecoords.tolist(),
+            'stagematrix': self.stagematrix.tolist(),
+            'gridshape': [self.nx, self.ny],
+            'direction': self.direction,
+            'zigzag': self.zigzag,
+            'overlap': self.overlap,
+            'filenames': fns,
+            'magnification': self.magnification,
+            'mode': self.mode,
+            'spotsize': self.spotsize,
+            'flip': self.flip,
+        }
 
         import yaml
         yaml.dump(d, stream=open(drc / 'montage.yaml', 'w'))
@@ -187,6 +190,5 @@ if __name__ == '__main__':
     m.plot_stitched(coords)
 
     # get coords optimized using cross correlation
-    dv = m.get_difference_vectors()
-    coords2 = m.get_optimized_montage_coords(dv)
+    coords2 = m.get_montage_coords(optimize=True)
     m.plot_stitched(coords2)

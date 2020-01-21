@@ -606,9 +606,23 @@ class Montage:
         self.difference_vectors = difference_vectors
         return difference_vectors
 
-    def get_montage_coords(self):
+    def get_montage_coords(self,
+                           optimize: bool = False,
+                           difference_vectors=None,
+                           method: str = 'leastsq',
+                           verbose: bool = False,
+                           ):
         """Get the coordinates for each section based on the gridspec only (not
         optimized)
+
+        Parameters
+        ----------
+        optimize : bool
+            Optimize the montage coords using a least-squares minimization
+        difference_vectors : dict
+            dict containing the pairwise difference vectors between each image. Can be obtained using the .get_difference_vectors method. If they are not given, the difference vectors are obtained using default parameters.
+        method : str
+            Least-squares minimization method to use (lmfit)
 
         Returns
         -------
@@ -632,15 +646,27 @@ class Montage:
 
         vects = np.array(vects)
 
-        return vects
+        if optimize:
+            return self.optimize_montage_coords(vects,
+                                                difference_vectors=difference_vectors,
+                                                method=method,
+                                                verbose=verbose)
+        else:
+            return vects
 
-    def get_optimized_montage_coords(self, difference_vectors, method: str = 'leastsq', verbose: bool = False):
+    def optimize_montage_coords(self,
+                                vects,
+                                difference_vectors=None,
+                                method: str = 'leastsq',
+                                verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares
         minimization.
 
         Parameters
         ----------
+        vects : np.array
+            List of Montage coords in an [n x 2] numpy array
         difference_vectors : dict
             dict containing the pairwise difference vectors between each image
         method : str
@@ -651,12 +677,13 @@ class Montage:
         coords : np.array[-1, 2]
             Optimized coordinates for each section in the montage map
         """
+        if difference_vectors is None:
+            difference_vectors = self.get_difference_vectors()
+
         res_x, res_y = self.image_shape
         grid = self.grid
         grid_x, grid_y = grid.shape
         n_gridpoints = grid_x * grid_y
-
-        vects = self.get_montage_coords()
 
         # determine which frames items have neighbours
         has_neighbours = {i for key in difference_vectors.keys() for i in key}
@@ -705,7 +732,12 @@ class Montage:
 
         return coords
 
-    def stitch(self, coords: 'np.array[-1, 2]', method: str = None, binning: int = 1, plot: bool = False, ax=None):
+    def stitch(self,
+               coords: 'np.array[-1, 2]',
+               method: str = None,
+               binning: int = 1,
+               plot: bool = False,
+               ax=None):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
