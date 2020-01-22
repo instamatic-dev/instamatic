@@ -554,14 +554,14 @@ class Montage:
 
         return difference_vector
 
-    def get_difference_vectors(self,
-                               threshold: float = 0.02,
-                               overlap_k: float = 1.0,
-                               method: str = 'imreg',
-                               segment: bool = False,
-                               plot: bool = False,
-                               verbose: bool = True,
-                               ):
+    def calculate_difference_vectors(self,
+                                     threshold: float = 0.02,
+                                     overlap_k: float = 1.0,
+                                     method: str = 'imreg',
+                                     segment: bool = False,
+                                     plot: bool = False,
+                                     verbose: bool = True,
+                                     ):
         """Get the difference vectors between the neighbouring images The
         images are overlapping by some amount defined using `overlap`. These
         strips are compared with cross correlation to calculate the shift
@@ -673,23 +673,9 @@ class Montage:
         self.difference_vectors = difference_vectors
         return difference_vectors
 
-    def calculate_montage_coords(self,
-                                 optimize: bool = False,
-                                 difference_vectors=None,
-                                 method: str = 'leastsq',
-                                 verbose: bool = False,
-                                 ):
+    def calculate_montage_coords(self):
         """Get the coordinates for each section based on the gridspec only (not
         optimized)
-
-        Parameters
-        ----------
-        optimize : bool
-            Optimize the montage coords using a least-squares minimization
-        difference_vectors : dict
-            dict containing the pairwise difference vectors between each image. Can be obtained using the .get_difference_vectors method. If they are not given, the difference vectors are obtained using default parameters.
-        method : str
-            Least-squares minimization method to use (lmfit)
 
         Returns
         -------
@@ -713,18 +699,11 @@ class Montage:
 
         vects = np.array(vects)
 
-        if optimize:
-            vects = self.optimize_montage_coords(vects,
-                                                 difference_vectors=difference_vectors,
-                                                 method=method,
-                                                 verbose=verbose)
         self.coords = vects
 
         return vects
 
     def optimize_montage_coords(self,
-                                vects,
-                                difference_vectors=None,
                                 method: str = 'leastsq',
                                 verbose: bool = False):
         """Use the difference vectors between each pair of images to calculate
@@ -733,20 +712,21 @@ class Montage:
 
         Parameters
         ----------
-        vects : np.array
-            List of Montage coords in an [n x 2] numpy array
-        difference_vectors : dict
-            dict containing the pairwise difference vectors between each image
         method : str
             Least-squares minimization method to use (lmfit)
+        verbose : bool
+            Be more verbose
 
         Returns
         -------
         coords : np.array[-1, 2]
             Optimized coordinates for each section in the montage map
         """
-        if difference_vectors is None:
-            difference_vectors = self.get_difference_vectors()
+        if not hasattr(self, 'vects'):
+            self.calculate_montage_coords()
+        vects = self.coords
+
+        difference_vectors = self.difference_vectors
 
         res_x, res_y = self.image_shape
         grid = self.grid
@@ -798,20 +778,22 @@ class Montage:
         offset = min(Vn[:, 0]), min(Vn[:, 1])
         coords = Vn - offset
 
+        self.optimized_coords = coords
+
         return coords
 
-    def _montage_patches(self, binning=1):
+    def _montage_patches(self, coords, binning=1):
         montage_patches = []
-        for i, coord in enumerate(self.coords):
+        for i, coord in enumerate(coords):
             image = self.images[i]
             patch = MontagePatch(image, coord, binning=binning)
             montage_patches.append(patch)
         return montage_patches
 
     def stitch(self,
-               coords: 'np.array[-1, 2]',
                method: str = None,
-               binning: int = 1):
+               binning: int = 1,
+               use_optimized_if_available: bool = True):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
@@ -821,19 +803,29 @@ class Montage:
             List of x/y pixel coordinates
         binning : int
             Bin the Montage image by this factor
+        use_optimized_if_available : bool
+            Use optimized coordinates if they are available
 
         Return
         ------
         stitched : np.array
             Stitched image
         """
+        if use_optimized_if_available:
+            try:
+                coords = self.optimized_coords
+                print('Using optimized coords')
+            except AttributeError:
+                coords = self.coords
+        else:
+            coords = self.coords
 
         grid = self.grid
         images = self.images
         nx, ny = grid.shape
         res_x, res_y = self.image_shape
 
-        c = self.coords.astype(int)
+        c = coords.astype(int)
         stitched_x, stitched_y = c.max(axis=0) - c.min(axis=0)
         stitched_x += res_x
         stitched_y += res_y
@@ -848,7 +840,7 @@ class Montage:
             if method == 'weighted':
                 weight = weight_map(stitched.shape, method='circle')
 
-        montage_patches = self._montage_patches(binning=binning)
+        montage_patches = self._montage_patches(coords, binning=binning)
         for i, patch in enumerate(montage_patches):
             im = patch.image
             x0 = patch.x0
@@ -871,13 +863,12 @@ class Montage:
 
         self.stitched = stitched
         self.centers = coords + np.array((res_x, res_y)) / 2
-        self.coords = coords
         self.stitched_binning = binning
         self.montage_patches = montage_patches
 
         return stitched
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, vmax: int = None):
         """Plots the stitched image.
 
         Parameters
@@ -885,7 +876,6 @@ class Montage:
         ax : matplotlib.Axis
             Matplotlib axis to plot on.
         """
-
         stitched = self.stitched
 
         if not ax:
@@ -916,7 +906,7 @@ class Montage:
                                      )
             ax.add_patch(rect)
 
-        ax.imshow(stitched)
+        ax.imshow(stitched, vmax=vmax)
 
         if not ax:
             plt.show()
