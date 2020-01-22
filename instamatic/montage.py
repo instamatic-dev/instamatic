@@ -334,6 +334,62 @@ def plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res
     plt.show()
 
 
+class MontagePatch:
+    """Simple class to calculate the bounding box for an image tile as part of
+    a montage.
+
+    Parameters
+    ----------
+    image : np.ndarray [ m x n ]
+        Original image tile
+    coord : tuple
+        Tuple with x/y coordinates of the patch (original size) location in the montage image
+    binning : int
+        Binning of the image patch
+    """
+
+    def __init__(self, image, coord, binning: int = 1):
+        super().__init__()
+        self.binning = binning
+        self.coord = coord
+        self._image = image
+        self._shape = image.shape
+
+    @property
+    def shape(self):
+        res_x, res_y = self._shape
+        shape = int(res_x / self.binning), int(res_y / self.binning)
+        return shape
+
+    @property
+    def res_x(self):
+        return self.shape[0]
+
+    @property
+    def res_y(self):
+        return self.shape[1]
+
+    @property
+    def image(self):
+        return bin_ndarray(self._image, self.shape)
+
+    @property
+    def x0(self):
+        return int(self.coord[0] / self.binning)
+
+    @property
+    def x1(self):
+        return self.x0 + self.shape[0]
+
+    @property
+    def y0(self):
+        return int(self.coord[1] / self.binning)
+
+    @property
+    def y1(self):
+        return self.y0 + self.shape[1]
+
+
 class Montage:
     """This class is used to stitch together a set of images to make a larger
     image.
@@ -456,7 +512,13 @@ class Montage:
 
         return m
 
-    def get_difference_vector(self, idx0: int, idx1: int, shift: list, overlap_k: float = 1.0, verbose: bool = False):
+    def get_difference_vector(self,
+                              idx0: int,
+                              idx1: int,
+                              shift: list,
+                              overlap_k: float = 1.0,
+                              verbose: bool = False,
+                              ):
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation.
 
@@ -492,9 +554,14 @@ class Montage:
 
         return difference_vector
 
-    def get_difference_vectors(self, threshold: float = 0.02, overlap_k: float = 1.0,
-                               method: str = 'imreg', segment: bool = False,
-                               plot: bool = False, verbose: bool = True):
+    def get_difference_vectors(self,
+                               threshold: float = 0.02,
+                               overlap_k: float = 1.0,
+                               method: str = 'imreg',
+                               segment: bool = False,
+                               plot: bool = False,
+                               verbose: bool = True,
+                               ):
         """Get the difference vectors between the neighbouring images The
         images are overlapping by some amount defined using `overlap`. These
         strips are compared with cross correlation to calculate the shift
@@ -606,12 +673,12 @@ class Montage:
         self.difference_vectors = difference_vectors
         return difference_vectors
 
-    def get_montage_coords(self,
-                           optimize: bool = False,
-                           difference_vectors=None,
-                           method: str = 'leastsq',
-                           verbose: bool = False,
-                           ):
+    def calculate_montage_coords(self,
+                                 optimize: bool = False,
+                                 difference_vectors=None,
+                                 method: str = 'leastsq',
+                                 verbose: bool = False,
+                                 ):
         """Get the coordinates for each section based on the gridspec only (not
         optimized)
 
@@ -647,12 +714,13 @@ class Montage:
         vects = np.array(vects)
 
         if optimize:
-            return self.optimize_montage_coords(vects,
-                                                difference_vectors=difference_vectors,
-                                                method=method,
-                                                verbose=verbose)
-        else:
-            return vects
+            vects = self.optimize_montage_coords(vects,
+                                                 difference_vectors=difference_vectors,
+                                                 method=method,
+                                                 verbose=verbose)
+        self.coords = vects
+
+        return vects
 
     def optimize_montage_coords(self,
                                 vects,
@@ -732,12 +800,18 @@ class Montage:
 
         return coords
 
+    def _montage_patches(self, binning=1):
+        montage_patches = []
+        for i, coord in enumerate(self.coords):
+            image = self.images[i]
+            patch = MontagePatch(image, coord, binning=binning)
+            montage_patches.append(patch)
+        return montage_patches
+
     def stitch(self,
                coords: 'np.array[-1, 2]',
                method: str = None,
-               binning: int = 1,
-               plot: bool = False,
-               ax=None):
+               binning: int = 1):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
@@ -747,10 +821,6 @@ class Montage:
             List of x/y pixel coordinates
         binning : int
             Bin the Montage image by this factor
-        plot : bool
-            Plot the stitched image
-        ax : matplotlib.Axis
-            Matplotlib axis to plot on.
 
         Return
         ------
@@ -763,34 +833,28 @@ class Montage:
         nx, ny = grid.shape
         res_x, res_y = self.image_shape
 
-        c = coords.astype(int)
+        c = self.coords.astype(int)
         stitched_x, stitched_y = c.max(axis=0) - c.min(axis=0)
         stitched_x += res_x
         stitched_y += res_y
 
-        stitched = np.zeros((int(stitched_x / binning), int(stitched_y / binning)), dtype=np.int32)
+        stitched = np.zeros((int(stitched_x / binning),
+                             int(stitched_y / binning)),
+                            dtype=np.int32)
 
         if method in ('average', 'weighted'):
-            n_images = np.zeros((int(stitched_x), int(stitched_y)), dtype=np.int32)
+            n_images = np.zeros_like(stitched)
 
             if method == 'weighted':
-                weight = weight_map(self.image_shape, method='circle')
+                weight = weight_map(stitched.shape, method='circle')
 
-        if plot and not ax:
-            fig, ax = plt.subplots(figsize=(10, 10))
-
-        for i, idx in enumerate(sorted_grid_indices(grid)):
-            new_shape = int(res_x / binning), int(res_y / binning)
-            im = bin_ndarray(images[i], new_shape)
-
-            x0, y0 = c[i]
-            x0 = int(x0 / binning)
-            y0 = int(y0 / binning)
-
-            x1 = x0 + im.shape[0]
-            y1 = y0 + im.shape[1]
-
-            # print(f"{x0:10d} {x1:10d} {y0:10d} {y1:10d}")
+        montage_patches = self._montage_patches(binning=binning)
+        for i, patch in enumerate(montage_patches):
+            im = patch.image
+            x0 = patch.x0
+            y0 = patch.y0
+            x1 = patch.x1
+            y1 = patch.y1
 
             if method == 'average':
                 stitched[x0:x1, y0:y1] += im
@@ -801,40 +865,63 @@ class Montage:
             else:
                 stitched[x0:x1, y0:y1] = im
 
-            if plot:
-                txt = f'{i}\n{idx}'
-
-                # NOTE that y/x are flipped for display in matplotlib ONLY
-                ax.text((y0 + y1) / 2, (x0 + x1) / 2, txt, color='red', fontsize=18, ha='center', va='center')
-                rect = patches.Rectangle([y0, x0], res_x / binning, res_y / binning, linewidth=0.5, edgecolor='r', facecolor='none')
-                ax.add_patch(rect)
-
         if method in ('average', 'weighted'):
             n_images = np.where(n_images == 0, 1, n_images)
             stitched /= n_images
-
-        if plot:
-            ax.imshow(stitched)
-            if not ax:
-                plt.show()
 
         self.stitched = stitched
         self.centers = coords + np.array((res_x, res_y)) / 2
         self.coords = coords
         self.stitched_binning = binning
+        self.montage_patches = montage_patches
 
         return stitched
 
-    def plot(self, coords: 'np.array[-1, 2]', ax=None):
-        """Stitch the images together using the given list of pixel coordinates
-        for each section.
+    def plot(self, ax=None):
+        """Plots the stitched image.
 
         Parameters
         ----------
-        coords : np.array[-1, 2]
-            List of x/y pixel coordinates
+        ax : matplotlib.Axis
+            Matplotlib axis to plot on.
         """
-        self.stitch(coords, plot=True, ax=ax)
+
+        stitched = self.stitched
+
+        if not ax:
+            fig, ax = plt.subplots(figsize=(10, 10))
+
+        grid = self.grid
+        indices = sorted_grid_indices(grid)
+        montage_patches = self.montage_patches
+        for i, patch in enumerate(montage_patches):
+            idx = indices[i]
+            txt = f'{i}\n{idx}'
+
+            # NOTE that y/x are flipped for display in matplotlib ONLY
+            ax.text((patch.y0 + patch.y1) / 2,
+                    (patch.x0 + patch.x1) / 2,
+                    txt,
+                    color='red',
+                    fontsize=18,
+                    ha='center',
+                    va='center',
+                    )
+            rect = patches.Rectangle([patch.y0, patch.x0],
+                                     patch.res_x,
+                                     patch.res_y,
+                                     linewidth=0.5,
+                                     edgecolor='r',
+                                     facecolor='none',
+                                     )
+            ax.add_patch(rect)
+
+        ax.imshow(stitched)
+
+        if not ax:
+            plt.show()
+        else:
+            return ax
 
     def pixel_to_stagecoord(self, px_coord: tuple, stagematrix=None) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage
