@@ -680,10 +680,6 @@ class Montage:
             shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
             shift = np.array(shift)
 
-            # pairwise difference vector
-            # difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
-            # print(f"Difference vector: {difference_vector}")
-
             results[seq0, seq1] = {
                 'shift': shift,
                 'idx0': idx0,
@@ -900,7 +896,6 @@ class Montage:
         if optimized:
             try:
                 coords = self.optimized_coords
-                print('Using optimized coords')
             except AttributeError:
                 coords = self.coords
         else:
@@ -993,6 +988,7 @@ class Montage:
             ax.add_patch(rect)
 
         ax.imshow(stitched, vmax=vmax)
+        ax.set_title('Stitched image')
 
         if not ax:
             plt.show()
@@ -1046,8 +1042,11 @@ class Montage:
 
         return px_coord.astype(int)
 
-    def find_holes(self, stitched, diameter: float = 40e3, tolerance: float = 0.1,
-                   pixelsize: float = None, plot: bool = False) -> tuple:
+    def find_holes(self,
+                   diameter: float = 40e3,
+                   tolerance: float = 0.1,
+                   pixelsize: float = None,
+                   plot: bool = False) -> tuple:
         """Find grid holes in the montage image.
 
         Parameters
@@ -1068,12 +1067,15 @@ class Montage:
         from skimage import morphology
         from skimage.measure import regionprops
 
+        stitched = self.stitched
+
         thresh = filters.threshold_otsu(stitched)
         selem = morphology.disk(10)
         seg = morphology.binary_closing(stitched > thresh, selem=selem)
 
-        fit, (ax0, ax1) = plt.subplots(ncols=2)
+        fit, (ax0, ax1) = plt.subplots(ncols=2, figsize=(12, 6))
 
+        ax0.set_label('Segmentation')
         ax0.imshow(seg)
 
         labeled, _ = ndimage.label(seg)
@@ -1088,6 +1090,7 @@ class Montage:
         else:
             pixelsize *= binning
 
+        ax1.set_label('Hole coordinates')
         ax1.imshow(stitched)
 
         max_val = tolerance * diameter
@@ -1095,16 +1098,26 @@ class Montage:
         stagecoords = []
         imagecoords = []
 
+        allds = []  # all diameters
+        selds = []  # selected diameters
+
         for prop in props:
             x, y = prop.centroid
 
             d = (prop.area ** 0.5) * pixelsize
+            allds.append(d)
 
             if abs(d - diameter) < max_val:
-                ax1.scatter(y, x, marker='+')
+                ax1.scatter(y, x, marker='+', color='r')
                 stagecoord = self.pixel_to_stagecoord((x, y))
                 stagecoords.append(stagecoord)
                 imagecoords.append((x, y))
+                selds.append(d)
+
+        prc = np.percentile
+        mdn = np.median
+        print(f'All hole diameters     50%: {mdn(allds):6.0f} | 5%: {prc(allds, 5):6.0f} | 95%: {prc(allds, 95):6.0f}')
+        print(f'Selected hole diameter 50%: {mdn(selds):6.0f} | 5%: {prc(selds, 5):6.0f} | 95%: {prc(selds, 95):6.0f}')
 
         return np.array(stagecoords), np.array(imagecoords)
 
