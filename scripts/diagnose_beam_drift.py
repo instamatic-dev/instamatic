@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
+from tqdm.auto import tqdm
 
 from instamatic.formats import adscimage
 from instamatic.tools import find_beam_center
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         fns = glob.glob(filepat)
         print(len(fns))
 
-        imgs = (adscimage.read_adsc(fn)[0] for fn in tqdm.tqdm(fns))
+        imgs = (adscimage.read_adsc(fn)[0] for fn in tqdm(fns))
         centers = (find_beam_center(img, 10, m=50, kind=3) for img in imgs)
         xy = np.array(list(centers))
 

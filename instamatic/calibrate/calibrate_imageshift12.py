@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 from skimage.feature import register_translation
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from instamatic.calibrate.fit import fit_affine_transformation
 logger = logging.getLogger(__name__)

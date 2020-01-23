@@ -7,8 +7,8 @@ from pathlib import Path
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
 from scipy import ndimage
+from tqdm.auto import tqdm
 
 from instamatic import neural_network
 from instamatic.formats import *
@@ -24,7 +24,7 @@ R = np.array([
 def get_stage_coords(fns, return_ims=False):
     coords = []
     has_crystals = []
-    t = tqdm.tqdm(fns, desc='Parsing files')
+    t = tqdm(fns, desc='Parsing files')
 
     imgs = []
 

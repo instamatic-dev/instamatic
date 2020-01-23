@@ -3,7 +3,7 @@ import glob
 import sys
 from pathlib import Path
 
-import tqdm
+from tqdm.auto import tqdm
 
 from instamatic import neural_network
 from instamatic.formats import *
@@ -87,7 +87,7 @@ def main(file_pattern):
     print(len(diff_fns), 'Patterns from isolated crystals')
 
     lst = []
-    for fn in tqdm.tqdm(diff_fns):
+    for fn in tqdm(diff_fns):
         img, h = read_hdf5(fn)
 
         frame = int(str(fn)[-12:-8])

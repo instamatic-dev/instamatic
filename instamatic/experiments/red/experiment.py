@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 import numpy as np
-import tqdm
+from tqdm.auto import tqdm
 
 from instamatic import config
 from instamatic.formats import write_tiff
@@ -93,7 +93,7 @@ class Experiment:
             ctrl.cam.block()
 
         # for i, a in enumerate(tilt_positions):
-        for i, angle in enumerate(tqdm.tqdm(tilt_positions)):
+        for i, angle in enumerate(tqdm(tilt_positions)):
             ctrl.stage.a = angle
 
             j = i + self.offset

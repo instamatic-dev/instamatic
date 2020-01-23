@@ -3,11 +3,11 @@ from pathlib import Path
 import lmfit
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
 from matplotlib import patches
 from scipy import ndimage
 from skimage import filters
 from skimage.feature import register_translation
+from tqdm.auto import tqdm
 
 from instamatic.imreg import translation
 from instamatic.tools import bin_ndarray
@@ -636,7 +636,7 @@ class Montage:
 
         results = {}
 
-        for i, pair in enumerate(tqdm.tqdm(pairs)):
+        for i, pair in enumerate(tqdm(pairs)):
             seq0 = pair['seq0']
             seq1 = pair['seq1']
 

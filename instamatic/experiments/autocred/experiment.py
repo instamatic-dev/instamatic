@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 from skimage.feature import register_translation
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift

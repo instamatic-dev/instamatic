@@ -4,7 +4,7 @@ import subprocess as sp
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
+from tqdm.auto import tqdm
 
 from instamatic.formats import read_image
 from instamatic.tools import get_files
@@ -26,7 +26,7 @@ number = 0
 if not os.path.isdir('movie'):
     os.mkdir('movie')
 
-for i, fn in enumerate(tqdm.tqdm(fns)):
+for i, fn in enumerate(tqdm(fns)):
     dps = glob.glob(fn.replace('images', 'data').replace('.h5', '_*.h5'))
 
     im, h_im = read_image(fn)
