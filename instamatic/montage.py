@@ -3,6 +3,7 @@ from pathlib import Path
 import lmfit
 import matplotlib.pyplot as plt
 import numpy as np
+import tqdm
 from matplotlib import patches
 from scipy import ndimage
 from skimage import filters
@@ -18,9 +19,35 @@ def sorted_grid_indices(grid):
     return np.dstack(np.unravel_index(np.argsort(grid.ravel()), grid.shape))[0]
 
 
+def find_threshold(values, half='lower') -> float:
+    """Find largest discontinuity in the `lower` or `upper` half of the data.
+
+    Parameters
+    ----------
+    half : str
+        Whether to use the `upper` or `lower` half of the data after sorting
+
+    Returns
+    -------
+    threshold : float
+        Threshold splitting the largest discontinuity to segment data with
+    """
+    x = np.array(sorted(values))
+    halfway = int(len(x) / 2)
+    sel = x[:halfway] if half == 'lower' else x[halfway:]
+    diff = np.diff(sel)
+    i = diff.argmax()
+    if half == 'upper':
+        i += halfway
+    thresh = (x[i] + x[i + 1]) / 2
+    return thresh
+
+
 def weight_map(shape, method='block', plot=False):
     """Generate a weighting map for the given shape.
 
+    Parameters
+    ----------
     shape : tuple
         Shape defines the 2 integers defining the shape of the image
     method : str
@@ -228,7 +255,7 @@ def define_pairs(grid: 'np.ndarray'):
     return pairs
 
 
-def disambiguate_shift(strip0, strip1, shift, verbose: bool = False):
+def disambiguate_shift(strip0, strip1, shift, verbose: bool = False) -> tuple:
     """Disambiguate the shifts obtained from cross correlation."""
     shift_x, shift_y = shift
 
@@ -518,7 +545,7 @@ class Montage:
                               shift: list,
                               overlap_k: float = 1.0,
                               verbose: bool = False,
-                              ):
+                              ) -> list:
         """Calculate the pixel distance between 2 images using the calculate
         pixel shift from cross correlation.
 
@@ -555,13 +582,13 @@ class Montage:
         return difference_vector
 
     def calculate_difference_vectors(self,
-                                     threshold: float = 0.02,
+                                     threshold: float = 'auto',
                                      overlap_k: float = 1.0,
                                      method: str = 'imreg',
                                      segment: bool = False,
                                      plot: bool = False,
                                      verbose: bool = True,
-                                     ):
+                                     ) -> dict:
         """Get the difference vectors between the neighbouring images The
         images are overlapping by some amount defined using `overlap`. These
         strips are compared with cross correlation to calculate the shift
@@ -571,7 +598,7 @@ class Montage:
         ----------
         threshold : float
             Lower for the cross correlation score to accept a shift or not
-            If a shift is not accepted, the shift is set to (0, 0)
+            If a shift is not accepted, the shift is set to (0, 0). Use the value 'auto' to automatically determine the threshold value. The threshold can be visualized using `.plot_fft_scores()`.
         overlap_k : float
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
@@ -582,6 +609,8 @@ class Montage:
         method : str
             Which cross correlation function to use `skimage`/`imreg`. `imreg` seems
             to perform slightly better in this scenario.
+        verbose : bool
+            Be more verbose
 
         Returns
         -------
@@ -605,11 +634,9 @@ class Montage:
 
         self.slices = slices
 
-        difference_vectors = {}
-        for i, pair in enumerate(pairs):
-            if verbose:
-                print('---')
+        results = {}
 
+        for i, pair in enumerate(tqdm.tqdm(pairs)):
             seq0 = pair['seq0']
             seq1 = pair['seq1']
 
@@ -620,60 +647,119 @@ class Montage:
             im0 = images[seq0]
             im1 = images[seq1]
 
-            if (seq1, seq0) in difference_vectors:
-                difference_vector = -difference_vectors[seq1, seq0]
-                if verbose:
-                    print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> Copy from {seq1:2d} - {seq0:2d} -> Vector: {difference_vector}')
-                difference_vectors[seq0, seq1] = difference_vector
-                continue
-
             if plot and False:
                 plot_images(im0, im1, seq0, seq1, side0, side1, idx0, idx1)
 
-            strip0 = im0[slices[side0]]
-            strip1 = im1[slices[side1]]
+            # If the pair of images has already been compared, copy that result instead
+            if (seq1, seq0) in results:
+                result = results[seq1, seq0]
+                shift = -result['shift']
+                score = result['fft_score']
+            else:
+                strip0 = im0[slices[side0]]
+                strip1 = im1[slices[side1]]
 
-            if segment:
-                t0 = filters.threshold_otsu(strip0)
-                t1 = filters.threshold_otsu(strip1)
-                strip0 = strip0 > t0
-                strip1 = strip1 > t1
-                # print(f"Thresholds: {t1} {t1}")
+                if segment:
+                    t0 = filters.threshold_otsu(strip0)
+                    t1 = filters.threshold_otsu(strip1)
+                    strip0 = strip0 > t0
+                    strip1 = strip1 > t1
+                    # print(f"Thresholds: {t1} {t1}")
 
-            if method == 'imreg':
-                shift, fft = translation(strip0, strip1, return_fft=True)
-                score = fft.max()
-            else:  # method = skimage.feature.register_translation
-                shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
-                fft = np.ones_like(strip0)
-                score = 1 - error
+                if method == 'imreg':
+                    shift, fft = translation(strip0, strip1, return_fft=True)
+                    score = fft.max()
+                else:  # method = skimage.feature.register_translation
+                    shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
+                    fft = np.ones_like(strip0)
+                    score = 1 - error
+
+                if plot:
+                    plot_fft(strip0, strip1, shift, fft, side0, side1)
 
             shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
-
-            if plot:
-                plot_fft(strip0, strip1, shift, fft, side0, side1)
-
-            if score < threshold:
-                if verbose:
-                    print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Below threshold!')
-                shift = np.array((0, 0))
-                continue
-            if verbose:
-                print(f'Pair {i:2d} -> {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> FFT score: {score:.4f} -> Shift: {shift}')
+            shift = np.array(shift)
 
             # pairwise difference vector
-            difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
+            # difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
             # print(f"Difference vector: {difference_vector}")
 
-            difference_vectors[seq0, seq1] = difference_vector
+            results[seq0, seq1] = {
+                'shift': shift,
+                'idx0': idx0,
+                'idx1': idx1,
+                'overlap_k': overlap_k,
+                'fft_score': score,
+            }
 
-            if plot:
-                plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y)
+            # if plot:
+            #     plot_shifted(im0, im1, difference_vector, seq0, seq1, idx0, idx1, res_x, res_y)
+
+        self.raw_difference_vectors = results
+
+        difference_vectors = self.filter_difference_vectors(threshold=threshold,
+                                                            verbose=verbose)
 
         self.difference_vectors = difference_vectors
+
         return difference_vectors
 
-    def calculate_montage_coords(self):
+    def filter_difference_vectors(self, threshold: float = 'auto', verbose: bool = True) -> dict:
+        """Filter the raw difference vectors based on their fft scores.
+
+        Parameters
+        ----------
+        threshold : float
+            Lower for the cross correlation score to accept a shift or not
+            If a shift is not accepted, the shift is set to (0, 0). Use the value 'auto' to automatically determine the threshold value. The threshold can be visualized using `.plot_fft_scores()`.
+        verbose : bool
+            Be more verbose
+        """
+        results = self.raw_difference_vectors
+
+        if threshold == 'auto':
+            scores = [item['fft_score'] for item in results.values()]
+            threshold = find_threshold(scores)
+
+        self.fft_threshold = threshold
+
+        out = {}
+        for i, (key, item) in enumerate(results.items()):
+            score = item['fft_score']
+            seq0, seq1 = key
+            idx0 = item['idx0']
+            idx1 = item['idx1']
+            overlap_k = item['overlap_k']
+
+            if score < threshold:
+                shift = np.array((0, 0))
+                if verbose:
+                    print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Below threshold!')
+            else:
+                shift = item['shift']
+                if verbose:
+                    print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Shift: {shift}')
+
+            difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
+            out[seq0, seq1] = difference_vector
+
+        return out
+
+    def plot_fft_scores(self) -> None:
+        """Plot the distribution of fft scores for the cross correlation."""
+        scores = [item['fft_score'] for item in self.raw_difference_vectors.values()]
+        auto_thresh = find_threshold(scores)
+        used_thresh = self.fft_threshold
+        plt.axhline(auto_thresh, lw=0.5, color='red', label=f'Suggested threshold={used_thresh:.4f}')
+        plt.axhline(used_thresh, lw=0.5, color='green', label=f'Actual threshold={auto_thresh:.4f}')
+        plt.plot(sorted(scores), '.')
+        plt.title('FFT scores')
+        plt.xlabel('Index')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.show()
+
+    def calculate_montage_coords(self) -> list:
         """Get the coordinates for each section based on the gridspec only (not
         optimized)
 
@@ -705,7 +791,7 @@ class Montage:
 
     def optimize_montage_coords(self,
                                 method: str = 'leastsq',
-                                verbose: bool = False):
+                                verbose: bool = False) -> list:
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares
         minimization.
@@ -793,7 +879,7 @@ class Montage:
     def stitch(self,
                method: str = None,
                binning: int = 1,
-               use_optimized_if_available: bool = True):
+               optimized: bool = True):
         """Stitch the images together using the given list of pixel coordinates
         for each section.
 
@@ -803,15 +889,15 @@ class Montage:
             List of x/y pixel coordinates
         binning : int
             Bin the Montage image by this factor
-        use_optimized_if_available : bool
-            Use optimized coordinates if they are available
+        optimized : bool
+            Use optimized coordinates if they are available [default = True]
 
         Return
         ------
         stitched : np.array
             Stitched image
         """
-        if use_optimized_if_available:
+        if optimized:
             try:
                 coords = self.optimized_coords
                 print('Using optimized coords')
