@@ -221,3 +221,9 @@ class CameraDLL:
         self._releaseCCDCOM()
         msg = f'Connection to camera {name} released'
         logger.info(msg)
+
+if __name__ == '__main__':
+    cam = CameraDLL()
+
+    from IPython import embed
+    embed();
