@@ -88,13 +88,36 @@ class CameraGatan2:
 
         print(f'Wrote {i+1} images to {path}')
 
-    def getImage(self, **kwargs) -> 'np.array':
-        """Acquire image through EMMENU and return data as np array."""
-        raise NotImplementedError
+    def getImage(self,
+                 exposure=0.400,
+                 binning=1,
+                 processing='gain normalized',
+                 ) -> 'np.array':
+        """Acquire image through DM and return data as np array."""
 
-    def acquireImage(self, **kwargs) -> int:
+        width, height = self.dimensions
+        top = 0
+        left = 0
+        bottom = height
+        right = width
+
+        arr = self.g.getImage(processing=processing,
+                              height=height,
+                              width=width,
+                              binning=binning,
+                              top=top,
+                              left=left,
+                              bottom=bottom,
+                              right=right,
+                              exposure=exposure,
+                              shutterDelay=0,
+                              )
+
+        return arr
+
+    def acquireImage(self, **kwargs) -> 'np.array':
         """Acquire image through DM."""
-        raise NotImplementedError
+        return self.getImage(**kwargs)
 
     def get_ready_for_record(self) -> None:
         self.reset_record_vars()
