@@ -81,6 +81,7 @@ class ConfigObject:
     def __init__(self, mapping: dict, tag='config'):
         super().__init__()
         self.tag = tag
+        self.name = None  # default parameter
         self.mapping = {}
         self.update(mapping)
 
@@ -125,8 +126,18 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
         camera_name = cfg.camera
 
     microscope_cfg = ConfigObject.from_file(base_drc / _config / _microscope / f'{microscope_name}.yaml')
-    calibration_cfg = ConfigObject.from_file(base_drc / _config / _calibration / f'{calibration_name}.yaml')
-    camera_cfg = ConfigObject.from_file(base_drc / _config / _camera / f'{camera_name}.yaml')
+    
+    if calibration_name:
+        calibration_cfg = ConfigObject.from_file(base_drc / _config / _calibration / f'{calibration_name}.yaml')
+    else:
+        calibration_cfg = ConfigObject({}, tag='NoCalib')
+        print("No camera is loaded.")
+    
+    if camera_name:
+        camera_cfg = ConfigObject.from_file(base_drc / _config / _camera / f'{camera_name}.yaml')
+    else:
+        camera_cfg = ConfigObject({}, tag='NoCamera')
+        print("No calibration is loaded.")
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg
