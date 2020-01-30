@@ -787,7 +787,8 @@ class Montage:
 
     def optimize_montage_coords(self,
                                 method: str = 'leastsq',
-                                verbose: bool = False) -> list:
+                                verbose: bool = False,
+                                ) -> list:
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares
         minimization.
@@ -995,7 +996,11 @@ class Montage:
         else:
             return ax
 
-    def pixel_to_stagecoord(self, px_coord: tuple, stagematrix=None) -> tuple:
+    def pixel_to_stagecoord(self,
+                            px_coord: tuple,
+                            stagematrix=None,
+                            plot=False,
+                            ) -> tuple:
         """Takes a pixel coordinate and transforms it into a stage
         coordinate."""
         if stagematrix is None:
@@ -1009,14 +1014,27 @@ class Montage:
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
 
-        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
+        # image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
+        image_pixel_coord = self.coords[j]  # 2020-01-31: make it work in Python
         image_stage_coord = self.stagecoords[j]
 
-        stage_coord = np.dot(px_coord - image_pixel_coord, mati) + image_stage_coord - center_offset
+        if plot:
+            img = self.images[j]
+            plt.imshow(img)
+            plot_x, plot_y = px_coord - image_pixel_coord[::-1]
+            plt.scatter(plot_y, plot_x)
+            plt.show()
+
+        tx, ty = np.dot(px_coord - image_pixel_coord, mati)  # 2020-01-31: make it work in Python
+
+        stage_coord = np.array((tx, -ty)) + image_stage_coord - center_offset
 
         return stage_coord
 
-    def stage_to_pixelcoord(self, stage_coord: tuple, stagematrix=None) -> tuple:
+    def stage_to_pixelcoord(self,
+                            stage_coord: tuple,
+                            stagematrix=None,
+                            ) -> tuple:
         """Takes a stage coordinate and transforms it into a pixel
         coordinate."""
         if stagematrix is None:
@@ -1046,7 +1064,8 @@ class Montage:
                    diameter: float = 40e3,
                    tolerance: float = 0.1,
                    pixelsize: float = None,
-                   plot: bool = False) -> tuple:
+                   plot: bool = False,
+                   ) -> tuple:
         """Find grid holes in the montage image.
 
         Parameters
@@ -1057,6 +1076,8 @@ class Montage:
             Tolerance in % how far the calculate diameter can be off
         pixelsize : float
             Unbinned tile pixelsize in nanometers
+        plot : bool
+            Plot the segmentation results and coordinates using Matplotlib
 
         Returns
         -------
@@ -1073,11 +1094,6 @@ class Montage:
         selem = morphology.disk(10)
         seg = morphology.binary_closing(stitched > thresh, selem=selem)
 
-        fit, (ax0, ax1) = plt.subplots(ncols=2, figsize=(12, 6))
-
-        ax0.set_label('Segmentation')
-        ax0.imshow(seg)
-
         labeled, _ = ndimage.label(seg)
         props = regionprops(labeled)
 
@@ -1089,9 +1105,6 @@ class Montage:
             pixelsize = getattr(config.calibration, f'pixelsize_{self.mode}')[self.magnification] * binning
         else:
             pixelsize *= binning
-
-        ax1.set_label('Hole coordinates')
-        ax1.imshow(stitched)
 
         max_val = tolerance * diameter
 
@@ -1108,18 +1121,36 @@ class Montage:
             allds.append(d)
 
             if abs(d - diameter) < max_val:
-                ax1.scatter(y, x, marker='+', color='r')
                 stagecoord = self.pixel_to_stagecoord((x, y))
                 stagecoords.append(stagecoord)
                 imagecoords.append((x, y))
                 selds.append(d)
+
+        stagecoords = np.array(stagecoords)
+        imagecoords = np.array(imagecoords)
+
+        if plot:
+            fig, (ax0, ax1, ax2) = plt.subplots(ncols=3, figsize=(12, 4))
+
+            ax0.set_title('Segmentation')
+            ax0.imshow(seg)
+
+            ax1.set_title('Image coords')
+            ax1.imshow(stitched)
+
+            plot_x, plot_y = np.array(imagecoords).T
+            ax1.scatter(plot_y, plot_x, marker='+', color='r')
+
+            ax2.set_title('Stage coords')
+            plot_x, plot_y = np.array(stagecoords).T
+            ax2.scatter(-plot_y / 1000, -plot_x / 1000)  # fiddle with coordinates to match the layout with the other axes
 
         prc = np.percentile
         mdn = np.median
         print(f'All hole diameters     50%: {mdn(allds):6.0f} | 5%: {prc(allds, 5):6.0f} | 95%: {prc(allds, 95):6.0f}')
         print(f'Selected hole diameter 50%: {mdn(selds):6.0f} | 5%: {prc(selds, 5):6.0f} | 95%: {prc(selds, 95):6.0f}')
 
-        return np.array(stagecoords), np.array(imagecoords)
+        return stagecoords, imagecoords
 
 
 if __name__ == '__main__':
