@@ -899,18 +899,23 @@ class TEMController:
 
         return stagematrix
 
-    def align_to(self, ref_img: 'np.array',
-                 apply: bool = True) -> list:
+    def align_to(self,
+                 ref_img: 'np.array',
+                 apply: bool = True,
+                 verbose: bool = False,
+                 ) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of
         interest (in the reference image) is at the center of the view.
 
         Parameters
         ----------
-        ref_img: np.array
+        ref_img : np.array
             Reference image that the microscope will be aligned to
-        apply: bool
+        apply : bool
             Toggle to translate the stage to center the image
+        verbose : bool
+            Be more verbose
 
         Returns
         -------
@@ -920,7 +925,10 @@ class TEMController:
         from skimage.feature import register_translation
 
         current_x, current_y = self.stage.xy
-        print(f'Current stage position: {current_x:.0f} {current_y:.0f}')
+
+        if verbose:
+            print(f'Current stage position: {current_x:.0f} {current_y:.0f}')
+
         stagematrix = self.get_stagematrix()
         mati = np.linalg.inv(stagematrix)
 
@@ -929,12 +937,16 @@ class TEMController:
         pixel_shift, error, phasediff = register_translation(ref_img, img, upsample_factor=10)
 
         stage_shift = np.dot(pixel_shift, mati)
+        stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
 
         print(f'Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}')
 
-        new_x = current_x - stage_shift[0]
+        new_x = current_x + stage_shift[0]
         new_y = current_y + stage_shift[1]
-        print(f'New stage position: {new_x:.0f} {new_y:.0f}')
+
+        if verbose:
+            print(f'New stage position: {new_x:.0f} {new_y:.0f}')
+
         if apply:
             self.stage.set_xy_with_backlash_correction(x=new_x, y=new_y)
 
