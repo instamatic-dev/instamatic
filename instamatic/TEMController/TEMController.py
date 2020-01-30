@@ -926,7 +926,7 @@ class TEMController:
 
         img = self.getRawImage()
 
-        pixel_shift = register_translation(ref_img, img, upsample_factor=10)
+        pixel_shift, error, phasediff = register_translation(ref_img, img, upsample_factor=10)
 
         stage_shift = np.dot(pixel_shift, mati)
 
@@ -989,7 +989,7 @@ class TEMController:
             if sign < 1:
                 img2, img1 = img1, img2
 
-            shift = register_translation(img1, img2, upsample_factor=10)
+            shift, error, phasediff = register_translation(img1, img2, upsample_factor=10)
 
             return shift
 

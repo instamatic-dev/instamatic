@@ -175,7 +175,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='BeamShift')
         img = imgscale(img, scale)
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         beamshift = np.array(h['BeamShift'])
         beampos.append(beamshift)
@@ -240,7 +240,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         print('Image:', fn)
         print('Beamshift: x={} | y={}'.format(*beamshift))
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         beampos.append(beamshift)
         shifts.append(shift)

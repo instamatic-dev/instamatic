@@ -238,7 +238,7 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
         img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         readout = np.array(h[key])
         readouts.append(readout)
@@ -287,7 +287,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
         print('Image:', fn)
         print('{}: dx={} | dy={}'.format(key, *readout))
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         readouts.append(readout)
         shifts.append(shift)

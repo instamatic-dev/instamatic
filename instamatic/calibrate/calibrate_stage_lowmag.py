@@ -259,7 +259,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
         img = imgscale(img, scale)
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         xobs, yobs, _, _, _ = h['StagePosition']
         stagepos.append((xobs, yobs))
@@ -335,7 +335,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         print(f'Stageposition: x={xobs:.0f} | y={yobs:.0f}')
         print()
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
         stagepos.append((xobs, yobs))
         shifts.append(shift)

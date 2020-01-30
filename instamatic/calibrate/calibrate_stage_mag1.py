@@ -131,7 +131,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
             img = imgscale(img, scale)
 
-            shift = register_translation(img_cent, img, upsample_factor=10)
+            shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
 
             xobs = stage.x
             yobs = stage.y
@@ -242,7 +242,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
         print('Image:', fn)
         print(f'Stageposition: x={xobs:.0f} | y={yobs:.0f}')
 
-        shift = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
         print('Shift:', shift)
         print()
 
