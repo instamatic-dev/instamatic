@@ -88,18 +88,24 @@ class AcquireAtItems:
 
         set_xy(x=x, y=y)
 
-    def start(self):
-        """Start serial acquisition protocol."""
+    def start(self, start_index: int = 0):
+        """Start serial acquisition protocol.
+
+        Parameters
+        ----------
+        start_index : int
+            Start acquisition from this item.
+        """
         import time
         import msvcrt
 
         ctrl = self.ctrl
-        nav_items = self.nav_items
+        nav_items = self.nav_items[start_index:]
 
         ntot = len(nav_items)
 
         print(f'\nAcquiring on {ntot} items.')
-        print('Press <Q> to interrupt.\n')
+        print('Press <Ctrl-C> to interrupt.\n')
 
         self.move_to_item(nav_items[0])  # pre-move
         self.pre_acquire(ctrl)
@@ -108,29 +114,24 @@ class AcquireAtItems:
         t0 = p.start_time
 
         for i, item in enumerate(nav_items):
-            ctrl.current_item = item
-            ctrl.current_i = i
-
-            eta = p.remaining_dt()  # s -> min
-            print(f'{i:3} [eta {eta}] -> {item}')
-
-            self.move_to_item(item)
-
+            # Run script in try/except block so that Keyboard interrupt
+            # will safely break out of the loop
             try:
+                i += start_index
+                ctrl.current_item = item
+                ctrl.current_i = i
+
+                eta = p.remaining_dt()  # s -> min
+                print(f'{i:3} [eta {eta}] -> {item}')
+
+                self.move_to_item(item)
                 self.acquire(ctrl)
-            except InterruptedError:
+
+                # calculate remaining time
+                p.update()
+            except (InterruptedError, KeyboardInterrupt):
                 print(f'\nAcquisition was interrupted during item `{item}`!')
                 break
-
-            # calculate remaining time
-            p.update()
-
-            # Stop/interrupt acquisition
-            if msvcrt.kbhit():
-                key = msvcrt.getch().decode()
-                if key == 'q':
-                    print(f'\nAcquisition was interrupted after item `{item}`!')
-                    break
 
         t1 = time.perf_counter()
 
