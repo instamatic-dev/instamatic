@@ -126,18 +126,18 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
         camera_name = cfg.camera
 
     microscope_cfg = ConfigObject.from_file(base_drc / _config / _microscope / f'{microscope_name}.yaml')
-    
+
     if calibration_name:
         calibration_cfg = ConfigObject.from_file(base_drc / _config / _calibration / f'{calibration_name}.yaml')
     else:
         calibration_cfg = ConfigObject({}, tag='NoCalib')
-        print("No camera is loaded.")
-    
+        print('No calibration is loaded.')
+
     if camera_name:
         camera_cfg = ConfigObject.from_file(base_drc / _config / _camera / f'{camera_name}.yaml')
     else:
         camera_cfg = ConfigObject({}, tag='NoCamera')
-        print("No calibration is loaded.")
+        print('No camera is loaded.')
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg
