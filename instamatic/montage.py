@@ -685,7 +685,7 @@ class Montage:
                 'idx0': idx0,
                 'idx1': idx1,
                 'overlap_k': overlap_k,
-                'fft_score': score,
+                'fft_score': np.nan_to_num(score, nan=0.0),
             }
 
             # if plot:
