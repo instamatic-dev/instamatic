@@ -1018,16 +1018,19 @@ class Montage:
         image_pixel_coord = self.coords[j]  # 2020-01-31: make it work in Python
         image_stage_coord = self.stagecoords[j]
 
-        if plot:
-            img = self.images[j]
-            plt.imshow(img)
-            plot_x, plot_y = px_coord - image_pixel_coord[::-1]
-            plt.scatter(plot_y, plot_x)
-            plt.show()
-
         tx, ty = np.dot(px_coord - image_pixel_coord, mati)  # 2020-01-31: make it work in Python
 
         stage_coord = np.array((tx, -ty)) + image_stage_coord - center_offset
+        stage_coord = stage_coord.astype(int)  # round to integer
+
+        if plot:
+            img = self.images[j]
+            plt.imshow(img)
+            plot_x, plot_y = px_coord - image_pixel_coord
+            plt.scatter(plot_y, plot_x, color='red')
+            plt.text(plot_y, plot_x, ' P', fontdict={'color': 'red', 'size': 20})
+            plt.title(f'Image coord: {image_stage_coord}\nP: {stage_coord}')
+            plt.show()
 
         return stage_coord
 
