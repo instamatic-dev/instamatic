@@ -460,6 +460,7 @@ class Montage:
             Filename of the mrc file to load.
         gridshape : tuple(2)
             Tuple describing the number of of x and y points in the montage grid.
+            TODO: Find a way to get this from the .mrc/.mdoc
         direction : str
             Defines the direction of data collection
         zigzag : bool
@@ -504,6 +505,14 @@ class Montage:
             c3 = c3[:, ::-1]  # flip coordinates
             c3 -= c3.min(axis=0)  # set minval to 0
             m.alignedpiececoordsvs = c3
+
+        m.magnification = m.mdoc[-1]['Magnification']
+        m.coords = m.piececoords  # map .coords to .piececoords
+
+        try:
+            m.optimized_coords = m.alignedpiececoordsvs  # map .optimized_coords to .alignedpiececoordsvs
+        except AttributeError:
+            m.optimized_coords = m.alignedpiececoords  # map .optimized_coords to .alignedpiececoords
 
         return m
 
@@ -746,8 +755,8 @@ class Montage:
         scores = [item['fft_score'] for item in self.raw_difference_vectors.values()]
         auto_thresh = find_threshold(scores)
         used_thresh = self.fft_threshold
-        plt.axhline(auto_thresh, lw=0.5, color='red', label=f'Suggested threshold={used_thresh:.4f}')
-        plt.axhline(used_thresh, lw=0.5, color='green', label=f'Actual threshold={auto_thresh:.4f}')
+        plt.axhline(auto_thresh, lw=0.5, color='red', label=f'Suggested threshold={auto_thresh:.4f}')
+        plt.axhline(used_thresh, lw=0.5, color='green', label=f'Actual threshold={used_thresh:.4f}')
         plt.plot(sorted(scores), '.')
         plt.title('FFT scores')
         plt.xlabel('Index')
@@ -805,7 +814,7 @@ class Montage:
         coords : np.array[-1, 2]
             Optimized coordinates for each section in the montage map
         """
-        if not hasattr(self, 'vects'):
+        if not hasattr(self, 'coords'):
             self.calculate_montage_coords()
         vects = self.coords
 
