@@ -88,7 +88,11 @@ def weight_map(shape, method='block', plot=False):
     return d
 
 
-def make_grid(gridshape: tuple, direction: str = 'updown', zigzag: bool = True, flip: bool = False) -> 'np.array':
+def make_grid(gridshape: tuple,
+              direction: str = 'updown',
+              zigzag: bool = True,
+              flip: bool = False,
+              ) -> 'np.array':
     """Defines the grid montage collection scheme.
 
     Parameters
@@ -115,7 +119,6 @@ def make_grid(gridshape: tuple, direction: str = 'updown', zigzag: bool = True, 
         grid[1::2] = np.fliplr(grid[1::2])
 
     if direction == 'updown':
-        pass
         if flip:
             grid = np.fliplr(grid)
     elif direction == 'downup':
@@ -453,8 +456,18 @@ class Montage:
         self.overlap_y = int(res_y * overlap)
 
     @classmethod
-    def from_serialem_mrc(cls, filename: str, gridshape: tuple, direction: str = 'leftright', zigzag: bool = True):
-        """Load a montage object from a SerialEM file image stack.
+    def from_serialem_mrc(cls,
+                          filename: str,
+                          gridshape: tuple,
+                          direction: str = 'updown',
+                          zigzag: bool = True,
+                          flip: bool = True,
+                          k_rot90: int = 3,
+                          ):
+        """Load a montage object from a SerialEM file image stack. The default
+        parameters transform the images to data suitable for use with
+        Instamatic. It makes no further assumptions about the way the data were
+        collected.
 
         Parameters
         ----------
@@ -467,6 +480,11 @@ class Montage:
             Defines the direction of data collection
         zigzag : bool
             Defines if the data has been collected in a zigzag manner
+        flip : bool
+            Flip around the vertical (lr, rl) or horizontal (ud, du) axis, i.e. start from the
+            botton (lr, rl) or right-hand (ud, du) side.
+        k_rot90 : int
+            Rotate the image by 90 degrees (clockwise) for `k` times, i.e., `k_rot90=3` rotates the image by 270 degrees.
 
         Returns
         -------
@@ -485,7 +503,7 @@ class Montage:
             'gridshape': gridshape,
             'direction': direction,
             'zigzag': zigzag,
-            'flip': False,
+            'flip': flip,
         }
 
         m = cls(images=images, gridspec=gridspec)
@@ -493,9 +511,8 @@ class Montage:
         m.filename = filename
         m.stagecoords = np.array([d['StagePosition'] for d in m.mdoc]) * 1000  # um->nm
         c1 = np.array([d['PieceCoordinates'][0:2] for d in m.mdoc])
-        m.piececoords = c1[:, ::-1]  # flip coordinates
+        m.piececoords = c1
         c2 = np.array([d['AlignedPieceCoords'][0:2] for d in m.mdoc])
-        c2 = c2[:, ::-1]  # flip coordinates
         c2 -= c2.min(axis=0)  # set minval to 0
         m.alignedpiececoords = c2
 
@@ -504,7 +521,6 @@ class Montage:
         except KeyError:
             pass
         else:
-            c3 = c3[:, ::-1]  # flip coordinates
             c3 -= c3.min(axis=0)  # set minval to 0
             m.alignedpiececoordsvs = c3
 
@@ -517,6 +533,16 @@ class Montage:
             m.optimized_coords = m.alignedpiececoordsvs  # map .optimized_coords to .alignedpiececoordsvs
         except AttributeError:
             m.optimized_coords = m.alignedpiececoords  # map .optimized_coords to .alignedpiececoords
+
+        # Rotate the images so they are in the same orientation as those from Instamatic
+        # This avoids a lot of problems later on
+        m.images = [np.rot90(image, k=k_rot90) for image in m.images]
+
+        # Also convert pixel coordinates from SerialEM to match the rotated images
+        # Not a very elegant solution, but works for the moment... #FIXME
+        idx = np.fliplr(np.arange(len(images)).reshape(gridshape))
+        m.coords = m.coords[idx.ravel()]
+        m.optimized_coords = m.optimized_coords[idx.ravel()]
 
         return m
 
@@ -1054,10 +1080,13 @@ class Montage:
 
         tx, ty = np.dot(px_coord - image_pixel_coord, mati)
 
-        if self.software.lower() == 'serialem':
-            stage_coord = np.array((ty, tx)) + image_stage_coord - center_offset  # SerialEM
-        else:
-            stage_coord = np.array((tx, -ty)) + image_stage_coord - center_offset  # Instamatic
+        # no longer needed if the image is imported with `k_rot90=3`
+        # if self.software.lower() == 'serialem':
+        #     tx, ty = ty, tx
+
+        ty = -ty
+
+        stage_coord = np.array((tx, ty)) + image_stage_coord - center_offset
 
         stage_coord = stage_coord.astype(int)  # round to integer
 
