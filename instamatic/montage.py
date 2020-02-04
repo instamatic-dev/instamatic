@@ -1049,13 +1049,16 @@ class Montage:
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
 
-        # image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
-        image_pixel_coord = self.coords[j]  # 2020-01-31: make it work in Python
+        image_pixel_coord = self.coords[j]
         image_stage_coord = self.stagecoords[j]
 
-        tx, ty = np.dot(px_coord - image_pixel_coord, mati)  # 2020-01-31: make it work in Python
+        tx, ty = np.dot(px_coord - image_pixel_coord, mati)
 
-        stage_coord = np.array((tx, -ty)) + image_stage_coord - center_offset
+        if self.software.lower() == 'serialem':
+            stage_coord = np.array((ty, tx)) + image_stage_coord - center_offset  # SerialEM
+        else:
+            stage_coord = np.array((tx, -ty)) + image_stage_coord - center_offset  # Instamatic
+
         stage_coord = stage_coord.astype(int)  # round to integer
 
         if plot:
