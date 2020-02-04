@@ -51,6 +51,9 @@ class GridMontage:
         self.ny = ny
         self.overlap = overlap
 
+        if not binning:
+            binning = self.ctrl.cam.getBinning()
+
         res_x, res_y = self.ctrl.cam.getDimensions()
 
         overlap_x = int(res_x * overlap)
@@ -78,6 +81,7 @@ class GridMontage:
         self.mode = self.ctrl.mode
         self.magnification = self.ctrl.magnification.value
         self.spotsize = self.ctrl.spotsize
+        self.binning = binning
 
         print('Setting up gridscan.')
         print(f'  Mag: {self.magnification}x')
@@ -88,6 +92,7 @@ class GridMontage:
         print(f'  Image shape: {res_x} x {res_y}')
         print(f'  Pixel center: {px_center}')
         print(f'  Spot size: {self.spotsize}')
+        print(f'  Binning: {self.binning}')
 
     def start(self):
         """Start the experiment."""
@@ -156,6 +161,7 @@ class GridMontage:
             'mode': self.mode,
             'spotsize': self.spotsize,
             'flip': self.flip,
+            'binning': self.binning,
         }
 
         import yaml

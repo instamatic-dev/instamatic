@@ -9,6 +9,7 @@ from skimage import filters
 from skimage.feature import register_translation
 from tqdm.auto import tqdm
 
+from instamatic import config
 from instamatic.imreg import translation
 from instamatic.tools import bin_ndarray
 
@@ -445,6 +446,7 @@ class Montage:
         self.image_shape = images[0].shape
         self.gridspec = gridspec
         self.grid = make_grid(**gridspec)
+        self.software = None
 
         res_x, res_y = self.image_shape
         self.overlap_x = int(res_x * overlap)
@@ -506,8 +508,10 @@ class Montage:
             c3 -= c3.min(axis=0)  # set minval to 0
             m.alignedpiececoordsvs = c3
 
+        m.image_binning = m.mdoc[-1]['Binning']
         m.magnification = m.mdoc[-1]['Magnification']
         m.coords = m.piececoords  # map .coords to .piececoords
+        m.software = 'serialem'
 
         try:
             m.optimized_coords = m.alignedpiececoordsvs  # map .optimized_coords to .alignedpiececoordsvs
@@ -545,8 +549,30 @@ class Montage:
         m.stagematrix = np.array(d['stagematrix'])
         m.mode = d['mode']
         m.magnification = d['magnification']
+        m.image_binning = d['binning']
+        m.software = 'instamatic'
 
         return m
+
+    def set_calibration(self, mode: str, magnification: int) -> None:
+        """Set the calibration parameters for the montage map. Sets the
+        pixelsize and stagematrix from the config files.
+
+        Parameters
+        ----------
+        mode : str
+            The TEM mode used, i.e. `lowmag`, `mag1`, `samag`
+        magnification : int
+            The magnification used
+        """
+        self.pixelsize = getattr(config.calibration, f'pixelsize_{mode}')[magnification]
+
+        binning = self.image_binning
+        stagematrix = getattr(config.calibration, f'stagematrix_{mode}')[magnification]
+        self.stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning)  # um -> nm
+
+        self.mode = mode
+        self.magnification = magnification
 
     def get_difference_vector(self,
                               idx0: int,
@@ -1112,9 +1138,7 @@ class Montage:
         binning = self.stitched_binning
 
         if not pixelsize:
-            # attempt to get pixelsize from config
-            from instamatic import config
-            pixelsize = getattr(config.calibration, f'pixelsize_{self.mode}')[self.magnification] * binning
+            pixelsize = self.pixelsize * binning
         else:
             pixelsize *= binning
 
