@@ -97,6 +97,8 @@ setup(
             'instamatic.goniotoolserver               = instamatic.server.goniotool_server:main',
             # setup
             'instamatic.autoconfig                    = instamatic.config.autoconfig:main',
+            # other
+            'instamatic.defocus_helper                = instamatic.gui.defocus_button:main',
         ],
     },
 )
