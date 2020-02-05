@@ -1096,7 +1096,7 @@ class Montage:
             plot_x, plot_y = px_coord - image_pixel_coord
             plt.scatter(plot_y, plot_x, color='red')
             plt.text(plot_y, plot_x, ' P', fontdict={'color': 'red', 'size': 20})
-            plt.title(f'Image coord: {image_stage_coord}\nP: {stage_coord}')
+            plt.title(f'Image coord: {image_stage_coord}\nP: {stage_coord}\nLinked to: {j}')
             plt.show()
 
         return stage_coord
@@ -1104,9 +1104,22 @@ class Montage:
     def stage_to_pixelcoord(self,
                             stage_coord: tuple,
                             stagematrix=None,
+                            plot: bool = False,
                             ) -> tuple:
-        """Takes a stage coordinate and transforms it into a pixel
-        coordinate."""
+        """Takes a stage coordinate and transforms it into a pixel coordinate.
+
+        Parameters
+        ----------
+        stage_coords : np.array (nx2)
+        stagematrix : np.array (2x2)
+        plot : bool
+            Visualize the pixelcoordinates on the stitched images
+
+        Returns
+        -------
+        np.array (nx2)
+            Pixel coordinates corresponding to the stitched image.
+        """
         if stagematrix is None:
             stagematrix = self.stagematrix
 
@@ -1120,15 +1133,50 @@ class Montage:
         j = np.argmin(diffs)
 
         image_stage_coord = self.stagecoords[j]
-        image_pixel_coord = self.coords[j][::-1]  # FIXME: Why do these coordinates need to be flipped (SerialEM)?
+        image_pixel_coord = self.coords[j].copy()
 
-        # The image pixel coordinate `image_pixel_coord` cooresponds to the corner,
+        image_pixel_coord[1] *= -1  # not sure why this is needed
+
+        # The image pixel coordinate `image_pixel_coord` corresponds to the corner,
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
         px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
         px_coord /= self.stitched_binning
 
-        return px_coord.astype(int)
+        px_coord[1] *= -1  # not sure why this is needed
+        px_coord = px_coord.astype(int)
+
+        if plot:
+            plot_x, plot_y = px_coord
+            plt.imshow(self.stitched)
+            plt.scatter(plot_y, plot_x, color='red', marker='.')
+            plt.text(plot_y, plot_x, ' P', fontdict={'color': 'red', 'size': 20})
+            plt.title(f'P: {px_coord}\nStage: {stage_coord}\nLinked to: {j}')
+            plt.show()
+
+        return px_coord
+
+    def stage_to_pixelcoord_all(self,
+                                stage_coords: tuple,
+                                stagematrix=None,
+                                plot: bool = False,
+                                ):
+        """Convert a list of stage coordinates into pixelcoordinates. Uses
+        `.stage_to_pixelcoord`
+
+        Parameters
+        ----------
+        stage_coords : np.array (nx2)
+        stagematrix : np.array (2x2)
+        plot : bool
+            Visualize the pixelcoordinates on the stitched images
+
+        Returns
+        -------
+        np.array (nx2)
+            Pixel coordinates corresponding to the stitched image.
+        """
+        raise NotImplementedError
 
     def find_holes(self,
                    diameter: float = 40e3,
