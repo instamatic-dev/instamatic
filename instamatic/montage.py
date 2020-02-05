@@ -943,8 +943,9 @@ class Montage:
 
         Parameters
         ----------
-        coords : np.array[-1, 2]
-            List of x/y pixel coordinates
+        method : str
+            Choices: [None, 'weighted', 'average']
+            With `weighted`, the intensity contribution is weighted by the distance from the center of the image. With 'average', the images are averaged, and 'None' simply places the patches in sequential order, overwriting previous data.
         binning : int
             Bin the Montage image by this factor
         optimized : bool
@@ -975,13 +976,15 @@ class Montage:
 
         stitched = np.zeros((int(stitched_x / binning),
                              int(stitched_y / binning)),
-                            dtype=np.int32)
+                            dtype=np.float64)
 
         if method in ('average', 'weighted'):
             n_images = np.zeros_like(stitched)
 
             if method == 'weighted':
-                weight = weight_map(stitched.shape, method='circle')
+                weight = weight_map((int(res_x / binning),
+                                     int(res_y / binning)),
+                                    method='circle')
 
         montage_patches = self._montage_patches(coords, binning=binning)
         for i, patch in enumerate(montage_patches):
@@ -994,7 +997,7 @@ class Montage:
             if method == 'average':
                 stitched[x0:x1, y0:y1] += im
                 n_images[x0:x1, y0:y1] += 1
-            if method == 'weighted':
+            elif method == 'weighted':
                 stitched[x0:x1, y0:y1] += im * weight
                 n_images[x0:x1, y0:y1] += weight
             else:
