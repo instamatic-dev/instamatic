@@ -82,8 +82,8 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
         try:
             data = conn.recv(BUFF).decode()
         except ConnectionResetError:
-            print("cRED experiment ended and connection was forcely closed.")
-            print("A new cRED experiment will build a new connection.")
+            print('cRED experiment ended and connection was forcely closed.')
+            print('A new cRED experiment will build a new connection.')
             break
 
         now = datetime.datetime.now().strftime('%H:%M:%S.%f')

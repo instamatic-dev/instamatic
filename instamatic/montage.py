@@ -100,8 +100,8 @@ def make_grid(gridshape: tuple,
     gridshape : tuple(int, int)
         Defines the shape of the grid
     direction : str
-        Defines the direction of data collection starting from the top (lr, rl) or left-hand (ud, du) side
-        `updown`, `downup`, `leftright`, `rightleft`
+        Defines the direction of data collection starting from the top (lr, rl)
+        or left-hand (ud, du) side `updown`, `downup`, `leftright`, `rightleft`
     zigzag : bool
         Defines if the data has been collected in a zigzag manner
     flip : bool
@@ -481,10 +481,11 @@ class Montage:
         zigzag : bool
             Defines if the data has been collected in a zigzag manner
         flip : bool
-            Flip around the vertical (lr, rl) or horizontal (ud, du) axis, i.e. start from the
-            botton (lr, rl) or right-hand (ud, du) side.
+            Flip around the vertical (lr, rl) or horizontal (ud, du) axis,
+            i.e. start from the botton (lr, rl) or right-hand (ud, du) side.
         k_rot90 : int
-            Rotate the image by 90 degrees (clockwise) for `k` times, i.e., `k_rot90=3` rotates the image by 270 degrees.
+            Rotate the image by 90 degrees (clockwise) for `k` times, i.e.,
+            `k_rot90=3` rotates the image by 270 degrees.
 
         Returns
         -------
@@ -659,7 +660,9 @@ class Montage:
         ----------
         threshold : float
             Lower for the cross correlation score to accept a shift or not
-            If a shift is not accepted, the shift is set to (0, 0). Use the value 'auto' to automatically determine the threshold value. The threshold can be visualized using `.plot_fft_scores()`.
+            If a shift is not accepted, the shift is set to (0, 0).
+            Use the value 'auto' to automatically determine the threshold value.
+            The threshold can be visualized using `.plot_fft_scores()`.
         overlap_k : float
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
@@ -768,7 +771,9 @@ class Montage:
         ----------
         threshold : float
             Lower for the cross correlation score to accept a shift or not
-            If a shift is not accepted, the shift is set to (0, 0). Use the value 'auto' to automatically determine the threshold value. The threshold can be visualized using `.plot_fft_scores()`.
+            If a shift is not accepted, the shift is set to (0, 0).
+            Use the value 'auto' to automatically determine the threshold value.
+            The threshold can be visualized using `.plot_fft_scores()`.
         verbose : bool
             Be more verbose
         """
@@ -797,7 +802,11 @@ class Montage:
                 if verbose:
                     print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Shift: {shift}')
 
-            difference_vector = self.get_difference_vector(idx0, idx1, shift, overlap_k=overlap_k, verbose=False)
+            difference_vector = self.get_difference_vector(idx0,
+                                                           idx1,
+                                                           shift,
+                                                           overlap_k=overlap_k,
+                                                           verbose=False)
             out[seq0, seq1] = difference_vector
 
         return out
@@ -945,7 +954,10 @@ class Montage:
         ----------
         method : str
             Choices: [None, 'weighted', 'average']
-            With `weighted`, the intensity contribution is weighted by the distance from the center of the image. With 'average', the images are averaged, and 'None' simply places the patches in sequential order, overwriting previous data.
+            With `weighted`, the intensity contribution is weighted by
+            the distance from the center of the image. With 'average',
+            the images are averaged, and 'None' simply places the patches
+            in sequential order, overwriting previous data.
         binning : int
             Bin the Montage image by this factor
         optimized : bool
@@ -1079,7 +1091,8 @@ class Montage:
         Returns
         -------
         np.array (nx2)
-            Stage coordinates (nm) corresponding to pixel coordinates given in the stitched image.
+            Stage coordinates (nm) corresponding to pixel coordinates
+            given in the stitched image.
         """
         if stagematrix is None:
             stagematrix = self.stagematrix
@@ -1298,7 +1311,8 @@ class Montage:
 
             ax2.set_title('Stage coords')
             plot_x, plot_y = np.array(stagecoords).T
-            ax2.scatter(-plot_y / 1000, -plot_x / 1000)  # fiddle with coordinates to match the layout with the other axes
+            # fiddle with coordinates to match the layout with the other axes #FIXME
+            ax2.scatter(-plot_y / 1000, -plot_x / 1000)
 
         prc = np.percentile
         mdn = np.median
