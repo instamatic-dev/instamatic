@@ -1061,9 +1061,23 @@ class Montage:
                             px_coord: tuple,
                             stagematrix=None,
                             plot=False,
-                            ) -> tuple:
-        """Takes a pixel coordinate and transforms it into a stage
-        coordinate."""
+                            ) -> 'np.array':
+        """Takes a pixel coordinate and transforms it into a stage coordinate.
+
+        Parameters
+        ----------
+        stage_coords : np.array (nx2)
+            List of stage coordinates in nm.
+        stagematrix : np.array (2x2)
+            Stage matrix to convert from pixel to stage coordinates
+        plot : bool
+            Visualize the pixelcoordinates on the stitched images
+
+        Returns
+        -------
+        np.array (nx2)
+            Stage coordinates (nm) corresponding to pixel coordinates given in the stitched image.
+        """
         if stagematrix is None:
             stagematrix = self.stagematrix
 
@@ -1105,19 +1119,25 @@ class Montage:
                             stage_coord: tuple,
                             stagematrix=None,
                             plot: bool = False,
-                            ) -> tuple:
+                            ) -> 'np.array':
         """Takes a stage coordinate and transforms it into a pixel coordinate.
+
+        Note that this is not the inverse of `.pixel_to_stagecoord`, as this function
+        finds the closest image to 'hook onto', and calculates the pixel coordinate
+        with that image as the reference position.
 
         Parameters
         ----------
         stage_coords : np.array (nx2)
+            List of stage coordinates in nm.
         stagematrix : np.array (2x2)
+            Stage matrix to convert from pixel to stage coordinates
         plot : bool
             Visualize the pixelcoordinates on the stitched images
 
         Returns
         -------
-        np.array (nx2)
+        px_cord : np.array (1x2)
             Pixel coordinates corresponding to the stitched image.
         """
         if stagematrix is None:
@@ -1156,27 +1176,43 @@ class Montage:
 
         return px_coord
 
-    def stage_to_pixelcoord_all(self,
-                                stage_coords: tuple,
-                                stagematrix=None,
-                                plot: bool = False,
-                                ):
+    def stage_to_pixelcoords(self,
+                             stage_coords: tuple,
+                             stagematrix=None,
+                             plot: bool = False,
+                             ) -> 'np.array':
         """Convert a list of stage coordinates into pixelcoordinates. Uses
         `.stage_to_pixelcoord`
+
+        Note that this is not the inverse of `.pixel_to_stagecoord`, as this function
+        finds the closest image to 'hook onto', and calculates the pixel coordinate
+        with that image as the reference position.
 
         Parameters
         ----------
         stage_coords : np.array (nx2)
+            List of stage coordinates in nm.
         stagematrix : np.array (2x2)
+            Stage matrix to convert from pixel to stage coordinates
         plot : bool
             Visualize the pixelcoordinates on the stitched images
 
         Returns
         -------
-        np.array (nx2)
+        px_coords : np.array (nx2)
             Pixel coordinates corresponding to the stitched image.
         """
-        raise NotImplementedError
+        f = self.stage_to_pixelcoord
+        px_coords = np.array([f(stage_coord, stagematrix=stagematrix) for stage_coord in stage_coords])
+
+        if plot:
+            plot_x, plot_y = px_coords.T
+            plt.imshow(self.stitched)
+            plt.scatter(plot_y, plot_x, color='red', marker='.')
+            plt.title(f'Pixel coordinates mapped on stitched image')
+            plt.show()
+
+        return px_coords
 
     def find_holes(self,
                    diameter: float = 40e3,
