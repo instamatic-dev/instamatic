@@ -1,3 +1,5 @@
+from tqdm.auto import tqdm
+
 from instamatic.utils.progress import Progress
 
 
@@ -105,15 +107,14 @@ class AcquireAtItems:
         ntot = len(nav_items)
 
         print(f'\nAcquiring on {ntot} items.')
-        print('Press <Ctrl-C> to interrupt.\n')
+        print('Press <Ctrl-C> or ⬛ to interrupt.\n')
 
         self.move_to_item(nav_items[0])  # pre-move
         self.pre_acquire(ctrl)
 
-        p = Progress(total=ntot, interval=5)
-        t0 = p.start_time
+        t0 = time.perf_counter()
 
-        for i, item in enumerate(nav_items):
+        for i, item in enumerate(tqdm(nav_items)):
             # Run script in try/except block so that Keyboard interrupt
             # will safely break out of the loop
             try:
@@ -121,14 +122,9 @@ class AcquireAtItems:
                 ctrl.current_item = item
                 ctrl.current_i = i
 
-                eta = p.remaining_dt()  # s -> min
-                print(f'{i:3} [eta {eta}] -> {item}')
-
                 self.move_to_item(item)
                 self.acquire(ctrl)
 
-                # calculate remaining time
-                p.update()
             except (InterruptedError, KeyboardInterrupt):
                 print(f'\nAcquisition was interrupted during item `{item}`!')
                 break

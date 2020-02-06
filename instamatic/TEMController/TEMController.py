@@ -939,7 +939,7 @@ class TEMController:
         stage_shift = np.dot(pixel_shift, mati)
         stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
 
-        print(f'Shifting stage by dx={stage_shift[0]:.2f} dy={stage_shift[1]:.2f}')
+        print(f'Aligning: shifting stage by dx={stage_shift[0]:6.0f} dy={stage_shift[1]:6.0f}')
 
         new_x = current_x + stage_shift[0]
         new_y = current_y + stage_shift[1]
