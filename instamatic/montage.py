@@ -574,6 +574,7 @@ class Montage:
         # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
         m.stagecoords = np.array(d['stagecoords'])
         m.stagematrix = np.array(d['stagematrix'])
+        m.pixelsize = d['pixelsize']  # unbinned pixelsize
         m.mode = d['mode']
         m.magnification = d['magnification']
         m.image_binning = d['binning']

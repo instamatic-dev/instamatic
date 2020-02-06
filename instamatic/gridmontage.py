@@ -76,12 +76,15 @@ class GridMontage:
 
         coords = (stagepos - stage_center).astype(int)
 
+        mode = self.ctrl.mode
+        magnification = self.ctrl.magnification.value
         self.stagecoords = coords
         self.grid = grid
-        self.mode = self.ctrl.mode
-        self.magnification = self.ctrl.magnification.value
+        self.mode = mode
+        self.magnification = magnification
         self.spotsize = self.ctrl.spotsize
         self.binning = binning
+        self.pixelsize = getattr(config.calibration, f'pixelsize_{mode}')[magnification]  # unbinned
 
         print('Setting up gridscan.')
         print(f'  Mag: {self.magnification}x')
@@ -162,6 +165,7 @@ class GridMontage:
             'spotsize': self.spotsize,
             'flip': self.flip,
             'binning': self.binning,
+            'pixelsize': self.pixelsize,
         }
 
         import yaml
