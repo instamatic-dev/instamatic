@@ -735,9 +735,6 @@ class Montage:
                 if plot:
                     plot_fft(strip0, strip1, shift, fft, side0, side1)
 
-            shift = disambiguate_shift(strip0, strip1, shift, verbose=False)
-            shift = np.array(shift)
-
             results[seq0, seq1] = {
                 'shift': shift,
                 'idx0': idx0,
