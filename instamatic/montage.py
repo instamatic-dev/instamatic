@@ -513,27 +513,20 @@ class Montage:
         m.stagecoords = np.array([d['StagePosition'] for d in m.mdoc]) * 1000  # um->nm
         c1 = np.array([d['PieceCoordinates'][0:2] for d in m.mdoc])
         m.piececoords = c1
-        c2 = np.array([d['AlignedPieceCoords'][0:2] for d in m.mdoc])
-        c2 -= c2.min(axis=0)  # set minval to 0
-        m.alignedpiececoords = c2
 
-        try:
-            c3 = np.array([d['AlignedPieceCoordsVS'][0:2] for d in m.mdoc])
-        except KeyError:
-            pass
-        else:
-            c3 -= c3.min(axis=0)  # set minval to 0
-            m.alignedpiececoordsvs = c3
+        # Apparently, SerialEM can save one or the other or both
+        # prefer APCVS over APC and move on
+        for key in 'AlignedPieceCoordsVS', 'AlignedPieceCoords':
+            if key in m.mdoc[0]:
+                c2 = np.array([d[key][0:2] for d in m.mdoc])
+                c2 -= c2.min(axis=0)  # set minval to 0
+                m.optimized_coords = c2
+                break
 
         m.image_binning = m.mdoc[-1]['Binning']
         m.magnification = m.mdoc[-1]['Magnification']
         m.coords = m.piececoords  # map .coords to .piececoords
         m.software = 'serialem'
-
-        try:
-            m.optimized_coords = m.alignedpiececoordsvs  # map .optimized_coords to .alignedpiececoordsvs
-        except AttributeError:
-            m.optimized_coords = m.alignedpiececoords  # map .optimized_coords to .alignedpiececoords
 
         # Rotate the images so they are in the same orientation as those from Instamatic
         # This avoids a lot of problems later on
