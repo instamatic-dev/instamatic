@@ -743,6 +743,8 @@ class Montage:
                 if plot:
                     plot_fft(strip0, strip1, shift, fft, side0, side1)
 
+            shift = np.array(shift)
+
             results[seq0, seq1] = {
                 'shift': shift,
                 'idx0': idx0,
@@ -859,6 +861,7 @@ class Montage:
                                 method: str = 'leastsq',
                                 skip: tuple = (),
                                 verbose: bool = False,
+                                plot: bool = False,
                                 ) -> list:
         """Use the difference vectors between each pair of images to calculate
         the optimal coordinates for each section using least-squares
