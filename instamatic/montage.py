@@ -325,9 +325,13 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     ax1.imshow(strip1, interpolation='nearest')
     ax1.set_title(f'{side1}')
     ax2.imshow(difference, interpolation='nearest')
-    ax2.set_title('Abs(Difference)')
-    ax3.imshow(fft, vmin=np.percentile(fft, 50.00), vmax=np.percentile(fft, 99.99))
+    ax2.set_title(f'Abs(Difference) - Shift: {shift_x} {shift_y}')
+    ax3.imshow(fft, vmin=np.percentile(fft, 90.0), vmax=np.percentile(fft, 99.99))
     ax3.set_title(f'Cross correlation (max={fft.max():.4f})')
+
+    ax3.scatter(shift_y, shift_x, color='red', marker='o', facecolor='none', s=100)
+    ax3.set_xlim(0, fft.shape[1])
+    ax3.set_ylim(0, fft.shape[0])
 
     plt.subplots_adjust(hspace=0.0)
     plt.show()
@@ -710,10 +714,14 @@ class Montage:
 
             # If the pair of images has already been compared, copy that result instead
             if (seq1, seq0) in results:
+                if verbose:
+                    print(f'{seq0:3d}{seq1:3d} | copy')
                 result = results[seq1, seq0]
                 shift = -result['shift']
                 score = result['fft_score']
             else:
+                if verbose:
+                    print(f'{seq0:3d}{seq1:3d} | fft')
                 strip0 = im0[slices[side0]]
                 strip1 = im1[slices[side1]]
 
@@ -752,6 +760,7 @@ class Montage:
                                                             verbose=verbose)
 
         self.difference_vectors = difference_vectors
+        self.weights = {k: v['fft_score'] for k, v in results.items()}
 
         return difference_vectors
 
@@ -848,6 +857,7 @@ class Montage:
 
     def optimize_montage_coords(self,
                                 method: str = 'leastsq',
+                                skip: tuple = (),
                                 verbose: bool = False,
                                 ) -> list:
         """Use the difference vectors between each pair of images to calculate
@@ -858,8 +868,12 @@ class Montage:
         ----------
         method : str
             Least-squares minimization method to use (lmfit)
+        skip : tuple
+            List of integers of frames to ignore
         verbose : bool
             Be more verbose
+        plot : bool
+            Plot the original and optimized pixel coordinates
 
         Returns
         -------
@@ -871,13 +885,14 @@ class Montage:
         vects = self.coords
 
         difference_vectors = self.difference_vectors
+        weights = self.weights
 
         res_x, res_y = self.image_shape
         grid = self.grid
         grid_x, grid_y = grid.shape
         n_gridpoints = grid_x * grid_y
 
-        # determine which frames items have neighbours
+        # determine which frames items have neighours
         has_neighbours = {i for key in difference_vectors.keys() for i in key}
 
         # setup parameters
@@ -885,44 +900,53 @@ class Montage:
 
         middle_i = int(n_gridpoints / 2)  # Find index of middlemost item
         for i, row in enumerate(vects):
-            if i not in has_neighbours:
+            if i in skip:
+                vary = False
+            elif i not in has_neighbours:
                 vary = False
             else:
                 vary = (i != middle_i)  # anchor on middle frame
             params.add(f'C{i}{0}', value=row[0], vary=vary, min=row[0] - res_x / 2, max=row[0] + res_x / 2)
             params.add(f'C{i}{1}', value=row[1], vary=vary, min=row[1] - res_y / 2, max=row[1] + res_y / 2)
 
-        def obj_func(params, diff_vects):
-            V = np.array([p.value for p in params.values()]).reshape(-1, 2)
-            n = len(V)
+        def obj_func(params, diff_vects, weights):
+            V = np.array([v.value for k, v in params.items() if k.startswith('C')]).reshape(-1, 2)
 
             # Minimization function from 2.2
-            new = []
-            for i in range(n):
-                for j in range(n):
-                    if i == j:
-                        continue
-                    if not (i, j) in diff_vects:
-                        continue
+            out = []
+            for i, j in diff_vects.keys():
+                if i in skip:
+                    continue
+                if j in skip:
+                    continue
 
-                    diffij = diff_vects[i, j]
+                diffij = diff_vects[i, j]
+                x = V[j] - V[i] - diffij
+                weight = weights[i, j]
+                out.append(x * weight)
 
-                    x = V[j] - V[i] - diffij
+            return np.array(out)
 
-                    new.append(x)
-
-            return np.array(new)
-
-        args = (difference_vectors,)
+        args = (difference_vectors, weights)
         res = lmfit.minimize(obj_func, params, args=args, method=method)
 
         lmfit.report_fit(res, show_correl=verbose, min_correl=0.8)
 
-        Vn = np.array([p.value for p in res.params.values()]).reshape(-1, 2)
+        params = res.params
+        Vn = np.array([v.value for k, v in params.items() if k.startswith('C')]).reshape(-1, 2)
+
         offset = min(Vn[:, 0]), min(Vn[:, 1])
         coords = Vn - offset
 
         self.optimized_coords = coords
+
+        if plot:
+            plt.title(f'Shifts from minimizization (`{method}`)')
+            plt.scatter(*self.coords.T, label='Original', marker='+')
+            plt.scatter(*self.optimized_coords.T, label='Optimized', marker='+')
+            # for (x1,y1), (x2, y2) in zip(m.coords, m.optimized_coords):
+            #     arrow = plt.arrow(x1, x2, x2-x1, y2-y1)
+            plt.legend()
 
         return coords
 
