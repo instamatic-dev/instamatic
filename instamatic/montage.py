@@ -1300,18 +1300,28 @@ class Montage:
             ax1.set_title('Image coords')
             ax1.imshow(stitched)
 
-            plot_x, plot_y = np.array(imagecoords).T
-            ax1.scatter(plot_y, plot_x, marker='+', color='r')
-
             ax2.set_title('Stage coords')
-            plot_x, plot_y = np.array(stagecoords).T
-            # fiddle with coordinates to match the layout with the other axes #FIXME
-            ax2.scatter(-plot_y / 1000, -plot_x / 1000)
+
+            try:
+                plot_x, plot_y = np.array(imagecoords).T
+                ax1.scatter(plot_y, plot_x, marker='+', color='r')
+            except ValueError:
+                pass
+
+            try:
+                plot_x, plot_y = np.array(stagecoords).T
+                # fiddle with coordinates to match the layout with the other axes #FIXME
+                ax2.scatter(-plot_y / 1000, -plot_x / 1000)
+            except ValueError:
+                pass
 
         prc = np.percentile
         mdn = np.median
         print(f'All hole diameters     50%: {mdn(allds):6.0f} | 5%: {prc(allds, 5):6.0f} | 95%: {prc(allds, 95):6.0f}')
-        print(f'Selected hole diameter 50%: {mdn(selds):6.0f} | 5%: {prc(selds, 5):6.0f} | 95%: {prc(selds, 95):6.0f}')
+        if len(selds) > 0:
+            print(f'Selected hole diameter 50%: {mdn(selds):6.0f} | 5%: {prc(selds, 5):6.0f} | 95%: {prc(selds, 95):6.0f}')
+        else:
+            print(f'Selected hole diameter 50%: {"-":>6s} | 5%: {"-":>6s} | 95%: {"-":>6s}')
 
         return stagecoords, imagecoords
 
