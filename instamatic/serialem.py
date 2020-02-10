@@ -86,6 +86,13 @@ INTEGER_LIST = ('MapWidthHeight', 'MapFramesXY',
 
 UNDEFINED = ()
 
+REQUIRED_MAPITEM = ('StageXYZ', 'MapFile', 'MapSection',
+                    'MapBinning', 'MapMagInd', 'MapScaleMat',
+                    'MapWidthHeight', 'Color', 'Regis',
+                    'Type', 'MapID', 'MapMontage', 'MapCamera',
+                    'NumPts', 'PtsX', 'PtsY',
+                    )
+
 
 class NavItem:
     """DataClass for SerialEM Nav items.
@@ -180,6 +187,7 @@ class MapItem(NavItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.validate()
         self.markers = {}
 
     @property
@@ -320,6 +328,56 @@ class MapItem(NavItem):
         items."""
         self.markers = {}
         self.update_markers(*items)
+
+    @classmethod
+    def from_dict(cls, dct, tag: str = None):
+        """Construct a new map item from a dictionary.
+
+        For the required keys, see `serialem.REQUIRED_MAPITEM
+
+        Parameters
+        ----------
+        dct : dict
+            Dictionary of required items
+        tag : str
+            Name to identify the map item by
+
+        Returns
+        -------
+        map_item : MapItem
+        """
+        MapID = MapItem.GROUP_ID_ITERATOR
+        MapItem.GROUP_ID_ITERATOR += 1
+
+        # required items that can be generated
+        map_dct = {
+            'Color': 2,
+            'Regis': 1,
+            'Type': 2,
+            'MapID': MapID,
+            'MapMontage': 0,
+            'MapCamera': 0,
+            'NumPts': 5,       # number of points describing square around it?
+            'PtsX': (-1, 1, 1, -1, -1),  # draw square around point, grid coordinates
+            'PtsY': (-1, -1, 1, 1, -1),  # draw square around point, grid coordinates
+        }
+
+        map_dct.update(dct)
+
+        if not tag:
+            tag = str(MapID)
+
+        map_item = cls(map_dct, tag=tag)
+        return map_item
+
+    def validate(self):
+        """Validate the dictionary.
+
+        Check whether all necessary keys are present
+        """
+        for key in REQUIRED_MAPITEM:
+            if key not in self.__dict__:
+                raise KeyError(f'MapItem: missing key `{key}`')
 
 
 def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
