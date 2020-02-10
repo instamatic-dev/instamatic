@@ -305,19 +305,19 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
         ax.set_axis_off()
     ax0, ax1, ax2, ax3 = axes
 
-    shape0 = strip0.shape
-    shape1 = strip1.shape
+    assert strip0.shape == strip1.shape, f'Shapes do not match, strip1: {strip1.shape} strip2: {strip2.shape}'
+    shape = strip0.shape
 
-    if shape0[0] > shape1[1]:
+    if shape[0] > shape[1]:
         strip0 = strip0.T
         strip1 = strip1.T
         fft = fft.T
-        shift_y, shift_x = shift
+        t1, t0 = shift
     else:
-        shift_x, shift_y = shift
+        t0, t1 = shift
 
     # Show difference
-    strip1_shifted = ndimage.shift(strip1, (shift_x, shift_y))
+    strip1_shifted = ndimage.shift(strip1, (t0, t1))
     difference = strip1_shifted - strip0.astype(float)
 
     ax0.imshow(strip0, interpolation='nearest')
@@ -325,11 +325,16 @@ def plot_fft(strip0, strip1, shift, fft, side0, side1):
     ax1.imshow(strip1, interpolation='nearest')
     ax1.set_title(f'{side1}')
     ax2.imshow(difference, interpolation='nearest')
-    ax2.set_title(f'Abs(Difference) - Shift: {shift_x} {shift_y}')
+    ax2.set_title(f'Abs(Difference) - Shift: {t0} {t1}')
     ax3.imshow(fft, vmin=np.percentile(fft, 90.0), vmax=np.percentile(fft, 99.99))
     ax3.set_title(f'Cross correlation (max={fft.max():.4f})')
 
-    ax3.scatter(shift_y, shift_x, color='red', marker='o', facecolor='none', s=100)
+    if t0 < 0:
+        t0 += shape[0]
+    if t1 < 0:
+        t1 += shape[0]
+
+    ax3.scatter(t1, t0, color='red', marker='o', facecolor='none', s=100)
     ax3.set_xlim(0, fft.shape[1])
     ax3.set_ylim(0, fft.shape[0])
 
@@ -738,7 +743,7 @@ class Montage:
                 else:  # method = skimage.feature.register_translation
                     shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
                     fft = np.ones_like(strip0)
-                    score = 1 - error
+                    score = 1 - error**0.5
 
                 if plot:
                     plot_fft(strip0, strip1, shift, fft, side0, side1)
@@ -766,7 +771,12 @@ class Montage:
 
         return difference_vectors
 
-    def filter_difference_vectors(self, threshold: float = 'auto', verbose: bool = True) -> dict:
+    def filter_difference_vectors(self,
+                                  threshold: float = 'auto',
+                                  max_shift: int = 200,
+                                  verbose: bool = True,
+                                  plot: bool = True,
+                                  ) -> dict:
         """Filter the raw difference vectors based on their fft scores.
 
         Parameters
@@ -776,8 +786,12 @@ class Montage:
             If a shift is not accepted, the shift is set to (0, 0).
             Use the value 'auto' to automatically determine the threshold value.
             The threshold can be visualized using `.plot_fft_scores()`.
+        max_shift : int
+            Maximum pixel shift for difference vector to be accepted.
         verbose : bool
             Be more verbose
+        plot : bool
+            Plot the difference vectors
         """
         results = self.raw_difference_vectors
 
@@ -794,24 +808,44 @@ class Montage:
             idx0 = item['idx0']
             idx1 = item['idx1']
             overlap_k = item['overlap_k']
+            shift = item['shift']
+            include = False
 
             if score < threshold:
-                shift = np.array((0, 0))
-                if verbose:
-                    print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Below threshold!')
+                new_shift = np.array((0, 0))
+                msg = '-> Below threshold!'
+            elif np.linalg.norm(shift) > max_shift:
+                new_shift = np.array(0.0)
+                msg = '-> Too large!'
             else:
-                shift = item['shift']
-                if verbose:
-                    print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Shift: {shift}')
+                new_shift = item['shift']
+                msg = '-> :-)'
+                include = True
 
-            difference_vector = self.get_difference_vector(idx0,
-                                                           idx1,
-                                                           shift,
-                                                           overlap_k=overlap_k,
-                                                           verbose=False)
-            out[seq0, seq1] = difference_vector
+            if verbose:
+                t0, t1 = shift
+                print(f'Pair {seq0:2d}:{idx0} - {seq1:2d}:{idx1} -> S: {score:.4f} -> Shift: {t0:4} {t1:4} {msg}')
+
+            if include:
+                out[seq0, seq1] = self.get_difference_vector(idx0,
+                                                             idx1,
+                                                             new_shift,
+                                                             overlap_k=overlap_k,
+                                                             verbose=False)
 
         return out
+
+    def plot_shifts(self) -> None:
+        """Plot the pixel shifts from the cross correlation."""
+        shifts = np.array([item['shift'] for item in self.raw_difference_vectors.values()])
+        scores = np.array([item['fft_score'] for item in self.raw_difference_vectors.values()])
+        t0, t1 = shifts.T
+        plt.scatter(t0, t1, c=scores, marker='+')
+        plt.xlabel('Shift X (px)')
+        plt.ylabel('Shift Y (px)')
+        plt.title('Pixel shifts from cross correlation')
+        plt.colorbar()
+        plt.show()
 
     def plot_fft_scores(self) -> None:
         """Plot the distribution of fft scores for the cross correlation."""
@@ -944,9 +978,12 @@ class Montage:
         self.optimized_coords = coords
 
         if plot:
-            plt.title(f'Shifts from minimizization (`{method}`)')
-            plt.scatter(*self.coords.T, label='Original', marker='+')
-            plt.scatter(*self.optimized_coords.T, label='Optimized', marker='+')
+            # center on average coordinate to better show displacement
+            c1 = self.coords - np.mean(self.coords, axis=0)
+            c2 = self.optimized_coords - np.mean(self.optimized_coords, axis=0)
+            plt.title(f'Shifts from minimizization (`{method}`)\nCentered on average position')
+            plt.scatter(*c1.T, label='Original', marker='+')
+            plt.scatter(*c2.T, label='Optimized', marker='+')
             # for (x1,y1), (x2, y2) in zip(m.coords, m.optimized_coords):
             #     arrow = plt.arrow(x1, x2, x2-x1, y2-y1)
             plt.legend()
