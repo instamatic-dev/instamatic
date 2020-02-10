@@ -215,6 +215,16 @@ class JeolMicroscope:
 
         return selector
 
+    def getMagnificationAbsoluteIndex(self) -> int:
+        index = self.getMagnificationIndex()
+        mode = self.GetFunctionMode()
+
+        if mode in ('mag1', 'samag'):
+            n_lowmag = len(config.microscope.range_lowmag)
+            index += n_lowmag
+
+        return index
+
     def setMagnificationIndex(self, index: int):
         if index < 0:
             raise JEOLValueError(f'Cannot lower magnification (index={index})')

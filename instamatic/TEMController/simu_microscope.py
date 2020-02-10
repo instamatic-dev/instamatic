@@ -284,6 +284,16 @@ class SimuMicroscope:
 
         return selector
 
+    def getMagnificationAbsoluteIndex(self) -> int:
+        index = self.getMagnificationIndex()
+        mode = self.getFunctionMode()
+
+        if mode in ('mag1', 'samag'):
+            n_lowmag = len(config.microscope.range_lowmag)
+            index += n_lowmag
+
+        return index
+
     def setMagnificationIndex(self, index: int):
         current_mode = self.getFunctionMode()
 

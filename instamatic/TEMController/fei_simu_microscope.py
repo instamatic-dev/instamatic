@@ -361,6 +361,9 @@ class FEISimuMicroscope:
             ind = self.proj.CameraLengthIndex
             return ind
 
+    def getMagnificationAbsoluteIndex(self) -> int:
+        raise NotImplementedError
+
     def setMagnificationIndex(self, index):
         if self.tom.Projection.Mode != 1:
             self.proj.MagnificationIndex = index
