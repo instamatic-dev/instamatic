@@ -51,3 +51,8 @@ repos:
           'flake8-type-annotations',
           'flake8-builtins',
           ]
+- repo: https://github.com/kynan/nbstripout
+  rev: master
+  hooks:
+    - id: nbstripout
+      files: ".ipynb"

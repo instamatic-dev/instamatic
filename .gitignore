@@ -4,7 +4,6 @@
 build
 dist
 *.egg-info
-*.ipynb
 .ipynb_checkpoints
 *.c
 .pydevproject
@@ -27,3 +26,4 @@ pytimepix
 index_server
 dials
 .db
+/RED_CCD_plugin
