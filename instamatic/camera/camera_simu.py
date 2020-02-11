@@ -51,11 +51,15 @@ class CameraSimu:
         if not exposure:
             exposure = self.default_exposure
         if not binsize:
-            binsize = self.default_binsize
+            binning = self.default_binsize
+
+        dim_x, dim_y = self.getDimensions()
+        dim_x = int(dim_x / binning)
+        dim_y = int(dim_y / binning)
 
         time.sleep(exposure)
 
-        arr = np.random.randint(256, size=self.dimensions)
+        arr = np.random.randint(256, size=(dim_x, dim_y))
 
         return arr
 
@@ -68,7 +72,13 @@ class CameraSimu:
         return self.dimensions
 
     def getImageDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
+        """Get the binned dimensions reported by the camera."""
+        bin_x, bin_y = self.getBinning()
+        dim_x, dim_y = self.getDimensions()
+
+        dim_x = int(dim_x / bin_x)
+        dim_y = int(dim_y / bin_y)
+
         return self.dimensions
 
     def getCameraDimensions(self) -> (int, int):
@@ -147,7 +157,7 @@ class CameraSimu:
         return list(range(20))
 
     def getBinning(self):
-        return (1, 1)
+        return self.default_binsize, self.default_binsize
 
     def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
         pass

@@ -193,7 +193,10 @@ class MapItem(NavItem):
     @property
     def map_scale_matrix(self) -> 'np.array':
         MapBinning = self.MapBinning
-        MontBinning = self.MontBinning
+        try:
+            MontBinning = self.MontBinning
+        except AttributeError:
+            MontBinning = 1
         mat = (MapBinning / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
         return mat.T
 
