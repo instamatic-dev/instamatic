@@ -843,19 +843,23 @@ class Montage:
         plt.scatter(t0, t1, c=scores, marker='+')
         plt.xlabel('Shift X (px)')
         plt.ylabel('Shift Y (px)')
-        plt.title('Pixel shifts from cross correlation')
+        plt.title('Pixel shifts (color = FFT score)')
+        plt.axis('equal')
         plt.colorbar()
         plt.show()
 
     def plot_fft_scores(self) -> None:
         """Plot the distribution of fft scores for the cross correlation."""
         scores = [item['fft_score'] for item in self.raw_difference_vectors.values()]
+        shifts = np.array([item['shift'] for item in self.raw_difference_vectors.values()])
+        amplitudes = np.linalg.norm(shifts, axis=1)
         auto_thresh = find_threshold(scores)
         used_thresh = self.fft_threshold
         plt.axhline(auto_thresh, lw=0.5, color='red', label=f'Suggested threshold={auto_thresh:.4f}')
         plt.axhline(used_thresh, lw=0.5, color='green', label=f'Actual threshold={used_thresh:.4f}')
-        plt.plot(sorted(scores), '.')
-        plt.title('FFT scores')
+        plt.scatter(np.arange(len(scores)), sorted(scores), c=amplitudes, marker='.')
+        plt.colorbar()
+        plt.title('FFT scores (color = pixel shift)')
         plt.xlabel('Index')
         plt.ylabel('Score')
         plt.legend()
@@ -981,11 +985,12 @@ class Montage:
             # center on average coordinate to better show displacement
             c1 = self.coords - np.mean(self.coords, axis=0)
             c2 = self.optimized_coords - np.mean(self.optimized_coords, axis=0)
-            plt.title(f'Shifts from minimizization (`{method}`)\nCentered on average position')
+            plt.title(f'Shifts from minimization (`{method}`)\nCentered on average position')
             plt.scatter(*c1.T, label='Original', marker='+')
             plt.scatter(*c2.T, label='Optimized', marker='+')
             # for (x1,y1), (x2, y2) in zip(m.coords, m.optimized_coords):
             #     arrow = plt.arrow(x1, x2, x2-x1, y2-y1)
+            plt.axis('equal')
             plt.legend()
 
         return coords
