@@ -4,7 +4,10 @@ from instamatic.utils.progress import Progress
 
 
 class AcquireAtItems:
-    """Class to automated acquisition at many stage locations.
+    """Class to automated acquisition at many stage locations. The acquisition
+    functions must be callable (or a list of callables) that accept `ctrl` as
+    an argument. In case a list of callables is given, they are excecuted in
+    sequence.
 
     Parameters
     ----------
@@ -13,11 +16,11 @@ class AcquireAtItems:
     nav_items: list
         List of (x, y) / (x, y, z) coordinates, or
         List of navigation items loaded from a `.nav` file.
-    acquire: callable
+    acquire: callable, list of callables
         Main function to call, must take `ctrl` as an argument
-    pre_acquire: callable
+    pre_acquire: callable, list of callables
         This function is called before the first acquisition item is run.
-    post_acquire: callable
+    post_acquire: callable, list of callables
         This function is run after the last acquisition item has run.
     backlash: bool
         Move the stage with backlash correction.
@@ -40,30 +43,51 @@ class AcquireAtItems:
         self.ctrl = ctrl
 
         if pre_acquire:
-            print('Pre-acquire: OK')
-            self.pre_acquire = pre_acquire
+            self._pre_acquire = self.validate(pre_acquire)
+            for func in self._pre_acquire:
+                print(f'Pre-acquire: `{func.__name__}` OK')
 
         if acquire:
-            print('Acquire: OK')
-            self.acquire = acquire
+            self._acquire = self.validate(acquire)
+            for func in self._acquire:
+                print(f'Acquire: `{func.__name__}` OK')
 
         if post_acquire:
-            print('Post-acquire: OK')
-            self.post_acquire = post_acquire
+            self._post_acquire = self.validate(post_acquire)
+            for func in self._post_acquire:
+                print(f'Post-acquire: `{func.__name__}` OK')
 
         self.backlash = backlash
 
+    # blank placeholders
+    _acquire = ()
+    _pre_acquire = ()
+    _post_acquire = ()
+
+    def validate(self, funcs):
+        """`func` can be a callable or a list of callables."""
+        if not isinstance(funcs, (list, tuple)):
+            funcs = (funcs,)
+
+        for func in funcs:
+            assert callable(func), """{func} is not a function!"""
+
+        return funcs
+
     def pre_acquire(self, ctrl):
-        """Function called after the last NavItem."""
-        pass
+        """Function called before the first stage position/NavItem."""
+        for func in self._pre_acquire:
+            func(ctrl)
 
     def post_acquire(self, ctrl):
-        """Function called before the first NavItem."""
-        pass
+        """Function called after the last stage position/NavItem."""
+        for func in self._post_acquire:
+            func(ctrl)
 
     def acquire(self, ctrl):
-        """Function to call at each stage position."""
-        print('Acquirement function has not been set.')
+        """Function to call at each stage position/NavItem."""
+        for func in self._acquire:
+            func(ctrl)
 
     def move_to_item(self, item):
         """Move the stage to the stage coordinates given by the NavItem."""
