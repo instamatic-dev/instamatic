@@ -37,25 +37,28 @@ class CameraSimu:
         if self.name != config.cfg.camera:
             config.load(camera_name=self.name)
 
-        self.__dict__.update(config.camera.mapping)
-
         self.streamable = True
 
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine.
+        self.__dict__.update(config.camera.mapping)
 
-        exposure: exposure time in seconds
-        binsize: which binning to use
+    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+        """Image acquisition routine. If the exposure and binsize are not
+        given, the default values are read from the config file.
+
+        exposure:
+            Exposure time in seconds.
+        binsize:
+            Which binning to use.
         """
 
         if not exposure:
             exposure = self.default_exposure
         if not binsize:
-            binning = self.default_binsize
+            binsize = self.default_binsize
 
         dim_x, dim_y = self.getDimensions()
-        dim_x = int(dim_x / binning)
-        dim_y = int(dim_y / binning)
+        dim_x = int(dim_x / binsize)
+        dim_y = int(dim_y / binsize)
 
         time.sleep(exposure)
 

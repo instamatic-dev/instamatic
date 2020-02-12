@@ -1132,31 +1132,35 @@ class TEMController:
             except TypeError:
                 func(v)
 
-    def getRawImage(self, exposure: float = 0.5, binsize: int = 1) -> np.ndarray:
+    def getRawImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the
         raw data array."""
         return self.cam.getImage(exposure=exposure, binsize=binsize)
 
-    def getImage(self, exposure: float = 0.5, binsize: int = 1, comment: str = '', out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = 'all') -> Tuple[np.ndarray, dict]:
-        """Retrieve image as numpy array from camera.
+    def getImage(self, exposure: float = None, binsize: int = None, comment: str = '', out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = 'all') -> Tuple[np.ndarray, dict]:
+        """Retrieve image as numpy array from camera. If the exposure and
+        binsize are not given, the default values are read from the config
+        file.
 
-        Parameters:
-            exposure: float,
-                exposure time in seconds
-            binsize: int,
-                which binning to use for the image, must be 1, 2, or 4
-            comment: str,
-                arbitrary comment to add to the header file under 'ImageComment'
-            out: str,
-                path or filename to which the image/header is saved (defaults to tiff)
-            plot: bool,
-                toggle whether to show the image using matplotlib after acquisition
-            full_header: bool,
-                return the full header
+        Parameters
+        ----------
+        exposure: float
+            Exposure time in seconds
+        binsize: int
+            which binning to use for the image, must be 1, 2, or 4
+        comment: str
+            Arbitrary comment to add to the header file under 'ImageComment'
+        out: str
+            Path or filename to which the image/header is saved (defaults to tiff)
+        plot: bool
+            Toggle whether to show the image using matplotlib after acquisition
+        full_header: bool
+            Return the full header
 
-        Returns:
-            image: np.ndarray, headerfile: dict
-                a tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
+        Returns
+        -------
+        image: np.ndarray, headerfile: dict
+            Tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
 
         Usage:
             img, h = self.getImage()

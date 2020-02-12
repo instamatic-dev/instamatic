@@ -118,7 +118,7 @@ class VideoStream(threading.Thread):
         atexit.register(grabber.stop)
         return grabber
 
-    def getImage(self, exposure=None, binsize=1):
+    def getImage(self, exposure=None, binsize=None):
         current_frametime = self.grabber.frametime
 
         # set to 0 to prevent it lagging data acquisition
