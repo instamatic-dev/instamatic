@@ -373,9 +373,11 @@ class MapItem(NavItem):
             tag = str(MapID)
 
         map_item = cls(map_dct, tag=tag)
+        map_item.calculate_PtsXY()
+
         return map_item
 
-    def validate(self):
+    def validate(self) -> None:
         """Validate the dictionary.
 
         Check whether all necessary keys are present
@@ -383,6 +385,28 @@ class MapItem(NavItem):
         for key in REQUIRED_MAPITEM:
             if key not in self.__dict__:
                 raise KeyError(f'MapItem: missing key `{key}`')
+
+    def calculate_PtsXY(self) -> None:
+        """Calculate PtsX / PtsY from the `map_item` information
+        (MapWidthHeight) via `.pixel_to_stagecoords`.
+
+        Updates the internal values.
+        """
+        x, y = self.MapWidthHeight
+
+        pts = np.array((
+            (0, 0),
+            (x, 0),
+            (x, y),
+            (0, y),
+            (0, 0),
+        ))
+
+        coords = self.pixel_to_stagecoords(pts)
+
+        PtsX, PtsY = coords.T
+        self.PtsX = PtsX.tolist()
+        self.PtsY = PtsY.tolist()
 
 
 def block2dict(block: list, kind: str = None, sequence: int = -1) -> dict:
