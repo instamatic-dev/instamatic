@@ -89,7 +89,7 @@ class GridMontage:
         print('Setting up gridscan.')
         print(f'  Mag: {self.magnification}x')
         print(f'  Mode: `{self.mode}`')
-        print(f'  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip:, {self.flip}')
+        print(f'  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip: {self.flip}')
         print(f'  Overlap: {self.overlap}')
         print()
         print(f'  Image shape: {res_x} x {res_y}')

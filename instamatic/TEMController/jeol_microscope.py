@@ -217,7 +217,7 @@ class JeolMicroscope:
 
     def getMagnificationAbsoluteIndex(self) -> int:
         index = self.getMagnificationIndex()
-        mode = self.GetFunctionMode()
+        mode = self.getFunctionMode()
 
         if mode in ('mag1', 'samag'):
             n_lowmag = len(config.microscope.range_lowmag)
