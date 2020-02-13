@@ -1048,7 +1048,7 @@ class Montage:
 
         stitched = np.zeros((int(stitched_x / binning),
                              int(stitched_y / binning)),
-                            dtype=np.float64)
+                            dtype=np.float32)
 
         if method in ('average', 'weighted'):
             n_images = np.zeros_like(stitched)
@@ -1131,6 +1131,17 @@ class Montage:
             plt.show()
         else:
             return ax
+
+    def export(self, outfile: str = 'stitched.tiff') -> None:
+        """Export the stitched image to a tiff file.
+
+        Parameters
+        ----------
+        outfile : str
+            Name of the image file.
+        """
+        from instamatic.formats import write_tiff
+        write_tiff(outfile, self.stitched)
 
     def pixel_to_stagecoord(self,
                             px_coord: tuple,
