@@ -94,6 +94,33 @@ REQUIRED_MAPITEM = ('StageXYZ', 'MapFile', 'MapSection',
                     )
 
 
+def item_to_string(d: dict, tag: str):
+    """Turn a SerialEM key/values dictionary into a .mdoc/.nav formatted
+    string."""
+    s = f'[Item = {tag}]\n'
+
+    for key in sorted(d.keys()):
+        val = d[key]
+
+        try:
+            if key in INTEGER:
+                val = str(val)
+            elif key in FLOAT:
+                val = str(val)
+            elif key in FLOAT_LIST:
+                val = ' '.join([str(x) for x in val])
+            elif key in INTEGER_LIST:
+                val = ' '.join([str(x) for x in val])
+        except TypeError as e:
+            print(e)
+            print(key, val)
+
+        s += f'{key} = {val}\n'
+
+    s += ''
+    return s
+
+
 class NavItem:
     """DataClass for SerialEM Nav items.
 
@@ -148,31 +175,8 @@ class NavItem:
 
     def to_string(self) -> str:
         """Convert nav item to string that can be printed to .nav file."""
-        s = f'[Item = {self.tag}]\n'
-
         d = self.to_dict()
-
-        for key in sorted(d.keys()):
-            val = d[key]
-
-            try:
-                if key in INTEGER:
-                    val = str(val)
-                elif key in FLOAT:
-                    val = str(val)
-                elif key in FLOAT_LIST:
-                    val = ' '.join([str(x) for x in val])
-                elif key in INTEGER_LIST:
-                    val = ' '.join([str(x) for x in val])
-            except TypeError as e:
-                print(e)
-                print(key, val)
-
-            s += f'{key} = {val}\n'
-
-        s += ''
-
-        return s
+        return item_to_string(d, tag=self.tag)
 
     def to_dict(self) -> dict:
         """Convert nav item back to dictionary."""
