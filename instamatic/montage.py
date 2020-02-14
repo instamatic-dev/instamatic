@@ -1171,7 +1171,7 @@ class Montage:
         mati = np.linalg.inv(stagematrix)
 
         px_coord = np.array(px_coord) * self.stitched_binning
-        center_offset = np.dot(np.array(self.image_shape) / 2, mati)
+        cx, cy = np.dot(np.array(self.image_shape) / 2, mati)
 
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
@@ -1181,14 +1181,11 @@ class Montage:
 
         tx, ty = np.dot(px_coord - image_pixel_coord, mati)
 
-        # no longer needed if the image is imported with `k_rot90=3`
-        # if self.software.lower() == 'serialem':
-        #     tx, ty = ty, tx
-
+        # conversions to convert between instamatic/serialem settings?
+        cy = -cy
         ty = -ty
 
-        stage_coord = np.array((tx, ty)) + image_stage_coord - center_offset
-
+        stage_coord = np.array((tx, ty)) + image_stage_coord - np.array((cx, cy))
         stage_coord = stage_coord.astype(int)  # round to integer
 
         if plot:
