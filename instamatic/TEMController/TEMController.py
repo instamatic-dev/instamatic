@@ -800,7 +800,27 @@ class TEMController:
         self.tem.setBeamBlank(on)
 
     def acquire_at_items(self, *args, **kwargs) -> None:
-        """See instamatic.acquire_at_items.AcquireAtItems for documentation."""
+        """Class to automated acquisition at many stage locations. The
+        acquisition functions must be callable (or a list of callables) that
+        accept `ctrl` as an argument. In case a list of callables is given,
+        they are excecuted in sequence.
+
+        Internally, this runs instamatic.acquire_at_items.AcquireAtItems. See there for more information.
+
+        Parameters
+        ----------
+        nav_items: list
+            List of (x, y) / (x, y, z) coordinates (nm), or
+            List of navigation items loaded from a `.nav` file.
+        acquire: callable, list of callables
+            Main function to call, must take `ctrl` as an argument
+        pre_acquire: callable, list of callables
+            This function is called before the first acquisition item is run.
+        post_acquire: callable, list of callables
+            This function is run after the last acquisition item has run.
+        backlash: bool
+        Move the stage with backlash correction.
+        """
         from instamatic.acquire_at_items import AcquireAtItems
 
         ctrl = self

@@ -127,12 +127,12 @@ def sort_nav_items_by_shortest_path(items: list,
         fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(12, 6))
         new_coords = coords[route]
         ax0.set_title(f'Before, total distance: {calc_total_dist(coords)/1000:.3g} μm')
-        ax0.plot(coords[:, 0] / 1000, coords[:, 1] / 1000, 'r-', marker='o')
+        ax0.plot(coords[:, 0] / 1000, coords[:, 1] / 1000, 'r--', marker='.', lw=1.0)
         ax0.scatter(coords[0, 0] / 1000, coords[0, 1] / 1000, color='red', s=100)
         ax0.axis('equal')
         ax1.set_title(f'After, total distance: {calc_total_dist(new_coords)/1000:.3g} μm')
-        ax1.plot(new_coords[:, 0] / 1000, new_coords[:, 1] / 1000, 'r-', marker='o')
-        ax1.scatter(new_coords[0, 0] / 1000, new_coords[0, 1] / 1000, color='red', s=100)
+        ax1.plot(new_coords[:, 0] / 1000, new_coords[:, 1] / 1000, 'r--', marker='.', lw=1.0)
+        ax1.scatter(new_coords[0, 0] / 1000, new_coords[0, 1] / 1000, color='red', s=50)
         ax1.axis('equal')
         plt.show()
 

@@ -502,6 +502,8 @@ class Montage:
         """
         import mrcfile
         from instamatic.serialem import read_mdoc_file
+        filename = str(filename)  # in case of Path object
+
         gm = mrcfile.open(filename)
         images = gm.data
 
@@ -649,10 +651,10 @@ class Montage:
     def calculate_difference_vectors(self,
                                      threshold: float = 'auto',
                                      overlap_k: float = 1.0,
-                                     method: str = 'imreg',
+                                     method: str = 'skimage',
                                      segment: bool = False,
                                      plot: bool = False,
-                                     verbose: bool = True,
+                                     verbose: bool = False,
                                      ) -> dict:
         """Get the difference vectors between the neighbouring images The
         images are overlapping by some amount defined using `overlap`. These

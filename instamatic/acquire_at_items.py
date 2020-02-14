@@ -14,7 +14,7 @@ class AcquireAtItems:
     ctrl: Instamatic.TEMController object
         Used to control the stage and TEM
     nav_items: list
-        List of (x, y) / (x, y, z) coordinates, or
+        List of (x, y) / (x, y, z) coordinates (nm), or
         List of navigation items loaded from a `.nav` file.
     acquire: callable, list of callables
         Main function to call, must take `ctrl` as an argument
