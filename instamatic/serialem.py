@@ -273,14 +273,18 @@ class MapItem(NavItem):
             px, py = np.array(coords).T
             plt.plot(px, py, 'ro', markerfacecolor='none', markersize=20, markeredgewidth=2)
 
-    def add_marker(self, coord, tag=None, acquire=True) -> 'NavItem':
+    def add_marker(self, coord, stagecoord=None, tag=None, acquire=True) -> 'NavItem':
         """Add pixel coordinate (numpy) as marker to a map item."""
 
         # assuming pixel coords from numpy
         py, px = coord
         yres = self.MapWidthHeight[1]
         py = yres - py
-        stage_x, stage_y = self.pixel_to_stagecoords((px, py))
+
+        if stagecoord is None:
+            stage_x, stage_y = self.pixel_to_stagecoords((px, py))
+        else:
+            stage_x, stage_y = stagecoord
 
         d = {}
         try:

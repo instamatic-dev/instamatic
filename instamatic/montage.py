@@ -1388,7 +1388,12 @@ class Montage:
             try:
                 plot_x, plot_y = np.array(stagecoords).T
                 # fiddle with coordinates to match the layout with the other axes #FIXME
-                ax2.scatter(-plot_y / 1000, -plot_x / 1000)
+                ax2.scatter(-plot_y / 1000, -plot_x / 1000, marker='+')
+                ax2.scatter(0, 0, marker='+', color='red', label='Origin')
+                ax2.legend()
+                ax2.axis('equal')
+                ax2.set_xlabel('X (μm)')
+                ax2.set_ylabel('Y (μm)')
             except ValueError:
                 pass
 
