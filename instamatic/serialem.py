@@ -277,18 +277,38 @@ class MapItem(NavItem):
             px, py = np.array(coords).T
             plt.plot(px, py, 'ro', markerfacecolor='none', markersize=20, markeredgewidth=2)
 
-    def add_marker(self, coord, stagecoord=None, tag=None, acquire=True) -> 'NavItem':
-        """Add pixel coordinate (numpy) as marker to a map item."""
+    def add_marker(self,
+                   coord: tuple,
+                   kind: str = 'pixel',
+                   tag: str = None,
+                   acquire: bool = True,
+                   ) -> 'NavItem':
+        """Add pixel or stage coordinate as marker to a map item. Markers are
+        linked to this `MapItem` via the `.markers` attribute.
 
-        # assuming pixel coords from numpy
-        py, px = coord
-        yres = self.MapWidthHeight[1]
-        py = yres - py
+        Parameters
+        ----------
+        coord : array (n x 2)
+            List of X, Y pixel coordinates or stage coordinates corresponding to the navigation item.
+        kind : str
+            Defines the kind of coordinate supplied, must be one of `pixel` or `stage`. Stage coordinates
+            are given in μm.
+        tag : str
+            Simple name tag for the item. It will be generated automatically if it is not given.
+        acquire : bool
+            Turn on the acquire flag for this item.
 
-        if stagecoord is None:
+        Returns
+        -------
+        Instance of `NavItem`
+        """
+        if kind == 'pixel':
+            py, px = coord
+            yres = self.MapWidthHeight[1]
+            py = yres - py
             stage_x, stage_y = self.pixel_to_stagecoords((px, py))
         else:
-            stage_x, stage_y = stagecoord
+            stage_x, stage_y = coord
 
         d = {}
         try:
@@ -313,17 +333,39 @@ class MapItem(NavItem):
 
         return item
 
-    def add_marker_group(self, coords, acquire=True, replace=True) -> list:
+    def add_marker_group(self,
+                         coords: list,
+                         kind: str = 'pixel',
+                         acquire: bool = True,
+                         replace: bool = True,
+                         ) -> list:
         """Add pixel coordinates (numpy) as markers to a map item If
-        `replace==True`, replace the entire list of existing markers on the map
-        item."""
+        `replace==True`, replace the entire list of existing markers on this
+        `MapItem` (via `.markers`).
+
+        Parameters
+        ----------
+        coords : array (n x 2)
+            List of X, Y pixel coordinates or stage coordinates corresponding to the navigation item.
+        kind : str
+            Defines the kind of coordinate supplied, must be one of `pixel` or `stage`. Stage coordinates
+            are given in μm.
+        acquire : bool
+            Turn on the acquire flag for this item.
+        replace : bool
+            Replace the exisiting items on this instance of `MapItem`
+
+        Returns
+        -------
+        List of `NavItem` instances
+        """
         if replace:
             self.markers = {}
 
         ret = []
         for i, coord in enumerate(coords):
             tag = f'{self.tag}-{i}'
-            item = self.add_marker(coord, tag=tag, acquire=True)
+            item = self.add_marker(coord, kind=kind, tag=tag, acquire=True)
             ret.append(item)
 
         MapItem.GROUP_ID_ITERATOR += 1
