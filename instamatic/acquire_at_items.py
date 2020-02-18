@@ -1,6 +1,7 @@
-from tqdm.auto import tqdm
+from collections import defaultdict
 
-from instamatic.utils.progress import Progress
+import numpy as np
+from tqdm.auto import tqdm
 
 
 class AcquireAtItems:
@@ -22,6 +23,11 @@ class AcquireAtItems:
         This function is called before the first acquisition item is run.
     post_acquire: callable, list of callables
         This function is run after the last acquisition item has run.
+    every_n: dict
+        Dictionary with functions to run every `n` positions. Each value must be
+        a callable or a list of callables taking a `ctrl` object as its agument,
+        e.g. every_n={2: every_2nd, 3: every_3rd}. These will be called in
+        sequence _after_ the main acquisition function.
     backlash: bool
         Move the stage with backlash correction.
 
@@ -36,6 +42,7 @@ class AcquireAtItems:
                  acquire=None,
                  pre_acquire=None,
                  post_acquire=None,
+                 every_n: dict = {},
                  backlash: bool = True):
         super().__init__()
 
@@ -44,18 +51,22 @@ class AcquireAtItems:
 
         if pre_acquire:
             self._pre_acquire = self.validate(pre_acquire)
-            for func in self._pre_acquire:
-                print(f'Pre-acquire: `{func.__name__}` OK')
+            print('Pre-acquire:', ', '.join([func.__name__ for func in self._pre_acquire]))
 
         if acquire:
-            self._acquire = self.validate(acquire)
-            for func in self._acquire:
-                print(f'Acquire: `{func.__name__}` OK')
+            self._acquire = defaultdict(list)
+            self._acquire[1].extend(self.validate(acquire))
+            for interval, funcs in every_n.items():
+                self._acquire[interval].extend(self.validate(funcs))
+
+            for interval, funcs in self._acquire.items():
+                print(f'Acquire[{interval}]:', ', '.join([func.__name__ for func in funcs]))
+
+            self._acquire_intervals = np.array(list(self._acquire.keys()))
 
         if post_acquire:
             self._post_acquire = self.validate(post_acquire)
-            for func in self._post_acquire:
-                print(f'Post-acquire: `{func.__name__}` OK')
+            print(f'Post-acquire:', ', '.join([func.__name__ for func in self._post_acquire]))
 
         self.backlash = backlash
 
@@ -70,24 +81,30 @@ class AcquireAtItems:
             funcs = (funcs,)
 
         for func in funcs:
-            assert callable(func), """{func} is not a function!"""
+            assert callable(func), f'{func} is not a function!'
 
         return funcs
 
     def pre_acquire(self, ctrl):
-        """Function called before the first stage position/NavItem."""
+        """Handler to call functions the first stage position/NavItem."""
         for func in self._pre_acquire:
             func(ctrl)
 
     def post_acquire(self, ctrl):
-        """Function called after the last stage position/NavItem."""
+        """Handler to call functions after the last stage position/NavItem."""
         for func in self._post_acquire:
             func(ctrl)
 
-    def acquire(self, ctrl):
-        """Function to call at each stage position/NavItem."""
-        for func in self._acquire:
-            func(ctrl)
+    def acquire(self, ctrl, i: int = 1):
+        """Handler to call functions at each stage position/NavItem (or at
+        specific intervals)."""
+        r = self._acquire_intervals
+        tasks = r[(i + 1) % r == 0]
+        for interval in tasks:
+            funcs = self._acquire[interval]
+            for func in funcs:
+                # print(f" >> {interval}: {func.__name__}")
+                func(ctrl)
 
     def move_to_item(self, item):
         """Move the stage to the stage coordinates given by the NavItem."""
@@ -147,7 +164,7 @@ class AcquireAtItems:
                 ctrl.current_i = i
 
                 self.move_to_item(item)
-                self.acquire(ctrl)
+                self.acquire(ctrl, i=i)
 
             except (InterruptedError, KeyboardInterrupt):
                 print(f'\nAcquisition was interrupted during item `{item}`!')
