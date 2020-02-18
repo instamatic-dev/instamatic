@@ -651,6 +651,7 @@ class Montage:
     def calculate_difference_vectors(self,
                                      threshold: float = 'auto',
                                      overlap_k: float = 1.0,
+                                     max_shift: int = 200,
                                      method: str = 'skimage',
                                      segment: bool = False,
                                      plot: bool = False,
@@ -672,6 +673,8 @@ class Montage:
             Extend the overlap by this factor, may help with the cross correlation
             For example, if the overlap is 50 pixels, `overlap_k=1.5` will extend the
             strips used for cross correlation to 75 pixels.
+        max_shift : int
+            Maximum pixel shift for difference vector to be accepted.
         segment : bool
             Segment the image using otsu's method before cross correlation. This improves
             the contrast for registration.
@@ -766,7 +769,8 @@ class Montage:
         self.raw_difference_vectors = results
 
         difference_vectors = self.filter_difference_vectors(threshold=threshold,
-                                                            verbose=verbose)
+                                                            verbose=verbose,
+                                                            max_shift=max_shift)
 
         self.difference_vectors = difference_vectors
         self.weights = {k: v['fft_score'] for k, v in results.items()}
