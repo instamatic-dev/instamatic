@@ -103,21 +103,21 @@ class GridMontage:
 
         buffer = []
 
-        def pre_acquire(ctrl):
-            print('Attempt to eliminate backlash.')
+        def eliminate_backlash(ctrl):
+            print('Attempting to eliminate backlash...')
             ctrl.stage.eliminate_backlash_xy()
 
-        def acquire(ctrl):
+        def acquire_image(ctrl):
             img, h = ctrl.getImage()
             buffer.append((img, h))
 
         def post_acquire(ctrl):
-            print('Post-acquire: done!')
+            pass
 
         ctrl.acquire_at_items(self.stagecoords,
-                              acquire=acquire,
-                              pre_acquire=pre_acquire,
-                              post_acquire=post_acquire)
+                              acquire=acquire_image,
+                              pre_acquire=eliminate_backlash,
+                              post_acquire=None)
 
         self.stagematrix = self.ctrl.get_stagematrix()
         self.buffer = buffer

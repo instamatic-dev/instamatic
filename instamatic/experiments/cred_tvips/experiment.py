@@ -61,10 +61,10 @@ class SerialExperiment:
         if self.rotation_speed:
             self.ctrl.stage.set_rotation_speed(self.rotation_speed)
 
-        def pre_acquire(ctrl):
+        def go_to_first_position(ctrl):
             ctrl.stage.set(a=start_angle)
 
-        def acquire(ctrl):
+        def acquire_cred_data(ctrl):
             nonlocal start_angle
             nonlocal end_angle
 
@@ -84,13 +84,13 @@ class SerialExperiment:
 
             start_angle, end_angle = end_angle, start_angle
 
-        def post_acquire(ctrl):
+        def stop_liveview(ctrl):
             ctrl.cam.stop_liveview()
 
         self.ctrl.acquire_at_items(self.nav_items,
-                                   acquire=acquire,
-                                   pre_acquire=pre_acquire,
-                                   post_acquire=post_acquire)
+                                   acquire=acquire_cred_data,
+                                   pre_acquire=go_to_first_position,
+                                   post_acquire=stop_liveview)
 
         if self.rotation_speed:
             self.ctrl.stage.set_rotation_speed(12)
