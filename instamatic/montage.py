@@ -451,6 +451,7 @@ class Montage:
                  images: list,
                  gridspec: dict,
                  overlap=0.1,
+                 **kwargs,
                  ):
         super().__init__()
 
@@ -458,7 +459,8 @@ class Montage:
         self.image_shape = images[0].shape
         self.gridspec = gridspec
         self.grid = make_grid(**gridspec)
-        self.software = None
+
+        self.__dict__.update(**kwargs)
 
         res_x, res_y = self.image_shape
         self.overlap_x = int(res_x * overlap)
@@ -518,30 +520,35 @@ class Montage:
             'flip': flip,
         }
 
-        m = cls(images=images, gridspec=gridspec)
-        m.mdoc = mdoc
-        m.filename = filename
-        m.stagecoords = np.array([d['StagePosition'] for d in m.mdoc]) * 1000  # um->nm
-        c1 = np.array([d['PieceCoordinates'][0:2] for d in m.mdoc])
+        # Rotate the images so they are in the same orientation as those from Instamatic
+        # This avoids a lot of problems later on
+        images = [np.rot90(image, k=k_rot90) for image in images]
+
+        kwargs = {
+            'stagecoords': np.array([d['StagePosition'] for d in mdoc]) * 1000,  # um->nm
+            'magnifiation': mdoc[-1]['Magnification'],
+            'image_binning': mdoc[-1]['Binning'],
+            'software': 'serialem',
+            'mdoc': mdoc,
+            'filename': filename,
+        }
+
+        m = cls(images=images, gridspec=gridspec, **kwargs)
+
+        c1 = np.array([d['PieceCoordinates'][0:2] for d in mdoc])
         m.piececoords = c1
 
         # Apparently, SerialEM can save one or the other or both
         # prefer APCVS over APC and move on
         for key in 'AlignedPieceCoordsVS', 'AlignedPieceCoords':
-            if key in m.mdoc[0]:
-                c2 = np.array([d[key][0:2] for d in m.mdoc])
+            if key in mdoc[0]:
+                c2 = np.array([d[key][0:2] for d in mdoc])
                 c2 -= c2.min(axis=0)  # set minval to 0
                 m.optimized_coords = c2
                 break
 
-        m.image_binning = m.mdoc[-1]['Binning']
-        m.magnification = m.mdoc[-1]['Magnification']
-        m.coords = m.piececoords  # map .coords to .piececoords
-        m.software = 'serialem'
-
-        # Rotate the images so they are in the same orientation as those from Instamatic
-        # This avoids a lot of problems later on
-        m.images = [np.rot90(image, k=k_rot90) for image in m.images]
+        # map .coords to .piececoords
+        m.coords = m.piececoords
 
         # Also convert pixel coordinates from SerialEM to match the rotated images
         # Not a very elegant solution, but works for the moment... #FIXME
@@ -567,22 +574,17 @@ class Montage:
 
         d = yaml.safe_load(open(p, 'r'))
         fns = (drc / fn for fn in d['filenames'])
-        overlap = d['overlap']
+
+        d['stagecoords'] = np.array(d['stagecoords'])
+        d['stagematrix'] = np.array(d['stagematrix'])
 
         images = [read_tiff(fn)[0] for fn in fns]
 
         gridspec = {k: v for k, v in d.items() if k in ('gridshape', 'direction', 'zigzag', 'flip')}
 
-        m = cls(images=images, gridspec=gridspec, overlap=overlap)
+        m = cls(images=images, gridspec=gridspec, **d)
         m.update_gridspec(flip=not d['flip'])  # BUG: Work-around for gridspec madness
         # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
-        m.stagecoords = np.array(d['stagecoords'])
-        m.stagematrix = np.array(d['stagematrix'])
-        m.pixelsize = d['pixelsize']  # unbinned pixelsize
-        m.mode = d['mode']
-        m.magnification = d['magnification']
-        m.image_binning = d['binning']
-        m.software = 'instamatic'
 
         return m
 
