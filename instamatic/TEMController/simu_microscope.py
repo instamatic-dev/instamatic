@@ -128,13 +128,13 @@ class SimuMicroscope:
         self._stage_dict = {}
         for key in ('a', 'b', 'x', 'y', 'z'):
             if key in ('a', 'b'):
-                speed = 10.0  # degree / sec
+                speed = 20.0  # degree / sec
                 current = random.randint(-40, 40)
             elif key in ('x', 'y'):
-                speed = 100_000.0  # nm / sec
+                speed = 1_000_000.0  # nm / sec
                 current = random.randint(-100000, 100000)
             elif key == 'z':
-                speed = 10_000.0  # nm / sec
+                speed = 100_000.0  # nm / sec
                 current = random.randint(-10000, 10000)
 
             self._stage_dict[key] = {
