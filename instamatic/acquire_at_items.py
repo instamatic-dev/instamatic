@@ -166,7 +166,8 @@ class AcquireAtItems:
                 self.move_to_item(item)
                 self.acquire(ctrl, i=i)
 
-            except (InterruptedError, KeyboardInterrupt):
+            except Exception as e:
+                print(repr(e.with_traceback(None)))
                 print(f'\nAcquisition was interrupted during item `{item}`!')
                 break
 
