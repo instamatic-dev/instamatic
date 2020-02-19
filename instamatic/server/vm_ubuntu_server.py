@@ -158,10 +158,11 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
 
     if spgr is None:
         with open(Path(path) / 'CORRECT.LP', 'r') as f:
-            if line.startswith(' SPACE GROUP NUMBER'):
-                spgr = int(line.strip('\n').split()[-1])
-            elif line.startswith(' SPACE_GROUP_NUMBER='):
-                spgr = int(line.strip('\n').split()[1])
+            for line in f:
+                if line.startswith(' SPACE GROUP NUMBER'):
+                    spgr = int(line.strip('\n').split()[-1])
+                elif line.startswith(' SPACE_GROUP_NUMBER='):
+                    spgr = int(line.strip('\n').split()[1])
     else:
         spgr = str(spgr)
 
