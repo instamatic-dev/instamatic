@@ -243,7 +243,10 @@ class MapItem(NavItem):
 
         m = mrcfile.mmap(map_file)
         s = self.MapSection
-        return np.array(m.data[s])
+        if m.is_single_image() and s == 0:
+            return np.array(m.data)
+        else:
+            return np.array(m.data[s])
 
     def plot_image(self, markers: bool = True) -> None:
         """Plot the image including markers (optional)"""
