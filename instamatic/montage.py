@@ -1307,7 +1307,7 @@ class Montage:
         return px_coords
 
     def find_holes(self,
-                   diameter: float = 40e3,
+                   diameter: float = None,
                    tolerance: float = 0.1,
                    pixelsize: float = None,
                    plot: bool = False,
@@ -1317,7 +1317,8 @@ class Montage:
         Parameters
         ----------
         diameter : float
-            In nm, approximate diameter of squares/grid holes
+            In nm, approximate diameter of squares/grid holes. If it
+            it is not specified, take the median diameter of all props.
         tolerance : float
             Tolerance in % how far the calculate diameter can be off
         pixelsize : float
@@ -1349,6 +1350,10 @@ class Montage:
             pixelsize = self.pixelsize * binning
         else:
             pixelsize *= binning
+
+        if diameter is None:
+            diameter = np.median([(prop.area ** 0.5) * pixelsize for prop in props])
+            print(f'Diameter: {diameter:.0f} nm')
 
         max_val = tolerance * diameter
 
