@@ -529,6 +529,7 @@ class Montage:
             'magnifiation': mdoc[-1]['Magnification'],
             'image_binning': mdoc[-1]['Binning'],
             'software': 'serialem',
+            'abs_mag_index': mdoc[-1]['MagIndex'],
             'mdoc': mdoc,
             'filename': filename,
         }
@@ -1150,6 +1151,55 @@ class Montage:
         """
         from instamatic.formats import write_tiff
         write_tiff(outfile, self.stitched)
+
+    def to_nav(self,
+               fn: str = 'stitched.nav',
+               coords: list = None,
+               kind: str = 'pixel'):
+        """Write montage to a SerialEM .nav file.
+        NOTE: The stage coordinates in the .nav file are not reliable.
+
+        Parameters
+        ----------
+        coords : np.array
+            List of pixel / stagecoords
+        kind : str
+            Specify whether the coordinates are pixel or stage coordinates,
+            must be one of `pixel` or `stage`.
+
+        Returns
+        -------
+        map_item : `MapItem`
+            Map item corresponding to the stitched image. Any coords
+            specified are accessed as a dict of markers
+            through `map_item.markers`.
+        """
+        import mrcfile
+        from instamatic.serialem import MapItem, write_nav_file
+
+        stem = fn.rsplit('.', 1)[-1]
+        fn_mrc = stem + '.mrc'
+        f = mrcfile.new(fn_mrc, data=self.stitched, overwrite=True)
+        f.close()
+
+        d = {
+            'StageXYZ': [0, 0, 0],
+            'MapFile': fn_mrc,
+            'MapSection': 0,
+            'MapBinning': self.binning[0],
+            'MapMagInd': self.abs_mag_index,
+            'MapScaleMat': self.stagematrix.flatten().tolist(),
+            'MapWidthHeight': self.stitched.shape,
+        }
+
+        map_item = MapItem.from_dict(d)
+
+        if coords is not None:
+            markers = map_item.add_marker_group(coords, kind=kind)
+
+        write_nav_file(fn, map_item, *map_item.markers.values())
+
+        return map_item
 
     def pixel_to_stagecoord(self,
                             px_coord: tuple,
