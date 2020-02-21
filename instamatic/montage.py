@@ -1464,33 +1464,15 @@ class Montage:
         else:
             print(f'Selected hole diameter 50%: {"-":>6s} | 5%: {"-":>6s} | 95%: {"-":>6s}')
 
+        self.feature_coords_stage = stagecoords
+        self.feature_coords_image = imagecoords
+
         return stagecoords, imagecoords
 
-    def browse(self,
-               imagecoords: list = None,
-               mmm: str = 'mmm.mrc',
-               ):
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 5))
-
-        px1_x, px1_y = imagecoords.T
-
-        im1 = ax1.imshow(self.stitched)
-        ax1.set_title('Global map')
-        ax1.scatter(px1_y, px1_x, marker='+', color='r', picker=8)
-
-        fn = mrcfile.mmap(mmm)
-
-        im2 = ax2.imshow(fn.data[0], vmax=5000)
-        ax2.set_title('Medium image')
-
-        def onclick(event):
-            axes = event.artist.axes
-            ind = event.ind[0]
-
-            data = fn.data[ind]
-            im2.set_data(data)
-
-        fig.canvas.mpl_connect('pick_event', onclick)
+    def to_browser(self):
+        from instamatic.browser import Browser
+        browser = Browser(self)
+        return browser
 
 
 if __name__ == '__main__':
