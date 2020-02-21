@@ -28,6 +28,9 @@ class Browser:
         self.stagecoords = np.array([mi.stage_xy for mi in self.map_items]) * 1000
         self.imagecoords = self.montage.stage_to_pixelcoords(self.stagecoords)
 
+    def set_data_location(self, s: str = 'data/diff_{key}.tiff'):
+        self.data_fmt = s
+
     def start(self, ctrl):
         double_click_delay = 0.5
 
@@ -35,9 +38,14 @@ class Browser:
 
         px1_x, px1_y = self.imagecoords.T
 
+        # FIXME: How to transform the coordinates instead?
+        self.stitched = np.flipud(np.rot90(self.stitched))
+
         im1 = ax1.imshow(self.stitched)
         ax1.set_title('Global map')
-        ax1.scatter(px1_y, px1_x, marker='+', color='r', picker=8)
+
+        # FIXME: Where does the 512 come from?
+        ax1.scatter(px1_x, px1_y + 512, marker='+', color='r', picker=8)
 
         im2 = ax2.imshow(self.mmap.data[0], vmax=5000)
         ax2.set_title('Medium image')
@@ -61,6 +69,10 @@ class Browser:
             if axes == ax1:
                 coord = self.stagecoords[ind]
                 img2 = self.mmap.data[ind]
+
+                # FIXME: Why is the flip needed here?
+                img2 = np.flipud(img2)
+
                 im2.set_data(img2)
 
                 map_item = self.map_items[ind]
@@ -69,21 +81,20 @@ class Browser:
                 pxcoords = map_item.stage_to_pixelcoords(coords)
 
                 xdata, ydata = pxcoords.T
-                data2.set_xdata(ydata)
-                data2.set_ydata(xdata)
+                data2.set_xdata(xdata)
+                data2.set_ydata(ydata)
                 ax2.set_title(map_item.tag)
 
             elif axes == ax2:
                 key, nav_item = list(map_item.markers.items())[ind]
-                print(key)
-
-                imagecoord = map_item.pixel_to_stagecoords(nav_item.stage_xy)
+                coord = nav_item.stage_xy
+                imagecoord = map_item.pixel_to_stagecoords(coord)
 
                 try:
-                    img3 = read_tiff(f'data/diff_{key}.tiff')[0]
+                    img3 = read_tiff(self.data_fmt.format(key=key))[0]
                     im3.set_data(img3)
                     ax3.set_title(key)
-                except Exception:
+                except FileNotFoundError:
                     pass
 
             if ind == current_ind and (t1 - t0 < double_click_delay):
