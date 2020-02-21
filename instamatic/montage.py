@@ -2,6 +2,7 @@ from pathlib import Path
 
 import lmfit
 import matplotlib.pyplot as plt
+import mrcfile
 import numpy as np
 from matplotlib import patches
 from scipy import ndimage
@@ -502,7 +503,6 @@ class Montage:
         -------
         Montage object constructed from the given images
         """
-        import mrcfile
         from instamatic.serialem import read_mdoc_file
         filename = str(filename)  # in case of Path object
 
@@ -1174,7 +1174,6 @@ class Montage:
             specified are accessed as a dict of markers
             through `map_item.markers`.
         """
-        import mrcfile
         from instamatic.serialem import MapItem, write_nav_file
 
         stem = fn.rsplit('.', 1)[-1]
@@ -1466,6 +1465,32 @@ class Montage:
             print(f'Selected hole diameter 50%: {"-":>6s} | 5%: {"-":>6s} | 95%: {"-":>6s}')
 
         return stagecoords, imagecoords
+
+    def browse(self,
+               imagecoords: list = None,
+               mmm: str = 'mmm.mrc',
+               ):
+        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 5))
+
+        px1_x, px1_y = imagecoords.T
+
+        im1 = ax1.imshow(self.stitched)
+        ax1.set_title('Global map')
+        ax1.scatter(px1_y, px1_x, marker='+', color='r', picker=8)
+
+        fn = mrcfile.mmap(mmm)
+
+        im2 = ax2.imshow(fn.data[0], vmax=5000)
+        ax2.set_title('Medium image')
+
+        def onclick(event):
+            axes = event.artist.axes
+            ind = event.ind[0]
+
+            data = fn.data[ind]
+            im2.set_data(data)
+
+        fig.canvas.mpl_connect('pick_event', onclick)
 
 
 if __name__ == '__main__':
