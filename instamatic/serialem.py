@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+import matplotlib as mpl
 import numpy as np
 
 
@@ -181,6 +182,16 @@ class NavItem:
     def to_dict(self) -> dict:
         """Convert nav item back to dictionary."""
         return {key: self.__dict__[key] for key in self._keys}
+
+    @property
+    def color_rgba(self) -> tuple:
+        """Return matplotlib RGBA color."""
+        return mpl.colors.to_rgba(self.color_str, alpha=None)
+
+    @property
+    def color_str(self) -> str:
+        """Return color as string."""
+        return ('red', 'green', 'blue', 'yellow', 'magenta', 'black')[self.Color]
 
 
 class MapItem(NavItem):

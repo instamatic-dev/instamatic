@@ -1,3 +1,4 @@
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -31,7 +32,7 @@ class Browser:
     def set_data_location(self, s: str = 'data/diff_{key}.tiff'):
         self.data_fmt = s
 
-    def start(self, ctrl):
+    def start(self, ctrl, cmap: str = 'gray'):
         double_click_delay = 0.5
 
         fig, (ax1, ax2, ax3) = plt.subplots(ncols=3, figsize=(10, 5))
@@ -41,17 +42,17 @@ class Browser:
         # FIXME: How to transform the coordinates instead?
         self.stitched = np.flipud(np.rot90(self.stitched))
 
-        im1 = ax1.imshow(self.stitched)
+        im1 = ax1.imshow(self.stitched, cmap=cmap)
         ax1.set_title('Global map')
 
         # FIXME: Where does the 512 come from?
         ax1.scatter(px1_x, px1_y + 512, marker='+', color='r', picker=8)
 
-        im2 = ax2.imshow(self.mmap.data[0], vmax=5000)
+        im2 = ax2.imshow(self.mmap.data[0], vmax=5000, cmap=cmap)
         ax2.set_title('Medium image')
-        data2, = ax2.plot([], [], marker='+', color='red', picker=8, lw=0)
+        data2 = ax2.scatter([], [], marker='+', color='red', picker=8, lw=1.0)
 
-        im3 = plt.imshow(np.arange(100).reshape(10, 10), vmax=5000)
+        im3 = plt.imshow(np.arange(100).reshape(10, 10), vmax=5000, cmap=cmap)
 
         key_active = ''
         current_ind = -1
@@ -77,12 +78,15 @@ class Browser:
 
                 map_item = self.map_items[ind]
                 coords = np.array([item.stage_xy for item in map_item.markers.values()])
+                colors_rgba = np.array([item.color_rgba for item in map_item.markers.values()])
+                data_fns = [self.data_fmt.format(key=key) for key in map_item.markers.keys()]
+                sel = [os.path.exists(fn) for fn in data_fns]
 
                 pxcoords = map_item.stage_to_pixelcoords(coords)
 
                 xdata, ydata = pxcoords.T
-                data2.set_xdata(xdata)
-                data2.set_ydata(ydata)
+                data2.set_offsets(pxcoords[sel])
+                data2.set_color(colors_rgba[sel])
                 ax2.set_title(map_item.tag)
 
             elif axes == ax2:
@@ -91,11 +95,11 @@ class Browser:
                 imagecoord = map_item.pixel_to_stagecoords(coord)
 
                 try:
-                    img3 = read_tiff(self.data_fmt.format(key=key))[0]
+                    img3 = read_tiff(data_fns[0])[0]
                     im3.set_data(img3)
                     ax3.set_title(key)
                 except FileNotFoundError:
-                    pass
+                    ax3.set_title(f'{key}\nFile not available!')
 
             if ind == current_ind and (t1 - t0 < double_click_delay):
                 print(f'Moving stage to:', coord)
