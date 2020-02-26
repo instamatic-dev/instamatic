@@ -917,7 +917,7 @@ class TEMController:
         if not binning:
             binning = self.cam.getBinning()
 
-        stagematrix = getattr(config.calibration, f'stagematrix_{mode}')[mag]
+        stagematrix = config.calibration[mode]['stagematrix'][mag]
 
         stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning[0])  # um -> nm
 

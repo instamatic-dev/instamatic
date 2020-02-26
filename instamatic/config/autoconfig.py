@@ -2,18 +2,9 @@ import shutil
 from math import sin
 from pathlib import Path
 
-import yaml
-
 from instamatic import config
+from instamatic.config.utils import yaml
 from instamatic.tools import relativistic_wavelength
-
-
-def list_representer(dumper, data):
-    """For cleaner printing of lists in yaml files."""
-    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
-
-
-yaml.representer.Representer.add_representer(list, list_representer)
 
 
 def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
@@ -143,15 +134,17 @@ def main():
     # Find magnification ranges
 
     for mode, rng in ranges.items():
+        calib_config[mode] = {}
+
         if cam_name == 'tvips':
             pixelsizes = get_tvips_calibs(ctrl=ctrl, rng=rng, mode=mode, wavelength=wavelength)
         else:
             pixelsizes = {r: 1.0 for r in rng}
-        calib_config['pixelsize_' + mode] = pixelsizes
+        calib_config[mode]['pixelsize'] = pixelsizes
 
         stagematrices = {r: [1, 0, 0, 1] for r in rng}
 
-        calib_config['stagematrix_' + mode] = stagematrices
+        calib_config[mode]['stagematrix'] = stagematrices
 
     # Write/copy configs
 

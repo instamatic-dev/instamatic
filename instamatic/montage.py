@@ -600,10 +600,10 @@ class Montage:
         magnification : int
             The magnification used
         """
-        self.pixelsize = getattr(config.calibration, f'pixelsize_{mode}')[magnification]
+        self.pixelsize = config.calibration[mode]['pixelsize'][magnification]
 
         binning = self.image_binning
-        stagematrix = getattr(config.calibration, f'stagematrix_{mode}')[magnification]
+        stagematrix = config.calibration[mode]['stagematrix'][magnification]
         self.stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning)  # um -> nm
 
         self.mode = mode

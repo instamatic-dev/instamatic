@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 
 import yaml
+
+from .config_updater import convert_calibration
+from .config_updater import is_oldstyle
 logger = logging.getLogger(__name__)
 
 
@@ -88,6 +91,9 @@ class ConfigObject:
     def __repr__(self):
         return f"{self.__class__.__name__}('{self.tag}')"
 
+    def __getitem__(self, item):
+        return self.mapping[item]
+
     @classmethod
     def from_file(cls, path: str):
         """Read configuration from yaml file, returns namespace."""
@@ -128,7 +134,12 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     microscope_cfg = ConfigObject.from_file(base_drc / _config / _microscope / f'{microscope_name}.yaml')
 
     if calibration_name:
-        calibration_cfg = ConfigObject.from_file(base_drc / _config / _calibration / f'{calibration_name}.yaml')
+        fn = base_drc / _config / _calibration / f'{calibration_name}.yaml'
+        calibration_cfg = ConfigObject.from_file(fn)
+
+        if is_oldstyle(calibration_cfg):
+            d = convert_calibration(fn)
+            calibration_cfg = ConfigObject(d, tag=calibration_name)
     else:
         calibration_cfg = ConfigObject({}, tag='NoCalib')
         print('No calibration is loaded.')
