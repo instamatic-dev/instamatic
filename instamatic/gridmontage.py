@@ -82,7 +82,7 @@ class GridMontage:
         self.grid = grid
         self.mode = mode
         self.magnification = magnification
-        self.abs_mag_index = ctrl.magnification.absolute_index
+        self.abs_mag_index = self.ctrl.magnification.absolute_index
         self.spotsize = self.ctrl.spotsize
         self.binning = list(binning)
         self.pixelsize = getattr(config.calibration, f'pixelsize_{mode}')[magnification]  # unbinned
