@@ -18,7 +18,7 @@ def convert_calibration(fn: str) -> dict:
     for k, v in dct.items():
         if '_' in k:
             k2, k1 = k.split('_')
-            print(k1, k2)
+            # print(k1, k2)
             new[k1][k2] = v
         else:
             new[k] = v
@@ -35,3 +35,9 @@ def convert_calibration(fn: str) -> dict:
     yaml.dump(new, open(fn, 'w'))
 
     return new
+
+
+if __name__ == '__main__':
+    import sys
+    for fn in sys.argv[1:]:
+        convert_calibration(fn)
