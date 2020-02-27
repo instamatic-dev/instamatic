@@ -4,7 +4,11 @@ from collections import defaultdict
 from pathlib import Path
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import patches
+
+from instamatic.tools import bin_ndarray
 
 
 # int
@@ -93,6 +97,71 @@ REQUIRED_MAPITEM = ('StageXYZ', 'MapFile', 'MapSection',
                     'Type', 'MapID', 'MapMontage', 'MapCamera',
                     'NumPts', 'PtsX', 'PtsY',
                     )
+
+
+def stitch_map_items(items: list,
+                     vmin: int = None,
+                     vmax: int = None,
+                     binning=16,
+                     ) -> None:
+    """Take a list of MapItems and plot them at scale with respect to each
+    other.
+
+    Parameters
+    ----------
+    vmax : int
+        Passed to plt.imshow to tune the contrast.
+    vmin : int
+        Passed to plt.imshow to tune the contrast.
+    binning : int
+        Bin the loaded images before displaying them to save
+        on memory and computation times
+    """
+    positions = []
+
+    fig, ax = plt.subplots()
+
+    tag_min = min(int(item.tag) for item in items)
+
+    for item in items:
+        sx, sy = item.stage_xy
+        pos_x, pos_y = item.stage_to_pixelcoords((sx / 1000, sy / 1000))
+
+        img = item.load_image()
+
+        if binning:
+            img = bin_ndarray(img, binning=binning)
+            pos_x /= binning
+            pos_y /= binning
+
+        positions.append((pos_x, pos_y))
+
+        shape_x, shape_y = img.shape
+        shape_x = shape_x // 2
+        shape_y = shape_y // 2
+
+        im = ax.imshow(img,
+                       interpolation='bilinear',
+                       extent=[pos_y - shape_y, pos_y + shape_y, pos_x - shape_x, pos_x + shape_x],
+                       clip_on=True,
+                       vmax=vmax, vmin=vmin)
+
+        rect = patches.Rectangle((pos_y - shape_y, pos_x - shape_x), shape_y * 2, shape_x * 2,
+                                 fill=False,
+                                 edgecolor='red',
+                                 linewidth=1)
+        ax.add_patch(rect)
+        ax.text(pos_y, pos_x, str(int(item.tag) - tag_min), ha='center', va='center', color='red')
+
+    ax.scatter(0, 0, color='red')
+
+    positions = np.array(positions)
+    xmin, ymin = positions.min(axis=0)
+    xmax, ymax = positions.max(axis=0)
+    ax.set_ylim(xmin - shape_x, xmax + shape_x)
+    ax.set_xlim(ymin - shape_x, ymax + shape_y)
+    ax.axis('off')
+    plt.show()
 
 
 def item_to_string(d: dict, tag: str):

@@ -235,9 +235,10 @@ def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=Fal
     return np.array((dx, dy))
 
 
-def bin_ndarray(ndarray, new_shape, operation='mean'):
+def bin_ndarray(ndarray, new_shape=None, binning=1, operation='mean'):
     """Bins an ndarray in all axes based on the target shape, by summing or
-    averaging.
+    averaging. If no target shape is given, calculate the target shape by the
+    given binning.
 
     Number of output dimensions must match number of input dimensions and
         new axes must divide old ones.
@@ -254,6 +255,13 @@ def bin_ndarray(ndarray, new_shape, operation='mean'):
      [262 270 278 286 294]
      [342 350 358 366 374]]
     """
+    if not new_shape:
+        shape_x, shape_y = ndarray.shape
+        new_shape = int(shape_x / binning), int(shape_y / binning)
+
+    if new_shape == ndarray.shape:
+        return ndarray
+
     operation = operation.lower()
     if operation not in ['sum', 'mean']:
         raise ValueError('Operation not supported.')
