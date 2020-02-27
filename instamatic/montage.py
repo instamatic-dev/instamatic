@@ -1095,7 +1095,7 @@ class Montage:
 
         return stitched
 
-    def plot(self, ax=None, vmax: int = None):
+    def plot(self, ax=None, vmax: int = None, labels: bool = True):
         """Plots the stitched image.
 
         Parameters
@@ -1115,15 +1115,16 @@ class Montage:
             idx = indices[i]
             txt = f'{i}\n{idx}'
 
-            # NOTE that y/x are flipped for display in matplotlib ONLY
-            ax.text((patch.y0 + patch.y1) / 2,
-                    (patch.x0 + patch.x1) / 2,
-                    txt,
-                    color='red',
-                    fontsize=18,
-                    ha='center',
-                    va='center',
-                    )
+            if labels:
+                # NOTE that y/x are flipped for display in matplotlib ONLY
+                ax.text((patch.y0 + patch.y1) / 2,
+                        (patch.x0 + patch.x1) / 2,
+                        txt,
+                        color='red',
+                        fontsize=18,
+                        ha='center',
+                        va='center',
+                        )
             rect = patches.Rectangle([patch.y0, patch.x0],
                                      patch.res_x,
                                      patch.res_y,
