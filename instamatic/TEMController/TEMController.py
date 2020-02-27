@@ -1,5 +1,6 @@
 import time
 from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from typing import Tuple
 
@@ -681,6 +682,8 @@ class TEMController:
     def __init__(self, tem, cam=None):
         super().__init__()
 
+        self._executor = ThreadPoolExecutor(max_workers=1)
+
         self.tem = tem
         self.cam = cam
 
@@ -1156,6 +1159,18 @@ class TEMController:
         """Simplified function equivalent to `getImage` that only returns the
         raw data array."""
         return self.cam.getImage(exposure=exposure, binsize=binsize)
+
+    def getFutureImage(self, exposure: float = None, binsize: int = None) -> 'future':
+        """Simplified function equivalent to `getImage` that returns the raw
+        image as a future. This makes the data acquisition call non-blocking.
+
+        Usage:
+            future = ctrl.getFutureImage()
+            (other operations)
+            img = future.result()
+        """
+        future = self._executor.submit(self.getRawImage, exposure=exposure, binsize=binsize)
+        return future
 
     def getImage(self, exposure: float = None, binsize: int = None, comment: str = '', out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = 'all') -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
