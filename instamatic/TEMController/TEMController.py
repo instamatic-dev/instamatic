@@ -1172,7 +1172,29 @@ class TEMController:
         future = self._executor.submit(self.getRawImage, exposure=exposure, binsize=binsize)
         return future
 
-    def getImage(self, exposure: float = None, binsize: int = None, comment: str = '', out: str = None, plot: bool = False, verbose: bool = False, header_keys: Tuple[str] = 'all') -> Tuple[np.ndarray, dict]:
+    def getRotatedImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+        """Simplified function equivalent to `getImage` that returns the
+        rotated image array."""
+        future = self.getFutureImage(exposure=exposure, binsize=binsize)
+        try:
+            mag = self.magnification.value
+            mode = self.mode
+            rot = config.calibration[mode]['rotation'][mag]
+            k = int(rot / 90)
+        except KeyError:
+            k = 0
+        arr = future.result()
+        return np.rot90(arr, k)
+
+    def getImage(self,
+                 exposure: float = None,
+                 binsize: int = None,
+                 comment: str = '',
+                 out: str = None,
+                 plot: bool = False,
+                 verbose: bool = False,
+                 header_keys: Tuple[str] = 'all',
+                 ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
         file.
@@ -1214,7 +1236,7 @@ class TEMController:
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
-        arr = self.cam.getImage(exposure=exposure, binsize=binsize)
+        arr = self.cam.getRotatedImage(exposure=exposure, binsize=binsize)
 
         h['ImageGetTimeEnd'] = time.perf_counter()
 
