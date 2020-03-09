@@ -2,7 +2,41 @@ import lmfit
 import numpy as np
 
 
-def fit_affine_transformation(a, b, rotation=True, scaling=True, translation=False, shear=False, as_params=False, verbose=False, **x0):
+def fit_affine_transformation(a, b,
+                              rotation: bool = True,
+                              scaling: bool = True,
+                              translation: bool = False,
+                              shear: bool = False,
+                              as_params: bool = False,
+                              verbose: bool = False,
+                              **x0,
+                              ):
+    """Fit an affine transformation matrix to transform `a` to `b` using linear
+    least-squares.
+
+    `a` and `b` must be Nx2 numpy arrays.
+
+    Parameters
+    ----------
+    rotation : bool
+        Fit the rotation component (angle).
+    scaling : bool
+        Fit the scaling component (sx, sy).
+    translation : bool
+        Fit a translation component (tx, ty).
+    shear : bool
+        Fit a shear component (k1, k2).
+    as_params : bool
+        Return the lmfit parameters, else the rotation/translation matrix
+    x0 : int/float
+        Any specified values are used to set the default parameters for
+        the different components: angle/sx/sy/tx/ty/k1/k2
+
+    Returns
+    -------
+    r, t : np.ndarray
+        Returns a 2x2 and a 2x1 numpy array to transform `a` to `b`.
+    """
     params = lmfit.Parameters()
     params.add('angle', value=x0.get('angle', 0), vary=rotation, min=-np.pi, max=np.pi)
     params.add('sx', value=x0.get('sx', 1), vary=scaling)
