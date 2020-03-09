@@ -1257,6 +1257,35 @@ class Montage:
 
         return stage_coord
 
+    def pixel_to_stagecoords(self, pixelcoords):
+        """Convert a list of pixel coordinates into stage coordinates. Uses
+        `.pixel_to_stagecoord`
+
+        Parameters
+        ----------
+        pixel_coords : np.array (nx2)
+            List of pixel coordinates.
+        stagematrix : np.array (2x2)
+            Stage matrix to convert from pixel to stage coordinates
+        plot : bool
+            Visualize the pixelcoordinates on the stitched images
+
+        Returns
+        -------
+        stage_coords : np.array (nx2)
+            stage coordinates corresponding to the given pixel coordinates on the stitched image.
+        """
+        f = self.pixel_to_stagecoord
+        stage_coords = np.array([f(px_coord, stagematrix=stagematrix) for px_coord in pixel_coords])
+
+        if plot:
+            plot_x, plot_y = px_coords.T
+            plt.scatter(plot_y, plot_x, color='red', marker='.')
+            plt.title(f'Stage coordinates')
+            plt.show()
+
+        return stage_coords
+
     def stage_to_pixelcoord(self,
                             stage_coord: tuple,
                             stagematrix=None,
@@ -1303,9 +1332,10 @@ class Montage:
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
         px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
-        px_coord /= self.stitched_binning
 
-        px_coord[1] *= -1  # not sure why this is needed
+        px_coord[1] = self.image_shape[1] - px_coord[1]  # not sure why this is needed
+
+        px_coord /= self.stitched_binning
         px_coord = px_coord.astype(int)
 
         if plot:
