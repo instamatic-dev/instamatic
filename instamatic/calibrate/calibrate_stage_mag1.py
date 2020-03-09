@@ -186,7 +186,7 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     """
     img_cent, h_cent = read_image(center_fn)
 
-    # binsize = h_cent["ImageBinSize"]
+    # binsize = h_cent["ImageBinsize"]
     cam_dimensions = h_cent['ImageCameraDimensions']
     bin_x, bin_y = cam_dimensions / np.array(img_cent.shape)
     assert bin_x == bin_y, 'Binsizes do not match {bin_x} != {bin_y}'

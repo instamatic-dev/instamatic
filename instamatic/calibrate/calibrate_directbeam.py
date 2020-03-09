@@ -270,7 +270,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
-    binsize = h_cent['ImageBinSize']
+    binsize = h_cent['ImageBinsize']
 
     print('{}: x={} | y={}'.format(key, *readout_cent))
 

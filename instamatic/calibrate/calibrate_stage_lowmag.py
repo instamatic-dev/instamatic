@@ -314,7 +314,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     print('Stageposition: x={:.0f} | y={:.0f}'.format(*xy_cent))
     print()
 
-    binsize = h_cent['ImageBinSize']
+    binsize = h_cent['ImageBinsize']
 
     shifts = []
     stagepos = []

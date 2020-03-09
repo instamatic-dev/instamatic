@@ -1222,9 +1222,13 @@ class TEMController:
         Usage:
             img, h = self.getImage()
         """
-
         if not self.cam:
             raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
+
+        if not binsize:
+            binsize = self.cam.default_binsize
+        if not exposure:
+            exposure = self.cam.default_exposure
 
         if not header_keys:
             h = {}
@@ -1236,7 +1240,7 @@ class TEMController:
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
-        arr = self.cam.getRotatedImage(exposure=exposure, binsize=binsize)
+        arr = self.getRotatedImage(exposure=exposure, binsize=binsize)
 
         h['ImageGetTimeEnd'] = time.perf_counter()
 
@@ -1245,8 +1249,10 @@ class TEMController:
 
         h['ImageGetTime'] = time.time()
         h['ImageExposureTime'] = exposure
-        h['ImageBinSize'] = binsize
+        h['ImageBinsize'] = binsize
         h['ImageResolution'] = arr.shape
+        # k['ImagePixelsize'] = config.calibration[mode]['pixelsize'][mag] * binsize
+        # k['ImageRotation'] = config.calibration[mode]['rotation'][mag]
         h['ImageComment'] = comment
         h['ImageCameraName'] = self.cam.name
         h['ImageCameraDimensions'] = self.cam.dimensions

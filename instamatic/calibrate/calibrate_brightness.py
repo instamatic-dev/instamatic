@@ -148,7 +148,7 @@ def calibrate_brightness_from_image_fn(fns):
         print('Image:', fn)
         img, h = load_img(fn)
         brightness = float(h['Brightness'])
-        binsize = float(h['ImageBinSize'])
+        binsize = float(h['ImageBinsize'])
 
         img, scale = autoscale(img)
 

@@ -192,7 +192,7 @@ def find_holes_entry():
 
         img_zoomed, scale = autoscale(img, maxdim=512)
 
-        binsize = h['ImageBinSize']
+        binsize = h['ImageBinsize']
         magnification = h['Magnification']
         d = 150
 
