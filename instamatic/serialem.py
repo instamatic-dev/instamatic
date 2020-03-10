@@ -102,7 +102,11 @@ REQUIRED_MAPITEM = ('StageXYZ', 'MapFile', 'MapSection',
 def stitch_map_items(items: list,
                      vmin: int = None,
                      vmax: int = None,
-                     binning=16,
+                     binning: int = 16,
+                     markers: list = None,
+                     scatter_kwargs: dict = {},
+                     color: str = 'red',
+                     label: bool = True,
                      ) -> None:
     """Take a list of MapItems and plot them at scale with respect to each
     other.
@@ -116,14 +120,35 @@ def stitch_map_items(items: list,
     binning : int
         Bin the loaded images before displaying them to save
         on memory and computation times
+    markers: list of arrays (Mx2)
+        Must be the same length as `items`. Each item in markers
+        is a numpy array (Mx2) containing x/y pixel coordinates (i.e. of
+        particle positions) to plot on the stitched map.
+    scatter_kwargs: dict
+        Passed to `plt.scatter` to style the points passed using
+        `markers`.
+    color: str
+        Color of all the decorations (markers, borders, text)
+    label: bool
+        Label each frame with the sequence number
     """
+    _scatter_kwargs = {
+        'marker': '.',
+        'color': 'blue',
+        's': 2,
+    }
+
+    _scatter_kwargs.update(scatter_kwargs)
+
     positions = []
 
     fig, ax = plt.subplots()
 
     tag_min = min(int(item.tag) for item in items)
 
-    for item in items:
+    xy_coords = []
+
+    for i, item in enumerate(items):
         sx, sy = item.stage_xy
         pos_x, pos_y = item.stage_to_pixelcoords((sx / 1000, sy / 1000))
 
@@ -148,12 +173,29 @@ def stitch_map_items(items: list,
 
         rect = patches.Rectangle((pos_y - shape_y, pos_x - shape_x), shape_y * 2, shape_x * 2,
                                  fill=False,
-                                 edgecolor='red',
+                                 edgecolor=color,
                                  linewidth=1)
         ax.add_patch(rect)
-        ax.text(pos_y, pos_x, str(int(item.tag) - tag_min), ha='center', va='center', color='red')
 
-    ax.scatter(0, 0, color='red')
+        if label:
+            ax.text(pos_y, pos_x, str(int(item.tag) - tag_min), ha='center', va='center', color=color)
+
+        if markers:
+            xy_coord = markers[i]
+            xy_coord = np.array((-1, 1)) * xy_coord / binning + np.array((pos_x, pos_y)) - np.array((-shape_x, shape_y))
+            xy_coords.append(xy_coord)
+
+    ax.scatter(0, 0, color=color, marker='+', label='Origin')
+    title = f'Overview of {len(items)} frames'
+
+    if markers:
+        xy_coords = np.vstack(xy_coords)
+        x, y = xy_coords.T
+
+        n_tot = len(xy_coords)
+        n_avg = len(xy_coords) / len(items)
+        ax.scatter(y, x, **_scatter_kwargs, label='Particles')
+        title += f'\n{n_tot} particles (average: {n_avg:.3f} / frame)'
 
     positions = np.array(positions)
     xmin, ymin = positions.min(axis=0)
@@ -161,6 +203,7 @@ def stitch_map_items(items: list,
     ax.set_ylim(xmin - shape_x, xmax + shape_x)
     ax.set_xlim(ymin - shape_x, ymax + shape_y)
     ax.axis('off')
+    plt.title(title)
     plt.show()
 
 
