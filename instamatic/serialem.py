@@ -403,6 +403,8 @@ class MapItem(NavItem):
             px, py = np.array(coords).T
             plt.plot(px, py, 'ro', markerfacecolor='none', markersize=20, markeredgewidth=2)
 
+        plt.show()
+
     def add_marker(self,
                    coord: tuple,
                    kind: str = 'pixel',
@@ -452,6 +454,8 @@ class MapItem(NavItem):
         d['Regis'] = self.Regis
         d['StageXYZ'] = [stage_x, stage_y, self.stage_z]
         d['Type'] = 0
+        if kind == 'pixel':
+            d['pixel_coord'] = coord
 
         item = NavItem(d, tag=tag)
 
@@ -509,6 +513,19 @@ class MapItem(NavItem):
         items."""
         self.markers = {}
         self.update_markers(*items)
+
+    def markers_as_pixels_coordinates(self):
+        """Return markers as (Mx2) array of pixel xy coordinates."""
+        try:
+            return np.array([marker.pixel_coord for marker in self.markers.values()])
+        except AttributeError:
+            raise NotImplementedError()  # This function is broken in some cases
+            markers = self.markers_as_stage_coordinates()
+            return self.stage_to_pixelcoords(markers)
+
+    def markers_as_stage_coordinates(self):
+        """Return markers as (Mx2) array of stage xy coordinates (µm)."""
+        return np.array([marker.stage_xy for marker in self.markers.values()])
 
     @classmethod
     def from_dict(cls, dct, tag: str = None):
