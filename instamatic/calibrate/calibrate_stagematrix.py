@@ -1,14 +1,19 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 from skimage.feature import register_translation
 
 from .fit import fit_affine_transformation
 from instamatic import config
+from instamatic.formats import write_tiff
 
 
 def calibrate_stage_from_stagepos(ctrl,
                                   *ranges,
                                   plot: bool = False,
+                                  drc=None,
                                   ) -> np.array:
     """Run the calibration algorithm on the given X/Y ranges. An image will be
     taken at each position for cross correlation with the previous. An affine
@@ -38,24 +43,45 @@ def calibrate_stage_from_stagepos(ctrl,
     >>> y_shifts = [(0, 0), (0, 10000), (0, 20000)]
     >>> stagematrix = calibrate_stage_from_stagepos(ctrl, x_shifts, y_shifts)
     """
+    if drc:
+        drc = Path(drc)
+
     stage_x, stage_y = ctrl.stage.xy
 
     stage_shifts = []  # um
     translations = []  # pixels
 
-    for rng in ranges:
+    d = {'n_ranges': len(ranges), 'stage_x': stage_x, 'stage_y': stage_y}
+    d['magnification'] = ctrl.magnification.value
+    d['mode'] = ctrl.mode
+
+    for i, rng in enumerate(ranges):
         last_image = None
 
-        for i, (dx, dy) in enumerate(rng):
+        range_d = {'range': rng, 'i': i}
+
+        for j, (dx, dy) in enumerate(rng):
             new_x_pos = stage_x + dx
             new_y_pos = stage_y + dy
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            print(i, ctrl.stage)
+            stage_pos = ctrl.stage
+
+            params = {
+                'dx': dx,
+                'dy': dy,
+                'j': j,
+                'stage_x': stage_pos.x,
+                'stage_y': stage_pos.y,
+                'stage_z': stage_pos.z,
+            }
 
             img, h = ctrl.getImage()
 
-            if i > 0:
+            if drc:
+                write_tiff(drc / f'{j}_{i}.tiff', img)
+
+            if j > 0:
                 translation, error, phasediff = register_translation(last_image, img)
                 print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
 
@@ -65,20 +91,31 @@ def calibrate_stage_from_stagepos(ctrl,
             last_image = img
         print()
 
+        d[i] = params
+
     # return to original position
     ctrl.stage.xy = (stage_x, stage_y)
 
     stage_shifts = np.array(stage_shifts)
     translations = np.array(translations)
 
+    d['translations'] = translations
+    d['stage_shifts'] = stage_shifts
+
     r, t = fit_affine_transformation(stage_shifts, translations, verbose=True)
+
+    d['r'] = r
+    d['t'] = t
+
+    if drc:
+        yaml.dump(d, open(drc / 'log.yaml', 'w'))
 
     if plot:
         r_i = np.linalg.inv(r)
         translations_ = np.dot(stage_shifts, r_i)
 
-        plt.scatter(*translations.T, label='Pixel translations (CC)')
-        plt.scatter(*translations_.T, label='Calculated pixel coordinates')
+        plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
+        plt.scatter(*translations_.T, marker='>', label='Calculated pixel coordinates')
         plt.legend()
 
     stagematrix = r
@@ -94,6 +131,7 @@ def calibrate_stage(ctrl,
                     min_n_step: int = 3,
                     max_n_step: int = 15,
                     plot: bool = False,
+                    drc: str = None,
                     ) -> np.array:
     """Calibrate the stage movement (nm) and the position of the camera
     (pixels) at a specific magnification.
@@ -120,6 +158,8 @@ def calibrate_stage(ctrl,
         calibration. This is used for higher magnifications.
     plot: bool
         Plot the fitting result.
+    drc: str
+        Path to store the raw data (optional).
 
     Returns
     -------
@@ -156,7 +196,7 @@ def calibrate_stage(ctrl,
     else:
         y_pos = np.arange(0, stage_length, y_step)[:max_n_step]
 
-    y_pos = np.stack((y_pos, np.zeros_like(y_pos))).T
+    y_pos = np.stack((np.zeros_like(y_pos), y_pos)).T
 
-    r, t = calibrate_stage_from_stagepos(ctrl, x_pos, y_pos, plot=plot)
-    return r
+    stagematrix = calibrate_stage_from_stagepos(ctrl, x_pos, y_pos, plot=plot, drc=drc)
+    return stagematrix
