@@ -1239,10 +1239,6 @@ class Montage:
 
         tx, ty = np.dot(px_coord - image_pixel_coord, mati)
 
-        # conversions to convert between instamatic/serialem settings?
-        cy = -cy
-        ty = -ty
-
         stage_coord = np.array((tx, ty)) + image_stage_coord - np.array((cx, cy))
         stage_coord = stage_coord.astype(int)  # round to integer
 
@@ -1257,7 +1253,7 @@ class Montage:
 
         return stage_coord
 
-    def pixel_to_stagecoords(self, pixelcoords):
+    def pixel_to_stagecoords(self, pixelcoords, stagematrix=None, plot: bool = False):
         """Convert a list of pixel coordinates into stage coordinates. Uses
         `.pixel_to_stagecoord`
 
@@ -1275,8 +1271,11 @@ class Montage:
         stage_coords : np.array (nx2)
             stage coordinates corresponding to the given pixel coordinates on the stitched image.
         """
+        if stagematrix is None:
+            stagematrix = self.stagematrix
+
         f = self.pixel_to_stagecoord
-        stage_coords = np.array([f(px_coord, stagematrix=stagematrix) for px_coord in pixel_coords])
+        stage_coords = np.array([f(px_coord, stagematrix=stagematrix) for px_coord in pixelcoords])
 
         if plot:
             plot_x, plot_y = px_coords.T
@@ -1326,14 +1325,10 @@ class Montage:
         image_stage_coord = self.stagecoords[j]
         image_pixel_coord = self.coords[j].copy()
 
-        image_pixel_coord[1] *= -1  # not sure why this is needed
-
         # The image pixel coordinate `image_pixel_coord` corresponds to the corner,
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
         px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
-
-        px_coord[1] = self.image_shape[1] - px_coord[1]  # not sure why this is needed
 
         px_coord /= self.stitched_binning
         px_coord = px_coord.astype(int)

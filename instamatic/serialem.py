@@ -318,7 +318,7 @@ class MapItem(NavItem):
         self.markers = {}
 
     @property
-    def map_scale_matrix(self) -> 'np.array':
+    def stagematrix(self) -> 'np.array':
         # MapScaleMat already has binning embedded
         # MapBinning = self.MapBinning
 
@@ -326,20 +326,19 @@ class MapItem(NavItem):
             MontBinning = self.MontBinning
         except AttributeError:
             MontBinning = 1
-        mat = (1 / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
-        return mat.T
+        stagematrix = (1 / MontBinning) * np.array(self.MapScaleMat).reshape(2, 2)
 
-    @property
-    def stagematrix(self) -> 'np.array':
-        """Alias for map_scale_matrix."""
-        return self.map_scale_matrix
+        # FIXME: why do we need the transpose?
+        stagematrix = stagematrix.T
+
+        return stagematrix
 
     def pixel_to_stagecoords(self, coords: list) -> 'np.array':
         """Convert from pixel coordinates to stage coordinates."""
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
         cs = np.array(self.StageXYZ)[0:2]
-        mati = np.linalg.inv(self.map_scale_matrix)
+        mati = np.linalg.inv(self.stagematrix)
 
         return np.dot(coords - cp, mati) + cs
 
@@ -348,7 +347,7 @@ class MapItem(NavItem):
         coords = np.array(coords)
         cp = np.array(self.MapWidthHeight) / 2
         cs = np.array(self.StageXYZ)[0:2]
-        mat = self.map_scale_matrix
+        mat = self.stagematrix
 
         return np.dot(coords - cs, mat) + cp
 
