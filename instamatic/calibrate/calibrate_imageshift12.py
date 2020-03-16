@@ -64,9 +64,10 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
 
     deflector.set(x=x0, y=y0)
 
-    r, t = fit_affine_transformation(shifts, imgpos, scaling=scaling)
+    fit_result = fit_affine_transformation(shifts, imgpos, scaling=scaling)
 
-    result = fit_affine_transformation(shifts, imgpos, scaling=scaling, as_params=True)
+    r = fit_result.r
+    t = fit_result.t
 
     if diff_defocus != 0:
         ctrl.difffocus.value = diff_focus_proper
@@ -75,13 +76,13 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
 
     print('Transformation matrix: ', r)
     logger.debug(f'Transformation matrix: {r}')
-    logger.debug(f"Parameters: angle: {result['angle']}")
-    logger.debug(f"sx: {result['sx']}")
-    logger.debug(f"sy: {result['sy']}")
-    logger.debug(f"tx: {result['tx']}")
-    logger.debug(f"ty: {result['ty']}")
-    logger.debug(f"k1: {result['k1']}")
-    logger.debug(f"k2: {result['k2']}")
+    logger.debug(f'Parameters: angle: {fit_result.angle}')
+    logger.debug(f'sx: {fit_result.sx}')
+    logger.debug(f'sy: {fit_result.sy}')
+    logger.debug(f'tx: {fit_result.tx}')
+    logger.debug(f'ty: {fit_result.ty}')
+    logger.debug(f'k1: {fit_result.k1}')
+    logger.debug(f'k2: {fit_result.k2}')
 
     r_i = np.linalg.inv(r)
     imgpos_ = np.dot(imgpos, r_i)

@@ -1,5 +1,10 @@
+from collections import namedtuple
+
 import lmfit
 import numpy as np
+
+
+FitResult = namedtuple('FitResult', 'r t angle sx sy tx ty k1 k2 params'.split())
 
 
 def fit_affine_transformation(a, b,
@@ -26,16 +31,16 @@ def fit_affine_transformation(a, b,
         Fit a translation component (tx, ty).
     shear : bool
         Fit a shear component (k1, k2).
-    as_params : bool
-        Return the lmfit parameters, else the rotation/translation matrix
     x0 : int/float
         Any specified values are used to set the default parameters for
         the different components: angle/sx/sy/tx/ty/k1/k2
 
     Returns
     -------
-    r, t : np.ndarray
-        Returns a 2x2 and a 2x1 numpy array to transform `a` to `b`.
+    fit_result : namedtuple
+        Returns a namedtuple containing the 2x2 (.r) rotation and a 2x1 (.t)
+        translation matrices to transform `a` to `b`. The raw parameters can
+        be accessed through the corresponding attributes.
     """
     params = lmfit.Parameters()
     params.add('angle', value=x0.get('angle', 0), vary=rotation, min=-np.pi, max=np.pi)
@@ -91,7 +96,4 @@ def fit_affine_transformation(a, b,
         [sx * k2 * sin, sy * cos]])
     t = np.array([tx, ty])
 
-    if as_params:
-        return res.params
-    else:
-        return r, t
+    return FitResult(r, t, angle, sx, sy, tx, ty, k1, k2, params)

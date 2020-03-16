@@ -115,14 +115,14 @@ class CalibDirectBeam:
 
     @classmethod
     def from_data(cls, shifts, readout, key, header=None, **dct):
-        r, t = fit_affine_transformation(shifts, readout, **dct)
+        fit_result = fit_affine_transformation(shifts, readout, **dct)
 
         d = {
             'header': header,
             'data_shifts': shifts,
             'data_readout': readout,
-            'r': r,
-            't': t,
+            'r': fit_result.r,
+            't': fit_result.t,
         }
 
         return cls({key: d})

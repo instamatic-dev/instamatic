@@ -158,7 +158,9 @@ class CalibStage:
 
     @classmethod
     def from_data(cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None):
-        r, t = fit_affine_transformation(shifts, stagepos, verbose=True, translation=True)
+        fit_result = fit_affine_transformation(shifts, stagepos, verbose=True, translation=True)
+        r = fit_result.r
+        t = fit_result.t
 
         if not camera_dimensions:
             if header:

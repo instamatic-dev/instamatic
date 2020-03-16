@@ -58,8 +58,6 @@ def calibrate_stage_from_stagepos(ctrl,
     for i, rng in enumerate(ranges):
         last_image = None
 
-        range_d = {'range': rng, 'i': i}
-
         for j, (dx, dy) in enumerate(rng):
             new_x_pos = stage_x + dx
             new_y_pos = stage_y + dy
@@ -102,7 +100,9 @@ def calibrate_stage_from_stagepos(ctrl,
     d['translations'] = translations
     d['stage_shifts'] = stage_shifts
 
-    r, t = fit_affine_transformation(stage_shifts, translations, verbose=True)
+    fit_result = fit_affine_transformation(stage_shifts, translations, verbose=True)
+    r = fit_result.r
+    t = fit_result.t
 
     d['r'] = r
     d['t'] = t

@@ -45,7 +45,9 @@ class CalibBeamShift:
 
     @classmethod
     def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None):
-        r, t = fit_affine_transformation(shifts, beampos)
+        fit_result = fit_affine_transformation(shifts, beampos)
+        r = fit_result.r
+        t = fit_result.t
 
         c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
         c.data_shifts = shifts
