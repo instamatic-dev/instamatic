@@ -126,7 +126,7 @@ def main():
     tem_config['wavelength'] = wavelength
 
     for mode, rng in ranges.items():
-        tem_config['range_' + mode] = rng
+        tem_config['ranges'] = {mode: rng}
 
     calib_config = {}
     calib_config['name'] = tem_name

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from .config_updater import convert_calibration
+from .config_updater import convert_config
 from .config_updater import is_oldstyle
 logger = logging.getLogger(__name__)
 
@@ -131,24 +131,31 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     if not camera_name:
         camera_name = cfg.camera
 
-    microscope_cfg = ConfigObject.from_file(base_drc / _config / _microscope / f'{microscope_name}.yaml')
+    microscope_fn = base_drc / _config / _microscope / f'{microscope_name}.yaml'
+    calibration_fn = base_drc / _config / _calibration / f'{calibration_name}.yaml'
+    camera_fn = base_drc / _config / _camera / f'{camera_name}.yaml'
+
+    microscope_cfg = ConfigObject.from_file(microscope_fn)
 
     if calibration_name:
-        fn = base_drc / _config / _calibration / f'{calibration_name}.yaml'
-        calibration_cfg = ConfigObject.from_file(fn)
-
-        if is_oldstyle(calibration_cfg):
-            d = convert_calibration(fn)
-            calibration_cfg = ConfigObject(d, tag=calibration_name)
+        calibration_cfg = ConfigObject.from_file(calibration_fn)
     else:
         calibration_cfg = ConfigObject({}, tag='NoCalib')
-        print('No calibration is loaded.')
+        print('No calibration config is loaded.')
 
     if camera_name:
-        camera_cfg = ConfigObject.from_file(base_drc / _config / _camera / f'{camera_name}.yaml')
+        camera_cfg = ConfigObject.from_file(camera_fn)
     else:
         camera_cfg = ConfigObject({}, tag='NoCamera')
-        print('No camera is loaded.')
+        print('No camera config is loaded.')
+
+    # Check and update oldstyle configs (overwrite .yaml)
+    if is_oldstyle(microscope_cfg):
+        d = convert_config(microscope_fn, kind='microscope')
+        microscope_cfg = ConfigObject(d, tag=microscope_name)
+    if is_oldstyle(calibration_cfg):
+        d = convert_config(calibration_fn, kind='calibration')
+        calibration_cfg = ConfigObject(d, tag=calibration_name)
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg

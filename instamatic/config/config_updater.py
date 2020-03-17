@@ -9,7 +9,8 @@ def is_oldstyle(dct: dict):
     return oldstyle
 
 
-def convert_calibration(fn: str) -> dict:
+def convert_config(fn: str, kind: str) -> dict:
+    """`kind` must be one of `microscope`/`camera`/`calibration`"""
     fn = Path(fn)
 
     dct = yaml.full_load(open(fn))
@@ -17,9 +18,14 @@ def convert_calibration(fn: str) -> dict:
     new = defaultdict(dict)
     for k, v in dct.items():
         if '_' in k:
-            k2, k1 = k.split('_')
-            # print(k1, k2)
-            new[k1][k2] = v
+            if kind == 'microscope':
+                k1, k2 = k.split('_')
+                new['ranges'][k2] = v
+            elif kind == 'calibration':
+                k2, k1 = k.split('_')
+                new[k1][k2] = v
+            else:
+                raise ValueError(f'Unrecognized value for `kind`: {kind}')
         else:
             new[k] = v
 
@@ -40,4 +46,4 @@ def convert_calibration(fn: str) -> dict:
 if __name__ == '__main__':
     import sys
     for fn in sys.argv[1:]:
-        convert_calibration(fn)
+        convert_config(fn)
