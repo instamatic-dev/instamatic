@@ -1176,14 +1176,24 @@ class TEMController:
         """Simplified function equivalent to `getImage` that returns the
         rotated image array."""
         future = self.getFutureImage(exposure=exposure, binsize=binsize)
+
         try:
             mag = self.magnification.value
             mode = self.mode
-            rot = config.calibration[mode]['rotation'][mag]
-            k = int(rot / 90)
+            k = config.calibration[mode]['rot90'][mag]
         except KeyError:
             k = 0
+
+        flipud = config.calibration[mode].get('flipud', False)
+        fliplr = config.calibration[mode].get('fliplr', False)
+
         arr = future.result()
+
+        if flipud:
+            arr = np.flipud(arr)
+        if fliplr:
+            arr = np.fliplr(arr)
+
         return np.rot90(arr, k)
 
     def getImage(self,
