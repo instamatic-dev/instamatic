@@ -163,15 +163,6 @@ class FEIMicroscope:
 
         self.FunctionMode_value = 0
 
-        for mode in self.FUNCTION_MODES.values():
-            attrname = f'range_{mode}'
-            try:
-                rng = getattr(config.microscope, attrname)
-            except AttributeError:
-                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
-            else:
-                setattr(self, attrname, rng)
-
         self.goniostopped = self.stage.Status
 
         input('Please select the type of sample stage before moving on.\nPress <ENTER> to continue...')

@@ -78,15 +78,6 @@ class SimuMicroscope:
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
 
-        for mode in self.FUNCTION_MODES:
-            attrname = f'range_{mode}'
-            try:
-                rng = getattr(config.microscope, attrname)
-            except AttributeError:
-                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
-            else:
-                setattr(self, attrname, rng)
-
         self.ZERO = ZERO
         self.MAX = MAX
         self.MIN = MIN
@@ -94,8 +85,8 @@ class SimuMicroscope:
         self._HT = 200_000  # V
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
-        self.Magnification_value = config.microscope.range_mag1[10]
-        self.Magnification_value_diff = config.microscope.range_diff[3]
+        self.Magnification_value = config.microscope.ranges['mag1'][10]
+        self.Magnification_value_diff = config.microscope.ranges['diff'][3]
 
         self.beamblank = False
 
@@ -262,7 +253,14 @@ class SimuMicroscope:
             return self.Magnification_value
 
     def setMagnification(self, value: int):
-        if self.getFunctionMode() == 'diff':
+        current_mode = self.getFunctionMode()
+
+        try:
+            selector = config.microscope.ranges[current_mode].index(value)
+        except ValueError:
+            raise TEMValueError(f'No such camera length or magnification: {value}') from None
+
+        if current_mode == 'diff':
             self.Magnification_value_diff = value
         else:
             self.Magnification_value = value
@@ -271,16 +269,7 @@ class SimuMicroscope:
         value = self.getMagnification()
         current_mode = self.getFunctionMode()
 
-        if current_mode == 'diff':
-            selector = self.range_diff.index(value)
-        elif current_mode == 'lowmag':
-            selector = self.range_lowmag.index(value)
-        elif current_mode == 'samag':
-            selector = self.range_samag.index(value)
-        elif current_mode == 'mag1':
-            selector = self.range_mag1.index(value)
-        elif current_mode == 'mag2':
-            selector = self.range_mag2.index(value)
+        selector = config.microscope.ranges[current_mode].index(value)
 
         return selector
 
@@ -289,7 +278,7 @@ class SimuMicroscope:
         mode = self.getFunctionMode()
 
         if mode in ('mag1', 'samag'):
-            n_lowmag = len(config.microscope.range_lowmag)
+            n_lowmag = len(config.microscope.ranges['lowmag'])
             index += n_lowmag
 
         return index
@@ -300,16 +289,10 @@ class SimuMicroscope:
         if index < 0:
             raise TEMValueError(f'Cannot lower magnification (index={index})')
 
-        if current_mode == 'diff':
-            value = self.range_diff[index]
-        elif current_mode == 'lowmag':
-            value = self.range_lowmag[index]
-        elif current_mode == 'samag':
-            value = self.range_samag[index]
-        elif current_mode == 'mag1':
-            value = self.range_mag1[index]
-        elif current_mode == 'mag2':
-            value = self.range_mag2[index]
+        try:
+            value = config.microscope.ranges[current_mode][index]
+        except IndexError:
+            raise TEMValueError(f'No such camera length or magnification index: {index}') from None
 
         self.setMagnification(value)
 
@@ -327,8 +310,8 @@ class SimuMicroscope:
         mag_ranges = {}
         for i, mode in enumerate(self.FUNCTION_MODES):
             try:
-                mag_ranges[mode] = getattr(self, f'range_{mode}')
-            except AttributeError:
+                mag_ranges[mode] = config.microscope.ranges[mode]
+            except KeyError:
                 pass
 
         return mag_ranges

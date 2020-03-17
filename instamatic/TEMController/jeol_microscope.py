@@ -116,15 +116,6 @@ class JeolMicroscope:
         self.FUNCTION_MODES = FUNCTION_MODES
         self.NTRLMAPPING = NTRLMAPPING
 
-        for mode in self.FUNCTION_MODES:
-            attrname = f'range_{mode}'
-            try:
-                rng = getattr(config.microscope, attrname)
-            except AttributeError:
-                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
-            else:
-                setattr(self, attrname, rng)
-
         self.ZERO = ZERO
         self.MAX = MAX
         self.MIN = MIN
@@ -188,26 +179,11 @@ class JeolMicroscope:
     def setMagnification(self, value: int):
         current_mode = self.getFunctionMode()
 
-        if current_mode == 'diff':
-            if value not in self.range_diff:
-                raise JEOLValueError(f'No such camera length: {value}')
-            selector = self.range_diff.index(value)
-        elif current_mode == 'lowmag':
-            if value not in self.range_lowmag:
-                raise JEOLValueError(f'No such `lowmag` magnification: {value}')
-            selector = self.range_lowmag.index(value)
-        elif current_mode == 'samag':
-            if value not in self.range_samag:
-                raise JEOLValueError(f'No such `samag` magnification: {value}')
-            selector = self.range_samag.index(value)
-        elif current_mode == 'mag1':
-            if value not in self.range_mag1:
-                raise JEOLValueError(f'No such `mag1` magnification: {value}')
-            selector = self.range_mag1.index(value)
-        elif current_mode == 'mag2':
-            if value not in self.range_mag2:
-                raise JEOLValueError(f'No such `mag2` magnification: {value}')
-            selector = self.range_mag2.index(value)
+        try:
+            selector = config.microscope.ranges[current_mode].index(value)
+        except ValueError as e:
+            raise TEMValueError(f'No such camera length or magnification: {value}') from None
+
         self.eos3.SetSelector(selector)
 
     def getMagnificationIndex(self) -> int:
@@ -220,7 +196,7 @@ class JeolMicroscope:
         mode = self.getFunctionMode()
 
         if mode in ('mag1', 'samag'):
-            n_lowmag = len(config.microscope.range_lowmag)
+            n_lowmag = len(config.microscope.ranges['lowmag'])
             index += n_lowmag
 
         return index
