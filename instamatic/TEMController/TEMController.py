@@ -11,6 +11,7 @@ from .microscope import Microscope
 from instamatic import config
 from instamatic.camera import Camera
 from instamatic.formats import write_tiff
+from instamatic.image_utils import rotate_image
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 
@@ -1157,12 +1158,37 @@ class TEMController:
 
     def getRawImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `getImage` that only returns the
-        raw data array."""
+        raw data array.
+
+        Parameters
+        ----------
+        exposure : float
+            Exposure in seconds.
+        binsize : int
+            Image binning.
+
+        Returns
+        -------
+        arr : np.array
+            Image as 2D numpy array.
+        """
         return self.cam.getImage(exposure=exposure, binsize=binsize)
 
     def getFutureImage(self, exposure: float = None, binsize: int = None) -> 'future':
         """Simplified function equivalent to `getImage` that returns the raw
         image as a future. This makes the data acquisition call non-blocking.
+
+        Parameters
+        ----------
+        exposure: float
+            Exposure time in seconds
+        binsize: int
+            Binning to use for the image, must be 1, 2, or 4, etc
+
+        Returns
+        -------
+        future : `future`
+            Future object that contains the image as 2D numpy array.
 
         Usage:
             future = ctrl.getFutureImage()
@@ -1174,27 +1200,33 @@ class TEMController:
 
     def getRotatedImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `getImage` that returns the
-        rotated image array."""
+        rotated image array.
+
+        Parameters
+        ----------
+        exposure: float
+            Exposure time in seconds
+        binsize: int
+            Binning to use for the image, must be 1, 2, or 4, etc
+        mode : str
+            Magnification mode
+        mag : int
+            Magnification value
+
+        Returns
+        -------
+        arr : np.array
+            Image as 2D numpy array.
+        """
         future = self.getFutureImage(exposure=exposure, binsize=binsize)
 
-        try:
-            mag = self.magnification.value
-            mode = self.mode
-            k = config.calibration[mode]['rot90'][mag]
-        except KeyError:
-            k = 0
-
-        flipud = config.calibration[mode].get('flipud', False)
-        fliplr = config.calibration[mode].get('fliplr', False)
+        mag = self.magnification.value
+        mode = self.mode
 
         arr = future.result()
+        arr = rotate_image(arr, mode=mode, mag=mag)
 
-        if flipud:
-            arr = np.flipud(arr)
-        if fliplr:
-            arr = np.fliplr(arr)
-
-        return np.rot90(arr, k)
+        return arr
 
     def getImage(self,
                  exposure: float = None,
@@ -1214,7 +1246,7 @@ class TEMController:
         exposure: float
             Exposure time in seconds
         binsize: int
-            which binning to use for the image, must be 1, 2, or 4
+            Binning to use for the image, must be 1, 2, or 4, etc
         comment: str
             Arbitrary comment to add to the header file under 'ImageComment'
         out: str
