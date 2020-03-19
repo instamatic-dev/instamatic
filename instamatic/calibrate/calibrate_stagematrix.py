@@ -3,15 +3,49 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
+from scipy import stats
 from skimage.feature import register_translation
 
 from .fit import fit_affine_transformation
 from instamatic import config
+from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
+from instamatic.image_utils import rotate_image
+
+np.set_printoptions(suppress=True)
+
+write = False
+
+
+def getImage(ctrl, drc, j, i, mode, mag):
+    if write:
+        img, h = ctrl.getImage()
+        if drc:
+            write_tiff(drc / f'{j}_{i}.tiff', img)
+    else:
+        img, h = read_tiff(drc / f'{j}_{i}.tiff')
+        img = rotate_image(img, mode=mode, mag=mag)
+
+    return img, h
+
+
+def get_outlier_filter(data, threshold: float = 2.0) -> list:
+    """Simple outlier filter based on zscore.
+
+    `threshold` defines the cut-off value for which zscores are still
+    accepted as an inlier. Returns an boolean numpy array.
+    """
+    zscore = stats.zscore(np.linalg.norm(data, axis=1))
+    sel = abs(zscore) < threshold
+
+    if not np.all(sel):
+        print(f'Filtered {len(sel) - np.sum(sel)} outliers.')
+
+    return sel
 
 
 def calibrate_stage_from_stagepos(ctrl,
-                                  *ranges,
+                                  *args,
                                   plot: bool = False,
                                   drc=None,
                                   ) -> np.array:
@@ -19,6 +53,8 @@ def calibrate_stage_from_stagepos(ctrl,
     taken at each position for cross correlation with the previous. An affine
     transformation matrix defines the relation between the pixel shift and the
     difference in stage position.
+
+    The stagematrix takes the image binning into account.
 
     Parameters
     ----------
@@ -51,64 +87,68 @@ def calibrate_stage_from_stagepos(ctrl,
     stage_shifts = []  # um
     translations = []  # pixels
 
-    d = {'n_ranges': len(ranges), 'stage_x': stage_x, 'stage_y': stage_y}
-    d['magnification'] = ctrl.magnification.value
-    d['mode'] = ctrl.mode
+    mag = ctrl.magnification.value
+    mode = ctrl.mode
+    binning = ctrl.cam.getBinning()[0]
 
-    for i, rng in enumerate(ranges):
-        last_image = None
+    pairs = []
 
-        for j, (dx, dy) in enumerate(rng):
-            new_x_pos = stage_x + dx
-            new_y_pos = stage_y + dy
+    for i, (n_steps, step) in enumerate(args):
+        last_img, _ = getImage(ctrl, drc, 0, i, mode, mag)
+        current_stage_pos = ctrl.stage
+        dx, dy = step
+
+        for j in range(1, n_steps + 1):
+            new_x_pos = current_stage_pos.x + dx
+            new_y_pos = current_stage_pos.y + dy
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            stage_pos = ctrl.stage
+            img, _ = getImage(ctrl, drc, j, i, mode, mag)
 
-            params = {
-                'dx': dx,
-                'dy': dy,
-                'j': j,
-                'stage_x': stage_pos.x,
-                'stage_y': stage_pos.y,
-                'stage_z': stage_pos.z,
-            }
+            pairs.append((last_img, img))
+            stage_shifts.append((dx, dy))
 
-            img, h = ctrl.getImage()
+            current_stage_pos = ctrl.stage
 
-            if drc:
-                write_tiff(drc / f'{j}_{i}.tiff', img)
+            print(current_stage_pos)
 
-            if j > 0:
-                translation, error, phasediff = register_translation(last_image, img)
-                print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
+            last_img = img
 
-                translations.append(translation)
-                stage_shifts.append((dx, dy))
+        # return to original position
+        ctrl.stage.xy = (stage_x, stage_y)
 
-            last_image = img
-        print()
+    # Cross correlation
+    translations = []
+    for img0, img1 in pairs:
+        translation, error, phasediff = register_translation(img0, img1, upsample_factor=10)
+        print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
+        translations.append(translation)
 
-        d[i] = params
+    # Filter outliers
+    sel = get_outlier_filter(translations)
+    stage_shifts = np.array(stage_shifts)[sel]
+    translations = np.array(translations)[sel]
 
-    # return to original position
-    ctrl.stage.xy = (stage_x, stage_y)
-
-    stage_shifts = np.array(stage_shifts)
-    translations = np.array(translations)
-
-    d['translations'] = translations
-    d['stage_shifts'] = stage_shifts
-
-    fit_result = fit_affine_transformation(stage_shifts, translations, verbose=True)
-    r = fit_result.r
+    # Fit stagematrix
+    fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
+    r = fit_result.r / binning
     t = fit_result.t
 
-    d['r'] = r
-    d['t'] = t
-
-    if drc:
-        yaml.dump(d, open(drc / 'log.yaml', 'w'))
+    if write:
+        if drc:
+            d = {
+                'n_ranges': len(args),
+                'stage_x': stage_x,
+                'stage_y': stage_y,
+                'mode': mode,
+                'magnification': mag,
+                'args': args,
+                'translations': translations,
+                'stage_shifts': stage_shifts,
+                'r': r,
+                't': t,
+            }
+            yaml.dump(d, open(drc / 'log.yaml', 'w'))
 
     if plot:
         r_i = np.linalg.inv(r)
@@ -135,6 +175,8 @@ def calibrate_stage(ctrl,
                     ) -> np.array:
     """Calibrate the stage movement (nm) and the position of the camera
     (pixels) at a specific magnification.
+
+    The stagematrix takes the image binning into account.
 
     Parameters
     ----------
@@ -185,18 +227,25 @@ def calibrate_stage(ctrl,
     x_step, y_step = displacement * (1 - overlap)
 
     if x_step * min_n_step > stage_length:
-        x_pos = np.arange(min_n_step) * x_step
+        n_x_step = min_n_step
     else:
-        x_pos = np.arange(0, stage_length, x_step)[:max_n_step]
-
-    x_pos = np.stack((x_pos, np.zeros_like(x_pos))).T
+        n_x_step = min(stage_length // x_step, max_n_step)
 
     if y_step * min_n_step > stage_length:
-        y_pos = np.arange(min_n_step) * y_step
+        n_y_step = min_n_step
     else:
-        y_pos = np.arange(0, stage_length, y_step)[:max_n_step]
+        n_y_step = min(stage_length // y_step, max_n_step)
 
-    y_pos = np.stack((np.zeros_like(y_pos), y_pos)).T
+    args = (
+        (n_x_step, [x_step, 0]),
+        (n_y_step, [0, y_step]),
+    )
 
-    stagematrix = calibrate_stage_from_stagepos(ctrl, x_pos, y_pos, plot=plot, drc=drc)
+    stagematrix = calibrate_stage_from_stagepos(
+        ctrl,
+        *args,
+        plot=plot,
+        drc=drc,
+    )
+
     return stagematrix
