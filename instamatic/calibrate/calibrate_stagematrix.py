@@ -11,6 +11,7 @@ from instamatic import config
 from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
+from instamatic.utils import get_new_work_subdirectory
 
 np.set_printoptions(suppress=True)
 
@@ -251,3 +252,83 @@ def calibrate_stage(ctrl,
     )
 
     return stagematrix
+
+
+def calibrate_stage_all(ctrl,
+                        mag_ranges: dict = None,
+                        overlap: float = 0.8,
+                        stage_length: int = 40_000,
+                        min_n_step: int = 5,
+                        max_n_step: int = 9,
+                        save: bool = False,
+                        ) -> dict:
+    """Run the stagematrix calibration routine for all magnifications
+    specified. Return the updates values for the configuration file.
+
+    Parameters
+    ----------
+    mag_ranges : dict
+        Dictionary with the mag ranges to calibrate. Format example:
+        `mag_ranges = {'lowmag': (100, 200, 300), 'mag1': (1000, 2000, 3000)}`
+        If not defined, all mag ranges (lowmag, mag1) are taken.
+    overlap: float
+        Specify the approximate overlap between images for cross
+        correlation.
+    stage_length: int
+        Specify the minimum length (in stage coordinates) the calibration
+        should cover.
+    min_n_step: int
+        Specify the minimum number of steps to take along X and Y for the
+        calibration.
+    max_n_step: int
+        Specify the maximum number of steps to take along X and Y for the
+        calibration. This is used for higher magnifications.
+    save: bool
+        Save the data to the data directory.
+
+    Returns
+    -------
+    config : dict
+    """
+    modes = 'lowmag', 'mag1'
+
+    if not mag_ranges:
+        mag_ranges = config.microscope.ranges
+
+    cfg = {mode: {} for mode in modes}
+
+    for mode in modes:
+        cfg[mode] = {'stagematrix': {}, 'pixelsize': {}}
+
+        for mag in mag_ranges[mode]:
+            msg = f'Calibrating `{mode}` @ {mag}x'
+            if save:
+                drc = get_new_work_subdirectory(f'stagematrix_{mode}')
+                msg += f' -> {drc}'
+
+            try:
+                drc = drcs[mode][mag]
+                print(msg)
+            except KeyError:
+                continue
+
+            try:
+                stagematrix = calibrate_stage(ctrl,
+                                              mode=mode,
+                                              mag=mag,
+                                              overlap=overlap,
+                                              min_n_step=min_n_step,
+                                              max_n_step=max_n_step,
+                                              drc=drc,
+                                              )
+            except ValueError as e:
+                print(e)
+                continue
+
+            cfg[mode]['pixelsize'][mag] = float(stagematrix_to_pixelsize(stagematrix))
+            cfg[mode]['stagematrix'][mag] = stagematrix.round(4).flatten().tolist()
+
+    print('\nUpdate:', config.calibration.location)
+    print(yaml.dump(cfg))
+
+    return cfg
