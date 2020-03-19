@@ -98,7 +98,7 @@ def calibrate_stage_from_stagepos(ctrl,
         current_stage_pos = ctrl.stage
         dx, dy = step
 
-        for j in range(1, n_steps + 1):
+        for j in range(1, n_steps):
             new_x_pos = current_stage_pos.x + dx
             new_y_pos = current_stage_pos.y + dy
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
@@ -131,7 +131,7 @@ def calibrate_stage_from_stagepos(ctrl,
 
     # Fit stagematrix
     fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
-    r = fit_result.r / binning
+    r = fit_result.r
     t = fit_result.t
 
     if write:
@@ -147,6 +147,7 @@ def calibrate_stage_from_stagepos(ctrl,
                 'stage_shifts': stage_shifts,
                 'r': r,
                 't': t,
+                'binning': binning,
             }
             yaml.dump(d, open(drc / 'log.yaml', 'w'))
 
@@ -157,8 +158,9 @@ def calibrate_stage_from_stagepos(ctrl,
         plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
         plt.scatter(*translations_.T, marker='>', label='Calculated pixel coordinates')
         plt.legend()
+        plt.show()
 
-    stagematrix = r
+    stagematrix = r / binning
 
     return stagematrix
 
@@ -229,16 +231,16 @@ def calibrate_stage(ctrl,
     if x_step * min_n_step > stage_length:
         n_x_step = min_n_step
     else:
-        n_x_step = min(stage_length // x_step, max_n_step)
+        n_x_step = min(int(stage_length // x_step), max_n_step)
 
     if y_step * min_n_step > stage_length:
         n_y_step = min_n_step
     else:
-        n_y_step = min(stage_length // y_step, max_n_step)
+        n_y_step = min(int(stage_length // y_step), max_n_step)
 
     args = (
-        (n_x_step, [x_step, 0]),
-        (n_y_step, [0, y_step]),
+        (n_x_step, [x_step, 0.0]),
+        (n_y_step, [0.0, y_step]),
     )
 
     stagematrix = calibrate_stage_from_stagepos(
