@@ -81,10 +81,11 @@ def get_alignments() -> dict:
 class ConfigObject:
     """Namespace for configuration (maps dict items to attributes)."""
 
-    def __init__(self, mapping: dict, tag='config'):
+    def __init__(self, mapping: dict, tag: str = 'config', location: str = None):
         super().__init__()
         self.tag = tag
         self.name = None  # default parameter
+        self.location = location
         self.mapping = {}
         self.update(mapping)
 
@@ -98,7 +99,7 @@ class ConfigObject:
     def from_file(cls, path: str):
         """Read configuration from yaml file, returns namespace."""
         tag = Path(path).stem
-        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), tag=tag)
+        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), tag=tag, location=path)
 
     def update_from_file(self, path: str) -> None:
         """Update configuration from yaml file."""
@@ -107,7 +108,6 @@ class ConfigObject:
     def update(self, mapping: dict):
         for key, value in mapping.items():
             setattr(self, key, value)
-
         self.mapping.update(mapping)
 
 
@@ -122,7 +122,7 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     global cfg
 
     cfg = ConfigObject.from_file(Path(__file__).parent / _global_yaml)  # load defaults
-    cfg.update_from_file(base_drc / _config / _global_yaml)             # update user parameters
+    cfg.update_from_file(config_drc / _global_yaml)             # update user parameters
 
     if not microscope_name:
         microscope_name = cfg.microscope
@@ -131,31 +131,31 @@ def load(microscope_name=None, calibration_name=None, camera_name=None):
     if not camera_name:
         camera_name = cfg.camera
 
-    microscope_fn = base_drc / _config / _microscope / f'{microscope_name}.yaml'
-    calibration_fn = base_drc / _config / _calibration / f'{calibration_name}.yaml'
-    camera_fn = base_drc / _config / _camera / f'{camera_name}.yaml'
+    microscope_yaml = microscope_drc / f'{microscope_name}.yaml'
+    calibration_yaml = calibration_drc / f'{calibration_name}.yaml'
+    camera_yaml = camera_drc / f'{camera_name}.yaml'
 
-    microscope_cfg = ConfigObject.from_file(microscope_fn)
+    microscope_cfg = ConfigObject.from_file(microscope_yaml)
 
     if calibration_name:
-        calibration_cfg = ConfigObject.from_file(calibration_fn)
+        calibration_cfg = ConfigObject.from_file(calibration_yaml)
     else:
         calibration_cfg = ConfigObject({}, tag='NoCalib')
         print('No calibration config is loaded.')
 
     if camera_name:
-        camera_cfg = ConfigObject.from_file(camera_fn)
+        camera_cfg = ConfigObject.from_file(camera_yaml)
     else:
         camera_cfg = ConfigObject({}, tag='NoCamera')
         print('No camera config is loaded.')
 
     # Check and update oldstyle configs (overwrite .yaml)
     if is_oldstyle(microscope_cfg):
-        d = convert_config(microscope_fn, kind='microscope')
-        microscope_cfg = ConfigObject(d, tag=microscope_name)
+        d = convert_config(microscope_yaml, kind='microscope')
+        microscope_cfg.update(d, clear=True)
     if is_oldstyle(calibration_cfg):
-        d = convert_config(calibration_fn, kind='calibration')
-        calibration_cfg = ConfigObject(d, tag=calibration_name)
+        d = convert_config(calibration_yaml, kind='calibration')
+        calibration_cfg.update(d, clear=True)
 
     # assign in two steps to ensure an exception is raised if any of the configs cannot be loaded
     microscope = microscope_cfg
@@ -181,6 +181,9 @@ assert config_drc.exists(), f'Configuration directory `{config_drc}` does not ex
 scripts_drc = base_drc / _scripts
 logs_drc = base_drc / _logs
 alignments_drc = base_drc / _alignments
+microscope_drc = config_drc / _microscope
+calibration_drc = config_drc / _calibration
+camera_drc = config_drc / _camera
 
 scripts_drc.mkdir(exist_ok=True)
 logs_drc.mkdir(exist_ok=True)
