@@ -157,7 +157,7 @@ def calibrate_stage_from_stageshifts(ctrl,
 
     mag = ctrl.magnification.value
     mode = ctrl.mode
-    binning = ctrl.cam.getBinning()[0]
+    binning = ctrl.cam.getBinning()
 
     pairs = []
 

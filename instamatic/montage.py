@@ -1186,7 +1186,7 @@ class Montage:
             'StageXYZ': [0, 0, 0],
             'MapFile': fn_mrc,
             'MapSection': 0,
-            'MapBinning': self.binning[0],
+            'MapBinning': self.binning,
             'MapMagInd': self.abs_mag_index,
             'MapScaleMat': self.stagematrix.flatten().tolist(),
             'MapWidthHeight': self.stitched.shape,

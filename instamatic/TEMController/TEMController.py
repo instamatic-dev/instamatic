@@ -923,7 +923,7 @@ class TEMController:
 
         stagematrix = config.calibration[mode]['stagematrix'][mag]
 
-        stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning[0])  # um -> nm
+        stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning)  # um -> nm
 
         return stagematrix
 

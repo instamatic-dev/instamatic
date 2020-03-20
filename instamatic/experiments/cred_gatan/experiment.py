@@ -319,9 +319,11 @@ class Experiment:
         bin_x, bin_y = d['bin_x'], d['bin_y']
         image_dimensions_x, image_dimensions_y = d['image_res_x'], d['image_res_y']
         camera_dimensions_x, camera_dimensions_y = d['cam_res_x'], d['cam_res_y']
+        assert bin_x == bin_y, 'Binnings differ in X and Y direction! (X: {bin_x} | Y: {bin_y})'
+        binning = bin_x
 
-        pixelsize *= bin_x
-        physical_pixelsize *= bin_x
+        pixelsize *= binning
+        physical_pixelsize *= binning
 
         print(f'\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f}')
         print('Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}'.format(*self.start_position))
@@ -353,7 +355,7 @@ class Experiment:
             print(f'Camera length: {self.camera_length} cm', file=f)
             print(f'Pixelsize: {pixelsize} px/Angstrom', file=f)
             print(f'Physical pixelsize: {physical_pixelsize} um', file=f)
-            print(f'Binning: {bin_x} {bin_y}', file=f)
+            print(f'Binning: {binning}', file=f)
             print(f'Image dimensions: {image_dimensions_x} {image_dimensions_y}', file=f)
             print(f'Camera dimensions: {camera_dimensions_x} {camera_dimensions_y}', file=f)
             print(f'Stretch amplitude: {config.camera.stretch_azimuth} %', file=f)

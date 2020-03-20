@@ -15,8 +15,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 
     calib_range = {}
 
-    BinX, BinY = ctrl.cam.getBinning()
-    assert BinX == BinY, 'Binnings differ in X and Y direction?! (X: {BinX} | Y: {BinY})'
+    binning = ctrl.cam.getBinning()
 
     ctrl.mode = mode
 

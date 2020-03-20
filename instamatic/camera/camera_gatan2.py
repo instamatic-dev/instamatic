@@ -58,14 +58,14 @@ class CameraGatan2:
 
     def getImageDimensions(self) -> (int, int):
         """Get the dimensions of the image."""
-        bin_x, bin_y = self.getBinning()
+        binning = self.getBinning()
         raise NotImplementedError
 
     def getPhysicalPixelsize(self) -> (int, int):
         """Returns the physical pixel size of the camera nanometers."""
         raise NotImplementedError
 
-    def getBinning(self) -> (int, int):
+    def getBinning(self) -> int:
         """Returns the binning corresponding to the currently selected camera
         config."""
         raise NotImplementedError

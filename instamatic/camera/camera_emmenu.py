@@ -342,18 +342,21 @@ class CameraEMMENU:
 
     def getImageDimensions(self) -> (int, int):
         """Get the dimensions of the image."""
-        bin_x, bin_y = self.getBinning()
-        return int(self._cam.RealSizeX / bin_x), int(self._cam.RealSizeY / bin_y)
+        binning = self.getBinning()
+        return int(self._cam.RealSizeX / binning), int(self._cam.RealSizeY / binning)
 
     def getPhysicalPixelsize(self) -> (int, int):
         """Returns the physical pixel size of the camera nanometers."""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
 
-    def getBinning(self) -> (int, int):
+    def getBinning(self) -> int:
         """Returns the binning corresponding to the currently selected camera
         config."""
         cfg = self.getCurrentConfig(as_dict=False)
-        return cfg.BinningX, cfg.BinningY
+        bin_x = cfg.BinningX
+        bin_y = cfg.BinningY
+        assert bin_x == bin_y, 'Binnings differ in X and Y direction! (X: {bin_x} | Y: {bin_y})'
+        return bin_x
 
     def getCameraName(self) -> str:
         """Get the name reported by the camera."""

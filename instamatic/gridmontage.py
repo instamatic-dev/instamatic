@@ -84,7 +84,7 @@ class GridMontage:
         self.magnification = magnification
         self.abs_mag_index = self.ctrl.magnification.absolute_index
         self.spotsize = self.ctrl.spotsize
-        self.binning = list(binning)
+        self.binning = binning
         self.pixelsize = config.calibration[mode]['pixelsize'][magnification]  # unbinned
 
         print('Setting up gridscan.')
