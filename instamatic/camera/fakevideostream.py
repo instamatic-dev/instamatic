@@ -3,7 +3,7 @@ import threading
 import numpy as np
 
 from .camera import Camera
-from instamatic.tools import autoscale
+from instamatic.image_utils import autoscale
 
 
 class VideoStream(threading.Thread):

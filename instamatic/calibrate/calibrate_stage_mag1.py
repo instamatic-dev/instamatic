@@ -9,9 +9,9 @@ from .calibrate_stage_lowmag import CalibStage
 from .filenames import *
 from instamatic import config
 from instamatic.formats import read_image
+from instamatic.image_utils import autoscale
+from instamatic.image_utils import imgscale
 from instamatic.io import get_new_work_subdirectory
-from instamatic.TEMController import initialize
-from instamatic.tools import *
 logger = logging.getLogger(__name__)
 
 
@@ -289,7 +289,8 @@ prepare
 """)
         exit()
     elif len(sys.argv) == 1:
-        ctrl = initialize()
+        from instamatic import TEMController
+        ctrl = TEMController.initialize()
         calibrate_mag1(ctrl=ctrl, save_images=True)
     else:
         center_fn = sys.argv[1]

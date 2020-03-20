@@ -11,8 +11,8 @@ from skimage.feature import register_translation
 from tqdm.auto import tqdm
 
 from instamatic import config
+from instamatic.image_utils import bin_ndarray
 from instamatic.imreg import translation
-from instamatic.tools import bin_ndarray
 
 
 def sorted_grid_indices(grid):

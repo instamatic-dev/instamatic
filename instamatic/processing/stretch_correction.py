@@ -11,7 +11,7 @@ from skimage.measure import label
 from skimage.measure import regionprops
 
 from instamatic.formats import read_tiff
-from instamatic.tools import autoscale
+from instamatic.image_utils import autoscale
 
 
 def apply_transform_to_image(img, transform, center=None):

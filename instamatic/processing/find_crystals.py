@@ -12,7 +12,7 @@ from skimage import morphology
 from skimage import segmentation
 
 from instamatic.config import calibration
-from instamatic.tools import autoscale
+from instamatic.image_utils import autoscale
 
 
 CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel'])

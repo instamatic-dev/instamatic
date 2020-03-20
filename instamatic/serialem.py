@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import patches
 
-from instamatic.tools import bin_ndarray
+from instamatic.image_utils import bin_ndarray
 
 
 # int

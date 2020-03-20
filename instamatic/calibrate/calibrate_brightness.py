@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .filenames import *
+from instamatic.image_utils import autoscale
 from instamatic.processing.find_holes import find_holes
-from instamatic.TEMController import initialize
-from instamatic.tools import *
+from instamatic.tools import find_beam_center
 logger = logging.getLogger(__name__)
 
 
@@ -195,7 +195,8 @@ prepare
 """)
         exit()
     elif len(sys.argv) == 1:
-        ctrl = initialize()
+        from instamatic import TEMController
+        ctrl = TEMController.initialize()
         calibrate_brightness(ctrl, save_images=True)
     else:
         fns = sys.argv[1:]

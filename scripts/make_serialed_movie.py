@@ -7,10 +7,30 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from instamatic.formats import read_image
-from instamatic.tools import get_files
 
 plt.rcParams['figure.figsize'] = 10, 10
 plt.rcParams['image.cmap'] = 'gray'
+
+
+def get_files(file_pat: str) -> list:
+    """Grab files from globbing pattern or stream file."""
+    from instamatic.formats import read_ycsv
+    if os.path.exists(file_pat):
+        root, ext = os.path.splitext(file_pat)
+        if ext.lower() == '.ycsv':
+            df, d = read_ycsv(file_pat)
+            fns = df.index.tolist()
+        else:
+            f = open(file_pat, 'r')
+            fns = [line.split('#')[0].strip() for line in f if not line.startswith('#')]
+    else:
+        fns = glob.glob(file_pat)
+
+    if len(fns) == 0:
+        raise OSError(f"No files matching '{file_pat}' were found.")
+
+    return fns
+
 
 fns = get_files(r'images\image*.h5')
 

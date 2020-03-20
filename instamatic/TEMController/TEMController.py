@@ -850,7 +850,7 @@ class TEMController:
         backlash: bool
             Toggle to move to each position with backlash correction
         """
-        from instamatic.tools import find_script
+        from instamatic.io import find_script
         script = find_script(script)
 
         import importlib.util
@@ -878,7 +878,7 @@ class TEMController:
         It will check if the script exists in the scripts directory if
         it cannot find it directly.
         """
-        from instamatic.tools import find_script
+        from instamatic.io import find_script
         script = find_script(script)
 
         if verbose:

@@ -10,24 +10,6 @@ from skimage import exposure
 from skimage.measure import regionprops
 
 
-def find_script(script: str):
-    """Resolves the script name Looks in the local directory, absolute
-    directory and in the scripts directory."""
-    from pathlib import Path
-    from instamatic import config
-
-    script = Path(script)
-
-    if not script.exists():
-        test_location = config.scripts_drc / script
-        if not test_location.exists():
-            raise OSError(f'No such script: {script}')
-        else:
-            script = test_location
-
-    return script
-
-
 def prepare_grid_coordinates(nx: int, ny: int, stepsize: float = 1.0) -> 'np.array':
     """Prepare a list of grid coordinates nx by ny in size. The grid is
     centered at the center of the grid.
@@ -96,38 +78,6 @@ def find_subranges(lst: list) -> (int, int):
     for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
         group = list(map(itemgetter(1), group))
         yield min(group), max(group)
-
-
-def autoscale(img: np.ndarray, maxdim: int = 512) -> (np.ndarray, float):
-    """Scale the image to fit the maximum dimension given by `maxdim` Returns
-    the scaled image, and the image scale."""
-    if maxdim:
-        scale = float(maxdim) / max(img.shape)
-
-    return ndimage.zoom(img, scale, order=1), scale
-
-
-def imgscale(img: np.ndarray, scale: float) -> np.ndarray:
-    """Scale the image by the given scale."""
-    if scale == 1:
-        return img
-    return ndimage.zoom(img, scale, order=1)
-
-
-def denoise(img: np.ndarray, sigma: int = 3, method: str = 'median') -> np.ndarray:
-    """Denoises the image using a gaussian or median filter.
-
-    median filter is better at preserving edges
-    """
-    if method == 'gaussian':
-        return ndimage.gaussian_filter(img, sigma)
-    else:
-        return ndimage.median_filter(img, sigma)
-
-
-def enhance_contrast(img: np.ndarray) -> np.ndarray:
-    """Enhance contrast by histogram equalization."""
-    return exposure.equalize_hist(img)
 
 
 def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3) -> (float, float):
@@ -233,68 +183,6 @@ def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=Fal
             plt.show()
 
     return np.array((dx, dy))
-
-
-def bin_ndarray(ndarray, new_shape=None, binning=1, operation='mean'):
-    """Bins an ndarray in all axes based on the target shape, by summing or
-    averaging. If no target shape is given, calculate the target shape by the
-    given binning.
-
-    Number of output dimensions must match number of input dimensions and
-        new axes must divide old ones.
-
-    Example
-    -------
-    >>> m = np.arange(0,100,1).reshape((10,10))
-    >>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
-    >>> print(n)
-
-    [[ 22  30  38  46  54]
-     [102 110 118 126 134]
-     [182 190 198 206 214]
-     [262 270 278 286 294]
-     [342 350 358 366 374]]
-    """
-    if not new_shape:
-        shape_x, shape_y = ndarray.shape
-        new_shape = int(shape_x / binning), int(shape_y / binning)
-
-    if new_shape == ndarray.shape:
-        return ndarray
-
-    operation = operation.lower()
-    if operation not in ['sum', 'mean']:
-        raise ValueError('Operation not supported.')
-    if ndarray.ndim != len(new_shape):
-        raise ValueError(f'Shape mismatch: {ndarray.shape} -> {new_shape}')
-    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
-                                                     ndarray.shape)]
-    flattened = [l for p in compression_pairs for l in p]
-    ndarray = ndarray.reshape(flattened)
-    for i in range(len(new_shape)):
-        op = getattr(ndarray, operation)
-        ndarray = op(-1 * (i + 1))
-    return ndarray
-
-
-def get_files(file_pat: str) -> list:
-    """Grab files from globbing pattern or stream file."""
-    from instamatic.formats import read_ycsv
-    if os.path.exists(file_pat):
-        root, ext = os.path.splitext(file_pat)
-        if ext.lower() == '.ycsv':
-            df, d = read_ycsv(file_pat)
-            fns = df.index.tolist()
-        else:
-            f = open(file_pat, 'r')
-            fns = [line.split('#')[0].strip() for line in f if not line.startswith('#')]
-    else:
-        fns = glob.glob(file_pat)
-
-    if len(fns) == 0:
-        raise OSError(f"No files matching '{file_pat}' were found.")
-
-    return fns
 
 
 def printer(data) -> None:

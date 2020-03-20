@@ -10,7 +10,7 @@ from skimage import morphology
 from skimage import segmentation
 
 from instamatic.config import calibration
-from instamatic.tools import *
+from instamatic.image_utils import autoscale
 
 plt.rcParams['image.cmap'] = 'gray'
 

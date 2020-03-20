@@ -8,8 +8,8 @@ from skimage.feature import register_translation
 
 from .filenames import *
 from .fit import fit_affine_transformation
-from instamatic.TEMController import initialize
-from instamatic.tools import *
+from instamatic.image_utils import autoscale
+from instamatic.image_utils import imgscale
 logger = logging.getLogger(__name__)
 
 
@@ -382,7 +382,8 @@ prepare
 """)
         exit()
     elif len(sys.argv) == 1:
-        ctrl = initialize()
+        from instamatic import TEMController
+        ctrl = TEMController.initialize()
         calibrate_stage_lowmag(ctrl=ctrl, save_images=True)
     else:
         center_fn = sys.argv[1]

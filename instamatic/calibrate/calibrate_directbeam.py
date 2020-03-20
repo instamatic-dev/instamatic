@@ -10,8 +10,8 @@ from skimage.feature import register_translation
 from .filenames import *
 from .fit import fit_affine_transformation
 from instamatic import config
-from instamatic.TEMController import initialize
-from instamatic.tools import *
+from instamatic.image_utils import autoscale
+from instamatic.image_utils import imgscale
 from instamatic.tools import printer
 logger = logging.getLogger(__name__)
 
@@ -364,7 +364,8 @@ Usage:
     if len(sys.argv[1:]) > 0:
         calibrate_directbeam(patterns=sys.argv[1:])
     else:
-        ctrl = initialize()
+        from instamatic import TEMController
+        ctrl = TEMController.initialize()
         calibrate_directbeam(ctrl=ctrl)
 
 

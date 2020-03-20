@@ -9,12 +9,6 @@ import numpy as np
 from instamatic.formats import read_tiff
 
 
-def printer(data):
-    """Print things to stdout on one line dynamically."""
-    sys.stdout.write('\r\x1b[K' + data.__str__())
-    sys.stdout.flush()
-
-
 def tiff2png(interval=10, drc='movie'):
     fns1 = glob.glob(r'tiff\*.tif?')
     fns2 = glob.glob(r'tiff_image\*.tif?')

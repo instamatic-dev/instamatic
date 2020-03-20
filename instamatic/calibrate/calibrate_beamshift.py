@@ -10,9 +10,10 @@ from skimage.feature import register_translation
 from .filenames import *
 from .fit import fit_affine_transformation
 from instamatic import config
+from instamatic.image_utils import autoscale
+from instamatic.image_utils import imgscale
 from instamatic.processing.find_holes import find_holes
-from instamatic.TEMController import initialize
-from instamatic.tools import *
+from instamatic.tools import find_beam_center
 from instamatic.tools import printer
 logger = logging.getLogger(__name__)
 
@@ -306,7 +307,8 @@ Usage:
 """)
         exit()
     elif len(sys.argv) == 1:
-        ctrl = initialize()
+        from instamatic import TEMController
+        ctrl = TEMController.initialize()
         calibrate_beamshift(ctrl=ctrl, save_images=True)
     else:
         center_fn = sys.argv[1]
