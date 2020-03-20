@@ -604,7 +604,7 @@ class Montage:
 
         binning = self.image_binning
         stagematrix = config.calibration[mode]['stagematrix'][magnification]
-        self.stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning)  # um -> nm
+        self.stagematrix = np.array(stagematrix).reshape(2, 2) / binning
 
         self.mode = mode
         self.magnification = magnification
@@ -1182,13 +1182,15 @@ class Montage:
         f = mrcfile.new(fn_mrc, data=self.stitched, overwrite=True)
         f.close()
 
+        map_scale_mat = np.linalg.inv(self.stagematrix)
+
         d = {
             'StageXYZ': [0, 0, 0],
             'MapFile': fn_mrc,
             'MapSection': 0,
             'MapBinning': self.binning,
             'MapMagInd': self.abs_mag_index,
-            'MapScaleMat': self.stagematrix.flatten().tolist(),
+            'MapScaleMat': map_scale_mat.flatten().tolist(),
             'MapWidthHeight': self.stitched.shape,
         }
 

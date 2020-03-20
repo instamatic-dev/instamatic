@@ -922,8 +922,7 @@ class TEMController:
             binning = self.cam.getBinning()
 
         stagematrix = config.calibration[mode]['stagematrix'][mag]
-
-        stagematrix = np.array(stagematrix).reshape(2, 2) / (1000 * binning)  # um -> nm
+        stagematrix = np.array(stagematrix).reshape(2, 2) * binning  # um -> nm
 
         return stagematrix
 
@@ -958,13 +957,12 @@ class TEMController:
             print(f'Current stage position: {current_x:.0f} {current_y:.0f}')
 
         stagematrix = self.get_stagematrix()
-        mati = np.linalg.inv(stagematrix)
 
-        img = self.getRawImage()
+        img = self.getRotatedImage()
 
         pixel_shift, error, phasediff = register_translation(ref_img, img, upsample_factor=10)
 
-        stage_shift = np.dot(pixel_shift, mati)
+        stage_shift = np.dot(pixel_shift, stagematrix)
         stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
 
         print(f'Aligning: shifting stage by dx={stage_shift[0]:6.0f} dy={stage_shift[1]:6.0f}')
@@ -1020,11 +1018,11 @@ class TEMController:
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
             self.stage.a = angle1
-            img1 = self.getRawImage()
+            img1 = self.getRotatedImage()
 
             angle2 = +tilt * sign
             self.stage.a = angle2
-            img2 = self.getRawImage()
+            img2 = self.getRotatedImage()
 
             if sign < 1:
                 img2, img1 = img1, img2

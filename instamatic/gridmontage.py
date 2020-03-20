@@ -67,12 +67,10 @@ class GridMontage:
 
         px_center = vect * ((np.array(grid.shape) / 2) - 0.5)
 
-        stagematrix = self.ctrl.get_stagematrix(binning=binning)
+        self.stagematrix = self.ctrl.get_stagematrix(binning=binning)
 
-        mati = np.linalg.inv(stagematrix)
-
-        stage_center = np.dot(px_center, mati) + stage_shift
-        stagepos = np.dot(px_coords, mati)
+        stage_center = np.dot(px_center, self.stagematrix) + stage_shift
+        stagepos = np.dot(px_coords, self.stagematrix)
 
         coords = (stagepos - stage_center).astype(int)
 
@@ -120,7 +118,6 @@ class GridMontage:
                               pre_acquire=eliminate_backlash,
                               post_acquire=None)
 
-        self.stagematrix = self.ctrl.get_stagematrix()
         self.buffer = buffer
 
         self.save()

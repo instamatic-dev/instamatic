@@ -289,7 +289,7 @@ class Experiment:
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beamblank_off()
 
-            img2 = self.ctrl.getRawImage()
+            img2 = self.ctrl.getRotatedImage()
             write_tiff(self.path / 'image_after.tiff', img2)
 
             self.ctrl.beamblank_on()
