@@ -82,7 +82,7 @@ class CameraSimu:
         dim_x = int(dim_x / binning)
         dim_y = int(dim_y / binning)
 
-        return self.dimensions
+        return dim_x, dim_y
 
     def getCameraDimensions(self) -> (int, int):
         """Get the dimensions reported by the camera."""
