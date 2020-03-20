@@ -11,23 +11,14 @@ from instamatic import config
 from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
-from instamatic.utils import get_new_work_subdirectory
+from instamatic.io import get_new_work_subdirectory
 
 np.set_printoptions(suppress=True)
 
-write = False
 
-
-def getImage(ctrl, drc, j, i, mode, mag):
-    if write:
-        img, h = ctrl.getImage()
-        if drc:
-            write_tiff(drc / f'{j}_{i}.tiff', img)
-    else:
-        img, h = read_tiff(drc / f'{j}_{i}.tiff')
-        img = rotate_image(img, mode=mode, mag=mag)
-
-    return img, h
+def stagematrix_to_pixelsize(stagematrix: np.array) -> float:
+    """Calculate approximate pixelsize from the stagematrix."""
+    return np.mean(np.linalg.norm(stagematrix, axis=1))
 
 
 def get_outlier_filter(data, threshold: float = 2.0) -> list:
@@ -45,11 +36,11 @@ def get_outlier_filter(data, threshold: float = 2.0) -> list:
     return sel
 
 
-def calibrate_stage_from_stagepos(ctrl,
-                                  *args,
-                                  plot: bool = False,
-                                  drc=None,
-                                  ) -> np.array:
+def calibrate_stage_from_stageshifts(ctrl,
+                                     *args,
+                                     plot: bool = False,
+                                     drc=None,
+                                     ) -> np.array:
     """Run the calibration algorithm on the given X/Y ranges. An image will be
     taken at each position for cross correlation with the previous. An affine
     transformation matrix defines the relation between the pixel shift and the
@@ -62,7 +53,7 @@ def calibrate_stage_from_stagepos(ctrl,
     ctrl: `TEMController`
         TEM control object to allow stage movement to different coordinates.
     ranges: np.array (Nx2)
-        Each range is a List of tuples with X/Y stage movements (i.e.
+        Each range is a List of tuples with X/Y stage shifts (i.e.
         displacements from the current position). Multiple ranges can be
         specified to be run in sequence.
     plot: bool
@@ -78,7 +69,7 @@ def calibrate_stage_from_stagepos(ctrl,
     -----
     >>> x_shifts = [(0, 0), (10000, 0), (20000, 0)]
     >>> y_shifts = [(0, 0), (0, 10000), (0, 20000)]
-    >>> stagematrix = calibrate_stage_from_stagepos(ctrl, x_shifts, y_shifts)
+    >>> stagematrix = calibrate_stage_from_stageshifts(ctrl, x_shifts, y_shifts)
     """
     if drc:
         drc = Path(drc)
@@ -95,23 +86,32 @@ def calibrate_stage_from_stagepos(ctrl,
     pairs = []
 
     for i, (n_steps, step) in enumerate(args):
-        last_img, _ = getImage(ctrl, drc, 0, i, mode, mag)
+        j = 0
+
         current_stage_pos = ctrl.stage
         dx, dy = step
+
+        last_img, _ = ctrl.getImage()
+
+        if drc:
+            write_tiff(drc / f'{j}_{i}.tiff', last_img)
 
         for j in range(1, n_steps):
             new_x_pos = current_stage_pos.x + dx
             new_y_pos = current_stage_pos.y + dy
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            img, _ = getImage(ctrl, drc, j, i, mode, mag)
+            img, _ = ctrl.getImage()
+
+            if drc:
+                write_tiff(drc / f'{j}_{i}.tiff', img)
 
             pairs.append((last_img, img))
             stage_shifts.append((dx, dy))
 
             current_stage_pos = ctrl.stage
 
-            print(current_stage_pos)
+            print(f'{i:02d}-{j:02d}: {current_stage_pos}')
 
             last_img = img
 
@@ -135,22 +135,21 @@ def calibrate_stage_from_stagepos(ctrl,
     r = fit_result.r
     t = fit_result.t
 
-    if write:
-        if drc:
-            d = {
-                'n_ranges': len(args),
-                'stage_x': stage_x,
-                'stage_y': stage_y,
-                'mode': mode,
-                'magnification': mag,
-                'args': args,
-                'translations': translations,
-                'stage_shifts': stage_shifts,
-                'r': r,
-                't': t,
-                'binning': binning,
-            }
-            yaml.dump(d, open(drc / 'log.yaml', 'w'))
+    if drc:
+        d = {
+            'n_ranges': len(args),
+            'stage_x': stage_x,
+            'stage_y': stage_y,
+            'mode': mode,
+            'magnification': mag,
+            'args': args,
+            'translations': translations,
+            'stage_shifts': stage_shifts,
+            'r': r,
+            't': t,
+            'binning': binning,
+        }
+        yaml.dump(d, open(drc / 'log.yaml', 'w'))
 
     if plot:
         r_i = np.linalg.inv(r)
@@ -244,7 +243,7 @@ def calibrate_stage(ctrl,
         (n_y_step, [0.0, y_step]),
     )
 
-    stagematrix = calibrate_stage_from_stagepos(
+    stagematrix = calibrate_stage_from_stageshifts(
         ctrl,
         *args,
         plot=plot,
@@ -289,6 +288,8 @@ def calibrate_stage_all(ctrl,
     Returns
     -------
     config : dict
+        Dictionary in the same structure as `instamatic.config` with the
+        calibrated values.
     """
     modes = 'lowmag', 'mag1'
 
@@ -305,12 +306,8 @@ def calibrate_stage_all(ctrl,
             if save:
                 drc = get_new_work_subdirectory(f'stagematrix_{mode}')
                 msg += f' -> {drc}'
-
-            try:
-                drc = drcs[mode][mag]
-                print(msg)
-            except KeyError:
-                continue
+            else:
+                drc = None
 
             try:
                 stagematrix = calibrate_stage(ctrl,
@@ -321,14 +318,15 @@ def calibrate_stage_all(ctrl,
                                               max_n_step=max_n_step,
                                               drc=drc,
                                               )
-            except ValueError as e:
+            except ValueError as e:  # raises if pixelsize is 0 or 1.0
                 print(e)
                 continue
 
             cfg[mode]['pixelsize'][mag] = float(stagematrix_to_pixelsize(stagematrix))
             cfg[mode]['stagematrix'][mag] = stagematrix.round(4).flatten().tolist()
 
-    print('\nUpdate:', config.calibration.location)
+    print('\nUpdate this config file:\n  ', config.calibration.location)
+
     print(yaml.dump(cfg))
 
     return cfg
