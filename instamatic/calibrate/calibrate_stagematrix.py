@@ -36,6 +36,83 @@ def get_outlier_filter(data, threshold: float = 2.0) -> list:
     return sel
 
 
+def cross_correlate_image_pairs(pairs: tuple) -> list:
+    """Cross correlate image pairs."""
+    translations = []
+    for img0, img1 in pairs:
+        translation, error, phasediff = register_translation(img0, img1, upsample_factor=10)
+        print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
+        translations.append(translation)
+    return translations
+
+
+def calibrate_stage_from_file(drc: str, plot: bool = False):
+    """Calibrate the stage from the saved log/tiff files. This is essentially
+    the same function as below, with the exception that it reads the `log.yaml`
+    to recalculate the stage matrix.
+
+    Parameters
+    ----------
+    drc : str
+        Directory containing the `log.yaml` and tiff files.
+    plot : bool
+        Plot the results of the fitting.
+
+    Returns
+    -------
+    stagematrix: np.ndarray (2x2)
+        Stage matrix used to transform the camera coordinates to stage
+        coordinates
+    """
+    drc = Path(drc)
+    fn = drc / 'log.yaml'
+
+    d = yaml.full_load(open(fn, 'r'))
+
+    binning = d['binning']
+    args = d['args']
+
+    stage_shifts = []  # um
+    pairs = []
+
+    for i, (n_steps, step) in enumerate(args):
+        dx, dy = step
+
+        for j in range(0, n_steps):
+            img, _ = read_tiff(drc / f'{i}_{j}.tiff')
+
+            if j > 0:
+                pairs.append((last_img, img))
+                stage_shifts.append((dx, dy))
+
+            last_img = img
+
+    translations = cross_correlate_image_pairs(pairs)
+
+    # Filter outliers
+    sel = get_outlier_filter(translations)
+    stage_shifts = np.array(stage_shifts)[sel]
+    translations = np.array(translations)[sel]
+
+    # Fit stagematrix
+    fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
+    r = fit_result.r
+    t = fit_result.t
+
+    if plot:
+        r_i = np.linalg.inv(r)
+        translations_ = np.dot(stage_shifts, r_i)
+
+        plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
+        plt.scatter(*translations_.T, marker='>', label='Calculated pixel coordinates')
+        plt.legend()
+        plt.show()
+
+    stagematrix = r / binning
+
+    return stagematrix
+
+
 def calibrate_stage_from_stageshifts(ctrl,
                                      *args,
                                      plot: bool = False,
@@ -67,8 +144,8 @@ def calibrate_stage_from_stageshifts(ctrl,
 
     Usage
     -----
-    >>> x_shifts = [(0, 0), (10000, 0), (20000, 0)]
-    >>> y_shifts = [(0, 0), (0, 10000), (0, 20000)]
+    >>> x_shifts = [3, (10000, 0)]
+    >>> y_shifts = [3, (0, 10000)]
     >>> stagematrix = calibrate_stage_from_stageshifts(ctrl, x_shifts, y_shifts)
     """
     if drc:
@@ -77,7 +154,6 @@ def calibrate_stage_from_stageshifts(ctrl,
     stage_x, stage_y = ctrl.stage.xy
 
     stage_shifts = []  # um
-    translations = []  # pixels
 
     mag = ctrl.magnification.value
     mode = ctrl.mode
@@ -94,7 +170,7 @@ def calibrate_stage_from_stageshifts(ctrl,
         last_img, _ = ctrl.getImage()
 
         if drc:
-            write_tiff(drc / f'{j}_{i}.tiff', last_img)
+            write_tiff(drc / f'{i}_{j}.tiff', last_img)
 
         for j in range(1, n_steps):
             new_x_pos = current_stage_pos.x + dx
@@ -104,7 +180,7 @@ def calibrate_stage_from_stageshifts(ctrl,
             img, _ = ctrl.getImage()
 
             if drc:
-                write_tiff(drc / f'{j}_{i}.tiff', img)
+                write_tiff(drc / f'{i}_{j}.tiff', img)
 
             pairs.append((last_img, img))
             stage_shifts.append((dx, dy))
@@ -118,12 +194,7 @@ def calibrate_stage_from_stageshifts(ctrl,
         # return to original position
         ctrl.stage.xy = (stage_x, stage_y)
 
-    # Cross correlation
-    translations = []
-    for img0, img1 in pairs:
-        translation, error, phasediff = register_translation(img0, img1, upsample_factor=10)
-        print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
-        translations.append(translation)
+    translations = cross_correlate_image_pairs(pairs)
 
     # Filter outliers
     sel = get_outlier_filter(translations)
