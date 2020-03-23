@@ -6,28 +6,28 @@ logger = logging.getLogger(__name__)
 
 __all__ = ['Camera']
 
-default_cam = config.camera.name
+default_cam_interface = config.camera.interface
 
 
-def get_cam(name: str = None):
-    """Grabs the camera object defined by `name`"""
+def get_cam(interface: str = None):
+    """Grabs the camera object defined by `interface`"""
 
     simulate = config.cfg.simulate
 
-    if simulate or name == 'simulate':
+    if simulate or interface == 'simulate':
         from .camera_simu import CameraSimu as cam
-    elif name == 'simulateDLL':
+    elif interface == 'simulateDLL':
         from .camera_gatan import CameraDLL as cam
-    elif name in ('orius', 'gatan'):
+    elif interface in ('orius', 'gatan'):
         from .camera_gatan import CameraDLL as cam
-    elif name in ('gatansocket'):
+    elif interface in ('gatansocket'):
         from .camera_gatan2 import CameraGatan2 as cam
-    elif name in ('timepix', 'pytimepix'):
+    elif interface in ('timepix', 'pytimepix'):
         from . import camera_timepix as cam
-    elif name in ('emmenu', 'tvips'):
+    elif interface in ('emmenu', 'tvips'):
         from .camera_emmenu import CameraEMMENU as cam
     else:
-        raise ValueError(f'No such camera: {name}')
+        raise ValueError(f'No such camera interface: {interface}')
 
     return cam
 
@@ -36,27 +36,32 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     """Initialize the camera identified by the 'name' parameter if `as_stream`
     is True, it will return a VideoStream object if `as_stream` is False, it
     will return the raw Camera object."""
+
     if name is None:
-        name = default_cam
+        # use default interface if no camera name is specified
+        interface = default_cam_interface
     elif name != config.cfg.camera:
+        # load specific config/interface
         config.load_camera_config(camera_name=name)
-        name = config.cfg.camera
+        interface = config.camera.interface
+    else:
+        interface = name
 
     if use_server:
         from .camera_client import CamClient
-        cam = CamClient(name)
+        cam = CamClient(name=name)
         as_stream = False  # precaution
     else:
-        cam_cls = get_cam(name)
+        cam_cls = get_cam(interface)
 
-        if name in ('timepix', 'pytimepix'):
+        if interface in ('timepix', 'pytimepix'):
             tpx_config = Path(__file__).parent / 'tpx' / 'config.txt'  # TODO: put this somewhere central
-            cam = cam_cls.initialize(tpx_config)
-        elif name in ('emmenu', 'tvips'):
-            cam = cam_cls()
+            cam = cam_cls.initialize(tpx_config, name=name)
+        elif interface in ('emmenu', 'tvips'):
+            cam = cam_cls(name=name)
             as_stream = False  # override `as_stream` for this interface
         else:
-            cam = cam_cls()
+            cam = cam_cls(name=name)
 
     if as_stream:
         if cam.streamable:

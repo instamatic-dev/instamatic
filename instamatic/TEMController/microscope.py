@@ -1,12 +1,12 @@
 from instamatic import config
 
-default_tem = config.microscope.name
+default_tem_interface = config.microscope.interface
 
 __all__ = ['Microscope']
 
 
-def get_tem(name: str):
-    """Grab tem class."""
+def get_tem(interface: str):
+    """Grab tem class with the specific 'interface'."""
 
     simulate = config.cfg.simulate
 
@@ -15,16 +15,16 @@ def get_tem(name: str):
         if not admin.is_admin():
             raise PermissionError('Access to the TEM interface requires admin rights.')
 
-    if simulate or name == 'simulate':
+    if simulate or interface == 'simulate':
         from .simu_microscope import SimuMicroscope as cls
-    elif name == 'jeol':
+    elif interface == 'jeol':
         from .jeol_microscope import JeolMicroscope as cls
-    elif name == 'fei':
+    elif interface == 'fei':
         from .fei_microscope import FEIMicroscope as cls
-    elif name == 'fei_simu':
+    elif interface == 'fei_simu':
         from .fei_simu_microscope import FEISimuMicroscope as cls
     else:
-        raise ValueError(f'No such microscope: `{name}`')
+        raise ValueError(f'No such microscope interface: `{interface}`')
 
     return cls
 
@@ -39,17 +39,20 @@ def Microscope(name: str = None, use_server: bool = False):
 
     returns: TEM interface class
     """
+
     if name is None:
-        name = default_tem
+        interface = default_tem_interface
     elif name != config.cfg.microscope:
         config.load_microscope_config(microscope_name=name)
-        name = config.cfg.microscope
+        interface = config.microscope.interface
+    else:
+        interface = name
 
     if use_server:
         from .microscope_client import MicroscopeClient
-        tem = MicroscopeClient(name)
+        tem = MicroscopeClient(name=name)
     else:
         cls = get_tem(name)
-        tem = cls()
+        tem = cls(name=name)
 
     return tem

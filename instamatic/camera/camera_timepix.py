@@ -50,7 +50,7 @@ def correctCross(raw, factor=2.15):
 
 
 class CameraTPX:
-    def __init__(self):
+    def __init__(self, name='pytimepix'):
         libdrc = Path(__file__).parent
 
         self.lockfile = libdrc / 'timepix.lockfile'
@@ -308,7 +308,7 @@ class CameraTPX:
         self.streamable = True
 
 
-def initialize(config):
+def initialize(config, name='pytimepix'):
     from pathlib import Path
 
     base = Path(config).parent
@@ -326,7 +326,7 @@ def initialize(config):
             if inp[0] == 'PIXELBPC':
                 pixelsCfg = base / inp[1]
 
-    cam = CameraTPX()
+    cam = CameraTPX(name=name)
     cam.connect(hwId)
 
     cam.init()

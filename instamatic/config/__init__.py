@@ -83,8 +83,7 @@ class ConfigObject:
 
     def __init__(self, mapping: dict, tag: str = 'config', location: str = None):
         super().__init__()
-        self.tag = tag
-        self.name = None  # default parameter
+        self.name = tag
         self.location = location
         self.mapping = {}
         self.update(mapping)
@@ -157,9 +156,6 @@ def load_microscope_config(microscope_name: str = None):
 def load_camera_config(camera_name: str = None):
     global camera
 
-    if camera_name == 'simulate':
-        raise ValueError
-
     if not camera_name:
         camera_name = cfg.camera
 
@@ -172,6 +168,7 @@ def load_camera_config(camera_name: str = None):
         print('No camera config is loaded.')
 
     camera = camera_cfg
+    camera.name = camera_name
 
     cfg.camera = camera.name
 
