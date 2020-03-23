@@ -10,8 +10,8 @@ from instamatic import config
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.cam_server_host
-PORT = config.cfg.cam_server_port
+HOST = config.settings.cam_server_host
+PORT = config.settings.cam_server_port
 BUFSIZE = 4096
 
 

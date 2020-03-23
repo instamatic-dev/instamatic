@@ -18,8 +18,8 @@ box = []
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.tem_server_host
-PORT = config.cfg.tem_server_port
+HOST = config.settings.tem_server_host
+PORT = config.settings.tem_server_port
 BUFSIZE = 1024
 
 
@@ -109,7 +109,7 @@ def handle(conn, q):
 
 
 def main():
-    if config.cfg.tem_require_admin:
+    if config.settings.tem_require_admin:
         from instamatic import admin
         if not admin.is_admin():
             admin.run_as_admin(__file__)

@@ -14,7 +14,7 @@ from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConver
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
 
-use_vm = config.cfg.use_VM_server_exe
+use_vm = config.settings.use_VM_server_exe
 
 
 def print_and_log(msg, logger=None):
@@ -101,15 +101,15 @@ class Experiment:
         else:
             self.image_interval = 99999
 
-        self.relax_beam_before_experiment = self.image_interval_enabled and config.cfg.cred_relax_beam_before_experiment
+        self.relax_beam_before_experiment = self.image_interval_enabled and config.settings.cred_relax_beam_before_experiment
 
-        self.track_stage_position = config.cfg.cred_track_stage_positions
+        self.track_stage_position = config.settings.cred_track_stage_positions
         self.stage_positions = []
 
         if use_vm:
             self.s2 = socket.socket()
-            vm_host = config.cfg.VM_server_host
-            vm_port = config.cfg.VM_server_port
+            vm_host = config.settings.VM_server_host
+            vm_port = config.settings.VM_server_port
         try:
             self.s2.connect((vm_host, vm_port))
             print('VirtualBox server connected for autocRED.')

@@ -52,8 +52,8 @@ if not os.path.isfile(log_rotaterange):
     with open(log_rotaterange, 'a') as f:
         f.write('x\ty\tz\trotation range\n')
 
-use_dials = config.cfg.use_indexing_server_exe
-use_vm = config.cfg.use_VM_server_exe
+use_dials = config.settings.use_indexing_server_exe
+use_vm = config.settings.use_VM_server_exe
 
 
 def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
@@ -224,8 +224,8 @@ class Experiment:
 
         if use_dials:
             self.s = socket.socket()
-            dials_host = config.cfg.indexing_server_host
-            dials_port = config.cfg.indexing_server_port
+            dials_host = config.settings.indexing_server_host
+            dials_port = config.settings.indexing_server_port
             try:
                 self.s.connect((dials_host, dials_port))
                 print('DIALS server connected for autocRED.')
@@ -236,8 +236,8 @@ class Experiment:
 
         if use_vm:
             self.s2 = socket.socket()
-            vm_host = config.cfg.VM_server_host
-            vm_port = config.cfg.VM_server_port
+            vm_host = config.settings.VM_server_host
+            vm_port = config.settings.VM_server_port
             try:
                 self.s2.connect((vm_host, vm_port))
                 print('VirtualBox server connected for autocRED.')

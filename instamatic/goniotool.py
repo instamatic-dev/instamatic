@@ -12,8 +12,8 @@ from instamatic import config
 GONIOTOOL_EXE = 'C:\\JEOL\\TOOL\\GonioTool.exe'
 DEFAULT_SPEED = 12
 
-HOST = config.cfg.goniotool_server_host
-PORT = config.cfg.goniotool_server_port
+HOST = config.settings.goniotool_server_host
+PORT = config.settings.goniotool_server_port
 BUFSIZE = 1024
 
 

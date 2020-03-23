@@ -300,7 +300,7 @@ class CameraTPX:
         return self.dimensions
 
     def load_defaults(self):
-        if self.name != config.cfg.camera:
+        if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
 
         self.__dict__.update(config.camera.mapping)

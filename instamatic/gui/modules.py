@@ -19,7 +19,7 @@ all_modules = (
 )
 
 try:
-    modules = config.cfg.modules
+    modules = config.settings.modules
 except AttributeError:
     modules = all_modules
 finally:

@@ -61,7 +61,7 @@ class ExperimentalCtrl(LabelFrame):
         e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_y)
         e_stage_y.grid(row=6, column=2, sticky='EW')
 
-        if config.cfg.use_goniotool:
+        if config.settings.use_goniotool:
             Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
             e_goniotool_tx = Spinbox(frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1)
             e_goniotool_tx.grid(row=5, column=1, sticky='EW')

@@ -8,14 +8,14 @@ from instamatic import config
 
 scripts_drc = config.scripts_drc
 
-SERVER_EXE = config.cfg.indexing_server_exe
-HOST = config.cfg.indexing_server_host
-PORT = config.cfg.indexing_server_port
+SERVER_EXE = config.settings.indexing_server_exe
+HOST = config.settings.indexing_server_host
+PORT = config.settings.indexing_server_port
 BUFSIZE = 1024
 
-VM_SERVER_EXE = config.cfg.VM_server_exe
-VMHOST = config.cfg.VM_server_host
-VMPORT = config.cfg.VM_server_port
+VM_SERVER_EXE = config.settings.VM_server_exe
+VMHOST = config.settings.VM_server_host
+VMPORT = config.settings.VM_server_port
 
 
 class DebugFrame(LabelFrame):

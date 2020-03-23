@@ -12,7 +12,7 @@ default_cam_interface = config.camera.interface
 def get_cam(interface: str = None):
     """Grabs the camera object defined by `interface`"""
 
-    simulate = config.cfg.simulate
+    simulate = config.settings.simulate
 
     if simulate or interface == 'simulate':
         from .camera_simu import CameraSimu as cam
@@ -40,7 +40,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     if name is None:
         # use default interface if no camera name is specified
         interface = default_cam_interface
-    elif name != config.cfg.camera:
+    elif name != config.settings.camera:
         # load specific config/interface
         config.load_camera_config(camera_name=name)
         interface = config.camera.interface

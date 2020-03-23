@@ -14,8 +14,8 @@ from instamatic import config
 # HOST = 'localhost'
 # PORT = 8088
 
-HOST = config.cfg.tem_server_host
-PORT = config.cfg.tem_server_port
+HOST = config.settings.tem_server_host
+PORT = config.settings.tem_server_port
 BUFSIZE = 1024
 
 
@@ -122,8 +122,8 @@ class MicroscopeClient:
     def check_goniotool(self):
         """Check whether goniotool is available and update the config as
         necessary."""
-        if config.cfg.use_goniotool:
-            config.cfg.use_goniotool = self.is_goniotool_available()
+        if config.settings.use_goniotool:
+            config.settings.use_goniotool = self.is_goniotool_available()
 
 
 class TraceVariable:

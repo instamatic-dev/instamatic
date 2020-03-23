@@ -128,7 +128,7 @@ class Console(LabelFrame):
     def export_text(self):
         """Export text from the text widget to a file."""
 
-        drc = config.cfg.work_directory
+        drc = config.settings.work_directory
 
         f = filedialog.asksaveasfile(mode='w',
                                      defaultextension='.txt',

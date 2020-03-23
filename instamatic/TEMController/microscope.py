@@ -8,9 +8,9 @@ __all__ = ['Microscope']
 def get_tem(interface: str):
     """Grab tem class with the specific 'interface'."""
 
-    simulate = config.cfg.simulate
+    simulate = config.settings.simulate
 
-    if config.cfg.tem_require_admin:
+    if config.settings.tem_require_admin:
         from instamatic import admin
         if not admin.is_admin():
             raise PermissionError('Access to the TEM interface requires admin rights.')
@@ -42,7 +42,7 @@ def Microscope(name: str = None, use_server: bool = False):
 
     if name is None:
         interface = default_tem_interface
-    elif name != config.cfg.microscope:
+    elif name != config.settings.microscope:
         config.load_microscope_config(microscope_name=name)
         interface = config.microscope.interface
     else:

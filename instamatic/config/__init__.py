@@ -114,75 +114,75 @@ def load_calibration(calibration_name: str = None):
     global calibration
 
     if not calibration_name:
-        calibration_name = cfg.calibration
+        calibration_name = settings.calibration
 
     calibration_yaml = calibration_drc / f'{calibration_name}.yaml'
 
     if calibration_name:
-        calibration_cfg = ConfigObject.from_file(calibration_yaml)
+        calibration_config = ConfigObject.from_file(calibration_yaml)
     else:
-        calibration_cfg = ConfigObject({}, tag='NoCalib')
+        calibration_config = ConfigObject({}, name='NoCalib')
         print('No calibration config is loaded.')
 
-    if is_oldstyle(calibration_cfg):
+    if is_oldstyle(calibration_config):
         d = convert_config(calibration_yaml, kind='calibration')
-        calibration_cfg.update(d, clear=True)
+        calibration_config.update(d, clear=True)
 
-    calibration = calibration_cfg
+    calibration = calibration_config
 
-    cfg.calibration = calibration.name
+    settings.calibration = calibration.name
 
 
 def load_microscope_config(microscope_name: str = None):
     global microscope
 
     if not microscope_name:
-        microscope_name = cfg.microscope
+        microscope_name = settings.microscope
 
     microscope_yaml = microscope_drc / f'{microscope_name}.yaml'
 
-    microscope_cfg = ConfigObject.from_file(microscope_yaml)
+    microscope_config = ConfigObject.from_file(microscope_yaml)
 
     # Check and update oldstyle configs (overwrite .yaml)
-    if is_oldstyle(microscope_cfg):
+    if is_oldstyle(microscope_config):
         d = convert_config(microscope_yaml, kind='microscope')
-        microscope_cfg.update(d, clear=True)
+        microscope_config.update(d, clear=True)
 
-    microscope = microscope_cfg
+    microscope = microscope_config
 
-    cfg.microscope = microscope.name
+    settings.microscope = microscope.name
 
 
 def load_camera_config(camera_name: str = None):
     global camera
 
     if not camera_name:
-        camera_name = cfg.camera
+        camera_name = settings.camera
 
     camera_yaml = camera_drc / f'{camera_name}.yaml'
 
     if camera_name:
-        camera_cfg = ConfigObject.from_file(camera_yaml)
+        camera_config = ConfigObject.from_file(camera_yaml)
     else:
-        camera_cfg = ConfigObject({}, tag='NoCamera')
+        camera_config = ConfigObject({}, name='NoCamera')
         print('No camera config is loaded.')
 
-    camera = camera_cfg
+    camera = camera_config
     camera.name = camera_name
 
-    cfg.camera = camera.name
+    settings.camera = camera.name
 
 
 def load_global_config():
-    global cfg
+    global settings
 
-    cfg = ConfigObject.from_file(Path(__file__).parent / _global_yaml)  # load defaults
-    cfg.update_from_file(config_drc / _global_yaml)             # update user parameters
+    settings = ConfigObject.from_file(Path(__file__).parent / _global_yaml)  # load defaults
+    settings.update_from_file(config_drc / _global_yaml)             # update user parameters
 
-    cfg.data_directory = Path(cfg.data_directory)
+    settings.data_directory = Path(settings.data_directory)
 
     today = datetime.datetime.now().strftime('%Y-%m-%d')
-    cfg.work_directory = cfg.data_directory / f'{today}'
+    settings.work_directory = settings.data_directory / f'{today}'
 
 
 def load_all(microscope_name: str = None,
@@ -216,7 +216,7 @@ logs_drc.mkdir(exist_ok=True)
 
 print(f'Config directory: {config_drc}')
 
-cfg = None
+settings = None
 microscope = None
 calibration = None
 camera = None

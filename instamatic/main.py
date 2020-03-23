@@ -28,9 +28,9 @@ def locate(name, show=False):
     elif name == 'scripts':
         drc = config.scripts_drc
     elif name == 'work':
-        drc = config.cfg.work_directory
+        drc = config.settings.work_directory
     elif name == 'data':
-        drc = config.cfg.data_directory
+        drc = config.settings.data_directory
     else:
         raise ValueError(f'No such directory: `{name}`')
 

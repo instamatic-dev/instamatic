@@ -46,7 +46,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag')
         self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
 
-        if config.cfg.use_goniotool:
+        if config.settings.use_goniotool:
             Label(frame, text='Rot. Speed', width=20).grid(row=10, column=0, sticky='W')
             self.o_goniotool_tx = OptionMenu(frame, self.var_goniotool_tx, 1, *list(range(1, 13)))
             self.o_goniotool_tx.grid(row=10, column=1, sticky='W', padx=10)

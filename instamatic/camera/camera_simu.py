@@ -34,7 +34,7 @@ class CameraSimu:
         self._start_record_time = -1
 
     def load_defaults(self):
-        if self.name != config.cfg.camera:
+        if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
 
         self.streamable = True

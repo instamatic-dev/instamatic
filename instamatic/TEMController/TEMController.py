@@ -18,8 +18,8 @@ _ctrl = None  # store reference of ctrl so it can be accessed without re-initial
 default_cam = config.camera.name
 default_tem = config.microscope.name
 
-use_tem_server = config.cfg.use_tem_server
-use_cam_server = config.cfg.use_cam_server
+use_tem_server = config.settings.use_tem_server
+use_cam_server = config.settings.use_cam_server
 
 
 def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> 'TEMController':

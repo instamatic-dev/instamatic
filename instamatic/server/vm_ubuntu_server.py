@@ -11,15 +11,15 @@ import virtualbox
 
 from instamatic import config
 
-HOST = config.cfg.VM_server_host
-PORT = config.cfg.VM_server_port
-VM_ID = config.cfg.VM_ID
-VM_USERNAME = config.cfg.VM_USERNAME
-VM_PWD = config.cfg.VM_PWD
-VM_DELAY1 = config.cfg.VM_STARTUP_DELAY
-VM_DELAY2 = config.cfg.VM_DESKTOP_DELAY
-VM_SF = config.cfg.VM_SHARED_FOLDER
-#ENABLE_SHELXT = config.cfg.ENABLE_SHELXT
+HOST = config.settings.VM_server_host
+PORT = config.settings.VM_server_port
+VM_ID = config.settings.VM_ID
+VM_USERNAME = config.settings.VM_USERNAME
+VM_PWD = config.settings.VM_PWD
+VM_DELAY1 = config.settings.VM_STARTUP_DELAY
+VM_DELAY2 = config.settings.VM_DESKTOP_DELAY
+VM_SF = config.settings.VM_SHARED_FOLDER
+#ENABLE_SHELXT = config.settings.ENABLE_SHELXT
 BUFF = 1024
 
 

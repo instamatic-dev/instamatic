@@ -18,7 +18,7 @@ class IOFrame(LabelFrame):
         LabelFrame.__init__(self, parent, text='Input/Output')
         self.parent = parent
 
-        self.workdrc = Path(config.cfg.work_directory)
+        self.workdrc = Path(config.settings.work_directory)
 
         self.init_vars()
 
@@ -70,7 +70,7 @@ class IOFrame(LabelFrame):
     def init_vars(self):
         workdrc = self.workdrc
 
-        ff = config.cfg.flatfield
+        ff = config.settings.flatfield
         if not ff:
             self.var_flatfield = StringVar(value='')
         else:

@@ -11,8 +11,8 @@ from instamatic import TEMController
 
 ctrl = TEMController.initialize()
 
-HOST = config.cfg.fei_server_host
-PORT = config.cfg.fei_server_port
+HOST = config.settings.fei_server_host
+PORT = config.settings.fei_server_port
 
 
 def handle(conn):

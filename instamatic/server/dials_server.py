@@ -13,12 +13,12 @@ from instamatic import config
 try:
     EXE = Path(sys.argv[1])
 except BaseException:
-    EXE = Path(config.cfg.dials_script)
+    EXE = Path(config.settings.dials_script)
 
 CWD = EXE.parent
 
-HOST = config.cfg.indexing_server_host
-PORT = config.cfg.indexing_server_port
+HOST = config.settings.indexing_server_host
+PORT = config.settings.indexing_server_port
 BUFF = 1024
 
 

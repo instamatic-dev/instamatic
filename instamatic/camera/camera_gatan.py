@@ -139,7 +139,7 @@ class CameraDLL:
         atexit.register(self.releaseConnection)
 
     def load_defaults(self):
-        if self.name != config.cfg.camera:
+        if self.name != config.settings.camera:
             config.load(camera_name=self.name)
 
         self.__dict__.update(config.camera.mapping)
