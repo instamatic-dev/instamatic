@@ -85,7 +85,7 @@ class DataCollectionController(threading.Thread):
 class AppLoader:
     """Loader for the main App.
 
-    Initializes all the modules specified in `global.yaml`
+    Initializes all the modules specified in `settings.yaml`
     """
 
     def __init__(self):

@@ -7,12 +7,14 @@ from pathlib import Path
 
 import yaml
 
+from .config_updater import check_global_yaml
 from .config_updater import convert_config
 from .config_updater import is_oldstyle
 logger = logging.getLogger(__name__)
 
 
-_global_yaml = 'global.yaml'
+_settings_yaml = 'settings.yaml'
+_defaults_yaml = 'defaults.yaml'
 _logs = 'logs'
 _config = 'config'
 _microscope = 'microscope'
@@ -38,7 +40,8 @@ def initialize_in_appData():
     for sub_drc in (_microscope, _calibration, _camera):
         shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
-    shutil.copy(src / _global_yaml, config_drc / _global_yaml)
+    shutil.copy(src / _settings_yaml, config_drc / _settings_yaml)
+    shutil.copy(src / _defaults_yaml, config_drc / _defaults_yaml)
 
     os.mkdir(dst / _logs)
 
@@ -173,11 +176,22 @@ def load_camera_config(camera_name: str = None):
     settings.camera = camera.name
 
 
-def load_global_config():
+def load_defaults():
+    global defaults
+
+    copy_defaults(Path(__file__).parent / _defaults_yaml, drc / _defaults_yaml)
+
+    defaults = ConfigObject.from_file(Path(__file__).parent / _defaults_yaml)  # load defaults
+    defaults.update_from_file(config_drc / _defaults_yaml)             # update user parameters
+
+
+def load_settings():
     global settings
 
-    settings = ConfigObject.from_file(Path(__file__).parent / _global_yaml)  # load defaults
-    settings.update_from_file(config_drc / _global_yaml)             # update user parameters
+    check_global_yaml(config_drc, 'global.yaml', _settings_yaml)
+
+    settings = ConfigObject.from_file(Path(__file__).parent / _settings_yaml)  # load defaults
+    settings.update_from_file(config_drc / _settings_yaml)             # update user parameters
 
     settings.data_directory = Path(settings.data_directory)
 
@@ -189,11 +203,12 @@ def load_all(microscope_name: str = None,
              calibration_name: str = None,
              camera_name: str = None,
              ):
-    """Load the global.yaml file and microscope/calib/camera configs The config
-    files to load can be overridden by specifying
+    """Load the settings.yaml file and microscope/calib/camera configs The
+    config files to load can be overridden by specifying
     microscope_name/calibration_name/camera_name."""
 
-    load_global_config()
+    load_settings()
+    load_defaults()
     load_microscope_config(microscope_name)
     load_camera_config(camera_name)
     load_calibration(calibration_name)
@@ -217,6 +232,7 @@ logs_drc.mkdir(exist_ok=True)
 print(f'Config directory: {config_drc}')
 
 settings = None
+defaults = None
 microscope = None
 calibration = None
 camera = None

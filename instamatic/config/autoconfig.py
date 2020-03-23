@@ -163,7 +163,7 @@ def main():
     if cam_config:
         print(f'    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`')
     print()
-    print(f"In `{config.config_drc / 'global.yaml'}`:")
+    print(f'In `{config._settings_yaml}`:')
     print(f'    microscope: {tem_name}_tem')
     print(f'    calibration: {tem_name}_calib')
     if cam_config:

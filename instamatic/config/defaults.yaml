@@ -1,0 +1,6 @@
+montage:
+  gridspec:
+    direction: 'downup'
+    zigzag: true
+    flip: true
+  overlap: 0.1

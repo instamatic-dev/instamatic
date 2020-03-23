@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .montage import *
+from instamatic import config
 
 
 class GridMontage:
@@ -10,9 +11,10 @@ class GridMontage:
     def __init__(self, ctrl):
         super().__init__()
         self.ctrl = ctrl
-        self.direction = 'updown'
-        self.zigzag = True
-        self.flip = False
+        gridspec = config.settings.montage['gridspec']
+        self.direction = gridspec['direction']
+        self.zigzag = gridspec['zigzag']
+        self.flip = gridspec['flip']
 
     @property
     def gridspec(self):
@@ -26,7 +28,7 @@ class GridMontage:
 
     def setup(self,
               nx: int, ny: int,
-              overlap: float = 0.1,
+              overlap: float = config.settings.montage['overlap'],
               stage_shift: tuple = (0.0, 0.0),
               binning: int = None) -> 'np.array':
         """Set up the experiment, run `GridMontage.start` to acquire data.

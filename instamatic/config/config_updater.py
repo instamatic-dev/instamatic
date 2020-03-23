@@ -9,6 +9,21 @@ def is_oldstyle(dct: dict):
     return oldstyle
 
 
+def check_global_yaml(drc, old, new):
+    old = Path(drc) / old
+    new = Path(drc) / new
+
+    print(old)
+    print(new)
+
+    if new.exists():
+        return True
+
+    if old.exists():
+        old.rename(new)
+        print(f'Moved {old}->{new}')
+
+
 def convert_config(fn: str, kind: str) -> dict:
     """`kind` must be one of `microscope`/`camera`/`calibration`"""
     fn = Path(fn)
