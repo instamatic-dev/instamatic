@@ -81,15 +81,15 @@ def get_alignments() -> dict:
 class ConfigObject:
     """Namespace for configuration (maps dict items to attributes)."""
 
-    def __init__(self, mapping: dict, tag: str = 'config', location: str = None):
+    def __init__(self, mapping: dict, name: str = 'config', location: str = None):
         super().__init__()
-        self.name = tag
+        self.name = name
         self.location = location
         self.mapping = {}
         self.update(mapping)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}('{self.tag}')"
+        return f"{self.__class__.__name__}('{self.name}')"
 
     def __getitem__(self, item):
         return self.mapping[item]
@@ -97,8 +97,8 @@ class ConfigObject:
     @classmethod
     def from_file(cls, path: str):
         """Read configuration from yaml file, returns namespace."""
-        tag = Path(path).stem
-        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), tag=tag, location=path)
+        name = Path(path).stem
+        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), name=name, location=path)
 
     def update_from_file(self, path: str) -> None:
         """Update configuration from yaml file."""
