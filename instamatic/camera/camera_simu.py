@@ -56,9 +56,7 @@ class CameraSimu:
         if not binsize:
             binsize = self.default_binsize
 
-        dim_x, dim_y = self.getDimensions()
-        dim_x = int(dim_x / binsize)
-        dim_y = int(dim_y / binsize)
+        dim_x, dim_y = self.getImageDimensions()
 
         time.sleep(exposure)
 
@@ -70,14 +68,10 @@ class CameraSimu:
         """Check if the camera is available."""
         return True
 
-    def getDimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
-        return self.dimensions
-
     def getImageDimensions(self) -> (int, int):
         """Get the binned dimensions reported by the camera."""
         binning = self.getBinning()
-        dim_x, dim_y = self.getDimensions()
+        dim_x, dim_y = self.getCameraDimensions()
 
         dim_x = int(dim_x / binning)
         dim_y = int(dim_y / binning)

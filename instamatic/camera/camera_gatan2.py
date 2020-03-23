@@ -48,10 +48,6 @@ class CameraGatan2:
         """Get the version number of DM."""
         return self.g.GetDMVersion()
 
-    def getDimensions(self) -> (int, int):
-        """alias to getImageDimensions."""
-        return self.getImageDimensions()
-
     def getCameraDimensions(self) -> (int, int):
         """Get the maximum dimensions reported by the camera."""
         raise NotImplementedError
@@ -59,7 +55,8 @@ class CameraGatan2:
     def getImageDimensions(self) -> (int, int):
         """Get the dimensions of the image."""
         binning = self.getBinning()
-        raise NotImplementedError
+        dim_x, dim_y = self.getCameraDimensions()
+        return int(dim_x / binning), int(dim_y / binning)
 
     def getPhysicalPixelsize(self) -> (int, int):
         """Returns the physical pixel size of the camera nanometers."""

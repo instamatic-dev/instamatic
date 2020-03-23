@@ -1295,7 +1295,7 @@ class TEMController:
         # k['ImageRotation'] = config.calibration[mode]['rotation'][mag]
         h['ImageComment'] = comment
         h['ImageCameraName'] = self.cam.name
-        h['ImageCameraDimensions'] = self.cam.dimensions
+        h['ImageCameraDimensions'] = self.cam.getCameraDimensions()
 
         if verbose:
             print(f'Image acquired - shape: {arr.shape}, size: {arr.nbytes / 1024:.0f} kB')

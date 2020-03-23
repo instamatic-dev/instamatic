@@ -132,7 +132,7 @@ class CameraDLL:
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
-        # dim_x, dim_y = self.getDimensions()
+        # dim_x, dim_y = self.getImageDimensions()
         # print(f"Dimensions {dim_x}x{dim_y}")
         # print(f"Info {self.isCameraInfoAvailable()} | Count {self.getCameraCount()}")
 
@@ -196,7 +196,7 @@ class CameraDLL:
         """Return the status of the camera."""
         return self._isCameraInfoAvailable()
 
-    def getDimensions(self) -> (int, int):
+    def getCameraDimensions(self) -> (int, int):
         """Return the dimensions reported by the camera."""
         pnWidth = c_int(0)
         pnHeight = c_int(0)

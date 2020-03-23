@@ -993,7 +993,7 @@ class Experiment:
     def raster_scan(self):
         from instamatic.experiments.serialed.experiment import get_offsets_in_scan_area
         pixelsize_mag1 = config.calibration.pixelsize_mag1[self.magnification] / 1000  # nm -> um
-        xdim, ydim = config.camera.dimensions
+        xdim, ydim = self.ctrl.getCameraDimensions()
         box_x, box_y = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
 
         # Make negative to reflect config change 2019-07-03 to make omega more in line with other software

@@ -290,13 +290,13 @@ def calibrate_stage(ctrl,
         mode = ctrl.mode
         mag = ctrl.magnification.value
 
-    shape = config.camera.dimensions
+    camera_shape = ctrl.cam.getCameraDimensions()
     pixelsize = config.calibration[mode]['pixelsize'][mag]
 
     if pixelsize == 1.0 or pixelsize == 0.0:
         raise ValueError(f'Invalid pixelsize for `{mode}` @ {mag}x -> {pixelsize}')
 
-    displacement = np.array(shape) * pixelsize
+    displacement = np.array(camera_shape) * pixelsize
     x_step, y_step = displacement * (1 - overlap)
 
     if x_step * min_n_step > stage_length:

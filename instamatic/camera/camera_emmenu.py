@@ -329,10 +329,6 @@ class CameraEMMENU:
 
         return np.array(arr)
 
-    def getDimensions(self) -> (int, int):
-        """alias to getImageDimensions."""
-        return self.getImageDimensions()
-
     def getCameraDimensions(self) -> (int, int):
         """Get the maximum dimensions reported by the camera."""
         # cfg = self.getCurrentConfig()
