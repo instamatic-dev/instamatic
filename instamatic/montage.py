@@ -602,9 +602,9 @@ class Montage:
         """
         self.pixelsize = config.calibration[mode]['pixelsize'][magnification]
 
-        binning = self.image_binning
+        image_binning = self.image_binning
         stagematrix = config.calibration[mode]['stagematrix'][magnification]
-        self.stagematrix = np.array(stagematrix).reshape(2, 2) / binning
+        self.stagematrix = np.array(stagematrix).reshape(2, 2) * image_binning
 
         self.mode = mode
         self.magnification = magnification
@@ -1188,7 +1188,7 @@ class Montage:
             'StageXYZ': [0, 0, 0],
             'MapFile': fn_mrc,
             'MapSection': 0,
-            'MapBinning': self.binning,
+            'MapBinning': self.image_binning,
             'MapMagInd': self.abs_mag_index,
             'MapScaleMat': map_scale_mat.flatten().tolist(),
             'MapWidthHeight': self.stitched.shape,
@@ -1228,10 +1228,10 @@ class Montage:
         if stagematrix is None:
             stagematrix = self.stagematrix
 
-        mati = np.linalg.inv(stagematrix)
+        stagematrix = self.stagematrix
 
         px_coord = np.array(px_coord) * self.stitched_binning
-        cx, cy = np.dot(np.array(self.image_shape) / 2, mati)
+        cx, cy = np.dot(np.array(self.image_shape) / 2, stagematrix)
 
         diffs = np.linalg.norm((self.centers - px_coord), axis=1)
         j = np.argmin(diffs)
@@ -1239,7 +1239,7 @@ class Montage:
         image_pixel_coord = self.coords[j]
         image_stage_coord = self.stagecoords[j]
 
-        tx, ty = np.dot(px_coord - image_pixel_coord, mati)
+        tx, ty = np.dot(px_coord - image_pixel_coord, stagematrix)
 
         stage_coord = np.array((tx, ty)) + image_stage_coord - np.array((cx, cy))
         stage_coord = stage_coord.astype(int)  # round to integer
@@ -1281,8 +1281,10 @@ class Montage:
 
         if plot:
             plot_x, plot_y = px_coords.T
-            plt.scatter(plot_y, plot_x, color='red', marker='.')
+            plt.scatter(plot_x, plot_y, color='red', marker='.')
             plt.title(f'Stage coordinates')
+            plt.xlabel('X (nm)')
+            plt.xlabel('Y (nm)')
             plt.show()
 
         return stage_coords
@@ -1318,7 +1320,7 @@ class Montage:
         mat = stagematrix
         mati = np.linalg.inv(stagematrix)
 
-        center_offset = np.dot(np.array(self.image_shape) / 2, mati)
+        center_offset = np.dot(np.array(self.image_shape) / 2, mat)
         stage_coord = np.array(stage_coord)
 
         diffs = np.linalg.norm((self.stagecoords - stage_coord), axis=1)
@@ -1330,7 +1332,7 @@ class Montage:
         # The image pixel coordinate `image_pixel_coord` corresponds to the corner,
         # but the stage coord `image_stage_coord` at the center of the image.
         # `px_coord` is the relative offset added to the corner pixel coordiante of the image
-        px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mat) + image_pixel_coord
+        px_coord = np.dot(stage_coord - image_stage_coord + center_offset, mati) + image_pixel_coord
 
         px_coord /= self.stitched_binning
         px_coord = px_coord.astype(int)
@@ -1421,12 +1423,12 @@ class Montage:
         labeled, _ = ndimage.label(seg)
         props = regionprops(labeled)
 
-        binning = self.stitched_binning
+        stitched_binning = self.stitched_binning
 
         if not pixelsize:
-            pixelsize = self.pixelsize * binning
+            pixelsize = self.pixelsize * stitched_binning
         else:
-            pixelsize *= binning
+            pixelsize *= stitched_binning
 
         if diameter is None:
             diameter = np.median([(prop.area ** 0.5) * pixelsize for prop in props])
@@ -1474,8 +1476,7 @@ class Montage:
 
             try:
                 plot_x, plot_y = np.array(stagecoords).T
-                # fiddle with coordinates to match the layout with the other axes #FIXME
-                ax2.scatter(-plot_y / 1000, -plot_x / 1000, marker='+')
+                ax2.scatter(plot_x / 1000, plot_y / 1000, marker='+')
                 ax2.scatter(0, 0, marker='+', color='red', label='Origin')
                 ax2.legend()
                 ax2.axis('equal')
