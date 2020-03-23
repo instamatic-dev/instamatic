@@ -12,7 +12,9 @@ default_cam = config.camera.name
 def get_cam(name: str = None):
     """Grabs the camera object defined by `name`"""
 
-    if name == 'simulate':
+    simulate = config.cfg.simulate
+
+    if simulate or name == 'simulate':
         from .camera_simu import CameraSimu as cam
     elif name == 'simulateDLL':
         from .camera_gatan import CameraDLL as cam

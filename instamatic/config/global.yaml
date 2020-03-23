@@ -2,6 +2,9 @@ microscope: simulate
 camera: simulate
 calibration: simulate
 
+# Global toggle to force simulated camera/microscope interface
+simulate: False
+
 data_directory: C:/instamatic
 #flatfield: C:/instamatic/flatfield.tiff
 flatfield:
