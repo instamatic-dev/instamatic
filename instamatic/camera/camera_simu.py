@@ -35,7 +35,7 @@ class CameraSimu:
 
     def load_defaults(self):
         if self.name != config.cfg.camera:
-            config.load(camera_name=self.name)
+            config.load_camera_config(camera_name=self.name)
 
         self.streamable = True
 

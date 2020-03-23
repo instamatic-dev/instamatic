@@ -42,7 +42,7 @@ def Microscope(name: str = None, use_server: bool = False):
     if name is None:
         name = default_tem
     elif name != config.cfg.microscope:
-        config.load(microscope_name=name)
+        config.load_microscope_config(microscope_name=name)
         name = config.cfg.microscope
 
     if use_server:

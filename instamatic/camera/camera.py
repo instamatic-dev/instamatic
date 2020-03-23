@@ -39,7 +39,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     if name is None:
         name = default_cam
     elif name != config.cfg.camera:
-        config.load(camera_name=name)
+        config.load_camera_config(camera_name=name)
         name = config.cfg.camera
 
     if use_server:
