@@ -11,6 +11,7 @@ from skimage.feature import register_translation
 from tqdm.auto import tqdm
 
 from instamatic import config
+from instamatic.config import defaults
 from instamatic.image_utils import bin_ndarray
 from instamatic.imreg import translation
 
@@ -471,15 +472,21 @@ class Montage:
     def from_serialem_mrc(cls,
                           filename: str,
                           gridshape: tuple,
-                          direction: str = 'updown',
-                          zigzag: bool = True,
-                          flip: bool = True,
-                          k_rot90: int = 3,
+                          direction: str = defaults.montage['from_serialem_mrc']['direction'],
+                          zigzag: bool = defaults.montage['from_serialem_mrc']['zigzag'],
+                          flip: bool = defaults.montage['from_serialem_mrc']['flip'],
+                          image_rot90: int = defaults.montage['from_serialem_mrc']['rot90'],
+                          image_flipud: bool = defaults.montage['from_serialem_mrc']['flipud'],
+                          image_fliplr: bool = defaults.montage['from_serialem_mrc']['fliplr'],
                           ):
         """Load a montage object from a SerialEM file image stack. The default
         parameters transform the images to data suitable for use with
         Instamatic. It makes no further assumptions about the way the data were
         collected.
+
+        The parameters image_rot90/image_flipud/image_fliplr manipulate the images in this order, so they can look the same as when collected with Instamatic. This is necessary to use the stage calibration, which is not specified in the SerialEM mrc file.
+
+        Use .set_calibration(mode, mag) to set the correct stagematrix, or specify the one from SerialEM.
 
         Parameters
         ----------
@@ -495,9 +502,14 @@ class Montage:
         flip : bool
             Flip around the vertical (lr, rl) or horizontal (ud, du) axis,
             i.e. start from the botton (lr, rl) or right-hand (ud, du) side.
-        k_rot90 : int
-            Rotate the image by 90 degrees (clockwise) for `k` times, i.e.,
-            `k_rot90=3` rotates the image by 270 degrees.
+        image_rot90 : int
+            Rotate the image by 90 degrees (clockwise) for this times, i.e.,
+            `image_rot90=3` rotates the image by 270 degrees.
+        image_flipud:
+            Flip the images around the horizintal axis.
+        image_fliplr:
+            Flip the images around the vertical axis. The
+
 
         Returns
         -------
@@ -509,7 +521,6 @@ class Montage:
         gm = mrcfile.open(filename)
         images = gm.data
 
-        # is the mdoc needed?
         mdoc = read_mdoc_file(filename + '.mdoc', only_kind='zvalue')
         assert len(mdoc) == len(images)
 
@@ -521,8 +532,12 @@ class Montage:
         }
 
         # Rotate the images so they are in the same orientation as those from Instamatic
-        # This avoids a lot of problems later on
-        images = [np.rot90(image, k=k_rot90) for image in images]
+        if image_rot90:
+            images = [np.rot90(image, k=image_rot90) for image in images]
+        if image_flipud:
+            images = [np.flipud(image) for image in images]
+        if image_fliplr:
+            images = [np.fliplr(image) for image in images]
 
         kwargs = {
             'stagecoords': np.array([d['StagePosition'] for d in mdoc]) * 1000,  # um->nm
@@ -537,25 +552,38 @@ class Montage:
         m = cls(images=images, gridspec=gridspec, **kwargs)
 
         c1 = np.array([d['PieceCoordinates'][0:2] for d in mdoc])
-        m.piececoords = c1
+
+        def convert_coords(c,
+                           rot90=image_rot90,
+                           flipud=image_flipud,
+                           fliplr=image_fliplr,
+                           ):
+            # SerialEM uses a different convention for X/Y
+            c = np.fliplr(c)
+
+            angle = np.radians(image_rot90 * 90)
+            R = np.array([np.cos(angle), -np.sin(angle), np.sin(angle), np.cos(angle)]).reshape(2, 2)
+
+            c = np.dot(c, R)
+
+            if flipud:
+                c[:, 1] *= -1
+            if fliplr:
+                c[:, 0] *= -1
+
+            c -= c.min(axis=0)
+
+            return c
 
         # Apparently, SerialEM can save one or the other or both
         # prefer APCVS over APC and move on
         for key in 'AlignedPieceCoordsVS', 'AlignedPieceCoords':
             if key in mdoc[0]:
                 c2 = np.array([d[key][0:2] for d in mdoc])
-                c2 -= c2.min(axis=0)  # set minval to 0
-                m.optimized_coords = c2
                 break
 
-        # map .coords to .piececoords
-        m.coords = m.piececoords
-
-        # Also convert pixel coordinates from SerialEM to match the rotated images
-        # Not a very elegant solution, but works for the moment... #FIXME
-        idx = np.fliplr(np.arange(len(images)).reshape(gridshape))
-        m.coords = m.coords[idx.ravel()]
-        m.optimized_coords = m.optimized_coords[idx.ravel()]
+        m.coords = convert_coords(c1)
+        m.optimized_coords = convert_coords(c2)
 
         return m
 
