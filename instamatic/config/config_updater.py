@@ -1,3 +1,4 @@
+import shutil
 from collections import defaultdict
 from pathlib import Path
 
@@ -5,23 +6,32 @@ from .utils import yaml
 
 
 def is_oldstyle(dct: dict):
+    """Check if the config format has been deprecated."""
     oldstyle = any('_' in key for key in dct.mapping.keys())
     return oldstyle
 
 
-def check_global_yaml(drc, old, new):
-    old = Path(drc) / old
-    new = Path(drc) / new
-
-    print(old)
-    print(new)
-
-    if new.exists():
+def check_global_yaml(src: str, dst: str):
+    """Check if `dst` exists, else rename `src` to `dst`."""
+    if dst.exists():
         return True
 
-    if old.exists():
-        old.rename(new)
-        print(f'Moved {old}->{new}')
+    if src.exists():
+        src.rename(dst)
+        print(f'Moved {old}->{dst}')
+
+
+def check_defaults_yaml(drc: str, fn: str, src_fn: str = None):
+    """Check if `drc/fn` exists, else copy `fn` from local drc (copy `src_fn`
+    if specified)."""
+    dst = drc / fn
+
+    if not dst.exists():
+        if not src_fn:
+            src_fn = fn
+        src = Path(__file__).parent / src_fn
+        shutil.copy(src, dst)
+        print(f'Copying {src}->{dst}')
 
 
 def convert_config(fn: str, kind: str) -> dict:

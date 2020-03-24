@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from .config_updater import check_defaults_yaml
 from .config_updater import check_global_yaml
 from .config_updater import convert_config
 from .config_updater import is_oldstyle
@@ -179,7 +180,7 @@ def load_camera_config(camera_name: str = None):
 def load_defaults():
     global defaults
 
-    copy_defaults(Path(__file__).parent / _defaults_yaml, drc / _defaults_yaml)
+    check_defaults_yaml(config_drc, _defaults_yaml)
 
     defaults = ConfigObject.from_file(Path(__file__).parent / _defaults_yaml)  # load defaults
     defaults.update_from_file(config_drc / _defaults_yaml)             # update user parameters
@@ -188,7 +189,7 @@ def load_defaults():
 def load_settings():
     global settings
 
-    check_global_yaml(config_drc, 'global.yaml', _settings_yaml)
+    check_global_yaml(config_drc / 'global.yaml', config_drc / _settings_yaml)
 
     settings = ConfigObject.from_file(Path(__file__).parent / _settings_yaml)  # load defaults
     settings.update_from_file(config_drc / _settings_yaml)             # update user parameters
