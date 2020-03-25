@@ -1,8 +1,24 @@
 # Configuration
 
-Instamatic can be configured through a series of yaml files. `global.yaml` at the root of the config directory, and three subdirectories (`microscope`, `calibration`, `camera`) that hold the specific configuration for the microscope set up.
+Instamatic can be configured through a series of yaml files. `settings.yaml` and `defaults.yaml` at the root of the config directory, and three subdirectories (`microscope`, `calibration`, `camera`) that hold the specific configuration for the microscope set up.
 
-By default, instamatic looks for the `config` directory in `%APPDATA%/Instamatic`. This directory is created automatically with the default config files on first use. The config directory is printed when the program is started. The default location can be overriden using the `Instamatic` environment variable, i.e. in Powershell: `$ENV:Instamatic = "C:/Instamatic"`. In the portable installation, the config directory is in the root directory as defined by the `Instamatic` environment variable.
+```bash
+$ENV:Instamatic
++-- config  
+    +-- settings.yaml  
+    +-- defaults.yaml  
+    +-- microscope  
+    |   +-- jeol-2100.yaml  
+    |   +-- simulated.yaml  
+    +-- camera  
+    |   +-- timepix.yaml  
+    |   +-- simulated.yaml  
+    +-- calibration  
+        +-- calibration-1.yaml  
+        +-- calibration-2.yaml
+```
+
+By default, instamatic looks for the `config` directory in `%APPDATA%/instamatic`. This directory is created automatically with the default config files on first use. The config directory is printed when the program is started. The default location can be overriden using the `Instamatic` environment variable, i.e. in Powershell: `$ENV:Instamatic = "C:/Instamatic"`. In the portable installation, the config directory is in the root directory as defined by the `Instamatic` environment variable.
 
 You can run:
 ```bash
@@ -12,7 +28,7 @@ To help generate some of the input files (in particular templates for the micros
 
 Examples of configuration files can be found [here](https://github.com/stefsmeets/tree/master/instamatic/config).
 
-## global.yaml
+## settings.yaml
 
 This is the global configuration file for `instamatic`. It defines which microscope / camera setup to use through the `microscope`, `camera`, and `calibration` settings.
 
@@ -25,23 +41,35 @@ name of the camera file to use. Instamatic will look for the corresponding `.yam
 **calibration**  
 name of the calibration file to use. Instamatic will look for the corresponding `.yaml` file in the `config/calibration` directory.
 
+**simulate**
+Run instamatic in simulation mode. This simulates the connection to the microscope and the camera.
+
 **data_directory**  
 Default path to where data should be stored, i.e. `C:/instamatic`
 
 **flatfield**  
-Path to tiff file containing flatfield, i.e. `C:/instamatic/flatfield.tiff`. Leave blank if  no flatfield should be applied.
+Path to tiff file containing flatfield, i.e. `C:/instamatic/flatfield.tiff`. Leave blank if no flatfield should be applied.
 
 **use_tem_server**  
 use the tem server with the given host/port below. If instamatic cannot find the tem server, it will start a new temserver in a subprocess. The tem server can be started using `instamatic.temserver.exe`. This helps to isolate the microscope communication. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread.
 
 **tem_server_host**  
-Set this to `localhost` if the TEM server is run locally. To make a remote connection over the network, use `'0.0.0.0'` on the server, and the ip address of the server on the client.
+Set this to `localhost` if the TEM server is run locally. To make a remote connection over the network, use `'0.0.0.0'` on the server (start using `instamatic.temserver.exe`, and the ip address of the server on the client.
 
 **tem_server_port**  
 the server port, default: `8088`
 
 **tem_require_admin**
 Some microscopes require admin rights to access their API, set `tem_require_admin: True` to enable some checks for admin rights and request UAC elevation before enabling the connection. Default: `False`.
+
+**use_cam_server**  
+Use the cam server with the given host/port below. If instamatic cannot find the cam server, it will start a new camserver in a subprocess. The cam server can be started using `instamatic.camserver.exe`. This helps to isolate the camera communication from the main program. Instamatic will connect to the server via sockets. The main advantage is that a socket client can be run in a thread, whereas a COM connection makes problems if it is not in main thread.
+
+**cam_server_host**  
+Set this to `localhost` if the cam server is run locally. To make a remote connection over the network, use `'0.0.0.0'` on the server (start using `instamatic.camserver.exe`), and the ip address of the server on the client.
+
+**cam_server_port**  
+the server port, default: `8087`
 
 **indexing_server_exe**  
 After data are collected, the path where the data are saved can be sent to this program via a socket connection for automated data processing. Available are the dials indexing server (`instamatic.dialsserver.exe`) and the XDS indexing server (`instamatic.xdsserver.exe`)
@@ -64,64 +92,116 @@ Track the stage position during a CRED experiment (for testing only), default: `
 **modules**  
 List of modules to load for the GUI, must be one of {`cred`, `cred_tvips`, `cred_fei`, `sed`, `autocred`, `red`, `machine_learning`, `ctrl`, `debug`, `about`, `io`}
 
+**Goniotool settings**
+For JEOL only, automatically set the rotation speed via Goniotool (`instamatic.goniotool.exe`). These variables set up the remote connection.
+
+`use_goniotool: False`
+`goniotool_server_host: 'localhost'`
+`goniotool_server_port: 8090`
+
+**FEI server settings**
+Define here the host/port for InsteaDMatic to control the rotation speed on a FEI/TFS system. `InsteaDMatic` connects to an instance of `instamatic.temserver_fei.exe` running on this address,, which in turn connects to the microscope.
+
+```yaml
+fei_server_host: '192.168.12.1'
+fei_server_port: 8091
+```
+
+**VM indexing server (XDS)**
+Automatically submit the data to an indexing server running in a VM (VirtualBox).
+
+```yaml
+use_VM_server_exe: False
+VM_server_exe: 'instamatic.VMserver.exe'
+VM_server_host: 'localhost'
+VM_server_port: 8092
+VM_ID: "Ubuntu 14.04.3"
+VM_USERNAME: "lab6"
+VM_PWD: "testtest"
+VM_STARTUP_DELAY: 50
+VM_DESKTOP_DELAY: 20
+VM_SHARED_FOLDER: F:\SharedWithVM
+```
+
+## defaults.yaml
+
+This file contains the default parameters for some functions.
+
 ## calibration.yaml
 
-In this file the calibration of the pixelsizes can be specified, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `global.yaml`. To begin with, the values can be safely set to 1.0, as their importance depends on the experiment you are running.
+In this file the calibration of the pixelsizes can be specified, both in diffraction and imaging modes. This file is must be located the `config/calibration` directory, and can have any name as defined in `settings.yaml`. To begin with, the values can be safely set to 1.0, as their importance depends on the experiment you are running. The dictionary tree is defined below:
+
+```bash
++-- calibration.yaml  
+    +-- name: str
+    +-- diff
+        +-- pixelsize: dict
+    +-- mag
+        +-- flipud: bool
+        +-- fliplr: bool
+        +-- rot90: dict
+        +-- pixelsize: dict
+        +-- stagematrix: dict
+```
+
+Here, `mag` can be any of the mag modes, i.e. `mag1`, `lowmag`, `samag`.
 
 **name**  
-Name of the corresponding camera interface. This variable is not used currently in the code at present.
+Name of the corresponding camera interface. This variable is not used currently in the code.
 
-**pixelsize_diff**  
-Give here a list of camera lengths (as reported by the TEM) and the corresponding pixel dimensions in reciprocal angstrom, separated by a `:`, for example:
-```
-  150: 0.02942304
-  200: 0.02206728
-  250: 0.017653824
-...
-```
+**diff/pixelsize**  
+Give here a list of camera lengths (as reported by the TEM) and the corresponding pixel dimensions in reciprocal angstrom (px/Å), separated by a `:`, for example:
 
-**pixelsize_lowmag**  
-Give here the magnification and pixel size for images taken in lowmag mode in nanometer, for example:
-```
-  50: 895.597
-  80: 559.748
-  100: 447.799
- ...
+```yaml
+diff:
+  pixelsize:
+    150: 0.02942304
+    200: 0.02206728
+    250: 0.017653824
 ```
 
-**pixelsize_mag1**  
-Likewise, give here the magnification and pixel size for the images taken in mag1 mode in nanometer, for exmaple:
-```
-  2500: 16.2926
-  3000: 13.3909
-  4000: 9.87389
-  ...
+**mag/flipud**
+Flip the images around the horizontal axes. This is used to globally modify all images taken by the camera using `ctrl.getImage()` or `ctrl.getRotatedImage()` to make them in line with the fluorescence screen or otherwise. Default: False.
+
+**mag/fliplr**
+Similar to above, except that the images are flipped around the vertical axis. Default: False.
+
+**mag/rot90**
+Similar to above, this defines a rotation to be applied to every image. This was implemented to circumvent an issue on our TEM where images where the lenses incurred a -90 degrees rotation from lowmag 250x to 1000x. If not defined, the default is 0.
+
+```yaml
+lowmag:
+  rot90:
+    150: 0
+    200: 0
+    250: 3
 ```
 
-Optionally, tables for **pixelsize_mag2**, **pixelsize_samag** can also be defined, but they are not used.
+**mag/pixelsize**  
+Give here the magnification and pixel size for images taken in lowmag/mag1 mode in nanometer (nm), for example:
 
-**stagematrix_lowmag**
+```yaml
+lowmag:
+  pixelsize:
+    150: 77.71
+    200: 59.31
+    250: 45.36
+```
+
+**mag/stagematrix**
 This is a mapping of the pixel coordinates to the stage coordinates. They can be obtained using SerialEM (`StageToCameraMatrix` in `SerialEMCalibration.txt`) via _Calibration_ > _Image & Stage Shift_ > _Stage Shift_ ([link](http://bio3d.colorado.edu/SerialEM/betaHlp/html/menu_calibration.htm#hid_calibration_stageshift)). These are used to convert from detected shifts in pixel coordinates (i.e. using cross correlation) to the corresponding translation of the stage.
-```
-  ...
-  250: [ 0.276258, -21.935572, 22.306572, 0.565116 ]
-  300: [ 0.331509, -26.322686, 26.767886, 0.678139 ]
-  400: [ 0.442012, -35.096915, 35.690515, 0.904185 ]
-  ...
-```
 
-**stagematrix_mag1**
-Same as above, but for Mag1 mode.
-```
-  200: [ 20.450142, 0.974105,  0.200866, 19.46804 ]
-  250: [ 24.747572, 0.910169, -0.473581, 24.16539 ]
-  300: [ 28.800819, 0.854005, -0.418774, 28.18689 ]
-  ...
+```yaml
+mag:
+  stagematrix:
+    250: [ 0.276258, -21.935572, 22.306572, 0.565116 ]
+    300: [ 0.331509, -26.322686, 26.767886, 0.678139 ]
+    400: [ 0.442012, -35.096915, 35.690515, 0.904185 ]
 ```
 
 ## camera.yaml:
 
-This file holds the specifications of the camera. This file is must be located the `config/camera` directory, and can have any name as defined in `global.yaml`.
+This file holds the specifications of the camera. This file is must be located the `config/camera` directory, and can have any name as defined in `settings.yaml`.
 
 **name**  
 Give the name of the camera interface to connect to, for example: `timepix`/`emmenu`/`simulate`/`gatan`. Leave blank to load the camera specs, but do not load the camera module (this also turns off the videostream gui).
@@ -172,7 +252,7 @@ Set up the grid and stepsize for the calibration of the direct beam in diffracti
 
 ## microscope.yaml
 
-This file holds all the specifications of the microscope as necessary. It is important to set up the camera lengths, magnifications, and magnification modes. This file is must be located the `microscope/camera` directory, and can have any name as defined in `global.yaml`.
+This file holds all the specifications of the microscope as necessary. It is important to set up the camera lengths, magnifications, and magnification modes. This file is must be located the `microscope/camera` directory, and can have any name as defined in `settings.yaml`.
 
 **name**  
 name of the microscope interface to use
@@ -182,14 +262,14 @@ The wavelength of the microscope in Ansgtroms. This is used to generate some of 
 
 **range_diff**  
 List here the available camera lengts available on the microscope in ascending order
-```
+```yaml
 range_diff: [150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200,
 1500, 2000, 2500, 3000, 3500, 4000, 4500]
 ```
 
 **range_mag1**, **range_lowmag**, **range_mag2**, **range_samag**  
 List here the available magnifications available on the microscope in ascending order, for example:
-```
+```yaml
 range_mag1: [2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000,
 15000, 20000, 25000, 30000, 40000, 50000, 60000, 80000, 100000, 120000, 150000,
 200000, 250000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000,
