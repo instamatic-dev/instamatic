@@ -48,26 +48,6 @@ See [the documentation](docs) for how to set up and use Instamatic.
 
 Use `pydoc` to access the full API reference: `pydoc -b instamatic`
 
-## Requirements
-
- - Python3.6
- - comtypes
- - lmfit
- - matplotlib
- - numpy
- - pandas
- - Pillow
- - scipy
- - scikit-image
- - tqdm
- - pyyaml
- - h5py
- - IPython
-
-Requirements can be installed via:
-
-    pip install -r requirements.txt
-
 ## Installation
 
 The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
@@ -80,3 +60,7 @@ To install:
 
     pip install -r requirements.txt
     python setup.py install
+
+Or:
+
+     pip install git+https://github.com/stefsmeets/instamatic.git
