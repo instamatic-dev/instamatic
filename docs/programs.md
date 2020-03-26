@@ -1,8 +1,43 @@
 # Useful programs and scripts
 
-There are several programs coming with `instamatic`. Some of the more commonly used ones are defined here.
+There are several programs coming with `instamatic`. The documented ones are indicated marked with ✓.
 
-### instamatic
+- **Main**
+  + ✓ [instamatic](#instamatic) (`instamatic.main:main`)
+  + [instamatic.gui](#instamaticgui) (`instamatic.gui:main`)
+  + ✓ [instamatic.controller](#instamaticcontroller) (`instamatic.TEMController.TEMController:main_entry`)
+- **Experiment**
+  + [instamatic.serialed](#instamaticserialed) (`instamatic.experiments.serialed.experiment:main`)
+  + [instamatic.camera](#instamaticcamera) (`instamatic.camera.camera:main_entry`)
+- **Calibrate**
+  + [instamatic.calibrate_stage_lowmag](#instamaticcalibrate_stage_lowmag) (`instamatic.calibrate.calibrate_stage_lowmag:main_entry`)
+  + [instamatic.calibrate_stage_mag1](#instamaticcalibrate_stage_mag1) (`instamatic.calibrate.calibrate_stage_mag1:main_entry`)
+  + [instamatic.calibrate_beamshift](#instamaticcalibrate_beamshift) (`instamatic.calibrate.calibrate_beamshift:main_entry`)
+  + [instamatic.calibrate_directbeam](#instamaticcalibrate_directbeam) (`instamatic.calibrate.calibrate_directbeam:main_entry`)
+- **Processing**
+  + ✓ [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
+  + ✓ [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
+  + [instamatic.find_crystals](#instamaticfind_crystals) (`instamatic.processing.find_crystals:main_entry`)
+  + [instamatic.learn](#instamaticlearn) (`scripts.learn:main_entry`)
+- **Explore**
+  + [instamatic.browser](#instamaticbrowser) (`scripts.browser:main`)
+  + [instamatic.viewer](#instamaticviewer) (`scripts.viewer:main`)
+- **Servers**
+  + [instamatic.watcher](#instamaticwatcher) (`instamatic.server.TEMbkgWatcher:main`)
+  + ✓ [instamatic.temserver](#instamatictemserver) (`instamatic.server.tem_server:main`)
+  + ✓ [instamatic.camserver](#instamaticcamserver) (`instamatic.server.cam_server:main`)
+  + [instamatic.dialsserver](#instamaticdialsserver) (`instamatic.server.dials_server:main`)
+  + ✓ [instamatic.VMserver](#instamaticVMserver) (`instamatic.server.vm_ubuntu_server:main`)
+  + [instamatic.xdsserver](#instamaticxdsserver) (`instamatic.server.xds_server:main`)
+  + [instamatic.temserver_fei](#instamatictemserver_fei) (`instamatic.server.TEMServer_FEI:main`)
+  + [instamatic.goniotoolserver](#instamaticgoniotoolserver) (`instamatic.server.goniotool_server:main`)
+- **Setup**
+  + [instamatic.autoconfig](#instamaticautoconfig) (`instamatic.config.autoconfig:main`)
+- **Other**
+  + [instamatic.defocus_helper](#instamaticdefocus_helper) (`instamatic.gui.defocus_button:main`)
+  + ✓ [instamatic.install](#instamaticinstall) (Cmder)
+
+## instamatic
 
 Start the instamatic GUI. The GUI is modular and can be defined using the config system. The GUI can be used to control the microscope and run the experiments. The GUI itself is further described on the GUI page.
 
@@ -10,15 +45,7 @@ Usage:
 
     instamatic
 
-<!-- ### instamatic.serialed
-
-Command line program to run the serial ED data collection routine.
-
-Usage:
-
-    instamatic.serialed -->
-
-### instamatic.controller
+## instamatic.controller
 
 Connect to the microscope and camera, and open an IPython terminal to interactively control the microscope. Useful for testing! It initializes the TEMController (accessible through the `ctrl` variable) using the parameters given in the `config`.
 
@@ -26,7 +53,7 @@ Usage:
 
     instamatic.controller
 
-### instamatic.flatfield
+## instamatic.flatfield
 
 This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
 
@@ -38,7 +65,7 @@ This will collect 100 images and average them to determine the flatfield image. 
 
 This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`.
 
-### instamatic.stretch_correction
+## instamatic.stretch_correction
 
 Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the `config` under `camera.stretch_azimuth` and `camera.stretch_percentage`.
 
@@ -46,7 +73,7 @@ Usage:
 
     instamatic.stretch_correction powder_pattern.tiff
 
-### instamatic.browser
+## instamatic.browser
 
 Visualize the data collected (both images and diffraction data) in a serialED experiment. The `-s` flag attempts to stitch the images together.
 
@@ -54,7 +81,7 @@ Usage:
 
     instamatic.browser images/*.h5 [-s]
 
-### instamatic.viewer
+## instamatic.viewer
 
 Simple image viewer to open any image collected collected using instamatic. Supported formats include [`hdf5`](http://www.h5py.org/), `TIFF`, and [`SMV`](https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php/SMV_file_format).
 
@@ -63,42 +90,42 @@ Usage:
     instamatic.viewer image.tiff
 
 
-### instamatic.temserver
+## instamatic.temserver
 
 This program initializes a connection to the TEM as defined in the config. On some setups it must be run in admin mode in order to establish a connection (on JEOL TEMs, wait for the beep!). The purpose of this program is to isolate the microscope connection in a separate process for improved stability of the interface in case `instamatic` crashes or is started and stopped frequently. For running the GUI, the temserver is required. Another reason is that it allows for remote connections from different PCs. The connection goes over a TCP socket.
 
-The host and port are defined in `config/global.yaml`
+The host and port are defined in `config/settings.yaml`
 
 Usage:
 
     instamatic.temserver
 
 
-### instamatic.camserver
+## instamatic.camserver
 
 As with the temserver, the camserver controls the connection to the camera. It has been developed for usage with TVIPS cameras, because EMMENU allows scripting over the COM interface, which is otherwise difficult to integrate in the GUI. Sending data over the socket connection has considerable overhead (up to 100 ms for a 2k image), but it works well for small messages.
 
-The host and port are defined in `config/global.yaml`
+The host and port are defined in `config/settings.yaml`
 
 Usage:
 
     instamatic.camserver
 
 
-### instamatic.VMserver
+## instamatic.VMserver
 
 The script sets up socket connection between `instamatic` and [`VirtualBox`](https://www.virtualbox.org/wiki/Downloads) software via [`virtualbox python API`](https://www.virtualbox.org/sdkref/). Therefore, `VirtualBox` and the corresponding SDK need to be installed before running this command. This script is developed particularly for the possibility of running software [`XDS`](http://xds.mpimf-heidelberg.mpg.de/html_doc/downloading.html) under windows 7 or newer, a system which a lot of TEM computers may be using.
 
 After installation of `VirtualBox` and the corresponding SDK, `XDS` needs to be installed correctly in the guest Ubuntu system. In addition, a shared folder between `VirtualBox` and windows system needs to be set up properly in order for the server to work.
 
-The host and port are defined in `config/global.yaml`
+The host and port are defined in `config/settings.yaml`
 
 Usage:
 
     instamatic.VMserver
 
 
-### instamatic.install
+## instamatic.install
 
 This script sets up the paths for `instamatic`. It is necessary to run it at after first installation, and sometimes when the program is updated, or when the instamatic directory has moved.
 

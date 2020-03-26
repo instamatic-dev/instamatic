@@ -10,7 +10,7 @@ On the left side, a live view of the camera will be shown if the camera can be s
 
 On the right side, there is a pane for file i/o, and the available modules for data collection.
 
-Each of the modules can be turned off (except the io module) in the `global.yaml`.
+Each of the modules can be turned off (except the io module) in the `settings.yaml`.
 
 
 ## Data i/o
@@ -30,7 +30,7 @@ The number is automatically incremenbed when a new experiment is started. Data a
 
 **Flatfield**  
 Here the path to the flatfield image can be specified. The default
-value is read from `config/global.yaml` and can be left blank if no flatfield should be used.
+value is read from `config/settings.yaml` and can be left blank if no flatfield should be used.
 
 **Open work directory**  
 Open the current work directory, which is a combination of the root
@@ -87,7 +87,6 @@ change the data collection time for each image.
 **Beam unblanker**  
 If this option is selected, the beam will be automatically unblanked
 when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
-
 
 ### Image interval
 

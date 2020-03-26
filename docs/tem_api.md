@@ -11,9 +11,9 @@ from instamatic import TEMController
 ctrl = TEMController.initialize()
 ```
 
-If no names for the camera/microscope are given, it reads the defaults from the config directory listed when TEMController is imported (`config/global.yaml`). The config directory is generated on the first run of `instamatic`. By default these are set to load simulation of the camera/microscope. The simulation is is a good test to see if it works at all (a shortcut to this is to type `instamatic.controller.exe` in the terminal).
+If no names for the camera/microscope are given, it reads the defaults from the config directory listed when TEMController is imported (`config/settings.yaml`). The config directory is generated on the first run of `instamatic`. By default these are set to load simulation of the camera/microscope. The simulation is is a good test to see if it works at all (a shortcut to this is to type `instamatic.controller.exe` in the terminal).
 
-The config files work as follows: The global configurations are defined in `config/global.yaml`. The values `cam_name` and `tem_name` correspond to the values given in `global.yaml`. The values given for calibration/camera/microscope in turn point to the files with the same name in the corresponding directories. For example, `camera: foo` corresponds to the file `config/camera/foo.yaml`, where you can customize the settings.
+The config files work as follows: The global configurations are defined in `config/settings.yaml`. The values `cam_name` and `tem_name` correspond to the values given in `settings.yaml`. The values given for calibration/camera/microscope in turn point to the files with the same name in the corresponding directories. For example, `camera: foo` corresponds to the file `config/camera/foo.yaml`, where you can customize the settings.
 
 You can override the defaults here, so on the microscope computer you could try:
 

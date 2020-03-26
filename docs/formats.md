@@ -3,7 +3,8 @@
 This package includes some functions to read and write data.
 
 To import:
-```
+
+```python
 from instamatic.formats import *
 ```
 

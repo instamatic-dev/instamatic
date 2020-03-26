@@ -19,6 +19,7 @@ The latest, bleeding edge development version of `instamatic` is available from 
 If you run the portable installation, just extract and replace the `instamatic` directory in the root directory of the installation (the one that contains `start_Cmder.exe`). Make sure to delete the old one before.
 
 If you want to install `instamatic` into your own python installation, just extract and run:
+
 ```bash
 pip install -r requirements.txt
 python setup.py install
@@ -34,13 +35,13 @@ instamatic.autoconfig.exe
 ```
 To help generate some of the input files (in particular templates for the microscope/calibration files). This should give you a working setup for the microscope.
 
-In order of importance:
+In order of priority:
 
 1. __Initialize the config directory__  
    If you are running the portable installation, you can skip this step. Otherwise, if you are running instamatic for the first time, it will set up the config directory. Simply run `instamatic`. It should say that it sets up the config directory and tell the path where the data are.
 
 2. __Set up the microscope interface__  
-   In `config/global.yaml` define the camera interface you want to use. You can use the autoconfig tool or one of the example files and modify those. You can name these files anything you want, as long as the name under `microscope` matches the filename in `config/microscope`
+   In `config/settings.yaml` define the camera interface you want to use. You can use the autoconfig tool or one of the example files and modify those. You can name these files anything you want, as long as the name under `microscope` matches the filename in `config/microscope`
 
 3. __Set up the magnifications and camera lengths__  
    In the config file, i.e `config/microscope/jeol.yaml`, set the correct camera lengths (`range_diff`) and magnifications for your microscopes (`range_lowmag` and `range_mag1`). Also make sure you set the wavelength. Again, the autoconfig tool is your best friend, otherwise, the way to get those numbers is to simply write them down as you turn the magnification knob on the microcope.
@@ -54,10 +55,10 @@ In order of importance:
 6. __Test if it works__  
    Run `instamatic.temcontroller` to start a IPython shell that initializes the connection. It should run with no crashes or warnings.
 
-7. __Update `global.yaml`__  
-   There are a few more choices to make in `instamatic/global.yaml`. If you use a TVIPS camera, make sure you put `use_cam_server: true`.
+7. __Update `settings.yaml`__  
+   There are a few more choices to make in `instamatic/settings.yaml`. If you use a TVIPS camera, make sure you put `use_cam_server: true`.
 
-It is often a good idea to run the camserver and temserver in a different terminal window by running `instamatic.temserver` / `instamatic.camserver` if you specified this in `global.yaml`.
+It is often a good idea to run the camserver and temserver in a different terminal window by running `instamatic.temserver` / `instamatic.camserver` if you specified this in `settings.yaml`.
 
 ## Other directories
 
