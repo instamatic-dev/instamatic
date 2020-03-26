@@ -1,12 +1,18 @@
-calib_beamshift: {gridsize: 5, stepsize: 2500}
+calib_beamshift:
+  gridsize: 5
+  stepsize: 2500
 calib_directbeam:
-  BeamShift: {gridsize: 5, stepsize: 350}
-  DiffShift: {gridsize: 5, stepsize: 1500}
+  BeamShift:
+    gridsize: 5
+    stepsize: 350
+  DiffShift:
+    gridsize: 5
+    stepsize: 1500
+camera_rotation_vs_stage_xy: 0.925
 default_binsize: 2
 default_exposure: 0.1
 dimensions: [2048, 2048]
-name: gatan
+interface: gatan
 possible_binsizes: [1, 2, 4]
-camera_rotation_vs_stage_xy: 0.925
 stretch_amplitude: 0
 stretch_azimuth: 0
