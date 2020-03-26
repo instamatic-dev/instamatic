@@ -153,7 +153,7 @@ def main_entry():
     import argparse
     description = """Program to collect and apply flatfield/darkfield corrections"""
 
-    parser = argparse.ArgumentParser(  # usage=usage,
+    parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 

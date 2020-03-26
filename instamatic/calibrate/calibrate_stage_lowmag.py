@@ -8,6 +8,7 @@ from skimage.feature import register_translation
 
 from .filenames import *
 from .fit import fit_affine_transformation
+from instamatic.formats import read_image
 from instamatic.image_utils import autoscale
 from instamatic.image_utils import imgscale
 logger = logging.getLogger(__name__)
@@ -306,7 +307,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     return:
         instance of Calibration class with conversion methods
     """
-    img_cent, h_cent = load_img(center_fn)
+    img_cent, h_cent = read_image(center_fn)
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
 
@@ -321,14 +322,8 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     shifts = []
     stagepos = []
 
-    # gridsize = 5
-    # stepsize = 50000
-    # n = (gridsize - 1) / 2 # number of points = n*(n+1)
-    # x_grid, y_grid = np.meshgrid(np.arange(-n, n+1) * stepsize, np.arange(-n, n+1) * stepsize)
-    # stagepos_p = np.array(zip(x_grid.flatten(), y_grid.flatten()))
-
     for fn in other_fn:
-        img, h = load_img(fn)
+        img, h = read_image(fn)
 
         img = imgscale(img, scale)
 
@@ -367,27 +362,27 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
 
 
 def main_entry():
+    import argparse
+    description = """Program to calibrate the lowmag mode (100x) of the microscope (Deprecated)."""
 
-    if 'help' in sys.argv:
-        print("""
-Program to calibrate lowmag (100x) of microscope
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
-Usage:
-prepare
-    instamatic.calibrate_lowmag
-        To start live calibration routine on the microscope
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
 
-    instamatic.calibrate_lowmag CENTER_IMAGE (CALIBRATION_IMAGE ...)
-       To perform calibration using pre-collected images
-""")
-        exit()
-    elif len(sys.argv) == 1:
+    options = parser.parse_args()
+    args = options.args
+
+    if not args:
         from instamatic import TEMController
         ctrl = TEMController.initialize()
         calibrate_stage_lowmag(ctrl=ctrl, save_images=True)
     else:
-        center_fn = sys.argv[1]
-        other_fn = sys.argv[2:]
+        center_fn = args[0]
+        other_fn = args[1:]
         calibrate_stage_lowmag(center_fn, other_fn)
 
 

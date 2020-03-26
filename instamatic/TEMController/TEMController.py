@@ -1365,7 +1365,7 @@ def main_entry():
     import argparse
     description = """Python program to control Jeol TEM"""
 
-    parser = argparse.ArgumentParser(  # usage=usage,
+    parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 

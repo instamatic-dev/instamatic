@@ -274,27 +274,27 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
 
 
 def main_entry():
+    import argparse
+    description = """Program to calibrate the mag1 mode of the microscope (Deprecated)."""
 
-    if 'help' in sys.argv:
-        print("""
-Program to calibrate mag1 of microscope
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
-Usage:
-prepare
-    instamatic.calibrate_mag1
-        To start live calibration routine on the microscope
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
 
-    instamatic.calibrate_mag1 CENTER_IMAGE (CALIBRATION_IMAGE ...)
-       To perform calibration using pre-collected images
-""")
-        exit()
-    elif len(sys.argv) == 1:
+    options = parser.parse_args()
+    args = options.args
+
+    if not args:
         from instamatic import TEMController
         ctrl = TEMController.initialize()
         calibrate_mag1(ctrl=ctrl, save_images=True)
     else:
-        center_fn = sys.argv[1]
-        other_fn = sys.argv[2:]
+        center_fn = args[0]
+        other_fn = args[1:]
         calibrate_mag1(center_fn, other_fn)
 
 

@@ -545,13 +545,18 @@ class Experiment:
         print('\n\nData collection finished.')
 
 
-def main_gui():
-    from gui import main
-    main.start()
-
-
 def main():
+    import argparse
+    description = """Command line program to run the serial ED data collection routine."""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
     from instamatic import TEMController
+
     try:
         params = json.load(open('params.json', 'r'))
     except OSError:

@@ -76,17 +76,12 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 def main_entry():
     import argparse
     from instamatic.formats import write_tiff
-    # usage = """acquire"""
 
-    description = """Program to acquire image data from gatan gatan ccd camera"""
+    description = """Simple program to acquire image data from the camera"""
 
-    parser = argparse.ArgumentParser(  # usage=usage,
+    parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    # parser.add_argument("args",
-    #                     type=str, metavar="FILE",
-    #                     help="Path to save cif")
 
     parser.add_argument('-b', '--binsize',
                         action='store', type=int, metavar='N', dest='binsize',
@@ -104,14 +99,6 @@ def main_entry():
                         action='store_true', dest='show_fig',
                         help="""Show the image (default True)""")
 
-    # parser.add_argument("-t", "--tem",
-    #                     action="store", type=str, dest="tem",
-    #                     help="""Simulate microscope connection (default False)""")
-
-    parser.add_argument('-u', '--simulate',
-                        action='store_true', dest='simulate',
-                        help="""Simulate camera/microscope connection (default False)""")
-
     parser.add_argument('-s', '--series',
                         action='store_true', dest='take_series',
                         help="""Enable mode to take a series of images (default False)""")
@@ -122,8 +109,6 @@ def main_entry():
         outfile=None,
         show_fig=False,
         test=False,
-        simulate=False,
-        camera='simulate',
         take_series=False,
     )
 
@@ -191,7 +176,6 @@ def main_entry():
         arr, h = ctrl.getImage(binsize=binsize, exposure=exposure)
 
         if show_fig:
-            # save_header(sys.stdout, h)
             plt.imshow(arr, cmap='gray', interpolation='none')
             plt.show()
 
@@ -199,8 +183,6 @@ def main_entry():
             write_tiff(outfile, arr, header=h)
         else:
             write_tiff('out', arr, header=h)
-
-    # cam.releaseConnection()
 
 
 if __name__ == '__main__':

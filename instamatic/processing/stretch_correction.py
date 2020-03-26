@@ -198,13 +198,21 @@ def get_ring_props(edges):
 
 
 def main_entry(sigma=None):
-    if len(sys.argv) != 2:
-        print('Program to find microscope stretch amplitude/azimuth from a powder pattern')
-        print()
-        print('Usage: python find_stretch_correction.py powder_pattern.tiff')
-        exit()
+    import argparse
+    description = """Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the config under `camera.stretch_azimuth` and `camera.stretch_percentage`."""
 
-    fname = sys.argv[1]
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('args',
+                        type=str, nargs=1, metavar='powder_pattern.tiff',
+                        help='Diffraction pattern (TIFF) from a nanocrystalline powder showing Debye-Scherrer rings.')
+
+    options = parser.parse_args()
+    args = options.args
+
+    fname = args[0]
     img, h = read_tiff(fname)
 
     if max(img.shape) > 1024:

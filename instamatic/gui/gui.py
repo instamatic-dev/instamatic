@@ -176,4 +176,6 @@ def start_gui(ctrl, log=None):
 
 
 if __name__ == '__main__':
-    main()
+    from instamatic import TEMController
+    ctrl = TEMController.initialize()
+    start_gui(ctrl)

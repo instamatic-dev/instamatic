@@ -181,26 +181,26 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
 
 
 def main_entry():
-    if 'help' in sys.argv:
-        print("""
-Program to calibrate brightness of microscope
+    import argparse
+    description = """Program to calibrate the brightness of the microscope (Deprecated)."""
 
-Usage:
-prepare
-    instamatic.calibrate_brightness
-        To start live calibration routine on the microscope
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    instamatic.calibrate_brightness IMAGE (IMAGE ...)
-       To perform calibration using pre-collected images
-""")
-        exit()
-    elif len(sys.argv) == 1:
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Perform calibration using pre-collected images. If no arguments are given, run the live calibration routine.')
+
+    options = parser.parse_args()
+    args = options.args
+
+    if not args:
         from instamatic import TEMController
         ctrl = TEMController.initialize()
         calibrate_brightness(ctrl, save_images=True)
     else:
-        fns = sys.argv[1:]
-        calibrate_brightness(fns)
+        calibrate_brightness(args)
 
 
 if __name__ == '__main__':

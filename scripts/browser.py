@@ -226,7 +226,7 @@ Program for indexing electron diffraction images.
 Usage: instamatic.browser images/*.tiff -r results.csv
 """
 
-    parser = argparse.ArgumentParser(  # usage=usage,
+    parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

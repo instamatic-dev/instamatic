@@ -349,20 +349,22 @@ Calibrate direct beam position
 
 
 def main_entry():
-    if 'help' in sys.argv:
-        print("""
-Program to calibrate PLA to compensate for beamshift movements
+    import argparse
+    description = """Program to calibrate the diffraction shift (PLA) to correct for beamshift movements (Deprecated)."""
 
-Usage:
-    instamatic.calibrate_directbeam
-        To start live calibration routine on the microscope
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    instamatic.calibrate_directbeam (DiffShift:pattern.tiff) (BeamShift:pattern.tiff)
-        To perform calibration from saved images
-""")
-        exit()
-    if len(sys.argv[1:]) > 0:
-        calibrate_directbeam(patterns=sys.argv[1:])
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Perform calibration using pre-collected images. They must be formatted as such: DiffShift:pattern.tiff BeamShift:pattern.tiff, where `pattern` is a globbing pattern that finds the images corresponding to the key BeamShift or DiffShift. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+
+    options = parser.parse_args()
+    args = options.args
+
+    if args:
+        calibrate_directbeam(patterns=args)
     else:
         from instamatic import TEMController
         ctrl = TEMController.initialize()

@@ -294,25 +294,27 @@ Calibrate beamshift
 
 
 def main_entry():
-    if 'help' in sys.argv:
-        print("""
-Program to calibrate beamshift of microscope
+    import argparse
+    description = """Program to calibrate the beamshift of the microscope (Deprecated)."""
 
-Usage:
-    instamatic.calibrate_beamshift
-        To start live calibration routine on the microscope
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    instamatic.calibrate_beamshift CENTER_IMAGE (CALIBRATION_IMAGE ...)
-       To perform calibration using pre-collected images
-""")
-        exit()
-    elif len(sys.argv) == 1:
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+
+    options = parser.parse_args()
+    args = options.args
+
+    if len(sys.argv) == 1:
         from instamatic import TEMController
         ctrl = TEMController.initialize()
         calibrate_beamshift(ctrl=ctrl, save_images=True)
     else:
-        center_fn = sys.argv[1]
-        other_fn = sys.argv[2:]
+        center_fn = args[0]
+        other_fn = args[1:]
         calibrate_beamshift(center_fn=center_fn, other_fn=other_fn)
 
 
