@@ -128,9 +128,9 @@ def load_calibration(calibration_name: str = None):
         calibration_config = ConfigObject({}, name='NoCalib')
         print('No calibration config is loaded.')
 
-    if is_oldstyle(calibration_config):
+    if is_oldstyle(calibration_config, kind='calibration'):
         d = convert_config(calibration_yaml, kind='calibration')
-        calibration_config.update(d, clear=True)
+        calibration_config.update(d)
 
     calibration = calibration_config
 
@@ -148,9 +148,9 @@ def load_microscope_config(microscope_name: str = None):
     microscope_config = ConfigObject.from_file(microscope_yaml)
 
     # Check and update oldstyle configs (overwrite .yaml)
-    if is_oldstyle(microscope_config):
+    if is_oldstyle(microscope_config, kind='microscope'):
         d = convert_config(microscope_yaml, kind='microscope')
-        microscope_config.update(d, clear=True)
+        microscope_config.update(d)
 
     microscope = microscope_config
 
@@ -170,6 +170,11 @@ def load_camera_config(camera_name: str = None):
     else:
         camera_config = ConfigObject({}, name='NoCamera')
         print('No camera config is loaded.')
+
+    # Check and update oldstyle configs (overwrite .yaml)
+    if is_oldstyle(camera_config, kind='camera'):
+        d = convert_config(camera_yaml, kind='camera')
+        camera_config.update(d)
 
     camera = camera_config
     camera.name = camera_name
