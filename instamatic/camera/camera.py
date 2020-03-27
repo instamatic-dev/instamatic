@@ -77,7 +77,7 @@ def main_entry():
     import argparse
     from instamatic.formats import write_tiff
 
-    description = """Simple program to acquire image data from the camera"""
+    description = """Simple program to acquire image data from the camera."""
 
     parser = argparse.ArgumentParser(
         description=description,

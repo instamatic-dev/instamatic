@@ -88,6 +88,25 @@ def handle(conn):
 
 
 def main():
+    import argparse
+
+    description = f"""
+Starts a simple server to send indexing jobs to. Runs `{EXE}` for every job sent to it. Opens a socket on port {HOST}:{PORT}.
+
+The data sent to the server is a dict containing the following elements:
+
+- `path`: Path to the data directory (str)
+- `rotrange`: Total rotation range in degrees (float)
+- `nframes`: Number of data frames (int)
+- `osc`: Oscillation range in degrees (float)
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',

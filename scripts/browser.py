@@ -223,7 +223,9 @@ def main():
     description = """
 Program for indexing electron diffraction images.
 
-Usage: instamatic.browser images/*.tiff -r results.csv
+Example:
+
+    instamatic.browser images/*.tiff -r results.csv
 """
 
     parser = argparse.ArgumentParser(

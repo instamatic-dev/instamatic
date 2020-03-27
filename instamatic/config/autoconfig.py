@@ -73,9 +73,18 @@ def choice_prompt(choices: list = [], default=None, question: str = 'Which one?'
 
 
 def main():
-    """This tool will help to set up the configuration files for `instamatic`
-    It establishes a connection to the microscope and reads out the camera
-    lengths and magnification ranges."""
+    import argparse
+
+    description = """
+This tool will help to set up the configuration files for `instamatic`.
+It establishes a connection to the microscope and reads out the camera lengths and magnification ranges.
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
 
     # Connect to microscope
 

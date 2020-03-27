@@ -193,11 +193,25 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
 
 
 def main_entry():
+    import argparse
+    description = """Find crystals in images."""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('args',
+                        type=str, nargs='*', metavar='IMG',
+                        help='Images to find crystals in.')
+
+    options = parser.parse_args()
+    args = options.args
+
     from instamatic.formats import read_image
     import warnings
     warnings.simplefilter('ignore')
 
-    for fn in sys.argv[1:]:
+    for fn in args:
         img, h = read_image(fn)
 
         crystals = find_crystals_timepix(img, h['exp_magnification'], plot=True)

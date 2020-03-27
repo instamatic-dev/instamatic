@@ -74,10 +74,8 @@ class GonioToolServer(threading.Thread):
                 print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
-        """Evaluate the function `func_name` on `self.tem` with *args and.
-
-        **kwargs.
-        """
+        """Evaluate the function `func_name` on `self.goniotool` and call it
+        with *args and **kwargs."""
         # print(func_name, args, kwargs)
         f = getattr(self.goniotool, func_name)
         ret = f(*args, **kwargs)
@@ -111,6 +109,28 @@ def handle(conn, q):
 
 
 def main():
+    import argparse
+
+    description = f"""
+Connects to `Goniotool.exe` and starts a server for network communication. Opens a socket on port {HOST}:{PORT}.
+
+The host and port are defined in `config/settings.yaml`.
+
+The data sent over the socket is a pickled dictionary with the following elements:
+
+- `func_name`: Name of the function to call (str)
+- `args`: (Optional) List of arguments for the function (list)
+- `kwargs`: (Optiona) Dictionary of keyword arguments for the function (dict)
+
+The response is returned as a pickle object.
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.logs_drc / f'instamatic_goniotool_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',

@@ -165,7 +165,7 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
     else:
         spgr = str(spgr)
 
-    wavelength = 0.02508
+    wavelength = config.microscope.wavelength
     a, b, c, al, be, ga = cell
     spgr = str(spgr)
     out = Path(path) / 'shelx.ins'
@@ -221,32 +221,35 @@ def solve_structure_shelxt(path, ins_name='shelx'):
 
 
 def main():
-    """if ENABLE_SHELXT:
-        composition = input("In order to run shelxt automatically, please input the composition information of your crystal: (e.g. Si1 O2) \n")
-    else:
-        composition = None"""
-
     import argparse
 
-    description = 'VM server to run XDS online while performing data collection. Option to run SHELXT.'
+    description = """
+The script sets up socket connection between `instamatic` and `VirtualBox` software via `virtualbox` python API. Therefore, `VirtualBox` and the corresponding SDK need to be installed before running this command. This script is developed particularly for the possibility of running `XDS` under windows 7 or newer, a system which a lot of TEM computers may be using.
+
+After installation of VirtualBox and the corresponding SDK, `XDS` needs to be installed correctly in the guest Ubuntu system. In addition, a shared folder between `VirtualBox` and windows system needs to be set up properly in order for the server to work.
+
+The host and port are defined in `config/settings.yaml`.
+"""
+
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('-shelxt',
                         action='store_true', dest='shelxt',
-                        help='Run shelxt when xds ASCII HKL file is generated')
+                        help='Run SHELXT when xds ASCII HKL file is generated.')
 
     parser.add_argument('-c', '--unitcell',
                         action='store', type=str, nargs=6, dest='unitcell',
-                        help='Preknowledge: six numbers of the unit cell parameters')
+                        metavar=('a', 'b', 'c', 'al', 'be', 'ga'),
+                        help='Six numbers of the unit cell parameters.')
 
     parser.add_argument('-s', '--spgr',
                         action='store', type=str, dest='spgr',
-                        help='Preknowledge: space group')
+                        help='Space group.')
 
     parser.add_argument('-m', '--composition',
-                        action='store', type=str, nargs='+', dest='composition',
-                        help='Preknowledge: crystal unit cell composition')
+                        action='store', type=str, nargs='+', dest='composition', metavar=('Xn', 'Ym'),
+                        help='Unit cell composition, i.e. `-m H2 O1`.')
 
     parser.set_defaults(shelxt=False,
                         unitcell=None,

@@ -3,8 +3,6 @@ from tkinter.ttk import *
 
 from instamatic import TEMController
 
-ctrl = TEMController.initialize()
-
 
 class DefocusButton(LabelFrame):
     def __init__(self, parent):
@@ -60,6 +58,17 @@ class DefocusButton(LabelFrame):
 
 
 def main():
+    import argparse
+    description = """Tiny button to focus and defocus the diffraction pattern."""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
+    ctrl = TEMController.initialize()
+
     root = Tk()
     DefocusButton(root).pack(side='top', fill='both', expand=True, padx=10, pady=10)
     root.lift()

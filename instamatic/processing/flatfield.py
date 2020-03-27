@@ -151,7 +151,16 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
 def main_entry():
     import argparse
-    description = """Program to collect and apply flatfield/darkfield corrections"""
+    description = """
+This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
+
+    instamatic.flatfield --collect
+
+This will collect 100 images and average them to determine the flatfield image. A darkfield image is also collected by applying the same routine with the beam blanked. Dead pixels are identified as pixels with 0 intensities. To apply these corrections:
+
+    instamatic.flatfield image.tiff [image.tiff ..] -f flatfield.tiff [-d darkfield.tiff] [-o drc]
+
+This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`."""
 
     parser = argparse.ArgumentParser(
         description=description,

@@ -199,7 +199,9 @@ def get_ring_props(edges):
 
 def main_entry(sigma=None):
     import argparse
-    description = """Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the config under `camera.stretch_azimuth` and `camera.stretch_percentage`."""
+    description = """
+Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the `config` under `camera.stretch_azimuth` and `camera.stretch_percentage`.
+"""
 
     parser = argparse.ArgumentParser(
         description=description,

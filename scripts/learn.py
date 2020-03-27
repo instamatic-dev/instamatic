@@ -128,8 +128,22 @@ def main(file_pattern):
 
 
 def main_entry():
-    if len(sys.argv) > 1:
-        pattern = sys.argv[1]
+    import argparse
+    description = """Predict whether a crystal is of good or bad quality by its diffraction pattern."""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('args',
+                        type=str, nargs=1, metavar='PAT',
+                        help='File pattern to glob for images (HDF5), i.e. `images/*.h5`.')
+
+    options = parser.parse_args()
+    args = options.args
+
+    if args:
+        pattern = args[0]
     else:
         pattern = 'images/*.h5'
 

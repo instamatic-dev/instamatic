@@ -93,6 +93,20 @@ def handle(conn):
 
 
 def main():
+    import argparse
+
+    description = f"""
+Starts a simple XDS server to send indexing jobs to. Runs XDS for every job sent to it. Opens a socket on port {HOST}:{PORT}.
+
+The data sent to the server as a bytes string containing the data path (must contain `cRED_log.txt`).
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',

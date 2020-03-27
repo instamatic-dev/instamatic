@@ -308,7 +308,7 @@ def main_entry():
     options = parser.parse_args()
     args = options.args
 
-    if len(sys.argv) == 1:
+    if not args:
         from instamatic import TEMController
         ctrl = TEMController.initialize()
         calibrate_beamshift(ctrl=ctrl, save_images=True)

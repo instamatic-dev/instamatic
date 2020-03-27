@@ -72,10 +72,8 @@ class TemServer(threading.Thread):
                 print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
-        """Evaluate the function `func_name` on `self.tem` with *args and.
-
-        **kwargs.
-        """
+        """Evaluate the function `func_name` on `self.tem` and call it with
+        `args` and `kwargs`."""
         # print(func_name, args, kwargs)
         f = getattr(self.tem, func_name)
         ret = f(*args, **kwargs)
@@ -117,9 +115,28 @@ def main():
 
     import argparse
 
-    parser = argparse.ArgumentParser()
+    description = f"""
+Connects to the TEM and starts a server for microscope communication. Opens a socket on port {HOST}:{PORT}.
+
+This program initializes a connection to the TEM as defined in the config. On some setups it must be run in admin mode in order to establish a connection (on JEOL TEMs, wait for the beep!). The purpose of this program is to isolate the microscope connection in a separate process for improved stability of the interface in case instamatic crashes or is started and stopped frequently. For running the GUI, the temserver is required. Another reason is that it allows for remote connections from different PCs. The connection goes over a TCP socket.
+
+The host and port are defined in `config/settings.yaml`.
+
+The data sent over the socket is a pickled dictionary with the following elements:
+
+- `func_name`: Name of the function to call (str)
+- `args`: (Optional) List of arguments for the function (list)
+- `kwargs`: (Optiona) Dictionary of keyword arguments for the function (dict)
+
+The response is returned as a pickle object.
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument('-t', '--microscope', action='store', dest='microscope',
-                        help="""Override microscope to use""")
+                        help="""Override microscope to use.""")
 
     parser.set_defaults(microscope=None)
     options = parser.parse_args()

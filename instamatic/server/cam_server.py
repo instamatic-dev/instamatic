@@ -76,10 +76,8 @@ class CamServer(threading.Thread):
                 print(f'{now} | {status} {attr_name}: {ret}')
 
     def evaluate(self, attr_name: str, args: list, kwargs: dict):
-        """Evaluate the function `attr_name` on `self.cam` with *args and.
-
-        **kwargs.
-        """
+        """Evaluate the function or attribute `attr_name` on `self.cam`, if
+        `attr_name` refers to a function, call it with *args and **kwargs."""
         # print(attr_name, args, kwargs)
         f = getattr(self.cam, attr_name)
         if callable(f):
@@ -131,9 +129,28 @@ def handle(conn, q):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser()
+    description = f"""
+Connects to the camera and starts a server for camera communication. Opens a socket on port {HOST}:{PORT}.
+
+This program initializes a connection to the camera as defined in the config. This separates the communication from the main process and allows for remote connections from different PCs. The connection goes over a TCP socket.
+
+The host and port are defined in `config/settings.yaml`.
+
+The data sent over the socket is a pickled dictionary with the following elements:
+
+- `attr_name`: Name of the function to call or attribute to return (str)
+- `args`: (Optional) List of arguments for the function (list)
+- `kwargs`: (Optiona) Dictionary of keyword arguments for the function (dict)
+
+The response is returned as a pickle object.
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument('-c', '--camera', action='store', dest='camera',
-                        help="""Override camera to use""")
+                        help="""Override camera to use.""")
 
     parser.set_defaults(camera=None)
     options = parser.parse_args()

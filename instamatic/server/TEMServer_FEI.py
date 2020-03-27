@@ -9,7 +9,6 @@ from socket import *
 from instamatic import config
 from instamatic import TEMController
 
-ctrl = TEMController.initialize()
 
 HOST = config.settings.fei_server_host
 PORT = config.settings.fei_server_port
@@ -45,6 +44,18 @@ def run_rotation_with_speed(data):
 
 
 def main():
+    import argparse
+
+    description = """
+Utility script to enable rotation control from a dmscript. See [https://github.com/stefsmeets/instamatic/tree/master/dmscript] for usage.
+"""
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    options = parser.parse_args()
+
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.logs_drc / f'instamatic_temserver_Themis_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
@@ -52,6 +63,8 @@ def main():
                         level=logging.DEBUG)
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
+
+    ctrl = TEMController.initialize()
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST, PORT))
