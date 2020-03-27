@@ -26,9 +26,19 @@ def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream:
     """Initialize TEMController object giving access to the TEM and Camera
     interfaces.
 
-    tem_name: Name of the TEM to use
-    cam_name: Name of the camera to use, can be set to 'None' to skip camera initialization
-    stream: Open the camera as a stream (this enables `TEMController.show_stream()`)
+    Parameters
+    ----------
+    tem_name : str
+        Name of the TEM to use
+    cam_name : str
+        Name of the camera to use, can be set to 'None' to skip camera initialization
+    stream : bool
+        Open the camera as a stream (this enables `TEMController.show_stream()`)
+
+    Returns
+    -------
+    ctrl : `TEMController`
+        Return TEM control object
     """
 
     print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
@@ -1363,27 +1373,36 @@ class TEMController:
 
 def main_entry():
     import argparse
-    description = """Python program to control Jeol TEM"""
+    description = """Connect to the microscope and camera, and open an IPython terminal to interactively control the microscope. Useful for testing! It initializes the TEMController (accessible through the `ctrl` variable) using the parameters given in the `config`."""
 
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    # parser.add_argument("args",
-    #                     type=str, metavar="FILE",
-    #                     help="Path to save cif")
-
     parser.add_argument('-u', '--simulate',
                         action='store_true', dest='simulate',
-                        help="""Simulate microscope connection (default False)""")
+                        help='Simulate microscope connection (default: False)')
+
+    parser.add_argument('-c', '--camera',
+                        action='store', type=str, dest='tem_name',
+                        help='Camera configuration to load.')
+
+    parser.add_argument('-t', '--tem',
+                        action='store', type=str, dest='cam_name',
+                        help='TEM configuration to load.')
 
     parser.set_defaults(
         simulate=False,
-        tem='simtem',
+        tem_name=None,
+        cam_name=None,
     )
 
     options = parser.parse_args()
-    ctrl = initialize()
+
+    if options.simulate:
+        config.settings.simulate = True
+
+    ctrl = initialize(tem_name=options.tem_name, cam_name=options.cam_name)
 
     from IPython import embed
     embed(banner1='\nAssuming direct control.\n')
