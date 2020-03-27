@@ -68,26 +68,24 @@ setup(
         'console_scripts': [
             # main
             'instamatic                               = instamatic.main:main',
-            'instamatic.gui                           = instamatic.gui:main',
-            'instamatic.serialed                      = instamatic.experiments.serialed.experiment:main',
-            # experiment
-            'instamatic.camera                        = instamatic.camera.camera:main_entry',
             'instamatic.controller                    = instamatic.TEMController.TEMController:main_entry',
+            # experiments
+            'instamatic.serialed                      = instamatic.experiments.serialed.experiment:main',
+            'instamatic.camera                        = instamatic.camera.camera:main_entry',
             # calibrate
             'instamatic.calibrate_stage_lowmag        = instamatic.calibrate.calibrate_stage_lowmag:main_entry',
             'instamatic.calibrate_stage_mag1          = instamatic.calibrate.calibrate_stage_mag1:main_entry',
             'instamatic.calibrate_beamshift           = instamatic.calibrate.calibrate_beamshift:main_entry',
             'instamatic.calibrate_directbeam          = instamatic.calibrate.calibrate_directbeam:main_entry',
-            # processing
             'instamatic.flatfield                     = instamatic.processing.flatfield:main_entry',
             'instamatic.stretch_correction            = instamatic.processing.stretch_correction:main_entry',
-            'instamatic.find_crystals                 = instamatic.processing.find_crystals:main_entry',
-            'instamatic.learn                         = scripts.learn:main_entry',
-            # explore
+            # tools
             'instamatic.browser                       = scripts.browser:main',
             'instamatic.viewer                        = scripts.viewer:main',
+            'instamatic.defocus_helper                = instamatic.gui.defocus_button:main',
+            'instamatic.find_crystals                 = instamatic.processing.find_crystals:main_entry',
+            'instamatic.learn                         = scripts.learn:main_entry',
             # server
-            'instamatic.watcher                       = instamatic.server.TEMbkgWatcher:main',
             'instamatic.temserver                     = instamatic.server.tem_server:main',
             'instamatic.camserver                     = instamatic.server.cam_server:main',
             'instamatic.dialsserver                   = instamatic.server.dials_server:main',
@@ -97,8 +95,6 @@ setup(
             'instamatic.goniotoolserver               = instamatic.server.goniotool_server:main',
             # setup
             'instamatic.autoconfig                    = instamatic.config.autoconfig:main',
-            # other
-            'instamatic.defocus_helper                = instamatic.gui.defocus_button:main',
         ],
     },
 )
