@@ -1453,8 +1453,8 @@ def main_entry():
 
     parser.set_defaults(
         simulate=False,
-        tem_name=None,
-        cam_name=None,
+        tem_name=default_tem,
+        cam_name=default_cam,
     )
 
     options = parser.parse_args()
