@@ -155,21 +155,21 @@ To get the image from the camera, and a header containing the readout of the mic
 t = 0.5  # exposure time in seconds
 b = 2
 comment = "This comment will be added to the header"
-img, h = ctrl.getImage(exposure=t, binsize=b, comment=comment)
+img, h = ctrl.get_image(exposure=t, binsize=b, comment=comment)
 ```
 By default, the full header is included, but this can be suppressed with the `full_header` variable (saving some time).:
 ```python
-img, h = ctrl.getImage(full_header=False)
+img, h = ctrl.get_image(full_header=False)
 ```
 To directly save the file, use the `out` command:
 ```python
-img, h = ctrl.getImage(out="image.tiff")
+img, h = ctrl.get_image(out="image.tiff")
 ```
 To just get the image data, use:
 ```python
-img = ctrl.getRawImage()
+img = ctrl.get_raw_image()
 ```
-This is much faster than `ctrl.getImage`, because the microscope is not read out.
+This is much faster than `ctrl.get_image`, because the microscope is not read out.
 
 In case a streamable camera is used, `ctrl.show_stream()` will show a GUI window with the stream.
 
@@ -259,7 +259,7 @@ angles = range(-40, 40, 1)
 for i, angle in enumerate(angles):
     print(f"Angle = {angle}")
     ctrl.stage.a = angle
-    img, h = ctrl.getImage(exposure_time)
+    img, h = ctrl.get_image(exposure_time)
     fn = "image_{:04d}.tiff".format(i)
     write_tiff(fn, img, header=h)
 ```

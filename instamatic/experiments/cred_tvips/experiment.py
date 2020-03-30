@@ -313,7 +313,7 @@ class Experiment:
             input('Move SAED aperture to crystal and press <ENTER> to measure! ')
 
             # cannot do this while lieview is running
-            # img1 = self.ctrl.getRotatedImage()
+            # img1 = self.ctrl.get_rotated_image()
             # write_tiff(self.path / "image_before.tiff", img1)
 
             self.ctrl.beam.blank()
@@ -441,7 +441,7 @@ class Experiment:
                 self.ctrl.difffocus.defocus(self.defocus_offset)
             self.ctrl.beam.unblank()
 
-            img2 = self.ctrl.getRotatedImage()
+            img2 = self.ctrl.get_rotated_image()
             write_tiff(self.path / 'image_after.tiff', img2)
 
             self.ctrl.beam.blank()

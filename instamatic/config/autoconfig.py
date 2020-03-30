@@ -23,7 +23,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         ctrl.magnification.index = i
         d = ctrl.cam.getCurrentCameraInfo()
 
-        img = ctrl.getImage(exposure=10)  # set to minimum allowed value
+        img = ctrl.get_image(exposure=10)  # set to minimum allowed value
         index = ctrl.cam.get_image_index()
         v = ctrl.cam.getEMVectorByIndex(index)
 

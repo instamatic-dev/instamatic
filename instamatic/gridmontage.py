@@ -110,7 +110,7 @@ class GridMontage:
             ctrl.stage.eliminate_backlash_xy()
 
         def acquire_image(ctrl):
-            img, h = ctrl.getImage()
+            img, h = ctrl.get_image()
             buffer.append((img, h))
 
         def post_acquire(ctrl):

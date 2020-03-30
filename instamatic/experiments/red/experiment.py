@@ -84,7 +84,7 @@ class Experiment:
         image_mode = ctrl.mode.get()
         if image_mode != 'diff':
             fn = self.tiff_image_path / f'image_{self.offset}.tiff'
-            img, h = self.ctrl.getImage(exposure_time / 5)
+            img, h = self.ctrl.get_image(exposure_time / 5)
             write_tiff(fn, img, header=h)
             ctrl.mode.set('diff')
             time.sleep(1.0)  # add some delay to account for beam lag
@@ -98,7 +98,7 @@ class Experiment:
 
             j = i + self.offset
 
-            img, h = self.ctrl.getImage(exposure_time)
+            img, h = self.ctrl.get_image(exposure_time)
 
             self.buffer.append((j, img, h))
 

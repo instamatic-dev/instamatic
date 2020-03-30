@@ -52,10 +52,10 @@ def center_z_height(ctrl, verbose=False):
     for i in range(0, 10):
         z1 = ctrl.stage.z
         ctrl.stage.set(a=a0)
-        img0, h = ctrl.getImage(exposure=0.01, comment='z height finding')
+        img0, h = ctrl.get_image(exposure=0.01, comment='z height finding')
         z.append(z0 + i * 1000)
         ctrl.stage.set(a=a0 + 10)
-        img1, h = ctrl.getImage(exposure=0.01, comment='z height finding')
+        img1, h = ctrl.get_image(exposure=0.01, comment='z height finding')
         shift, error, phasediff = register_translation(img0, img1, upsample_factor=10)
         d1 = np.linalg.norm(shift)
         if shift[0] < 0:
@@ -116,7 +116,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     magnification = ctrl.magnification.value
 
     x0, y0, z0, a0, b0 = ctrl.stage.get()
-    img0, h = ctrl.getImage(exposure=0.01, comment='z height finding HY')
+    img0, h = ctrl.get_image(exposure=0.01, comment='z height finding HY')
     try:
         crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread=spread, offset=offset)
         if verbose:
@@ -138,7 +138,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
             break
 
     while ctrl.stage.is_moving():
-        img, h = ctrl.getImage(exposure=0.01, comment='z height finding HY')
+        img, h = ctrl.get_image(exposure=0.01, comment='z height finding HY')
         try:
             crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread=spread, offset=offset)
 

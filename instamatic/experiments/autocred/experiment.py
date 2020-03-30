@@ -380,7 +380,7 @@ class Experiment:
                     self.center_particle_ofinterest((crystal.x, crystal.y), transform_stagepos)
                     crystalsize = crystal.area_pixel
                     # print("crystal size: {}".format(crystalsize))
-                    img, h = self.ctrl.getImage(exposure=self.expt, header_keys=None)
+                    img, h = self.ctrl.get_image(exposure=self.expt, header_keys=None)
 
                     crystal_positions_new = find_crystals_timepix(img, magnification=self.magnification, spread=self.spread, offset=self.offset)
 
@@ -495,7 +495,7 @@ class Experiment:
         diff_focus_defocused = diff_focus_proper + difffocus
         self.ctrl.difffocus.value = diff_focus_defocused
 
-        img0, h = self.ctrl.getImage(exp_t, header_keys=None)
+        img0, h = self.ctrl.get_image(exp_t, header_keys=None)
         self.ctrl.difffocus.value = diff_focus_proper
         return img0, h
 
@@ -515,7 +515,7 @@ class Experiment:
         img_var_est = []
         beamsize_est = []
         for i in range(0, cycle):
-            img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
+            img, h = self.ctrl.get_image(self.exposure_time_image, header_keys=None)
             crystal_pos, img0_cropped, window_size = self.image_cropper(img=img, window_size=0)
             v = self.img_var(img0_cropped, crystal_pos)
             print(f'blank image variance: {v}')
@@ -690,7 +690,7 @@ class Experiment:
                         bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
 
                     self.ctrl.difffocus.value = diff_focus_defocused
-                    img, h = self.ctrl.getImage(self.exposure_time_image, header_keys=None)
+                    img, h = self.ctrl.get_image(self.exposure_time_image, header_keys=None)
                     self.ctrl.difffocus.value = diff_focus_proper
 
                     image_buffer.append((i, img, h))
@@ -787,7 +787,7 @@ class Experiment:
 
                 else:
                     t_start = time.perf_counter()
-                    img, h = self.ctrl.getImage(self.expt, header_keys=None)
+                    img, h = self.ctrl.get_image(self.expt, header_keys=None)
                     if buffer == []:
                         imgscale0 = np.sum(img)
                     else:
@@ -975,7 +975,7 @@ class Experiment:
         self.ctrl.beamshift.set(*bs)
         self.ctrl.brightness.value = br
 
-        img_cent = self.ctrl.getRawImage(exposure=exposure, binsize=binsize)
+        img_cent = self.ctrl.get_raw_image(exposure=exposure, binsize=binsize)
 
         if np.mean(img_cent) > 10:
 
@@ -1022,7 +1022,7 @@ class Experiment:
 
             if dist > 50000 or x_zheight * y_zheight == 0 or x_zheight == 999999:
                 try:
-                    img, h = self.ctrl.getImage(exposure=self.expt, header_keys=None)
+                    img, h = self.ctrl.get_image(exposure=self.expt, header_keys=None)
                     if img.mean() > 10:
                         self.magnification = self.ctrl.magnification.value
                         crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
@@ -1153,7 +1153,7 @@ class Experiment:
             self.magnification = self.ctrl.magnification.value
 
             self.rotation_direction = self.eliminate_backlash_in_tiltx()
-            img, h = self.ctrl.getImage(exposure=self.expt, header_keys=header_keys)
+            img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
             # img, h = Experiment.apply_corrections(img, h)
 
             threshold = 10  # ignore black images
@@ -1175,7 +1175,7 @@ class Experiment:
 
                 (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
 
-                img, h = self.ctrl.getImage(exposure=self.expt, header_keys=header_keys)
+                img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
                 h['exp_magnification'] = self.ctrl.magnification.get()
                 write_tiff(path / f'Overall_view', img, h)
 
@@ -1215,7 +1215,7 @@ class Experiment:
                         beamshift_coords = np.array(bs) - np.dot(crystal_coords[k] - self.calib_beamshift.reference_pixel, self.calib_beamshift.transform)
                         self.ctrl.beamshift.set(*beamshift_coords.astype(int))
 
-                        img, h = self.ctrl.getImage(exposure=0.001, comment=comment, header_keys=header_keys)
+                        img, h = self.ctrl.get_image(exposure=0.001, comment=comment, header_keys=header_keys)
                         h['exp_magnification'] = self.ctrl.magnification.get()
                         write_tiff(path / f'crystal_{k:04d}', img, h)
 
@@ -1250,7 +1250,7 @@ class Experiment:
                             time.sleep(0.5)
 
                             self.rotation_direction = self.eliminate_backlash_in_tiltx()
-                            img, h = self.ctrl.getImage(exposure=self.expt, header_keys=header_keys)
+                            img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
                             h['exp_magnification'] = self.ctrl.magnification.get()
                             write_tiff(path / f'Overall_view_{k:04d}', img, h)
 
@@ -1264,7 +1264,7 @@ class Experiment:
 
                             (beamshiftcoord_0, size_crystal_targeted) = self.center_particle_from_crystalList(crystal_positions, transform_stagepos, self.magnification, self.beam_size_avg)
 
-                            img, h = self.ctrl.getImage(exposure=self.expt, header_keys=header_keys)
+                            img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
                             h['exp_magnification'] = self.ctrl.magnification.get()
                             write_tiff(path / f'Overall_view_{k:04d}', img, h)
 

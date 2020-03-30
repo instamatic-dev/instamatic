@@ -1028,7 +1028,7 @@ class TEMController:
 
         stagematrix = self.get_stagematrix()
 
-        img = self.getRotatedImage()
+        img = self.get_rotated_image()
 
         pixel_shift, error, phasediff = register_translation(ref_img, img, upsample_factor=10)
 
@@ -1088,11 +1088,11 @@ class TEMController:
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
             self.stage.a = angle1
-            img1 = self.getRotatedImage()
+            img1 = self.get_rotated_image()
 
             angle2 = +tilt * sign
             self.stage.a = angle2
-            img2 = self.getRotatedImage()
+            img2 = self.get_rotated_image()
 
             if sign < 1:
                 img2, img1 = img1, img2
@@ -1224,8 +1224,8 @@ class TEMController:
             except TypeError:
                 func(v)
 
-    def getRawImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
-        """Simplified function equivalent to `getImage` that only returns the
+    def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+        """Simplified function equivalent to `get_image` that only returns the
         raw data array.
 
         Parameters
@@ -1242,8 +1242,8 @@ class TEMController:
         """
         return self.cam.getImage(exposure=exposure, binsize=binsize)
 
-    def getFutureImage(self, exposure: float = None, binsize: int = None) -> 'future':
-        """Simplified function equivalent to `getImage` that returns the raw
+    def get_future_image(self, exposure: float = None, binsize: int = None) -> 'future':
+        """Simplified function equivalent to `get_image` that returns the raw
         image as a future. This makes the data acquisition call non-blocking.
 
         Parameters
@@ -1259,15 +1259,15 @@ class TEMController:
             Future object that contains the image as 2D numpy array.
 
         Usage:
-            future = ctrl.getFutureImage()
+            future = ctrl.get_future_image()
             (other operations)
             img = future.result()
         """
-        future = self._executor.submit(self.getRawImage, exposure=exposure, binsize=binsize)
+        future = self._executor.submit(self.get_raw_image, exposure=exposure, binsize=binsize)
         return future
 
-    def getRotatedImage(self, exposure: float = None, binsize: int = None) -> np.ndarray:
-        """Simplified function equivalent to `getImage` that returns the
+    def get_rotated_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+        """Simplified function equivalent to `get_image` that returns the
         rotated image array.
 
         Parameters
@@ -1286,7 +1286,7 @@ class TEMController:
         arr : np.array
             Image as 2D numpy array.
         """
-        future = self.getFutureImage(exposure=exposure, binsize=binsize)
+        future = self.get_future_image(exposure=exposure, binsize=binsize)
 
         mag = self.magnification.value
         mode = self.mode.get()
@@ -1296,15 +1296,15 @@ class TEMController:
 
         return arr
 
-    def getImage(self,
-                 exposure: float = None,
-                 binsize: int = None,
-                 comment: str = '',
-                 out: str = None,
-                 plot: bool = False,
-                 verbose: bool = False,
-                 header_keys: Tuple[str] = 'all',
-                 ) -> Tuple[np.ndarray, dict]:
+    def get_image(self,
+                  exposure: float = None,
+                  binsize: int = None,
+                  comment: str = '',
+                  out: str = None,
+                  plot: bool = False,
+                  verbose: bool = False,
+                  header_keys: Tuple[str] = 'all',
+                  ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
         file.
@@ -1330,7 +1330,7 @@ class TEMController:
             Tuple of the image as numpy array and dictionary with all the tem parameters and image attributes
 
         Usage:
-            img, h = self.getImage()
+            img, h = self.get_image()
         """
         if not self.cam:
             raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
@@ -1350,7 +1350,7 @@ class TEMController:
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
-        arr = self.getRotatedImage(exposure=exposure, binsize=binsize)
+        arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
 
         h['ImageGetTimeEnd'] = time.perf_counter()
 

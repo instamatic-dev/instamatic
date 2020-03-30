@@ -35,7 +35,7 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
         for delta in np.arange(-5, 6) * step:
             ctrl.difffocus.set(current + delta)
 
-            img, h = ctrl.getImage(header_keys=None)
+            img, h = ctrl.get_image(header_keys=None)
 
             score = np.sum(img > img.max() / 2)**2
 
@@ -211,7 +211,7 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
     attr = getattr(ctrl, key.lower())
 
     outfile = os.path.join(outdir, f'calib_db_{key}_0000') if save_images else None
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment='Beam in center of image', out=outfile)
+    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, comment='Beam in center of image', out=outfile)
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent)
@@ -235,7 +235,7 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
         outfile = os.path.join(outdir, f'calib_db_{key}_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
+        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
         shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)

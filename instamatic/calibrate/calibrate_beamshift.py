@@ -142,7 +142,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     if not stepsize:
         stepsize = config.camera.calib_beamshift.get('stepsize', 250)
 
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, comment='Beam in center of image')
+    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, comment='Beam in center of image')
     x_cent, y_cent = beamshift_cent = np.array(h_cent['BeamShift'])
 
     magnification = h_cent['Magnification']
@@ -175,7 +175,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         outfile = os.path.join(outdir, 'calib_beamshift_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='BeamShift')
+        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='BeamShift')
         img = imgscale(img, scale)
 
         shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)

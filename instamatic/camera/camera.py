@@ -165,7 +165,7 @@ def main_entry():
                     i = value
             print(f'binsize = {binsize} | exposure = {exposure} | file #{i}')
         else:
-            arr, h = ctrl.getImage(binsize=binsize, exposure=exposure, comment=inp)
+            arr, h = ctrl.get_image(binsize=binsize, exposure=exposure, comment=inp)
 
             write_tiff(outfile, arr, header=h)
 
@@ -173,7 +173,7 @@ def main_entry():
     else:
         import matplotlib.pyplot as plt
 
-        arr, h = ctrl.getImage(binsize=binsize, exposure=exposure)
+        arr, h = ctrl.get_image(binsize=binsize, exposure=exposure)
 
         if show_fig:
             plt.imshow(arr, cmap='gray', interpolation='none')

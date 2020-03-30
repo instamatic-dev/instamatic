@@ -233,7 +233,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
+    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
 
     x_cent, y_cent, _, _, _ = h_cent['StagePosition']
     xy_cent = np.array([x_cent, y_cent])
@@ -258,7 +258,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         outfile = f'calib_{i:04d}' if save_images else None
 
         comment = comment
-        img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='StagePosition')
+        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='StagePosition')
 
         img = imgscale(img, scale)
 
@@ -285,7 +285,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         print()
 
     if save_images:
-        ctrl.getImage(exposure=exposure, binsize=binsize, out='calib_end', comment='Center image (end)')
+        ctrl.get_image(exposure=exposure, binsize=binsize, out='calib_end', comment='Center image (end)')
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
 

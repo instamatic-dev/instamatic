@@ -475,7 +475,7 @@ class Experiment:
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
 
-            img, h = self.ctrl.getImage(exposure=self.image_exposure, binsize=self.image_binsize, header_keys=header_keys)
+            img, h = self.ctrl.get_image(exposure=self.image_exposure, binsize=self.image_binsize, header_keys=header_keys)
 
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -507,7 +507,7 @@ class Experiment:
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = self.datadir / f'image_{i:04d}_{k:04d}'
                 comment = f'Image {i} Crystal {k}'
-                img, h = self.ctrl.getImage(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
+                img, h = self.ctrl.get_image(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
                 img, h = self.apply_corrections(img, h)
 
                 for d in (d_diff, d_pos, d_cryst):
@@ -530,7 +530,7 @@ class Experiment:
                         self.ctrl.stage.a = rotation_angle
 
                         outfile = self.datadir / f'image_{i:04d}_{k:04d}_{rotation_angle}'
-                        img, h = self.ctrl.getImage(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
+                        img, h = self.ctrl.get_image(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
                         img, h = self.apply_corrections(img, h)
 
                         for d in (d_diff, d_pos, d_cryst):

@@ -79,7 +79,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, h_cent = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
+    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
     stage_cent = ctrl.stage.get()
 
     cam_dimensions = h_cent['ImageCameraDimensions']
@@ -127,7 +127,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
             outfile = work_drc / f'calib_{i:04d}' if save_images else None
 
             comment = f'Calib image {i}: dx={dx} - dy={dy}'
-            img, h = ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment=comment)
+            img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment)
 
             img = imgscale(img, scale)
 
@@ -164,7 +164,7 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     if save_images:
         outfile = work_drc / 'calib_end'
-        ctrl.getImage(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (end)')
+        ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (end)')
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
     c.plot()

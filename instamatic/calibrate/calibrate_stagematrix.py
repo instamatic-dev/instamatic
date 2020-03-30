@@ -167,7 +167,7 @@ def calibrate_stage_from_stageshifts(ctrl,
         current_stage_pos = ctrl.stage
         dx, dy = step
 
-        last_img, _ = ctrl.getImage()
+        last_img, _ = ctrl.get_image()
 
         if drc:
             write_tiff(drc / f'{i}_{j}.tiff', last_img)
@@ -177,7 +177,7 @@ def calibrate_stage_from_stageshifts(ctrl,
             new_y_pos = current_stage_pos.y + dy
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            img, _ = ctrl.getImage()
+            img, _ = ctrl.get_image()
 
             if drc:
                 write_tiff(drc / f'{i}_{j}.tiff', img)

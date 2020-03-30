@@ -46,7 +46,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
         y0 = deflector.y
         scaling = False
 
-    img_cent, h_cent = ctrl.getImage(exposure=0.01, comment='Beam in center of image')
+    img_cent, h_cent = ctrl.get_image(exposure=0.01, comment='Beam in center of image')
 
     shifts = []
     imgpos = []
@@ -55,7 +55,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
     for i in tqdm(range(0, 5)):
         for j in range(0, 5):
             deflector.set(x=x0 + (i - 2) * stepsize, y=y0 + (j - 2) * stepsize)
-            img, h = ctrl.getImage(exposure=0.01, comment='imageshifted image')
+            img, h = ctrl.get_image(exposure=0.01, comment='imageshifted image')
 
             shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
             imgshift = np.array(((i - 2) * stepsize, (j - 2) * stepsize))

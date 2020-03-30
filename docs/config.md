@@ -163,7 +163,7 @@ diff:
 ```
 
 **mag/flipud**
-Flip the images around the horizontal axes. This is used to globally modify all images taken by the camera using `ctrl.getImage()` or `ctrl.getRotatedImage()` to make them in line with the fluorescence screen or otherwise. Default: False.
+Flip the images around the horizontal axes. This is used to globally modify all images taken by the camera using `ctrl.get_image()` or `ctrl.get_rotated_image()` to make them in line with the fluorescence screen or otherwise. Default: False.
 
 **mag/fliplr**
 Similar to above, except that the images are flipped around the vertical axis. Default: False.

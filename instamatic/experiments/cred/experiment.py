@@ -270,7 +270,7 @@ class Experiment:
                 acquisition_time = (t_start - t0) / (i - 1)
 
                 self.ctrl.difffocus.set(self.diff_focus_defocused, confirm_mode=False)
-                img, h = self.ctrl.getImage(exposure_image, header_keys=None)
+                img, h = self.ctrl.get_image(exposure_image, header_keys=None)
                 self.ctrl.difffocus.set(self.diff_focus_proper, confirm_mode=False)
 
                 image_buffer.append((i, img, h))
@@ -291,7 +291,7 @@ class Experiment:
                 time.sleep(diff)
 
             else:
-                img, h = self.ctrl.getImage(self.exposure, header_keys=None)
+                img, h = self.ctrl.get_image(self.exposure, header_keys=None)
                 # print(f"{i} Image!")
                 buffer.append((i, img, h))
 
