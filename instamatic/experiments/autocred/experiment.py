@@ -87,7 +87,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
         print(f'No {imageshift}, defocus = {diff_defocus} calibration found. Choose the desired defocus value.')
         inp = input('Press ENTER when ready.')
         if ctrl.mode != mode:
-            ctrl.mode = mode
+            ctrl.mode.set(mode)
         satisfied = 'x'
         while satisfied == 'x':
             if imageshift == 'IS1' and diff_defocus != 0:
@@ -272,15 +272,15 @@ class Experiment:
     def hysteresis_check(self, n_cycle=4):
         print('Relaxing beam...')
         modes = ['mag1', 'samag', 'diff']
-        current_mode = self.ctrl.mode
+        current_mode = self.ctrl.mode.get()
         mode_index = modes.index(current_mode)
 
         for i in range(n_cycle):
-            self.ctrl.mode = modes[(mode_index + 1) % 3]
+            self.ctrl.mode.set(modes[(mode_index + 1) % 3])
             time.sleep(0.5)
-            self.ctrl.mode = modes[(mode_index + 2) % 3]
+            self.ctrl.mode.set(modes[(mode_index + 2) % 3])
             time.sleep(0.5)
-            self.ctrl.mode = modes[mode_index]
+            self.ctrl.mode.set(modes[mode_index])
             time.sleep(0.5)
 
         print('Beam relaxing done.')
@@ -507,8 +507,8 @@ class Experiment:
         print('\033[k', msg, end='\r')
 
     def imagevar_blank_estimator(self, brightness, cycle=3):
-        # previous_mode = self.ctrl.mode
-        self.ctrl.mode = 'mag1'
+        # previous_mode = self.ctrl.mode.get()
+        self.ctrl.mode.set('mag1')
         self.ctrl.brightness.value = brightness
 
         input('Please move your stage to a blank area for image variance calculation. Do not change brightness. Press ENTER when ready.')
@@ -525,8 +525,8 @@ class Experiment:
         image_var = np.average(img_var_est)
         beamsize_avg = np.average(window_size)
 
-        self.ctrl.mode = 'samag'
-        self.ctrl.mode = 'diff'
+        self.ctrl.mode.set('samag')
+        self.ctrl.mode.set('diff')
         return image_var, beamsize_avg
 
     def auto_cred_collection(self, path, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, calib_beamshift):
@@ -576,8 +576,8 @@ class Experiment:
             self.logger.debug(f'Transform_imgshift2_foc: {transform_imgshift2_foc}')
 
             if self.ctrl.mode != 'diff':
-                self.ctrl.mode = 'samag'
-                self.ctrl.mode = 'diff'
+                self.ctrl.mode.set('samag')
+                self.ctrl.mode.set('diff')
 
             bs_x0, bs_y0 = self.ctrl.beamshift.get()
             is_x0, is_y0 = self.ctrl.imageshift1.get()
@@ -939,7 +939,7 @@ class Experiment:
 
     def write_BrightnessStates(self, n_cycles=2):
         print('Go to your desired magnification and camera length. Now recording lens states...')
-        self.ctrl.mode = 'mag1'
+        self.ctrl.mode.set('mag1')
         input('Please choose the desired magnification, partially converge the beam in MAG1 to around 1 um in diameter, and center it using beamshift. Press ENTER when ready')
 
         for i in range(0, n_cycles):
@@ -950,8 +950,8 @@ class Experiment:
         img_brightness = self.ctrl.brightness.value
         bs = self.ctrl.beamshift.get()
 
-        self.ctrl.mode = 'samag'
-        self.ctrl.mode = 'diff'
+        self.ctrl.mode.set('samag')
+        self.ctrl.mode.set('diff')
         input('Please go to diffraction mode, choose desired camera length, focus the diffraction spots, and center it using PLA. Press ENTER when ready')
         for i in range(0, n_cycles):
             self.hysteresis_check()
@@ -1076,7 +1076,7 @@ class Experiment:
             print('No beam shift calibration result found. Running instamatic.calibrate_beamshift first...\n')
             print('Going to MAG1, desired magnification, and desired brightness. DO NOT change brightness!')
             if self.ctrl.mode != 'mag1':
-                self.ctrl.mode = 'mag1'
+                self.ctrl.mode.set('mag1')
                 self.ctrl.magnification.value = desired_mag
                 self.ctrl.brightness.value = img_brightness
 
@@ -1095,10 +1095,10 @@ class Experiment:
                 self.diff_brightness, self.diff_difffocus = pickle.load(f)
         except OSError:
             if not self.ctrl.mode == 'diff':
-                self.ctrl.mode = 'samag'
+                self.ctrl.mode.set('samag')
                 self.ctrl.imageshift1.set(x=is1status[0], y=is1status[1])
                 self.ctrl.imageshift2.set(x=is2status[0], y=is2status[1])
-                self.ctrl.mode = 'diff'
+                self.ctrl.mode.set('diff')
             self.ctrl.difffocus.value = dp_focus
 
             self.calib_directbeam = CalibDirectBeam.live(self.ctrl, outdir=self.calibdir)
@@ -1138,7 +1138,7 @@ class Experiment:
             # ready = input("Please make sure that you are in the super user mode and the rotation speed is set via GONIOTOOL! Press ENTER to continue.")
 
             if self.ctrl.mode != 'mag1':
-                self.ctrl.mode = 'mag1'
+                self.ctrl.mode.set('mag1')
 
             self.ctrl.magnification.value = desired_mag
             self.ctrl.brightness.value = 65535
@@ -1223,8 +1223,8 @@ class Experiment:
 
                         if self.isolated(crystal_positions[k], crystal_coords) and crystal_positions[k].isolated and not any(t < 100 for t in crystal_coords[k]) and not any(t > 416 for t in crystal_coords[k]):
 
-                            self.ctrl.mode = 'samag'
-                            self.ctrl.mode = 'diff'
+                            self.ctrl.mode.set('samag')
+                            self.ctrl.mode.set('diff')
                             self.ctrl.imageshift1.set(x=is1status[0], y=is1status[1])
                             self.ctrl.imageshift2.set(x=is2status[0], y=is2status[1])
                             self.ctrl.diffshift.set(x=plastatus[0], y=plastatus[1])
@@ -1245,7 +1245,7 @@ class Experiment:
                             self.auto_cred_collection(outfile, pathtiff, pathsmv, pathred, transform_imgshift, transform_imgshift2, transform_imgshift_foc, transform_imgshift2_foc, transform_beamshift_d, transform_beamshift_d_defoc, self.calib_beamshift)
 
                             self.ctrl.beamshift.set(x=self.calib_beamshift.reference_shift[0], y=self.calib_beamshift.reference_shift[1])
-                            self.ctrl.mode = 'mag1'
+                            self.ctrl.mode.set('mag1')
                             self.ctrl.brightness.value = 65535
                             time.sleep(0.5)
 
@@ -1299,7 +1299,7 @@ class Experiment:
                         self.print_and_del('Exitting loop...')
                         break
 
-                self.ctrl.mode = 'mag1'
+                self.ctrl.mode.set('mag1')
                 self.ctrl.brightness.value = 65535
 
                 self.ctrl.imageshift1.set(x=IS1_Neut[0], y=IS1_Neut[1])

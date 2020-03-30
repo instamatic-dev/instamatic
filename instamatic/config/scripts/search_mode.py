@@ -1,3 +1,3 @@
 ctrl.screen_down()
 ctrl.beam.unblank()
-ctrl.mode_mag1()
+ctrl.mode.set('mag1')

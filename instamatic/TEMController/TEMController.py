@@ -726,6 +726,78 @@ class Beam:
             time.sleep(delay)
 
 
+class Mode:
+    """Control for the magnification mode."""
+
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self._setter = self._tem.setFunctionMode
+        self._getter = self._tem.getFunctionMode
+
+    def __repr__(self):
+        val = self.get()
+        return f'{self.name}({repr(val)})'
+
+    def __eq__(self, other):
+        """Allow `str` comparison."""
+        if isinstance(other, str):
+            return self.get() == other
+        return False
+
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
+
+    def set(self, mode: str) -> None:
+        """Set the function mode, must be one of `mag1`, `mag2`, `lowmag`,
+        `samag`, `diff`."""
+        self._setter(mode)
+
+    def get(self) -> str:
+        """Returns the function mode, one of `mag1`, `mag2`, `lowmag`, `samag`,
+        `diff`."""
+        return self._getter()
+
+
+class Screen:
+    """Control for the fluorescence screen."""
+
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self._setter = self._tem.setScreenPosition
+        self._getter = self._tem.getScreenPosition
+
+    def __repr__(self):
+        return f'{self.name}({repr(self.position)})'
+
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
+
+    @property
+    def position(self) -> str:
+        """Return the position of the screen as a `str`"""
+        if self.is_up:
+            return 'up'
+        else:
+            return 'down'
+
+    @property
+    def is_up(self) -> bool:
+        """Return the position of the screen as a `bool`"""
+        return self._getter()
+
+    def up(self) -> None:
+        """Raise the fluorescence screen."""
+        self.tem.setScreenPosition('up')
+
+    def down(self) -> None:
+        """Lower the fluorescence screen."""
+        self.tem.setScreenPosition('down')
+
+
 class TEMController:
     """TEMController object that enables access to all defined microscope
     controls.
@@ -755,6 +827,8 @@ class TEMController:
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
         self.beam = Beam(tem)
+        self.screen = Screen(tem)
+        self.mode = Mode(tem)
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
@@ -798,46 +872,6 @@ class TEMController:
     @spotsize.setter
     def spotsize(self, value: int):
         self.tem.setSpotSize(value)
-
-    def mode_lowmag(self):
-        self.tem.setFunctionMode('lowmag')
-
-    def mode_mag1(self):
-        self.tem.setFunctionMode('mag1')
-
-    def mode_samag(self):
-        self.tem.setFunctionMode('samag')
-
-    def mode_diffraction(self):
-        self.tem.setFunctionMode('diff')
-
-    @property
-    def screen(self):
-        """Returns one of 'up', 'down'."""
-        self.tem.getScreenPosition()
-
-    @screen.setter
-    def screen(self, value: str):
-        """Should be one of 'up', 'down'."""
-        self.tem.setScreenPosition(value)
-
-    def screen_up(self):
-        """Raise the fluorescence screen."""
-        self.tem.setScreenPosition('up')
-
-    def screen_down(self):
-        """Lower the fluorescence screen."""
-        self.tem.setScreenPosition('down')
-
-    @property
-    def mode(self):
-        """Returns one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'."""
-        return self.tem.getFunctionMode()
-
-    @mode.setter
-    def mode(self, value: str):
-        """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'."""
-        self.tem.setFunctionMode(value)
 
     def acquire_at_items(self, *args, **kwargs) -> None:
         """Class to automated acquisition at many stage locations. The
@@ -951,7 +985,7 @@ class TEMController:
         """
 
         if not mode:
-            mode = self.mode
+            mode = self.mode.get()
         if not mag:
             mag = self.magnification.value
         if not binning:
@@ -1255,7 +1289,7 @@ class TEMController:
         future = self.getFutureImage(exposure=exposure, binsize=binsize)
 
         mag = self.magnification.value
-        mode = self.mode
+        mode = self.mode.get()
 
         arr = future.result()
         arr = rotate_image(arr, mode=mode, mag=mag)
@@ -1353,7 +1387,7 @@ class TEMController:
 
         Restore the alignment using:     `ctrl.restore("beam")`
         """
-        if not self.mode == 'diff':
+        if self.mode != 'diff':
             raise TEMControllerError('Microscope is not in `diffraction mode`')
         keys = 'FunctionMode', 'Brightness', 'GunTilt', 'DiffFocus', 'SpotSize'
         self.store(name=name, keys=keys, save_to_file=save_to_file)

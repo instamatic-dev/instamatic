@@ -65,7 +65,7 @@ def relax_beam(controller, **kwargs):
     n_cycles = 4
     print(f'Relaxing beam ({n_cycles} cycles)')
 
-    controller.ctrl.mode_diffraction()
+    controller.ctrl.mode.set('diff')
 
     offset = kwargs['value']
 

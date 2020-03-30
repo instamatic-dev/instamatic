@@ -196,9 +196,9 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
         instance of Calibration class with conversion methods
     """
 
-    if not ctrl.mode == 'diff':
+    if ctrl.mode != 'diff':
         print(' >> Switching to diffraction mode')
-        ctrl.mode_diffraction()
+        ctrl.mode.set('diff')
 
     exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)

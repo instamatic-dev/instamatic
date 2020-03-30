@@ -242,9 +242,9 @@ class ExperimentalTVIPS(LabelFrame):
         toggle = self.var_toggle_diff_mode.get()
 
         if toggle:
-            self.ctrl.mode_diffraction()
+            self.ctrl.mode.set('diff')
         else:
-            self.ctrl.mode_mag1()
+            self.ctrl.mode.set('mag1')
 
     def toggle_beamblank(self):
         toggle = self.var_toggle_beamblank.get()

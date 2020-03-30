@@ -1,3 +1,3 @@
 ctrl.screen_up()
 ctrl.beam.unblank()
-ctrl.mode_diffraction()
+ctrl.mode.set('diff')

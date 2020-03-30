@@ -160,7 +160,7 @@ class ExperimentalCtrl(LabelFrame):
         self.q = q
 
     def set_mode(self, event=None):
-        self.ctrl.mode = self.var_mode.get()
+        self.ctrl.mode.set(self.var_mode.get())
 
     def set_brightness(self, event=None):
         self.var_brightness.set(self.var_brightness.get())

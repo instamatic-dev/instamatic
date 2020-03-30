@@ -81,12 +81,12 @@ class Experiment:
         print(f'\nStart_angle: {start_angle:.3f}')
         # print "Angles:", tilt_positions
 
-        image_mode = ctrl.mode
+        image_mode = ctrl.mode.get()
         if image_mode != 'diff':
             fn = self.tiff_image_path / f'image_{self.offset}.tiff'
             img, h = self.ctrl.getImage(exposure_time / 5)
             write_tiff(fn, img, header=h)
-            ctrl.mode_diffraction()
+            ctrl.mode.set('diff')
             time.sleep(1.0)  # add some delay to account for beam lag
 
         if ctrl.cam.streamable:

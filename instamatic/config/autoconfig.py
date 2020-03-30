@@ -17,7 +17,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 
     binning = ctrl.cam.getBinning()
 
-    ctrl.mode = mode
+    ctrl.mode.set(mode)
 
     for i, mag in enumerate(rng):
         ctrl.magnification.index = i

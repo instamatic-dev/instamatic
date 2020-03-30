@@ -121,7 +121,7 @@ class Experiment:
 
         if self.ctrl.mode != self.mode:
             print(f'Switching to {self.mode} mode')
-            self.ctrl.mode = self.mode
+            self.ctrl.mode.set(self.mode)
 
         if self.mode == 'diff':
             self.ctrl.difffocus.refocus()

@@ -4,7 +4,7 @@ The TEMController is at the heart of `instamatic`. Every routine depends on acce
 
 ## Getting started
 
-In IPython:
+In IPython/Jupyter:
 
 ```python
 from instamatic import TEMController
@@ -29,7 +29,7 @@ Otherwise, to skip camera initialization:
 ctrl = TEMController.initialize(tem_name='jeol', cam_name=None)
 ```
 
-Once a`ctrl` (control) object has been intialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `TEMController.initialize?`).
+Once a `ctrl` (control) object has been initialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `TEMController.initialize?`).
 
 Based on this you can write your own python scripts to control the microscope and/or camera. See in `instamatic/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `instamatic/TEMController/`
 
@@ -42,7 +42,7 @@ To move to a different position:
 ```python
 ctrl.stage.xy = 10000, 20000
 ```
-A convenient way to experiment with the options available is to run `instamatic.controller`. This will initialize a `ctrl` object that can be played with interactively.
+A convenient way to experiment with the options available is to run `instamatic.controller` on the command line. This will initialize a `ctrl` object that can be played with interactively.
 
 ### Lenses
 
@@ -195,12 +195,11 @@ ctrl.screen_down()
 ```
 To switch modes:
 ```python
-current_mode = ctrl.mode
-ctrl.mode = "diff"  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
-ctrl.mode_lowmag()
-ctrl.mode_mag1()
-ctrl.mode_samag()
-ctrl.mode_diff()
+current_mode = ctrl.mode.get()
+ctrl.mode.set('diff')  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
+ctrl.mode.set('lowmag')
+ctrl.mode.set('mag1')
+ctrl.mode.set('samag')
 ```
 To change spotsize:
 ```python

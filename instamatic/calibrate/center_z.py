@@ -35,7 +35,7 @@ def center_z_height(ctrl, verbose=False):
     """
     print('\033[k', 'Finding eucentric height...', end='\r')
     if ctrl.mode != 'mag1':
-        ctrl.mode = 'mag1'
+        ctrl.mode.set('mag1')
 
     ctrl.brightness.value = 65535
     ctrl.magnification.value = 2500
@@ -109,7 +109,7 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
 
     print('\033[k', 'Finding eucentric height...', end='\r')
     if ctrl.mode != 'mag1':
-        ctrl.mode = 'mag1'
+        ctrl.mode.set('mag1')
 
     ctrl.brightness.value = 65535
     ctrl.magnification.value = 2500

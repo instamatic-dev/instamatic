@@ -180,7 +180,7 @@ class Experiment:
     def load_calibration(self, **kwargs):
         """Load user specified config and calibration files."""
 
-        self.ctrl.mode_mag1()
+        self.ctrl.mode.set('mag1')
         self.ctrl.brightness.max()
 
         if (not self.begin_here) or (not self.scan_radius):
@@ -205,7 +205,7 @@ class Experiment:
         try:
             self.calib_beamshift = CalibBeamShift.from_file()
         except OSError:
-            self.ctrl.mode_mag1()
+            self.ctrl.mode.set('mag1')
             self.ctrl.store('image')
             self.ctrl.brightness.set(image_brightness)
             self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -228,7 +228,7 @@ class Experiment:
         try:
             self.calib_directbeam = CalibDirectBeam.from_file()
         except OSError:
-            self.ctrl.mode_diffraction()
+            self.ctrl.mode.set('diff')
             self.ctrl.store('diffraction')
             self.ctrl.tem.setSpotSize(self.diff_spotsize)
 
@@ -286,7 +286,7 @@ class Experiment:
         import atexit
         atexit.register(self.ctrl.restore)
 
-        self.ctrl.mode_diffraction()
+        self.ctrl.mode.set('diff')
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.difffocus.set(self.diff_difffocus)
         self.ctrl.tem.setSpotSize(self.diff_spotsize)
@@ -294,7 +294,7 @@ class Experiment:
         self.neutral_diffshift = np.array(self.ctrl.diffshift.get())
         self.log.info('DiffShift(x=%d, y=%d)', *self.neutral_diffshift)
 
-        self.ctrl.mode_mag1()
+        self.ctrl.mode.set('mag1')
         self.ctrl.magnification.value = self.magnification
         self.ctrl.brightness.max()
         self.calib_beamshift.center(self.ctrl)
@@ -313,7 +313,7 @@ class Experiment:
         if self.ctrl.mode == 'diff':
             self.ctrl.diffshift.set(*self.neutral_diffshift)
 
-        self.ctrl.mode_mag1()
+        self.ctrl.mode.set('mag1')
         self.ctrl.brightness.max()
 
     def diffraction_mode(self, delay=0.2):
@@ -323,7 +323,7 @@ class Experiment:
         time.sleep(delay)
 
         self.ctrl.brightness.set(self.diff_brightness)
-        self.ctrl.mode_diffraction()
+        self.ctrl.mode.set('diff')
         self.ctrl.difffocus.value = self.diff_difffocus  # difffocus must be set AFTER switching to diffraction mode
 
     def report_status(self):

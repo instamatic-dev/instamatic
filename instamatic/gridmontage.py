@@ -77,7 +77,7 @@ class GridMontage:
 
         coords = (stagepos - stage_center).astype(int)
 
-        mode = self.ctrl.mode
+        mode = self.ctrl.mode.get()
         magnification = self.ctrl.magnification.value
         self.stagecoords = coords
         self.grid = grid
@@ -194,7 +194,7 @@ class GridMontage:
 if __name__ == '__main__':
     from instamatic import TEMController
     ctrl = TEMController.initialize()
-    ctrl.mode = 'lowmag'
+    ctrl.mode.set('lowmag')
     ctrl.magnification.value = 100
 
     gm = GridMontage(ctrl)

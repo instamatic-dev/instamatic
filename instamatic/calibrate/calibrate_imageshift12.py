@@ -108,6 +108,6 @@ def Calibrate_Beamshift_D_Defoc(ctrl, diff_defocus, stepsize, logger):
 
 def Calibrate_Stage(ctrl, stepsize, logger):
     if ctrl.mode != 'mag1':
-        ctrl.mode = 'mag1'
+        ctrl.mode.set('mag1')
     ctrl.brightness.value = 65535
     return Calibrate_Imageshift(ctrl=ctrl, diff_defocus=0, stepsize=stepsize, logger=logger, key='S')

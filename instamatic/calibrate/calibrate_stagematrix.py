@@ -156,7 +156,7 @@ def calibrate_stage_from_stageshifts(ctrl,
     stage_shifts = []  # um
 
     mag = ctrl.magnification.value
-    mode = ctrl.mode
+    mode = ctrl.mode.get()
     binning = ctrl.cam.getBinning()
 
     pairs = []
@@ -284,10 +284,10 @@ def calibrate_stage(ctrl,
     """
 
     if mode and mag:
-        ctrl.mode = mode
+        ctrl.mode.set(mode)
         ctrl.magnification.value = mag
     else:
-        mode = ctrl.mode
+        mode = ctrl.mode.get()
         mag = ctrl.magnification.value
 
     camera_shape = ctrl.cam.getCameraDimensions()

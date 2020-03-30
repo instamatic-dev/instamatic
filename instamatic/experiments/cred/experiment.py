@@ -248,7 +248,7 @@ class Experiment:
         image_buffer = []
 
         if self.ctrl.mode != 'diff':
-            self.ctrl.mode = 'diff'
+            self.ctrl.mode.set('diff')
 
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
