@@ -617,7 +617,7 @@ class Experiment:
             self.logger.debug(f'Tracking method: {trackmethod}. Initial crystal_pos: {crystal_pos} by find_defocused_image_center.')
 
         if self.unblank_beam:
-            self.ctrl.beamblank = False
+            self.ctrl.beam.unblank()
 
         if self.mode > 1:
             a_i = self.ctrl.stage.a
@@ -831,7 +831,7 @@ class Experiment:
 
         if self.unblank_beam:
             # print("Blanking beam")
-            self.ctrl.beamblank = True
+            self.ctrl.beam.blank()
 
         self.stopEvent.clear()
 
@@ -932,7 +932,7 @@ class Experiment:
                 fn = os.path.join(drc, f'{i:05d}.tiff')
                 write_tiff(fn, img, header=h)
 
-        self.ctrl.beamblank = False
+        self.ctrl.beam.unblank()
         self.number_exp_performed += 1
         if self.verbose:
             print('Data Collection and Conversion Done.')
@@ -1295,7 +1295,7 @@ class Experiment:
                             break
                     except BaseException:
                         traceback.print_exc()
-                        self.ctrl.beamblank = False
+                        self.ctrl.beam.unblank()
                         self.print_and_del('Exitting loop...')
                         break
 
@@ -1389,7 +1389,7 @@ class Experiment:
             lensPar_i = pickle.load(f)
 
         self.ctrl.from_dict(lensPar_i)
-        self.ctrl.beamblank = True
+        self.ctrl.beam.blank()
 
         print('AutocRED collection done.')
         self.number_crystals_scanned = 0

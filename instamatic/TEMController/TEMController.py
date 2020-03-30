@@ -682,6 +682,50 @@ class Stage:
             time.sleep(settle_delay)
 
 
+class Beam:
+    """Control for the beam blanker."""
+
+    def __init__(self, tem):
+        super().__init__()
+        self._tem = tem
+        self._setter = self._tem.setBeamBlank
+        self._getter = self._tem.isBeamBlanked
+
+    def __repr__(self):
+        return f'{self.name}({repr(self.status)})'
+
+    @property
+    def name(self) -> str:
+        return self.__class__.__name__
+
+    @property
+    def status(self):
+        """Return the status of the beam blanker as a `str` (on/off)"""
+        if self.is_blanked:
+            return 'blanked'
+        else:
+            return 'unblanked'
+
+    @property
+    def is_blanked(self) -> bool:
+        """Return the status of the beam blanker as a `bool`"""
+        return self._getter()
+
+    def blank(self, delay: float = 0.0) -> None:
+        """Turn the beamblank on, optionally wait for `delay` in ms to allow
+        the beam to settle."""
+        self._setter(True)
+        if delay:
+            time.sleep(delay)
+
+    def unblank(self, delay: float = 0.0) -> None:
+        """Turn the beamblank off, optionally wait for `delay` in ms to allow
+        the beam to settle."""
+        self._setter(False)
+        if delay:
+            time.sleep(delay)
+
+
 class TEMController:
     """TEMController object that enables access to all defined microscope
     controls.
@@ -710,6 +754,7 @@ class TEMController:
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
         self.difffocus = DiffFocus(tem)
+        self.beam = Beam(tem)
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
@@ -784,17 +829,6 @@ class TEMController:
         """Lower the fluorescence screen."""
         self.tem.setScreenPosition('down')
 
-    def beamblank_on(self):
-        """Turn the beamblank on."""
-        self.tem.setBeamBlank(True)
-
-    def beamblank_off(self, delay: float = 0.0):
-        """Turn the beamblank off, optionally wait for `delay` ms to allow the
-        beam to settle."""
-        self.tem.setBeamBlank(False)
-        if delay:
-            time.sleep(delay)
-
     @property
     def mode(self):
         """Returns one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'."""
@@ -804,14 +838,6 @@ class TEMController:
     def mode(self, value: str):
         """Should be one of 'mag1', 'mag2', 'lowmag', 'samag', 'diff'."""
         self.tem.setFunctionMode(value)
-
-    @property
-    def beamblank(self):
-        return self.tem.isBeamBlanked()
-
-    @beamblank.setter
-    def beamblank(self, on: bool):
-        self.tem.setBeamBlank(on)
 
     def acquire_at_items(self, *args, **kwargs) -> None:
         """Class to automated acquisition at many stage locations. The
@@ -1285,8 +1311,8 @@ class TEMController:
         else:
             h = self.to_dict(header_keys)
 
-        if self.autoblank and self.beamblank:
-            self.beamblank = False
+        if self.autoblank:
+            self.beam.unblank()
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
@@ -1295,7 +1321,7 @@ class TEMController:
         h['ImageGetTimeEnd'] = time.perf_counter()
 
         if self.autoblank:
-            self.beamblank = True
+            self.beam.blank()
 
         h['ImageGetTime'] = time.time()
         h['ImageExposureTime'] = exposure

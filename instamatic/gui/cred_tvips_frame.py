@@ -250,9 +250,9 @@ class ExperimentalTVIPS(LabelFrame):
         toggle = self.var_toggle_beamblank.get()
 
         if toggle:
-            self.ctrl.beamblank_on()
+            self.ctrl.beam.blank()
         else:
-            self.ctrl.beamblank_off()
+            self.ctrl.beam.unblank()
 
     def toggle_screen(self):
         toggle = self.var_toggle_screen.get()

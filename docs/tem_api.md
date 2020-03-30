@@ -177,15 +177,16 @@ In case a streamable camera is used, `ctrl.show_stream()` will show a GUI window
 
 To blank the beam:
 ```python
-ctrl.beamblank_on()
+ctrl.beam.blank()
 ```
 To unblank the beam:
 ```python
-ctrl.beamblank_off()
+ctrl.beam.unblank()
 ```
 To get the state of the beam blanker:
 ```python
-ctrl.beamblank
+status = ctrl.beam.status          # str
+is_blanked = ctrl.beam.is_blanked  # bool
 ```
 The fluorescence screen can be controlled via:
 ```python

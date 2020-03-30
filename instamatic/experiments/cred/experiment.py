@@ -219,7 +219,7 @@ class Experiment:
 
         if self.unblank_beam:
             print('Unblanking beam')
-            self.ctrl.beamblank = False
+            self.ctrl.beam.unblank()
 
         return start_angle
 
@@ -323,7 +323,7 @@ class Experiment:
 
         if self.unblank_beam:
             print('Blanking beam')
-            self.ctrl.beamblank = True
+            self.ctrl.beam.blank()
 
         # in case something went wrong starting data collection, return gracefully
         if i == 1:

@@ -1,3 +1,3 @@
 ctrl.screen_up()
-ctrl.beamblank_off()
+ctrl.beam.unblank()
 ctrl.mode_diffraction()
