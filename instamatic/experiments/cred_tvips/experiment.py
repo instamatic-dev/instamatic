@@ -257,7 +257,7 @@ class Experiment:
         if not self.beamblank_is_on:
             self.ctrl.beam.blank()
 
-        self.ctrl.screen_up()
+        self.ctrl.screen.up()
 
         if self.ctrl.mode != self.mode:
             print(f'Switching to {self.mode} mode')

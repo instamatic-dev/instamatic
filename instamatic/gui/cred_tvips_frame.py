@@ -258,9 +258,9 @@ class ExperimentalTVIPS(LabelFrame):
         toggle = self.var_toggle_screen.get()
 
         if toggle:
-            self.ctrl.screen_up()
+            self.ctrl.screen.up()
         else:
-            self.ctrl.screen_down()
+            self.ctrl.screen.down()
 
     def start_liveview(self):
         self.q.put(('ctrl', {'task': 'cam.start_liveview'}))

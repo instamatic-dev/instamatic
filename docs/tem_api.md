@@ -188,18 +188,25 @@ To get the state of the beam blanker:
 status = ctrl.beam.status          # str
 is_blanked = ctrl.beam.is_blanked  # bool
 ```
-The fluorescence screen can be controlled via:
+The position of the fluorescence screen can be controlled via:
 ```python
-ctrl.screen_up()
-ctrl.screen_down()
+ctrl.screen.up()
+ctrl.screen.down()
+print(ctrl.screen.position)  # 'down'
 ```
-To switch modes:
+To switch/get function modes:
 ```python
 current_mode = ctrl.mode.get()
 ctrl.mode.set('diff')  # choices: 'mag1', 'mag2', 'lowmag', 'samag', 'diff'
 ctrl.mode.set('lowmag')
 ctrl.mode.set('mag1')
-ctrl.mode.set('samag')
+ctrl.mode.set(current_mode)
+```
+The current mode can be checked using the equality operator (or using the `.get` method):
+```python
+if ctrl.mode != 'diff':
+    ctrl.mode.set('diff')
+    assert ctrl.mode.get() == 'diff'
 ```
 To change spotsize:
 ```python
@@ -222,13 +229,11 @@ and to recall them:
 ```python
 ctrl.restore(name="stash")
 ```
-
 High tension:
 ```python
 ht = ctrl.high_tension
 print(ht, "V")
 ```
-
 Current density:
 ```python
 cd = ctrl.current_density
