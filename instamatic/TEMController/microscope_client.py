@@ -1,5 +1,6 @@
 import atexit
 import datetime
+import json
 import pickle
 import socket
 import subprocess as sp
@@ -9,6 +10,8 @@ from functools import wraps
 
 from .exceptions import TEMCommunicationError
 from instamatic import config
+from instamatic.server.serializer import dumper
+from instamatic.server.serializer import loader
 
 
 # HOST = 'localhost'
@@ -96,10 +99,10 @@ class MicroscopeClient:
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         # t0 = time.perf_counter()
 
-        self.s.send(pickle.dumps(dct))
+        self.s.send(dumper(dct))
         response = self.s.recv(self._bufsize)
         if response:
-            status, data = pickle.loads(response)
+            status, data = loader(response)
 
         if status == 200:
             return data

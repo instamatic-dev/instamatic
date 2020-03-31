@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import pickle
 import queue
@@ -6,17 +7,13 @@ import socket
 import threading
 import traceback
 
+from .serializer import dumper
+from .serializer import loader
 from instamatic import config
 from instamatic.TEMController import Microscope
 
-# import sys
-# sys.setswitchinterval(0.001)  # seconds
-
 condition = threading.Condition()
 box = []
-
-# HOST = 'localhost'
-# PORT = 8088
 
 HOST = config.settings.tem_server_host
 PORT = config.settings.tem_server_port
@@ -42,6 +39,8 @@ class TemServer(threading.Thread):
         # self.name is a reserved parameter for threads
         self._name = name
 
+        self.verbose = True
+
     def run(self):
         """Start the server thread."""
         self.tem = Microscope(name=self._name, use_server=False)
@@ -64,12 +63,13 @@ class TemServer(threading.Thread):
                     traceback.print_exc()
                     if self.log:
                         self.log.exception(e)
-                    ret = e
+                    ret = repr(e)
                     status = 500
 
                 box.append((status, ret))
                 condition.notify()
-                print(f'{now} | {status} {func_name}: {ret}')
+                if self.verbose:
+                    print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
         """Evaluate the function `func_name` on `self.tem` and call it with
@@ -89,21 +89,19 @@ def handle(conn, q):
             if not data:
                 break
 
-            data = pickle.loads(data)
+            data = loader(data)
 
             if data == 'exit':
                 break
 
             if data == 'kill':
-                # killEvent.set() ?
-                # s.shutdown() ?
                 break
 
             with condition:
                 q.put(data)
                 condition.wait()
                 response = box.pop()
-                conn.send(pickle.dumps(response))
+                conn.send(dumper(response))
 
 
 def main():
