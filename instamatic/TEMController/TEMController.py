@@ -6,13 +6,13 @@ from typing import Tuple
 import numpy as np
 
 from .deflectors import *
-from .exceptions import TEMControllerError
 from .lenses import *
 from .microscope import Microscope
 from .stage import *
 from .states import *
 from instamatic import config
 from instamatic.camera import Camera
+from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 

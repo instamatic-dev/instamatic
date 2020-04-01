@@ -5,9 +5,9 @@ import time
 
 import comtypes.client
 
-from .exceptions import FEIValueError
-from .exceptions import TEMCommunicationError
 from instamatic import config
+from instamatic.exceptions import FEIValueError
+from instamatic.exceptions import TEMCommunicationError
 logger = logging.getLogger(__name__)
 
 

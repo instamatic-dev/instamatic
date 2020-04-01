@@ -8,6 +8,10 @@ from functools import wraps
 from pywinauto import Application
 
 from instamatic import config
+from instamatic.exceptions import exception_list
+from instamatic.exceptions import TEMCommunicationError
+from instamatic.server.serializer import dumper
+from instamatic.server.serializer import loader
 
 GONIOTOOL_EXE = 'C:\\JEOL\\TOOL\\GonioTool.exe'
 DEFAULT_SPEED = 12
@@ -45,7 +49,7 @@ class GonioToolClient:
         super().__init__()
 
         self.name = name
-        self.bufsize = BUFSIZE
+        self._bufsize = BUFSIZE
 
         try:
             self.connect()
@@ -94,16 +98,17 @@ class GonioToolClient:
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
 
-        self.s.send(pickle.dumps(dct))
-        response = self.s.recv(BUFSIZE)
+        self.s.send(dumper(dct))
+        response = self.s.recv(self._bufsize)
         if response:
-            status, data = pickle.loads(response)
+            status, data = loader(response)
 
         if status == 200:
             return data
 
         elif status == 500:
-            raise data
+            error_code, args = data
+            raise exception_list.get(error_code, TEMCommunicationError)(*args)
 
         else:
             raise ConnectionError(f'Unknown status code: {status}')

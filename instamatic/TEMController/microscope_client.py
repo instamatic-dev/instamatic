@@ -8,15 +8,12 @@ import threading
 import time
 from functools import wraps
 
-from .exceptions import exception_list
-from .exceptions import TEMCommunicationError
 from instamatic import config
+from instamatic.exceptions import exception_list
+from instamatic.exceptions import TEMCommunicationError
 from instamatic.server.serializer import dumper
 from instamatic.server.serializer import loader
 
-
-# HOST = 'localhost'
-# PORT = 8088
 
 HOST = config.settings.tem_server_host
 PORT = config.settings.tem_server_port

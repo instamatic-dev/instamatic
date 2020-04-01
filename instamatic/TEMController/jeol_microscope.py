@@ -5,9 +5,9 @@ from typing import Tuple
 
 import comtypes.client
 
-from .exceptions import JEOLValueError
-from .exceptions import TEMCommunicationError
 from instamatic import config
+from instamatic.exceptions import JEOLValueError
+from instamatic.exceptions import TEMCommunicationError
 logger = logging.getLogger(__name__)
 
 NTRLMAPPING = {

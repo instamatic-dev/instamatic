@@ -26,6 +26,7 @@ exception_list = {
     'FEIValueError': FEIValueError,
     'TEMControllerError   ': TEMControllerError,
     'AttributeError': AttributeError,
+    'AssertionError': AssertionError,
     'ConnectionError': ConnectionError,
     'Exception': Exception,
     'FileNotFoundError': FileNotFoundError,

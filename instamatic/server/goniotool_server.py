@@ -6,19 +6,16 @@ import socket
 import threading
 import traceback
 
+from .serializer import dumper
+from .serializer import loader
 from instamatic import config
 from instamatic.goniotool import GonioToolWrapper
-
-# import sys
-# sys.setswitchinterval(0.001)  # seconds
 
 barrier = threading.Barrier(2, timeout=60)
 
 condition = threading.Condition()
 box = []
 
-# HOST = 'localhost'
-# PORT = 8088
 
 HOST = config.settings.goniotool_server_host
 PORT = config.settings.goniotool_server_port
@@ -44,6 +41,8 @@ class GonioToolServer(threading.Thread):
         # self.name is a reserved parameter for threads
         self._name = name
 
+        self.verbose = False
+
     def run(self):
         """Start the server thread."""
         self.goniotool = GonioToolWrapper(barrier=barrier)
@@ -66,12 +65,13 @@ class GonioToolServer(threading.Thread):
                     traceback.print_exc()
                     if self.log:
                         self.log.exception(e)
-                    ret = e
+                    ret = (e.__class__.__name__, e.args)
                     status = 500
 
                 box.append((status, ret))
                 condition.notify()
-                print(f'{now} | {status} {func_name}: {ret}')
+                if self.verbose:
+                    print(f'{now} | {status} {func_name}: {ret}')
 
     def evaluate(self, func_name: str, args: list, kwargs: dict):
         """Evaluate the function `func_name` on `self.goniotool` and call it
@@ -91,21 +91,19 @@ def handle(conn, q):
             if not data:
                 break
 
-            data = pickle.loads(data)
+            data = loader(data)
 
             if data == 'exit':
                 break
 
             if data == 'kill':
-                # killEvent.set() ?
-                # s.shutdown() ?
                 break
 
             with condition:
                 q.put(data)
                 condition.wait()
                 response = box.pop()
-                conn.send(pickle.dumps(response))
+                conn.send(dumper(response))
 
 
 def main():
@@ -116,7 +114,7 @@ Connects to `Goniotool.exe` and starts a server for network communication. Opens
 
 The host and port are defined in `config/settings.yaml`.
 
-The data sent over the socket is a pickled dictionary with the following elements:
+The data sent over the socket is a serialized dictionary with the following elements:
 
 - `func_name`: Name of the function to call (str)
 - `args`: (Optional) List of arguments for the function (list)

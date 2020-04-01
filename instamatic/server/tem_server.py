@@ -120,13 +120,13 @@ This program initializes a connection to the TEM as defined in the config. On so
 
 The host and port are defined in `config/settings.yaml`.
 
-The data sent over the socket is a pickled dictionary with the following elements:
+The data sent over the socket is a serialized dictionary with the following elements:
 
 - `func_name`: Name of the function to call (str)
 - `args`: (Optional) List of arguments for the function (list)
 - `kwargs`: (Optiona) Dictionary of keyword arguments for the function (dict)
 
-The response is returned as a pickle object.
+The response is returned as a serialized object.
 """
 
     parser = argparse.ArgumentParser(
