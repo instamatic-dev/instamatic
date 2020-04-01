@@ -39,7 +39,7 @@ class TemServer(threading.Thread):
         # self.name is a reserved parameter for threads
         self._name = name
 
-        self.verbose = True
+        self.verbose = False
 
     def run(self):
         """Start the server thread."""

@@ -14,6 +14,7 @@ use_tem_server: True
 tem_server_host: 'localhost'
 tem_server_port: 8088
 tem_require_admin: False
+tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml
 
 # Run the Camera connection in a different process
 use_cam_server: False
