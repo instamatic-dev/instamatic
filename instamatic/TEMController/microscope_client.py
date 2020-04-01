@@ -8,6 +8,7 @@ import threading
 import time
 from functools import wraps
 
+from .exceptions import exception_list
 from .exceptions import TEMCommunicationError
 from instamatic import config
 from instamatic.server.serializer import dumper
@@ -97,10 +98,11 @@ class MicroscopeClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-        # t0 = time.perf_counter()
 
         self.s.send(dumper(dct))
+
         response = self.s.recv(self._bufsize)
+
         if response:
             status, data = loader(response)
 
@@ -108,7 +110,8 @@ class MicroscopeClient:
             return data
 
         elif status == 500:
-            raise data
+            error_code, args = data
+            raise exception_list.get(error_code, TEMCommunicationError)(*args)
 
         else:
             raise ConnectionError(f'Unknown status code: {status}')

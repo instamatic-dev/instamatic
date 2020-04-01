@@ -63,7 +63,7 @@ class TemServer(threading.Thread):
                     traceback.print_exc()
                     if self.log:
                         self.log.exception(e)
-                    ret = repr(e)
+                    ret = (e.__class__.__name__, e.args)
                     status = 500
 
                 box.append((status, ret))
