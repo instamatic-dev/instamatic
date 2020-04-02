@@ -98,8 +98,8 @@ class Console(LabelFrame):
         self.text.insert(END, text)
 
     def test_write(self, text=None):
-        from instamatic.version import thank_you_message
-        thank_you_message(self.write)
+        from instamatic import banner
+        banner.thank_you_message(self.write)
 
     def toggle_capture(self):
         """Toggle for redirecting stdout to the console."""

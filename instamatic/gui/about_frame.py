@@ -4,8 +4,8 @@ from tkinter.font import Font
 from tkinter.font import nametofont
 from tkinter.ttk import *
 
+import instamatic
 from .base_module import BaseModule
-from instamatic import version
 
 
 def get_background_of_widget(widget):
@@ -104,17 +104,17 @@ class AboutFrame(LabelFrame):
         Label(frame, text='').grid(row=5, column=0, sticky='W')
 
         Label(frame, text='Source code:').grid(row=10, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=version.__url__, action=self.link_github)
+        link = Link_Button(frame, text=instamatic.__url__, action=self.link_github)
         link.grid(row=10, column=1, sticky='W')
         Label(frame, text='').grid(row=12, column=0, sticky='W')
 
         Label(frame, text='Manual:').grid(row=20, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=version.__url__, action=self.link_github)
+        link = Link_Button(frame, text=instamatic.__url__, action=self.link_github)
         link.grid(row=20, column=1, sticky='W')
         Label(frame, text='').grid(row=22, column=0, sticky='W')
 
         Label(frame, text='If you found this software useful, please cite:').grid(row=30, column=0, sticky='W', columnspan=2, padx=10)
-        txt = Message(frame, text=version.__citation__, width=320, justify=LEFT)
+        txt = Message(frame, text=instamatic.__citation__, width=320, justify=LEFT)
         txt.grid(row=31, column=1, sticky='W')
 
         Label(frame, text='').grid(row=31, column=0, sticky='W', padx=10)
@@ -123,11 +123,11 @@ class AboutFrame(LabelFrame):
 
     def link_github(self, event=None):
         import webbrowser
-        webbrowser.open_new(version.__url__)
+        webbrowser.open_new(instamatic.__url__)
 
     def link_manual(self, event=None):
         import webbrowser
-        webbrowser.open_new(version.__url__)
+        webbrowser.open_new(instamatic.__url__)
 
 
 module = BaseModule(name='about', display_name='about', tk_frame=AboutFrame, location='bottom')

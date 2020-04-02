@@ -6,9 +6,9 @@ import traceback
 from tkinter import *
 from tkinter.ttk import *
 
+import instamatic
 from .modules import JOBS
 from .modules import MODULES
-from instamatic import version
 from instamatic.formats import *
 
 
@@ -149,7 +149,7 @@ class MainFrame:
         self.app = AppLoader()
         self.app.load(modules, self.module_frame)
 
-        self.root.wm_title(version.__long_title__)
+        self.root.wm_title(instamatic.__long_title__)
         self.root.wm_protocol('WM_DELETE_WINDOW', self.close)
 
         self.root.bind('<Escape>', self.close)

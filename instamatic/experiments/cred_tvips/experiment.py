@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 from scipy.interpolate import interp1d
 
+import instamatic
 from instamatic import config
 from instamatic import serialem
-from instamatic import version
 from instamatic.formats import write_tiff
 from instamatic.tools import get_acquisition_time
 
@@ -481,7 +481,7 @@ class Experiment:
         print(f'Rotation speed: {self.rotation_speed:.3f} degrees/s')
 
         with open(self.path / 'cRED_log.txt', 'w') as f:
-            print(f'Program: {version.__long_title__} + EMMenu {self.emmenu.getEMMenuVersion()}', file=f)
+            print(f'Program: {instamatic.__long_title__} + EMMenu {self.emmenu.getEMMenuVersion()}', file=f)
             print(f'Camera: {config.camera.name}', file=f)
             print(f'Microscope: {config.microscope.name}', file=f)
             print(f'Camera type: {self.emmenu.getCameraType()}', file=f)

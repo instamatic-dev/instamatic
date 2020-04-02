@@ -96,8 +96,8 @@ def main():
     # enable faster switching between threads
     sys.setswitchinterval(0.001)  # seconds
 
-    from instamatic import version
-    version.register_thank_you_message()
+    from instamatic import banner
+    banner.register_thank_you_message()
 
     from instamatic import config
 
