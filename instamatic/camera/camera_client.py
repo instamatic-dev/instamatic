@@ -1,14 +1,12 @@
 import atexit
-import pickle
 import socket
 import subprocess as sp
 import time
 from functools import wraps
 
 from instamatic import config
-
-# HOST = 'localhost'
-# PORT = 8088
+from instamatic.server.serialize import pickle_dumper as dumper
+from instamatic.server.serialize import pickle_loader as loader
 
 HOST = config.settings.cam_server_host
 PORT = config.settings.cam_server_port
@@ -42,7 +40,7 @@ class CamClient:
         super().__init__()
 
         self.name = name
-        self.bufsize = BUFSIZE
+        self._bufsize = BUFSIZE
         self.streamable = False  # overrides cam settings
 
         try:
@@ -69,7 +67,7 @@ class CamClient:
 
         xres, yres = self.getImageDimensions()
         bitdepth = 4
-        self.imagebufsize = bitdepth * xres * yres + self.bufsize
+        self._imagebufsize = bitdepth * xres * yres + self.bufsize
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -97,24 +95,24 @@ class CamClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-        # t0 = time.perf_counter()
 
-        self.s.send(pickle.dumps(dct))
+        self.s.send(dumper(dct))
 
         if dct['attr_name'] == 'getImage':
             # approximately 2-3 ms for the interface
-            response = self.s.recv(self.imagebufsize)
+            response = self.s.recv(self._imagebufsize)
         else:
-            response = self.s.recv(self.bufsize)
+            response = self.s.recv(self._bufsize)
 
         if response:
-            status, data = pickle.loads(response)
+            status, data = loader(response)
 
         if status == 200:
             return data
 
         elif status == 500:
-            raise data
+            error_code, args = data
+            raise exception_list.get(error_code, TEMCommunicationError)(*args)
 
         else:
             raise ConnectionError(f'Unknown status code: {status}')

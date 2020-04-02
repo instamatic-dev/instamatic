@@ -6,19 +6,15 @@ import socket
 import threading
 import traceback
 
+from .serializer import dumper
+from .serializer import loader
 from instamatic import config
 from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
-# import sys
-# sys.setswitchinterval(0.001)  # seconds
-
 condition = threading.Condition()
 box = []
-
-# HOST = 'localhost'
-# PORT = 8088
 
 HOST = config.settings.cam_server_host
 PORT = config.settings.cam_server_port
@@ -44,6 +40,10 @@ class CamServer(threading.Thread):
         # self.name is a reserved parameter for threads
         self._name = name
 
+        self._bufsize = BUFSIZE
+
+        self.verbose = False
+
     def run(self):
         """Start server thread."""
         self.cam = Camera(name=self._name, use_server=False)
@@ -68,12 +68,13 @@ class CamServer(threading.Thread):
                     traceback.print_exc()
                     if self.log:
                         self.log.exception(e)
-                    ret = e
+                    ret = (e.__class__.__name__, e.args)
                     status = 500
 
                 box.append((status, ret))
                 condition.notify()
-                print(f'{now} | {status} {attr_name}: {ret}')
+                if self.verbose:
+                    print(f'{now} | {status} {attr_name}: {ret}')
 
     def evaluate(self, attr_name: str, args: list, kwargs: dict):
         """Evaluate the function or attribute `attr_name` on `self.cam`, if
@@ -108,22 +109,19 @@ def handle(conn, q):
             if not data:
                 break
 
-            data = pickle.loads(data)
+            data = loader(data)
 
             if data == 'exit':
                 break
 
             if data == 'kill':
-                # killEvent.set() ?
-                # s.shutdown() ?
                 break
 
             with condition:
                 q.put(data)
                 condition.wait()
                 response = box.pop()
-                conn.sendall(pickle.dumps(response))
-                # conn.send(pickle.dumps(response))
+                conn.sendall(dumper(response))
 
 
 def main():
