@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'instamatic'
-version = '1.1.0'
+version = "1.2.0"
 description = 'Python program for automated electron diffraction data collection'
 license = 'GPL-3.0-only'
 classifiers = [
@@ -18,9 +18,9 @@ classifiers = [
 homepage = 'http://github.com/stefsmeets/instamatic'
 repository = 'http://github.com/stefsmeets/instamatic'
 documentation = 'http://github.com/stefsmeets/instamatic'
-authors = ['Stef Smeets <s.smeets@tudelft.nl>']
+authors = ["Stef Smeets <s.smeets@tudelft.nl>"]
 maintainers = ['Stef Smeets <s.smeets@tudelft.nl>']
-readme = 'readme.md'
+readme = "readme.md"
 keywords = [
     'electron-crystallography',
     'electron-microscopy',
@@ -33,7 +33,7 @@ keywords = [
 ]
 
 [tool.poetry.dependencies]
-python = '>=3.6'
+python = ">=3.6"
 comtypes = '>=1.1.7'
 h5py = '>=2.10.0'
 ipython = '>=7.11.1'
@@ -52,42 +52,43 @@ tqdm = '>=4.41.1'
 virtualbox = '>=2.0.0'
 
 [tool.poetry.dev-dependencies]
-check-manifest = '*'
-pre-commit = '*'
+check-manifest = "*"
+pre-commit = "*"
 
 [tool.poetry.scripts]
 # main
-'instamatic' = 'instamatic.main:main'
-'instamatic.controller' = 'instamatic.TEMController.TEMController:main_entry'
+instamatic = 'instamatic.main:main'
+"instamatic.controller" = 'instamatic.TEMController.TEMController:main_entry'
 # experiments
-'instamatic.serialed' = 'instamatic.experiments.serialed.experiment:main'
-'instamatic.camera' = 'instamatic.camera.camera:main_entry'
+"instamatic.serialed" = 'instamatic.experiments.serialed.experiment:main'
+"instamatic.camera" = 'instamatic.camera.camera:main_entry'
 # calibrate
-'instamatic.calibrate_stage_lowmag' = 'instamatic.calibrate.calibrate_stage_lowmag:main_entry'
-'instamatic.calibrate_stage_mag1' = 'instamatic.calibrate.calibrate_stage_mag1:main_entry'
-'instamatic.calibrate_beamshift' = 'instamatic.calibrate.calibrate_beamshift:main_entry'
-'instamatic.calibrate_directbeam' = 'instamatic.calibrate.calibrate_directbeam:main_entry'
-'instamatic.flatfield' = 'instamatic.processing.flatfield:main_entry'
-'instamatic.stretch_correction' = 'instamatic.processing.stretch_correction:main_entry'
+"instamatic.calibrate_stage_lowmag" = 'instamatic.calibrate.calibrate_stage_lowmag:main_entry'
+"instamatic.calibrate_stage_mag1" = 'instamatic.calibrate.calibrate_stage_mag1:main_entry'
+"instamatic.calibrate_beamshift" = 'instamatic.calibrate.calibrate_beamshift:main_entry'
+"instamatic.calibrate_directbeam" = 'instamatic.calibrate.calibrate_directbeam:main_entry'
+"instamatic.flatfield" = 'instamatic.processing.flatfield:main_entry'
+"instamatic.stretch_correction" = 'instamatic.processing.stretch_correction:main_entry'
 # tools
-'instamatic.browser' = 'scripts.browser:main'
-'instamatic.viewer' = 'scripts.viewer:main'
-'instamatic.defocus_helper' = 'instamatic.gui.defocus_button:main'
-'instamatic.find_crystals' = 'instamatic.processing.find_crystals:main_entry'
-'instamatic.learn' = 'scripts.learn:main_entry'
+"instamatic.browser" = 'scripts.browser:main'
+"instamatic.viewer" = 'scripts.viewer:main'
+"instamatic.defocus_helper" = 'instamatic.gui.defocus_button:main'
+"instamatic.find_crystals" = 'instamatic.processing.find_crystals:main_entry'
+"instamatic.learn" = 'scripts.learn:main_entry'
 # server
-'instamatic.temserver' = 'instamatic.server.tem_server:main'
-'instamatic.camserver' = 'instamatic.server.cam_server:main'
-'instamatic.dialsserver' = 'instamatic.server.dials_server:main'
-'instamatic.VMserver' = 'instamatic.server.vm_ubuntu_server:main'
-'instamatic.xdsserver' = 'instamatic.server.xds_server:main'
-'instamatic.temserver_fei' = 'instamatic.server.TEMServer_FEI:main'
-'instamatic.goniotoolserver' = 'instamatic.server.goniotool_server:main'
+"instamatic.temserver" = 'instamatic.server.tem_server:main'
+"instamatic.camserver" = 'instamatic.server.cam_server:main'
+"instamatic.dialsserver" = 'instamatic.server.dials_server:main'
+"instamatic.VMserver" = 'instamatic.server.vm_ubuntu_server:main'
+"instamatic.xdsserver" = 'instamatic.server.xds_server:main'
+"instamatic.temserver_fei" = 'instamatic.server.TEMServer_FEI:main'
+"instamatic.goniotoolserver" = 'instamatic.server.goniotool_server:main'
 # setup
-'instamatic.autoconfig' = 'instamatic.config.autoconfig:main'
+"instamatic.autoconfig" = 'instamatic.config.autoconfig:main'
 
 [tool.poetry.urls]
 'Bug Reports' = 'https://github.com/stefsmeets/instamatic/issues'
+
 
 [tool.dephell.main]
 from = {format = 'poetry', path = 'pyproject.toml'}
