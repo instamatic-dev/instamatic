@@ -5,6 +5,9 @@ import queue
 import socket
 import threading
 import traceback
+from multiprocessing import shared_memory
+
+import numpy as np
 
 from .serializer import dumper
 from .serializer import loader
@@ -12,6 +15,7 @@ from instamatic import config
 from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
+
 
 condition = threading.Condition()
 box = []
@@ -42,7 +46,25 @@ class CamServer(threading.Thread):
 
         self._bufsize = BUFSIZE
 
-        self.verbose = False
+        self.verbose = True
+
+        self.buffers = {}
+
+    def setup_shared_buffer(self, arr):
+        self.shmem = shared_memory.SharedMemory(create=True, size=arr.nbytes)
+        buffer = np.ndarray(arr.shape, dtype=arr.dtype, buffer=self.shmem.buf)
+        self.buffers[arr.shape] = buffer
+        print('created buffer', self.shmem.name, arr.shape, arr.dtype)
+
+    def copy_to_shared_buffer(self, arr):
+        if arr.shape not in self.buffers:
+            print('making buffer')
+            self.setup_shared_buffer(arr)
+
+        buffer = self.buffers[arr.shape]
+
+        buffer[:] = arr[:]
+        print('buffer copied')
 
     def run(self):
         """Start server thread."""
@@ -70,6 +92,11 @@ class CamServer(threading.Thread):
                         self.log.exception(e)
                     ret = (e.__class__.__name__, e.args)
                     status = 500
+
+                if attr_name == 'getImage':
+                    self.copy_to_shared_buffer(ret)
+                    ret = {'shape': ret.shape, 'dtype': str(ret.dtype), 'name': self.shmem.name}
+                    print(ret)
 
                 box.append((status, ret))
                 condition.notify()

@@ -3,10 +3,13 @@ import socket
 import subprocess as sp
 import time
 from functools import wraps
+from multiprocessing import shared_memory
+
+import numpy as np
 
 from instamatic import config
-from instamatic.server.serialize import pickle_dumper as dumper
-from instamatic.server.serialize import pickle_loader as loader
+from instamatic.server.serializer import pickle_dumper as dumper
+from instamatic.server.serializer import pickle_loader as loader
 
 HOST = config.settings.cam_server_host
 PORT = config.settings.cam_server_port
@@ -67,7 +70,10 @@ class CamClient:
 
         xres, yres = self.getImageDimensions()
         bitdepth = 4
-        self._imagebufsize = bitdepth * xres * yres + self.bufsize
+        self._imagebufsize = bitdepth * xres * yres + self._bufsize
+
+        self.buffers = {}
+        self.shms = {}
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,14 +104,40 @@ class CamClient:
 
         self.s.send(dumper(dct))
 
-        if dct['attr_name'] == 'getImage':
-            # approximately 2-3 ms for the interface
-            response = self.s.recv(self._imagebufsize)
-        else:
-            response = self.s.recv(self._bufsize)
+        response = self.s.recv(self._bufsize)
 
         if response:
             status, data = loader(response)
+
+        if dct['attr_name'] == 'getImage':
+            print(data)
+            name = data['name']
+            shape = data['shape']
+            dtype = getattr(np, data['dtype'])
+
+            if name not in self.shms:
+                print('creating shm')
+                shm = shared_memory.SharedMemory(name=name)
+                self.shms[name] = shm
+
+            # if name in self.shms:
+            #     print('retrieving from shms')
+            #     shm = self.shms[name]
+            #     data = np.frombuffer(shm.buf, dtype).copy()
+            #     shm.close()
+            #     return data
+
+            if name not in self.buffers:
+                print('making buffer')
+                shm = self.shms[name]
+                self.buffers[name] = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
+
+            if name in self.buffers:
+                print('retrieving from buffers')
+                shm = self.shms[name]
+                buffer = self.buffers[name]
+                data = buffer[:]
+                # return 123
 
         if status == 200:
             return data
