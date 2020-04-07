@@ -1,0 +1,15 @@
+name: Push
+on: [push]
+
+jobs:
+  test-build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.8'
+        architecture: x64
+    - run: pip install poetry==1.0.5
+    - run: poetry install --no-dev
+    - run: poetry build
