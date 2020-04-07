@@ -15,17 +15,17 @@ def get_cam(interface: str = None):
     simulate = config.settings.simulate
 
     if simulate or interface == 'simulate':
-        from .camera_simu import CameraSimu as cam
+        from instamatic.camera.camera_simu import CameraSimu as cam
     elif interface == 'simulateDLL':
-        from .camera_gatan import CameraDLL as cam
+        from instamatic.camera.camera_gatan import CameraDLL as cam
     elif interface in ('orius', 'gatan'):
-        from .camera_gatan import CameraDLL as cam
+        from instamatic.camera.camera_gatan import CameraDLL as cam
     elif interface in ('gatansocket'):
-        from .camera_gatan2 import CameraGatan2 as cam
+        from instamatic.camera.camera_gatan2 import CameraGatan2 as cam
     elif interface in ('timepix', 'pytimepix'):
-        from . import camera_timepix as cam
+        from instamatic.camera import camera_timepix as cam
     elif interface in ('emmenu', 'tvips'):
-        from .camera_emmenu import CameraEMMENU as cam
+        from instamatic.camera.camera_emmenu import CameraEMMENU as cam
     else:
         raise ValueError(f'No such camera interface: {interface}')
 
@@ -48,7 +48,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
         interface = name
 
     if use_server:
-        from .camera_client import CamClient
+        from instamatic.camera.camera_client import CamClient
         cam = CamClient(name=name)
         as_stream = False  # precaution
     else:
@@ -187,7 +187,10 @@ def main_entry():
 
 if __name__ == '__main__':
     # main_entry()
-    cam = Camera(name='timepix')
+    cam = Camera(use_server=True)
     arr = cam.getImage(exposure=0.1)
     print(arr)
     print(arr.shape)
+
+    from IPython import embed
+    embed(banner1='')

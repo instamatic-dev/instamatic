@@ -45,6 +45,7 @@ class CamClient:
         self.name = name
         self._bufsize = BUFSIZE
         self.streamable = False  # overrides cam settings
+        self.verbose = False
 
         try:
             self.connect()
@@ -63,6 +64,9 @@ class CamClient:
                 else:
                     break
 
+        self.buffers = {}
+        self.shms = {}
+
         self._init_dict()
         self._init_attr_dict()
 
@@ -71,9 +75,6 @@ class CamClient:
         xres, yres = self.getImageDimensions()
         bitdepth = 4
         self._imagebufsize = bitdepth * xres * yres + self._bufsize
-
-        self.buffers = {}
-        self.shms = {}
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,7 +102,6 @@ class CamClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-
         self.s.send(dumper(dct))
 
         response = self.s.recv(self._bufsize)
@@ -110,15 +110,15 @@ class CamClient:
             status, data = loader(response)
 
         if dct['attr_name'] == 'getImage':
-            print(data)
             name = data['name']
             shape = data['shape']
             dtype = getattr(np, data['dtype'])
 
             if name not in self.shms:
-                print('creating shm')
                 shm = shared_memory.SharedMemory(name=name)
                 self.shms[name] = shm
+                if self.verbose:
+                    print('Read shared memory: `{name}`')
 
             # if name in self.shms:
             #     print('retrieving from shms')
@@ -128,16 +128,17 @@ class CamClient:
             #     return data
 
             if name not in self.buffers:
-                print('making buffer')
+                if self.verbose:
+                    print(f'Connect to buffer: `{name}` | {shape} ({dtype})')
                 shm = self.shms[name]
                 self.buffers[name] = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
 
             if name in self.buffers:
-                print('retrieving from buffers')
+                if self.verbose:
+                    print(f'Retrieve data from buffer `{name}`')
                 shm = self.shms[name]
                 buffer = self.buffers[name]
                 data = buffer[:]
-                # return 123
 
         if status == 200:
             return data

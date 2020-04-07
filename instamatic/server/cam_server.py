@@ -46,7 +46,7 @@ class CamServer(threading.Thread):
 
         self._bufsize = BUFSIZE
 
-        self.verbose = True
+        self.verbose = False
 
         self.buffers = {}
 
@@ -54,24 +54,22 @@ class CamServer(threading.Thread):
         self.shmem = shared_memory.SharedMemory(create=True, size=arr.nbytes)
         buffer = np.ndarray(arr.shape, dtype=arr.dtype, buffer=self.shmem.buf)
         self.buffers[arr.shape] = buffer
-        print('created buffer', self.shmem.name, arr.shape, arr.dtype)
+        if self.verbose:
+            print(f'Created new buffer: `{self.shmem.name}` | {arr.shape} ({arr.dtype})')
 
     def copy_to_shared_buffer(self, arr):
         if arr.shape not in self.buffers:
-            print('making buffer')
             self.setup_shared_buffer(arr)
 
         buffer = self.buffers[arr.shape]
-
-        buffer[:] = arr[:]
-        print('buffer copied')
+        buffer[:] = arr[:]  # copy data to buffer
 
     def run(self):
         """Start server thread."""
         self.cam = Camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
-        print(f'Initialized connection to camera: {self.cam.name}')
+        print(f'Initialized camera: {self.cam.interface}')
 
         while True:
             now = datetime.datetime.now().strftime('%H:%M:%S.%f')
@@ -96,7 +94,6 @@ class CamServer(threading.Thread):
                 if attr_name == 'getImage':
                     self.copy_to_shared_buffer(ret)
                     ret = {'shape': ret.shape, 'dtype': str(ret.dtype), 'name': self.shmem.name}
-                    print(ret)
 
                 box.append((status, ret))
                 condition.notify()

@@ -51,12 +51,15 @@ class CameraSimu:
             Which binning to use.
         """
 
-        if not exposure:
+        if exposure is None:
             exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
 
-        dim_x, dim_y = self.getImageDimensions()
+        dim_x, dim_y = self.getCameraDimensions()
+
+        dim_x = int(dim_x / binsize)
+        dim_y = int(dim_y / binsize)
 
         time.sleep(exposure)
 
