@@ -50,14 +50,22 @@ class CamServer(threading.Thread):
 
         self.buffers = {}
 
+        self.use_shared_memory = config.settings.cam_use_shared_memory
+        print('Use shared memory:', self.use_shared_memory)
+
     def setup_shared_buffer(self, arr):
+        """Set up shared memory buffer.
+
+        Make a buffer for each binsize, and store the buffers to a dict.
+        """
         self.shmem = shared_memory.SharedMemory(create=True, size=arr.nbytes)
         buffer = np.ndarray(arr.shape, dtype=arr.dtype, buffer=self.shmem.buf)
         self.buffers[arr.shape] = buffer
         if self.verbose:
             print(f'Created new buffer: `{self.shmem.name}` | {arr.shape} ({arr.dtype})')
 
-    def copy_to_shared_buffer(self, arr):
+    def copy_data_to_shared_buffer(self, arr):
+        """Copy numpy image array to shared memory."""
         if arr.shape not in self.buffers:
             self.setup_shared_buffer(arr)
 
@@ -90,10 +98,15 @@ class CamServer(threading.Thread):
                         self.log.exception(e)
                     ret = (e.__class__.__name__, e.args)
                     status = 500
-
-                if attr_name == 'getImage':
-                    self.copy_to_shared_buffer(ret)
-                    ret = {'shape': ret.shape, 'dtype': str(ret.dtype), 'name': self.shmem.name}
+                else:
+                    if self.use_shared_memory:
+                        if attr_name == 'getImage':
+                            self.copy_data_to_shared_buffer(ret)
+                            ret = {
+                                'shape': ret.shape,
+                                'dtype': str(ret.dtype),
+                                'name': self.shmem.name,
+                            }
 
                 box.append((status, ret))
                 condition.notify()

@@ -47,6 +47,10 @@ class CamClient:
         self.streamable = False  # overrides cam settings
         self.verbose = False
 
+        # TODO: can also check for localhost here??
+        self.use_shared_memory = config.settings.cam_use_shared_memory
+        print('Use shared memory:', self.use_shared_memory)
+
         try:
             self.connect()
         except ConnectionRefusedError:
@@ -109,36 +113,9 @@ class CamClient:
         if response:
             status, data = loader(response)
 
-        if dct['attr_name'] == 'getImage':
-            name = data['name']
-            shape = data['shape']
-            dtype = getattr(np, data['dtype'])
-
-            if name not in self.shms:
-                shm = shared_memory.SharedMemory(name=name)
-                self.shms[name] = shm
-                if self.verbose:
-                    print('Read shared memory: `{name}`')
-
-            # if name in self.shms:
-            #     print('retrieving from shms')
-            #     shm = self.shms[name]
-            #     data = np.frombuffer(shm.buf, dtype).copy()
-            #     shm.close()
-            #     return data
-
-            if name not in self.buffers:
-                if self.verbose:
-                    print(f'Connect to buffer: `{name}` | {shape} ({dtype})')
-                shm = self.shms[name]
-                self.buffers[name] = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
-
-            if name in self.buffers:
-                if self.verbose:
-                    print(f'Retrieve data from buffer `{name}`')
-                shm = self.shms[name]
-                buffer = self.buffers[name]
-                data = buffer[:]
+        if self.use_shared_memory:
+            if dct['attr_name'] == 'getImage':
+                data = self.get_data_from_shared_memory(**data)
 
         if status == 200:
             return data
@@ -165,3 +142,30 @@ class CamClient:
 
     def __dir__(self):
         return tuple(self._dct.keys()) + tuple(self._attr_dct.keys())
+
+    def get_data_from_shared_memory(self, name: str, shape: tuple, dtype: str, **kwargs):
+        """Grab image data from shared buffer."""
+        dtype = getattr(np, dtype)
+
+        # Initialize shared memory object
+        if name not in self.shms:
+            shm = shared_memory.SharedMemory(name=name)
+            self.shms[name] = shm
+            if self.verbose:
+                print('Read shared memory: `{name}`')
+
+        # Initialize shared memory buffer
+        if name not in self.buffers:
+            if self.verbose:
+                print(f'Connect to buffer: `{name}` | {shape} ({dtype})')
+            shm = self.shms[name]
+            self.buffers[name] = np.ndarray(shape, dtype=dtype, buffer=shm.buf)
+
+        # Copy data from shared image buffer
+        if self.verbose:
+            print(f'Retrieve data from buffer `{name}`')
+
+        buffer = self.buffers[name]
+        data = buffer[:]
+
+        return data
