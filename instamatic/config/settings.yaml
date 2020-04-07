@@ -20,6 +20,7 @@ tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml
 use_cam_server: False
 cam_server_host: 'localhost'
 cam_server_port: 8087
+cam_use_shared_memory: true
 
 # Submit collected data to an indexing server (CRED only)
 use_indexing_server_exe: False

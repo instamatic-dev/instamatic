@@ -71,6 +71,9 @@ Set this to `localhost` if the cam server is run locally. To make a remote conne
 **cam_server_port**  
 The server port, default: `8087`.
 
+**cam_use_shared_memory**  
+Use [shared memory interface](https://docs.python.org/3/library/multiprocessing.shared_memory.html) for fast IPC of image data if the camera interface runs on the same computer as `instamatic` (Python 3.8+ only).
+
 **indexing_server_exe**  
 After data are collected, the path where the data are saved can be sent to this program via a socket connection for automated data processing. Available are the dials indexing server (`instamatic.dialsserver.exe`) and the XDS indexing server (`instamatic.xdsserver.exe`).
 
