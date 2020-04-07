@@ -25,6 +25,9 @@ PORT = config.settings.cam_server_port
 BUFSIZE = 4096
 
 
+is_local_connection = HOST in ('127.0.0.1', 'localhost')
+
+
 class CamServer(threading.Thread):
     """Camera communcation server.
 

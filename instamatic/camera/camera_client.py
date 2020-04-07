@@ -47,10 +47,6 @@ class CamClient:
         self.streamable = False  # overrides cam settings
         self.verbose = False
 
-        # TODO: can also check for localhost here??
-        self.use_shared_memory = config.settings.cam_use_shared_memory
-        print('Use shared memory:', self.use_shared_memory)
-
         try:
             self.connect()
         except ConnectionRefusedError:
@@ -68,6 +64,9 @@ class CamClient:
                 else:
                     break
 
+        self.use_shared_memory = config.settings.cam_use_shared_memory and self.is_local_connection
+        print('Use shared memory:', self.use_shared_memory)
+
         self.buffers = {}
         self.shms = {}
 
@@ -79,6 +78,11 @@ class CamClient:
         xres, yres = self.getImageDimensions()
         bitdepth = 4
         self._imagebufsize = bitdepth * xres * yres + self._bufsize
+
+    @property
+    def is_local_connection(self):
+        """Check if the socket connection is a local connection."""
+        return self.s.getpeername()[0] == self.s.getsockname()[0]
 
     def connect(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
