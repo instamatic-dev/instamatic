@@ -33,7 +33,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore E501
 
     - name: Install with poetry
-    - run: |
+      run: |
         pip install poetry==1.0.5
         poetry install --no-dev
 
