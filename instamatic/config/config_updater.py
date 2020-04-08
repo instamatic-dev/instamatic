@@ -15,7 +15,7 @@ def is_oldstyle(dct: dict, kind: str):
     return oldstyle
 
 
-def check_global_yaml(src: str, dst: str):
+def check_settings_yaml(src: str, dst: str):
     """Check if `dst` exists, else rename `src` to `dst`."""
     if dst.exists():
         return True
@@ -62,14 +62,14 @@ def convert_config(fn: str, kind: str) -> dict:
 
     new = dict(new)
 
-    print('Updated:', fn)
-
     fn = Path(fn)
     backup = fn.with_suffix('.yaml_backup')
     if backup.exists():
         raise OSError(f'File `{backup}` already exists.')
     fn.rename(backup)
     yaml.dump(new, open(fn, 'w'))
+
+    print('Updated:', fn)
 
     return new
 

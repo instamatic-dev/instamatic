@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 
 from .config_updater import check_defaults_yaml
-from .config_updater import check_global_yaml
+from .config_updater import check_settings_yaml
 from .config_updater import convert_config
 from .config_updater import is_oldstyle
 logger = logging.getLogger(__name__)
@@ -194,7 +194,7 @@ def load_defaults():
 def load_settings():
     global settings
 
-    check_global_yaml(config_drc / 'global.yaml', config_drc / _settings_yaml)
+    check_settings_yaml(config_drc / 'global.yaml', config_drc / _settings_yaml)
 
     settings = ConfigObject.from_file(Path(__file__).parent / _settings_yaml)  # load defaults
     settings.update_from_file(config_drc / _settings_yaml)             # update user parameters
