@@ -54,6 +54,7 @@ virtualbox = '>=2.0.0'
 [tool.poetry.dev-dependencies]
 check-manifest = "*"
 pre-commit = "*"
+pytest = "^5.4.1"
 
 [tool.poetry.scripts]
 # main

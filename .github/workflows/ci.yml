@@ -32,6 +32,15 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore E501
 
-    - run: pip install poetry==1.0.5
-    - run: poetry install --no-dev
-    - run: poetry build
+    - name: Install with poetry
+    - run: |
+        pip install poetry==1.0.5
+        poetry install --no-dev
+
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest
+
+    - name: Build with poetry
+      run: poetry build
