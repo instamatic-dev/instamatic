@@ -1,17 +1,7 @@
-import os
-from pathlib import Path
-
 import pytest
 
-from instamatic.TEMController import initialize
 
-base_drc = Path(__file__).parent
-os.environ['instamatic'] = str(base_drc.absolute())
-
-ctrl = initialize()
-
-
-def test_stage():
+def test_stage(ctrl):
     pos = ctrl.stage.get()
     assert isinstance(pos, tuple)
     assert len(pos) == 5
@@ -23,7 +13,7 @@ def test_stage():
     assert ctrl.stage.b == 0
 
 
-def test_deflectors():
+def test_deflectors(ctrl):
     for deflector in (
         ctrl.guntilt,
         ctrl.beamshift,
@@ -39,7 +29,7 @@ def test_deflectors():
         assert deflector.get() == (0, 0)
 
 
-def test_magnification():
+def test_magnification(ctrl):
     lens = ctrl.magnification
 
     lens.index = 0
@@ -66,7 +56,7 @@ def test_magnification():
     assert 'diff' in ranges
 
 
-def test_difffocus():
+def test_difffocus(ctrl):
     lens = ctrl.difffocus
 
     ctrl.mode.set('mag1')
@@ -91,7 +81,7 @@ def test_difffocus():
     ctrl.mode.set('mag1')
 
 
-def test_brightness():
+def test_brightness(ctrl):
     lens = ctrl.brightness
     lens.min()  # set to 0
     val = lens.get()
