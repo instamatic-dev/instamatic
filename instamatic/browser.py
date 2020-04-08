@@ -112,7 +112,7 @@ class Browser:
         self.ax3.axis('off')
 
     def onclick(self, event, double_click_delay=0.5):
-        t1 = time.clock()
+        t1 = time.perf_counter()
 
         axes = event.artist.axes
         ind = event.ind[0]
@@ -131,7 +131,7 @@ class Browser:
             print(f'Moving stage to:', self.coord)
             self.ctrl.stage.xy = self.coord
 
-        self.t0 = time.clock()
+        self.t0 = time.perf_counter()
         self.current_ind = ind
         self.fig.canvas.draw()
 

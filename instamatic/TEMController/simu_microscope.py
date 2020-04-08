@@ -163,7 +163,7 @@ class SimuMicroscope:
         d['is_moving'] = True
         d['start'] = current
         d['end'] = val
-        d['t0'] = time.clock()
+        d['t0'] = time.perf_counter()
         d['direction'] = direction
 
     def _StagePositionGetter(self, var: str) -> float:
@@ -171,7 +171,7 @@ class SimuMicroscope:
         d = self._stage_dict[var]
         is_moving = d['is_moving']
         if is_moving:
-            dt = time.clock() - d['t0']
+            dt = time.perf_counter() - d['t0']
             direction = d['direction']
             speed = d['speed']
             start = d['start']

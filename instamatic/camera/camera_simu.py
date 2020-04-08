@@ -127,7 +127,7 @@ class CameraSimu:
     def stop_record(self) -> None:
         t1 = self._start_record_time
         if t1 >= 0:
-            t2 = time.clock()
+            t2 = time.perf_counter()
             n_images = int((t2 - t1) / self._exposure)
             new_index = self.get_image_index() + n_images
             self.set_image_index(new_index)
@@ -137,7 +137,7 @@ class CameraSimu:
             pass
 
     def start_record(self) -> None:
-        self._start_record_time = time.clock()
+        self._start_record_time = time.perf_counter()
 
     def stop_liveview(self) -> None:
         self.stop_record()

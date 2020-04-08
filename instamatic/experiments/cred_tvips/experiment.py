@@ -96,7 +96,7 @@ class SerialExperiment:
             self.ctrl.stage.set_rotation_speed(12)
 
     def run_from_tracking_file(self):
-        t0 = time.clock()
+        t0 = time.perf_counter()
         n_measured = 0
 
         n_items = len(self.tracks)
@@ -136,7 +136,7 @@ class SerialExperiment:
 
             time.sleep(3)
 
-        t1 = time.clock()
+        t1 = time.perf_counter()
         dt = t1 - t0
         print(f'Serial experiment finished -> {n_measured} crystals measured')
         print(f'Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal')

@@ -1346,12 +1346,12 @@ class Experiment:
             try:
                 with open(self.calibdir / 'z-height-adjustment-time.pkl', 'rb') as f:
                     t = pickle.load(f)
-                    if t - time.clock() > 14400:
+                    if t - time.perf_counter() > 14400:
                         self.print_and_del('Z-height needs to be updated every session. Readjusting z-height...')
                         x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset=self.offset)
                         xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                         self.logger.info(f'Stage position: x = {xpoint}, y = {ypoint}. Z height adjusted to {zpoint}. Tilt angle x {aaa} deg, Tilt angle y {bbb} deg')
-                        t = time.clock()
+                        t = time.perf_counter()
                         with open(self.calibdir / 'z-height-adjustment-time.pkl', 'wb') as f:
                             pickle.dump(t, f)
 
@@ -1360,7 +1360,7 @@ class Experiment:
                 x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset=self.offset)
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                 self.logger.info(f'Stage position: x = {xpoint}, y = {ypoint}. Z height adjusted to {zpoint}. Tilt angle x {aaa} deg, Tilt angle y {bbb} deg')
-                t = time.clock()
+                t = time.perf_counter()
                 with open(self.calibdir / 'z-height-adjustment-time.pkl', 'wb') as f:
                     pickle.dump(t, f)
         else:
@@ -1368,7 +1368,7 @@ class Experiment:
             x_zheight, y_zheight = center_z_height_HYMethod(self.ctrl, spread=self.spread, offset=self.offset)
             xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
             self.logger.info(f'Stage position: x = {xpoint}, y = {ypoint}. Z height adjusted to {zpoint}. Tilt angle x {aaa} deg, Tilt angle y {bbb} deg')
-            t = time.clock()
+            t = time.perf_counter()
             with open(self.calibdir / 'z-height-adjustment-time.pkl', 'wb') as f:
                 pickle.dump(t, f)
 
