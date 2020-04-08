@@ -35,11 +35,11 @@ jobs:
     - name: Install with poetry
       run: |
         pip install poetry==1.0.5
-        poetry install --no-dev
+        # poetry install --no-dev
+        poetry install
 
     - name: Test with pytest
       run: |
-        pip install pytest
         poetry run pytest tests
 
     - name: Build with poetry
