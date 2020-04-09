@@ -29,3 +29,5 @@
 /utils
 TODO
 generate_old_style.bat
+pytest.bat
+htmlcov
