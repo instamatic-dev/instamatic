@@ -25,7 +25,6 @@ jobs:
     - name: Build with poetry
       run: poetry build
 
-    - name: Publish with poetry (testpypi)
+    - name: Publish with poetry
       run: |
-        poetry config repositories.testpypi https://test.pypi.org/legacy/
-        poetry publish -r testpypi -u ${{ secrets.test_pypi_user }} -p ${{ secrets.test_pypi_pw }}
+        poetry publish -u ${{ secrets.pypi_user }} -p ${{ secrets.pypi_pw }}
