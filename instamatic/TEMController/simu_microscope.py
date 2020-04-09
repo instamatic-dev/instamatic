@@ -252,6 +252,10 @@ class SimuMicroscope:
         else:
             return self.Magnification_value
 
+    def setNeutral(self, *args):
+        """Neutralize given deflectors."""
+        pass
+
     def setMagnification(self, value: int):
         current_mode = self.getFunctionMode()
 
@@ -507,6 +511,8 @@ class SimuMicroscope:
 
     def setScreenPosition(self, value: int):
         """value = 'up' or 'down'"""
+        if value not in ('up', 'down'):
+            raise TEMValueError(f'No such screen position: `{value}`.')
         self.screenposition_value = value
 
     def setSpotSize(self, value: int):

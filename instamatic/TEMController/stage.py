@@ -1,6 +1,10 @@
+import time
 from collections import namedtuple
 from contextlib import contextmanager
 from typing import Tuple
+
+import numpy as np
+
 
 # namedtuples to store results from .get()
 StagePositionTuple = namedtuple('StagePositionTuple', ['x', 'y', 'z', 'a', 'b'])
@@ -49,7 +53,7 @@ class Stage:
             self.set(a=a, wait=False)
         # Do not wait on `set` to return to normal rotation speed quickly
         if wait:
-            self.wait_for_stage()
+            self.wait()
 
     @contextmanager
     def rotating_speed(self, speed: int):
@@ -169,7 +173,7 @@ class Stage:
         """Return 'True' if the stage is moving."""
         return self._tem.isStageMoving()
 
-    def wait_for_stage(self) -> None:
+    def wait(self) -> None:
         """Blocking call that waits for stage movement to finish."""
         self._tem.waitForStage()
 
