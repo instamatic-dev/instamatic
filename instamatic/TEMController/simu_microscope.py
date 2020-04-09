@@ -154,6 +154,11 @@ class SimuMicroscope:
         """Return goniotool status."""
         return self.goniotool_available
 
+    def _set_instant_stage_movement(self):
+        """Eliminate stage movement delays for testing."""
+        for key in ('a', 'b', 'x', 'y', 'z'):
+            self._stage_dict[key]['speed'] = 2**32
+
     def _StagePositionSetter(self, var: str, val: float) -> None:
         """General stage position setter, models stage movement speed."""
         d = self._stage_dict[var]

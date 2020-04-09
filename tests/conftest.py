@@ -12,4 +12,8 @@ os.environ['instamatic'] = str(base_drc.absolute())
 def ctrl():
     from instamatic.TEMController import initialize
     ctrl = initialize()
+
+    # set instant stage movement for testing
+    ctrl.tem._set_instant_stage_movement()
+
     return ctrl

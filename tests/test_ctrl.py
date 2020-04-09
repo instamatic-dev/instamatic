@@ -1,16 +1,81 @@
+import numpy as np
 import pytest
 
 
+def test_setup(ctrl):
+    from instamatic import TEMController
+
+    ctrl2 = TEMController.get_instance()
+    assert ctrl2 is ctrl
+
+
+def test_other(ctrl):
+    ctrl.spotsize = 1
+    assert ctrl.spotsize == 1
+
+    stagematrix = ctrl.get_stagematrix()
+    assert stagematrix.shape == (2, 2)
+
+    ctrl.store('test1')
+    ctrl.restore('test1')
+
+    ctrl.mode.set('diff')
+    ctrl.store_diff_beam()
+
+    ctrl.mode.set('mag1')
+    with pytest.raises(Exception):
+        ctrl.store_diff()
+
+
 def test_stage(ctrl):
-    pos = ctrl.stage.get()
+    stage = ctrl.stage
+
+    pos = stage.get()
     assert isinstance(pos, tuple)
     assert len(pos) == 5
 
-    ctrl.stage.neutral()
-    assert ctrl.stage.xy == (0, 0)
-    assert ctrl.stage.z == 0
-    assert ctrl.stage.a == 0
-    assert ctrl.stage.b == 0
+    stage.neutral()
+    assert stage.xy == (0, 0)
+
+    stage.x = 100
+    assert stage.x == 100
+    stage.y = -100
+    assert stage.y == -100
+    stage.z = 10
+    assert stage.z == 10
+    stage.a = 1
+    assert stage.a == 1
+    stage.b = -1
+    assert stage.b == -1
+
+    stage.xy = (0, 0)
+    assert stage.xy == (0, 0)
+
+    stage.set_a_with_speed(45, speed=12, wait=True)
+    assert not stage.is_moving()
+
+    assert stage.a == 45
+
+    stage.set(x=0, y=0, z=0)
+    stage.move_in_projection(delta_x=1, delta_y=1)
+    assert pytest.approx(abs(stage.y) + abs(stage.z), np.sqrt(2))
+    assert stage.x == 1
+
+    stage.set(x=0, y=0, z=0)
+    stage.move_along_optical_axis(1)
+    assert pytest.approx(abs(stage.y) + abs(stage.z), np.sqrt(2))
+
+    stage.xy = (0, 0)
+    stage.move_xy_with_backlash_correction(shift_x=100, shift_y=100)
+    assert stage.xy == (100, 100)
+    stage.move_xy_with_backlash_correction(shift_x=-100, shift_y=-100)
+    assert stage.xy == (0, 0)
+
+    stage.eliminate_backlash_a()
+    stage.eliminate_backlash_xy()
+
+    with pytest.raises(TypeError):
+        stage.set('rawr')
 
 
 def test_deflectors(ctrl):
@@ -25,8 +90,20 @@ def test_deflectors(ctrl):
         val = deflector.get()
         assert len(val) == 2
         assert isinstance(val, tuple)
-        deflector.xy = (0, 0)
-        assert deflector.get() == (0, 0)
+
+        deflector.x = 100
+        deflector.y = 200
+        assert deflector.x == 100
+        assert deflector.y == 200
+        assert deflector.xy == (100, 200)
+
+        deflector.xy = (10, 20)
+        assert deflector.xy == (10, 20)
+
+        deflector.neutral()
+
+    with pytest.raises(TypeError):
+        deflector.set('rawr')
 
 
 def test_magnification(ctrl):
@@ -83,10 +160,61 @@ def test_difffocus(ctrl):
 
 def test_brightness(ctrl):
     lens = ctrl.brightness
+    lens.max()  # set to max
     lens.min()  # set to 0
     val = lens.get()
     assert isinstance(val, int)
     assert val == 0
+
+    lens.value = 100
+    assert lens.value == 100
+
+
+def test_beam(ctrl):
+    beam = ctrl.beam
+    unblanked = 'unblanked'
+
+    beam.unblank()
+    assert beam.get() == unblanked
+
+    beam.blank()
+    assert beam.is_blanked
+
+    beam.set(unblanked)
+    assert beam.state == unblanked
+
+    with pytest.raises(ValueError):
+        beam.set('rawr')
+
+
+def test_mode(ctrl):
+    mode = ctrl.mode
+
+    mode.set('diff')
+    assert mode == 'diff'
+    mode.set('lowmag')
+    assert mode == 'lowmag'
+
+    mode.set('mag1')
+    assert mode == 'mag1'
+
+    with pytest.raises(ValueError):
+        mode.set('rawr')
+
+
+def test_screen(ctrl):
+    screen = ctrl.screen
+
+    screen.down()
+    screen.up()
+    assert screen.is_up
+
+    screen.down()
+    assert screen.get() == 'down'
+    assert screen.get() != 'up'
+
+    with pytest.raises(ValueError):
+        screen.set('rawr')
 
 
 if __name__ == '__main__':
