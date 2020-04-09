@@ -1,27 +1,25 @@
-name: Build
-on: [push]
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: windows-latest
 
-    # strategy:
-    #   max-parallel: 4
-    #   matrix:
-    #     python-version: [3.6, 3.7]
-
-    # steps:
-    # - uses: actions/checkout@v1
-    # - name: Set up Python ${{ matrix.python-version }}
-    #   uses: actions/setup-python@v1
-    #   with:
-    #     python-version: ${{ matrix.python-version }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
       with:
-        python-version: '3.8'
+        python-version: ${{ matrix.python-version }}
         architecture: x64
 
     - name: Lint with flake8
@@ -44,8 +42,3 @@ jobs:
 
     - name: Build with poetry
       run: poetry build
-
-    - name: Publish with poetry (testpypi)
-      run: |
-        poetry config repositories.testpypi https://test.pypi.org/legacy/
-        poetry publish -r testpypi -u ${{ secrets.test_pypi_user }} -p ${{ secrets.test_pypi_pw }}
