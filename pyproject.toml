@@ -55,6 +55,7 @@ virtualbox = '>=2.0.0'
 check-manifest = "*"
 pre-commit = "*"
 pytest = "^5.4.1"
+pytest-cov = "^2.8.1"
 
 [tool.poetry.scripts]
 # main

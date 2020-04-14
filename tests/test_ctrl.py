@@ -217,6 +217,16 @@ def test_screen(ctrl):
         screen.set('rawr')
 
 
+def test_align_to(ctrl):
+    reference = ctrl.get_raw_image()
+    pos = ctrl.stage.xy
+
+    shift = ctrl.align_to(reference, apply=True)
+
+    assert len(shift) == 2
+    assert pos != ctrl.stage.xy
+
+
 if __name__ == '__main__':
     test_ctrl()
 
