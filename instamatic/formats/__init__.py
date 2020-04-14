@@ -29,6 +29,8 @@ def read_image(fname: str) -> (np.array, dict):
         img, h = read_adsc(fname)
     elif ext in ('.mrc'):
         img, h = read_mrc(fname)
+    elif ext in ('.cbf'):
+        img, h = read_cbf(fname)
     else:
         raise OSError(f'Cannot open file {fname}, unknown extension: {ext}')
     return img, h
@@ -114,7 +116,7 @@ def read_hdf5(fname: str) -> (np.array, dict):
     if not os.path.exists(fname):
         raise FileNotFoundError(f"No such file: '{fname}'")
 
-    f = h5py.File(fname)
+    f = h5py.File(fname, 'r')
     return np.array(f['data']), dict(f['data'].attrs)
 
 

@@ -21,6 +21,11 @@ def swap_needed(header: dict) -> bool:
 
 def write_adsc(fname: str, data: np.array, header: dict = {}):
     """Write adsc format."""
+    if 'SIZE1' not in header and 'SIZE2' not in header:
+        dim2, dim1 = data.shape
+        header['SIZE1'] = dim1
+        header['SIZE2'] = dim2
+
     out = b'{\n'
     for key in header:
         out += '{:}={:};\n'.format(key, header[key]).encode()
@@ -84,7 +89,7 @@ def read_adsc(fname: str) -> (np.array, dict):
     # now read the data into the array
     dim1 = int(header['SIZE1'])
     dim2 = int(header['SIZE2'])
-    data = np.fromstring(binary, np.uint16)
+    data = np.frombuffer(binary, np.uint16)
     if swap_needed(header):
         data.byteswap(True)
     try:
