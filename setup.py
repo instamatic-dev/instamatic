@@ -21,7 +21,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='instamatic',
-    version='1.3.1-alpha.0',
+    version='1.3.0',
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.6',
     project_urls={
@@ -115,6 +115,7 @@ setup(
         'numpy>=1.17.3',
         'pandas>=0.25.3',
         'pillow>=7.0.0',
+        'pyserialem==0.*,>=0.1.0',
         'pywinauto>=0.6.8',
         'pyyaml>=5.3',
         'scikit-image>=0.16.2',
@@ -125,5 +126,7 @@ setup(
     extras_require={
         'dev': [
             'check-manifest',
-            'pre-commit']},
+            'pre-commit',
+            'pytest==5.*,>=5.4.1',
+            'pytest-cov==2.*,>=2.8.1']},
 )

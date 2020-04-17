@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'instamatic'
-version = "1.2.2"
+version = "1.3.0"
 description = 'Python program for automated electron diffraction data collection'
 license = 'GPL-3.0-only'
 classifiers = [
@@ -74,8 +74,8 @@ pyserialem = "^0.1.0"
 [tool.poetry.dev-dependencies]
 check-manifest = "*"
 pre-commit = "*"
-pytest = "^5.4.1"
-pytest-cov = "^2.8.1"
+pytest = "==5.*,>=5.4.1"
+pytest-cov = "==2.*,>=2.8.1"
 
 [tool.poetry.scripts]
 # main
@@ -110,6 +110,7 @@ instamatic = 'instamatic.main:main'
 
 [tool.poetry.urls]
 'Bug Reports' = 'https://github.com/stefsmeets/instamatic/issues'
+
 
 
 [tool.dephell.main]

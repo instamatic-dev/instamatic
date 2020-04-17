@@ -1,6 +1,6 @@
 ![build](https://github.com/stefsmeets/instamatic/workflows/build/badge.svg)
-![publish](https://github.com/stefsmeets/instamatic/workflows/publish/badge.svg)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2026774.svg)](https://doi.org/10.5281/zenodo.2026774)
+![PyPI](https://img.shields.io/pypi/v/pyserialem.svg?style=flat)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
 
 # Instamatic
 
