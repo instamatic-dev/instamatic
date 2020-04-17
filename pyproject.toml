@@ -41,8 +41,6 @@ include = [
     'docs/*.md',
     'docs/*.png',
     'docs/*.py',
-    'pyproject.toml',
-    'readme.md',
     'requirements.txt',
     'scripts/*.py',
     'setup_win.bat',
@@ -52,7 +50,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6"
+python = ">=3.6.1"
 comtypes = '>=1.1.7'
 h5py = '>=2.10.0'
 ipython = '>=7.11.1'
