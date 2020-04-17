@@ -116,7 +116,7 @@ def main():
     ctrl = TEMController.initialize(stream=True)
 
     if options.nav_file:
-        from instamatic.serialem import read_nav_file
+        from pyserialem import read_nav_file
         nav_items = read_nav_file(options.nav_file, acquire_only=True)
 
     if options.acquire_at_items:

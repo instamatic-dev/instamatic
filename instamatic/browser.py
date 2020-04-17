@@ -4,9 +4,9 @@ import time
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+from pyserialem import read_nav_file
 
 from instamatic.formats import read_tiff
-from instamatic.serialem import read_nav_file
 
 
 class Browser:

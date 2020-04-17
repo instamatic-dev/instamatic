@@ -515,7 +515,7 @@ class Montage:
         -------
         Montage object constructed from the given images
         """
-        from instamatic.serialem import read_mdoc_file
+        from pyserialem import read_mdoc_file
         filename = str(filename)  # in case of Path object
 
         gm = mrcfile.open(filename)
@@ -1203,7 +1203,7 @@ class Montage:
             specified are accessed as a dict of markers
             through `map_item.markers`.
         """
-        from instamatic.serialem import MapItem, write_nav_file
+        from pyserialem import MapItem, write_nav_file
 
         stem = fn.rsplit('.', 1)[-1]
         fn_mrc = stem + '.mrc'

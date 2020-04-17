@@ -5,11 +5,11 @@ import time
 from pathlib import Path
 
 import numpy as np
+from pyserialem import read_nav_file
 from scipy.interpolate import interp1d
 
 import instamatic
 from instamatic import config
-from instamatic import serialem
 from instamatic.formats import write_tiff
 from instamatic.tools import get_acquisition_time
 
@@ -31,7 +31,7 @@ class SerialExperiment:
         self.base_drc = self.instruction_file.parent
 
         if self.instruction_file.suffix == '.nav':
-            self.nav_items = serialem.read_nav_file(self.instruction_file, acquire_only=True)
+            self.nav_items = read_nav_file(self.instruction_file, acquire_only=True)
             self.run = self.run_from_nav_file
             self.start_angle = target_angle / 2
             self.end_angle = -self.start_angle
