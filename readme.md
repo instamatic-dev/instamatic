@@ -23,19 +23,11 @@ Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and
 
 A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/stefsmeets/InsteaDMatic).
 
-## Reference
+## Installation
 
-If you find this software useful, please consider citing one of the references below and/or refer to the source code in your publications:
+    pip install instamatic
 
-- S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, and W. Wan, (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
-
-Some of the methods implemented in Instamatic are described in:
-
-- B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 1-14
-
-- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661
-
-- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
+Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
 ## Documentation
 
@@ -50,19 +42,16 @@ See [the documentation](docs) for how to set up and use Instamatic.
 
 Use `pydoc` to access the full API reference: `pydoc -b instamatic`
 
-## Installation
+## Reference
 
-The simplest way is to download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
+If you find this software useful, please consider citing one of the references below and/or refer to the source code in your publications:
 
-Alternatively, the latest development version can always be obtained via:
+- S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, and W. Wan, (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
 
-    https://github.com/stefsmeets/instamatic/archive/master.zip
+Some of the methods implemented in Instamatic are described in:
 
-To install:
+- B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 1-14
 
-    pip install -r requirements.txt
-    python setup.py install
+- M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661
 
-Or:
-
-     pip install git+https://github.com/stefsmeets/instamatic.git
+- S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
