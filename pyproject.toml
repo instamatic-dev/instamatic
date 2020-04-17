@@ -31,6 +31,25 @@ keywords = [
     'data-collection',
     'automation'
 ]
+include = [
+    '.pre-commit-config.yaml',
+    'AUTHORS',
+    'LICENCE',
+    'demos/*.ipynb',
+    'demos/nav.nav',
+    'demos/readme.md',
+    'docs/*.md',
+    'docs/*.png',
+    'docs/*.py',
+    'pyproject.toml',
+    'readme.md',
+    'requirements.txt',
+    'scripts/*.py',
+    'setup_win.bat',
+    'tests/*.py',
+    'tests/config/*.yaml',
+    'tests/config/*/*.yaml',
+]
 
 [tool.poetry.dependencies]
 python = ">=3.6"
