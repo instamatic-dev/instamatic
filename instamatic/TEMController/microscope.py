@@ -52,7 +52,7 @@ def Microscope(name: str = None, use_server: bool = False):
         from .microscope_client import MicroscopeClient
         tem = MicroscopeClient(name=name)
     else:
-        cls = get_tem(name)
+        cls = get_tem(interface)
         tem = cls(name=name)
 
     return tem
