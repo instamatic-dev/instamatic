@@ -1,9 +1,22 @@
 import datetime
 import logging
 import os
+import pprint
 import sys
+from pathlib import Path
 
+import instamatic
 from instamatic import config
+
+
+locations = {
+    'base': config.base_drc,
+    'config': config.config_drc,
+    'logs': config.logs_drc,
+    'scripts': config.scripts_drc,
+    'data': config.settings.data_directory,
+    'work': config.settings.work_directory,
+}
 
 
 def locate(name, show=False):
@@ -19,19 +32,9 @@ def locate(name, show=False):
     -------
     drc : pathlib.Path
     """
-    if name == 'base':
-        drc = config.base_drc
-    elif name == 'config':
-        drc = config.config_drc
-    elif name == 'logs':
-        drc = config.logs_drc
-    elif name == 'scripts':
-        drc = config.scripts_drc
-    elif name == 'work':
-        drc = config.settings.work_directory
-    elif name == 'data':
-        drc = config.settings.data_directory
-    else:
+    try:
+        drc = locations[name]
+    except KeyError:
         raise ValueError(f'No such directory: `{name}`')
 
     if show:
@@ -42,7 +45,27 @@ def locate(name, show=False):
     else:
         print(drc)
 
-    return drc
+    return Path(drc)
+
+
+def show_info():
+    """Show info about the current instamatic installation."""
+    print('\n# Version')
+    print(f'{instamatic.__version__}')
+
+    print('\n# Locations')
+    for name, value in locations.items():
+        print(f' - ({name}) {value}')
+
+    print('\n# Config files')
+    print(f' - {config.settings.location}')
+    print(f' - {config.defaults.location}')
+    print(f' - {config.camera.location}')
+    print(f' - {config.microscope.location}')
+    print(f' - {config.calibration.location}')
+
+    print('\n# settings.yaml')
+    pprint.pprint(config.settings.mapping, sort_dicts=False)
 
 
 def main():
@@ -73,12 +96,17 @@ def main():
                         action='store', type=str, dest='show',
                         help='Open the requested directory and exit, see `--locate`.')
 
+    parser.add_argument('-i', '--info',
+                        action='store_true', dest='info',
+                        help='Show info about the current instamatic installation.')
+
     parser.set_defaults(script=None,
                         acquire_at_items=False,
                         nav_file=None,
                         start_gui=True,
                         locate=None,
                         show=False,
+                        info=False,
                         )
 
     options = parser.parse_args()
@@ -88,6 +116,9 @@ def main():
         exit()
     if options.show:
         locate(options.show, show=True)
+        exit()
+    if options.info:
+        show_info()
         exit()
 
     from instamatic.utils import high_precision_timers

@@ -107,6 +107,7 @@ class ConfigObject:
     def update_from_file(self, path: str) -> None:
         """Update configuration from yaml file."""
         self.update(yaml.load(open(path, 'r'), Loader=yaml.Loader))
+        self.location = path
 
     def update(self, mapping: dict):
         for key, value in mapping.items():
