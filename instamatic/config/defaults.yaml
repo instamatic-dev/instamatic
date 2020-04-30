@@ -12,3 +12,8 @@ montage:
     rot90: 3
     flipud: true
     fliplr: false
+predicrystal:
+  location: 'C:\predicrystal'
+  pixel_classification: 'C:\predicrystal\classifiers\normalized_holey_pixel_classification.ilp'
+  object_classification: 'C:\predicrystal\classifiers\normalized_holey_object_classification.ilp'
+  filter_distance: 2.0
