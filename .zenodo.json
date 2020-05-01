@@ -1,0 +1,26 @@
+{
+  "creators": [
+        {
+            "orcid": "0000-0002-5413-9038",
+            "affiliation": "TU Delft",
+            "name": "Stef Smeets"
+        },
+        {
+            "affiliation": "Stockholm University",
+            "name": "Bin Wang"
+        },
+
+  ],
+  "keywords": [
+    "electron-crystallography",
+    "electron-microscopy",
+    "electron-diffraction",
+    "serial-crystallography",
+    "3D-electron-diffraction",
+    "micro-ed",
+    "data-collection",
+    "automation",
+  ],
+  "license": "GPL-3.0",
+  "upload_type": "software",
+}
