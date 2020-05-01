@@ -2,7 +2,7 @@ from instamatic import config
 
 default_tem_interface = config.microscope.interface
 
-__all__ = ['Microscope']
+__all__ = ['Microscope', 'get_tem']
 
 
 def get_tem(interface: str):
@@ -42,11 +42,12 @@ def Microscope(name: str = None, use_server: bool = False):
 
     if name is None:
         interface = default_tem_interface
+        name = interface
     elif name != config.settings.microscope:
         config.load_microscope_config(microscope_name=name)
         interface = config.microscope.interface
     else:
-        interface = name
+        interface = config.microscope.interface
 
     if use_server:
         from .microscope_client import MicroscopeClient
