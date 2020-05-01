@@ -94,13 +94,8 @@ class AboutFrame(LabelFrame):
         frame = Frame(self)
 
         Label(frame, text='').grid(row=0, column=0, sticky='W')
-        Label(frame, text='Author:').grid(row=1, column=0, sticky='W', padx=10)
+        Label(frame, text='Contact:').grid(row=1, column=0, sticky='W', padx=10)
         Label(frame, text='Stef Smeets (stef.smeets@tudelft.nl)').grid(row=1, column=1, sticky='W')
-        Label(frame, text='Contributors:').grid(row=2, column=0, sticky='W', padx=10)
-        Label(frame, text='Bin Wang').grid(row=3, column=1, sticky='W')
-        Label(frame, text='Magdalena O. Cichocka').grid(row=2, column=1, sticky='W')
-        Label(frame, text='Jonas Ångström').grid(row=4, column=1, sticky='W')
-        Label(frame, text='Wei Wan').grid(row=5, column=1, sticky='W')
         Label(frame, text='').grid(row=5, column=0, sticky='W')
 
         Label(frame, text='Source code:').grid(row=10, column=0, sticky='W', padx=10)
@@ -109,15 +104,20 @@ class AboutFrame(LabelFrame):
         Label(frame, text='').grid(row=12, column=0, sticky='W')
 
         Label(frame, text='Manual:').grid(row=20, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__url__, action=self.link_github)
+        link = Link_Button(frame, text=instamatic.__url__ + '/docs', action=self.link_github)
         link.grid(row=20, column=1, sticky='W')
         Label(frame, text='').grid(row=22, column=0, sticky='W')
 
-        Label(frame, text='If you found this software useful, please cite:').grid(row=30, column=0, sticky='W', columnspan=2, padx=10)
-        txt = Message(frame, text=instamatic.__citation__, width=320, justify=LEFT)
-        txt.grid(row=31, column=1, sticky='W')
+        Label(frame, text='Bugs:').grid(row=30, column=0, sticky='W', padx=10)
+        link = Link_Button(frame, text=instamatic.__url__ + '/issues', action=self.link_github)
+        link.grid(row=30, column=1, sticky='W')
+        Label(frame, text='').grid(row=32, column=0, sticky='W')
 
-        Label(frame, text='').grid(row=31, column=0, sticky='W', padx=10)
+        Label(frame, text='If you found this software useful, please cite:').grid(row=40, column=0, sticky='W', columnspan=2, padx=10)
+        txt = Message(frame, text=instamatic.__citation__, width=320, justify=LEFT)
+        txt.grid(row=41, column=1, sticky='W')
+
+        Label(frame, text='').grid(row=41, column=0, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x')
 

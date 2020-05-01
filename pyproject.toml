@@ -33,7 +33,7 @@ keywords = [
 ]
 include = [
     '.pre-commit-config.yaml',
-    'AUTHORS',
+    'THANKS.md',
     'LICENCE',
     'demos/*.ipynb',
     'demos/nav.nav',

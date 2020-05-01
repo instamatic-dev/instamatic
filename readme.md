@@ -44,13 +44,15 @@ Use `pydoc` to access the full API reference: `pydoc -b instamatic`
 
 ## Reference
 
-If you find this software useful, please consider citing one of the references below and/or refer to the source code in your publications:
+If you found `Instamatic` useful, please consider citing it or one of the references below.
 
-- S. Smeets, B. Wang, M.O. Cichocka, J. Ångström, and W. Wan, (2018, December 7). Instamatic (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.2026774
+Each software release is archived on [Zenodo](https://zenodo.org), which provides a DOI for the project and each release. The project DOI [10.5281/zenodo.1090388](https://doi.org/10.5281/zenodo.1090388) will always resolve to the latest archive, which contains all the information needed to cite the release.
 
-Some of the methods implemented in Instamatic are described in:
+Alternatively, some of the methods implemented in `Instamatic` are described in:
 
 - B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 1-14
+
+- B. Wang, [Development of rotation electron diffraction as a fully automated and accurate method for structure determination](http://www.diva-portal.org/smash/record.jsf?pid=diva2:1306254). PhD thesis (2019), Dept. of Materials and Environmental Chemistry (MMK), Stockholm University
 
 - M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661
 
