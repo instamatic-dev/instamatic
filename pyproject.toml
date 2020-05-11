@@ -94,6 +94,7 @@ instamatic = 'instamatic.main:main'
 "instamatic.viewer" = 'scripts.viewer:main'
 "instamatic.defocus_helper" = 'instamatic.gui.defocus_button:main'
 "instamatic.find_crystals" = 'instamatic.processing.find_crystals:main_entry'
+"instamatic.find_crystals_ilastik" = 'instamatic.processing.find_crystals_ilastik:main_entry'
 "instamatic.learn" = 'scripts.learn:main_entry'
 # server
 "instamatic.temserver" = 'instamatic.server.tem_server:main'
