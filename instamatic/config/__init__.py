@@ -1,3 +1,4 @@
+import collections
 import datetime
 import logging
 import os
@@ -24,6 +25,16 @@ _camera = 'camera'
 _scripts = 'scripts'
 _alignments = 'alignments'
 _instamatic = 'instamatic'
+
+
+def nested_update(d: dict, u: dict) -> dict:
+    """Nested dictionary update, updates `d` with `u`"""
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = nested_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 
 def initialize_in_appData():
@@ -111,8 +122,14 @@ class ConfigObject:
 
     def update(self, mapping: dict):
         for key, value in mapping.items():
-            setattr(self, key, value)
-        self.mapping.update(mapping)
+            if isinstance(value, dict):
+                try:
+                    nested_update(getattr(self, key), value)
+                except AttributeError:
+                    setattr(self, key, value)
+            else:
+                setattr(self, key, value)
+        nested_update(self.mapping, mapping)
 
 
 def load_calibration(calibration_name: str = None):
