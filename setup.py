@@ -21,7 +21,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='instamatic',
-    version='1.3.2',
+    version='1.4.0',
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.6.1',
     project_urls={
@@ -59,6 +59,7 @@ setup(
             'instamatic.viewer = scripts.viewer:main',
             'instamatic.defocus_helper = instamatic.gui.defocus_button:main',
             'instamatic.find_crystals = instamatic.processing.find_crystals:main_entry',
+            'instamatic.find_crystals_ilastik = instamatic.processing.find_crystals_ilastik:main_entry',
             'instamatic.learn = scripts.learn:main_entry',
             'instamatic.temserver = instamatic.server.tem_server:main',
             'instamatic.camserver = instamatic.server.cam_server:main',
@@ -113,9 +114,9 @@ setup(
         'matplotlib>=3.1.2',
         'mrcfile>=1.1.2',
         'numpy>=1.17.3',
-        'pandas>=0.25.3',
+        'pandas>=1.0.0',
         'pillow>=7.0.0',
-        'pyserialem==0.*,>=0.1.0',
+        'pyserialem==0.*,>=0.1.3',
         'pywinauto>=0.6.8',
         'pyyaml>=5.3',
         'scikit-image>=0.16.2',
