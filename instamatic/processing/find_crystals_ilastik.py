@@ -1,15 +1,11 @@
 import sys
 from pathlib import Path
 
+import predicrystal
 import yaml
 
 from instamatic import config
 from instamatic.config import defaults
-
-
-predicrystal_path = Path(defaults.predicrystal['location'])  # noqa
-import predicrystal  # noqa
-from predicrystal.run_ilastik_cmndline import find_classifier
 
 
 def make_map_scale_ind_yaml(fn: str = 'MapScaleInd.yaml'):
@@ -45,22 +41,6 @@ class CrystalFinder:
             if not fn.exists():
                 raise OSError(f'`{fn}` does not exist!')
 
-        self._pixel_classification = Path(defaults.predicrystal['pixel_classification'])
-        self._object_classification = Path(defaults.predicrystal['object_classification'])
-
-        self._pixel_classification = find_classifier(self._pixel_classification)
-        self._object_classification = find_classifier(self._object_classification)
-
-    @property
-    def pixel_classification(self):
-        """Path to the Ilastik pixel classification project file (`.ilp`)"""
-        return self._pixel_classification
-
-    @property
-    def object_classification(self):
-        """Path to the Ilastik object classification project file (`.ilp`)"""
-        return self._object_classification
-
     def write_metadata(self, fn='settings.yaml', drc='.'):
         """Store metadata to a yaml file.
 
@@ -71,17 +51,12 @@ class CrystalFinder:
         with open(drc / fn, 'w') as f:
             yaml.dump(self.metadata, stream=f)
 
-    def convert_to_tiff(
-        self,
-        train_size: int = defaults.predicrystal['train_size'],
-        train_mag: int = defaults.predicrystal['train_size'],
-    ):
+    def convert_to_tiff(self, classifier):
         """Convert mrc file to tiff files compatible with `Ilastik`"""
         metadata = predicrystal.generate_test_data(
             nav=self.nav,
             mrc=self.mrc,
-            train_size=train_size,
-            train_mag_index=train_mag,
+            classifier=classifier,
         )
         self.metadata = metadata
 
@@ -93,29 +68,15 @@ class CrystalFinder:
 
         self.write_metadata()
 
-    def run_ilastik(
-        self,
-        object_classification: str = None,
-        pixel_classification: str = None,
-    ):
+    def run_ilastik(self, classifier):
         """Run the Ilastik classifiers (pixel / object)."""
-        if not object_classification:
-            object_classification = self._object_classification
-        else:
-            object_classification = find_classifier(object_classification)
-        if not pixel_classification:
-            pixel_classification = self._pixel_classification
-        else:
-            pixel_classification = find_classifier(pixel_classification)
-
         tiff_folder = self.tiff_folder
         mrc_folder = self.mrc_file.parent
 
         output_folder = predicrystal.run_classifiers(
             tiff_folder=tiff_folder,
             mrc_folder=mrc_folder,
-            pixel_classification=pixel_classification,
-            object_classification=object_classification,
+            classifier=classifier,
         )
 
         self.metadata['output filename'] = str(output_folder)
@@ -125,7 +86,7 @@ class CrystalFinder:
 
     def results_to_nav(
         self,
-        filter_distance: float = defaults.predicrystal['filter_distance'],
+        filter_distance: float = 2.0,
     ):
         """Conver the `Ilastik` results to a new `.nav` file that can be read
         by SerialEM.
@@ -170,7 +131,7 @@ def main_entry():
     # Re-use parsers from `predicrystal`
     parents = (
         parsers.test_data_parser(add_help=False),
-        parsers.project_file_parser(add_help=False),
+        # parsers.project_file_parser(add_help=False),
         parsers.output_parser(add_help=False),
     )
 
@@ -193,9 +154,9 @@ file compatible with `SerialEM` or `Instamatic`."""
         help='Generate `MapScaleInd.yaml` for `predicrystal` from config.')
 
     parser.set_defaults(
-        pixel_classification=None,
-        object_classification=None,
         generate_map_scale_ind=False,
+        classifier=defaults.predicrystal['classifier'],
+        filter_distance=defaults.predicrystal['filter_distance'],
     )
 
     # hide not implemented arguments
@@ -215,15 +176,9 @@ file compatible with `SerialEM` or `Instamatic`."""
         mrc=options.mrc_location,
     )
 
-    cf.convert_to_tiff(
-        train_size=options.init_train_size,
-        train_mag=options.init_magnification_index,
-    )
+    cf.convert_to_tiff(classifier=options.classifier)
 
-    cf.run_ilastik(
-        pixel_classification=options.pixel_classification,
-        object_classification=options.object_classification,
-    )
+    cf.run_ilastik(classifier=options.classifier)
 
     cf.results_to_nav(
         filter_distance=options.filter_distance,
