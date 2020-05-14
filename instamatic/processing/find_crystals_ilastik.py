@@ -9,6 +9,7 @@ from instamatic.config import defaults
 
 predicrystal_path = Path(defaults.predicrystal['location'])  # noqa
 import predicrystal  # noqa
+from predicrystal.run_ilastik_cmndline import find_classifier
 
 
 def make_map_scale_ind_yaml(fn: str = 'MapScaleInd.yaml'):
@@ -47,8 +48,8 @@ class CrystalFinder:
         self._pixel_classification = Path(defaults.predicrystal['pixel_classification'])
         self._object_classification = Path(defaults.predicrystal['object_classification'])
 
-        assert self._pixel_classification.exists()
-        assert self._object_classification.exists()
+        self._pixel_classification = find_classifier(self._pixel_classification)
+        self._object_classification = find_classifier(self._object_classification)
 
     @property
     def pixel_classification(self):
@@ -100,8 +101,12 @@ class CrystalFinder:
         """Run the Ilastik classifiers (pixel / object)."""
         if not object_classification:
             object_classification = self._object_classification
+        else:
+            object_classification = find_classifier(object_classification)
         if not pixel_classification:
             pixel_classification = self._pixel_classification
+        else:
+            pixel_classification = find_classifier(pixel_classification)
 
         tiff_folder = self.tiff_folder
         mrc_folder = self.mrc_file.parent
