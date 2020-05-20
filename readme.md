@@ -1,7 +1,7 @@
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/stefsmeets/instamatic/build)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)
-![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/instamatic)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/stefsmeets/instamatic/build)](https://github.com/stefsmeets/instamatic/actions)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)](https://pypi.org/project/instamatic/)
+[![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/instamatic/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/instamatic)](https://pypi.org/project/instamatic/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
 
 # Instamatic
