@@ -1,4 +1,4 @@
-![build](https://github.com/stefsmeets/instamatic/workflows/build/badge.svg)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/stefsmeets/instamatic/build)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)
 ![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/instamatic)
