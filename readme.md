@@ -1,5 +1,7 @@
 ![build](https://github.com/stefsmeets/instamatic/workflows/build/badge.svg)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)
 ![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/instamatic)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
 
 # Instamatic
