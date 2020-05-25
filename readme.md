@@ -57,3 +57,37 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
 - M.O. Cichocka, J. Ångström, B. Wang, X. Zou, and S. Smeets, [High-throughput continuous rotation electron diffraction data acquisition via software automation](http://dx.doi.org/10.1107/S1600576718015145), J. Appl. Cryst. (2018). 51, 1652–1661
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
+
+## Source Code Structure
+
+* **`demos/`** - Jupyter demo notebooks
+* **`docs/`** - Documentation
+* **`instamatic/`**
+  * **`TEMController/`** - Microscope interaction code
+  * **`calibrate/`** - Tools for calibration
+  * **`camera/`** - Camera interaction code
+  * **`config/`** - Configuration management
+  * **`experiments/`** - Specific data collection routines
+  * **`formats/`** - Image formats and other IO
+  * **`gui/`** - GUI code
+  * **`neural_network/`** - Crystal quality prediction
+  * **`processing/`** - Data processing tools
+  * **`server/`** - Manages interprocess/network communication
+  * **`utils/`** - Helpful utilities
+  * **`acquire_at_items.py`** - Stage movement/data acquisition engine
+  * **`admin.py`** - Check for administrator
+  * **`banner.py`** - Appropriately annoying thank you message
+  * **`browser.py`** - Montage browsing class
+  * **`exceptions.py`** - Internal exceptions
+  * **`goniotool.py`** - Goniotool (JEOL) interaction code
+  * **`gridmontage.py`** - Grid montage data collection code
+  * **`image_utils.py`** - Image transformation routines
+  * **`imreg.py`** - Image registration (cross correlation)
+  * **`io.py`** - Some io-related scripts
+  * **`main.py`** - Main entry point
+  * **`montage.py`** - Image stitching
+  * **`navigation.py`** - Optimize navigation paths
+  * **`tools.py`** - Collection of functions used throughout the code
+* **`scripts/`** - Helpful scripts
+* **`pyproject.toml`** - Dependency/build system declaration (poetry)
+* **`setup.py`** - Old-style build script
