@@ -79,7 +79,7 @@ class CrystalFinder:
             classifier=classifier,
         )
 
-        self.metadata['output filename'] = str(output_folder)
+        self.metadata['output folder'] = str(output_folder)
         self.output_folder = output_folder
 
         self.write_metadata()
