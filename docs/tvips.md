@@ -8,7 +8,7 @@ This module can be used for cRED/SerialRED data collection using a TVIPS camera.
 
 Data are stored to the directory specified in the *Data i/o* dialog. Each new experiment is saved to a new directory, and previous data are never overwritten. Images are stored in `.tiff` format and experimental metadata are to `cRED_log.txt`
 
-The python script [process_tvips.py](scripts/process_tvips.py) can be used to convert the data to MRC or SMV format, with input files for [REDp](https://www.mmk.su.se/zou/electron-crystallography-software/rotation-electron-diffraction-red) (.ed3d) and [XDS](http://xds.mpimf-heidelberg.mpg.de/) (XDS.INP).
+The python script [process_tvips.py](../scripts/process_tvips.py) can be used to convert the data to MRC or SMV format, with input files for [REDp](https://zenodo.org/record/2545322) (.ed3d) and [XDS](http://xds.mpimf-heidelberg.mpg.de/) (XDS.INP).
 
 Data collection was tested and developed on a JEOL 1400 with F416 camera.
 
@@ -16,11 +16,12 @@ Data collection was tested and developed on a JEOL 1400 with F416 camera.
 
 #### 1. Console window
 
-Shows the program output, see: [Console](gui.md).
+Shows the program output, see: [Console](gui.md#console).
 
 #### 2. Input/output
 
-Contronls where the data are stored. For more information, see: [Data i/o](gui.md).
+Contronls where the data are stored. For more information, see: [Data i/o](gui.md#Data-io).
+
 
 #### 3. Experimental parameters
 
@@ -70,7 +71,7 @@ Start the live view in EMMENU.
 Stop the live view in EMMENU.
 
 **Search**  
-Switch the microscope to search mode. The parameters of the search mode are defined in `$instamatic\scripts\search_mode.py`, for example to put the screen down, unblank the beam, and switch to MAG1 mode:
+Switch the microscope to search mode. Internally, these are defined as [`instamatic` scripts](https://github.com/stefsmeets/instamatic/tree/master/instamatic/config/scripts) and can therefore be easily modified. The parameters of the search mode are defined in `$instamatic\scripts\search_mode.py`, for example to put the screen down, unblank the beam, and switch to MAG1 mode:
 
 ```python
 ctrl.screen.down()
