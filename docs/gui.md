@@ -22,11 +22,11 @@ This panel deals with input and output of the experimental data.
 ![Input and output](gui_io.png)
 
 **Directory**  
-Root directory to work in. By default this is C:/instamatic/work_$date/
+Root directory to work in. By default this is `C:/instamatic/$date/`
 
 **Sample name and number**  
 This determines the subdirectory where experimental data are stored.
-The number is automatically incremenbed when a new experiment is started. Data are never overwritten.
+The number is automatically incremented when a new experiment is started. Data are never overwritten.
 
 **Flatfield**  
 Here the path to the flatfield image can be specified. The default
@@ -42,7 +42,31 @@ microscope, camera, and calibration files go here.
 
 **Delete last experiment**  
 Sometimes, a data collection will go wrong... Pressing this button will
-mark the last experiment directy for deletion. It will not actually delete anything.
+mark the last experiment directy for deletion. It will not actually delete anything, but you will at least know which ones to delete afterwards :-)
+
+
+## Console
+
+Module: `console`
+
+If enabled, this panel logs the console output.
+
+**Test**  
+Print a test message.
+
+**Clear**  
+Clears the console.
+
+**Export**  
+Opens a file browser to export the console output to a text file
+
+**Capture**  
+Check this toggle to redirect the output from `stdout`.
+
+**Timestamp**  
+Check this toggle to prepend timestamps to each message.
+
+![Console](gui_console.png)
 
 
 ## SerialED data collection
@@ -145,6 +169,7 @@ Module: `ctrl`
 
 This module allows some control over the microscope from the GUI and is updated as needed. At the moment, controls to control the stage position have been implemented, as well as a basic alpha wobbler which will rock the stage back and forth to find the eucentric height for rotation.
 
+![Control](gui_control.png)
 
 ## Advanced
 
@@ -165,6 +190,8 @@ There are also functions to collect a flatfield image.
 `Reset triggers` and `Empty queue` are for debugging, and probably redundant at this stage.
 
 Module: `debug`
+
+![Advanced](gui_advanced.png)
 
 ## About
 
