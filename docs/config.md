@@ -226,7 +226,7 @@ Give the dimensions of the camera at binning 1, for example: `[516, 516]`.
 Give the maximum counts of the camera, for example: `11800`. This is used for the contrast in the liveview and the flatfield collection.
 
 **physical_pixelsize**  
-The physical size of a pixel in micrometer, for example: `0.055`.
+The physical size of a pixel in millimeter, for example: `0.055`.
 
 **possible_binsizes**  
 Give here a list of possible binnings, for example: `[1]` or `[1, 2, 4]`.
