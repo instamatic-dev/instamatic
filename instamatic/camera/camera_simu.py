@@ -67,6 +67,10 @@ class CameraSimu:
 
         return arr
 
+    def acquireImage(self) -> int:
+        """For TVIPS compatibility."""
+        return 1
+
     def isCameraInfoAvailable(self) -> bool:
         """Check if the camera is available."""
         return True
