@@ -18,16 +18,18 @@ Electron microscopes supported:
 Cameras supported:
 
 - ASI Timepix (including live-view GUI)
-- Gatan cameras through DM plugin
+- Gatan cameras through DM plugin [1]
 - TVIPS cameras through EMMENU4 API
 
 Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/stefsmeets/InsteaDMatic).
+[1]: A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/stefsmeets/InsteaDMatic).
 
 ## Installation
 
-    pip install instamatic
+```bash
+pip install instamatic
+```
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
@@ -41,6 +43,7 @@ See [the documentation](docs) for how to set up and use Instamatic.
 - [Setting up instamatic](docs/setup.md)
 - [Programs included](docs/programs.md)
 - [GUI and Module system](docs/gui.md)
+- [TVIPS module](docs/tvips.md)
 
 Use `pydoc` to access the full API reference: `pydoc -b instamatic`
 
@@ -52,7 +55,7 @@ Each software release is archived on [Zenodo](https://zenodo.org), which provide
 
 Alternatively, some of the methods implemented in `Instamatic` are described in:
 
-- B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 1-14
+- B. Wang, X. Zou, and S. Smeets, [Automated serial rotation electron diffraction combined with cluster analysis: an efficient multi-crystal workflow for structure determination](https://doi.org/10.1107/S2052252519007681), IUCrJ (2019). 6, 854-867
 
 - B. Wang, [Development of rotation electron diffraction as a fully automated and accurate method for structure determination](http://www.diva-portal.org/smash/record.jsf?pid=diva2:1306254). PhD thesis (2019), Dept. of Materials and Environmental Chemistry (MMK), Stockholm University
 
