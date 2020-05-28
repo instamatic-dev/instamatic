@@ -8,4 +8,4 @@ Or via the API:
 
 `ctrl.run_script("hello_world.py")`
 
-Instamatic will always look first check if the path exists, and if it cannot find it, it will run it from the scripts directory (in the config directory listed when `instamatic` is launched).
+Instamatic will always look first check if the path exists locally. If it cannot find it, it will run it from the scripts directory (`instamatic -l scripts`).
