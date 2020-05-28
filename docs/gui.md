@@ -4,7 +4,7 @@
 
 Start the gui by typing `instamatic` in the command line.
 
-![Main interface](gui_main.png)
+![Main interface](images/gui_main.png)
 
 On the left side, a live view of the camera will be shown if the camera can be streamed, such as the Timepix. On the top, there are some fields to change the output of the view. The exposure time for the live view, brightness, and display range can be changed here. Pressing the `Save Image` button will dump the current frame to a tiff file in the active directory.
 
@@ -19,7 +19,7 @@ Module: `io`
 
 This panel deals with input and output of the experimental data.
 
-![Input and output](gui_io.png)
+![Input and output](images/gui_io.png)
 
 **Directory**  
 Root directory to work in. By default this is `C:/instamatic/$date/`
@@ -66,7 +66,7 @@ Check this toggle to redirect the output from `stdout`.
 **Timestamp**  
 Check this toggle to prepend timestamps to each message.
 
-![Console](gui_console.png)
+![Console](images/gui_console.png)
 
 
 ## SerialED data collection
@@ -75,7 +75,7 @@ Module: `sed`
 
 Serial electron diffraction (serialED) is a technique to collect diffraction data on a large number of crystals. One diffraction pattern per crystal is collected. These can then be combined for structure determination, or used for screening/phase analysis.
 
-![serial electron diffraction pane](gui_serialed.png)
+![serial electron diffraction pane](images/gui_serialed.png)
 
 Data collection can be started from the ‘serialED’ tab by pressing the ‘Start Collection’ button. Follow the instructions in the terminal to setup and calibrate the experiment.
 
@@ -103,7 +103,7 @@ Continuous RED (cRED) data collection can be started from the `cRED` tab.
 
 The data collection procedure can be initiated by pressing ‘Start Collection’. The program will then wait for the rotation to start. The moment the pedal is pressed to start the rotation, the program will start the data collection with the specified options. Do not release your foot until after you press ‘Stop Collection’. This will signal the program to stop data collection, and write the images. Images are written in TIFF, MRC, and SMV format. Input files for REDp (.ed3d) and XDS (XDS.INP) are also written.
 
-![Continous rotation electron diffraction pane](gui_cred.png)
+![Continous rotation electron diffraction pane](images/gui_cred.png)
 
 **Exposure time**  
 change the data collection time for each image.
@@ -169,7 +169,7 @@ Module: `ctrl`
 
 This module allows some control over the microscope from the GUI and is updated as needed. At the moment, controls to control the stage position have been implemented, as well as a basic alpha wobbler which will rock the stage back and forth to find the eucentric height for rotation.
 
-![Control](gui_control.png)
+![Control](images/gui_control.png)
 
 ## Advanced
 
@@ -191,7 +191,7 @@ There are also functions to collect a flatfield image.
 
 Module: `debug`
 
-![Advanced](gui_advanced.png)
+![Advanced](images/gui_advanced.png)
 
 ## About
 

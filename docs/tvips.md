@@ -12,7 +12,7 @@ The python script [process_tvips.py](scripts/process_tvips.py) can be used to co
 
 Data collection was tested and developed on a JEOL 1400 with F416 camera.
 
-![TVIPS ED data collection pane](gui_tvips_annotated.png)
+![TVIPS ED data collection pane](images/gui_tvips_annotated.png)
 
 #### 1. Console window
 
