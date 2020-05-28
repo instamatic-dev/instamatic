@@ -23,6 +23,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.init_vars()
 
         frame = Frame(self)
+
         Label(frame, text='Target angle (degrees):').grid(row=4, column=0, sticky='W')
         self.e_target_angle = Spinbox(frame, textvariable=self.var_target_angle, width=sbwidth, from_=-80.0, to=80.0, increment=5.0, state=NORMAL)
         self.e_target_angle.grid(row=4, column=1, sticky='W', padx=10)
@@ -76,14 +77,6 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame = Frame(self)
 
-        self.e_instructions = Entry(frame, width=50, textvariable=self.var_instruction_file)
-        self.e_instructions.grid(row=4, column=1, sticky='EW')
-        self.BrowseTrackButton = Button(frame, text='Browse..', command=self.browse_instructions)
-        self.BrowseTrackButton.grid(row=4, column=2, sticky='EW')
-        Label(frame, text='Instruction file:').grid(row=4, column=0, sticky='W')
-        frame.pack(side='top', fill='x', padx=10, pady=10)
-
-        frame = Frame(self)
         self.SearchButton = Button(frame, text='Search', command=self.search)
         self.SearchButton.grid(row=1, column=0, sticky='EW')
 
@@ -98,6 +91,16 @@ class ExperimentalTVIPS(LabelFrame):
         frame.columnconfigure(2, weight=1)
 
         frame.pack(fill='x', padx=10, pady=10)
+
+        frame = Frame(self)
+
+        self.e_instructions = Entry(frame, width=50, textvariable=self.var_instruction_file)
+        self.e_instructions.grid(row=4, column=1, sticky='EW')
+        self.BrowseTrackButton = Button(frame, text='Browse..', command=self.browse_instructions)
+        self.BrowseTrackButton.grid(row=4, column=2, sticky='EW')
+        Label(frame, text='Instruction file:').grid(row=4, column=0, sticky='W')
+
+        frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
 
