@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'instamatic'
-version = "1.4.0"
+version = "1.4.1"
 description = 'Python program for automated electron diffraction data collection'
 license = 'GPL-3.0-only'
 classifiers = [
@@ -109,6 +109,7 @@ instamatic = 'instamatic.main:main'
 
 [tool.poetry.urls]
 'Bug Reports' = 'https://github.com/stefsmeets/instamatic/issues'
+
 
 [tool.dephell.main]
 from = {format = 'poetry', path = 'pyproject.toml'}
