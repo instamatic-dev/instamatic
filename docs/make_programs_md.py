@@ -1,6 +1,8 @@
 import subprocess as sp
 from pathlib import Path
 
+import toml
+
 
 def parse_lines(lines):
     ret = []
@@ -38,9 +40,11 @@ def parse_lines(lines):
 
 out = open('autodoc.md', 'w')
 
-fn = Path().absolute().parent / 'setup.py'
-
+fn = Path().absolute().parent / 'pyproject.toml'
 print(fn)
+
+d = toml.load(fn)
+progs = d['tool']['poetry']['scripts']
 
 category = '- **{}**'
 toc = '  + [{}](#{}) (`{}`)'
@@ -49,41 +53,11 @@ header = '\n## {}\n'
 capture = False
 lines = []
 
-with open(fn, 'r') as f:
-    for line in f:
-        if 'console_scripts' in line:
-            capture = True
-            continue
-        if '],' in line:
-            capture = False
-            continue
+for prog, loc in progs.items():
+    ref = prog.strip('.')
+    print(toc.format(prog, ref, loc), file=out)
 
-        if capture:
-            lines.append(line.strip())
-
-
-progs = []
-
-for line in lines:
-    if not line:
-        continue
-
-    if line.startswith('#'):
-        title = line.strip("#' ").capitalize()
-        print(category.format(title), file=out)
-
-    else:
-        prog, loc = line.split('=')
-
-        prog = prog.strip("' ")
-        ref = prog.strip('.')
-        loc = loc.strip("' ,")
-        print(toc.format(prog, ref, loc), file=out)
-
-        progs.append(prog)
-
-
-for i, prog in enumerate(progs):
+for i, prog in enumerate(progs.keys()):
     positional = []
     optional = []
     description = []

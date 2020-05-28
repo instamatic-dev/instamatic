@@ -139,7 +139,7 @@ def main_entry():
 
 Takes a `.nav` file and `.mrc` file as input.
 Performs pixel and object classification using the Ilastik interface in
-[predicrystal](https://gitlab.com/aj-lab/predicrystal. Crystals are
+[predicrystal](https://gitlab.com/aj-lab/predicrystal). Crystals are
 filtered by their distance. The resulting data is stored in a new `.nav`
 file compatible with `SerialEM` or `Instamatic`."""
 
