@@ -8,5 +8,6 @@ See the topics below for how to set up and use `instamatic`.
 - [Setting up instamatic](setup.md)
 - [Programs included](programs.md)
 - [GUI and Module system](gui.md)
+- [TVIPS module](tvips.md)
 
 Use `pydoc` to access the full API reference: `pydoc -b instamatic`
