@@ -70,7 +70,7 @@ capture = False
 lines = []
 
 for prog, loc in progs.items():
-    ref = prog.strip('.')
+    ref = prog.replace('.', '')
     print(toc.format(prog, ref, loc), file=out)
 
 for i, prog in enumerate(progs.keys()):
