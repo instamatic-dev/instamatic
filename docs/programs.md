@@ -34,6 +34,7 @@ There are several programs coming with `instamatic`. These docs are autogenerate
   + [instamatic.autoconfig](#instamaticautoconfig) (`instamatic.config.autoconfig:main`)
   + [instamatic.install](#instamaticinstall) (Cmder)
 
+
 ## instamatic
 
 Start instamatic with various functions (see below). If no arguments are given, start the instamatic GUI. The GUI is modular and can be defined using the config system. The GUI can be used to control the microscope and run the experiments. The GUI itself is further described on the GUI page.
@@ -44,19 +45,19 @@ instamatic [-h] [-s SCRIPT] [-n NAV_FILE] [-a] [-l LOCATE] [-o SHOW]
            [-i]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-s SCRIPT, --script SCRIPT`:  
+`-s SCRIPT`, `--script SCRIPT`:  
  Run the script given  
-`-n NAV_FILE, --nav NAV_FILE`:  
+`-n NAV_FILE`, `--nav NAV_FILE`:  
  Load the given .nav file  
-`-a, --acquire_at_items`:  
+`-a`, `--acquire_at_items`:  
  Run the script file `--script` at every point marked with `Acquire` in the nav file `--nav`.  
-`-l LOCATE, --locate LOCATE`:  
+`-l LOCATE`, `--locate LOCATE`:  
  Locate a requested directory and exit, i.e. `config`, `data`, `scripts`, `base`, 'work`, `logs`  
-`-o SHOW, --open SHOW`:  
+`-o SHOW`, `--open SHOW`:  
 Open the requested directory and exit, see `--locate`.  
-`-i, --info`:  
+`-i`, `--info`:  
 Show info about the current instamatic installation.  
 
 
@@ -69,13 +70,13 @@ Connect to the microscope and camera, and open an IPython terminal to interactiv
 instamatic.controller [-h] [-u] [-c TEM_NAME] [-t CAM_NAME]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-u, --simulate`:  
+`-u`, `--simulate`:  
 Simulate microscope connection (default: False)  
-`-c TEM_NAME, --camera TEM_NAME`:  
+`-c TEM_NAME`, `--camera TEM_NAME`:  
  Camera configuration to load.  
-`-t CAM_NAME, --tem CAM_NAME`:  
+`-t CAM_NAME`, `--tem CAM_NAME`:  
  TEM configuration to load.  
 
 
@@ -88,7 +89,7 @@ Command line program to run the serial ED data collection routine.
 instamatic.serialed [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -101,17 +102,17 @@ Simple program to acquire image data from the camera.
 instamatic.camera [-h] [-b N] [-e N] [-o image.png] [-d] [-s]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-b N, --binsize N`:  
+`-b N`, `--binsize N`:  
 Binsize to use. Must be one of 1, 2, or 4 (default 1)  
-`-e N, --exposure N`:  
+`-e N`, `--exposure N`:  
 Exposure time (default 0.5)  
-`-o image.png, --out image.png`:  
+`-o image.png`, `--out image.png`:  
  Where to store image  
-`-d, --display`:  
+`-d`, `--display`:  
 Show the image (default True)  
-`-s, --series`:  
+`-s`, `--series`:  
 Enable mode to take a series of images (default False)  
 
 
@@ -128,7 +129,7 @@ instamatic.calibrate_stage_lowmag [-h] [IMG [IMG ...]]
 Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -145,7 +146,7 @@ instamatic.calibrate_stage_mag1 [-h] [IMG [IMG ...]]
 Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -162,7 +163,7 @@ instamatic.calibrate_beamshift [-h] [IMG [IMG ...]]
 Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -179,7 +180,7 @@ instamatic.calibrate_directbeam [-h] [IMG [IMG ...]]
 Perform calibration using pre-collected images. They must be formatted as such: DiffShift:pattern.tiff BeamShift:pattern.tiff, where `pattern` is a globbing pattern that finds the images corresponding to the key BeamShift or DiffShift. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -206,15 +207,15 @@ instamatic.flatfield [-h] [-f flatfield.tiff] [-d darkfield.tiff]
 Image file paths/pattern  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-f flatfield.tiff, --flatfield flatfield.tiff`:  
+`-f flatfield.tiff`, `--flatfield flatfield.tiff`:  
  Path to flatfield file  
-`-d darkfield.tiff, --darkfield darkfield.tiff`:  
+`-d darkfield.tiff`, `--darkfield darkfield.tiff`:  
  Path to darkfield file  
-`-o DRC, --output DRC`:  
+`-o DRC`, `--output DRC`:  
 Output directory for image files  
-`-c, --collect`:  
+`-c`, `--collect`:  
 Collect flatfield/darkfield images on microscope  
 
 
@@ -231,7 +232,7 @@ instamatic.stretch_correction [-h] powder_pattern.tiff
 Diffraction pattern (TIFF) from a nanocrystalline powder showing Debye-Scherrer rings.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -252,9 +253,9 @@ instamatic.browser [-h] [-s] [FILE]
 File pattern to image files  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-s, --stitch`:  
+`-s`, `--stitch`:  
 Stitch images together.  
 
 
@@ -271,7 +272,7 @@ instamatic.viewer [-h] IMG
 Image to display (TIFF, HDF5, MRC, SMV).  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -284,7 +285,7 @@ Tiny button to focus and defocus the diffraction pattern.
 instamatic.defocus_helper [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -301,7 +302,7 @@ instamatic.find_crystals [-h] [IMG [IMG ...]]
 Images to find crystals in.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -322,17 +323,17 @@ instamatic.find_crystals_ilastik [-h] [-n <path>] [-m <path>]
                                  [--mapscaleind]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-n <path>, --nav <path>, --nav_location <path>`:  
+`-n <path>`, `--nav <path>`, `--nav_location <path>`:  
  The full path to the .nav file. Enter as raw string  
-`-m <path>, --mrc <path>, --mrc_location <path>`:  
+`-m <path>`, `--mrc <path>`, `--mrc_location <path>`:  
  The full path to the .mrc file (not the global map). Enter as raw string  
-`-c <name>, --classifier <name>`:  
+`-c <name>`, `--classifier <name>`:  
  Use the classifier as defined in /classifiers/classifiers.yaml  
-`-f D, --filter_dist D, --filter_distance D`:  
+`-f D`, `--filter_dist D`, `--filter_distance D`:  
  Specify what distance the crystals should be separated  
-`-d <path>, --output <path>, --output_name <path>`:  
+`-d <path>`, `--output <path>`, `--output_name <path>`:  
  The destination of the .nav file created  
 `--mapscaleind`:  
 Generate `MapScaleInd.yaml` for `predicrystal` from config.  
@@ -351,7 +352,7 @@ instamatic.learn [-h] PAT
 File pattern to glob for images (HDF5), i.e. `images/*.h5`.  
 
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -376,9 +377,9 @@ The response is returned as a serialized object.
 instamatic.temserver [-h] [-t MICROSCOPE]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-t MICROSCOPE, --microscope MICROSCOPE`:  
+`-t MICROSCOPE`, `--microscope MICROSCOPE`:  
  Override microscope to use.  
 
 
@@ -403,9 +404,9 @@ The response is returned as a pickle object.
 instamatic.camserver [-h] [-c CAMERA]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
-`-c CAMERA, --camera CAMERA`:  
+`-c CAMERA`, `--camera CAMERA`:  
  Override camera to use.  
 
 
@@ -425,7 +426,7 @@ The data sent to the server is a dict containing the following elements:
 instamatic.dialsserver [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -443,15 +444,15 @@ instamatic.VMserver [-h] [-shelxt] [-c a b c al be ga] [-s SPGR]
                     [-m Xn [Ym ...]]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 `-shelxt`:  
 Run SHELXT when xds ASCII HKL file is generated.  
-`-c a b c al be ga, --unitcell a b c al be ga`:  
+`-c a b c al be ga`, `--unitcell a b c al be ga`:  
  Six numbers of the unit cell parameters.  
-`-s SPGR, --spgr SPGR`:  
+`-s SPGR`, `--spgr SPGR`:  
 Space group.  
-`-m Xn [Ym ...], --composition Xn [Ym ...]`:  
+`-m Xn [Ym ...]`, `--composition Xn [Ym ...]`:  
  Unit cell composition, i.e. `-m H2 O1`.  
 
 
@@ -466,7 +467,7 @@ The data sent to the server as a bytes string containing the data path (must con
 instamatic.xdsserver [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -479,7 +480,7 @@ Utility script to enable rotation control from a dmscript. See [https://github.c
 instamatic.temserver_fei [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -502,7 +503,7 @@ The response is returned as a pickle object.
 instamatic.goniotoolserver [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 
@@ -516,7 +517,7 @@ It establishes a connection to the microscope and reads out the camera lengths a
 instamatic.autoconfig [-h]
 ```
 **Optional arguments:**  
-`-h, --help`:  
+`-h`, `--help`:  
 show this help message and exit  
 
 

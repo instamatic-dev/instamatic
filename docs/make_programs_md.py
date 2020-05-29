@@ -19,20 +19,23 @@ def parse_lines(lines):
 
         inp = line.split('  ', maxsplit=1)
 
-        if len(inp) == 2:
-            # flush key/val because new key is found
+        def flush():
+            nonlocal val
+            nonlocal key
+
             if val:
                 buffer.append((key, val))
                 val = ''
+
+        if len(inp) == 2:
+            flush()  # new key is found
 
             key = inp[0]
             val = inp[1].strip()
 
         elif inp[0].startswith('-'):
-            # flush key/val because new key is found
-            if val:
-                buffer.append((key, val))
-                val = ''
+            flush()  # new key is found
+
             key = inp[0]
             try:
                 val = inp[1].strip()
@@ -42,12 +45,11 @@ def parse_lines(lines):
         else:
             val += ' ' + inp[0]
 
-    # flush key/val after loop
-    if val:
-        buffer.append((key, val))
+    flush()  # after loop
 
     for key, val in buffer:
-        ret.append(f'`{key}`:  \n{val}  ')
+        key_str = ', '.join(f'`{k.strip()}`' for k in key.split(','))
+        ret.append(f'{key_str}:  \n{val}  ')
 
     return ret
 
