@@ -137,7 +137,7 @@ class TEMController:
                 f'{self.difffocus}\n'
                 f'{self.brightness}\n'
                 f'SpotSize({self.spotsize})\n'
-                f'Saved alignments: {tuple(self._saved_alignments.keys())}\n')
+                f'Saved alignments: {tuple(self._saved_alignments.keys())}')
 
     @property
     def high_tension(self) -> float:
