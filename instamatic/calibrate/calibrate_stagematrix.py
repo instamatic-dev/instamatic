@@ -6,8 +6,8 @@ import yaml
 from scipy import stats
 from skimage.feature import register_translation
 
-from .fit import fit_affine_transformation
 from instamatic import config
+from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
@@ -401,3 +401,58 @@ def calibrate_stage_all(ctrl,
     print(yaml.dump(cfg))
 
     return cfg
+
+
+def main_entry():
+    import argparse
+
+    description = """Run the stagematrix calibration routine for all magnifications
+    specified. Return the updates values for the configuration file."""
+
+    parser = argparse.ArgumentParser(description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-m', '--mode', dest='mode', type=str,
+                        help=('Select the imaging mode (mag1/mag2/lowmag/samag). '
+                              'If `all` is specified, all imaging modes+mags are calibrated.'
+                              'If the imaging mode and magnification are not given, the current'
+                              'values are used.'))
+    parser.add_argument('-k', '--mag', dest='mag', type=int, metavar='K',
+                        help='Select the imaging magnification.')
+    parser.add_argument('-A', '--all_mags', action='store_true', dest='all_mags',
+                        help='Run calibration routine for all mags over selected mode.')
+    parser.add_argument('-v', '--overlap', dest='overlap', type=float, metavar='X',
+                        help=('Specify the approximate overlap between images for cross '
+                              'correlation.'))
+    parser.add_argument('-l', '--stage_length', dest='stage_length', type=int,
+                        help=('Specify the minimum length (in stage coordinates) the calibration '
+                              'should cover.'))
+    parser.add_argument('-a', '--min_n_steps', dest='min_n_step', type=int, metavar='N',
+                        help=('Specify the minimum number of steps to take along X and Y for the '
+                              'calibration.'))
+    parser.add_argument('-b', '--max_n_steps', dest='max_n_step', type=int, metavar='N',
+                        help=('Specify the maximum number of steps to take along X and Y for the '
+                              'calibration. This is used for higher magnifications.'))
+    parser.add_argument('-p', '--plot', dest='plot', action='store_true',
+                        help='Plot the fitting result.')
+    parser.add_argument('-d', '--drc', dest='drc', type=str, metavar='<path>',
+                        help='Path to store the raw data (optional).')
+    parser.add_argument('-s', '--save', action='store_true', dest='save',
+                        help='Save the data to the data directory.')
+
+    parser.set_defaults(mode=None,
+                        mag=None,
+                        overlap=0.8,
+                        stage_length=40_000,
+                        min_n_step=5,
+                        max_n_step=9,
+                        plot=False,
+                        drc=None,
+                        save=False,
+                        )
+
+    options = parser.parse_args()
+
+
+if __name__ == '__main__':
+    main_entry()

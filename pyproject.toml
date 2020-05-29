@@ -87,6 +87,7 @@ instamatic = 'instamatic.main:main'
 "instamatic.calibrate_stage_mag1" = 'instamatic.calibrate.calibrate_stage_mag1:main_entry'
 "instamatic.calibrate_beamshift" = 'instamatic.calibrate.calibrate_beamshift:main_entry'
 "instamatic.calibrate_directbeam" = 'instamatic.calibrate.calibrate_directbeam:main_entry'
+"instamatic.calibrate_stagematrix" = 'instamatic.calibrate.calibrate_stagematrix:main_entry'
 "instamatic.flatfield" = 'instamatic.processing.flatfield:main_entry'
 "instamatic.stretch_correction" = 'instamatic.processing.stretch_correction:main_entry'
 # tools
