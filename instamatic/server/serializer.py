@@ -6,8 +6,6 @@ import yaml
 from instamatic.config import settings
 PROTOCOL = settings.tem_communication_protocol
 
-print(f'Protocol: `{PROTOCOL}`')
-
 # %timeit ctrl.stage.get()
 # - pickle:  287 µs ± 10.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
 # - json:    320 µs ± 55.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
