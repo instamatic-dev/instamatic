@@ -262,3 +262,21 @@ calibration = None
 camera = None
 
 load_all()
+
+locations = {
+    'base': base_drc,
+    'config': config_drc,
+    'logs': logs_drc,
+    'scripts': scripts_drc,
+    'camera': alignments_drc,
+    'microscope': calibration.location,
+    'calibration': microscope.location,
+    'alignments': camera.location,
+    'data': settings.data_directory,
+    'work': settings.work_directory,
+    'microscope_config': calibration.location,
+    'calibration_config': microscope.location,
+    'alignments_config': camera.location,
+    'settings': config_drc / _settings_yaml,
+    'defaults': config_drc / _defaults_yaml,
+}
