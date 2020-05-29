@@ -21,7 +21,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='instamatic',
-    version='1.4.2',
+    version='1.5.0',
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.6.1',
     project_urls={
@@ -53,6 +53,7 @@ setup(
             'instamatic.calibrate_stage_mag1 = instamatic.calibrate.calibrate_stage_mag1:main_entry',
             'instamatic.calibrate_beamshift = instamatic.calibrate.calibrate_beamshift:main_entry',
             'instamatic.calibrate_directbeam = instamatic.calibrate.calibrate_directbeam:main_entry',
+            'instamatic.calibrate_stagematrix = instamatic.calibrate.calibrate_stagematrix:main_entry',
             'instamatic.flatfield = instamatic.processing.flatfield:main_entry',
             'instamatic.stretch_correction = instamatic.processing.stretch_correction:main_entry',
             'instamatic.browser = scripts.browser:main',
@@ -119,7 +120,7 @@ setup(
         'pyserialem==0.*,>=0.1.3',
         'pywinauto>=0.6.8',
         'pyyaml>=5.3',
-        'scikit-image>=0.16.2',
+        'scikit-image>=0.17.1',
         'scipy>=1.3.2',
         'tifffile>=2019.7.26.2',
         'tqdm>=4.41.1',

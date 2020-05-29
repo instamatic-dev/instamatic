@@ -9,7 +9,7 @@ __banner__ = r"""
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 """
 
-__version__ = '1.4.2'
+__version__ = '1.5.0'
 __title__ = 'instamatic'
 __long_title__ = f'{__title__} v{__version__}'
 __author__ = 'Stef Smeets'
