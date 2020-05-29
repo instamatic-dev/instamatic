@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy import ndimage
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tqdm.auto import tqdm
 
 from instamatic import config
@@ -713,7 +713,7 @@ class Experiment:
 
                     if trackmethod == 'c':
 
-                        cc, err, diffphase = register_translation(img0_cropped, img_cropped)
+                        cc, err, diffphase = phase_cross_correlation(img0_cropped, img_cropped)
                         self.logger.debug(f'Cross correlation result: {cc}')
 
                         if self.guess_crystmove and i >= self.nom_ii:

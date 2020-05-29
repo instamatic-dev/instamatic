@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from scipy import stats
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 
 from instamatic import config
 from instamatic.calibrate.fit import fit_affine_transformation
@@ -40,7 +40,7 @@ def cross_correlate_image_pairs(pairs: tuple) -> list:
     """Cross correlate image pairs."""
     translations = []
     for img0, img1 in pairs:
-        translation, error, phasediff = register_translation(img0, img1, upsample_factor=10)
+        translation, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10)
         print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
         translations.append(translation)
     return translations

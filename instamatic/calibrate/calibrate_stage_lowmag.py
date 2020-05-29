@@ -4,7 +4,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 
 from .filenames import *
 from .fit import fit_affine_transformation
@@ -262,7 +262,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
         img = imgscale(img, scale)
 
-        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
         xobs, yobs, _, _, _ = h['StagePosition']
         stagepos.append((xobs, yobs))
@@ -332,7 +332,7 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
         print(f'Stageposition: x={xobs:.0f} | y={yobs:.0f}')
         print()
 
-        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
         stagepos.append((xobs, yobs))
         shifts.append(shift)

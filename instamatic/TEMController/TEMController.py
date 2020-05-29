@@ -303,7 +303,7 @@ class TEMController:
         stage_shift : np.array[2]
             The stage shift vector determined from cross correlation
         """
-        from skimage.feature import register_translation
+        from skimage.registration import phase_cross_correlation
 
         current_x, current_y = self.stage.xy
 
@@ -314,7 +314,7 @@ class TEMController:
 
         img = self.get_rotated_image()
 
-        pixel_shift, error, phasediff = register_translation(ref_img, img, upsample_factor=10)
+        pixel_shift, error, phasediff = phase_cross_correlation(ref_img, img, upsample_factor=10)
 
         stage_shift = np.dot(pixel_shift, stagematrix)
         stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
@@ -367,7 +367,7 @@ class TEMController:
         z: float
             Optimized Z value for eucentric tilting
         """
-        from skimage.feature import register_translation
+        from skimage.registration import phase_cross_correlation
 
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
@@ -381,7 +381,7 @@ class TEMController:
             if sign < 1:
                 img2, img1 = img1, img2
 
-            shift, error, phasediff = register_translation(img1, img2, upsample_factor=10)
+            shift, error, phasediff = phase_cross_correlation(img1, img2, upsample_factor=10)
 
             return shift
 

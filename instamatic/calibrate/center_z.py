@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 
 from instamatic.processing.find_crystals import find_crystals_timepix
 
@@ -56,7 +56,7 @@ def center_z_height(ctrl, verbose=False):
         z.append(z0 + i * 1000)
         ctrl.stage.set(a=a0 + 10)
         img1, h = ctrl.get_image(exposure=0.01, comment='z height finding')
-        shift, error, phasediff = register_translation(img0, img1, upsample_factor=10)
+        shift, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10)
         d1 = np.linalg.norm(shift)
         if shift[0] < 0:
             d1 = -d1

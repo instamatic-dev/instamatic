@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tqdm.auto import tqdm
 
 from instamatic.calibrate.fit import fit_affine_transformation
@@ -57,7 +57,7 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
             deflector.set(x=x0 + (i - 2) * stepsize, y=y0 + (j - 2) * stepsize)
             img, h = ctrl.get_image(exposure=0.01, comment='imageshifted image')
 
-            shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
+            shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
             imgshift = np.array(((i - 2) * stepsize, (j - 2) * stepsize))
             imgpos.append(imgshift)
             shifts.append(shift)

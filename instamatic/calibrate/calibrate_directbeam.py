@@ -5,7 +5,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 
 from .filenames import *
 from .fit import fit_affine_transformation
@@ -238,7 +238,7 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
         img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
         img = imgscale(img, scale)
 
-        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
         readout = np.array(h[key])
         readouts.append(readout)
@@ -287,7 +287,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
         print('Image:', fn)
         print('{}: dx={} | dy={}'.format(key, *readout))
 
-        shift, error, phasediff = register_translation(img_cent, img, upsample_factor=10)
+        shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
         readouts.append(readout)
         shifts.append(shift)

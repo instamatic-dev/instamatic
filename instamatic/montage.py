@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import patches
 from scipy import ndimage
 from skimage import filters
-from skimage.feature import register_translation
+from skimage.registration import phase_cross_correlation
 from tqdm.auto import tqdm
 
 from instamatic import config
@@ -776,8 +776,8 @@ class Montage:
                 if method == 'imreg':
                     shift, fft = translation(strip0, strip1, return_fft=True)
                     score = fft.max()
-                else:  # method = skimage.feature.register_translation
-                    shift, error, phasediff = register_translation(strip0, strip1, return_error=True)
+                else:  # method = skimage.registration.phase_cross_correlation
+                    shift, error, phasediff = phase_cross_correlation(strip0, strip1, return_error=True)
                     fft = np.ones_like(strip0)
                     score = 1 - error**0.5
 
