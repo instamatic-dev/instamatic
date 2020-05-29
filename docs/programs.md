@@ -13,7 +13,7 @@ There are several programs coming with `instamatic`. These docs are autogenerate
   + [instamatic.calibrate_stage_mag1](#instamaticcalibrate_stage_mag1) (`instamatic.calibrate.calibrate_stage_mag1:main_entry`)
   + [instamatic.calibrate_beamshift](#instamaticcalibrate_beamshift) (`instamatic.calibrate.calibrate_beamshift:main_entry`)
   + [instamatic.calibrate_directbeam](#instamaticcalibrate_directbeam) (`instamatic.calibrate.calibrate_directbeam:main_entry`)
-  + [instamatic.calibrate_stagematrix](#instamatic.calibrate_stagematrix) (`instamatic.calibrate.calibrate_stagematrix:main_entry`)
+  + [instamatic.calibrate_stagematrix](#instamaticcalibrate_stagematrix) (`instamatic.calibrate.calibrate_stagematrix:main_entry`)
   + [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
   + [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
 - **Tools**
