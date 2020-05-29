@@ -290,6 +290,8 @@ def calibrate_stage(ctrl,
         mode = ctrl.mode.get()
         mag = ctrl.magnification.value
 
+    print(f'\nCalibrating stagematrix mode=`{mode}` mag={mag}\n')
+
     camera_shape = ctrl.cam.getCameraDimensions()
     pixelsize = config.calibration[mode]['pixelsize'][mag]
 
@@ -325,6 +327,7 @@ def calibrate_stage(ctrl,
 
 
 def calibrate_stage_all(ctrl,
+                        modes=('mag1', 'lowmag'),
                         mag_ranges: dict = None,
                         overlap: float = 0.8,
                         stage_length: int = 40_000,
@@ -340,7 +343,7 @@ def calibrate_stage_all(ctrl,
     mag_ranges : dict
         Dictionary with the mag ranges to calibrate. Format example:
         `mag_ranges = {'lowmag': (100, 200, 300), 'mag1': (1000, 2000, 3000)}`
-        If not defined, all mag ranges (lowmag, mag1) are taken.
+        If not defined, all mag ranges (`lowmag`, `mag1`) as defined above are taken.
     overlap: float
         Specify the approximate overlap between images for cross
         correlation.
@@ -362,10 +365,11 @@ def calibrate_stage_all(ctrl,
         Dictionary in the same structure as `instamatic.config` with the
         calibrated values.
     """
-    modes = 'lowmag', 'mag1'
 
     if not mag_ranges:
         mag_ranges = config.microscope.ranges
+
+    modes = list(mag_ranges.keys())
 
     cfg = {mode: {} for mode in modes}
 
@@ -407,7 +411,12 @@ def main_entry():
     import argparse
 
     description = """Run the stagematrix calibration routine for all magnifications
-    specified. Return the updates values for the configuration file."""
+specified. Return the updates values for the configuration file.
+
+Calibrate the stage movement (nm) and the position of the camera
+(pixels) at a specific magnification.
+
+The stagematrix takes the image binning into account."""
 
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -417,31 +426,40 @@ def main_entry():
                               'If `all` is specified, all imaging modes+mags are calibrated.'
                               'If the imaging mode and magnification are not given, the current'
                               'values are used.'))
-    parser.add_argument('-k', '--mag', dest='mag', type=int, metavar='K',
-                        help='Select the imaging magnification.')
+
+    parser.add_argument('-k', '--mag', dest='mags', type=int, nargs='+', metavar='K',
+                        help='Select the imaging magnification(s).')
+
     parser.add_argument('-A', '--all_mags', action='store_true', dest='all_mags',
                         help='Run calibration routine for all mags over selected mode.')
+
     parser.add_argument('-v', '--overlap', dest='overlap', type=float, metavar='X',
                         help=('Specify the approximate overlap between images for cross '
                               'correlation.'))
+
     parser.add_argument('-l', '--stage_length', dest='stage_length', type=int,
                         help=('Specify the minimum length (in stage coordinates) the calibration '
                               'should cover.'))
+
     parser.add_argument('-a', '--min_n_steps', dest='min_n_step', type=int, metavar='N',
                         help=('Specify the minimum number of steps to take along X and Y for the '
                               'calibration.'))
+
     parser.add_argument('-b', '--max_n_steps', dest='max_n_step', type=int, metavar='N',
                         help=('Specify the maximum number of steps to take along X and Y for the '
                               'calibration. This is used for higher magnifications.'))
-    parser.add_argument('-p', '--plot', dest='plot', action='store_true',
-                        help='Plot the fitting result.')
-    parser.add_argument('-d', '--drc', dest='drc', type=str, metavar='<path>',
-                        help='Path to store the raw data (optional).')
+
+    # parser.add_argument('-p', '--plot', dest='plot', action='store_true',
+    #                     help='Plot the fitting result.')
+
+    # parser.add_argument('-d', '--drc', dest='drc', type=str, metavar='<path>',
+    #                     help='Path to store the raw data (optional).')
+
     parser.add_argument('-s', '--save', action='store_true', dest='save',
                         help='Save the data to the data directory.')
 
-    parser.set_defaults(mode=None,
-                        mag=None,
+    parser.set_defaults(mode=(),
+                        mags=(),
                         overlap=0.8,
                         stage_length=40_000,
                         min_n_step=5,
@@ -452,6 +470,45 @@ def main_entry():
                         )
 
     options = parser.parse_args()
+
+    mode = options.mode
+    mags = options.mags
+
+    from instamatic import TEMController
+    ctrl = TEMController.initialize()
+
+    if not mode:
+        mode = ctrl.mode.get()
+    if not mags:
+        mags = (ctrl.magnification.get(), )
+
+    kwargs = {
+        'overlap': options.overlap,
+        'stage_length': options.stage_length,
+        'min_n_step': options.min_n_step,
+        'max_n_step': options.max_n_step,
+    }
+
+    if mode == 'all':
+        calibrate_stage_all(
+            ctrl,
+            save=options.save,
+            **kwargs,
+        )
+    elif options.all_mags:
+        calibrate_stage_all(
+            ctrl,
+            mode=mode,
+            save=options.save,
+            **kwargs,
+        )
+    else:
+        calibrate_stage_all(
+            ctrl,
+            mag_ranges={mode: mags},
+            save=options.save,
+            **kwargs,
+        )
 
 
 if __name__ == '__main__':
