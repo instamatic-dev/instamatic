@@ -148,7 +148,7 @@ class IOFrame(LabelFrame):
             os.startfile(drc.parent)
 
     def open_config_directory(self):
-        drc = config.base_drc
+        drc = config.locations['base']
         os.startfile(drc)
 
 

@@ -30,7 +30,7 @@ def run_dials_indexing(data):
 
     cmd = [str(EXE), path]
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    fn = config.logs_drc / f'Dials_indexing_{date}.log'
+    fn = config.locations['logs'] / f'Dials_indexing_{date}.log'
     unitcelloutput = []
 
     p = sp.Popen(cmd, cwd=CWD, stdout=sp.PIPE)
@@ -108,7 +108,7 @@ The data sent to the server is a dict containing the following elements:
     options = parser.parse_args()
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_indexing_server_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)

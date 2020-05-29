@@ -9,16 +9,6 @@ import instamatic
 from instamatic import config
 
 
-locations = {
-    'base': config.base_drc,
-    'config': config.config_drc,
-    'logs': config.logs_drc,
-    'scripts': config.scripts_drc,
-    'data': config.settings.data_directory,
-    'work': config.settings.work_directory,
-}
-
-
 def locate(name, show=False):
     """Locate the directory given by `name`
 
@@ -33,7 +23,7 @@ def locate(name, show=False):
     drc : pathlib.Path
     """
     try:
-        drc = locations[name]
+        drc = config.locations[name]
     except KeyError:
         raise ValueError(f'No such directory: `{name}`')
 
@@ -54,7 +44,7 @@ def show_info():
     print(f'{instamatic.__version__}')
 
     print('\n# Locations')
-    for name, value in locations.items():
+    for name, value in config.locations.items():
         print(f' - ({name}) {value}')
 
     print('\n# Config files')
@@ -133,7 +123,7 @@ def main():
     from instamatic import config
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_{date}.log'
+    logfile = config.location['logs'] / f'instamatic_{date}.log'
 
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,

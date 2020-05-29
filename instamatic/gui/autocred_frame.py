@@ -29,7 +29,7 @@ class ExperimentalautocRED(LabelFrame):
         self.init_vars()
 
         date = datetime.datetime.now().strftime('%Y-%m-%d')
-        self.calib_path_is = config.logs_drc / f'ImageShift_LOGS_{date}'
+        self.calib_path_is = config.locations['logs'] / f'ImageShift_LOGS_{date}'
         self.calib_path = Path('..')
 
         frame = Frame(self)

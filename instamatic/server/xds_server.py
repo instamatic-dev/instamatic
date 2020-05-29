@@ -108,7 +108,7 @@ The data sent to the server as a bytes string containing the data path (must con
     options = parser.parse_args()
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_indexing_server_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_indexing_server_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)

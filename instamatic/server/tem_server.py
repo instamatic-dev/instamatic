@@ -141,7 +141,7 @@ The response is returned as a serialized object.
     microscope = options.microscope
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_TEMServer_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_TEMServer_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)

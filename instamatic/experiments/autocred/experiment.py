@@ -44,8 +44,8 @@ from instamatic.tools import find_defocused_image_center
 # imgvar_threshold = 600
 
 date = datetime.datetime.now().strftime('%Y-%m-%d')
-log_rotaterange = config.logs_drc / f'Rotrange_stagepos_{date}.log'
-log_iscalibs = config.logs_drc / f'ImageShift_LOGS_{date}'
+log_rotaterange = config.locations['logs'] / f'Rotrange_stagepos_{date}.log'
+log_iscalibs = config.locations['logs'] / f'ImageShift_LOGS_{date}'
 log_iscalibs.mkdir(exist_ok=True)
 
 if not os.path.isfile(log_rotaterange):
@@ -78,7 +78,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
 
     try:
         if imageshift == 'S':
-            with open(config.logs_drc / file, 'rb') as f:
+            with open(config.locations['logs'] / file, 'rb') as f:
                 transform_imgshift, c = pickle.load(f)
         else:
             with open(log_iscalibs / file, 'rb') as f:

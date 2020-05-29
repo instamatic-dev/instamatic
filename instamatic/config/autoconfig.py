@@ -165,14 +165,19 @@ It establishes a connection to the microscope and reads out the camera lengths a
     yaml.dump(tem_config, open(tem_config_fn, 'w'), sort_keys=False)
     yaml.dump(calib_config, open(calib_config_fn, 'w'), sort_keys=False)
 
+    microscope_drc = config.locations['microscope']
+    camera_drc = config.locations['camera']
+    calibration_drc = config.locations['calibration']
+    settings_yaml = config.locations['settings']
+
     print()
     print(f'Wrote files config files:')
-    print(f'    Copy {tem_config_fn} -> `{config.config_drc / tem_config_fn}`')
-    print(f'    Copy {calib_config_fn} -> `{config.config_drc / calib_config_fn}`')
+    print(f'    Copy {tem_config_fn} -> `{microscope_drc / tem_config_fn}`')
+    print(f'    Copy {calib_config_fn} -> `{calibration_drc / calib_config_fn}`')
     if cam_config:
-        print(f'    Copy {cam_config_fn} -> `{config.config_drc / cam_config_fn}`')
+        print(f'    Copy {cam_config_fn} -> `{camera_drc / cam_config_fn}`')
     print()
-    print(f'In `{config._settings_yaml}`:')
+    print(f'In `{settings_yaml}`:')
     print(f'    microscope: {tem_name}_tem')
     print(f'    calibration: {tem_name}_calib')
     if cam_config:

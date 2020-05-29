@@ -57,7 +57,7 @@ Utility script to enable rotation control from a dmscript. See [https://github.c
     options = parser.parse_args()
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_temserver_Themis_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_temserver_Themis_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)

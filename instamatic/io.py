@@ -6,7 +6,7 @@ from instamatic import config
 def get_new_work_subdirectory(stem='experiment', drc=None, number=1, mkdir=True):
     """Simple function to grab new empty working directory."""
     if not drc:
-        drc = config.settings.work_directory
+        drc = config.locations['work']
     else:
         drc = Path(drc)
 
@@ -27,7 +27,7 @@ def find_script(script: str):
     script = Path(script)
 
     if not script.exists():
-        test_location = config.scripts_drc / script
+        test_location = config.locations['scripts'] / script
         if not test_location.exists():
             raise OSError(f'No such script: {script}')
         else:

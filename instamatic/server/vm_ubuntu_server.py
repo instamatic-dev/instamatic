@@ -275,7 +275,7 @@ The host and port are defined in `config/settings.yaml`.
     print('Ctrl Alt T sent!')
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.logs_drc / f'instamatic_xdsVM_server_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_xdsVM_server_{date}.log'
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
                         level=logging.DEBUG)
