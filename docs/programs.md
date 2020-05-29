@@ -52,6 +52,8 @@ show this help message and exit
  Load the given .nav file  
 `-a, --acquire_at_items`:  
  Run the script file `--script` at every point marked with `Acquire` in the nav file `--nav`.  
+`-l LOCATE, --locate LOCATE`:  
+ Locate a requested directory and exit, i.e. `config`, `data`, `scripts`, `base`, 'work`, `logs`  
 `-o SHOW, --open SHOW`:  
 Open the requested directory and exit, see `--locate`.  
 `-i, --info`:  
@@ -73,6 +75,8 @@ show this help message and exit
 Simulate microscope connection (default: False)  
 `-c TEM_NAME, --camera TEM_NAME`:  
  Camera configuration to load.  
+`-t CAM_NAME, --tem CAM_NAME`:  
+ TEM configuration to load.  
 
 
 ## instamatic.serialed
@@ -103,6 +107,8 @@ show this help message and exit
 Binsize to use. Must be one of 1, 2, or 4 (default 1)  
 `-e N, --exposure N`:  
 Exposure time (default 0.5)  
+`-o image.png, --out image.png`:  
+ Where to store image  
 `-d, --display`:  
 Show the image (default True)  
 `-s, --series`:  
@@ -119,7 +125,7 @@ instamatic.calibrate_stage_lowmag [-h] [IMG [IMG ...]]
 ```
 **Positional arguments:**  
 `IMG`:  
-Perform calibration using pre-collected images. The first image  
+Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
 `-h, --help`:  
@@ -136,7 +142,7 @@ instamatic.calibrate_stage_mag1 [-h] [IMG [IMG ...]]
 ```
 **Positional arguments:**  
 `IMG`:  
-Perform calibration using pre-collected images. The first image  
+Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
 `-h, --help`:  
@@ -153,7 +159,7 @@ instamatic.calibrate_beamshift [-h] [IMG [IMG ...]]
 ```
 **Positional arguments:**  
 `IMG`:  
-Perform calibration using pre-collected images. The first image  
+Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
 `-h, --help`:  
@@ -170,7 +176,7 @@ instamatic.calibrate_directbeam [-h] [IMG [IMG ...]]
 ```
 **Positional arguments:**  
 `IMG`:  
-Perform calibration using pre-collected images. They must be  
+Perform calibration using pre-collected images. They must be formatted as such: DiffShift:pattern.tiff BeamShift:pattern.tiff, where `pattern` is a globbing pattern that finds the images corresponding to the key BeamShift or DiffShift. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.  
 
 **Optional arguments:**  
 `-h, --help`:  
@@ -204,6 +210,8 @@ Image file paths/pattern
 show this help message and exit  
 `-f flatfield.tiff, --flatfield flatfield.tiff`:  
  Path to flatfield file  
+`-d darkfield.tiff, --darkfield darkfield.tiff`:  
+ Path to darkfield file  
 `-o DRC, --output DRC`:  
 Output directory for image files  
 `-c, --collect`:  
@@ -220,7 +228,7 @@ instamatic.stretch_correction [-h] powder_pattern.tiff
 ```
 **Positional arguments:**  
 `powder_pattern.tiff`:  
-Diffraction pattern (TIFF) from a nanocrystalline  
+Diffraction pattern (TIFF) from a nanocrystalline powder showing Debye-Scherrer rings.  
 
 **Optional arguments:**  
 `-h, --help`:  
@@ -325,9 +333,9 @@ show this help message and exit
 `-f D, --filter_dist D, --filter_distance D`:  
  Specify what distance the crystals should be separated  
 `-d <path>, --output <path>, --output_name <path>`:  
-The destination of the .nav file created.
+ The destination of the .nav file created  
 `--mapscaleind`:  
-Generate `MapScaleInd.yaml` for `predicrystal` from config.
+Generate `MapScaleInd.yaml` for `predicrystal` from config.  
 
 
 ## instamatic.learn
@@ -370,6 +378,8 @@ instamatic.temserver [-h] [-t MICROSCOPE]
 **Optional arguments:**  
 `-h, --help`:  
 show this help message and exit  
+`-t MICROSCOPE, --microscope MICROSCOPE`:  
+ Override microscope to use.  
 
 
 ## instamatic.camserver
@@ -395,6 +405,8 @@ instamatic.camserver [-h] [-c CAMERA]
 **Optional arguments:**  
 `-h, --help`:  
 show this help message and exit  
+`-c CAMERA, --camera CAMERA`:  
+ Override camera to use.  
 
 
 ## instamatic.dialsserver
@@ -435,8 +447,12 @@ instamatic.VMserver [-h] [-shelxt] [-c a b c al be ga] [-s SPGR]
 show this help message and exit  
 `-shelxt`:  
 Run SHELXT when xds ASCII HKL file is generated.  
+`-c a b c al be ga, --unitcell a b c al be ga`:  
+ Six numbers of the unit cell parameters.  
 `-s SPGR, --spgr SPGR`:  
 Space group.  
+`-m Xn [Ym ...], --composition Xn [Ym ...]`:  
+ Unit cell composition, i.e. `-m H2 O1`.  
 
 
 ## instamatic.xdsserver
@@ -502,6 +518,7 @@ instamatic.autoconfig [-h]
 **Optional arguments:**  
 `-h, --help`:  
 show this help message and exit  
+
 
 ## instamatic.install
 

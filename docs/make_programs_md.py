@@ -9,6 +9,7 @@ def parse_lines(lines):
 
     buffer = []
     val = ''
+    key = ''
 
     for line in lines:
         line = line.strip()
@@ -19,18 +20,31 @@ def parse_lines(lines):
         inp = line.split('  ', maxsplit=1)
 
         if len(inp) == 2:
+            # flush key/val because new key is found
+            if val:
+                buffer.append((key, val))
+                val = ''
+
             key = inp[0]
             val = inp[1].strip()
-            buffer.append((key, val))
-            val = ''
 
         elif inp[0].startswith('-'):
+            # flush key/val because new key is found
             if val:
                 buffer.append((key, val))
                 val = ''
             key = inp[0]
+            try:
+                val = inp[1].strip()
+            except IndexError:
+                pass
+
         else:
             val += ' ' + inp[0]
+
+    # flush key/val after loop
+    if val:
+        buffer.append((key, val))
 
     for key, val in buffer:
         ret.append(f'`{key}`:  \n{val}  ')
