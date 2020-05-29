@@ -13,6 +13,7 @@ There are several programs coming with `instamatic`. These docs are autogenerate
   + [instamatic.calibrate_stage_mag1](#instamaticcalibrate_stage_mag1) (`instamatic.calibrate.calibrate_stage_mag1:main_entry`)
   + [instamatic.calibrate_beamshift](#instamaticcalibrate_beamshift) (`instamatic.calibrate.calibrate_beamshift:main_entry`)
   + [instamatic.calibrate_directbeam](#instamaticcalibrate_directbeam) (`instamatic.calibrate.calibrate_directbeam:main_entry`)
+  + [instamatic.calibrate_stagematrix](#instamatic.calibrate_stagematrix) (`instamatic.calibrate.calibrate_stagematrix:main_entry`)
   + [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
   + [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
 - **Tools**
@@ -182,6 +183,43 @@ Perform calibration using pre-collected images. They must be formatted as such: 
 **Optional arguments:**  
 `-h`, `--help`:  
 show this help message and exit  
+
+
+## instamatic.calibrate_stagematrix
+
+Run the stagematrix calibration routine for all magnifications
+specified. Return the updates values for the configuration file.
+
+Calibrate the stage movement (nm) and the position of the camera
+(pixels) at a specific magnification.
+
+The stagematrix takes the image binning into account.
+
+**Usage:**  
+```bash
+instamatic.calibrate_stagematrix [-h] [-m MODE] [-k K [K ...]] [-A]
+                                 [-v X] [-l STAGE_LENGTH] [-a N] [-b N]
+                                 [-s]
+```
+**Optional arguments:**  
+`-h`, `--help`:  
+show this help message and exit  
+`-m MODE`, `--mode MODE`:  
+Select the imaging mode (mag1/mag2/lowmag/samag). If `all` is specified, all imaging modes+mags are calibrated.If the imaging mode and magnification are not given, the currentvalues are used.  
+`-k K [K ...]`, `--mag K [K ...]`:  
+ Select the imaging magnification(s).  
+`-A`, `--all_mags`:  
+Run calibration routine for all mags over selected mode.  
+`-v X`, `--overlap X`:  
+Specify the approximate overlap between images for cross correlation.  
+`-l STAGE_LENGTH`, `--stage_length STAGE_LENGTH`:  
+ Specify the minimum length (in stage coordinates) the calibration should cover.  
+`-a N`, `--min_n_steps N`:  
+ Specify the minimum number of steps to take along X and Y for the calibration.  
+`-b N`, `--max_n_steps N`:  
+ Specify the maximum number of steps to take along X and Y for the calibration. This is used for higher magnifications.  
+`-s`, `--save`:  
+Save the data to the data directory [C:\instamatic].  
 
 
 ## instamatic.flatfield
