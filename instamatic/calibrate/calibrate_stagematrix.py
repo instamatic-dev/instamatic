@@ -15,6 +15,8 @@ from instamatic.io import get_new_work_subdirectory
 
 np.set_printoptions(suppress=True)
 
+data_drc = config.locations['data']
+
 
 def stagematrix_to_pixelsize(stagematrix: np.array) -> float:
     """Calculate approximate pixelsize from the stagematrix."""
@@ -369,11 +371,12 @@ def calibrate_stage_all(ctrl,
     if not mag_ranges:
         mag_ranges = config.microscope.ranges
 
-    modes = list(mag_ranges.keys())
-
-    cfg = {mode: {} for mode in modes}
+    cfg = {mode: {} for mode in modes if mode in mag_ranges}
 
     for mode in modes:
+        if mode not in mag_ranges:
+            continue
+
         cfg[mode] = {'stagematrix': {}, 'pixelsize': {}}
 
         for mag in mag_ranges[mode]:
@@ -400,7 +403,7 @@ def calibrate_stage_all(ctrl,
             cfg[mode]['pixelsize'][mag] = float(stagematrix_to_pixelsize(stagematrix))
             cfg[mode]['stagematrix'][mag] = stagematrix.round(4).flatten().tolist()
 
-    print('\nUpdate this config file:\n  ', config.calibration.location)
+    print('\nUpdate this config file:\n  ', config.locations['calibration'])
 
     print(yaml.dump(cfg))
 
@@ -449,14 +452,8 @@ The stagematrix takes the image binning into account."""
                         help=('Specify the maximum number of steps to take along X and Y for the '
                               'calibration. This is used for higher magnifications.'))
 
-    # parser.add_argument('-p', '--plot', dest='plot', action='store_true',
-    #                     help='Plot the fitting result.')
-
-    # parser.add_argument('-d', '--drc', dest='drc', type=str, metavar='<path>',
-    #                     help='Path to store the raw data (optional).')
-
     parser.add_argument('-s', '--save', action='store_true', dest='save',
-                        help='Save the data to the data directory.')
+                        help=f'Save the data to the data directory [{data_drc}].')
 
     parser.set_defaults(mode=(),
                         mags=(),
