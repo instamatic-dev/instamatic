@@ -215,7 +215,7 @@ class Experiment:
             self.magnification = self.ctrl.magnification.value
             self.log.info('Brightness=%s', self.ctrl.brightness)
 
-        self.pixelsize_mag1 = config.calibration.pixelsize_mag1[self.magnification] / 1000  # nm -> um
+        self.pixelsize_mag1 = config.calibration['mag1']['pixelsize'][self.magnification] / 1000  # nm -> um
         xdim, ydim = self.ctrl.cam.getCameraDimensions()
         self.image_dimensions = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
         self.log.info('Image dimensions %s', self.image_dimensions)
@@ -238,7 +238,7 @@ class Experiment:
             self.diff_difffocus = self.ctrl.difffocus.value
             self.diff_cameralength = self.ctrl.magnification.value
 
-        self.diff_pixelsize = config.calibration.pixelsize_diff[self.diff_cameralength]
+        self.diff_pixelsize = config.calibration['diff']['pixelsize'][self.diff_cameralength]
         self.change_spotsize = self.diff_spotsize != self.image_spotsize
         self.crystal_spread = kwargs.get('crystal_spread', 0.6)
 

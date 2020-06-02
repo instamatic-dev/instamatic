@@ -117,7 +117,7 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
             apprximate feature size in pixels
     """
 
-    px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
+    px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
     px *= (binsize / img_scale)
     py *= (binsize / img_scale)
     hole_area = (np.pi * (diameter / 2.0)**2) / (px * py)
@@ -202,7 +202,7 @@ def find_holes_entry():
         print()
         for hole in holes:
             x, y = hole.centroid
-            px = py = calibration.pixelsize_lowmag[magnification] / 1000  # nm -> um
+            px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
             area = hole.area * px * py / scale**2
             d = 2 * (area / np.pi)**0.5
             print(f'x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um')

@@ -307,7 +307,7 @@ class Experiment:
         wavelength = config.microscope.wavelength
 
         try:
-            pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
+            pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
         except KeyError:
             print(f'Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0')
             pixelsize = 1.0

@@ -134,7 +134,7 @@ class Experiment:
         self.logger.info(f'Data saving path: {self.path}')
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[self.camera_length]  # px / Angstrom
+        self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth

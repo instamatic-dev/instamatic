@@ -355,7 +355,7 @@ class Experiment:
             displacement = np.subtract((258, 258), pos_arr)
             mag = self.ctrl.magnification.value
 
-            s = config.calibration.pixelsize_mag1[mag] / 1000  # nm -> um
+            s = config.calibration['mag1']['pixelsize'][mag] / 1000  # nm -> um
             # print("scaling facor: {} um per px".format(s))
 
             mvmt = s * displacement
@@ -858,7 +858,7 @@ class Experiment:
 
         rotation_angle = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration.pixelsize_diff[camera_length]  # px / Angstrom
+        self.pixelsize = config.calibration['diff']['pixelsize'][camera_length]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth
@@ -992,7 +992,7 @@ class Experiment:
 
     def raster_scan(self):
         from instamatic.experiments.serialed.experiment import get_offsets_in_scan_area
-        pixelsize_mag1 = config.calibration.pixelsize_mag1[self.magnification] / 1000  # nm -> um
+        pixelsize_mag1 = config.calibration['mag1']['pixelsize'][self.magnification] / 1000  # nm -> um
         xdim, ydim = self.ctrl.getCameraDimensions()
         box_x, box_y = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
 
