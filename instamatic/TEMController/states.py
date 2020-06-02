@@ -1,3 +1,6 @@
+import time
+
+
 class State:
     """Class for describing microscope state objects."""
 
