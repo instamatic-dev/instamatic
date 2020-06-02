@@ -6,7 +6,7 @@ from tkinter.ttk import *
 from .base_module import BaseModule
 from instamatic import config
 
-scripts_drc = config.location['scripts']
+scripts_drc = config.locations['scripts']
 
 SERVER_EXE = config.settings.indexing_server_exe
 HOST = config.settings.indexing_server_host

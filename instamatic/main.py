@@ -123,7 +123,7 @@ def main():
     from instamatic import config
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
-    logfile = config.location['logs'] / f'instamatic_{date}.log'
+    logfile = config.locations['logs'] / f'instamatic_{date}.log'
 
     logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
                         filename=logfile,
