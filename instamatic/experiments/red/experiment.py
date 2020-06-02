@@ -29,9 +29,9 @@ class Experiment:
         self.ctrl = ctrl
         self.path = Path(path)
 
-        self.mrc_path = path / 'mrc'
-        self.tiff_path = path / 'tiff'
-        self.tiff_image_path = path / 'tiff_image'
+        self.mrc_path = self.path / 'mrc'
+        self.tiff_path = self.path / 'tiff'
+        self.tiff_image_path = self.path / 'tiff_image'
 
         self.tiff_path.mkdir(exist_ok=True, parents=True)
         self.tiff_image_path.mkdir(exist_ok=True, parents=True)
