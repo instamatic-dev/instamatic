@@ -1,9 +1,9 @@
-import collections
 import datetime
 import logging
 import os
 import shutil
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 import yaml
@@ -30,7 +30,7 @@ _instamatic = 'instamatic'
 def nested_update(d: dict, u: dict) -> dict:
     """Nested dictionary update, updates `d` with `u`"""
     for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
+        if isinstance(v, Mapping):
             d[k] = nested_update(d.get(k, {}), v)
         else:
             d[k] = v
