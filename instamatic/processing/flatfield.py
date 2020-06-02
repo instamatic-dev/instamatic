@@ -126,7 +126,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     np.save(fp, deadpixels)
 
     if collect_darkfield:
-        ctrl.beamblank = True
+        ctrl.beam.blank()
 
         buffer = []
 
@@ -139,7 +139,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
         d = np.mean(buffer, axis=0)
         d = remove_deadpixels(d, deadpixels=deadpixels)
 
-        ctrl.beamblank = False
+        ctrl.beam.unblank()
 
         fd = drc / f'darkfield_{ctrl.cam.name}_{date}.tiff'
         write_tiff(fd, d, header={'deadpixels': deadpixels})

@@ -113,8 +113,7 @@ class Experiment:
     def get_ready(self):
         # self.cam.set_exposure(self.exposure)
 
-        self.beamblank_is_on = self.ctrl.beamblank
-        if not self.beamblank_is_on:
+        if not self.ctrl.beam.is_blanked:
             self.ctrl.beam.blank()
 
         self.ctrl.screen.up()
@@ -244,7 +243,7 @@ class Experiment:
         t1 = time.perf_counter()
         self.cam.stop_record()
 
-        if self.beamblank_is_on:
+        if self.ctrl.beam.is_blanked:
             self.ctrl.beam.blank()
 
         self.end_position = self.ctrl.stage.get()
