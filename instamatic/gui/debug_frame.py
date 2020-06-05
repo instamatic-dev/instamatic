@@ -41,11 +41,13 @@ class DebugFrame(LabelFrame):
         self.RunButton = Button(frame, text='Run', command=self.run_script)
         self.RunButton.grid(row=2, column=3, sticky='EW')
 
-        Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=4, sticky='ew', pady=10)
+        Separator(frame, orient=HORIZONTAL).grid(row=3, columnspan=8, sticky='ew', pady=10)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
+
+        Label(frame, text='Indexing server options').grid(row=0, column=0, sticky='W')
 
         Label(frame, text='Indexing server: DIALS').grid(row=2, column=0, sticky='W')
 
@@ -84,23 +86,35 @@ class DebugFrame(LabelFrame):
         self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=DISABLED)
         self.e_compo.grid(row=6, column=3, sticky='EW', columnspan=2)
 
+        self.use_sendto_AS_check = Checkbutton(frame, text='Send SMV path to autosolution server: ', variable=self.var_send_data_to_AS, command=self.toggle_use_AS)
+        self.use_sendto_AS_check.grid(row=7, column=0, sticky='W')
+        
+        Label(frame, text='SMV files path: ').grid(row=8, column=0, sticky='EW')
+        self.e_smvpath = Entry(frame, textvariable=self.var_e_smvpath, width=50, state=DISABLED)
+        self.e_smvpath.grid(row=8, column=0, sticky='EW', columnspan=4)
+
+        self.SendButton = Button(frame, text='send', command=self.send_path_to_AS)
+        self.SendButton.grid(row=8, column=4, sticky='EW')
+
         frame.columnconfigure(0, weight=1)
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
+        Separator(frame, orient=HORIZONTAL).grid(row=9, columnspan=8, sticky='ew', pady=10)
+
         frame = Frame(self)
 
-        Label(frame, text='Collect flatfield').grid(row=2, column=0, sticky='W')
+        Label(frame, text='Collect flatfield').grid(row=1, column=0, sticky='W')
 
-        Label(frame, text='Frames').grid(row=2, column=1, sticky='W', padx=5)
+        Label(frame, text='Frames').grid(row=1, column=1, sticky='W', padx=5)
 
         self.e_ff_frames = Entry(frame, textvariable=self.var_ff_frames, width=10)
-        self.e_ff_frames.grid(row=2, column=2, sticky='EW')
+        self.e_ff_frames.grid(row=1, column=2, sticky='EW')
 
         self.ff_darkfield = Checkbutton(frame, text='Darkfield', variable=self.var_ff_darkfield)
-        self.ff_darkfield.grid(row=2, column=3, sticky='EW', padx=5)
+        self.ff_darkfield.grid(row=1, column=3, sticky='EW', padx=5)
 
         self.RunFlatfield = Button(frame, text='Run', command=self.run_flatfield_collection)
-        self.RunFlatfield.grid(row=2, column=4, sticky='EW')
+        self.RunFlatfield.grid(row=1, column=4, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.pack(side='top', fill='x', padx=10, pady=10)
@@ -135,9 +149,11 @@ class DebugFrame(LabelFrame):
         self.var_ff_frames = IntVar(value=100)
         self.var_ff_darkfield = BooleanVar(value=False)
         self.var_use_shelxt = BooleanVar(value=False)
+        self.var_send_data_to_AS = BooleanVar(value=False)
         self.var_e_compo = StringVar(value='Si1 O2')
         self.var_e_sg = StringVar(value='1')
         self.var_e_uc = StringVar(value='10 10 10 90 90 90')
+        self.var_e_smvpath = StringVar(value='')
 
     def kill_server(self):
         self.q.put(('autoindex', {'task': 'kill_server'}))
@@ -173,6 +189,19 @@ class DebugFrame(LabelFrame):
     def register_server_xdsVM(self):
         self.q.put(('autoindex_xdsVM', {'task': 'register_server_xdsVM'}))
         self.triggerEvent.set()
+
+    def send_path_to_AS(self):
+        path = self.var_e_smvpath.get()
+
+        #Send to server
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(f'Sending string {path} to auto structure solution server...')
+            s.connect((VMHOST, VMPORT))
+            s.send(path)
+            data = s.recv(BUFSIZE).decode()
+            print(data)
+
+        print("Sent!")
 
     def scripts_combobox_update(self, event=None):
         for fn in self.scripts_drc.rglob('*.py'):
@@ -243,6 +272,13 @@ class DebugFrame(LabelFrame):
             self.e_compo.config(state=DISABLED)
             self.e_sg.config(state=DISABLED)
             self.e_uc.config(state=DISABLED)
+
+    def toggle_use_AS(self):
+        enable = self.var_send_data_to_AS.get()
+        if enable:
+            self.e_smvpath.config(state=NORMAL)
+        else:
+            self.e_smvpath.config(state=DISABLED)
 
 
 def debug(controller, **kwargs):
