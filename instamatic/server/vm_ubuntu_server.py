@@ -119,14 +119,14 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
             session.console.keyboard.put_keys(['ENTER'])
 
             """Not sure if I should put some delay here, but just to avoid neglected communication"""
-            time.sleep(90)
+            time.sleep(120)
 
             if shelxt:
                 try:
                     generate_xdsconv_input(path)
                     session.console.keyboard.put_keys('xdsconv')
                     session.console.keyboard.put_keys(['ENTER'])
-                    time.sleep(3)
+                    time.sleep(5)
 
                     generate_shelxt_input(unitcell, spgr, composition, path)
                     solve_structure_shelxt(path)

@@ -151,8 +151,8 @@ class DebugFrame(LabelFrame):
         self.var_use_shelxt = BooleanVar(value=False)
         self.var_send_data_to_AS = BooleanVar(value=False)
         self.var_e_compo = StringVar(value='Si1 O2')
-        self.var_e_sg = StringVar(value='1')
-        self.var_e_uc = StringVar(value='10 10 10 90 90 90')
+        self.var_e_sg = StringVar(value='')
+        self.var_e_uc = StringVar(value='')
         self.var_e_smvpath = StringVar(value='')
 
     def kill_server(self):
@@ -191,13 +191,16 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def send_path_to_AS(self):
-        path = self.var_e_smvpath.get()
+        import socket
+        import json
 
+        path = self.var_e_smvpath.get()
+        data_tosend = {'path': path}
         #Send to server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(f'Sending string {path} to auto structure solution server...')
             s.connect((VMHOST, VMPORT))
-            s.send(path)
+            s.send(json.dumps(data_tosend).encode('utf8'))
             data = s.recv(BUFSIZE).decode()
             print(data)
 
