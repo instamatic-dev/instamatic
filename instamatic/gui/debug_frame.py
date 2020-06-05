@@ -1,4 +1,5 @@
 import tkinter.filedialog
+import socket
 from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
@@ -75,15 +76,15 @@ class DebugFrame(LabelFrame):
         self.use_shelxt_check.grid(row=4, column=0, sticky='W')
 
         Label(frame, text='Space group: ').grid(row=4, column=2, sticky='EW')
-        self.e_sg = Entry(frame, textvariable=self.var_e_sg, width=15, state=DISABLED)
+        self.e_sg = Entry(frame, textvariable=self.var_e_sg, width=15, state=NORMAL)
         self.e_sg.grid(row=4, column=3, sticky='EW', columnspan=2)
 
         Label(frame, text='Unit cell: ').grid(row=5, column=2, sticky='EW')
-        self.e_uc = Entry(frame, textvariable=self.var_e_uc, width=15, state=DISABLED)
+        self.e_uc = Entry(frame, textvariable=self.var_e_uc, width=15, state=NORMAL)
         self.e_uc.grid(row=5, column=3, sticky='EW', columnspan=2)
 
         Label(frame, text='Composition: ').grid(row=6, column=2, sticky='EW')
-        self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=DISABLED)
+        self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=NORMAL)
         self.e_compo.grid(row=6, column=3, sticky='EW', columnspan=2)
 
         self.use_sendto_AS_check = Checkbutton(frame, text='Send SMV path to autosolution server: ', variable=self.var_send_data_to_AS, command=self.toggle_use_AS)
@@ -148,7 +149,7 @@ class DebugFrame(LabelFrame):
 
         self.var_ff_frames = IntVar(value=100)
         self.var_ff_darkfield = BooleanVar(value=False)
-        self.var_use_shelxt = BooleanVar(value=False)
+        self.var_use_shelxt = BooleanVar(value=True)
         self.var_send_data_to_AS = BooleanVar(value=False)
         self.var_e_compo = StringVar(value='Si1 O2')
         self.var_e_sg = StringVar(value='')
@@ -191,7 +192,6 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def send_path_to_AS(self):
-        import socket
         import json
 
         path = self.var_e_smvpath.get()
@@ -299,7 +299,6 @@ def debug(controller, **kwargs):
 
 
 def autoindex(controller, **kwargs):
-    import socket
 
     task = kwargs.get('task')
     if task == 'start_server':
@@ -337,7 +336,6 @@ def autoindex(controller, **kwargs):
 
 
 def autoindex_xdsVM(controller, **kwargs):
-    import socket
 
     task = kwargs.get('task')
     if task == 'start_server_xdsVM':
@@ -365,9 +363,10 @@ def autoindex_xdsVM(controller, **kwargs):
                 print('No composition information provided. SHELXT cannot run.')
 
         controller.indexing_server_process = sp.call(cmd, shell=True)
-        print(f'Indexing server `{VM_SERVER_EXE}` started on {VMHOST}:{VMPORT}')
+        print(f'Indexing server `{VM_SERVER_EXE}` starting on {VMHOST}:{VMPORT}')
         #controller.use_indexing_server_xds = True
-        print('VM XDS Indexing server registered')
+        print('VM XDS Indexing server registered. Please wait for around 2 min before XDS server is ready.')
+        print('Please refer to the server console for the current status of the server.')
         return
 
     elif task == 'register_server_xdsVM':
