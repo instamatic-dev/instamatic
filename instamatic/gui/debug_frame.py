@@ -1,5 +1,5 @@
-import tkinter.filedialog
 import socket
+import tkinter.filedialog
 from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
@@ -89,12 +89,12 @@ class DebugFrame(LabelFrame):
 
         self.use_sendto_AS_check = Checkbutton(frame, text='Send SMV path to autosolution server: ', variable=self.var_send_data_to_AS, command=self.toggle_use_AS)
         self.use_sendto_AS_check.grid(row=7, column=0, sticky='W')
-        
+
         Label(frame, text='SMV files path: ').grid(row=8, column=0, sticky='EW')
         self.e_smvpath = Entry(frame, textvariable=self.var_e_smvpath, width=50, state=DISABLED)
         self.e_smvpath.grid(row=8, column=0, sticky='EW', columnspan=4)
 
-        self.SendButton = Button(frame, text='send', command=self.send_path_to_AS)
+        self.SendButton = Button(frame, text='Send', command=self.send_path_to_autosolution)
         self.SendButton.grid(row=8, column=4, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -191,20 +191,11 @@ class DebugFrame(LabelFrame):
         self.q.put(('autoindex_xdsVM', {'task': 'register_server_xdsVM'}))
         self.triggerEvent.set()
 
-    def send_path_to_AS(self):
-        import json
-
+    def send_path_to_autosolution(self):
         path = self.var_e_smvpath.get()
-        data_tosend = {'path': path}
-        #Send to server
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            print(f'Sending string {path} to auto structure solution server...')
-            s.connect((VMHOST, VMPORT))
-            s.send(json.dumps(data_tosend).encode('utf8'))
-            data = s.recv(BUFSIZE).decode()
-            print(data)
 
-        print("Sent!")
+        self.q.put(('autosolution_path', {'path': path}))
+        self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
         for fn in self.scripts_drc.rglob('*.py'):
@@ -391,11 +382,31 @@ def autoindex_xdsVM(controller, **kwargs):
         del controller.indexing_server_process
 
 
+def autosolution_path(controller, **kwargs):
+    import json
+
+    path = kwargs.get('path')
+
+    params = {'path': path}
+    payload = json.dumps(params).encode('utf8')
+
+    # Send to server
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print(f'Sending string `{path}` to auto structure solution server...')
+        s.connect((VMHOST, VMPORT))
+        s.send(payload)
+        data = s.recv(BUFSIZE).decode()
+        print(data)
+
+    print('Sent!')
+
+
 module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame, location='bottom')
 commands = {
     'debug': debug,
     'autoindex': autoindex,
     'autoindex_xdsVM': autoindex_xdsVM,
+    'autosolution_path': autosolution_path,
 }
 
 if __name__ == '__main__':
