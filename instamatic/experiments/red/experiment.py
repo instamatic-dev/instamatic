@@ -124,7 +124,7 @@ class Experiment:
         print(f'Done, current angle = {self.current_angle:.2f} degrees')
 
         if image_mode != 'diff':
-            ctrl.mode = image_mode
+            ctrl.mode.set(image_mode)
 
     def finalize(self):
         """Finalize data collection after `self.start_collection` has been run.
