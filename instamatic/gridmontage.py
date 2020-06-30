@@ -160,6 +160,8 @@ class GridMontage:
             write_tiff(drc / name, img, header=h)
             fns.append(name)
 
+        n_images = i + 1
+
         d = {
             'stagecoords': self.stagecoords.tolist(),
             'stagematrix': self.stagematrix.tolist(),
@@ -179,7 +181,7 @@ class GridMontage:
 
         import yaml
         yaml.dump(d, stream=open(drc / 'montage.yaml', 'w'))
-        print(f' >> Wrote {len(self.stagecoords)} montage images to {drc}')
+        print(f' >> Wrote {n_images} montage images to {drc}')
 
     def plot(self):
         """Simple plot of the stage coordinates."""
