@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from pyserialem.montage import make_grid
+from pyserialem.montage import sorted_grid_indices
 
 from .montage import *
 from instamatic import config
