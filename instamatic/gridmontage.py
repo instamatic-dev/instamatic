@@ -175,7 +175,7 @@ class GridMontage:
             'mode': self.mode,
             'spotsize': self.spotsize,
             'flip': self.flip,
-            'binning': self.binning,
+            'image_binning': self.binning,
             'pixelsize': self.pixelsize,
         }
 
