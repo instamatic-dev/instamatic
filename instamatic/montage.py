@@ -20,14 +20,13 @@ class InstamaticMontage(Montage):
 
         pixelsize = config.calibration[mode]['pixelsize'][magnification]
 
-        image_binning = self.image_binning
         stagematrix = config.calibration[mode]['stagematrix'][magnification]
-        stagematrix = np.array(stagematrix).reshape(2, 2) * image_binning
+        stagematrix = np.array(stagematrix).reshape(2, 2)
 
         self.set_pixelsize(pixelsize)
         self.set_stagematrix(stagematrix)
-        self.set_mode(mode)
-        self.set_magnification(magnification)
+        self.mode = mode
+        self.magnification = magnification
 
     @classmethod
     def from_montage_yaml(cls, filename: str = 'montage.yaml'):
