@@ -3,13 +3,15 @@ import socket
 import subprocess as sp
 import time
 from functools import wraps
-from multiprocessing import shared_memory
 
 import numpy as np
 
 from instamatic import config
 from instamatic.server.serializer import pickle_dumper as dumper
 from instamatic.server.serializer import pickle_loader as loader
+
+if config.settings.cam_use_shared_memory:
+    from multiprocessing import shared_memory
 
 HOST = config.settings.cam_server_host
 PORT = config.settings.cam_server_port

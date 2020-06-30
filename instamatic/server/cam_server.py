@@ -5,7 +5,6 @@ import queue
 import socket
 import threading
 import traceback
-from multiprocessing import shared_memory
 
 import numpy as np
 
@@ -16,6 +15,8 @@ from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
+if config.settings.cam_use_shared_memory:
+    from multiprocessing import shared_memory
 
 condition = threading.Condition()
 box = []
