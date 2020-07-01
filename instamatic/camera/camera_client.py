@@ -9,6 +9,7 @@ import numpy as np
 from instamatic import config
 from instamatic.server.serializer import pickle_dumper as dumper
 from instamatic.server.serializer import pickle_loader as loader
+from instamatic.exceptions import exception_list
 
 if config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
