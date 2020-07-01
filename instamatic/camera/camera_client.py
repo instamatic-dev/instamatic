@@ -120,13 +120,17 @@ class CamClient:
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         self.s.send(dumper(dct))
 
-        response = self.s.recv(self._bufsize)
+        acquiring_image = dct['attr_name'] == 'getImage'
 
+        if acquiring_image and not self.use_shared_memory:
+            response = self.s.recv(self._imagebufsize)
+        else:
+            response = self.s.recv(self._bufsize)
+            
         if response:
             status, data = loader(response)
 
-        if self.use_shared_memory:
-            if dct['attr_name'] == 'getImage':
+        if self.use_shared_memory and acquiring_image:
                 data = self.get_data_from_shared_memory(**data)
 
         if status == 200:
