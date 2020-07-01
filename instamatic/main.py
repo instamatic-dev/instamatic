@@ -55,7 +55,8 @@ def show_info():
     print(f' - {config.calibration.location}')
 
     print('\n# settings.yaml')
-    pprint.pprint(config.settings.mapping, sort_dicts=False)
+    pprint.pprint(config.settings.mapping)  # py37
+    # pprint.pprint(config.settings.mapping, sort_dicts=True)  # py38
 
 
 def main():
