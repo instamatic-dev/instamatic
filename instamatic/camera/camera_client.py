@@ -41,10 +41,15 @@ class CamClient:
     API.
     """
 
-    def __init__(self, name: str):
+    def __init__(
+        self, 
+        name: str,
+        interface: str,
+        ):
         super().__init__()
 
         self.name = name
+        self.interface = interface
         self._bufsize = BUFSIZE
         self.streamable = False  # overrides cam settings
         self.verbose = False
@@ -137,7 +142,7 @@ class CamClient:
         """Get list of functions and their doc strings from the uninitialized
         class."""
         from instamatic.camera.camera import get_cam
-        cam = get_cam(self.name)
+        cam = get_cam(self.interface)
 
         self._dct = {key: value for key, value in cam.__dict__.items() if not key.startswith('_')}
         self._dct['get_attrs'] = None

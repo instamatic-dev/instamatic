@@ -39,17 +39,15 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 
     if name is None:
         name = config.camera.name
-        interface = config.camera.interface
     elif name != config.settings.camera:
         # load specific config/interface
         config.load_camera_config(camera_name=name)
-        interface = config.camera.interface
-    else:
-        interface = name
+
+    interface = config.camera.interface
 
     if use_server:
         from instamatic.camera.camera_client import CamClient
-        cam = CamClient(name=name)
+        cam = CamClient(name=name, interface=interface)
         as_stream = False  # precaution
     else:
         cam_cls = get_cam(interface)
