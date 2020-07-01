@@ -7,9 +7,9 @@ from functools import wraps
 import numpy as np
 
 from instamatic import config
+from instamatic.exceptions import exception_list
 from instamatic.server.serializer import pickle_dumper as dumper
 from instamatic.server.serializer import pickle_loader as loader
-from instamatic.exceptions import exception_list
 
 if config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
@@ -43,10 +43,10 @@ class CamClient:
     """
 
     def __init__(
-        self, 
+        self,
         name: str,
         interface: str,
-        ):
+    ):
         super().__init__()
 
         self.name = name
@@ -126,12 +126,12 @@ class CamClient:
             response = self.s.recv(self._imagebufsize)
         else:
             response = self.s.recv(self._bufsize)
-            
+
         if response:
             status, data = loader(response)
 
         if self.use_shared_memory and acquiring_image:
-                data = self.get_data_from_shared_memory(**data)
+            data = self.get_data_from_shared_memory(**data)
 
         if status == 200:
             return data

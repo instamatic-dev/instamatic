@@ -59,10 +59,10 @@ class CameraEMMENU:
     """
 
     def __init__(
-        self, 
-        drc_name: str = 'Diffraction', 
+        self,
+        drc_name: str = 'Diffraction',
         name: str = 'emmenu',
-        ):
+    ):
         """Initialize camera module."""
         super().__init__()
 
