@@ -38,8 +38,8 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     will return the raw Camera object."""
 
     if name is None:
-        # use default interface if no camera name is specified
-        interface = default_cam_interface
+        name = config.camera.name
+        interface = config.camera.interface
     elif name != config.settings.camera:
         # load specific config/interface
         config.load_camera_config(camera_name=name)

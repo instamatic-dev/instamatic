@@ -41,7 +41,7 @@ class CamClient:
     API.
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         super().__init__()
 
         self.name = name

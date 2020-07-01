@@ -54,11 +54,15 @@ class CameraEMMENU:
 
     drc_name : str
         Set the default folder to store data in
-    interface : str
+    name : str
         Name of the interface
     """
 
-    def __init__(self, drc_name: str = 'Diffraction', interface: str = 'emmenu'):
+    def __init__(
+        self, 
+        drc_name: str = 'Diffraction', 
+        name: str = 'emmenu',
+        ):
         """Initialize camera module."""
         super().__init__()
 
@@ -67,7 +71,7 @@ class CameraEMMENU:
         except OSError:
             comtypes.CoInitialize()
 
-        self.name = interface
+        self.name = name
 
         self._obj = comtypes.client.CreateObject('EMMENU4.EMMENUApplication.1', comtypes.CLSCTX_ALL)
 
