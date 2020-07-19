@@ -32,7 +32,7 @@ class VideoStreamFrame(LabelFrame):
 
         self.frame_delay = 50
 
-        self.frametime = 0.05
+        self.frametime = 0.1
         self.brightness = 1.0
         self.display_range = self.display_range_default = self.stream.cam.dynamic_range
         # Maximum number from image readout
@@ -211,7 +211,8 @@ class VideoStreamFrame(LabelFrame):
 
         # the display range in ImageTk is from 0 to 256
         if self.auto_contrast:
-            frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
+            tmp = frame - np.min(frame[::8, ::8])
+            frame = tmp * (256.0 / (1 + np.percentile(tmp[::8, ::8], 99.5)))  # use 128x128 array for faster calculation
 
             image = Image.fromarray(frame)
         elif self.display_range != self.display_range_default:
@@ -284,7 +285,12 @@ def ipy_embed(*args, **kwargs):
 
 if __name__ == '__main__':
     from instamatic import config
-    from instamatic.camera import VideoStream
+    from instamatic.camera.videostream import VideoStream
+    from instamatic.camera.datastream_dm import CameraDataStream
+
+    p = CameraDataStream(cam=config.camera.name, frametime=0.1)
+    p.start_loop()
+    time.sleep(10)
 
     stream = VideoStream(cam=config.camera.name)
 
@@ -297,3 +303,4 @@ if __name__ == '__main__':
 
         import IPython
         IPython.embed()
+        p.stop()

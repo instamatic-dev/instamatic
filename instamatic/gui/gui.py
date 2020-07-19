@@ -1,5 +1,6 @@
 import atexit
 import queue
+import time
 import sys
 import threading
 import traceback
@@ -21,12 +22,13 @@ class DataCollectionController(threading.Thread):
     important to keep the GUI responsive for long-running experiments.
     """
 
-    def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, log=None):
+    def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, data_stream=None, log=None):
         super().__init__()
         self.ctrl = ctrl
         self.stream = stream
         self.beam_ctrl = beam_ctrl
         self.app = app
+        self.data_stream = data_stream
         self.daemon = True
 
         self.use_indexing_server = False
@@ -75,6 +77,8 @@ class DataCollectionController(threading.Thread):
                 self.log.exception(e)
 
     def close(self):
+        self.data_stream.stop()
+        time.sleep(0.1)
         for item in (self.ctrl, self.stream, self.beam_ctrl, self.app):
             try:
                 item.close()
@@ -162,14 +166,14 @@ class MainFrame:
         sys.exit()
 
 
-def start_gui(ctrl, log=None):
+def start_gui(ctrl, data_stream, log=None):
     """Function to start the gui, to be imported and run elsewhere when ctrl is
     initialized Requires the `ctrl` object to be passed."""
     root = Tk()
 
     gui = MainFrame(root, cam=ctrl.cam, modules=MODULES)
 
-    experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, log=log)
+    experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, data_stream=data_stream, log=log)
     experiment_ctrl.start()
 
     root.mainloop()
@@ -177,5 +181,11 @@ def start_gui(ctrl, log=None):
 
 if __name__ == '__main__':
     from instamatic import TEMController
+    from instamatic.camera.datastream_dm import CameraDataStream
+    import time
+
+    data_stream = CameraDataStream(cam=config.camera.name, frametime=0.1)
+    data_stream.start_loop()
     ctrl = TEMController.initialize()
-    start_gui(ctrl)
+    time.sleep(8)
+    start_gui(ctrl, data_stream)

@@ -1,8 +1,12 @@
 import atexit
+import time
 import threading
 
 from .camera import Camera
+from .datastream_dm import frame_buffer, get_from_buffer
 
+class GrabbingError(RuntimeError):
+    pass
 
 class ImageGrabber:
     """Continuously read out the camera for continuous acquisition.
@@ -40,21 +44,25 @@ class ImageGrabber:
         self.acquireCompleteEvent = threading.Event()
         self.continuousCollectionEvent = threading.Event()
 
-    def run(self):
-        while not self.stopEvent.is_set():
-
-            if self.acquireInitiateEvent.is_set():
-                self.acquireInitiateEvent.clear()
-
-                frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
-                self.callback(frame, acquire=True)
-
-            elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
-                self.callback(frame)
+    def run(self, queue):
+        #i = 0
+        try:
+            while not self.stopEvent.is_set():
+                if self.acquireInitiateEvent.is_set():
+                    self.acquireInitiateEvent.clear()
+                    frame = get_from_buffer(queue, exposure=self.exposure)
+                    self.callback(frame, acquire=True)
+                elif not self.continuousCollectionEvent.is_set():
+                    frame = get_from_buffer(queue, exposure=self.frametime)
+                    self.callback(frame)
+                #if i%10 == 0:
+                #    print(f"Number of images consumed: {i}")
+                #i = i + 1
+        except:
+            raise GrabbingError(f'ImageGrabber encountered en error!')
 
     def start_loop(self):
-        self.thread = threading.Thread(target=self.run, args=(), daemon=True)
+        self.thread = threading.Thread(target=self.run, args=(frame_buffer,), daemon=True)
         self.thread.start()
 
     def stop(self):
@@ -195,7 +203,16 @@ class VideoStream(threading.Thread):
 
 
 if __name__ == '__main__':
-    stream = VideoStream(cam='timepix')
+    from multiprocessing import Event
+    from .datastream_dm import CameraDataStream
+
+    camera = 'DMfaux'
+    stream = VideoStream(cam=camera)
+    data_stream = CameraDataStream(cam=camera, frametime=0.1)
+    data_stream.start_loop()
     from IPython import embed
+    print('test')
+    from instamatic.gui import videostream_frame
     embed()
-    stream.stop()
+    data_stream.stop()
+    stream.close()

@@ -26,6 +26,8 @@ def get_cam(interface: str = None):
         from instamatic.camera import camera_timepix as cam
     elif interface in ('emmenu', 'tvips'):
         from instamatic.camera.camera_emmenu import CameraEMMENU as cam
+    elif interface in ('DM'):
+        from instamatic.camera.camera_dm import CameraDM as cam
     else:
         raise ValueError(f'No such camera interface: {interface}')
 
@@ -58,6 +60,8 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
         elif interface in ('emmenu', 'tvips'):
             cam = cam_cls(name=name)
             as_stream = False  # override `as_stream` for this interface
+        elif interface in ('DM'):
+            cam = cam_cls(name=name)
         else:
             cam = cam_cls(name=name)
 

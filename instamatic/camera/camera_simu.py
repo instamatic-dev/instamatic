@@ -63,7 +63,7 @@ class CameraSimu:
 
         time.sleep(exposure)
 
-        arr = np.random.randint(256, size=(dim_x, dim_y))
+        arr = np.random.randint(65535, size=(dim_x, dim_y))
 
         return arr
 
