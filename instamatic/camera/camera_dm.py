@@ -80,10 +80,14 @@ class CameraDM:
         """Equivalent to closeShutter?"""
         pyDM.stopAcquireImgStack()
 
-    def getImage(self, exposure=0.1, wait=0.01):
+    def getImage(self, exposure=0.1, wait=0.02):
         #time.sleep(0.05)
         return pyDM.onAcquireImgStack(wait).copy().squeeze()
         #return np.random.randint(65535, size=(self.dimensions[0], self.dimensions[1]))
+
+    def get_from_buffer(self, queue, exposure):
+        time.sleep(exposure+0.001)
+        return queue.get()
 
     def getCameraDimensions(self) -> (int, int):
         return self.dimensions
@@ -116,18 +120,19 @@ def run_proc(queue, name):
     cam.startAcquisition()
     time.sleep(2)
 
-    arr = cam.getImage(wait=0.01)
+    arr = cam.getImage(wait=0)
     # other camera can use wait=100 but for K2 DM will freeze if wait is equal to 100
     # so if select K2 as a camera, use wait=0.01, result not very good, can run camera_dm but not videostream
     print(f'[ py hardware timer] -> shape: {arr.shape}')
     t0 = time.perf_counter()
     for i,x in enumerate(range(n)):
-        arr = cam.getImage(wait=0.01)
+        arr = cam.getImage(wait=0)
         #arr = np.random.random((1024,1024))
         queue.put(arr)
         if i%10 == 0:
             print(f"Number of images produced: {i}")
     print('producer done')
+    print(arr)
     dt = time.perf_counter() - t0
 
     cam.stopAcquisition()

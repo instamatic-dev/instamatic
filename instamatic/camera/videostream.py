@@ -3,7 +3,7 @@ import time
 import threading
 
 from .camera import Camera
-from .datastream_dm import frame_buffer, get_from_buffer
+from .datastream_dm import frame_buffer
 
 class GrabbingError(RuntimeError):
     pass
@@ -50,10 +50,10 @@ class ImageGrabber:
             while not self.stopEvent.is_set():
                 if self.acquireInitiateEvent.is_set():
                     self.acquireInitiateEvent.clear()
-                    frame = get_from_buffer(queue, exposure=self.exposure)
+                    frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
                     self.callback(frame, acquire=True)
                 elif not self.continuousCollectionEvent.is_set():
-                    frame = get_from_buffer(queue, exposure=self.frametime)
+                    frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
                     self.callback(frame)
                 #if i%10 == 0:
                 #    print(f"Number of images consumed: {i}")
