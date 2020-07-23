@@ -154,9 +154,6 @@ if __name__ == '__main__':
     from IPython import embed
     import threading
     
-    from .datastream_dm import get_from_buffer
-
-    
 
     if False:
         run()
@@ -166,7 +163,7 @@ if __name__ == '__main__':
     if True:
         p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMfaux'), daemon=True)
         p.start()
-        t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
-        t.start()
+        #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
+        #t.start()
 
     embed()

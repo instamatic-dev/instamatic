@@ -4,7 +4,7 @@ import multiprocessing
 from .camera_dm import CameraDM
 
 frame_buffer = multiprocessing.Queue(1024)
-stream_buffer = multiprocessing.Queue(1024)
+stream_buffer = multiprocessing.Queue(2048)
 
 class DataStreamError(RuntimeError):
     pass
@@ -53,6 +53,8 @@ class StreamBuffer:
     """
     def __init__(self, exposure, frametime):
         self.stopProcEvent = multiprocessing.Event()
+        self.clearBufferEvent = multiprocessing.Event()
+
         self.exposure = exposure
         self.frametime = frametime
 
@@ -72,14 +74,14 @@ class StreamBuffer:
                 for j in range(n):
                     tmp = queue_in.get()
                     arr[:,:,j] = tmp
-            image = arr.mean(axis=2)
-            queue_out.put(image)
-            if i%10 == 0:
-                print(f"Number of images processed: {i}")
-            i = i + 1
+                image = arr.mean(axis=2)
+                queue_out.put(image)
+                if i%10 == 0:
+                    print(f"Number of images processed: {i}")
+                i = i + 1
+                #while self
         except:
             raise StreamBufferError(f'StreamBuffer encountered en error!')
-
 
     def start_loop(self):
         self.proc = multiprocessing.Process(target=self.run_proc, args=(frame_buffer,stream_buffer), daemon=True)
@@ -89,4 +91,6 @@ class StreamBuffer:
         self.stopProcEvent.set()
         print('Stopping buffer stream')
 
-        
+    def clear_buffer(self):
+        self.clearBufferEvent.set()
+

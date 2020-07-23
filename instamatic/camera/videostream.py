@@ -3,7 +3,9 @@ import time
 import threading
 
 from .camera import Camera
-from .datastream_dm import frame_buffer
+
+# can add a configuration to hide when buffers are not needed
+from .datastream_dm import frame_buffer, stream_buffer
 
 class GrabbingError(RuntimeError):
     pass
