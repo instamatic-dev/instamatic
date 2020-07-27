@@ -19,7 +19,7 @@ class CameraDM:
 
     def __init__(self, name, exposure=0.1, numImg=1):
 
-        if name not in ('DMK2', 'DMONeView', 'DMsimu_c', 'DMfaux'):
+        if name not in ('DMK2', 'DMOneView', 'DMsimu_c', 'DMfaux', 'DMorius'):
             raise InvalidNameError(f"Please input a valid camera name!")
 
         libdrc = Path(__file__).parent
@@ -54,6 +54,7 @@ class CameraDM:
 
     def init(self):
         pyDM.initCCDCOM()
+        """
         pyDM.initAcquisitionParam(self.processing, 
                                  self.exposure, 
                                  self.binsize, 
@@ -64,6 +65,8 @@ class CameraDM:
                                  self.CCD_area[3],
                                  self.read_mode,
                                  self.is_continuous)
+        """
+        pyDM.initAcquisitionMode(0)
         pyDM.prepareImgStack(self.numImg)
 
     def uninit(self):
@@ -114,19 +117,17 @@ def initialize(name='DM', exposure=0.1):
 def run_proc(queue, name):
     n = 100
 
-    t = 0.1
+    t = 0.07
     cam = initialize(name, exposure=t)
 
     cam.startAcquisition()
     time.sleep(2)
 
-    arr = cam.getImage(wait=0)
-    # other camera can use wait=100 but for K2 DM will freeze if wait is equal to 100
-    # so if select K2 as a camera, use wait=0.01, result not very good, can run camera_dm but not videostream
+    arr = cam.getImage(wait=0.01)
     print(f'[ py hardware timer] -> shape: {arr.shape}')
     t0 = time.perf_counter()
     for i,x in enumerate(range(n)):
-        arr = cam.getImage(wait=0)
+        arr = cam.getImage(wait=0.01)
         #arr = np.random.random((1024,1024))
         queue.put(arr)
         if i%10 == 0:
@@ -161,7 +162,7 @@ if __name__ == '__main__':
         t = threading.Thread(target=run, args=(), daemon=True)
         t.start()
     if True:
-        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMfaux'), daemon=True)
+        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMorius'), daemon=True)
         p.start()
         #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
         #t.start()
