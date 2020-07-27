@@ -11,8 +11,14 @@ calib_directbeam:
 camera_rotation_vs_stage_xy: 0
 default_binsize: 4
 default_exposure: 0.1
-dimensions: [4096, 4096]
+dimensions: [1024, 1024]
+CCD_area: [0, 0, 4096, 4096]
+dynamic_range: 65535
 interface: DM
+physical_pixelsize: 0.015
 possible_binsizes: [1, 2, 4, 8]
 stretch_amplitude: 0
 stretch_azimuth: 0
+processing: 1
+read_mode: 0
+is_continuous: "\x01"

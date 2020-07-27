@@ -8,14 +8,15 @@ calib_directbeam:
   DiffShift:
     gridsize: 5
     stepsize: 1500
-camera_rotation_vs_stage_xy: 0
-default_binsize: 1
+camera_rotation_vs_stage_xy: 0.925
+default_binsize: 2
 default_exposure: 0.1
-dimensions: [512, 512]
-CCD_area: [0, 0, 512, 512]
+dimensions: [1024, 1024]
+CCD_area: [0, 0, 2048, 2048]
 dynamic_range: 65535
 interface: DM
-possible_binsizes: [1, 2]
+physical_pixelsize: 0.0074
+possible_binsizes: [1, 2, 4]
 stretch_amplitude: 0
 stretch_azimuth: 0
 processing: 1
