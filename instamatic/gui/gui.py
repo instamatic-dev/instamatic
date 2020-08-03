@@ -77,8 +77,9 @@ class DataCollectionController(threading.Thread):
                 self.log.exception(e)
 
     def close(self):
-        self.data_stream.stop()
-        time.sleep(0.1)
+        if self.data_stream is not None:
+            self.data_stream.stop()
+        time.sleep(0.2)
         for item in (self.ctrl, self.stream, self.beam_ctrl, self.app):
             try:
                 item.close()

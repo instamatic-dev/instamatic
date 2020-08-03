@@ -3,9 +3,11 @@ import time
 import threading
 
 from .camera import Camera
+from instamatic import config
 
 # can add a configuration to hide when buffers are not needed
-from .datastream_dm import frame_buffer, stream_buffer
+if not config.settings.simulate and config.settings.camera[:2]=="DM":
+    from .datastream_dm import frame_buffer, stream_buffer
 
 class GrabbingError(RuntimeError):
     pass
@@ -52,10 +54,16 @@ class ImageGrabber:
             while not self.stopEvent.is_set():
                 if self.acquireInitiateEvent.is_set():
                     self.acquireInitiateEvent.clear()
-                    frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
+                    if not config.settings.simulate and self.cam.name[:2]=="DM":
+                        frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
+                    else:
+                        frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
                     self.callback(frame, acquire=True)
                 elif not self.continuousCollectionEvent.is_set():
-                    frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
+                    if not config.settings.simulate and self.cam.name[:2]=="DM":
+                        frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
+                    else:
+                        frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
                     self.callback(frame)
                 #if i%10 == 0:
                 #    print(f"Number of images consumed: {i}")
@@ -64,7 +72,10 @@ class ImageGrabber:
             raise GrabbingError(f'ImageGrabber encountered en error!')
 
     def start_loop(self):
-        self.thread = threading.Thread(target=self.run, args=(frame_buffer,), daemon=True)
+        if not config.settings.simulate and self.cam.name[:2]=="DM":
+            self.thread = threading.Thread(target=self.run, args=(frame_buffer,), daemon=True)
+        else:
+            self.thread = threading.Thread(target=self.run, args=(None,), daemon=True)
         self.thread.start()
 
     def stop(self):
@@ -208,13 +219,12 @@ if __name__ == '__main__':
     from multiprocessing import Event
     from .datastream_dm import CameraDataStream
 
-    camera = 'DMfaux'
+    camera = 'simulate'
     stream = VideoStream(cam=camera)
-    data_stream = CameraDataStream(cam=camera, frametime=0.1)
-    data_stream.start_loop()
+    #data_stream = CameraDataStream(cam=camera, frametime=0.1)
+    #data_stream.start_loop()
     from IPython import embed
     print('test')
-    from instamatic.gui import videostream_frame
     embed()
-    data_stream.stop()
+    #data_stream.stop()
     stream.close()

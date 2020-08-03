@@ -141,11 +141,12 @@ def main():
         from pyserialem import read_nav_file
         nav_items = read_nav_file(options.nav_file, acquire_only=True)
 
-    from instamatic.camera.datastream_dm import CameraDataStream
-    import time
-    data_stream = CameraDataStream(cam=config.camera.name, frametime=0.3)
-    data_stream.start_loop()
-    time.sleep(8)
+    if not config.settings.simulate and config.settings.camera[:2]=="DM":
+        from instamatic.camera.datastream_dm import CameraDataStream
+        import time
+        data_stream = CameraDataStream(cam=config.camera.name, frametime=0.3)
+        data_stream.start_loop()
+        time.sleep(8)
 
     if options.acquire_at_items:
         ctrl.run_script_at_items(nav_items=nav_items, script=options.script)
@@ -153,7 +154,10 @@ def main():
         ctrl.run_script(options.script)
     elif options.start_gui:
         from instamatic.gui import start_gui
-        start_gui(ctrl, data_stream, log=log)
+        if not config.settings.simulate and config.settings.camera[:2]=="DM":
+            start_gui(ctrl, data_stream, log=log)
+        else:
+            start_gui(ctrl, None, log=log)
 
 
 
