@@ -1,0 +1,70 @@
+microscope: fei_themisZ
+camera: simulate
+calibration: simulate
+
+# Global toggle to force simulated camera/microscope interface
+simulate: False
+
+data_directory: C:/instamatic
+#flatfield: C:/instamatic/flatfield.tiff
+flatfield:
+
+# Run the TEM connection in a different process (recommended)
+use_tem_server: False
+tem_server_host: 'localhost'
+tem_server_port: 8088
+tem_require_admin: True
+tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml
+
+# Run the Camera connection in a different process
+use_cam_server: False
+cam_server_host: 'localhost'
+cam_server_port: 8087
+cam_use_shared_memory: true
+
+# Submit collected data to an indexing server (CRED only)
+use_indexing_server_exe: False
+indexing_server_exe: 'instamatic.dialsserver.exe'
+indexing_server_host: 'localhost'
+indexing_server_port: 8089
+dials_script: 'E:/cctbx/dials_script.bat'
+
+# JEOL only, automatically set the rotation speed via Goniotool (instamatic.goniotool)
+use_goniotool: False
+goniotool_server_host: 'localhost'
+goniotool_server_port: 8090
+
+# To control the rotation speed on a FEI/TFS system, need to set the same IP address as the host machine
+fei_server_host: '192.168.1.159'
+fei_server_port: 8091
+
+# Automatically submit the data to an indexing server running in a VM (VirtualBox)
+use_VM_server_exe: False
+VM_server_exe: 'instamatic.VMserver.exe'
+VM_server_host: 'localhost'
+VM_server_port: 8092
+VM_ID: "Ubuntu 14.04.3"
+VM_USERNAME: "lab6"
+VM_PWD: "testtest"
+VM_STARTUP_DELAY: 50
+VM_DESKTOP_DELAY: 20
+VM_SHARED_FOLDER: F:\SharedWithVM
+
+# Testing variables
+cred_relax_beam_before_experiment: false
+cred_track_stage_positions: false
+
+# Here the panels for the GUI can be turned on/off/reordered
+modules:
+  - 'cred'
+  - 'cred_tvips'
+  - 'cred_fei'
+  - 'sed'
+  - 'autocred'
+  - 'red'
+  - 'machine_learning'
+  - 'ctrl'
+  - 'debug'
+  - 'about'
+  - 'console'
+  - 'io'
