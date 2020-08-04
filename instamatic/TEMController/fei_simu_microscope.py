@@ -11,7 +11,7 @@ from instamatic.exceptions import TEMCommunicationError
 logger = logging.getLogger(__name__)
 
 
-FUNCTION_MODES = {0: 'LM', 1: 'Mi', 2: 'SA', 3: 'Mh', 4: 'LAD', 5: 'D'}
+FUNCTION_MODES = {1: 'LM', 2: 'Mi', 3: 'SA', 4: 'Mh', 5: 'LAD', 6: 'D'}
 
 MIN = 0.0
 MAX = 1.0
@@ -31,11 +31,11 @@ class FEISimuMicroscope:
 
         print('BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU')
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument', comtypes.CLSCTX_ALL)
         # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
-        self.tom = comtypes.client.CreateObject('TEM.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tom = comtypes.client.CreateObject('TEM.Instrument', comtypes.CLSCTX_ALL)
 
         self.stage = self.tem.Stage
         self.proj = self.tom.Projection
@@ -90,8 +90,6 @@ class FEISimuMicroscope:
 
         self.spotsize = 1
 
-        self.screenposition_value = 'up'
-
         self.condensorlens1_value = random.randint(MIN, MAX)
         self.condensorlens2_value = random.randint(MIN, MAX)
         self.condensorminilens_value = random.randint(MIN, MAX)
@@ -106,9 +104,9 @@ class FEISimuMicroscope:
         self.tem.GUN.HTValue = htvalue
 
     def getCurrentDensity(self) -> float:
-        """Get the current density from the fluorescence screen in nA?"""
-        value = self.tecnai.Camera.ScreenCurrent
-        # value = -1
+        """Need to get the current density from the fluorescence screen in nA?"""
+        #value = self.tecnai.Camera.ScreenCurrent
+        value = self.tom.Screen.Current * 1e9
         return value
 
     def getMagnification(self):
@@ -329,11 +327,13 @@ class FEISimuMicroscope:
 
     def getScreenPosition(self):
         # TO BE CHECKED: does FEI tem have a screenposition object??
-        return self.screenposition_value
+        dic = {0:'down', 1:'up'}
+        return dic[self.tom.Screen.Position]
 
     def setScreenPosition(self, value):
         """value = 'up' or 'down'"""
-        self.screenposition_value = value
+        dic = {'down':0, 'up':1}
+        self.tom.Screen.SetScreenPosition(dict[value])
 
     def getCondensorLens1(self):
         return self.condensorlens1_value

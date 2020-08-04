@@ -19,7 +19,7 @@ def get_tem(interface: str):
         from .simu_microscope import SimuMicroscope as cls
     elif interface == 'jeol':
         from .jeol_microscope import JeolMicroscope as cls
-    elif interface == 'fei':
+    elif interface in ('fei', 'fei_themisZ'):
         from .fei_microscope import FEIMicroscope as cls
     elif interface == 'fei_simu':
         from .fei_simu_microscope import FEISimuMicroscope as cls

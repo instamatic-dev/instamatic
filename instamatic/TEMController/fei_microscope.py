@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # 0.01: 0.297
 
 
-FUNCTION_MODES = {0: 'LM', 1: 'Mi', 2: 'SA', 3: 'Mh', 4: 'LAD', 5: 'D'}
+FUNCTION_MODES = {1: 'LM', 2: 'Mi', 3: 'SA', 4: 'Mh', 5: 'LAD', 6: 'D'}
 
 MagnificationMapping = {
     1: 45,
@@ -132,11 +132,11 @@ class FEIMicroscope:
 
         print('FEI Themis Z initializing...')
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument', comtypes.CLSCTX_ALL)
         # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
-        self.tom = comtypes.client.CreateObject('TEM.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tom = comtypes.client.CreateObject('TEM.Instrument', comtypes.CLSCTX_ALL)
 
         # TEM Status constants
         self.tem_constant = comtypes.client.Constants(self.tem)
@@ -174,8 +174,8 @@ class FEIMicroscope:
         self.tem.GUN.HTValue = htvalue
 
     def getCurrentDensity(self) -> float:
-        """Get the current density from the fluorescence screen in nA?"""
-        value = self.tecnai.Camera.ScreenCurrent
+        """Need to get the current density from the fluorescence screen in nA? Call it current density for compatibility issues"""
+        value = self.tom.Screen.Current * 1e9
         # value = -1
         return value
 
@@ -452,6 +452,15 @@ class FEIMicroscope:
 
     def isfocusscreenin(self):
         return self.tom.Screen.IsFocusScreenIn
+
+    def getScreenPosition(self):
+        dic = {0:'down', 1:'up'}
+        return dic[self.tom.Screen.Position]
+
+    def setScreenPosition(self, value):
+        """value = 'up' or 'down'"""
+        dic = {'down':0, 'up':1}
+        self.tom.Screen.SetScreenPosition(dict[value])
 
     def getDiffShift(self):
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough"""
