@@ -455,7 +455,9 @@ class FEIMicroscope:
            LAD or D). The imaging submode can change, when the magnification is changed."""
         if isinstance(value, str):
             try:
-                value = FUNCTION_MODES.index(value)
+                for key, val in FUNCTION_MODES.items():
+                    if val == value:
+                        value = key
             except ValueError:
                 raise FEIValueError(f'Unrecognized function mode: {value}.')
         self.FunctionMode_value = value

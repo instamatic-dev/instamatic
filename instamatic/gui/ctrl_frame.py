@@ -29,7 +29,11 @@ class ExperimentalCtrl(LabelFrame):
         b_find_eucentric_height.grid(row=0, column=0, sticky='EW', columnspan=2)
 
         Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
-        self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
+        
+        if config.settings.microscope[:3] == "fei":
+            self.o_mode = OptionMenu(frame, self.var_mode, 'D', 'LM', 'Mi', 'SA', 'Mh', 'LAD', 'D', command=self.set_mode)
+        else:
+            self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
         self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
