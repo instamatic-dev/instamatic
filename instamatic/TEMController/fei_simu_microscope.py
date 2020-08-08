@@ -79,8 +79,8 @@ class FEISimuMicroscope:
 
         self.beamblank = False
 
-        self.condensorlensstigmator_x = random.randint(MIN, MAX)
-        self.condensorlensstigmator_y = random.randint(MIN, MAX)
+        self.condenserlensstigmator_x = random.randint(MIN, MAX)
+        self.condenserlensstigmator_y = random.randint(MIN, MAX)
 
         self.intermediatelensstigmator_x = random.randint(MIN, MAX)
         self.intermediatelensstigmator_y = random.randint(MIN, MAX)
@@ -90,9 +90,9 @@ class FEISimuMicroscope:
 
         self.spotsize = 1
 
-        self.condensorlens1_value = random.randint(MIN, MAX)
-        self.condensorlens2_value = random.randint(MIN, MAX)
-        self.condensorminilens_value = random.randint(MIN, MAX)
+        self.condenserlens1_value = random.randint(MIN, MAX)
+        self.condenserlens2_value = random.randint(MIN, MAX)
+        self.condenserminilens_value = random.randint(MIN, MAX)
         self.objectivelensecoarse_value = random.randint(MIN, MAX)
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
@@ -296,10 +296,10 @@ class FEISimuMicroscope:
         """True/False or 1/0."""
         self.beamblank = mode
 
-    def getCondensorLensStigmator(self):
+    def getCondenserLensStigmator(self):
         return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
 
-    def setCondensorLensStigmator(self, x, y):
+    def setCondenserLensStigmator(self, x, y):
         self.tom.Illumination.CondenserStigmator.X = x
         self.tom.Illumination.CondenserStigmator.Y = y
 
@@ -335,14 +335,14 @@ class FEISimuMicroscope:
         dic = {'down':0, 'up':1}
         self.tom.Screen.SetScreenPosition(dict[value])
 
-    def getCondensorLens1(self):
-        return self.condensorlens1_value
+    def getCondenserLens1(self):
+        return self.condenserlens1_value
 
-    def getCondensorLens2(self):
-        return self.condensorlens2_value
+    def getCondenserLens2(self):
+        return self.condenserlens2_value
 
-    def getCondensorMiniLens(self):
-        return self.condensorminilens_value
+    def getCondenserMiniLens(self):
+        return self.condenserminilens_value
 
     def getObjectiveLenseCoarse(self):
         return self.objectivelensecoarse_value
