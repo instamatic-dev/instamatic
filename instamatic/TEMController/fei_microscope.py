@@ -185,7 +185,7 @@ class FEIMicroscope:
     def getCurrentDensity(self) -> float:
         """Need to get the current density from the fluorescence screen in nA? Call it current density 
            for compatibility issues"""
-        value = self.tem.ScreenCurrent * 1e9
+        value = self.tem.Camera.ScreenCurrent * 1e9
         return value
 
     def getMagnification(self):
