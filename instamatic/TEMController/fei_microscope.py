@@ -28,9 +28,17 @@ logger = logging.getLogger(__name__)
 # 0.02: 0.593
 # 0.01: 0.297
 
-
+"""
+LM     Imaging mode, low magnification
+Mi     Imaging mode, lower intermediate magnification range
+SA     Imaging mode, high magnification
+Mh     Imaging mode, highest magnification range
+LAD    Diffraction, LAD mode (the mode entered from LM imaging)
+D      Diffraction mode as entered from higher magnification imaging modes
+"""
 FUNCTION_MODES = {1: 'LM', 2: 'Mi', 3: 'SA', 4: 'Mh', 5: 'LAD', 6: 'D'}
 
+# Need more checking
 MagnificationMapping = {
     1: 45,
     2: 58,
@@ -95,6 +103,7 @@ MagnificationMapping = {
     61: 6200,
     62: 3100}
 
+# Checking if LAD mode CameraLengthMapping is different from D mode
 CameraLengthMapping = {
     1: 34,
     2: 42,
@@ -219,14 +228,14 @@ class FEIMicroscope:
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """x, y, z in the system are in unit of meters, angles in radians. 1s per call (without moving anything)."""
-        pos = self.stage.Position
-        axis = 0
-
         if speed > 1 or speed < 0:
             raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 
         self.tom.Stage.Speed = speed
         goniospeed = self.tom.Stage.Speed
+
+        pos = self.stage.Position
+        axis = 0
 
         if x is not None:
             pos.X = x * 1e-6
@@ -266,9 +275,10 @@ class FEIMicroscope:
 
     def setGunShift(self, x, y):
         """x y can only be float numbers between -1 and 1. 150 ms per call"""
-        gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+
+        gs = self.tem.GUN.Shift
 
         if x is not None:
             gs.X = x
@@ -285,16 +295,17 @@ class FEIMicroscope:
 
     def setGunTilt(self, x, y):
         """150ms per call"""
-        gt = self.tecnai.Gun.Tilt
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+
+        gt = self.tem.Gun.Tilt
 
         if x is not None:
             gt.X = x
         if y is not None:
             gt.Y = y
 
-        self.tecnai.Gun.Tilt = gt
+        self.tem.Gun.Tilt = gt
 
     def getBeamShift(self):
         """User Shift. 6ms per call"""
@@ -305,11 +316,11 @@ class FEIMicroscope:
 
     def setBeamShift(self, x, y):
         """User Shift. 10ms per call"""
-        bs = self.tom.Illumination.BeamShift
         if abs(x) > 1 or abs(y) > 1:
             print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
             return
 
+        bs = self.tom.Illumination.BeamShift
         if x is not None:
             bs.X = x
         if y is not None:
@@ -324,9 +335,9 @@ class FEIMicroscope:
 
     def setBeamAlignShift(self, x, y):
         """Align Shift."""
-        bs = self.tom.Illumination.BeamAlignShift
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        bs = self.tom.Illumination.BeamAlignShift
 
         if x is not None:
             bs.X = x
@@ -452,20 +463,32 @@ class FEIMicroscope:
     def getHolderType(self):
         return self.stage.Holder
 
-    """What is the relationship between defocus and focus?? Both are changing the defoc value"""
+    def getDiffFocus(self, confirm_mode=True):
+        if confirm_mode and (self.getFunctionMode() not in ("LAD", "D")):
+            raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
+        return self.tem.Projection.Defocus
 
-    def getDefocus(self):
+    def setDiffFocus(self, value, confirm_model=True):
+        if confirm_mode and (self.getFunctionMode() not in ("LAD", "D")):
+            raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
+        self.tem.Projection.Defocus = value
+
+    def getDefocus(self, confirm_mode=True):
         """1.2ms per call. 
            Defocus value of the currently active mode. Changing ‘Defocus’ will also change ‘Focus’ 
            and vice versa. ‘Defocus’ is in physical units (meters) and measured with respect to a origin that can 
            be set by using ‘ResetDefocus()’."""
+        if confirm_mode and (self.getFunctionMode() not in ('LM','Mi','SA','Mh')):
+            raise FEIValueError("Must be in ('LM','Mi','SA','Mh') mode to get Defocus")
         return self.tem.Projection.Defocus
 
-    def setDefocus(self, value):
+    def setDefocus(self, value, confirm_mode=True):
         """defocus value in unit m. 6ms per call. 
            Defocus value of the currently active mode. Changing ‘Defocus’ will also change ‘Focus’ 
            and vice versa. ‘Defocus’ is in physical units (meters) and measured with respect to a origin that can 
            be set by using ‘ResetDefocus()’."""
+        if confirm_mode and (self.getFunctionMode() not in ('LM','Mi','SA','Mh')):
+            raise FEIValueError("Must be in ('LM','Mi','SA','Mh') mode to get Defocus")
         self.tem.Projection.Defocus = value
 
     def ResetDefocus(self):
@@ -522,8 +545,7 @@ class FEIMicroscope:
            The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
         ds1 = self.tem.Projection.DiffractionShift
         if abs(x) > 1 or abs(y) > 1:
-            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
-            return
+            raise FEIValueError('Invalid gunshift setting: can only be float numbers between -1 and 1.')
 
         if x is not None:
             ds1.X = x / 180 * pi
@@ -548,10 +570,12 @@ class FEIMicroscope:
     def setBeamUnblank(self):
         self.tem.Illumination.BeamBlanked = 0
 
-    def getCondensorLensStigmator(self):
+    def getCondenserLensStigmator(self):
         return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
 
-    def setCondensorLensStigmator(self, x, y):
+    def setCondenserLensStigmator(self, x, y):
+        if abs(x) > 1 or abs(y) > 1:
+            raise FEIValueError('Invalid condenser lens stigmator setting: can only be float numbers between -1 and 1.')
         self.tom.Illumination.CondenserStigmator.X = x
         self.tom.Illumination.CondenserStigmator.Y = y
 
@@ -560,6 +584,8 @@ class FEIMicroscope:
         return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x, y):
+        if abs(x) > 1 or abs(y) > 1:
+            raise FEIValueError('Invalid intermediate lens stigmator setting: can only be float numbers between -1 and 1.')
         self.tom.Illumination.DiffractionStigmator.X = x
         self.tom.Illumination.DiffractionStigmator.Y = y
 
@@ -567,18 +593,23 @@ class FEIMicroscope:
         return self.tom.Illumination.ObjectiveStigmator.X, self.tom.Illumination.ObjectiveStigmator.Y
 
     def setObjectiveLensStigmator(self, x, y):
+        if abs(x) > 1 or abs(y) > 1:
+            raise FEIValueError('Invalid objective lens stigmator setting: can only be float numbers between -1 and 1.')
         self.tom.Illumination.ObjectiveStigmator.X = x
         self.tom.Illumination.ObjectiveStigmator.Y = y
 
     def getSpotSize(self):
-        """The spot size index (usually ranging from 1 to 11)."""
-        return self.tom.Illumination.SpotsizeIndex
+        """The spot size index (usually ranging from 1 to 11). 220ms per call."""
+        return self.tem.Illumination.SpotsizeIndex
 
     def setSpotSize(self, value):
-        """The spot size index (usually ranging from 1 to 11)."""
-        self.tom.Illumination.SpotsizeIndex = value
+        """The spot size index (usually ranging from 1 to 11). 224ms per call."""
+        if value < 1 or value > 11:
+            raise FEIValueError('The range of spot size is from 1 to 11.')
+        self.tem.Illumination.SpotsizeIndex = value
 
     def getMagnificationIndex(self):
+        """"""
         if self.tom.Projection.Mode != 1:
             ind = self.proj.MagnificationIndex
             return ind
@@ -635,184 +666,213 @@ class FEIMicroscope:
     def getProbeMode(self):
         """Mode of the illumination system (either nanoprobe or microprobe). 
            (Nearly) no effect for low magnifications (LM)."""
-        pass
+        return self.tem.Illumination.Mode
 
     def setProbeMode(self, value):
         """Mode of the illumination system (either nanoprobe or microprobe). 
            (Nearly) no effect for low magnifications (LM)."""
-        pass
+        if value != 0 or value != 1:
+            raise FEIValueError('The probe mode must be 0 or 1.')
+        self.tem.Illumination.Mode = value
 
     def getProbeIntensity(self):
         """Intensity value of the current mode (typically ranging from 0 to 1.0, 
            but on some microscopes the minimum may be higher"""
-        pass
+        return self.tem.Illumination.Intensity
 
     def setProbeIntensity(self, value):
         """Intensity value of the current mode (typically ranging from 0 to 1.0, 
            but on some microscopes the minimum may be higher"""
-        pass
+        if value < 0 or y > 1:
+            raise FEIValueError('The range of intensity of probe is from 0 to 1.')
+        self.tem.Illumination.Intensity = value
+
 
     def isIntensityZoomEnabled(self):
         """Activates/deactivates the intensity zoom in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        pass
+        return self.tem.Illumination.IntensityZoomEnabled
 
-    def setIntensityZoomEnabled(self, value):
+    def setIntensityZoomEnabled(self, value: bool):
         """Activates/deactivates the intensity zoom in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        pass
+        self.tem.Illumination.IntensityZoomEnabled = value
 
     def isIntensityLimitEnabled(self):
         """Activates/deactivates the intensity limit in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        pass
+        return self.tem.Illumination.IntensityLimitEnabled
 
-    def setIntensityLimitEnabled(self, value):
+    def setIntensityLimitEnabled(self, value: bool):
         """Activates/deactivates the intensity limit in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        pass
+        self.tem.Illumination.IntensityLimitEnabled = value
 
     def getProbeShift(self):
         """Beam shift relative to the origin stored at alignment time. Units: meters."""
-        pass
+        return self.tem.Illumination.Shift.X, self.tem.Illumination.Shift.Y
 
-    def setProbeShift(self, value):
+    def setProbeShift(self, x, y):
         """Beam shift relative to the origin stored at alignment time. Units: meters."""
-        pass
+        self.tem.Illumination.Shift.X = x
+        self.tem.Illumination.Shift.Y = y
 
     def getDarkFieldTilt(self):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
            if dark field mode is active. Units: radians, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        pass
+        return self.tem.Illumination.Tilt.X, self.tem.Illumination.Tilt.Y
 
     def setDarkFieldTilt(self, x, y):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
            if dark field mode is active. Units: radians, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        pass
+        self.tem.Illumination.Tilt.X = x
+        self.tem.Illumination.Tilt.Y = y
 
     def getRotationCenter(self):
         """Corresponds to the alignment beam tilt value. Units are radians, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
-        pass
+        return self.tem.Illumination.RotationCenter.X, self.tem.Illumination.RotationCenter.Y
 
     def setRotationCenter(self, x, y):
         """Corresponds to the alignment beam tilt value. Units are radians, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
-        pass
+        if abs(x) > 0.3 or abs(y) > 0.3:
+            raise FEIValueError('Invalid rotation center setting: can only be float numbers between -0.3 and 0.3.')
+        self.tem.Illumination.RotationCenter.X = x
+        self.tem.Illumination.RotationCenter.Y = y
 
     def getStemMagnification(self):
         """The magnification value in STEM mode. You can change the magnification only in discrete steps 
            (the same as on the microscope). If you specify a value that is not one of those steps, the scripting 
            will select the nearest available step."""
-        pass
+        return self.tem.Illumination.StemMagnification
 
     def setStemMagnification(self, value):
         """The magnification value in STEM mode. You can change the magnification only in discrete steps 
            (the same as on the microscope). If you specify a value that is not one of those steps, the scripting 
            will select the nearest available step."""
-        pass
+        self.tem.Illumination.StemMagnification = value
 
     def getStemRotation(self):
         """The STEM rotation angle (in radians)."""
-        pass
+        return self.tem.Illumination.StemRotation
 
     def setStemRotation(self, value):
         """The STEM rotation angle (in radians)."""
-        pass
+        value = value * pi / 180
+        self.tem.Illumination.StemRotation = value
 
     def getProbeDefocus(self):
         """The amount of probe defocus (in meters). Accessible only in Probe mode."""
-        pass
+        return self.tem.Illumination.ProbeDefocus
 
     def setProbeDefocus(self, value):
         """The amount of probe defocus (in meters). Accessible only in Probe mode."""
-        pass
+        self.tem.Illumination.ProbeDefocus = value
 
     def getConvergenceAngle(self):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        pass
+        return self.tem.Illumination.ConvergenceAngle
 
     def setConvergenceAngle(self, value):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        pass
+        self.tem.Illumination.ConvergenceAngle = value
 
-    def NormalizeCondenser(self):
-        """Normalizes the condenser lenses and/or the minicondenser lens, dependent on the choice of ‘Norm’."""
-        pass
+    def NormalizeCondenser(self, index):
+        """Normalizes the condenser lenses and/or the minicondenser lens, dependent on the choice of ‘Norm’.
+        Spotsize       normalize lens C1 (spotsize)
+        Intensity      normalize lens C2 (intensity) + C3
+        Condenser      normalize C1 + C2 + C3
+        MiniCondenser  normalize the minicondenser lens
+        ObjectivePole  normalize minicondenser and objective
+        All            normalize C1, C2, C3, minicondenser + objective"""
+        if index not in range(1,7):
+            raise FEIValueError('Invalid condenser normalize setting: index should between 1 and 6.')
+        return self.tem.Illumination.Normalize(index)
 
     def NormalizeProjection(self):
         """Normalizes the objective lens or the projector lenses, dependent on the choice of ‘Norm’.
-           pnmObjective    Normalize objective lens
-           pnmProjector    Normalize Diffraction, Intermediate, P1 and P2 lenses
-           pnmAll          Normalize objective, diffraction, intermediate, P1 and P2 lenses"""
-        pass
+           Objective    Normalize objective lens
+           Projector    Normalize Diffraction, Intermediate, P1 and P2 lenses
+           All          Normalize objective, diffraction, intermediate, P1 and P2 lenses"""
+        if index not in (10, 11, 12):
+            raise FEIValueError('Invalid condenser normalize setting: index should between 10 and 12.')
+        return self.tem.Projection.Normalize(index)
 
     def isAutoLoaderAvailable(self):
         """Returns whether the AutoLoader is available on the microscope."""
-        pass
+        return self.tem.AutoLoader.AutoLoaderAvailable
 
     def getNumberOfCassetteSlots(self):
         """The number of cassette slots in a cartridge."""
-        pass
+        return self.tem.AutoLoader.NumberOfCassetteSlots
 
-    def getSlotStatus(self):
+    def getSlotStatus(self, index):
         """The status of the slot specified.
            CassetteSlotStatus_Unknown       Cassette slot status has not been determined
            CassetteSlotStatus_Occupied      Cassette slot contains a cartridge
            CassetteSlotStatus_Empty         Cassette slot is empty
            CassetteSlotStatus_Error         Cassette slot generated an error"""
-        pass
+        return self.tem.AutoLoader.SlotStatus(index)
 
-    def LoadCartridge(self, value):
+    def LoadCartridge(self, index):
         """([in] fromSlot Long) Loads the cartride from the given slot into the microscope."""
-        pass
+        self.tem.AutoLoader.LoadCartridge(index)
 
     def UnloadCartridge(self):
         """Unloads the cartridge currently in the microscope and puts it back into its slot in the cassette."""
-        pass
+        self.tem.AutoLoader.UnloadCartridge()
 
     def getProjectionMode(self):
-        """Main mode of the projection system (either imaging or diffraction)."""
-        pass
+        """Main mode of the projection system (either imaging or diffraction).
+           Imaging          Projector in imaging mode
+           Diffraction      Projector in diffraction  mode"""
+        return self.tem.Projection.Mode
 
     def setProjectionMode(self, value):
-        """Main mode of the projection system (either imaging or diffraction)."""
-        pass
+        """Main mode of the projection system (either imaging or diffraction).
+           Imaging          Projector in imaging mode
+           Diffraction      Projector in diffraction  mode"""
+        self.tem.Projection.Mode = value
 
     def getLensProgram(self):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
-           characterize a mode of the projection system."""
-        pass
+           characterize a mode of the projection system.
+           Regular        The default lens program
+           EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
+        return self.tem.Projection.LensProgram
 
     def setLensProgram(self, value):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
-           characterize a mode of the projection system."""
-        pass
+           characterize a mode of the projection system.
+           Regular        The default lens program
+           EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
+        self.tem.Projection.LensProgram = value
 
     def getImageRotation(self):
         """The rotation of the image or diffraction pattern on the fluorescent screen 
            with respect to the specimen. Units: radians."""
-        pass
+        return self.tem.Projection.ImageRotation
 
-    def getDetectorShift(self):
+    def getDetectorShift(self, value):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
            pdsOnAxis       Does not shift the image/diffraction pattern
            pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
            pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
-        pass
+        return self.tem.Projection.DetectorShift
 
     def setDetectorShift(self, value):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
            pdsOnAxis       Does not shift the image/diffraction pattern
            pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
            pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
-        pass
+        self.tem.Projection.DetectorShift = value
 
     def getDetectorShiftMode(self):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
@@ -823,7 +883,7 @@ class FEIMicroscope:
            pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
-        pass
+        return self.tem.Projection.DetectorShiftMode
 
     def setDetectorShiftMode(self, value):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
@@ -834,9 +894,9 @@ class FEIMicroscope:
            pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
-        pass 
+        self.tem.Projection.DetectorShiftMode = value 
 
-    def isShutterOverrideOn(self):
+    def isShutterOverrideOn(self) -> bool:
         """The BlankerShutter object has only one property, ShutterOverrideOn. This property can be used in 
            cryo-electron microscopy to burn ice off the specimen while blocking the beam from hitting the CCD camera. 
            When the shutter override is true, the CCD camera no longer has control over the microscope shutters. 
@@ -852,9 +912,9 @@ class FEIMicroscope:
            7. Switch the shutter override off.
            8. If necessary, wait for a short delay (one second) to allow the system to switch the shuttering back to normal.
            9. Unblank the beam (the CCD now has control again)."""
-        pass
+        return self.tem.BlankerShutter.ShutterOverrideOn
 
-    def setShutterOverrideOn(self, value):
+    def setShutterOverrideOn(self, value: bool):
         """The BlankerShutter object has only one property, ShutterOverrideOn. This property can be used in 
            cryo-electron microscopy to burn ice off the specimen while blocking the beam from hitting the CCD camera. 
            When the shutter override is true, the CCD camera no longer has control over the microscope shutters. 
@@ -870,13 +930,17 @@ class FEIMicroscope:
            7. Switch the shutter override off.
            8. If necessary, wait for a short delay (one second) to allow the system to switch the shuttering back to normal.
            9. Unblank the beam (the CCD now has control again)."""
-        pass
+        self.tem.BlankerShutter.ShutterOverrideOn = value
 
     def getDiffractionShift(self):
         """The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
-        pass
+        return self.tem.Projection.DiffractionShift.X, self.tem.Projection.DiffractionShift.Y
 
     def setDiffractionShift(self, x, y):
-        """The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
-        pass
+        """Parameter x and y are in degree. The diffraction pattern shift with respect to the origin that is 
+           defined by alignment. Units: radians."""
+        x = x * pi / 180
+        y = y * pi / 180
+        self.tem.Projection.DiffractionShift.X = x 
+        self.tem.Projection.DiffractionShift.Y = y
 
