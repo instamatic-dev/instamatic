@@ -520,7 +520,7 @@ class FEIMicroscope:
 
     def getScreenCurrent(self):
         """return screen current in nA."""
-        return self.tem.ScreenCurrent * 1e9
+        return self.tem.Camera.ScreenCurrent * 1e9
 
     def isfocusscreenin(self):
         return self.tom.Screen.IsFocusScreenIn
