@@ -65,6 +65,7 @@ class Experiment:
                  image_interval: int = 99999,
                  diff_defocus: int = 0,
                  exposure_time_image: float = 0.01,
+                 rotation_speed: float = 0.1,
                  write_tiff: bool = True,
                  write_xds: bool = True,
                  write_dials: bool = True,
@@ -79,11 +80,12 @@ class Experiment:
         self.logger = log
         self.mode = mode
         if ctrl.cam.name == 'simulate':
-            self.mode = 'simulate'
+            self.mode = 'footfree'
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
         self.footfree_rotate_to = footfree_rotate_to
+        self.rotation_speed = rotation_speed
 
         self.diff_defocus = diff_defocus
         self.exposure_image = exposure_time_image
@@ -203,7 +205,8 @@ class Experiment:
             rotate_to = self.footfree_rotate_to
 
             start_angle = self.ctrl.stage.a
-            self.ctrl.stage.set(a=rotate_to, wait=False)
+            self.ctrl.stage.set_with_speed(a=rotate_to, wait=False, speed=self.rotation_speed)
+            print('Footfree Data Recording started.')
 
         else:
             print('Waiting for rotation to start...', end=' ')
@@ -308,10 +311,10 @@ class Experiment:
 
         if self.mode == 'simulate':
             # simulate somewhat realistic end numbers
-            self.ctrl.stage.x += np.random.randint(-5000, 5000)
-            self.ctrl.stage.y += np.random.randint(-5000, 5000)
-            self.ctrl.stage.a += np.random.randint(-100, 100)
-            self.ctrl.magnification.set(300)
+            self.ctrl.stage.x += np.random.randint(-100, 100)
+            self.ctrl.stage.y += np.random.randint(-100, 100)
+            self.ctrl.stage.a += np.random.randint(-60, 60)
+            self.ctrl.magnification.set(330)
 
         self.end_position = self.ctrl.stage.get()
         self.end_angle = self.end_position[3]
@@ -340,7 +343,10 @@ class Experiment:
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+        if config.settings.microscope[:3] == "fei":
+            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # px / Angstrom
+        else:
+            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth  # deg

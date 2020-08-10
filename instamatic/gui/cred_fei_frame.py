@@ -97,6 +97,7 @@ class ExperimentalcRED_FEI(LabelFrame):
 
 
 def acquire_data_cREDfei(controller, **kwargs):
+    controller.log.info('Start cRED experiment')
     from operator import attrgetter
 
     task = kwargs.pop('task')

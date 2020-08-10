@@ -76,7 +76,7 @@ class Stage:
             else:
                 yield  # if requested speed is the same as current
 
-    def get(self) -> Tuple[int, int, int, int, int]:
+    def get(self) -> Tuple[float, float, float, float, float]:
         """Get stage positions; x, y, z, and status of the rotation axes; a,
         b."""
         return StagePositionTuple(*self._getter())

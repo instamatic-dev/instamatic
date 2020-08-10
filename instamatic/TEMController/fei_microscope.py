@@ -435,23 +435,26 @@ class FEIMicroscope:
         pass
 
     def isStageMoving(self):
+        """Check if sample stage is moving"""
         if self.stage.Status == 0:
             return False
         else:
             return True
 
     def stopStage(self):
+        """Stop the sample stage, not working for FEI microscope now"""
         # self.stage.Status = self.goniostopped
-        raise NotImplementedError
+        print("Unable to stop the stage for FEI microscope")
+        return -1
 
     def getFunctionMode(self):
-        """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
+        """read only! {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
            LAD or D). The imaging submode can change, when the magnification is changed."""
         mode = self.tom.Projection.Submode
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
-        """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
+        """read only! {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
            LAD or D). The imaging submode can change, when the magnification is changed."""
         if isinstance(value, str):
             try:

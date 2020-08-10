@@ -5,7 +5,7 @@ from tkinter.ttk import *
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
 
-ENABLE_FOOTFREE_OPTION = False
+ENABLE_FOOTFREE_OPTION = True
 
 
 class ExperimentalcRED(LabelFrame):
@@ -51,10 +51,13 @@ class ExperimentalcRED(LabelFrame):
             Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
 
             Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
-            self.e_max_rotation = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
-            self.e_max_rotation.grid(row=9, column=1, sticky='W', padx=10)
+            self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
+            self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
+            Label(frame, text='Speed:').grid(row=9, column=2, sticky='W')
+            self.e_rotspeed = OptionMenu(frame, self.var_rotation_speed, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
+            self.e_rotspeed.grid(row=9, column=3, sticky='W', padx=10)
 
-            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky='W')
+            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
 
         self.lb_coll0 = Label(frame, text='')
         self.lb_coll1 = Label(frame, text='')
@@ -102,6 +105,7 @@ class ExperimentalcRED(LabelFrame):
 
         self.var_footfree_rotate_to = DoubleVar(value=65.0)
         self.var_toggle_footfree = BooleanVar(value=False)
+        self.var_rotation_speed = DoubleVar(value=0.1)
         self.mode = 'regular'
 
         self.var_save_tiff = BooleanVar(value=True)
@@ -154,6 +158,7 @@ class ExperimentalcRED(LabelFrame):
                   'diff_defocus': self.var_diff_defocus.get(),
                   'mode': self.mode,
                   'footfree_rotate_to': self.var_footfree_rotate_to.get(),
+                  'rotation_speed': self.var_rotation_speed.get(),
                   'write_tiff': self.var_save_tiff.get(),
                   'write_xds': self.var_save_xds.get(),
                   'write_dials': self.var_save_dials.get(),
@@ -186,10 +191,12 @@ class ExperimentalcRED(LabelFrame):
         enable = self.var_toggle_footfree.get()
         if enable:
             self.mode = 'footfree'
-            self.e_max_rotation.config(state=NORMAL)
+            self.e_endangle.config(state=NORMAL)
+            self.e_rotspeed.config(state=NORMAL)
         else:
             self.mode == 'regular'
-            self.e_max_rotation.config(state=DISABLED)
+            self.e_endangle.config(state=DISABLED)
+            self.e_rotspeed.config(state=DISABLED)
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
