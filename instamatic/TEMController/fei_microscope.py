@@ -1,6 +1,7 @@
 import atexit
 import logging
 import time
+import multiprocessing
 
 import comtypes.client
 from numpy import pi
@@ -127,6 +128,43 @@ CameraLengthMapping = {
     20: 2700,
     21: 3700}
 
+def rotate_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
+    tem = comtypes.client.CreateObject('TEMScripting.Instrument', comtypes.CLSCTX_ALL)
+    tom = comtypes.client.CreateObject('TEM.Instrument', comtypes.CLSCTX_ALL)
+
+    tom.Stage.Speed = speed
+    goniospeed = tom.Stage.Speed
+    pos = tem.Stage.Position
+    axis = 0
+
+    if x is not None:
+        pos.X = x * 1e-6
+        axis += 1
+    if y is not None:
+        pos.Y = y * 1e-6
+        axis += 2
+    if z is not None:
+        pos.Z = z * 1e-6
+        axis += 4
+    if a is not None:
+        pos.A = a / 180 * pi
+        axis += 8
+    if b is not None:
+        pos.B = b / 180 * pi
+        axis += 16
+    if speed == 1:
+        tem.Stage.Goto(pos, axis)
+    else:
+        if x is not None:
+            tem.Stage.GotoWithSpeed(pos, 1, goniospeed)
+        if y is not None:
+            tem.Stage.GotoWithSpeed(pos, 2, goniospeed)
+        if z is not None:
+            tem.Stage.GotoWithSpeed(pos, 4, goniospeed)
+        if a is not None:
+            tem.Stage.GotoWithSpeed(pos, 8, goniospeed)
+        if b is not None:
+            tem.Stage.GotoWithSpeed(pos, 16, goniospeed)
 
 class FEIMicroscope:
     """Python bindings to the FEI microscope using the COM interface."""
@@ -225,47 +263,17 @@ class FEIMicroscope:
     def getStagePosition(self):
         """return numbers in microns, angles in degs. 3ms per call"""
         return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
-
+    
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """x, y, z in the system are in unit of meters, angles in radians. 1s per call (without moving anything)."""
         if speed > 1 or speed < 0:
             raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 
-        self.tom.Stage.Speed = speed
-        goniospeed = self.tom.Stage.Speed
-
-        pos = self.stage.Position
-        axis = 0
-
-        if x is not None:
-            pos.X = x * 1e-6
-            axis += 1
-        if y is not None:
-            pos.Y = y * 1e-6
-            axis += 2
-        if z is not None:
-            pos.Z = z * 1e-6
-            axis += 4
-        if a is not None:
-            pos.A = a / 180 * pi
-            axis += 8
-        if b is not None:
-            pos.B = b / 180 * pi
-            axis += 16
-
-        if speed == 1:
-            self.stage.Goto(pos, axis)
+        if wait:
+            rotate_stage(x, y, z, a, b, speed)
         else:
-            if x is not None:
-                self.stage.GotoWithSpeed(pos, 1, goniospeed)
-            if y is not None:
-                self.stage.GotoWithSpeed(pos, 2, goniospeed)
-            if z is not None:
-                self.stage.GotoWithSpeed(pos, 4, goniospeed)
-            if a is not None:
-                self.stage.GotoWithSpeed(pos, 8, goniospeed)
-            if b is not None:
-                self.stage.GotoWithSpeed(pos, 16, goniospeed)
+            p = multiprocessing.Process(target=rotate_stage, args=(x,y,z,a,b,speed,))
+            p.start()
 
     def getGunShift(self):
         """150 ms per call"""
@@ -442,7 +450,8 @@ class FEIMicroscope:
 
     def stopStage(self):
         # self.stage.Status = self.goniostopped
-        raise NotImplementedError
+        print("Unable to stop the stage for FEI microscope")
+        return -1
 
     def getFunctionMode(self):
         """{1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
