@@ -128,7 +128,8 @@ CameraLengthMapping = {
     20: 2700,
     21: 3700}
 
-def rotate_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
+def move_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
+    """Rotate stage function. Mainly for start a new process and move the stage to achieve non-blocking stage manipulation"""
     tem = comtypes.client.CreateObject('TEMScripting.Instrument', comtypes.CLSCTX_ALL)
     tom = comtypes.client.CreateObject('TEM.Instrument', comtypes.CLSCTX_ALL)
 
@@ -269,11 +270,12 @@ class FEIMicroscope:
         if speed > 1 or speed < 0:
             raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 
-        if wait:
-            rotate_stage(x, y, z, a, b, speed)
-        else:
-            p = multiprocessing.Process(target=rotate_stage, args=(x,y,z,a,b,speed,))
-            p.start()
+        if not self.isStageMoving():
+            if wait:
+                move_stage(x, y, z, a, b, speed)
+            else:
+                p = multiprocessing.Process(target=move_stage, args=(x,y,z,a,b,speed,))
+                p.start()
 
     def getGunShift(self):
         """150 ms per call"""

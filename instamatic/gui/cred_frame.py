@@ -4,6 +4,7 @@ from tkinter.ttk import *
 
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
+from instamatic import config
 
 ENABLE_FOOTFREE_OPTION = True
 
@@ -23,8 +24,10 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text='Exposure time (s):').grid(row=1, column=0, sticky='W')
         exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         exposure_time.grid(row=1, column=1, sticky='W', padx=10)
+        self.ExposureButton = Button(frame, text='Confirm Exposure', command=self.confirm_exposure_time, state=NORMAL)
+        self.ExposureButton.grid(row=1, column=2, sticky='W')
 
-        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=2, sticky='W')
+        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
 
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
 
@@ -47,17 +50,25 @@ class ExperimentalcRED(LabelFrame):
         self.RelaxButton = Button(frame, text='Relax beam', command=self.relax_beam, state=DISABLED)
         self.RelaxButton.grid(row=7, column=2, sticky='EW')
 
-        if ENABLE_FOOTFREE_OPTION:
+        if ENABLE_FOOTFREE_OPTION and config.settings.microscope[:3]!="fei":
             Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
 
             Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
-            self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
+            self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=DISABLED)
             self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
-            Label(frame, text='Speed:').grid(row=9, column=2, sticky='W')
+
+            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
+
+        if config.settings.microscope[:3]=="fei":
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
+
+            Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
+            self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=NORMAL)
+            self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
+            Label(frame, text='Rotation Speed:').grid(row=9, column=2, sticky='W')
             self.e_rotspeed = OptionMenu(frame, self.var_rotation_speed, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
             self.e_rotspeed.grid(row=9, column=3, sticky='W', padx=10)
 
-            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
 
         self.lb_coll0 = Label(frame, text='')
         self.lb_coll1 = Label(frame, text='')
@@ -85,8 +96,9 @@ class ExperimentalcRED(LabelFrame):
         self.CollectionButton = Button(frame, text='Start Collection', command=self.start_collection)
         self.CollectionButton.grid(row=1, column=0, sticky='EW')
 
-        self.CollectionStopButton = Button(frame, text='Stop Collection', command=self.stop_collection, state=DISABLED)
-        self.CollectionStopButton.grid(row=1, column=1, sticky='EW')
+        if config.settings.microscope[:3]!="fei":
+            self.CollectionStopButton = Button(frame, text='Stop Collection', command=self.stop_collection, state=DISABLED)
+            self.CollectionStopButton.grid(row=1, column=1, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -113,6 +125,10 @@ class ExperimentalcRED(LabelFrame):
         self.var_save_dials = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
 
+    def confirm_exposure_time(self):
+        """Change the exposure time for Gatan camera. Need to stop and restart the data stream generation process"""
+        pass
+
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
         self.q = q
@@ -123,11 +139,16 @@ class ExperimentalcRED(LabelFrame):
             self.var_toggle_diff_defocus.set(False)
             self.toggle_diff_defocus()
 
-        self.CollectionStopButton.config(state=NORMAL)
+        if config.settings.microscope[:3]!="fei":
+            self.CollectionStopButton.config(state=NORMAL)
+
         self.CollectionButton.config(state=DISABLED)
         if self.mode == 'footfree':
             self.lb_coll1.config(text='Data collection has started.')
             self.lb_coll2.config(text='Click STOP COLLECTION to end the experiment.')
+        elif config.settings.microscope[:3]=="fei":
+            self.lb_coll1.config(text='FEI cRED Data collection has started.')
+            self.lb_coll2.config(text='Wait until the stage is rotated to the target angle.')
         else:
             self.lb_coll1.config(text='Now you can start to rotate the goniometer at any time.')
             self.lb_coll2.config(text='Click STOP COLLECTION BEFORE removing your foot from the pedal!')
@@ -138,6 +159,15 @@ class ExperimentalcRED(LabelFrame):
         self.q.put(('cred', params))
 
         self.triggerEvent.set()
+
+        if config.settings.microscope[:3]=="fei":
+            def stop_collection():
+                self.stopEvent.wait()
+                self.CollectionButton.config(state=NORMAL)
+                self.lb_coll1.config(text='')
+                self.lb_coll2.config(text='')
+            p = threading.Thread(target=stop_collection,args=())
+            p.start()
 
     def stop_collection(self, event=None):
         self.stopEvent.set()

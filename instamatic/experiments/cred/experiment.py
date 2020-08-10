@@ -79,8 +79,8 @@ class Experiment:
         self.unblank_beam = unblank_beam
         self.logger = log
         self.mode = mode
-        if ctrl.cam.name == 'simulate':
-            self.mode = 'footfree'
+        if self.ctrl.cam.name == 'simulate' and self.ctrl.tem.name[:3]!="fei":
+            self.mode = 'simulate'
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
@@ -205,8 +205,20 @@ class Experiment:
             rotate_to = self.footfree_rotate_to
 
             start_angle = self.ctrl.stage.a
-            self.ctrl.stage.set_with_speed(a=rotate_to, wait=False, speed=self.rotation_speed)
+            self.ctrl.stage.set(a=rotate_to, wait=False)
             print('Footfree Data Recording started.')
+
+        elif self.mode == 'regular' and self.ctrl.tem.name[:3]=="fei":
+            rotate_to = self.footfree_rotate_to
+
+            self.ctrl.stage.set_with_speed(a=rotate_to, wait=False, speed=self.rotation_speed)
+            while not self.ctrl.tem.isStageMoving():
+                time.sleep(0.1)
+
+            time.sleep(2)
+
+            start_angle = self.ctrl.stage.a
+            print('FEI Data Recording started.')
 
         else:
             print('Waiting for rotation to start...', end=' ')
@@ -299,6 +311,9 @@ class Experiment:
                 buffer.append((i, img, h))
 
             i += 1
+
+            if not self.ctrl.tem.isStageMoving():
+                self.stopEvent.set()
 
         t1 = time.perf_counter()
 
