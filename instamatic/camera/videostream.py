@@ -27,9 +27,6 @@ class ImageGrabber:
         self.callback = callback
         self.cam = cam
 
-        self.default_exposure = self.cam.default_exposure
-        self.default_binsize = self.cam.default_binsize
-        self.dimensions = self.cam.dimensions
         self.name = self.cam.name
 
         self.frame = None
@@ -59,13 +56,13 @@ class ImageGrabber:
                 try:
                     if self.acquireInitiateEvent.is_set():
                         self.acquireInitiateEvent.clear()
-                        if self.cam.name[:2]=="DM":
+                        if self.name[:2]=="DM":
                             frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
                         else:
                             frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
                         self.callback(frame, acquire=True)
                     elif not self.continuousCollectionEvent.is_set():
-                        if self.cam.name[:2]=="DM":
+                        if self.name[:2]=="DM":
                             frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
                         else:
                             frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
@@ -80,7 +77,7 @@ class ImageGrabber:
 
     def start_loop(self):
         """Obtaining frames from stream_buffer (after processing)"""
-        if not config.settings.simulate and self.cam.name[:2]=="DM":
+        if not config.settings.simulate and self.name[:2]=="DM":
             self.thread = threading.Thread(target=self.run, args=(stream_buffer,), daemon=True)
         else:
             self.thread = threading.Thread(target=self.run, args=(None,), daemon=True)
@@ -104,9 +101,6 @@ class VideoStream(threading.Thread):
 
         self.lock = threading.Lock()
 
-        self.default_exposure = self.cam.default_exposure
-        self.default_binsize = self.cam.default_binsize
-        self.dimensions = self.cam.dimensions
         self.name = self.cam.name
 
         self.frametime = self.default_exposure
