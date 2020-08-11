@@ -142,10 +142,12 @@ def main():
         nav_items = read_nav_file(options.nav_file, acquire_only=True)
 
     if not config.settings.simulate and config.settings.camera[:2]=="DM":
-        from instamatic.camera.datastream_dm import CameraDataStream
+        from instamatic.camera.datastream_dm import CameraDataStream, StreamBuffer
         import time
-        data_stream = CameraDataStream(cam=config.camera.name, frametime=0.3)
+        data_stream = CameraDataStream(cam=config.camera.name, frametime=0.05)
         data_stream.start_loop()
+        image_stream = StreamBuffer(exposure=0.3, frametime=0.05)
+        image_stream.start_loop()
         time.sleep(8)
 
     if options.acquire_at_items:
@@ -155,9 +157,9 @@ def main():
     elif options.start_gui:
         from instamatic.gui import start_gui
         if not config.settings.simulate and config.settings.camera[:2]=="DM":
-            start_gui(ctrl, data_stream, log=log)
+            start_gui(ctrl, data_stream, image_stream, log=log)
         else:
-            start_gui(ctrl, None, log=log)
+            start_gui(ctrl, None, None, log=log)
 
 
 

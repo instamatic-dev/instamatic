@@ -22,13 +22,14 @@ class DataCollectionController(threading.Thread):
     important to keep the GUI responsive for long-running experiments.
     """
 
-    def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, data_stream=None, log=None):
+    def __init__(self, ctrl=None, stream=None, beam_ctrl=None, app=None, data_stream=None, image_stream=None, log=None):
         super().__init__()
         self.ctrl = ctrl
         self.stream = stream
         self.beam_ctrl = beam_ctrl
         self.app = app
         self.data_stream = data_stream
+        self.image_stream = image_stream
         self.daemon = True
 
         self.use_indexing_server = False
@@ -77,14 +78,17 @@ class DataCollectionController(threading.Thread):
                 self.log.exception(e)
 
     def close(self):
-        if self.data_stream is not None:
-            self.data_stream.stop()
-        time.sleep(0.2)
         for item in (self.ctrl, self.stream, self.beam_ctrl, self.app):
             try:
                 item.close()
             except AttributeError:
                 pass
+
+        if self.image_stream is not None:
+            self.image_stream.stop()
+
+        if self.data_stream is not None:
+            self.data_stream.stop()
 
 
 class AppLoader:
@@ -93,10 +97,11 @@ class AppLoader:
     Initializes all the modules specified in `settings.yaml`
     """
 
-    def __init__(self):
+    def __init__(self, image_stream):
         super().__init__()
         self.modules = {}
         self.locations = ['left', 'top', 'bottom', 'right']
+        self.image_stream = image_stream
 
     def load(self, modules, master):
 
@@ -123,7 +128,10 @@ class AppLoader:
                 else:
                     parent = master
 
-                module_frame = module.initialize(parent)
+                if module.name == 'cred':
+                    module_frame = module.initialize(parent, image_stream=self.image_stream)
+                else:
+                    module_frame = module.initialize(parent)
                 module_frame.pack(side=location, fill='both', expand='yes', padx=10, pady=10)
                 self.modules[module.name] = module_frame
 
@@ -137,7 +145,7 @@ class MainFrame:
     Modules are loaded as defined through the `modules` variable.
     """
 
-    def __init__(self, root, cam, modules: list = []):
+    def __init__(self, root, cam, modules: list = [], image_stream=None):
         super().__init__()
         # the stream window is a special case, because it needs access
         # to the cam module
@@ -151,7 +159,7 @@ class MainFrame:
         self.module_frame = Frame(root)
         self.module_frame.pack(side='top', fill='both', expand=True)
 
-        self.app = AppLoader()
+        self.app = AppLoader(image_stream)
         self.app.load(modules, self.module_frame)
 
         self.root.wm_title(instamatic.__long_title__)
@@ -167,14 +175,14 @@ class MainFrame:
         sys.exit()
 
 
-def start_gui(ctrl, data_stream, log=None):
+def start_gui(ctrl, data_stream, image_stream, log=None):
     """Function to start the gui, to be imported and run elsewhere when ctrl is
     initialized Requires the `ctrl` object to be passed."""
     root = Tk()
 
-    gui = MainFrame(root, cam=ctrl.cam, modules=MODULES)
+    gui = MainFrame(root, cam=ctrl.cam, modules=MODULES, image_stream=image_stream)
 
-    experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, data_stream=data_stream, log=log)
+    experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, data_stream=data_stream, image_stream=image_stream, log=log)
     experiment_ctrl.start()
 
     root.mainloop()
@@ -182,11 +190,13 @@ def start_gui(ctrl, data_stream, log=None):
 
 if __name__ == '__main__':
     from instamatic import TEMController
-    from instamatic.camera.datastream_dm import CameraDataStream
+    from instamatic.camera.datastream_dm import CameraDataStream, StreamBuffer
     import time
 
-    data_stream = CameraDataStream(cam=config.camera.name, frametime=0.1)
+    data_stream = CameraDataStream(cam=config.camera.name, frametime=0.05)
     data_stream.start_loop()
+    image_stream = StreamBuffer(exposure=0.3, frametime=0.05)
+    image_stream.start_loop()
     ctrl = TEMController.initialize()
     time.sleep(8)
-    start_gui(ctrl, data_stream)
+    start_gui(ctrl, data_stream, image_stream)

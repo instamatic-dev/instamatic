@@ -54,7 +54,7 @@ class CameraDM:
 
     def init(self):
         pyDM.initCCDCOM()
-        """
+        
         pyDM.initAcquisitionParam(self.processing, 
                                  self.exposure, 
                                  self.binsize, 
@@ -64,9 +64,10 @@ class CameraDM:
                                  self.CCD_area[2], 
                                  self.CCD_area[3],
                                  self.read_mode,
+                                 self.quality_level,
                                  self.is_continuous)
-        """
-        pyDM.initAcquisitionMode(0)
+        
+        #pyDM.initAcquisitionMode(0)
         pyDM.prepareImgStack(self.numImg)
 
     def uninit(self):
@@ -90,7 +91,7 @@ class CameraDM:
 
     def get_from_buffer(self, queue, exposure):
         time.sleep(exposure+0.001)
-        return queue.get()
+        return queue.get(timeout=exposure*2)
 
     def getCameraDimensions(self) -> (int, int):
         return self.dimensions

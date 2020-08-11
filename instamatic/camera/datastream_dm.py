@@ -1,10 +1,13 @@
 import time
 import multiprocessing
+from queue import Empty as Empty
+import decimal
+import numpy as np
 
 from .camera_dm import CameraDM
 
-frame_buffer = multiprocessing.Queue(1024)
-stream_buffer = multiprocessing.Queue(2048)
+frame_buffer = multiprocessing.Queue(2048)
+stream_buffer = multiprocessing.Queue(1024)
 
 class DataStreamError(RuntimeError):
     pass
@@ -26,10 +29,9 @@ class CameraDataStream:
             self.cam.init()
             self.cam.startAcquisition()
             time.sleep(0.5)
-            print('test')
             while not self.stopProcEvent.is_set():
                 arr = self.cam.getImage(exposure=self.cam.exposure)
-                queue.put(arr)
+                queue.put(arr, timeout=1)
                 if i%10 == 0:
                     print(f"Number of images produced: {i}")
                 i = i + 1
@@ -39,12 +41,14 @@ class CameraDataStream:
             self.cam.stopAcquisition()
 
     def start_loop(self):
+        self.stopProcEvent.clear()
         self.proc = multiprocessing.Process(target=self.run_proc, args=(frame_buffer,), daemon=True)
         self.proc.start()
 
     def stop(self):
         self.stopProcEvent.set()
-        #print('Stopping data stream')
+        time.sleep(0.5)
+        print('Stopped the data stream')
 
 class StreamBuffer:
     """
@@ -53,44 +57,52 @@ class StreamBuffer:
     """
     def __init__(self, exposure, frametime):
         self.stopProcEvent = multiprocessing.Event()
-        self.clearBufferEvent = multiprocessing.Event()
 
         self.exposure = exposure
         self.frametime = frametime
 
     def run_proc(self, queue_in, queue_out):
-        if self.exposure%self.frametime != 0:
-            print('Exposure should be integer times of frametime')
+        if decimal.Decimal(str(self.exposure)) % decimal.Decimal(str(self.frametime)) != 0:
+            print(f"Exposure should be integer times of frametime.")
             self.stop()
             return
 
         i = 0
         n = int(self.exposure/self.frametime)
-        arr = queue_in.get()
-        dim_x, dim_y = arr.shape
-        arr = np.empty((dim_x, dim_y, n))
         try:
+            arr = queue_in.get(timeout=12)
+            dim_x, dim_y = arr.shape
+            arr = np.empty((dim_x, dim_y, n))
+
             while not self.stopProcEvent.is_set():
                 for j in range(n):
-                    tmp = queue_in.get()
+                    tmp = queue_in.get(timeout=self.exposure)
                     arr[:,:,j] = tmp
                 image = arr.mean(axis=2)
                 queue_out.put(image)
                 if i%10 == 0:
                     print(f"Number of images processed: {i}")
                 i = i + 1
-                #while self
+        except Empty:
+            print("The queue is empty!")
         except:
-            raise StreamBufferError(f'StreamBuffer encountered en error!')
+            raise StreamBufferError(f"StreamBuffer encountered en error!")
 
     def start_loop(self):
+        self.stopProcEvent.clear()
         self.proc = multiprocessing.Process(target=self.run_proc, args=(frame_buffer,stream_buffer), daemon=True)
         self.proc.start()
 
     def stop(self):
         self.stopProcEvent.set()
-        print('Stopping buffer stream')
+        time.sleep(0.5)
+        print('Stopped the buffer stream')
 
-    def clear_buffer(self):
-        self.clearBufferEvent.set()
-
+if __name__ == '__main__':
+    from instamatic import config
+    data_stream = CameraDataStream(cam=config.camera.name, frametime=0.05)
+    data_stream.start_loop()
+    image_stream = StreamBuffer(exposure=0.3, frametime=0.05)
+    image_stream.start_loop()
+    from IPython import embed
+    embed()

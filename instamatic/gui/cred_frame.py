@@ -1,4 +1,5 @@
 import threading
+import time
 from tkinter import *
 from tkinter.ttk import *
 
@@ -6,15 +7,16 @@ from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
 from instamatic import config
 
-ENABLE_FOOTFREE_OPTION = True
+ENABLE_FOOTFREE_OPTION = False
 
 
 class ExperimentalcRED(LabelFrame):
-    """GUI panel for doing cRED experiments on a Timepix camera."""
+    """GUI panel for doing cRED experiments on a Timepix camera and Gatan camera."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, image_stream):
         LabelFrame.__init__(self, parent, text='Continuous rotation electron diffraction')
         self.parent = parent
+        self.image_stream = image_stream
 
         sbwidth = 10
 
@@ -24,12 +26,14 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text='Exposure time (s):').grid(row=1, column=0, sticky='W')
         exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         exposure_time.grid(row=1, column=1, sticky='W', padx=10)
-        self.ExposureButton = Button(frame, text='Confirm Exposure', command=self.confirm_exposure_time, state=NORMAL)
-        self.ExposureButton.grid(row=1, column=2, sticky='W')
-
-        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
-
-        Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
+        if config.settings.microscope[:3]=="fei":
+            self.ExposureButton = Button(frame, text='Confirm Exposure', command=self.confirm_exposure_time, state=NORMAL)
+            self.ExposureButton.grid(row=1, column=2, sticky='W')
+            Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
+            Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=4, sticky='ew', pady=10)
+        else:
+            Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=2, sticky='W')
+            Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
 
         Checkbutton(frame, text='Enable image interval', variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky='W')
         self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
@@ -59,8 +63,8 @@ class ExperimentalcRED(LabelFrame):
 
             Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
 
-        if config.settings.microscope[:3]=="fei":
-            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
+        elif config.settings.microscope[:3]=="fei":
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=4, sticky='ew', pady=10)
 
             Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
             self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=NORMAL)
@@ -127,7 +131,10 @@ class ExperimentalcRED(LabelFrame):
 
     def confirm_exposure_time(self):
         """Change the exposure time for Gatan camera. Need to stop and restart the data stream generation process"""
-        pass
+        self.image_stream.stop()
+        time.sleep(0.3)
+        self.image_stream.exposure = self.var_exposure_time.get()
+        self.image_stream.start_loop()
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
