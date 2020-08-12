@@ -57,7 +57,7 @@ class Experiment:
                  path: str = None,
                  log=None,
                  flatfield: str = None,
-                 exposure_time: float = 0.5,
+                 exposure_time: float = 0.3,
                  unblank_beam: bool = False,
                  mode: str = None,
                  footfree_rotate_to: float = 60.0,

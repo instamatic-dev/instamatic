@@ -68,7 +68,7 @@ class StreamBuffer:
             return
 
         i = 0
-        n = int(self.exposure/self.frametime)
+        n = int(decimal.Decimal(str(self.exposure)) / decimal.Decimal(str(self.frametime)))
         try:
             arr = queue_in.get(timeout=12)
             dim_x, dim_y = arr.shape
@@ -81,7 +81,7 @@ class StreamBuffer:
                 image = arr.mean(axis=2)
                 queue_out.put(image)
                 if i%10 == 0:
-                    print(f"Number of images processed: {i}")
+                    print(f"Number of images processed: {i} {n}")
                 i = i + 1
         except Empty:
             print("The queue is empty!")
@@ -96,7 +96,7 @@ class StreamBuffer:
     def stop(self):
         self.stopProcEvent.set()
         time.sleep(0.5)
-        print('Stopped the buffer stream')
+        print('Stopping the buffer stream')
 
 if __name__ == '__main__':
     from instamatic import config
