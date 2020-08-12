@@ -26,7 +26,7 @@ class ExperimentalcRED(LabelFrame):
         Label(frame, text='Exposure time (s):').grid(row=1, column=0, sticky='W')
         exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
         exposure_time.grid(row=1, column=1, sticky='W', padx=10)
-        if config.settings.microscope[:3]=="fei":
+        if config.settings.microscope[:3]=="fei" and self.image_stream is not None:
             self.ExposureButton = Button(frame, text='Confirm Exposure', command=self.confirm_exposure_time, state=NORMAL)
             self.ExposureButton.grid(row=1, column=2, sticky='W')
             Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
@@ -171,7 +171,7 @@ class ExperimentalcRED(LabelFrame):
                 self.CollectionButton.config(state=NORMAL)
                 self.lb_coll1.config(text='')
                 self.lb_coll2.config(text='')
-            p = threading.Thread(target=stop_collection,args=())
+            p = threading.Thread(target=stop_collection, args=())
             p.start()
 
     def stop_collection(self, event=None):

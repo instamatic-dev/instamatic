@@ -48,8 +48,9 @@ class ImageGrabber:
 
     def run(self, queue):
         #i = 0
-        while queue.empty():
-            time.sleep(0.1)
+        if queue is not None:
+            while queue.empty():
+                time.sleep(0.1)
 
         try:
             while not self.stopEvent.is_set():
