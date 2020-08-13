@@ -464,8 +464,8 @@ class FEIMicroscope:
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
-        """read only! {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
-           LAD or D). The imaging submode can change, when the magnification is changed."""
+        """Read only! This function does not set the mode. {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the 
+           projection system (either LM, Mi, ..., LAD or D). The imaging submode can change, when the magnification is changed."""
         if isinstance(value, str):
             try:
                 for key, val in FUNCTION_MODES.items():
@@ -801,21 +801,21 @@ class FEIMicroscope:
 
     def NormalizeCondenser(self, index):
         """Normalizes the condenser lenses and/or the minicondenser lens, dependent on the choice of ‘Norm’.
-        Spotsize       normalize lens C1 (spotsize)
-        Intensity      normalize lens C2 (intensity) + C3
-        Condenser      normalize C1 + C2 + C3
-        MiniCondenser  normalize the minicondenser lens
-        ObjectivePole  normalize minicondenser and objective
-        All            normalize C1, C2, C3, minicondenser + objective"""
+           1: Spotsize       normalize lens C1 (spotsize)
+           2: Intensity      normalize lens C2 (intensity) + C3
+           3: Condenser      normalize C1 + C2 + C3
+           4: MiniCondenser  normalize the minicondenser lens
+           5: ObjectivePole  normalize minicondenser and objective
+           6: All            normalize C1, C2, C3, minicondenser + objective"""
         if index not in range(1,7):
             raise FEIValueError('Invalid condenser normalize setting: index should between 1 and 6.')
         return self.tem.Illumination.Normalize(index)
 
     def NormalizeProjection(self):
         """Normalizes the objective lens or the projector lenses, dependent on the choice of ‘Norm’.
-           Objective    Normalize objective lens
-           Projector    Normalize Diffraction, Intermediate, P1 and P2 lenses
-           All          Normalize objective, diffraction, intermediate, P1 and P2 lenses"""
+           10: Objective    Normalize objective lens
+           11: Projector    Normalize Diffraction, Intermediate, P1 and P2 lenses
+           12: All          Normalize objective, diffraction, intermediate, P1 and P2 lenses"""
         if index not in (10, 11, 12):
             raise FEIValueError('Invalid condenser normalize setting: index should between 10 and 12.')
         return self.tem.Projection.Normalize(index)
@@ -846,28 +846,28 @@ class FEIMicroscope:
 
     def getProjectionMode(self):
         """Main mode of the projection system (either imaging or diffraction).
-           Imaging          Projector in imaging mode
-           Diffraction      Projector in diffraction  mode"""
+           1: Imaging          Projector in imaging mode
+           2: Diffraction      Projector in diffraction  mode"""
         return self.tem.Projection.Mode
 
     def setProjectionMode(self, value):
         """Main mode of the projection system (either imaging or diffraction).
-           Imaging          Projector in imaging mode
-           Diffraction      Projector in diffraction  mode"""
+           1: Imaging          Projector in imaging mode
+           2: Diffraction      Projector in diffraction  mode"""
         self.tem.Projection.Mode = value
 
     def getLensProgram(self):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
            characterize a mode of the projection system.
-           Regular        The default lens program
-           EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
+           1: Regular        The default lens program
+           2: EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
         return self.tem.Projection.LensProgram
 
     def setLensProgram(self, value):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
            characterize a mode of the projection system.
-           Regular        The default lens program
-           EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
+           1: Regular        The default lens program
+           2: EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
         self.tem.Projection.LensProgram = value
 
     def getImageRotation(self):
@@ -875,38 +875,38 @@ class FEIMicroscope:
            with respect to the specimen. Units: radians."""
         return self.tem.Projection.ImageRotation
 
-    def getDetectorShift(self, value):
+    def getDetectorShift(self):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
-           pdsOnAxis       Does not shift the image/diffraction pattern
-           pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
-           pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
+           0: pdsOnAxis       Does not shift the image/diffraction pattern
+           1: pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
+           2: pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
         return self.tem.Projection.DetectorShift
 
     def setDetectorShift(self, value):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
-           pdsOnAxis       Does not shift the image/diffraction pattern
-           pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
-           pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
+           0: pdsOnAxis       Does not shift the image/diffraction pattern
+           1: pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
+           2: pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
         self.tem.Projection.DetectorShift = value
 
     def getDetectorShiftMode(self):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
-           pdsmAutoIgnore       The 'DetectorShift' is set to zero, when the fluorescent screen moves down. 
+           0: pdsmAutoIgnore       The 'DetectorShift' is set to zero, when the fluorescent screen moves down. 
                                 When it moves up again, what happens depends on what detector TEM thinks is 
                                 currently selected. Take care!.
-           pdsmManual           The detectorshift is applied as it is chosen in the 'DetectorShift'-property
-           pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
+           1: pdsmManual           The detectorshift is applied as it is chosen in the 'DetectorShift'-property
+           2: pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
         return self.tem.Projection.DetectorShiftMode
 
     def setDetectorShiftMode(self, value):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
-           pdsmAutoIgnore       The 'DetectorShift' is set to zero, when the fluorescent screen moves down. 
+           0: pdsmAutoIgnore       The 'DetectorShift' is set to zero, when the fluorescent screen moves down. 
                                 When it moves up again, what happens depends on what detector TEM thinks is 
                                 currently selected. Take care!.
-           pdsmManual           The detectorshift is applied as it is chosen in the 'DetectorShift'-property
-           pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
+           1: pdsmManual           The detectorshift is applied as it is chosen in the 'DetectorShift'-property
+           2: pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
         self.tem.Projection.DetectorShiftMode = value 

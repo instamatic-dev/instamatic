@@ -215,8 +215,6 @@ class Experiment:
             while not self.ctrl.tem.isStageMoving():
                 time.sleep(0.1)
 
-            time.sleep(2)
-
             start_angle = self.ctrl.stage.a
             print('FEI Data Recording started.')
 
@@ -262,8 +260,12 @@ class Experiment:
         buffer = []
         image_buffer = []
 
-        if self.ctrl.mode != 'diff':
-            self.ctrl.mode.set('diff')
+        if self.ctrl.tem.name[:3]=="fei":
+            if self.ctrl.mode not in ('D','LAD'):
+                self.ctrl.tem.setProjectionMode(2)
+        else:
+            if self.ctrl.mode != 'diff':
+                self.ctrl.mode.set('diff')
 
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
@@ -309,6 +311,7 @@ class Experiment:
                 img, h = self.ctrl.get_image(self.exposure, header_keys=None)
                 # print(f"{i} Image!")
                 buffer.append((i, img, h))
+                # print(f"Angle: {self.ctrl.stage.a}")
 
             i += 1
 

@@ -54,25 +54,23 @@ class ImageGrabber:
 
         try:
             while not self.stopEvent.is_set():
-                try:
-                    if self.acquireInitiateEvent.is_set():
-                        self.acquireInitiateEvent.clear()
-                        if self.name[:2]=="DM":
-                            frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
-                        else:
-                            frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
-                        self.callback(frame, acquire=True)
-                    elif not self.continuousCollectionEvent.is_set():
-                        if self.name[:2]=="DM":
-                            frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
-                        else:
-                            frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
-                        self.callback(frame)
-                    #if i%10 == 0:
-                    #    print(f"Number of images consumed: {i}")
-                    #i = i + 1
-                except Empty:
-                    print('The stream buffer is empty.')
+                if self.acquireInitiateEvent.is_set():
+                    self.acquireInitiateEvent.clear()
+                    if self.name[:2]=="DM":
+                        frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
+                    else:
+                        frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
+                    self.callback(frame, acquire=True)
+                elif not self.continuousCollectionEvent.is_set():
+                    if self.name[:2]=="DM":
+                        #print(f"frametime: {self.frametime}")
+                        frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
+                    else:
+                        frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
+                    self.callback(frame)
+                #if i%10 == 0:
+                #    print(f"Number of images consumed: {i}")
+                #i = i + 1
         except:
             raise GrabbingError(f'ImageGrabber encountered en error!')
 
@@ -86,7 +84,7 @@ class ImageGrabber:
 
     def stop(self):
         self.stopEvent.set()
-        self.thread.join()
+        #self.thread.join() Cannot use this join in here. Otherwise the closing of the program may not responsive
 
 
 class VideoStream(threading.Thread):
@@ -103,10 +101,10 @@ class VideoStream(threading.Thread):
         self.lock = threading.Lock()
 
         self.name = self.cam.name
-
-        self.frametime = self.default_exposure
-
+        
+        self.frametime = 0.1
         self.grabber = self.setup_grabber()
+
 
         self.streamable = self.cam.streamable
 
@@ -174,6 +172,8 @@ class VideoStream(threading.Thread):
     def clear_buffer(self):
         """Clear stream buffer: stream_buffer"""
         try:
+            while not data_stream.empty():
+                data_stream.get_nowait()
             while not stream_buffer.empty():
                 stream_buffer.get_nowait()
         except:

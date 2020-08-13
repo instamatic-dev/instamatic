@@ -6,8 +6,8 @@ import numpy as np
 
 from .camera_dm import CameraDM
 
-frame_buffer = multiprocessing.Queue(2048)
-stream_buffer = multiprocessing.Queue(1024)
+frame_buffer = multiprocessing.Queue(2)
+stream_buffer = multiprocessing.Queue(2048)
 
 class DataStreamError(RuntimeError):
     pass
@@ -24,17 +24,17 @@ class CameraDataStream:
         self.stopProcEvent = multiprocessing.Event()
 
     def run_proc(self, queue):
-        i = 0
+        #i = 0
         try:
             self.cam.init()
             self.cam.startAcquisition()
             time.sleep(0.5)
             while not self.stopProcEvent.is_set():
                 arr = self.cam.getImage(exposure=self.cam.exposure)
-                queue.put(arr, timeout=1)
-                if i%10 == 0:
-                    print(f"Number of images produced: {i}")
-                i = i + 1
+                queue.put(arr)
+                #if i%10 == 0:
+                #    print(f"Number of images produced: {i}")
+                #i = i + 1
         except:
             raise DataStreamError(f'CameraDataStream encountered en error!')
         finally:
@@ -48,7 +48,7 @@ class CameraDataStream:
     def stop(self):
         self.stopProcEvent.set()
         time.sleep(0.5)
-        print('Stopped the data stream')
+        print('Stopping the data stream')
 
 class StreamBuffer:
     """
@@ -70,21 +70,24 @@ class StreamBuffer:
         i = 0
         n = int(decimal.Decimal(str(self.exposure)) / decimal.Decimal(str(self.frametime)))
         try:
-            arr = queue_in.get(timeout=12)
+            arr = queue_in.get()
             dim_x, dim_y = arr.shape
             arr = np.empty((dim_x, dim_y, n))
 
             while not self.stopProcEvent.is_set():
+                t0 = time.perf_counter()
                 for j in range(n):
-                    tmp = queue_in.get(timeout=self.exposure)
+                    tmp = queue_in.get()
                     arr[:,:,j] = tmp
+                dt = time.perf_counter() - t0
                 image = arr.mean(axis=2)
-                queue_out.put(image)
-                if i%10 == 0:
-                    print(f"Number of images processed: {i} {n}")
-                i = i + 1
+                queue_out.put_nowait(image)
+                #if i%2 == 0:
+                    #print(f"Number of images processed: {i} {n}")
+                print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                #i = i + 1
         except Empty:
-            print("The queue is empty!")
+            print("The Frame Buffer queue is empty!")
         except:
             raise StreamBufferError(f"StreamBuffer encountered en error!")
 

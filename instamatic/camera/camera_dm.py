@@ -90,8 +90,8 @@ class CameraDM:
         #return np.random.randint(65535, size=(self.dimensions[0], self.dimensions[1]))
 
     def get_from_buffer(self, queue, exposure):
-        time.sleep(exposure+0.001)
-        return queue.get(timeout=exposure*2)
+        time.sleep(abs(exposure-0.05))
+        return queue.get()
 
     def getCameraDimensions(self) -> (int, int):
         return self.dimensions
