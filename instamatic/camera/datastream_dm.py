@@ -72,15 +72,18 @@ class StreamBuffer:
         try:
             arr = queue_in.get()
             dim_x, dim_y = arr.shape
-            arr = np.empty((dim_x, dim_y, n))
 
             while not self.stopProcEvent.is_set():
+                arr = np.empty((dim_x, dim_y))
                 t0 = time.perf_counter()
                 for j in range(n):
-                    tmp = queue_in.get()
-                    arr[:,:,j] = tmp
+                    if not self.stopProcEvent.is_set():
+                        tmp = queue_in.get()
+                        arr += tmp
+                    else:
+                        break
                 dt = time.perf_counter() - t0
-                image = arr.mean(axis=2)
+                image = arr / (j + 1)
                 queue_out.put_nowait(image)
                 #if i%2 == 0:
                     #print(f"Number of images processed: {i} {n}")
