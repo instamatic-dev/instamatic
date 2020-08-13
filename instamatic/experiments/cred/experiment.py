@@ -9,7 +9,12 @@ import numpy as np
 import instamatic
 from instamatic import config
 from instamatic.formats import write_tiff
-from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+
+if config.settings.camera[:2] == "DM":
+    from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
+else:
+    from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
