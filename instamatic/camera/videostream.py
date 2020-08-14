@@ -174,16 +174,6 @@ class VideoStream(threading.Thread):
     def close(self):
         self.grabber.stop()
 
-    def clear_buffer(self):
-        """Clear stream buffer: stream_buffer"""
-        try:
-            while not data_stream.empty():
-                data_stream.get_nowait()
-            while not stream_buffer.empty():
-                stream_buffer.get_nowait()
-        except:
-            pass
-
     def block(self):
         self.grabber.continuousCollectionEvent.set()
 

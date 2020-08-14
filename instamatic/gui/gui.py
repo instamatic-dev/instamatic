@@ -151,7 +151,7 @@ class MainFrame:
         # to the cam module
         if cam and cam.streamable:
             from .videostream_frame import module as stream_module
-            stream_module.set_kwargs(stream=cam)
+            stream_module.set_kwargs(stream=cam, image_stream=image_stream)
             modules.insert(0, stream_module)
 
         self.root = root

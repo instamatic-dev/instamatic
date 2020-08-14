@@ -20,13 +20,14 @@ class VideoStreamFrame(LabelFrame):
     """GUI panel to continuously display the last frame streamed from the
     camera."""
 
-    def __init__(self, parent, stream, app=None):
+    def __init__(self, parent, stream, app=None, image_stream=None):
         LabelFrame.__init__(self, parent, text='Stream')
 
         self.parent = parent
 
         self.stream = stream
         self.app = app
+        self.image_stream = image_stream
 
         self.panel = None
 
@@ -92,12 +93,15 @@ class VideoStreamFrame(LabelFrame):
         if self.stream.cam.name[:2]=="DM":
             frame = Frame(master)
             frame.pack(side='bottom', fill='both')
-            self.btn_save = Button(frame, text='Save image',
+            self.btn_save = Button(frame, text='Save Image',
                      command=self.saveImage)
             self.btn_save.pack(side='left', expand=True, fill='both', padx=10, pady=10)
-            self.btn_clear = Button(frame, text='Clear buffer',
-                     command=self.stream.clear_buffer)
-            self.btn_clear.pack(side='left', expand=True, fill='both', padx=10, pady=10)
+            self.btn_pause = Button(frame, text='Pause Stream',
+                     command=self.image_stream.pause_streaming)
+            self.btn_pause.pack(side='left', expand=True, fill='both', padx=10, pady=10)
+            self.btn_continue = Button(frame, text='Continue Stream',
+                     command=self.image_stream.continue_streaming)
+            self.btn_continue.pack(side='left', expand=True, fill='both', padx=10, pady=10)
         else:
             btn = Button(master, text='Save image',
                      command=self.saveImage)
