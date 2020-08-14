@@ -143,6 +143,10 @@ def main():
 
     if not config.settings.simulate and config.settings.camera[:2]=="DM":
         from instamatic.camera.datastream_dm import CameraDataStream, StreamBuffer
+        if config.settings.buffer_stream_use_thread:
+            from instamatic.camera.datastream_dm import StreamBufferThread as StreamBuffer
+        else:
+            from instamatic.camera.datastream_dm import StreamBufferProc as StreamBuffer
         import time
         data_stream = CameraDataStream(cam=config.camera.name, frametime=config.settings.default_frame_time)
         data_stream.start_loop()

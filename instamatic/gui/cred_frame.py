@@ -130,9 +130,12 @@ class ExperimentalcRED(LabelFrame):
 
     def confirm_exposure_time(self):
         """Change the exposure time for Gatan camera. Need to stop and restart the data stream generation process"""
-        self.image_stream.stop()
-        self.image_stream.exposure = self.var_exposure_time.get()
-        self.image_stream.start_loop()
+        if config.settings.buffer_stream_use_thread:
+            self.image_stream.exposure = self.var_exposure_time.get()
+        else:
+            self.image_stream.stop()
+            self.image_stream.exposure = self.var_exposure_time.get()
+            self.image_stream.start_loop()
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
