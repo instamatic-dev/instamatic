@@ -1,15 +1,25 @@
 import time
 import multiprocessing
+from multiprocessing.sharedctypes import RawArray
 import threading
 import queue
 import decimal
 import numpy as np
 from abc import ABC, abstractmethod
+
+from instamatic import config
 from .camera_dm import CameraDM
 
 frame_buffer = multiprocessing.Queue(2)
 stream_buffer_proc = multiprocessing.Queue(1024)
 stream_buffer_thread = queue.Queue(1024)
+
+image_size = config.camera.dimensions
+sharedMem = RawArray(np.ctypeslib.ctypes.c_uint16, image_size[0]*image_size[1])
+writeEvent = multiprocessing.Event()
+writeEvent.clear()
+readEvent = multiprocessing.Event()
+readEvent.set()
 
 class DataStreamError(RuntimeError):
     pass
@@ -25,32 +35,48 @@ class CameraDataStream:
         self.cam = CameraDM(cam, exposure=frametime)
         self.stopProcEvent = multiprocessing.Event()
 
-    def run_proc(self, queue):
-        #i = 0
+    def run(self, queue, read_event, write_event, shared_mem):
+        i = 0
         try:
             self.cam.init()
             self.cam.startAcquisition()
             time.sleep(0.5)
+            arr = self.cam.getImage(exposure=self.cam.exposure)
+            if image_size[0]!=arr.shape[0] or image_size[1]!=arr.shape[1]:
+                print("Please adjust the dimension in the configuration file.")
+                self.stop()
+
             while not self.stopProcEvent.is_set():
-                arr = self.cam.getImage(exposure=self.cam.exposure)
-                queue.put(arr)
-                #if i%10 == 0:
-                #    print(f"Number of images produced: {i}")
-                #i = i + 1
+                arr = self.cam.getImage(exposure=self.cam.exposure).astype(np.uint16)
+                self.put_arr(queue, arr, read_event, write_event, shared_mem)
+                if i%10 == 0:
+                    print(f"Number of images produced: {i}")
+                i = i + 1
         except:
             raise DataStreamError(f'CameraDataStream encountered en error!')
         finally:
             self.cam.stopAcquisition()
 
+    def put_arr(self, queue, arr, read_event, write_event, shared_mem):
+        if queue is None:
+            arr = arr.reshape(-1)
+            read_event.wait()
+            memoryview(shared_mem).cast('B').cast('H')[:] = arr[:]
+            write_event.set()
+            read_event.clear()
+        else:
+            queue.put(arr)
+
     def start_loop(self):
         self.stopProcEvent.clear()
-        self.proc = multiprocessing.Process(target=self.run_proc, args=(frame_buffer,), daemon=True)
+        self.proc = multiprocessing.Process(target=self.run, args=(frame_buffer,readEvent,writeEvent, sharedMem), daemon=True)
         self.proc.start()
 
     def stop(self):
         self.stopProcEvent.set()
         time.sleep(0.5)
         print('\nStopping the data stream')
+
 
 class StreamBuffer(ABC):
     """
@@ -63,8 +89,19 @@ class StreamBuffer(ABC):
         self.frametime = frametime
 
     @abstractmethod
-    def run_proc(self, queue_in, queue_out):        
+    def run(self, queue_in, queue_out, read_event, write_event, shared_mem):        
         pass
+
+    def get_arr(self, queue, read_event, write_event, shared_mem):
+        if queue is None:
+            arr = np.empty(image_size[0]*image_size[1])
+            write_event.wait()
+            arr[:] = memoryview(shared_mem)[:]
+            read_event.set()
+            write_event.clear()
+            return arr.reshape((image_size[0],image_size[1]))
+        else:
+            return queue.get()
 
     @abstractmethod
     def start_loop(self):
@@ -87,11 +124,9 @@ class StreamBufferProc(StreamBuffer):
         super().__init__(exposure, frametime)
         self.stopEvent = multiprocessing.Event()
 
-    def run_proc(self, queue_in, queue_out):        
-        # i = 0
+    def run(self, queue_in, queue_out, read_event, write_event, shared_mem):        
+        #i = 0
         try:
-            arr = queue_in.get()
-            dim_x, dim_y = arr.shape
             self.stopEvent.clear()
 
             while not self.stopEvent.is_set():
@@ -101,11 +136,11 @@ class StreamBufferProc(StreamBuffer):
                     self.stop()
                     break
 
-                arr = np.empty((dim_x, dim_y))
+                arr = np.empty((image_size[0], image_size[1]))
                 t0 = time.perf_counter()
                 for j in range(int(n)):
                     if not self.stopEvent.is_set():
-                        tmp = queue_in.get()
+                        tmp = self.get_arr(queue_in, read_event, write_event, shared_mem)
                         arr += tmp
                     else:
                         break
@@ -114,13 +149,16 @@ class StreamBufferProc(StreamBuffer):
                 queue_out.put_nowait(image)
                 #if i%2 == 0:
                     #print(f"Number of images processed: {i} {n}")
-                print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                if queue_in is None:
+                    print(f"Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                else:
+                    print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
                 #i = i + 1
         except:
             raise StreamBufferError(f"StreamBuffer encountered en error!")
 
     def start_loop(self):
-        self.proc = multiprocessing.Process(target=self.run_proc, args=(frame_buffer,stream_buffer_proc), daemon=True)
+        self.proc = multiprocessing.Process(target=self.run, args=(frame_buffer,stream_buffer_proc,readEvent,writeEvent,sharedMem), daemon=True)
         self.proc.start()
 
 class StreamBufferThread(StreamBuffer):
@@ -135,11 +173,9 @@ class StreamBufferThread(StreamBuffer):
         self.stopEvent = threading.Event()
         self.collectEvent = threading.Event()
 
-    def run_proc(self, queue_in, queue_out):        
+    def run(self, queue_in, queue_out, read_event, write_event, shared_mem):        
         # i = 0
         try:
-            arr = queue_in.get()
-            dim_x, dim_y = arr.shape
             self.stopEvent.clear()
             self.collectEvent.set()
 
@@ -150,12 +186,12 @@ class StreamBufferThread(StreamBuffer):
                     self.stop()
                     break
 
-                arr = np.empty((dim_x, dim_y))
+                arr = np.empty((image_size[0], image_size[1]))
                 t0 = time.perf_counter()
                 for j in range(int(n)):
                     if not self.stopEvent.is_set():
                         self.collectEvent.wait()
-                        tmp = queue_in.get()
+                        tmp = self.get_arr(queue_in, read_event, write_event, shared_mem)
                         arr += tmp
                     else:
                         break
@@ -164,13 +200,16 @@ class StreamBufferThread(StreamBuffer):
                 queue_out.put_nowait(image)
                 #if i%2 == 0:
                     #print(f"Number of images processed: {i} {n}")
-                print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                if queue_in is None:
+                    print(f"Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                else:
+                    print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
                 #i = i + 1
         except:
             raise StreamBufferError(f"StreamBuffer encountered en error!")
 
     def start_loop(self):
-        self.thread = threading.Thread(target=self.run_proc, args=(frame_buffer,stream_buffer_thread), daemon=True)
+        self.thread = threading.Thread(target=self.run, args=(frame_buffer,stream_buffer_thread,readEvent,writeEvent,sharedMem), daemon=True)
         self.thread.start()
 
     def pause_streaming(self):
