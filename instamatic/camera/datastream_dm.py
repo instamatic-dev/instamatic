@@ -36,7 +36,7 @@ class CameraDataStream:
         self.stopProcEvent = multiprocessing.Event()
 
     def run(self, queue, read_event, write_event, shared_mem):
-        i = 0
+        #i = 0
         try:
             self.cam.init()
             self.cam.startAcquisition()
@@ -49,15 +49,16 @@ class CameraDataStream:
             while not self.stopProcEvent.is_set():
                 arr = self.cam.getImage(exposure=self.cam.exposure).astype(np.uint16)
                 self.put_arr(queue, arr, read_event, write_event, shared_mem)
-                if i%10 == 0:
-                    print(f"Number of images produced: {i}")
-                i = i + 1
+                #if i%10 == 0:
+                    #print(f"Number of images produced: {i}")
+                #i = i + 1
         except:
             raise DataStreamError(f'CameraDataStream encountered en error!')
         finally:
             self.cam.stopAcquisition()
 
     def put_arr(self, queue, arr, read_event, write_event, shared_mem):
+        '''Put an array into a queue or a shared memory space'''
         if queue is None:
             arr = arr.reshape(-1)
             read_event.wait()
@@ -69,13 +70,13 @@ class CameraDataStream:
 
     def start_loop(self):
         self.stopProcEvent.clear()
-        self.proc = multiprocessing.Process(target=self.run, args=(frame_buffer,readEvent,writeEvent, sharedMem), daemon=True)
+        self.proc = multiprocessing.Process(target=self.run, args=(None,readEvent,writeEvent, sharedMem), daemon=True)
         self.proc.start()
 
     def stop(self):
         self.stopProcEvent.set()
         time.sleep(0.5)
-        print('\nStopping the data stream')
+        print('\nStopping the data stream.\n')
 
 
 class StreamBuffer(ABC):
@@ -93,6 +94,7 @@ class StreamBuffer(ABC):
         pass
 
     def get_arr(self, queue, read_event, write_event, shared_mem):
+        '''Get an array from a queue or a shared memory space'''
         if queue is None:
             arr = np.empty(image_size[0]*image_size[1])
             write_event.wait()
@@ -110,7 +112,7 @@ class StreamBuffer(ABC):
     def stop(self):
         self.stopEvent.set()
         time.sleep(0.1)
-        print('\nStopping the buffer stream')
+        print('\nStopping the buffer stream.\n')
 
     
 
@@ -209,7 +211,7 @@ class StreamBufferThread(StreamBuffer):
             raise StreamBufferError(f"StreamBuffer encountered en error!")
 
     def start_loop(self):
-        self.thread = threading.Thread(target=self.run, args=(frame_buffer,stream_buffer_thread,readEvent,writeEvent,sharedMem), daemon=True)
+        self.thread = threading.Thread(target=self.run, args=(None,stream_buffer_thread,readEvent,writeEvent,sharedMem), daemon=True)
         self.thread.start()
 
     def pause_streaming(self):

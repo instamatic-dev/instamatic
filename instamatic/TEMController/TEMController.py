@@ -510,7 +510,8 @@ class TEMController:
 
     def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
-        raw data array.
+           raw data array. self.cam here is the video stream, not the Camera object. 
+           Check initialize function for more info
 
         Parameters
         ----------
