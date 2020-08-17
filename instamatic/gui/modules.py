@@ -10,6 +10,7 @@ all_modules = (
     'sed',
     'autocred',
     'red',
+    'tomo',
     'machine_learning',
     'ctrl',
     'console',

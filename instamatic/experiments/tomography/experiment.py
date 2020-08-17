@@ -12,7 +12,7 @@ from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConver
 
 
 class Experiment:
-    """Initialize stepwise rotation electron diffraction experiment (no beam tilt). During stage rotation, the sample may drift.
+    """Initialize stepwise rotation electron diffraction experiment.
 
     ctrl:
         Instance of instamatic.TEMController.TEMController
@@ -46,7 +46,9 @@ class Experiment:
         self.current_angle = None
         self.buffer = []
 
-    def start_collection(self, exposure_time: float, tilt_range: float, stepsize: float):
+        self.img_ref = None
+
+    def start_collection(self, exposure_time: float, end_angle: float, stepsize: float):
         """Start or continue data collection for `tilt_range` degrees with
         steps given by `stepsize`, To finalize data collection and write data
         files, run `self.finalize`.
@@ -61,52 +63,63 @@ class Experiment:
             Step size for the angle in degrees, controls the direction and can be positive or negative
         """
         self.spotsize = self.ctrl.spotsize
-        self.now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.logger.info('Data recording started at: {self.now}')
-        self.logger.info(f'Exposure time: {exposure_time} s, Tilt range: {tilt_range}, step size: {stepsize}')
-
         ctrl = self.ctrl
-
-        if stepsize < 0:
-            tilt_range = -abs(tilt_range)
-        else:
-            tilt_range = abs(tilt_range)
 
         if self.current_angle is None:
             self.start_angle = start_angle = ctrl.stage.a
         else:
             start_angle = self.current_angle + stepsize
 
-        tilt_positions = np.arange(start_angle, start_angle + tilt_range, stepsize)
+        if start_angle > end_angle:
+            stepsize = -stepsize
+        else:
+            stepsize = stepsize
+
+        self.now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.logger.info('Data recording started at: {self.now}')
+        self.logger.info(f'Exposure time: {exposure_time} s, start angle: {start_angle}, end angle: {end_angle}, step size: {stepsize}')
+
+        tilt_positions = np.arange(start_angle, end_angle, stepsize)
         print(f'\nStart_angle: {start_angle:.3f}')
         # print "Angles:", tilt_positions
 
         image_mode = ctrl.mode.get()
         if config.settings.microscope[:3] == "fei":
-            if image_mode not in ('D', 'LAD'):
-                fn = self.tiff_image_path / f'image_{self.offset}.tiff'
-                img, h = self.ctrl.get_image(exposure_time / 5)
-                write_tiff(fn, img, header=h)
-                ctrl.tem.setProjectionMode(2) # 2 represents diffraction mode
-                time.sleep(1.0)  # add some delay to account for beam lag
+            if image_mode in ('D', 'LAD'):
+                raise RuntimeError("Please set the microscope to IMAGE mode")
         else:
-            if image_mode != 'diff':
-                fn = self.tiff_image_path / f'image_{self.offset}.tiff'
-                img, h = self.ctrl.get_image(exposure_time / 5)
-                write_tiff(fn, img, header=h)
-                ctrl.mode.set('diff')
-                time.sleep(1.0)  # add some delay to account for beam lag
+            if image_mode == 'diff':
+                raise RuntimeError("Please set the microscope to IMAGE mode")
+
+        self.img_ref, h = self.ctrl.get_image(exposure_time)
 
         if ctrl.cam.streamable:
             ctrl.cam.block()
 
-        # for i, a in enumerate(tilt_positions):
+        isFocused = False
+        isAligned = False
+
         for i, angle in enumerate(tqdm(tilt_positions)):
             ctrl.stage.a = angle
 
             j = i + self.offset
+            while isFocused and isAligned:
+                img, h = self.ctrl.get_image(exposure_time)
+                if not isFocused:
+                    isFocused = self.focus_image(self, img)
+                if not isAligned:
+                    isAligned = self.align_image(self, img)
 
             img, h = self.ctrl.get_image(exposure_time)
+
+            # suppose eccentric height is near 0 degree
+            if abs(angle) >= 50 and i % 2 == 1: 
+                isFocused = False
+            elif abs(angle) >= 25 and i % 5 == 4:
+                isFocused = False
+            elif abs(angle) >= 0 and i % 9 == 8:
+                isFocused = False
+            isAligned = False
 
             self.buffer.append((j, img, h))
 
@@ -131,12 +144,11 @@ class Experiment:
         self.current_angle = angle
         print(f'Done, current angle = {self.current_angle:.2f} degrees')
 
-        if config.settings.microscope[:3] == "fei":
-            if image_mode  not in ('D', 'LAD'):
-                ctrl.tem.setProjectionMode(1) # 1 represents image mode
-        else:
-            if image_mode != 'diff':
-                ctrl.mode.set(image_mode)
+    def focus_image(self, img):
+        pass
+
+    def align_image(self, img):
+        pass
 
     def finalize(self):
         """Finalize data collection after `self.start_collection` has been run.
@@ -210,7 +222,7 @@ def main():
     log = logging.getLogger(__name__)
 
     exposure_time = 0.5
-    tilt_range = 10
+    end_angle = 10
     stepsize = 1.0
 
     i = 1
@@ -224,12 +236,12 @@ def main():
     print(f'\nData directory: {expdir}')
 
     red_exp = Experiment(ctrl=ctrl, path=expdir, log=log, flatfield=None)
-    red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    red_exp.start_collection(exposure_time=exposure_time, end_angle=end_angle, stepsize=stepsize)
 
     input('Press << Enter >> to start the experiment... ')
 
     while not input(f'\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] '):
-        red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+        red_exp.start_collection(exposure_time=exposure_time, end_angle=end_angle, stepsize=stepsize)
 
     red_exp.finalize()
 
