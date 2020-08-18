@@ -49,6 +49,10 @@ class Experiment:
 
         self.img_ref = None
 
+        self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
+        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
+        self.wavelength = config.microscope.wavelength  # angstrom
+
     def start_collection(self, exposure_time: float, end_angle: float, stepsize: float):
         """Start or continue data collection for `tilt_range` degrees with
         steps given by `stepsize`, To finalize data collection and write data
@@ -67,6 +71,12 @@ class Experiment:
         ctrl = self.ctrl
         frametime = config.settings.default_frame_time
 
+        if config.settings.microscope[:3] == "fei":
+            self.ctrl.tem.setProjectionMode(2)
+            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.magnification]  # nm/pixel
+            self.ctrl.tem.setProjectionMode(1)
+        else:
+            self.pixelsize = config.calibration['diff']['pixelsize'][self.magnification]  # nm/pixel
         if self.current_angle is None:
             self.start_angle = start_angle = ctrl.stage.a
         else:
@@ -154,7 +164,7 @@ class Experiment:
 
     def focus_image(self, img):
         """Return the distance of sample movement between the beam tilt"""
-        pass
+        return 0, 0
 
     def align_image(self, img):
         """Return the distance between the collected image and the reference image"""
@@ -167,23 +177,13 @@ class Experiment:
         Write data in `self.buffer` to path given by `self.path`.
         """
         self.logger.info(f'Data saving path: {self.path}')
-        self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
-
-        if config.settings.microscope[:3] == "fei":
-            self.ctrl.tem.setProjectionMode(2)
-            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.magnification]  # px / Angstrom
-            self.ctrl.tem.setProjectionMode(1)
-        else:
-            self.pixelsize = config.calibration['diff']['pixelsize'][self.magnification]  # px / Angstrom
-        self.physical_pixelsize = config.camera.physical_pixelsize  # mm
-        self.wavelength = config.microscope.wavelength  # angstrom
 
         with open(self.path / 'summary.txt', 'a') as f:
             print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Magnification: {self.magnification}', file=f)
-            print(f'Pixelsize: {self.pixelsize} px/Angstrom', file=f)
+            print(f'Pixelsize: {self.pixelsize} nm/pixel', file=f)
             print(f'Physical pixelsize: {self.physical_pixelsize} um', file=f)
             print(f'Wavelength: {self.wavelength} Angstrom', file=f)
             print(f'Rotation axis: {self.rotation_axis} radians', file=f)

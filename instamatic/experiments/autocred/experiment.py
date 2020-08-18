@@ -873,7 +873,7 @@ class Experiment:
             print(f'Exposure Time: {self.expt} s', file=f)
             print(f'Spot Size: {spotsize}', file=f)
             print(f'Camera length: {camera_length} mm\n', file=f)
-            print(f'Pixelsize: {self.pixelsize} px/Angstrom', file=f)
+            print(f'Pixelsize: {self.pixelsize} Angstron^(-1)/pixel', file=f)
             print(f'Physical pixelsize: {self.physical_pixelsize} um', file=f)
             print(f'Wavelength: {self.wavelength} Angstrom', file=f)
             print(f'Stretch amplitude: {self.stretch_azimuth} %', file=f)

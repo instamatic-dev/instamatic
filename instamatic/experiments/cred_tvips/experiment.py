@@ -501,7 +501,7 @@ class Experiment:
             print(f'Wavelength: {wavelength} Angstrom', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} cm', file=f)
-            print(f'Pixelsize: {pixelsize} px/Angstrom', file=f)
+            print(f'Pixelsize: {pixelsize} Angstron^(-1)/pixel', file=f)
             print(f'Physical pixelsize: {physical_pixelsize} um', file=f)
             print(f'Binning: {binning}', file=f)
             print(f'Image dimensions: {image_dimensions_x} {image_dimensions_y}', file=f)
