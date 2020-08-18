@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+import decimal
 
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
@@ -69,6 +70,11 @@ class ExperimentalRED(LabelFrame):
         self.q = q
 
     def start_collection(self):
+        if config.settings.camera[:2] == "DM":
+            frametime = config.settings.default_frame_time
+            n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
+            self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
+            
         self.StartButton.config(state=DISABLED)
         self.ContinueButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)

@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import decimal
 
 import instamatic
 from instamatic import config
@@ -162,7 +163,7 @@ class Experiment:
             print(f'Total time: {self.total_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} mm', file=f)
-            print(f'Pixelsize: {self.pixelsize} Angstron^(-1)/pixel', file=f)
+            print(f'Pixelsize: {self.pixelsize} Angstrom^(-1)/pixel', file=f)
             print(f'Physical pixelsize: {self.physical_pixelsize} um', file=f)
             print(f'Wavelength: {self.wavelength} Angstrom', file=f)
             print(f'Stretch amplitude: {self.stretch_azimuth} %', file=f)
@@ -367,9 +368,9 @@ class Experiment:
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
         if config.settings.microscope[:3] == "fei":
-            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # px / Angstrom
+            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
         else:
-            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth  # deg

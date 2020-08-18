@@ -2,7 +2,7 @@ import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple
-
+import decimal
 import numpy as np
 from skimage.registration import phase_cross_correlation
 from scipy.ndimage import fourier_shift

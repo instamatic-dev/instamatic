@@ -1,8 +1,10 @@
 from tkinter import *
 from tkinter.ttk import *
+import decimal
 
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
+from instamatic import config
 
 
 class ExperimentalRED(LabelFrame):
@@ -61,11 +63,18 @@ class ExperimentalRED(LabelFrame):
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
+        self.var_exposure_time.trace('w', self.check_exposure_time)
         self.var_tilt_range = DoubleVar(value=5.0)
         self.var_stepsize = DoubleVar(value=1.0)
 
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
+
+    def check_exposure_time(self, *args):
+        if config.settings.camera[:2] == "DM":
+            frametime = config.settings.default_frame_time
+            n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
+            self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
