@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+from skimage.registration import phase_cross_correlation
 from tqdm.auto import tqdm
 
 from instamatic import config
@@ -64,6 +65,7 @@ class Experiment:
         """
         self.spotsize = self.ctrl.spotsize
         ctrl = self.ctrl
+        frametime = config.settings.default_frame_time
 
         if self.current_angle is None:
             self.start_angle = start_angle = ctrl.stage.a
@@ -91,7 +93,7 @@ class Experiment:
             if image_mode == 'diff':
                 raise RuntimeError("Please set the microscope to IMAGE mode")
 
-        self.img_ref, h = self.ctrl.get_image(exposure_time)
+        self.img_ref, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
 
         if ctrl.cam.streamable:
             ctrl.cam.block()
@@ -103,14 +105,20 @@ class Experiment:
             ctrl.stage.a = angle
 
             j = i + self.offset
-            while isFocused and isAligned:
-                img, h = self.ctrl.get_image(exposure_time)
-                if not isFocused:
-                    isFocused = self.focus_image(self, img)
-                if not isAligned:
-                    isAligned = self.align_image(self, img)
+            while not isFocused:
+                img, h = self.ctrl.get_image(frametime)
+                focus_pos_diff = self.focus_image(self, img)
+                if focus_pos_diff[0]**2 + focus_pos_diff[1]**2 < 30：
+                    isFocused=True
 
-            img, h = self.ctrl.get_image(exposure_time)
+            while not isAligned:
+                img, h = self.ctrl.get_image(frametime)
+                align_pos_diff = self.align_image(self, img)
+                ctrl.stage.xy = ctrl.stage.xy + align_pos_diff
+                if align_pos_diff[0]**2 + align_pos_diff[1]**2 < 6：
+                    isAligned=True
+
+            img, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
 
             # suppose eccentric height is near 0 degree
             if abs(angle) >= 50 and i % 2 == 1: 
@@ -131,7 +139,7 @@ class Experiment:
         if ctrl.cam.streamable:
             ctrl.cam.unblock()
 
-        self.camera_length = int(self.ctrl.magnification.get())
+        self.magnification = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
         self.exposure_time = exposure_time
 
@@ -139,16 +147,19 @@ class Experiment:
             print(f'{self.now}: Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.', file=f)
             print(f'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.')
 
-        self.logger.info('Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).')
+        self.logger.info('Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (magnification: {self.magnification}).')
 
         self.current_angle = angle
         print(f'Done, current angle = {self.current_angle:.2f} degrees')
 
     def focus_image(self, img):
+        """Return the distance of sample movement between the beam tilt"""
         pass
 
     def align_image(self, img):
-        pass
+        """Return the distance between the collected image and the reference image"""
+        shift, error, phasediff = phase_cross_correlation(self.img_ref, img)
+        return shift
 
     def finalize(self):
         """Finalize data collection after `self.start_collection` has been run.
@@ -160,25 +171,21 @@ class Experiment:
 
         if config.settings.microscope[:3] == "fei":
             self.ctrl.tem.setProjectionMode(2)
-            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # px / Angstrom
+            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.magnification]  # px / Angstrom
             self.ctrl.tem.setProjectionMode(1)
         else:
-            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+            self.pixelsize = config.calibration['diff']['pixelsize'][self.magnification]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
-        self.stretch_azimuth = config.camera.stretch_azimuth
-        self.stretch_amplitude = config.camera.stretch_amplitude
 
         with open(self.path / 'summary.txt', 'a') as f:
             print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
-            print(f'Camera length: {self.camera_length} mm', file=f)
+            print(f'Magnification: {self.magnification}', file=f)
             print(f'Pixelsize: {self.pixelsize} px/Angstrom', file=f)
             print(f'Physical pixelsize: {self.physical_pixelsize} um', file=f)
             print(f'Wavelength: {self.wavelength} Angstrom', file=f)
-            print(f'Stretch amplitude: {self.stretch_azimuth} %', file=f)
-            print(f'Stretch azimuth: {self.stretch_amplitude} degrees', file=f)
             print(f'Rotation axis: {self.rotation_axis} radians', file=f)
             print(f'Stepsize: {self.stepsize:.4f} degrees', file=f)
             print(f'Number of frames: {self.nframes}', file=f)
@@ -192,9 +199,7 @@ class Experiment:
                                  flatfield=self.flatfield,
                                  pixelsize=self.pixelsize,
                                  physical_pixelsize=self.physical_pixelsize,
-                                 wavelength=self.wavelength,
-                                 stretch_amplitude=self.stretch_amplitude,
-                                 stretch_azimuth=self.stretch_azimuth,
+                                 wavelength=self.wavelength
                                  )
 
         print('Writing data files...')

@@ -3,6 +3,7 @@ from tkinter.ttk import *
 
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
+from instamatic import config
 
 
 class ExperimentalRED(LabelFrame):

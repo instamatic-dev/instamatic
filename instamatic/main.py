@@ -150,7 +150,7 @@ def main():
         import time
         data_stream = CameraDataStream(cam=config.camera.name, frametime=config.settings.default_frame_time)
         data_stream.start_loop()
-        image_stream = StreamBuffer(exposure=0.6, frametime=config.settings.default_frame_time)
+        image_stream = StreamBuffer(exposure=config.settings.default_frame_time, frametime=config.settings.default_frame_time)
         image_stream.start_loop()
         time.sleep(8)
 
