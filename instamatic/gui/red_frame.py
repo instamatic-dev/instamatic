@@ -72,9 +72,13 @@ class ExperimentalRED(LabelFrame):
 
     def check_exposure_time(self, *args):
         if config.settings.camera[:2] == "DM":
-            frametime = config.settings.default_frame_time
-            n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
-            self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
+            try:
+                frametime = config.settings.default_frame_time
+                n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
+                self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
+            except TclError as e:
+                if 'expected floating-point number but got ""' in e.args[0]:
+                    pass
 
     def set_trigger(self, trigger=None, q=None):
         self.triggerEvent = trigger
