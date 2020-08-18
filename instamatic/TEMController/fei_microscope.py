@@ -139,13 +139,13 @@ def move_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
     axis = 0
 
     if x is not None:
-        pos.X = x * 1e-6
+        pos.X = x * 1e-9
         axis += 1
     if y is not None:
-        pos.Y = y * 1e-6
+        pos.Y = y * 1e-9
         axis += 2
     if z is not None:
-        pos.Z = z * 1e-6
+        pos.Z = z * 1e-9
         axis += 4
     if a is not None:
         pos.A = a / 180 * pi
@@ -266,7 +266,7 @@ class FEIMicroscope:
         return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
     
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
-        """x, y, z in the system are in unit of meters, angles in radians. 1s per call (without moving anything)."""
+        """x, y, z in the system are in unit of nm, angles in radians. 1s per call (without moving anything)."""
         if speed > 1 or speed < 0:
             raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 

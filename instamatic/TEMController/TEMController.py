@@ -5,7 +5,6 @@ from typing import Tuple
 import decimal
 import numpy as np
 from skimage.registration import phase_cross_correlation
-from scipy.ndimage import fourier_shift
 
 from .deflectors import *
 from .lenses import *
@@ -16,7 +15,7 @@ from instamatic import config
 from instamatic.camera import Camera
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
-from instamatic.image_utils import rotate_image
+from instamatic.image_utils import rotate_image, translate_image
 
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
@@ -305,8 +304,6 @@ class TEMController:
         stage_shift : np.array[2]
             The stage shift vector determined from cross correlation
         """
-        from skimage.registration import phase_cross_correlation
-
         current_x, current_y = self.stage.xy
 
         if verbose:
@@ -369,8 +366,6 @@ class TEMController:
         z: float
             Optimized Z value for eucentric tilting
         """
-        from skimage.registration import phase_cross_correlation
-
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
             self.stage.a = angle1
@@ -651,8 +646,9 @@ class TEMController:
             arr = self.get_rotated_image(exposure=frametime, binsize=binsize)
             for j in range(int(n)-1):
                 tmp = self.get_rotated_image(exposure=frametime, binsize=binsize)
-                shift, error, phasediff = phase_cross_correlation(arr, tmp)
-                tmp = np.fft.ifftn(fourier_shift(np.fft.fftn(tmp), shift))
+                if align:
+                    shift, error, phasediff = phase_cross_correlation(arr, tmp)
+                    tmp = translate_image(tmp, shift)
                 arr += tmp
             arr = arr / n
 

@@ -225,7 +225,7 @@ class Stage:
         movement."""
         pass
 
-    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200) -> None:
+    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 5000, settle_delay: float = 0.200) -> None:
         """Move to new x/y position with backlash correction. This is done by
         approaching the target x/y position always from the same direction.
 

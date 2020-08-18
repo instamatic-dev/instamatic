@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+from instamatic.image_utils import translate_image
 
 
 class Experiment:
@@ -103,6 +104,8 @@ class Experiment:
             if image_mode == 'diff':
                 raise RuntimeError("Please set the microscope to IMAGE mode")
 
+        stagematrix = self.get_stagematrix()
+
         self.img_ref, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
 
         if ctrl.cam.streamable:
@@ -122,10 +125,13 @@ class Experiment:
                     isFocused=True
 
             while not isAligned:
+                current_x, current_y = ctrl.stage.xy
                 img, h = self.ctrl.get_image(frametime)
-                align_pos_diff = self.align_image(self, img)
-                ctrl.stage.xy = ctrl.stage.xy + align_pos_diff
-                if align_pos_diff[0]**2 + align_pos_diff[1]**2 < 6：
+                pixel_shift = self.align_image(self, img)
+                stage_shift = np.dot(pixel_shift, stagematrix)
+                stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
+                ctrl.stage.xy = current_x + stage_shift[0], current_y + stage_shift[1]
+                if pixel_shift[0]**2 + pixel_shift[1]**2 < 6：
                     isAligned=True
 
             img, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
@@ -167,9 +173,9 @@ class Experiment:
         return 0, 0
 
     def align_image(self, img):
-        """Return the distance between the collected image and the reference image"""
-        shift, error, phasediff = phase_cross_correlation(self.img_ref, img)
-        return shift
+        """Return the distance between the collected image and the reference image. 1024*1024 image will take 124ms. So subsampling to 512*512. Takes around 23ms"""
+        shift, error, phasediff = phase_cross_correlation(self.img_ref[::2,::2], img[::2,::2])
+        return shift * 2
 
     def finalize(self):
         """Finalize data collection after `self.start_collection` has been run.
