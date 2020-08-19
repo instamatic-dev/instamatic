@@ -123,22 +123,40 @@ class TEMController:
         self.store()
 
     def __repr__(self):
-        return (f'Mode: {self.tem.getFunctionMode()}\n'
-                f'High tension: {self.high_tension/1000:.0f} kV\n'
-                f'Current density: {self.current_density:.2f} pA/cm2\n'
-                f'{self.gunshift}\n'
-                f'{self.guntilt}\n'
-                f'{self.beamshift}\n'
-                f'{self.beamtilt}\n'
-                f'{self.imageshift1}\n'
-                f'{self.imageshift2}\n'
-                f'{self.diffshift}\n'
-                f'{self.stage}\n'
-                f'{self.magnification}\n'
-                f'{self.difffocus}\n'
-                f'{self.brightness}\n'
-                f'SpotSize({self.spotsize})\n'
-                f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        if self.tem.name[:3] == "fei":
+            return (f'Mode: {self.tem.getFunctionMode()}\n'
+                    f'High tension: {self.high_tension/1000:.0f} kV\n'
+                    f'Current: {self.current:.2f} nA\n'
+                    f'{self.gunshift}\n'
+                    f'{self.guntilt}\n'
+                    f'{self.beamshift}\n'
+                    f'{self.beamtilt}\n'
+                    f'{self.imageshift1}\n'
+                    f'{self.imageshift2}\n'
+                    f'{self.diffshift}\n'
+                    f'{self.stage}\n'
+                    f'{self.magnification}\n'
+                    f'{self.difffocus}\n'
+                    f'{self.brightness}\n'
+                    f'SpotSize({self.spotsize})\n'
+                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        else:
+            return (f'Mode: {self.tem.getFunctionMode()}\n'
+                    f'High tension: {self.high_tension/1000:.0f} kV\n'
+                    f'Current density: {self.current_density:.2f} pA/cm2\n'
+                    f'{self.gunshift}\n'
+                    f'{self.guntilt}\n'
+                    f'{self.beamshift}\n'
+                    f'{self.beamtilt}\n'
+                    f'{self.imageshift1}\n'
+                    f'{self.imageshift2}\n'
+                    f'{self.diffshift}\n'
+                    f'{self.stage}\n'
+                    f'{self.magnification}\n'
+                    f'{self.difffocus}\n'
+                    f'{self.brightness}\n'
+                    f'SpotSize({self.spotsize})\n'
+                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
 
     @property
     def high_tension(self) -> float:
@@ -149,6 +167,11 @@ class TEMController:
     def current_density(self) -> float:
         """Get current density from fluorescence screen in pA/cm2."""
         return self.tem.getCurrentDensity()
+
+    @property
+    def current(self) -> float:
+        """Get current from fluorescence screen in nA."""
+        return self.tem.getScreenCurrent()
 
     @property
     def spotsize(self) -> int:
