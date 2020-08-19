@@ -104,8 +104,32 @@ MagnificationMapping = {
     61: 6200,
     62: 3100}
 
-# Checking if LAD mode CameraLengthMapping is different from D mode
+# Unit: mm
 CameraLengthMapping = {
+    1: 34,
+    2: 42,
+    3: 53,
+    4: 68,
+    5: 90,
+    6: 115,
+    7: 140,
+    8: 175,
+    9: 215,
+    10: 265,
+    11: 330,
+    12: 420,
+    13: 530,
+    14: 680,
+    15: 830,
+    16: 1050,
+    17: 1350,
+    18: 1700,
+    19: 2100,
+    20: 2700,
+    21: 3700}
+
+# Unit: mm
+CameraLengthMapping_LAD = {
     1: 34,
     2: 42,
     3: 53,
