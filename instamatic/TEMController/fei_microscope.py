@@ -216,9 +216,11 @@ class FEIMicroscope:
         input('Please select the type of sample stage before moving on.\nPress <ENTER> to continue...')
 
     def getHTValue(self):
+        '''The value of the HT setting as displayed in the TEM user interface. Units: Volts.'''
         return self.tem.GUN.HTValue
 
     def setHTValue(self, htvalue):
+        '''The value of the HT setting as displayed in the TEM user interface. Units: Volts.'''
         self.tem.GUN.HTValue = htvalue
 
     def getCurrentDensity(self) -> float:
@@ -263,7 +265,7 @@ class FEIMicroscope:
 
     def getStagePosition(self):
         """return numbers in microns, angles in degs. 3ms per call"""
-        return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
+        return self.stage.Position.X * 1e9, self.stage.Position.Y * 1e9, self.stage.Position.Z * 1e9, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
     
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """x, y, z in the system are in unit of nm, angles in radians. 1s per call (without moving anything)."""
@@ -272,19 +274,51 @@ class FEIMicroscope:
 
         if not self.isStageMoving():
             if wait:
-                move_stage(x, y, z, a, b, speed)
+                self.tom.Stage.Speed = speed
+                goniospeed = self.tom.Stage.Speed
+                pos = self.tem.Stage.Position
+                axis = 0
+
+                if x is not None:
+                    pos.X = x * 1e-9
+                    axis += 1
+                if y is not None:
+                    pos.Y = y * 1e-9
+                    axis += 2
+                if z is not None:
+                    pos.Z = z * 1e-9
+                    axis += 4
+                if a is not None:
+                    pos.A = a / 180 * pi
+                    axis += 8
+                if b is not None:
+                    pos.B = b / 180 * pi
+                    axis += 16
+                if speed == 1:
+                    self.tem.Stage.Goto(pos, axis)
+                else:
+                    if x is not None:
+                        self.tem.Stage.GotoWithSpeed(pos, 1, goniospeed)
+                    if y is not None:
+                        self.tem.Stage.GotoWithSpeed(pos, 2, goniospeed)
+                    if z is not None:
+                        self.tem.Stage.GotoWithSpeed(pos, 4, goniospeed)
+                    if a is not None:
+                        self.tem.Stage.GotoWithSpeed(pos, 8, goniospeed)
+                    if b is not None:
+                        self.tem.Stage.GotoWithSpeed(pos, 16, goniospeed)
             else:
                 p = multiprocessing.Process(target=move_stage, args=(x,y,z,a,b,speed,))
                 p.start()
 
     def getGunShift(self):
-        """150 ms per call"""
+        """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units).150 ms per call"""
         x = self.tem.GUN.Shift.X
         y = self.tem.GUN.Shift.Y
         return x, y
 
     def setGunShift(self, x, y):
-        """x y can only be float numbers between -1 and 1. 150 ms per call"""
+        """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 150 ms per call"""
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
@@ -298,13 +332,17 @@ class FEIMicroscope:
         self.tem.GUN.Shift = gs
 
     def getGunTilt(self):
-        """150ms per call"""
+        """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
+           The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
+           the beamblanker is active. 150ms per call"""
         x = self.tem.GUN.Tilt.X
         y = self.tem.GUN.Tilt.Y
         return x, y
 
     def setGunTilt(self, x, y):
-        """150ms per call"""
+        """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
+           The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
+           the beamblanker is active. 150ms per call"""
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
@@ -318,47 +356,41 @@ class FEIMicroscope:
         self.tem.Gun.Tilt = gt
 
     def getBeamShift(self):
-        """User Shift. 6ms per call"""
+        """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 6ms per call"""
         '1.19 ms in communication. Super fast!'
-        x = self.tom.Illumination.BeamShift.X
-        y = self.tom.Illumination.BeamShift.Y
+        x = self.tom.Illumination.BeamShift.X * 1e9
+        y = self.tom.Illumination.BeamShift.Y * 1e9
         return x, y
 
     def setBeamShift(self, x, y):
-        """User Shift. 10ms per call"""
-        if abs(x) > 1 or abs(y) > 1:
-            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
-            return
-
+        """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 10ms per call"""
         bs = self.tom.Illumination.BeamShift
         if x is not None:
-            bs.X = x
+            bs.X = x * 1e-9
         if y is not None:
-            bs.Y = y
+            bs.Y = y * 1e-9
         self.tom.Illumination.BeamShift = bs
 
     def getBeamAlignShift(self):
-        """Align Shift."""
-        x = self.tom.Illumination.BeamAlignShift.X
-        y = self.tom.Illumination.BeamAlignShift.Y
+        """Align Shift. I suppose the units is nm."""
+        x = self.tom.Illumination.BeamAlignShift.X * 1e9
+        y = self.tom.Illumination.BeamAlignShift.Y * 1e9
         return x, y
 
     def setBeamAlignShift(self, x, y):
-        """Align Shift."""
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        """Align Shift. I suppose the units is nm."""
         bs = self.tom.Illumination.BeamAlignShift
 
         if x is not None:
-            bs.X = x
+            bs.X = x * 1e-9
         if y is not None:
-            bs.Y = y
+            bs.Y = y * 1e-9
         self.tom.Illumination.BeamAlignShift = bs
 
     def getBeamTilt(self):
         """rotation center in FEI. 5ms per call"""
-        x = self.tom.Illumination.BeamAlignmentTilt.X
-        y = self.tom.Illumination.BeamAlignmentTilt.Y
+        x = self.tom.Illumination.BeamAlignmentTilt.X *180 / pi
+        y = self.tom.Illumination.BeamAlignmentTilt.Y *180 / pi
         return x, y
 
     def setBeamTilt(self, x, y):
@@ -366,31 +398,25 @@ class FEIMicroscope:
         bt = self.tom.Illumination.BeamAlignmentTilt
 
         if x is not None:
-            if abs(x) > 1:
-                raise FEIValueError(f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}')
-            bt.X = x
+            bt.X = x * pi / 180
         if y is not None:
-            if abs(y) > 1:
-                raise FEIValueError(f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}')
-            bt.Y = y
+            bt.Y = y * pi / 180
         self.tom.Illumination.BeamAlignmentTilt = bt
 
     def getImageShift1(self):
         """User image shift. 5ms per call
-           The image shift with respect to the origin that is defined by alignment. Units: meters."""
-        return self.tom.Projection.ImageShift.X, self.tom.Projection.ImageShift.Y
+           The image shift with respect to the origin that is defined by alignment. Units: nm."""
+        return self.tom.Projection.ImageShift.X * 1e9, self.tom.Projection.ImageShift.Y * 1e9
 
     def setImageShift1(self, x, y):
         """9.8ms per call
-           The image shift with respect to the origin that is defined by alignment. Units: meters."""
+           The image shift with respect to the origin that is defined by alignment. Units: nm."""
         is1 = self.tom.Projection.ImageShift
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
         if x is not None:
-            is1.X = x
+            is1.X = x * 1e-9
         if y is not None:
-            is1.Y = y
+            is1.Y = y * 1e-9
 
         self.tom.Projection.ImageShift = is1
 
@@ -403,26 +429,23 @@ class FEIMicroscope:
     def getImageBeamShift(self):
         """image-beam shift. 5ms per call
            Image shift with respect to the origin that is defined by alignment. The apparent beam shift is compensated for, 
-           without affecting the Shift-property of the Illumination-object. Units: meters.
+           without affecting the Shift-property of the Illumination-object. Units: nm.
            Attention: Avoid intermixing ImageShift and ImageBeamShift, otherwise it would mess up the beam shift 
            (=Illumination.Shift). If you want to use both alternately, then reset the other to zero first."""
-        return self.tom.Projection.ImageBeamShift.X, self.tom.Projection.ImageBeamShift.Y
+        return self.tom.Projection.ImageBeamShift.X * 1e9, self.tom.Projection.ImageBeamShift.Y * 1e9
 
     def setImageBeamShift(self, x, y):
         """9.8ms per call
            Image shift with respect to the origin that is defined by alignment. The apparent beam shift is compensated for, 
-           without affecting the Shift-property of the Illumination-object. Units: meters.
+           without affecting the Shift-property of the Illumination-object. Units: nm.
            Attention: Avoid intermixing ImageShift and ImageBeamShift, otherwise it would mess up the beam shift 
            (=Illumination.Shift). If you want to use both alternately, then reset the other to zero first."""
         is1 = self.tom.Projection.ImageBeamShift
-        if abs(x) > 1 or abs(y) > 1:
-            print('Invalid gunshift setting: can only be float numbers between -1 and 1.')
-            return
 
         if x is not None:
-            is1.X = x
+            is1.X = x / 1e9
         if y is not None:
-            is1.Y = y
+            is1.Y = y / 1e9
 
         self.tom.Projection.ImageBeamShift = is1
 
@@ -433,7 +456,7 @@ class FEIMicroscope:
            (for more information, see a0050100.htm on the TEM software installation CD under privada\beamtiltdiffshift). Units: radians.
            Attention: Avoid intermixing Tilt (of the beam in Illumination) and ImageBeamTilt. If you want to 
            use both alternately, then reset the other to zero first."""
-        pass
+        return self.tom.Projection.ImageBeamTilt.X * 1e9, self.tom.Projection.ImageBeamTilt.Y * 1e9
 
     def setImageBeamTilt(self, x, y):
         """Beam tilt with respect to the origin that is defined by alignment (rotation center). The resulting 
@@ -442,7 +465,14 @@ class FEIMicroscope:
            (for more information, see a0050100.htm on the TEM software installation CD under privada\beamtiltdiffshift). Units: radians.
            Attention: Avoid intermixing Tilt (of the beam in Illumination) and ImageBeamTilt. If you want to 
            use both alternately, then reset the other to zero first."""
-        pass
+        is1 = self.tom.Projection.ImageBeamTilt
+
+        if x is not None:
+            is1.X = x / 1e9
+        if y is not None:
+            is1.Y = y / 1e9
+
+        self.tom.Projection.ImageBeamTilt = is1
 
     def isStageMoving(self):
         """Check if sample stage is moving"""
@@ -559,8 +589,6 @@ class FEIMicroscope:
            180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough
            The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
         ds1 = self.tem.Projection.DiffractionShift
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError('Invalid gunshift setting: can only be float numbers between -1 and 1.')
 
         if x is not None:
             ds1.X = x / 180 * pi
@@ -642,20 +670,20 @@ class FEIMicroscope:
             self.proj.CameraLengthIndex = index
 
     def getBrightness(self):
-        """return diameter in microns."""
-        return self.tom.Illumination.IlluminatedAreaDiameter * 1e6
+        """return diameter in nm."""
+        return self.tom.Illumination.IlluminatedAreaDiameter * 1e9
 
     def setBrightness(self, value):
-        """return diameter in microns."""
-        self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-6
+        """return diameter in nm."""
+        self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-9
 
     def getIlluminatedArea(self):
-        """return diameter in microns. The size of the illuminated area. Accessible only in Parallel mode."""
-        return self.tem.Illumination.IlluminatedArea * 1e6
+        """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
+        return self.tem.Illumination.IlluminatedArea * 1e9
 
     def setIlluminatedArea(self, value):
-        """return diameter in microns. The size of the illuminated area. Accessible only in Parallel mode."""
-        self.tem.Illumination.IlluminatedArea = value * 1e-6
+        """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
+        self.tem.Illumination.IlluminatedArea = value * 1e-9
 
     def isStemAvailable(self):
         """Returns whether themicroscope has a STEM system or not."""
@@ -728,39 +756,39 @@ class FEIMicroscope:
         self.tem.Illumination.IntensityLimitEnabled = value
 
     def getProbeShift(self):
-        """Beam shift relative to the origin stored at alignment time. Units: meters."""
-        return self.tem.Illumination.Shift.X, self.tem.Illumination.Shift.Y
+        """Beam shift relative to the origin stored at alignment time. Units: nm."""
+        return self.tem.Illumination.Shift.X * 1e9, self.tem.Illumination.Shift.Y * 1e9
 
     def setProbeShift(self, x, y):
-        """Beam shift relative to the origin stored at alignment time. Units: meters."""
-        self.tem.Illumination.Shift.X = x
-        self.tem.Illumination.Shift.Y = y
+        """Beam shift relative to the origin stored at alignment time. Units: nm."""
+        self.tem.Illumination.Shift.X = x / 1e9
+        self.tem.Illumination.Shift.Y = y / 1e9
 
     def getDarkFieldTilt(self):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
-           if dark field mode is active. Units: radians, either in Cartesian (x,y) or polar (conical) tilt angles. 
+           if dark field mode is active. Units: degree, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        return self.tem.Illumination.Tilt.X, self.tem.Illumination.Tilt.Y
+        return self.tem.Illumination.Tilt.X / pi * 180, self.tem.Illumination.Tilt.Y / pi * 180
 
     def setDarkFieldTilt(self, x, y):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
-           if dark field mode is active. Units: radians, either in Cartesian (x,y) or polar (conical) tilt angles. 
+           if dark field mode is active. Units: degree, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        self.tem.Illumination.Tilt.X = x
-        self.tem.Illumination.Tilt.Y = y
+        self.tem.Illumination.Tilt.X = x / 180 * pi
+        self.tem.Illumination.Tilt.Y = y / 180 * pi
 
     def getRotationCenter(self):
-        """Corresponds to the alignment beam tilt value. Units are radians, range is ± 0.2-0.3rad. 
+        """Corresponds to the alignment beam tilt value. Units are degree, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
-        return self.tem.Illumination.RotationCenter.X, self.tem.Illumination.RotationCenter.Y
+        return self.tem.Illumination.RotationCenter.X / pi * 180, self.tem.Illumination.RotationCenter.Y / pi * 180
 
     def setRotationCenter(self, x, y):
-        """Corresponds to the alignment beam tilt value. Units are radians, range is ± 0.2-0.3rad. 
+        """Corresponds to the alignment beam tilt value. Units are degree, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
         if abs(x) > 0.3 or abs(y) > 0.3:
             raise FEIValueError('Invalid rotation center setting: can only be float numbers between -0.3 and 0.3.')
-        self.tem.Illumination.RotationCenter.X = x
-        self.tem.Illumination.RotationCenter.Y = y
+        self.tem.Illumination.RotationCenter.X = x / 180 * pi
+        self.tem.Illumination.RotationCenter.Y = y / 180 * pi
 
     def getStemMagnification(self):
         """The magnification value in STEM mode. You can change the magnification only in discrete steps 
@@ -776,7 +804,7 @@ class FEIMicroscope:
 
     def getStemRotation(self):
         """The STEM rotation angle (in radians)."""
-        return self.tem.Illumination.StemRotation
+        return self.tem.Illumination.StemRotation / pi * 180
 
     def setStemRotation(self, value):
         """The STEM rotation angle (in radians)."""
@@ -784,20 +812,20 @@ class FEIMicroscope:
         self.tem.Illumination.StemRotation = value
 
     def getProbeDefocus(self):
-        """The amount of probe defocus (in meters). Accessible only in Probe mode."""
-        return self.tem.Illumination.ProbeDefocus
+        """The amount of probe defocus (in nm). Accessible only in Probe mode."""
+        return self.tem.Illumination.ProbeDefocus * 1e9
 
     def setProbeDefocus(self, value):
-        """The amount of probe defocus (in meters). Accessible only in Probe mode."""
-        self.tem.Illumination.ProbeDefocus = value
+        """The amount of probe defocus (in nm). Accessible only in Probe mode."""
+        self.tem.Illumination.ProbeDefocus = value / 1e9
 
     def getConvergenceAngle(self):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        return self.tem.Illumination.ConvergenceAngle
+        return self.tem.Illumination.ConvergenceAngle / pi * 180
 
     def setConvergenceAngle(self, value):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        self.tem.Illumination.ConvergenceAngle = value
+        self.tem.Illumination.ConvergenceAngle = value / 180 * pi
 
     def NormalizeCondenser(self, index):
         """Normalizes the condenser lenses and/or the minicondenser lens, dependent on the choice of ‘Norm’.
@@ -948,12 +976,12 @@ class FEIMicroscope:
         self.tem.BlankerShutter.ShutterOverrideOn = value
 
     def getDiffractionShift(self):
-        """The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
-        return self.tem.Projection.DiffractionShift.X, self.tem.Projection.DiffractionShift.Y
+        """The diffraction pattern shift with respect to the origin that is defined by alignment. Units: degree."""
+        return self.tem.Projection.DiffractionShift.X * 180 / pi, self.tem.Projection.DiffractionShift.Y * 180 / pi
 
     def setDiffractionShift(self, x, y):
         """Parameter x and y are in degree. The diffraction pattern shift with respect to the origin that is 
-           defined by alignment. Units: radians."""
+           defined by alignment. Units: degree."""
         x = x * pi / 180
         y = y * pi / 180
         self.tem.Projection.DiffractionShift.X = x 
