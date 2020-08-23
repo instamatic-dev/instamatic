@@ -1,5 +1,5 @@
 microscope: simulate
-camera: simulate
+camera: DMfaux
 calibration: simulate
 
 # Global toggle to force simulated camera/microscope interface
@@ -14,13 +14,17 @@ use_tem_server: True
 tem_server_host: 'localhost'
 tem_server_port: 8088
 tem_require_admin: False
-tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml, marshal
+tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml
 
 # Run the Camera connection in a different process
 use_cam_server: False
 cam_server_host: 'localhost'
 cam_server_port: 8087
-cam_use_shared_memory: true
+cam_use_shared_memory: False
+
+# Settings related to stream pipeline
+default_frame_time: 0.3
+buffer_stream_use_thread: True
 
 # Submit collected data to an indexing server (CRED only)
 use_indexing_server_exe: False
@@ -35,7 +39,7 @@ goniotool_server_host: 'localhost'
 goniotool_server_port: 8090
 
 # For InsteaDMatic to control the rotation speed on a FEI/TFS system
-fei_server_host: '192.168.12.1'
+fei_server_host: '192.168.1.162'
 fei_server_port: 8091
 
 # Automatically submit the data to an indexing server running in a VM (VirtualBox)
@@ -52,16 +56,17 @@ VM_SHARED_FOLDER: F:\SharedWithVM
 
 # Testing variables
 cred_relax_beam_before_experiment: false
-cred_track_stage_positions: false
+cred_track_stage_positions: true
 
 # Here the panels for the GUI can be turned on/off/reordered
 modules:
   - 'cred'
   - 'cred_tvips'
-  - 'cred_fei'
+#  - 'cred_fei'
   - 'sed'
   - 'autocred'
   - 'red'
+  - 'tomo'
   - 'machine_learning'
   - 'ctrl'
   - 'debug'
