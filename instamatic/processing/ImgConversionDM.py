@@ -21,6 +21,8 @@ class ImgConversionDM(ImgConversion):
                  pixelsize: float = None,          # p/Angstrom, size of the pixels (overrides camera_length)
                  physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
                  wavelength: float = None,         # Angstrom, relativistic wavelength of the electron beam
+                 stretch_amplitude=0.0,             # Stretch correction amplitude, %
+                 stretch_azimuth=0.0,               # Stretch correction azimuth, degrees
                  ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -53,6 +55,11 @@ class ImgConversionDM(ImgConversion):
 
         self.use_beamstop = False
         self.mean_beam_center, self.beam_center_std = self.get_beam_centers()
+
+        # Stretch correction parameters
+        self.stretch_azimuth = config.camera.stretch_azimuth
+        self.stretch_amplitude = config.camera.stretch_amplitude
+        self.do_stretch_correction = self.stretch_amplitude != 0
 
         self.distance = (1 / self.wavelength) * (self.physical_pixelsize / self.pixelsize)
         self.osc_angle = osc_angle

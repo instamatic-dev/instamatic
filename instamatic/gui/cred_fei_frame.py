@@ -97,6 +97,7 @@ class ExperimentalcRED_FEI(LabelFrame):
 
 
 def acquire_data_cREDfei(controller, **kwargs):
+    controller.log.info('Start cRED experiment')
     from operator import attrgetter
 
     task = kwargs.pop('task')
@@ -114,5 +115,5 @@ commands = {'credfei': acquire_data_cREDfei}
 
 if __name__ == '__main__':
     root = Tk()
-    ExperimentalRED(root).pack(side='top', fill='both', expand=True)
+    ExperimentalcRED_FEI(root).pack(side='top', fill='both', expand=True)
     root.mainloop()

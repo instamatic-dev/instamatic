@@ -15,9 +15,11 @@ dimensions: [512, 512]
 CCD_area: [0, 0, 1024, 1024]
 dynamic_range: 65535
 interface: DM
+physical_pixelsize: 0.055
 possible_binsizes: [1, 2, 4]
 stretch_amplitude: 0
 stretch_azimuth: 0
 processing: 1
 read_mode: 0
+quality_level: 0
 is_continuous: "\x01"

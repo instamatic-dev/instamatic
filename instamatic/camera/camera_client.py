@@ -11,7 +11,7 @@ from instamatic.exceptions import exception_list
 from instamatic.server.serializer import pickle_dumper as dumper
 from instamatic.server.serializer import pickle_loader as loader
 
-if config.settings.cam_use_shared_memory:
+if config.settings.use_cam_server and config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
 
 HOST = config.settings.cam_server_host

@@ -15,7 +15,7 @@ from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
 high_precision_timers.enable()
 
-if config.settings.cam_use_shared_memory:
+if config.settings.use_cam_server and config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
 
 condition = threading.Condition()

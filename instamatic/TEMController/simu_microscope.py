@@ -90,8 +90,8 @@ class SimuMicroscope:
 
         self.beamblank = False
 
-        self.condensorlensstigmator_x = random.randint(MIN, MAX)
-        self.condensorlensstigmator_y = random.randint(MIN, MAX)
+        self.condenserlensstigmator_x = random.randint(MIN, MAX)
+        self.condenserlensstigmator_y = random.randint(MIN, MAX)
 
         self.intermediatelensstigmator_x = random.randint(MIN, MAX)
         self.intermediatelensstigmator_y = random.randint(MIN, MAX)
@@ -103,9 +103,9 @@ class SimuMicroscope:
 
         self.screenposition_value = 'up'
 
-        self.condensorlens1_value = random.randint(MIN, MAX)
-        self.condensorlens2_value = random.randint(MIN, MAX)
-        self.condensorminilens_value = random.randint(MIN, MAX)
+        self.condenserlens1_value = random.randint(MIN, MAX)
+        self.condenserlens2_value = random.randint(MIN, MAX)
+        self.condenserminilens_value = random.randint(MIN, MAX)
         self.objectivelensecoarse_value = random.randint(MIN, MAX)
         self.objectivelensefine_value = random.randint(MIN, MAX)
         self.objectiveminilens_value = random.randint(MIN, MAX)
@@ -486,12 +486,12 @@ class SimuMicroscope:
         """True/False or 1/0."""
         self.beamblank = mode
 
-    def getCondensorLensStigmator(self) -> Tuple[int, int]:
-        return self.condensorlensstigmator_x, self.condensorlensstigmator_y
+    def getCondenserLensStigmator(self) -> Tuple[int, int]:
+        return self.condenserlensstigmator_x, self.condenserlensstigmator_y
 
-    def setCondensorLensStigmator(self, x: int, y: int):
-        self.condensorlensstigmator_x = x
-        self.condensorlensstigmator_y = y
+    def setCondenserLensStigmator(self, x: int, y: int):
+        self.condenserlensstigmator_x = x
+        self.condenserlensstigmator_y = y
 
     def getIntermediateLensStigmator(self) -> Tuple[int, int]:
         return self.intermediatelensstigmator_x, self.intermediatelensstigmator_y
@@ -523,14 +523,14 @@ class SimuMicroscope:
     def setSpotSize(self, value: int):
         self.spotsize = value
 
-    def getCondensorLens1(self) -> int:
-        return self.condensorlens1_value
+    def getCondenserLens1(self) -> int:
+        return self.condenserlens1_value
 
-    def getCondensorLens2(self) -> int:
-        return self.condensorlens2_value
+    def getCondenserLens2(self) -> int:
+        return self.condenserlens2_value
 
-    def getCondensorMiniLens(self) -> int:
-        return self.condensorminilens_value
+    def getCondenserMiniLens(self) -> int:
+        return self.condenserminilens_value
 
     def getObjectiveLenseCoarse(self) -> int:
         return self.objectivelensecoarse_value

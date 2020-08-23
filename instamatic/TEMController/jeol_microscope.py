@@ -439,11 +439,11 @@ class JeolMicroscope:
         """Enable beam blank (mode=True) or disable (mode=False)"""
         self.def3.SetBeamBlank(mode)
 
-    def getCondensorLensStigmator(self) -> Tuple[int, int]:
+    def getCondenserLensStigmator(self) -> Tuple[int, int]:
         x, y, result = self.def3.getCLs()
         return x, y
 
-    def setCondensorLensStigmator(self, x: int, y: int):
+    def setCondenserLensStigmator(self, x: int, y: int):
         self.def3.SetCLs(x, y)
 
     def getIntermediateLensStigmator(self) -> Tuple[int, int]:
@@ -502,17 +502,17 @@ class JeolMicroscope:
         else:
             raise JEOLValueError('No such screen position:', value, "(must be 'up'/'down')")
 
-    def getCondensorLens1(self) -> int:
+    def getCondenserLens1(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG
         value, result = self.lens3.GetCL1()
         return value
 
-    def getCondensorLens2(self) -> int:
+    def getCondenserLens2(self) -> int:
         # No setter, adjusted via spotsize/NBD/LOWMAG
         value, result = self.lens3.GetCL2()
         return value
 
-    def getCondensorMiniLens(self) -> int:
+    def getCondenserMiniLens(self) -> int:
         # no setter
         value, result = self.lens3.GetCM()
         return value
@@ -534,10 +534,10 @@ class JeolMicroscope:
 
     def getAll(self):
         print('## lens3')
-        print('CL1', self.lens3.GetCL1())  # condensor lens
-        print('CL2', self.lens3.GetCL2())  # condensor lens
+        print('CL1', self.lens3.GetCL1())  # condenser lens
+        print('CL2', self.lens3.GetCL2())  # condenser lens
         print('CL3', self.lens3.GetCL3())  # brightness
-        print('CM', self.lens3.GetCM())   # condensor mini lens
+        print('CM', self.lens3.GetCM())   # condenser mini lens
         print('FLc', self.lens3.GetFLc())  # ?? -> self.lens3.SetFLc()
         print('FLf', self.lens3.GetFLf())  # ?? -> self.lens3.SetFLf()
         print('FLcomp1', self.lens3.GetFLcomp1())  # ??, no setter
@@ -558,7 +558,7 @@ class JeolMicroscope:
         print('## def3')
         print('CLA1', self.def3.GetCLA1())  # beam shift
         print('CLA2', self.def3.GetCLA2())  # beam tilt
-        print('CLs', self.def3.GetCLs())   # condensor lens stigmator
+        print('CLs', self.def3.GetCLs())   # condenser lens stigmator
         print('FLA1', self.def3.GetFLA1())
         print('FLA2', self.def3.GetFLA2())
         print('FLs1', self.def3.GetFLs1())

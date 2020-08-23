@@ -21,4 +21,5 @@ stretch_amplitude: 0
 stretch_azimuth: 0
 processing: 1
 read_mode: 0
+quality_level: 0
 is_continuous: "\x01"

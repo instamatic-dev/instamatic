@@ -29,7 +29,11 @@ class ExperimentalCtrl(LabelFrame):
         b_find_eucentric_height.grid(row=0, column=0, sticky='EW', columnspan=2)
 
         Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
-        self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
+        
+        if config.settings.microscope[:3] == "fei":
+            self.o_mode = OptionMenu(frame, self.var_mode, 'D', 'LM', 'Mi', 'SA', 'Mh', 'LAD', 'D', command=self.set_mode)
+        else:
+            self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
         self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
@@ -40,7 +44,7 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text='Angle (0)', width=20).grid(row=2, column=0, sticky='W')
         Label(frame, text='Angle (+)', width=20).grid(row=3, column=0, sticky='W')
         Label(frame, text='Alpha wobbler (±)', width=20).grid(row=4, column=0, sticky='W')
-        Label(frame, text='Stage(XY)', width=20).grid(row=6, column=0, sticky='W')
+        Label(frame, text='Stage(XYZ)', width=20).grid(row=6, column=0, sticky='W')
 
         e_negative_angle = Spinbox(frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5)
         e_negative_angle.grid(row=1, column=1, sticky='EW')
@@ -60,6 +64,8 @@ class ExperimentalCtrl(LabelFrame):
         e_stage_x.grid(row=6, column=1, sticky='EW')
         e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_y)
         e_stage_y.grid(row=6, column=2, sticky='EW')
+        e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_z)
+        e_stage_y.grid(row=6, column=3, sticky='EW')
 
         if config.settings.use_goniotool:
             Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
@@ -78,9 +84,9 @@ class ExperimentalCtrl(LabelFrame):
         b_positive_angle.grid(row=3, column=2, sticky='W')
 
         b_stage = Button(frame, text='Set', command=self.set_stage)
-        b_stage.grid(row=6, column=3, sticky='W')
+        b_stage.grid(row=6, column=4, sticky='W')
         b_stage_get = Button(frame, text='Get', command=self.get_stage)
-        b_stage_get.grid(row=6, column=4, sticky='W')
+        b_stage_get.grid(row=6, column=5, sticky='W')
 
         # defocus button
         Label(frame, text='Diff defocus:', width=20).grid(row=13, column=0, sticky='W')
@@ -142,8 +148,9 @@ class ExperimentalCtrl(LabelFrame):
 
         self.var_alpha_wobbler = DoubleVar(value=5)
 
-        self.var_stage_x = IntVar(value=0)
-        self.var_stage_y = IntVar(value=0)
+        self.var_stage_x = DoubleVar(value=0)
+        self.var_stage_y = DoubleVar(value=0)
+        self.var_stage_z = DoubleVar(value=0)
 
         self.var_goniotool_tx = IntVar(value=1)
 
@@ -211,13 +218,15 @@ class ExperimentalCtrl(LabelFrame):
         self.q.put(('ctrl', {'task': 'stage.set',
                              'x': self.var_stage_x.get(),
                              'y': self.var_stage_y.get(),
+                             'z': self.var_stage_z.get(),
                              'wait': self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
     def get_stage(self, event=None):
-        x, y, _, _, _ = self.ctrl.stage.get()
-        self.var_stage_x.set(int(x))
-        self.var_stage_y.set(int(y))
+        x, y, z, _, _ = self.ctrl.stage.get()
+        self.var_stage_x.set(round(x,2))
+        self.var_stage_y.set(round(y,2))
+        self.var_stage_z.set(round(z,2))
 
     def start_alpha_wobbler(self):
         self.wobble_stop_event = threading.Event()
@@ -266,8 +275,39 @@ class ExperimentalCtrl(LabelFrame):
 module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCtrl, location='bottom')
 commands = {}
 
+def run(ctrl, trigger, q):
+    from .modules import JOBS
+
+    while True:
+        trigger.wait()
+        trigger.clear()
+
+        job, kwargs = q.get()
+        try:
+            print(job)
+            func = JOBS[job]
+        except KeyError:
+            print(f'Unknown job: {job}')
+            print(f'Kwargs:\n{kwargs}')
+            continue
+        func(ctrl, **kwargs)
+
 
 if __name__ == '__main__':
+    import threading
+    import queue
+    
     root = Tk()
-    ExperimentalCtrl(root).pack(side='top', fill='both', expand=True)
+    trigger = threading.Event()
+    q = queue.LifoQueue(maxsize=1)
+    ctrl = ExperimentalCtrl(root)
+    ctrl.pack(side='top', fill='both', expand=True)
+    ctrl.set_trigger(trigger=trigger, q=q)
+
+    p = threading.Thread(target=run, args=(ctrl,trigger,q,))
+    p.start()
+
+
     root.mainloop()
+
+    

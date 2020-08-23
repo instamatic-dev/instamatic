@@ -1,4 +1,4 @@
-microscope: simulate
+microscope: fei_themisZ
 camera: simulate
 calibration: simulate
 
@@ -10,10 +10,10 @@ data_directory: C:/instamatic
 flatfield:
 
 # Run the TEM connection in a different process (recommended)
-use_tem_server: True
+use_tem_server: False
 tem_server_host: 'localhost'
 tem_server_port: 8088
-tem_require_admin: False
+tem_require_admin: True
 tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml, marshal
 
 # Run the Camera connection in a different process
@@ -34,8 +34,8 @@ use_goniotool: False
 goniotool_server_host: 'localhost'
 goniotool_server_port: 8090
 
-# For InsteaDMatic to control the rotation speed on a FEI/TFS system
-fei_server_host: '192.168.12.1'
+# To control the rotation speed on a FEI/TFS system, need to set the same IP address as the host machine
+fei_server_host: '192.168.1.159'
 fei_server_port: 8091
 
 # Automatically submit the data to an indexing server running in a VM (VirtualBox)

@@ -1,13 +1,19 @@
 import atexit
 import time
 import threading
+from queue import Empty as Empty
 
 from .camera import Camera
 from instamatic import config
 
 # can add a configuration to hide when buffers are not needed
-if not config.settings.simulate and config.settings.camera[:2]=="DM":
-    from .datastream_dm import frame_buffer, stream_buffer
+if config.settings.camera[:2]=="DM":
+    from .datastream_dm import frame_buffer
+    if config.settings.buffer_stream_use_thread:
+        from .datastream_dm import stream_buffer_thread as stream_buffer
+    else:
+        from .datastream_dm import stream_buffer_proc as stream_buffer
+    
 
 class GrabbingError(RuntimeError):
     pass
@@ -26,9 +32,6 @@ class ImageGrabber:
         self.callback = callback
         self.cam = cam
 
-        self.default_exposure = self.cam.default_exposure
-        self.default_binsize = self.cam.default_binsize
-        self.dimensions = self.cam.dimensions
         self.name = self.cam.name
 
         self.frame = None
@@ -50,17 +53,22 @@ class ImageGrabber:
 
     def run(self, queue):
         #i = 0
+        if queue is not None:
+            while queue.empty():
+                time.sleep(0.1)
+
         try:
             while not self.stopEvent.is_set():
                 if self.acquireInitiateEvent.is_set():
                     self.acquireInitiateEvent.clear()
-                    if not config.settings.simulate and self.cam.name[:2]=="DM":
+                    if self.name[:2]=="DM":
                         frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
                     else:
                         frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
                     self.callback(frame, acquire=True)
                 elif not self.continuousCollectionEvent.is_set():
-                    if not config.settings.simulate and self.cam.name[:2]=="DM":
+                    if self.name[:2]=="DM":
+                        #print(f"frametime: {self.frametime}")
                         frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
                     else:
                         frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
@@ -72,15 +80,16 @@ class ImageGrabber:
             raise GrabbingError(f'ImageGrabber encountered en error!')
 
     def start_loop(self):
-        if not config.settings.simulate and self.cam.name[:2]=="DM":
-            self.thread = threading.Thread(target=self.run, args=(frame_buffer,), daemon=True)
+        """Obtaining frames from stream_buffer (after processing)"""
+        if not config.settings.simulate and self.name[:2]=="DM":
+            self.thread = threading.Thread(target=self.run, args=(stream_buffer,), daemon=True)
         else:
             self.thread = threading.Thread(target=self.run, args=(None,), daemon=True)
         self.thread.start()
 
     def stop(self):
         self.stopEvent.set()
-        self.thread.join()
+        #self.thread.join() Cannot use this join in here. Otherwise the closing of the program may not responsive
 
 
 class VideoStream(threading.Thread):
@@ -96,14 +105,11 @@ class VideoStream(threading.Thread):
 
         self.lock = threading.Lock()
 
-        self.default_exposure = self.cam.default_exposure
-        self.default_binsize = self.cam.default_binsize
-        self.dimensions = self.cam.dimensions
         self.name = self.cam.name
-
-        self.frametime = self.default_exposure
-
+        
+        self.frametime = 0.1
         self.grabber = self.setup_grabber()
+
 
         self.streamable = self.cam.streamable
 

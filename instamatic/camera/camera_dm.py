@@ -54,19 +54,13 @@ class CameraDM:
 
     def init(self):
         pyDM.initCCDCOM()
-        """
-        pyDM.initAcquisitionParam(self.processing, 
-                                 self.exposure, 
-                                 self.binsize, 
-                                 self.binsize, 
-                                 self.CCD_area[0], 
-                                 self.CCD_area[1], 
-                                 self.CCD_area[2], 
-                                 self.CCD_area[3],
-                                 self.read_mode,
-                                 self.is_continuous)
-        """
-        pyDM.initAcquisitionMode(0)
+        
+        pyDM.initAcquisitionParam(self.processing, self.exposure, 
+                                  self.binsize, self.binsize, 
+                                  self.CCD_area[0], self.CCD_area[1], self.CCD_area[2], self.CCD_area[3],
+                                  self.read_mode, self.quality_level, self.is_continuous)
+        
+        #pyDM.initAcquisitionMode(0)
         pyDM.prepareImgStack(self.numImg)
 
     def uninit(self):
@@ -85,11 +79,12 @@ class CameraDM:
 
     def getImage(self, exposure=0.1, wait=0.02):
         #time.sleep(0.05)
-        return pyDM.onAcquireImgStack(wait).copy().squeeze()
+        return pyDM.onAcquireImgStack(wait).squeeze()
         #return np.random.randint(65535, size=(self.dimensions[0], self.dimensions[1]))
 
-    def get_from_buffer(self, queue, exposure):
-        time.sleep(exposure+0.001)
+    def get_from_buffer(self, queue, exposure, sleep=False):
+        if sleep:
+            time.sleep(abs(exposure-0.05))
         return queue.get()
 
     def getCameraDimensions(self) -> (int, int):
@@ -117,7 +112,7 @@ def initialize(name='DM', exposure=0.1):
 def run_proc(queue, name):
     n = 100
 
-    t = 0.07
+    t = 0.1
     cam = initialize(name, exposure=t)
 
     cam.startAcquisition()
@@ -129,7 +124,7 @@ def run_proc(queue, name):
     for i,x in enumerate(range(n)):
         arr = cam.getImage(wait=0.01)
         #arr = np.random.random((1024,1024))
-        queue.put(arr)
+        #queue.put(arr)
         if i%10 == 0:
             print(f"Number of images produced: {i}")
     print('producer done')
@@ -162,7 +157,7 @@ if __name__ == '__main__':
         t = threading.Thread(target=run, args=(), daemon=True)
         t.start()
     if True:
-        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMorius'), daemon=True)
+        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMfaux'), daemon=True)
         p.start()
         #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
         #t.start()

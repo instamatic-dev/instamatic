@@ -2,8 +2,9 @@ import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple
-
+import decimal
 import numpy as np
+from skimage.registration import phase_cross_correlation
 
 from .deflectors import *
 from .lenses import *
@@ -14,7 +15,7 @@ from instamatic import config
 from instamatic.camera import Camera
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
-from instamatic.image_utils import rotate_image
+from instamatic.image_utils import rotate_image, translate_image
 
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
@@ -122,22 +123,40 @@ class TEMController:
         self.store()
 
     def __repr__(self):
-        return (f'Mode: {self.tem.getFunctionMode()}\n'
-                f'High tension: {self.high_tension/1000:.0f} kV\n'
-                f'Current density: {self.current_density:.2f} pA/cm2\n'
-                f'{self.gunshift}\n'
-                f'{self.guntilt}\n'
-                f'{self.beamshift}\n'
-                f'{self.beamtilt}\n'
-                f'{self.imageshift1}\n'
-                f'{self.imageshift2}\n'
-                f'{self.diffshift}\n'
-                f'{self.stage}\n'
-                f'{self.magnification}\n'
-                f'{self.difffocus}\n'
-                f'{self.brightness}\n'
-                f'SpotSize({self.spotsize})\n'
-                f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        if self.tem.name[:3] == "fei":
+            return (f'Mode: {self.tem.getFunctionMode()}\n'
+                    f'High tension: {self.high_tension/1000:.0f} kV\n'
+                    f'Current: {self.current:.2f} nA\n'
+                    f'{self.gunshift}\n'
+                    f'{self.guntilt}\n'
+                    f'{self.beamshift}\n'
+                    f'{self.beamtilt}\n'
+                    f'{self.imageshift1}\n'
+                    f'{self.imageshift2}\n'
+                    f'{self.diffshift}\n'
+                    f'{self.stage}\n'
+                    f'{self.magnification}\n'
+                    f'{self.difffocus}\n'
+                    f'{self.brightness}\n'
+                    f'SpotSize({self.spotsize})\n'
+                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        else:
+            return (f'Mode: {self.tem.getFunctionMode()}\n'
+                    f'High tension: {self.high_tension/1000:.0f} kV\n'
+                    f'Current density: {self.current_density:.2f} pA/cm2\n'
+                    f'{self.gunshift}\n'
+                    f'{self.guntilt}\n'
+                    f'{self.beamshift}\n'
+                    f'{self.beamtilt}\n'
+                    f'{self.imageshift1}\n'
+                    f'{self.imageshift2}\n'
+                    f'{self.diffshift}\n'
+                    f'{self.stage}\n'
+                    f'{self.magnification}\n'
+                    f'{self.difffocus}\n'
+                    f'{self.brightness}\n'
+                    f'SpotSize({self.spotsize})\n'
+                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
 
     @property
     def high_tension(self) -> float:
@@ -148,6 +167,11 @@ class TEMController:
     def current_density(self) -> float:
         """Get current density from fluorescence screen in pA/cm2."""
         return self.tem.getCurrentDensity()
+
+    @property
+    def current(self) -> float:
+        """Get current from fluorescence screen in nA."""
+        return self.tem.getScreenCurrent()
 
     @property
     def spotsize(self) -> int:
@@ -303,8 +327,6 @@ class TEMController:
         stage_shift : np.array[2]
             The stage shift vector determined from cross correlation
         """
-        from skimage.registration import phase_cross_correlation
-
         current_x, current_y = self.stage.xy
 
         if verbose:
@@ -367,8 +389,6 @@ class TEMController:
         z: float
             Optimized Z value for eucentric tilting
         """
-        from skimage.registration import phase_cross_correlation
-
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
             self.stage.a = angle1
@@ -510,7 +530,8 @@ class TEMController:
 
     def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
-        raw data array.
+           raw data array. self.cam here is the video stream, not the Camera object. 
+           Check initialize function for more info
 
         Parameters
         ----------
@@ -585,6 +606,8 @@ class TEMController:
                   binsize: int = None,
                   comment: str = '',
                   out: str = None,
+                  multiple: bool = False,
+                  align: bool = False,
                   plot: bool = False,
                   verbose: bool = False,
                   header_keys: Tuple[str] = 'all',
@@ -603,6 +626,10 @@ class TEMController:
             Arbitrary comment to add to the header file under 'ImageComment'
         out: str
             Path or filename to which the image/header is saved (defaults to tiff)
+        multiple: bool
+            Toggle to average multiple images or not
+        align: bool
+            Toggle to align multiple images using phase_cross_correlation in scikit-image
         plot: bool
             Toggle whether to show the image using matplotlib after acquisition
         full_header: bool
@@ -634,7 +661,19 @@ class TEMController:
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
-        arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
+        if not multiple:
+            arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
+        else:
+            frametime = config.settings.default_frame_time
+            n = decimal.Decimal(str(exposure)) / decimal.Decimal(str(frametime))
+            arr = self.get_rotated_image(exposure=frametime, binsize=binsize)
+            for j in range(int(n)-1):
+                tmp = self.get_rotated_image(exposure=frametime, binsize=binsize)
+                if align:
+                    shift, error, phasediff = phase_cross_correlation(arr, tmp)
+                    tmp = translate_image(tmp, shift)
+                arr += tmp
+            arr = arr / n
 
         h['ImageGetTimeEnd'] = time.perf_counter()
 

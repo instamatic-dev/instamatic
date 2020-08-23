@@ -22,7 +22,13 @@ class BaseModule:
     def set_kwargs(self, **kwargs):
         self.kwargs = kwargs
 
-    def initialize(self, parent):
-        frame = self.tk_frame(parent, **self.kwargs)
+    def initialize(self, parent, **kwargs):
+        if kwargs:
+            for key, value in kwargs.items():
+                if key == "image_stream":
+                    frame = self.tk_frame(parent, image_stream=value, **self.kwargs)
+        else:
+            frame = self.tk_frame(parent, **self.kwargs)
+            
         self.frame = frame
         return frame

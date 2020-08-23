@@ -458,7 +458,7 @@ class Experiment:
         wavelength = config.microscope.wavelength
 
         try:
-            pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+            pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
         except KeyError:
             print(f'Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0')
             pixelsize = 1.0
@@ -501,7 +501,7 @@ class Experiment:
             print(f'Wavelength: {wavelength} Angstrom', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} cm', file=f)
-            print(f'Pixelsize: {pixelsize} px/Angstrom', file=f)
+            print(f'Pixelsize: {pixelsize} Angstrom^(-1)/pixel', file=f)
             print(f'Physical pixelsize: {physical_pixelsize} um', file=f)
             print(f'Binning: {binning}', file=f)
             print(f'Image dimensions: {image_dimensions_x} {image_dimensions_y}', file=f)

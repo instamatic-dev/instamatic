@@ -5,11 +5,17 @@ import time
 from pathlib import Path
 
 import numpy as np
+import decimal
 
 import instamatic
 from instamatic import config
 from instamatic.formats import write_tiff
-from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+
+if config.settings.camera[:2] == "DM":
+    from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
+else:
+    from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -57,7 +63,7 @@ class Experiment:
                  path: str = None,
                  log=None,
                  flatfield: str = None,
-                 exposure_time: float = 0.5,
+                 exposure_time: float = 0.3,
                  unblank_beam: bool = False,
                  mode: str = None,
                  footfree_rotate_to: float = 60.0,
@@ -65,6 +71,7 @@ class Experiment:
                  image_interval: int = 99999,
                  diff_defocus: int = 0,
                  exposure_time_image: float = 0.01,
+                 rotation_speed: float = 0.1,
                  write_tiff: bool = True,
                  write_xds: bool = True,
                  write_dials: bool = True,
@@ -78,12 +85,13 @@ class Experiment:
         self.unblank_beam = unblank_beam
         self.logger = log
         self.mode = mode
-        if ctrl.cam.name == 'simulate':
+        if self.ctrl.cam.name == 'simulate' and self.ctrl.tem.name[:3]!="fei":
             self.mode = 'simulate'
         self.stopEvent = stop_event
         self.flatfield = flatfield
 
         self.footfree_rotate_to = footfree_rotate_to
+        self.rotation_speed = rotation_speed
 
         self.diff_defocus = diff_defocus
         self.exposure_image = exposure_time_image
@@ -155,7 +163,7 @@ class Experiment:
             print(f'Total time: {self.total_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} mm', file=f)
-            print(f'Pixelsize: {self.pixelsize} px/Angstrom', file=f)
+            print(f'Pixelsize: {self.pixelsize} Angstrom^(-1)/pixel', file=f)
             print(f'Physical pixelsize: {self.physical_pixelsize} um', file=f)
             print(f'Wavelength: {self.wavelength} Angstrom', file=f)
             print(f'Stretch amplitude: {self.stretch_azimuth} %', file=f)
@@ -204,6 +212,17 @@ class Experiment:
 
             start_angle = self.ctrl.stage.a
             self.ctrl.stage.set(a=rotate_to, wait=False)
+            print('Footfree Data Recording started.')
+
+        elif self.mode == 'regular' and self.ctrl.tem.name[:3]=="fei":
+            rotate_to = self.footfree_rotate_to
+
+            self.ctrl.stage.set_with_speed(a=rotate_to, wait=False, speed=self.rotation_speed)
+            while not self.ctrl.tem.isStageMoving():
+                time.sleep(0.1)
+
+            start_angle = self.ctrl.stage.a
+            print('FEI Data Recording started.')
 
         else:
             print('Waiting for rotation to start...', end=' ')
@@ -247,8 +266,12 @@ class Experiment:
         buffer = []
         image_buffer = []
 
-        if self.ctrl.mode != 'diff':
-            self.ctrl.mode.set('diff')
+        if self.ctrl.tem.name[:3]=="fei":
+            if self.ctrl.mode not in ('D','LAD'):
+                self.ctrl.tem.setProjectionMode(2)
+        else:
+            if self.ctrl.mode != 'diff':
+                self.ctrl.mode.set('diff')
 
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
@@ -294,8 +317,12 @@ class Experiment:
                 img, h = self.ctrl.get_image(self.exposure, header_keys=None)
                 # print(f"{i} Image!")
                 buffer.append((i, img, h))
+                # print(f"Angle: {self.ctrl.stage.a}")
 
             i += 1
+
+            if not self.ctrl.tem.isStageMoving():
+                self.stopEvent.set()
 
         t1 = time.perf_counter()
 
@@ -308,10 +335,10 @@ class Experiment:
 
         if self.mode == 'simulate':
             # simulate somewhat realistic end numbers
-            self.ctrl.stage.x += np.random.randint(-5000, 5000)
-            self.ctrl.stage.y += np.random.randint(-5000, 5000)
-            self.ctrl.stage.a += np.random.randint(-100, 100)
-            self.ctrl.magnification.set(300)
+            self.ctrl.stage.x += np.random.randint(-100, 100)
+            self.ctrl.stage.y += np.random.randint(-100, 100)
+            self.ctrl.stage.a += np.random.randint(-60, 60)
+            self.ctrl.magnification.set(330)
 
         self.end_position = self.ctrl.stage.get()
         self.end_angle = self.end_position[3]
@@ -340,7 +367,10 @@ class Experiment:
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+        if config.settings.microscope[:3] == "fei":
+            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
+        else:
+            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth  # deg

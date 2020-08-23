@@ -76,7 +76,7 @@ class Stage:
             else:
                 yield  # if requested speed is the same as current
 
-    def get(self) -> Tuple[int, int, int, int, int]:
+    def get(self) -> Tuple[float, float, float, float, float]:
         """Get stage positions; x, y, z, and status of the rotation axes; a,
         b."""
         return StagePositionTuple(*self._getter())
@@ -225,7 +225,7 @@ class Stage:
         movement."""
         pass
 
-    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200) -> None:
+    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 5000, settle_delay: float = 0.200) -> None:
         """Move to new x/y position with backlash correction. This is done by
         approaching the target x/y position always from the same direction.
 

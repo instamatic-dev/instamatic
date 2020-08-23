@@ -2,6 +2,7 @@ import json
 import pickle
 
 import yaml
+import marshal
 
 from instamatic.config import settings
 PROTOCOL = settings.tem_communication_protocol
@@ -37,6 +38,14 @@ def pickle_dumper(data):
     return pickle.dumps(data)
 
 
+def marshal_loader(data):
+    return marshal.loads(data)
+
+
+def marshal_dumper(data):
+    return marshal.dumps(data)
+
+
 try:
     import msgpack
 except ImportError:
@@ -62,5 +71,8 @@ elif PROTOCOL == 'yaml':
 elif PROTOCOL == 'msgpack':
     loader = msgpack_loader
     dumper = msgpack_dumper
+elif PROTOCOL == 'marshal':
+    loader = marshal_loader
+    dumper = marshal_dumper
 else:
     raise ValueError(f'No such protocol: `{PROTOCOL}`')

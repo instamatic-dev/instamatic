@@ -56,6 +56,46 @@ def rotate_image(arr, mode: str, mag: int) -> np.array:
 
     return arr
 
+def translate_image(arr, shift: np.array) -> np.array:
+    """Translate an image according to shift. Shift should be a 2D numpy array"""
+    img = np.empty(arr.shape).astype(np.uint16)
+    shift = np.int16(shift)
+    avg = np.uint16(arr.mean())
+    if shift[0] >= 0 and shift[1] >= 0:
+        if shift[0] == 0 and shift[1] == 0:
+            return arr
+        elif shift[0] == 0:
+            img[:, shift[1]:] = arr[:, :-shift[1]]
+            img[:, :shift[1]] = avg
+        elif shift[1] == 0:
+            img[shift[0]:, :] = arr[:-shift[0], :]
+            img[:shift[0], :] = avg
+        else:
+            img[shift[0]:, shift[1]:] = arr[:-shift[0], :-shift[1]]
+            img[:shift[0], :] = avg
+            img[:, :shift[1]] = avg
+    elif shift[0] >= 0 and shift[1] < 0:
+        if shift[0] == 0:
+            img[:, :shift[1]] = arr[:, -shift[1]:]
+            img[:, shift[1]:] = avg
+        else:
+            img[shift[0]:, :shift[1]] = arr[:-shift[0], -shift[1]:]
+            img[:shift[0], :] = avg
+            img[:, shift[1]:] = avg
+    elif shift[0] < 0 and shift[1] >= 0:
+        if shift[1] == 0:
+            img[:shift[0], :] = arr[-shift[0]:, :]
+            img[shift[0]:, :] = avg
+        else:
+            img[:shift[0], shift[1]:] = arr[-shift[0]:, :-shift[1]]
+            img[shift[0]:, :] = avg
+            img[:, :shift[1]] = avg
+    elif shift[0] < 0 and shift[1] < 0:
+        img[:shift[0], :shift[1]] = arr[-shift[0]:, -shift[1]:]
+        img[shift[0]:, :] = avg
+        img[:, shift[1]:] = avg
+
+    return img
 
 def bin_ndarray(ndarray, new_shape=None, binning=1, operation='mean'):
     """Bins an ndarray in all axes based on the target shape, by summing or
