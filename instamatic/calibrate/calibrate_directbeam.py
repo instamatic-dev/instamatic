@@ -13,6 +13,8 @@ from instamatic import config
 from instamatic.image_utils import autoscale
 from instamatic.image_utils import imgscale
 from instamatic.tools import printer
+from instamatic.formats import read_image
+
 logger = logging.getLogger(__name__)
 
 
@@ -265,7 +267,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
     print()
     print('Center:', center_fn)
 
-    img_cent, h_cent = load_img(center_fn)
+    img_cent, h_cent = read_image(center_fn)
     readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
@@ -279,7 +281,7 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
 
     for i, fn in enumerate(other_fn):
         print(fn)
-        img, h = load_img(fn)
+        img, h = read_image(fn)
         img = imgscale(img, scale)
 
         readout = np.array(h[key])

@@ -616,7 +616,7 @@ class FEIMicroscope:
             raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
         return self.tem.Projection.Defocus * 1e9
 
-    def setDiffFocus(self, value, confirm_model=True):
+    def setDiffFocus(self, value, confirm_mode=True):
         if confirm_mode and (self.getFunctionMode() not in ("LAD", "D")):
             raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
         self.tem.Projection.Defocus = value * 1e-9
@@ -648,13 +648,15 @@ class FEIMicroscope:
         """1.2ms per call
            Focus setting of the currently active mode. Range: maximum between -1.0  (= underfocussed) and 
            1.0 (= overfocussed), but the exact limits are mode dependent and may be a lot lower."""
-        return self.tem.Projection.Focus * 1e9
+        return self.tem.Projection.Focus
 
     def setFocus(self, value):
         """6.5ms per call
            Focus setting of the currently active mode. Range: maximum between -1.0  (= underfocussed) and 
            1.0 (= overfocussed), but the exact limits are mode dependent and may be a lot lower."""
-        self.tem.Projection.Focus = value * 1e-9
+        if value < -1 or value > 1:
+            raise FEIValueError("Value must within -1 and 1")
+        self.tem.Projection.Focus = value
 
     def getApertureSize(self, aperture):
         '''Not sure about the unit'''
@@ -746,11 +748,11 @@ class FEIMicroscope:
         self.tem.Projection.ObjectiveStigmator.Y = y
 
     def getSpotSize(self):
-        """The spot size index (usually ranging from 1 to 11). 220ms per call."""
+        """The spot size index (usually ranging from 1 to 11). Adjust C1 current. 220ms per call."""
         return self.tem.Illumination.SpotsizeIndex
 
     def setSpotSize(self, value):
-        """The spot size index (usually ranging from 1 to 11). 224ms per call."""
+        """The spot size index (usually ranging from 1 to 11). Adjust C1 current. 224ms per call."""
         if value < 1 or value > 11:
             raise FEIValueError('The range of spot size is from 1 to 11.')
         self.tem.Illumination.SpotsizeIndex = value
@@ -773,19 +775,31 @@ class FEIMicroscope:
         else:
             self.proj.CameraLengthIndex = index
 
-    def getIlluminatedArea(self):
+    def getIlluminatedAreaDiameter(self):
         """return diameter in unknown unit."""
         return self.tom.Illumination.IlluminatedAreaDiameter * 1e9
 
-    def setIlluminatedArea(self, value):
+    def setIlluminatedAreaDiameter(self, value):
         """return diameter in unknown unit."""
         self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-9
 
     def getBrightness(self):
+        """Intensity value of the current mode (typically ranging from 0 to 1.0, 
+           but on some microscopes the minimum may be higher"""
+        return self.tem.Illumination.Intensity
+
+    def setBrightness(self, value):
+        """Intensity value of the current mode (typically ranging from 0 to 1.0, 
+           but on some microscopes the minimum may be higher"""
+        if value < 0 or value > 1:
+            raise FEIValueError('The range of intensity of probe is from 0 to 1.')
+        self.tem.Illumination.Intensity = value
+
+    def getIlluminatedArea(self):
         """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
         return self.tem.Illumination.IlluminatedArea * 1e9
 
-    def setBrightness(self, value):
+    def setIlluminatedArea(self, value):
         """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
         self.tem.Illumination.IlluminatedArea = value * 1e-9
 
@@ -821,19 +835,6 @@ class FEIMicroscope:
         if value != 0 or value != 1:
             raise FEIValueError('The probe mode must be 0 or 1.')
         self.tem.Illumination.Mode = value
-
-    def getProbeIntensity(self):
-        """Intensity value of the current mode (typically ranging from 0 to 1.0, 
-           but on some microscopes the minimum may be higher"""
-        return self.tem.Illumination.Intensity
-
-    def setProbeIntensity(self, value):
-        """Intensity value of the current mode (typically ranging from 0 to 1.0, 
-           but on some microscopes the minimum may be higher"""
-        if value < 0 or y > 1:
-            raise FEIValueError('The range of intensity of probe is from 0 to 1.')
-        self.tem.Illumination.Intensity = value
-
 
     def isIntensityZoomEnabled(self):
         """Activates/deactivates the intensity zoom in the current mode. This function only works, 
@@ -1091,3 +1092,43 @@ class FEIMicroscope:
         self.tem.Projection.DiffractionShift.X = x 
         self.tem.Projection.DiffractionShift.Y = y
 
+    def getAll(self):
+        """Same lens and deflector parameters as jeol to give an overview of the parameters"""
+        raise NotImplementedError("This function needs to be reimplemented.")
+        print('## lens3')
+        print('CL1', self.lens3.GetCL1())  # condenser lens
+        print('CL2', self.lens3.GetCL2())  # condenser lens
+        print('CL3', self.lens3.GetCL3())  # brightness
+        print('CM', self.lens3.GetCM())   # condenser mini lens
+        print('FLc', self.lens3.GetFLc())  # ?? -> self.lens3.SetFLc()
+        print('FLf', self.lens3.GetFLf())  # ?? -> self.lens3.SetFLf()
+        print('FLcomp1', self.lens3.GetFLcomp1())  # ??, no setter
+        print('FLcomp2', self.lens3.GetFLcomp2())  # ??, no setter
+        print('IL1', self.lens3.GetIL1())  # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        print('IL2', self.lens3.GetIL2())  # intermediate lens, no setter
+        print('IL3', self.lens3.GetIL3())  # intermediate lens, no setter
+        print('IL4', self.lens3.GetIL4())  # intermediate lens, no setter
+        print('OLc', self.lens3.GetOLc())  # objective focus coarse, SetOLc
+        print('OLf', self.lens3.GetOLf())  # objective focus fine, SetOLf
+        print('OM', self.lens3.GetOM())   # Objective mini lens
+        print('OM2', self.lens3.GetOM2())  # Objective mini lens
+        print('OM2Flag', self.lens3.GetOM2Flag())  # Objective mini lens 2 flag ??
+        print('PL1', self.lens3.GetPL1())  # projector lens, SetPLFocus
+        print('PL2', self.lens3.GetPL2())  # n/a
+        print('PL3', self.lens3.GetPL3())  # n/a
+        print()
+        print('## def3')
+        print('CLA1', self.def3.GetCLA1())  # beam shift
+        print('CLA2', self.def3.GetCLA2())  # beam tilt
+        print('CLs', self.def3.GetCLs())   # condenser lens stigmator
+        print('FLA1', self.def3.GetFLA1())
+        print('FLA2', self.def3.GetFLA2())
+        print('FLs1', self.def3.GetFLs1())
+        print('FLs2', self.def3.GetFLs2())
+        print('GUNA1', self.def3.GetGUNA1())  # gunshift
+        print('GUNA2', self.def3.GetGUNA2())  # guntilt
+        print('ILs', self.def3.GetILs())     # intermediate lens stigmator
+        print('IS1', self.def3.GetIS1())     # image shift 1
+        print('IS2', self.def3.GetIS2())     # image shift 2
+        print('OLs', self.def3.GetOLs())     # objective lens stigmator
+        print('PLA', self.def3.GetPLA())     # projector lens alignment

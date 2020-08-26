@@ -15,6 +15,8 @@ from instamatic.image_utils import imgscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
 from instamatic.tools import printer
+from instamatic.formats import read_image
+
 logger = logging.getLogger(__name__)
 
 
@@ -143,9 +145,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         stepsize = config.camera.calib_beamshift.get('stepsize', 250)
 
     img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, comment='Beam in center of image')
-    x_cent, y_cent = beamshift_cent = np.array(h_cent['BeamShift'])
+    x_cent, y_cent = beamshift_cent = np.array(ctrl.beamshift.get())
 
-    magnification = h_cent['Magnification']
+    magnification = ctrl.magnification.get()
     stepsize = 2500.0 / magnification * stepsize
 
     print(f'Gridsize: {gridsize} | Stepsize: {stepsize:.2f}')
@@ -180,7 +182,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
 
         shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
-        beamshift = np.array(h['BeamShift'])
+        beamshift = np.array(ctrl.beamshift.get())
         beampos.append(beamshift)
         shifts.append(shift)
 
@@ -218,7 +220,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     print()
     print('Center:', center_fn)
 
-    img_cent, h_cent = load_img(center_fn)
+    img_cent, h_cent = read_image(center_fn)
     beamshift_cent = np.array(h_cent['BeamShift'])
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
@@ -235,7 +237,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     beampos = []
 
     for fn in other_fn:
-        img, h = load_img(fn)
+        img, h = read_image(fn)
         img = imgscale(img, scale)
 
         beamshift = np.array(h['BeamShift'])

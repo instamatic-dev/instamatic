@@ -710,7 +710,7 @@ class TEMController:
 
         Restore the alignment using:     `ctrl.restore("beam")`
         """
-        if self.mode != 'diff':
+        if self.mode != 'diff' or self.mode not in ('D','LAD'):
             raise TEMControllerError('Microscope is not in `diffraction mode`')
         keys = 'FunctionMode', 'Brightness', 'GunTilt', 'DiffFocus', 'SpotSize'
         self.store(name=name, keys=keys, save_to_file=save_to_file)

@@ -9,6 +9,8 @@ from .filenames import *
 from instamatic.image_utils import autoscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
+from instamatic.formats import read_image
+
 logger = logging.getLogger(__name__)
 
 
@@ -146,7 +148,7 @@ def calibrate_brightness_from_image_fn(fns):
     for fn in fns:
         print()
         print('Image:', fn)
-        img, h = load_img(fn)
+        img, h = read_image(fn)
         brightness = float(h['Brightness'])
         binsize = float(h['ImageBinsize'])
 
