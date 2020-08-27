@@ -1,8 +1,12 @@
 import atexit
 import os
 import time
+import decimal
+import threading
 from pathlib import Path
 import numpy as np
+from skimage.registration import phase_cross_correlation
+
 import pyDMOneView as pyDM
 from instamatic import config
 from instamatic.utils import high_precision_timers
@@ -17,7 +21,7 @@ class InvalidNameError(RuntimeError):
 
 class CameraDM:
 
-    def __init__(self, name, exposure=0.1, numImg=1):
+    def __init__(self, name, frametime=0.1, numImg=1):
 
         if name not in ('DMK2', 'DMOneView', 'DMsimu_c', 'DMfaux', 'DMorius'):
             raise InvalidNameError(f"Please input a valid camera name!")
@@ -27,7 +31,7 @@ class CameraDM:
         self.lockfile = libdrc / 'DM.lockfile'
         #self.acquire_lock()
 
-        self.exposure = exposure
+        self.frametime = frametime
         self.numImg = numImg
 
         self.is_connected = None
@@ -55,7 +59,7 @@ class CameraDM:
     def init(self):
         pyDM.initCCDCOM()
         
-        pyDM.initAcquisitionParam(self.processing, self.exposure, 
+        pyDM.initAcquisitionParam(self.processing, self.frametime, 
                                   self.binsize, self.binsize, 
                                   self.CCD_area[0], self.CCD_area[1], self.CCD_area[2], self.CCD_area[3],
                                   self.read_mode, self.quality_level, self.is_continuous)
@@ -77,15 +81,37 @@ class CameraDM:
         """Equivalent to closeShutter?"""
         pyDM.stopAcquireImgStack()
 
-    def getImage(self, exposure=0.1, wait=0.02):
+    def getImage(self, frametime=0.1, wait=0.02):
         #time.sleep(0.05)
         return pyDM.onAcquireImgStack(wait).squeeze()
         #return np.random.randint(65535, size=(self.dimensions[0], self.dimensions[1]))
 
-    def get_from_buffer(self, queue, exposure, sleep=False):
-        if sleep:
-            time.sleep(abs(exposure-0.05))
-        return queue.get()
+    def get_from_buffer(self, queue, exposure, multiple=False, align=False):
+        '''
+        multiple: bool
+            Toggle to average multiple images or not
+        align: bool
+            Toggle to align multiple images using phase_cross_correlation in scikit-image
+        '''
+        if not multiple:
+            return queue.get()
+        else:
+            self.clear_buffer(queue)
+            n = int(decimal.Decimal(str(exposure)) / decimal.Decimal(str(self.frametime)))
+            arr = queue.get()
+            for j in range(n-1):
+                tmp = queue.get()
+                if align:
+                    shift, error, phasediff = phase_cross_correlation(arr, tmp)
+                    tmp = translate_image(tmp, shift)
+                arr += tmp
+            arr = arr / n
+        
+            return arr
+
+    def clear_buffer(self, queue):
+        while not queue.empty():
+            queue.get()
 
     def getCameraDimensions(self) -> (int, int):
         return self.dimensions
@@ -99,9 +125,9 @@ class CameraDM:
         self.streamable = True
 
 
-def initialize(name='DM', exposure=0.1):
+def initialize(name='DM', frametime=0.1):
 
-    cam = CameraDM(name=name, exposure=exposure)
+    cam = CameraDM(name=name, frametime=frametime)
 
     cam.init()
 
@@ -113,7 +139,7 @@ def run_proc(queue, name):
     n = 100
 
     t = 0.1
-    cam = initialize(name, exposure=t)
+    cam = initialize(name, frametime=t)
 
     cam.startAcquisition()
     time.sleep(2)

@@ -32,7 +32,7 @@ class CameraDataStream:
     Start a new process and continuously call getImage to obtain image data from Gatan cameras
     """
     def __init__(self, cam, frametime):
-        self.cam = CameraDM(cam, exposure=frametime)
+        self.cam = CameraDM(cam, frametime=frametime)
         self.stopProcEvent = multiprocessing.Event()
 
     def run(self, queue, read_event, write_event, shared_mem):
@@ -41,13 +41,13 @@ class CameraDataStream:
             self.cam.init()
             self.cam.startAcquisition()
             time.sleep(0.5)
-            arr = self.cam.getImage(exposure=self.cam.exposure)
+            arr = self.cam.getImage(frametime=self.cam.frametime)
             if image_size[0]!=arr.shape[0] or image_size[1]!=arr.shape[1]:
                 print("Please adjust the dimension in the configuration file.")
                 self.stop()
 
             while not self.stopProcEvent.is_set():
-                arr = self.cam.getImage(exposure=self.cam.exposure).astype(np.uint16)
+                arr = self.cam.getImage(frametime=self.cam.frametime).astype(np.uint16)
                 self.put_arr(queue, arr, read_event, write_event, shared_mem)
                 #if i%10 == 0:
                     #print(f"Number of images produced: {i}")

@@ -63,7 +63,7 @@ class ExperimentalRED(LabelFrame):
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=0.5)
-        self.var_exposure_time.trace('w', self.check_exposure_time)
+        # self.var_exposure_time.trace('w', self.check_exposure_time)
         self.var_tilt_range = DoubleVar(value=5.0)
         self.var_stepsize = DoubleVar(value=1.0)
 
@@ -74,8 +74,8 @@ class ExperimentalRED(LabelFrame):
         if config.settings.camera[:2] == "DM":
             try:
                 frametime = config.settings.default_frame_time
-                n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
-                self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
+                n = int(decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime)))
+                self.var_exposure_time.set(decimal.Decimal(str(frametime)) * n)
             except TclError as e:
                 if 'expected floating-point number but got ""' in e.args[0]:
                     pass
@@ -85,6 +85,7 @@ class ExperimentalRED(LabelFrame):
         self.q = q
 
     def start_collection(self):
+        self.check_exposure_time()
         self.StartButton.config(state=DISABLED)
         self.ContinueButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)

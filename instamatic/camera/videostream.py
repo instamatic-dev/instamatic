@@ -62,7 +62,7 @@ class ImageGrabber:
                 if self.acquireInitiateEvent.is_set():
                     self.acquireInitiateEvent.clear()
                     if self.name[:2]=="DM":
-                        frame = self.cam.get_from_buffer(queue, exposure=self.exposure)
+                        frame = self.cam.get_from_buffer(queue, exposure=self.exposure, multiple=True, align=True)
                     else:
                         frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
                     self.callback(frame, acquire=True)

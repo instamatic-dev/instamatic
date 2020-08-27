@@ -106,7 +106,7 @@ class Experiment:
 
         stagematrix = self.get_stagematrix()
 
-        self.img_ref, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
+        self.img_ref, h = self.ctrl.get_image(exposure_time)
 
         if ctrl.cam.streamable:
             ctrl.cam.block()
@@ -121,7 +121,7 @@ class Experiment:
             while not isFocused:
                 img, h = self.ctrl.get_image(frametime)
                 focus_pos_diff = self.focus_image(self, img)
-                if focus_pos_diff[0]**2 + focus_pos_diff[1]**2 < 30：
+                if focus_pos_diff[0]**2 + focus_pos_diff[1]**2 < 30:
                     isFocused=True
 
             while not isAligned:
@@ -131,7 +131,7 @@ class Experiment:
                 stage_shift = np.dot(pixel_shift, stagematrix)
                 stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
                 ctrl.stage.xy = current_x + stage_shift[0], current_y + stage_shift[1]
-                if pixel_shift[0]**2 + pixel_shift[1]**2 < 6：
+                if pixel_shift[0]**2 + pixel_shift[1]**2 < 6:
                     isAligned=True
 
             img, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)

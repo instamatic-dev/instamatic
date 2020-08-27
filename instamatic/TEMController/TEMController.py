@@ -2,7 +2,6 @@ import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple
-import decimal
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
@@ -606,8 +605,6 @@ class TEMController:
                   binsize: int = None,
                   comment: str = '',
                   out: str = None,
-                  multiple: bool = False,
-                  align: bool = False,
                   plot: bool = False,
                   verbose: bool = False,
                   header_keys: Tuple[str] = 'all',
@@ -626,10 +623,6 @@ class TEMController:
             Arbitrary comment to add to the header file under 'ImageComment'
         out: str
             Path or filename to which the image/header is saved (defaults to tiff)
-        multiple: bool
-            Toggle to average multiple images or not
-        align: bool
-            Toggle to align multiple images using phase_cross_correlation in scikit-image
         plot: bool
             Toggle whether to show the image using matplotlib after acquisition
         full_header: bool
@@ -661,19 +654,7 @@ class TEMController:
 
         h['ImageGetTimeStart'] = time.perf_counter()
 
-        if not multiple:
-            arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
-        else:
-            frametime = config.settings.default_frame_time
-            n = decimal.Decimal(str(exposure)) / decimal.Decimal(str(frametime))
-            arr = self.get_rotated_image(exposure=frametime, binsize=binsize)
-            for j in range(int(n)-1):
-                tmp = self.get_rotated_image(exposure=frametime, binsize=binsize)
-                if align:
-                    shift, error, phasediff = phase_cross_correlation(arr, tmp)
-                    tmp = translate_image(tmp, shift)
-                arr += tmp
-            arr = arr / n
+        arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
 
         h['ImageGetTimeEnd'] = time.perf_counter()
 
