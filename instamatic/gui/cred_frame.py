@@ -134,12 +134,12 @@ class ExperimentalcRED(LabelFrame):
         if config.settings.buffer_stream_use_thread:
             n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(self.image_stream.frametime))
             self.var_exposure_time.set(decimal.Decimal(str(self.image_stream.frametime)) * int(n))
-            self.image_stream.exposure = self.var_exposure_time.get()
+            # self.image_stream.exposure = self.var_exposure_time.get()
         else:
             self.image_stream.stop()
             n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(self.image_stream.frametime))
             self.var_exposure_time.set(decimal.Decimal(str(self.image_stream.frametime)) * int(n))
-            self.image_stream.exposure = self.var_exposure_time.get()
+            #self.image_stream.exposure = self.var_exposure_time.get()
             self.image_stream.start_loop()
 
     def set_trigger(self, trigger=None, q=None):

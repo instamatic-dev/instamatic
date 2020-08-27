@@ -10,6 +10,7 @@ from skimage.registration import phase_cross_correlation
 import pyDMOneView as pyDM
 from instamatic import config
 from instamatic.utils import high_precision_timers
+from instamatic.image_utils import translate_image
 
 high_precision_timers.enable()
 
@@ -21,7 +22,7 @@ class InvalidNameError(RuntimeError):
 
 class CameraDM:
 
-    def __init__(self, name, frametime=0.1, numImg=1):
+    def __init__(self, name, frametime=config.settings.default_frame_time, numImg=1):
 
         if name not in ('DMK2', 'DMOneView', 'DMsimu_c', 'DMfaux', 'DMorius'):
             raise InvalidNameError(f"Please input a valid camera name!")
@@ -94,11 +95,14 @@ class CameraDM:
             Toggle to align multiple images using phase_cross_correlation in scikit-image
         '''
         if not multiple:
-            return queue.get()
+            arr = queue.get()
+            return arr.astype(np.uint16)
         else:
             self.clear_buffer(queue)
             n = int(decimal.Decimal(str(exposure)) / decimal.Decimal(str(self.frametime)))
             arr = queue.get()
+            if n < 1:
+                return arr.astype(np.uint16)
             for j in range(n-1):
                 tmp = queue.get()
                 if align:
@@ -106,8 +110,7 @@ class CameraDM:
                     tmp = translate_image(tmp, shift)
                 arr += tmp
             arr = arr / n
-        
-            return arr
+            return arr.astype(np.uint16)
 
     def clear_buffer(self, queue):
         while not queue.empty():

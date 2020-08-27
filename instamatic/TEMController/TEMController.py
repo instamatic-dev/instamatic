@@ -109,10 +109,16 @@ class TEMController:
         self.stageposition = self.stage  # for backwards compatibility
         self.magnification = Magnification(tem)
         self.brightness = Brightness(tem)
-        self.difffocus = DiffFocus(tem)
         self.beam = Beam(tem)
         self.screen = Screen(tem)
         self.mode = Mode(tem)
+
+        if self.mode.state in ('diff', 'D', 'LAD'):
+            self.difffocus = DiffFocus(tem)
+            self.objfocus = None
+        else:
+            self.difffocus = None
+            self.objfocus = ObjFocus(tem)
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
@@ -122,40 +128,24 @@ class TEMController:
         self.store()
 
     def __repr__(self):
-        if self.tem.name[:3] == "fei":
-            return (f'Mode: {self.tem.getFunctionMode()}\n'
-                    f'High tension: {self.high_tension/1000:.0f} kV\n'
-                    f'Current: {self.current:.2f} nA\n'
-                    f'{self.gunshift}\n'
-                    f'{self.guntilt}\n'
-                    f'{self.beamshift}\n'
-                    f'{self.beamtilt}\n'
-                    f'{self.imageshift1}\n'
-                    f'{self.imageshift2}\n'
-                    f'{self.diffshift}\n'
-                    f'{self.stage}\n'
-                    f'{self.magnification}\n'
-                    f'{self.difffocus}\n'
-                    f'{self.brightness}\n'
-                    f'SpotSize({self.spotsize})\n'
-                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
-        else:
-            return (f'Mode: {self.tem.getFunctionMode()}\n'
-                    f'High tension: {self.high_tension/1000:.0f} kV\n'
-                    f'Current density: {self.current_density:.2f} pA/cm2\n'
-                    f'{self.gunshift}\n'
-                    f'{self.guntilt}\n'
-                    f'{self.beamshift}\n'
-                    f'{self.beamtilt}\n'
-                    f'{self.imageshift1}\n'
-                    f'{self.imageshift2}\n'
-                    f'{self.diffshift}\n'
-                    f'{self.stage}\n'
-                    f'{self.magnification}\n'
-                    f'{self.difffocus}\n'
-                    f'{self.brightness}\n'
-                    f'SpotSize({self.spotsize})\n'
-                    f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        current = f'Current: {self.current:.2f} nA\n' if self.tem.name[:3] == "fei" else f'Current density: {self.current_density:.2f} pA/cm2\n'
+        focus = f'{self.difffocus}\n' if self.mode.state in ('diff', 'D', 'LAD') else f'{self.objfocus}\n'
+        return (f'{self.mode}\n'
+                f'High tension: {self.high_tension/1000:.0f} kV\n'
+                f'{current}'
+                f'{self.gunshift}\n'
+                f'{self.guntilt}\n'
+                f'{self.beamshift}\n'
+                f'{self.beamtilt}\n'
+                f'{self.imageshift1}\n'
+                f'{self.imageshift2}\n'
+                f'{self.diffshift}\n'
+                f'{self.stage}\n'
+                f'{self.magnification}\n'
+                f'{focus}'
+                f'{self.brightness}\n'
+                f'SpotSize({self.spotsize})\n'
+                f'Saved alignments: {tuple(self._saved_alignments.keys())}')
 
     @property
     def high_tension(self) -> float:
@@ -464,31 +454,47 @@ class TEMController:
         """
 
         # Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
-        funcs = {
-            'FunctionMode': self.tem.getFunctionMode,
-            'GunShift': self.gunshift.get,
-            'GunTilt': self.guntilt.get,
-            'BeamShift': self.beamshift.get,
-            'BeamTilt': self.beamtilt.get,
-            'ImageShift1': self.imageshift1.get,
-            'ImageShift2': self.imageshift2.get,
-            'DiffShift': self.diffshift.get,
-            'StagePosition': self.stage.get,
-            'Magnification': self.magnification.get,
-            'DiffFocus': self.difffocus.get,
-            'Brightness': self.brightness.get,
-            'SpotSize': self.tem.getSpotSize,
-        }
+        mode = self.tem.getFunctionMode()
+        if mode in ('diff', 'D', 'LAD'):
+            funcs = {
+                'GunShift': self.gunshift.get,
+                'GunTilt': self.guntilt.get,
+                'BeamShift': self.beamshift.get,
+                'BeamTilt': self.beamtilt.get,
+                'ImageShift1': self.imageshift1.get,
+                'ImageShift2': self.imageshift2.get,
+                'DiffShift': self.diffshift.get,
+                'StagePosition': self.stage.get,
+                'Magnification': self.magnification.get,
+                'DiffFocus': self.difffocus.get,
+                'Brightness': self.brightness.get,
+                'SpotSize': self.tem.getSpotSize,
+            }
+        else:
+            funcs = {
+                'GunShift': self.gunshift.get,
+                'GunTilt': self.guntilt.get,
+                'BeamShift': self.beamshift.get,
+                'BeamTilt': self.beamtilt.get,
+                'ImageShift1': self.imageshift1.get,
+                'ImageShift2': self.imageshift2.get,
+                'DiffShift': self.diffshift.get,
+                'StagePosition': self.stage.get,
+                'Magnification': self.magnification.get,
+                'ObjFocus': self.objfocus.get,
+                'Brightness': self.brightness.get,
+                'SpotSize': self.tem.getSpotSize,
+            }
 
         dct = {}
-
+        dct['FunctionMode'] = mode
         if 'all' in keys or not keys:
             keys = funcs.keys()
 
         for key in keys:
             try:
                 dct[key] = funcs[key]()
-            except ValueError:
+            except TypeError:
                 # print(f"No such key: `{key}`")
                 pass
 
@@ -497,24 +503,38 @@ class TEMController:
     def from_dict(self, dct: dict):
         """Restore microscope parameters from dict."""
 
-        funcs = {
-            # 'FunctionMode': self.tem.setFunctionMode,
-            'GunShift': self.gunshift.set,
-            'GunTilt': self.guntilt.set,
-            'BeamShift': self.beamshift.set,
-            'BeamTilt': self.beamtilt.set,
-            'ImageShift1': self.imageshift1.set,
-            'ImageShift2': self.imageshift2.set,
-            'DiffShift': self.diffshift.set,
-            'StagePosition': self.stage.set,
-            'Magnification': self.magnification.set,
-            'DiffFocus': self.difffocus.set,
-            'Brightness': self.brightness.set,
-            'SpotSize': self.tem.setSpotSize,
-        }
-
         mode = dct['FunctionMode']
         self.tem.setFunctionMode(mode)
+        if mode in ('diff', 'D', 'LAD'):
+             funcs = {
+                'GunShift': self.gunshift.set,
+                'GunTilt': self.guntilt.set,
+                'BeamShift': self.beamshift.set,
+                'BeamTilt': self.beamtilt.set,
+                'ImageShift1': self.imageshift1.set,
+                'ImageShift2': self.imageshift2.set,
+                'DiffShift': self.diffshift.set,
+                'StagePosition': self.stage.set,
+                'Magnification': self.magnification.set,
+                'DiffFocus': self.difffocus.set,
+                'Brightness': self.brightness.set,
+                'SpotSize': self.tem.setSpotSize,
+            }
+        else:
+            funcs = {
+                'GunShift': self.gunshift.set,
+                'GunTilt': self.guntilt.set,
+                'BeamShift': self.beamshift.set,
+                'BeamTilt': self.beamtilt.set,
+                'ImageShift1': self.imageshift1.set,
+                'ImageShift2': self.imageshift2.set,
+                'DiffShift': self.diffshift.set,
+                'StagePosition': self.stage.set,
+                'Magnification': self.magnification.set,
+                'ObjFocus': self.objfocus.set,
+                'Brightness': self.brightness.set,
+                'SpotSize': self.tem.setSpotSize,
+            }
 
         for k, v in dct.items():
             if k in funcs:
@@ -526,6 +546,8 @@ class TEMController:
                 func(*v)
             except TypeError:
                 func(v)
+            except AttributeError:
+                pass
 
     def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
@@ -607,7 +629,7 @@ class TEMController:
                   out: str = None,
                   plot: bool = False,
                   verbose: bool = False,
-                  header_keys: Tuple[str] = 'all',
+                  header_keys: Tuple[str] = None,
                   ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config

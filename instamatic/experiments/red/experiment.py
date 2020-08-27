@@ -81,6 +81,9 @@ class Experiment:
         print(f'\nStart_angle: {start_angle:.3f}')
         # print "Angles:", tilt_positions
 
+        if ctrl.cam.streamable:
+            ctrl.cam.block()
+
         image_mode = ctrl.mode.get()
         if config.settings.microscope[:3] == "fei":
             if image_mode not in ('D', 'LAD'):
@@ -96,9 +99,6 @@ class Experiment:
                 write_tiff(fn, img, header=h)
                 ctrl.mode.set('diff')
                 time.sleep(1.0)  # add some delay to account for beam lag
-
-        if ctrl.cam.streamable:
-            ctrl.cam.block()
 
         # for i, a in enumerate(tilt_positions):
         for i, angle in enumerate(tqdm(tilt_positions)):

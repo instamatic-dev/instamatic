@@ -273,6 +273,9 @@ class Experiment:
             if self.ctrl.mode != 'diff':
                 self.ctrl.mode.set('diff')
 
+        if self.ctrl.difffocus is None:
+            self.ctrl.difffocus = instamatic.TEMController.DiffFocus(self.ctrl.tem)
+
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper
         exposure_image = self.exposure_image

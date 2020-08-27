@@ -35,6 +35,20 @@ class Lens:
         self.set(value)
 
 
+class ObjFocus(Lens):
+    """Control the focus of objective lens (IL1)"""
+
+    def __init__(self, tem):
+        super().__init__(tem=tem)
+        self._getter = self._tem.getDefocus
+        self._setter = self._tem.setDefocus
+
+    def set(self, value: int, confirm_mode: bool = True):
+        """
+        confirm_mode: verify that TEM is set to the image mode.
+        """
+        self._setter(value, confirm_mode=confirm_mode)
+
 class DiffFocus(Lens):
     """Control the Difffraction focus lens (IL1)"""
 
