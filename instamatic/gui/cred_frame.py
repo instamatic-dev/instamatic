@@ -30,48 +30,46 @@ class ExperimentalcRED(LabelFrame):
         if self.image_stream is not None:
             self.ExposureButton = Button(frame, text='Confirm Exposure', command=self.confirm_exposure_time, state=NORMAL)
             self.ExposureButton.grid(row=1, column=2, sticky='W')
-            Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
-            Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=4, sticky='ew', pady=10)
-        else:
-            Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=2, sticky='W')
-            Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
+        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=3, sticky='W')
+        Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=4, sticky='ew', pady=10)
 
-        if config.settings.microscope[:3]!="fei":
-            Checkbutton(frame, text='Enable image interval', variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky='W')
-            self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
-            self.c_toggle_defocus.grid(row=6, column=2, sticky='W')
+        Checkbutton(frame, text='Enable image interval', variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky='W')
+        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
+        self.c_toggle_defocus.grid(row=6, column=2, sticky='W')
 
-            Label(frame, text='Image interval:').grid(row=5, column=0, sticky='W')
-            self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, width=sbwidth, from_=1, to=9999, increment=1, state=DISABLED)
-            self.e_image_interval.grid(row=5, column=1, sticky='W', padx=10)
+        Label(frame, text='Image interval:').grid(row=5, column=0, sticky='W')
+        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, width=sbwidth, from_=1, to=9999, increment=1, state=DISABLED)
+        self.e_image_interval.grid(row=5, column=1, sticky='W', padx=10)
 
-            Label(frame, text='Diff defocus:').grid(row=6, column=0, sticky='W')
-            self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
-            self.e_diff_defocus.grid(row=6, column=1, sticky='W', padx=10)
+        Label(frame, text='Diff defocus:').grid(row=6, column=0, sticky='W')
+        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
+        self.e_diff_defocus.grid(row=6, column=1, sticky='W', padx=10)
 
-            Label(frame, text='Image exposure (s):').grid(row=7, column=0, sticky='W')
-            self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
-            self.e_image_exposure.grid(row=7, column=1, sticky='W', padx=10)
+        Label(frame, text='Image exposure (s):').grid(row=7, column=0, sticky='W')
+        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
+        self.e_image_exposure.grid(row=7, column=1, sticky='W', padx=10)
 
-            self.RelaxButton = Button(frame, text='Relax beam', command=self.relax_beam, state=DISABLED)
-            self.RelaxButton.grid(row=7, column=2, sticky='EW')
+        self.RelaxButton = Button(frame, text='Relax beam', command=self.relax_beam, state=DISABLED)
+        self.RelaxButton.grid(row=7, column=2, sticky='EW')
 
-            if ENABLE_FOOTFREE_OPTION:
-                Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
+        if config.settings.microscope[:3] != "fei" and ENABLE_FOOTFREE_OPTION:
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
 
-                Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
-                self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=DISABLED)
-                self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
+            Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
+            self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=DISABLED)
+            self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
 
-                Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
+            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=4, sticky='W')
 
-        elif config.settings.microscope[:3]=="fei":
-            Label(frame, text='Rotate to:').grid(row=5, column=0, sticky='W')
+        elif config.settings.microscope[:3] == "fei":
+            Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
+
+            Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
             self.e_endangle = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=-80.0, to=80.0, increment=1.0, state=NORMAL)
-            self.e_endangle.grid(row=5, column=1, sticky='W', padx=10)
-            Label(frame, text='Rotation Speed:').grid(row=5, column=2, sticky='W')
+            self.e_endangle.grid(row=9, column=1, sticky='W', padx=10)
+            Label(frame, text='Rotation Speed:').grid(row=9, column=2, sticky='W')
             self.e_rotspeed = OptionMenu(frame, self.var_rotation_speed, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
-            self.e_rotspeed.grid(row=5, column=3, sticky='W', padx=10)
+            self.e_rotspeed.grid(row=9, column=3, sticky='W', padx=10)
 
 
         self.lb_coll0 = Label(frame, text='')
@@ -114,7 +112,10 @@ class ExperimentalcRED(LabelFrame):
         self.var_exposure_time = DoubleVar(value=0.3)
         self.var_unblank_beam = BooleanVar(value=False)
         self.var_image_interval = IntVar(value=10)
-        self.var_diff_defocus = IntVar(value=1500)
+        if config.settings.microscope[:3] == "fei":
+            self.var_diff_defocus = IntVar(value=1500)
+        else:
+            self.var_diff_defocus = IntVar(value=1500)
         self.var_enable_image_interval = BooleanVar(value=False)
         self.var_toggle_diff_defocus = BooleanVar(value=False)
         self.var_exposure_time_image = DoubleVar(value=0.01)
@@ -235,11 +236,9 @@ class ExperimentalcRED(LabelFrame):
         if enable:
             self.mode = 'footfree'
             self.e_endangle.config(state=NORMAL)
-            self.e_rotspeed.config(state=NORMAL)
         else:
             self.mode == 'regular'
             self.e_endangle.config(state=DISABLED)
-            self.e_rotspeed.config(state=DISABLED)
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()

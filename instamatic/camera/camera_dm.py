@@ -114,6 +114,7 @@ class CameraDM:
 
     def clear_buffer(self, queue):
         while not queue.empty():
+            #print('Queue not empty!')
             queue.get()
 
     def getCameraDimensions(self) -> (int, int):
@@ -141,7 +142,7 @@ def initialize(name='DM', frametime=0.1):
 def run_proc(queue, name):
     n = 100
 
-    t = 0.1
+    t = config.settings.default_frame_time
     cam = initialize(name, frametime=t)
 
     cam.startAcquisition()
