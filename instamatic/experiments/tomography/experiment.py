@@ -71,13 +71,13 @@ class Experiment:
         self.spotsize = self.ctrl.spotsize
         ctrl = self.ctrl
         frametime = config.settings.default_frame_time
+        self.magnification = int(self.ctrl.magnification.get())
 
-        if config.settings.microscope[:3] == "fei":
-            self.ctrl.tem.setProjectionMode(2)
-            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.magnification]  # nm/pixel
-            self.ctrl.tem.setProjectionMode(1)
-        else:
-            self.pixelsize = config.calibration['diff']['pixelsize'][self.magnification]  # nm/pixel
+        image_mode = ctrl.mode.get()
+        if image_mode in ('D', 'LAD', 'diff'):
+            raise RuntimeError("Please set the microscope to IMAGE mode")
+
+        self.pixelsize = config.calibration[image_mode]['pixelsize'][self.magnification]  # nm/pixel
         if self.current_angle is None:
             self.start_angle = start_angle = ctrl.stage.a
         else:
@@ -96,15 +96,7 @@ class Experiment:
         print(f'\nStart_angle: {start_angle:.3f}')
         # print "Angles:", tilt_positions
 
-        image_mode = ctrl.mode.get()
-        if config.settings.microscope[:3] == "fei":
-            if image_mode in ('D', 'LAD'):
-                raise RuntimeError("Please set the microscope to IMAGE mode")
-        else:
-            if image_mode == 'diff':
-                raise RuntimeError("Please set the microscope to IMAGE mode")
-
-        stagematrix = self.get_stagematrix()
+        stagematrix = self.ctrl.get_stagematrix(binning=self.ctrl.cam.default_binsize, mag=self.magnification, mode=image_mode)
 
         self.img_ref, h = self.ctrl.get_image(exposure_time)
 
@@ -120,21 +112,21 @@ class Experiment:
             j = i + self.offset
             while not isFocused:
                 img, h = self.ctrl.get_image(frametime)
-                focus_pos_diff = self.focus_image(self, img)
+                focus_pos_diff = self.focus_image(img)
                 if focus_pos_diff[0]**2 + focus_pos_diff[1]**2 < 30:
                     isFocused=True
 
             while not isAligned:
                 current_x, current_y = ctrl.stage.xy
                 img, h = self.ctrl.get_image(frametime)
-                pixel_shift = self.align_image(self, img)
+                pixel_shift = self.align_image(img)
                 stage_shift = np.dot(pixel_shift, stagematrix)
                 stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
                 ctrl.stage.xy = current_x + stage_shift[0], current_y + stage_shift[1]
                 if pixel_shift[0]**2 + pixel_shift[1]**2 < 6:
                     isAligned=True
 
-            img, h = self.ctrl.get_image(exposure_time, multiple=True, align=True)
+            img, h = self.ctrl.get_image(exposure_time)
 
             # suppose eccentric height is near 0 degree
             if abs(angle) >= 50 and i % 2 == 1: 
@@ -155,7 +147,6 @@ class Experiment:
         if ctrl.cam.streamable:
             ctrl.cam.unblock()
 
-        self.magnification = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
         self.exposure_time = exposure_time
 
@@ -182,6 +173,9 @@ class Experiment:
 
         Write data in `self.buffer` to path given by `self.path`.
         """
+        if not hasattr(self, 'end_angle'):
+            self.end_angle = self.ctrl.stage.a
+
         self.logger.info(f'Data saving path: {self.path}')
 
         with open(self.path / 'summary.txt', 'a') as f:
@@ -215,9 +209,6 @@ class Experiment:
 
         print('Writing input files...')
         img_conv.write_ed3d(self.mrc_path)
-        img_conv.write_pets_inp(self.path)
-
-        img_conv.write_beam_centers(self.path)
 
         print('Data Collection and Conversion Done.')
         print()

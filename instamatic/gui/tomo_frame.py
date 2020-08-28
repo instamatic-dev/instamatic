@@ -59,7 +59,7 @@ class ExperimentalRED(LabelFrame):
 
     def init_vars(self):
         self.var_exposure_time = DoubleVar(value=1.0)
-        self.var_exposure_time.trace('w', self.check_exposure_time)
+        #self.var_exposure_time.trace('w', self.check_exposure_time)
         self.var_end_angle = DoubleVar(value=60.0)
         self.var_stepsize = DoubleVar(value=1.0)
 
@@ -82,12 +82,9 @@ class ExperimentalRED(LabelFrame):
 
     def start_collection(self):
         if config.settings.camera[:2] == "DM":
-            frametime = config.settings.default_frame_time
-            n = decimal.Decimal(str(self.var_exposure_time.get())) / decimal.Decimal(str(frametime))
-            self.var_exposure_time.set(decimal.Decimal(str(frametime)) * int(n))
+            self.check_exposure_time()
             
         self.StartButton.config(state=DISABLED)
-        self.ContinueButton.config(state=NORMAL)
         self.FinalizeButton.config(state=NORMAL)
         self.e_exposure_time.config(state=DISABLED)
         self.e_stepsize.config(state=DISABLED)
@@ -97,7 +94,6 @@ class ExperimentalRED(LabelFrame):
 
     def stop_collection(self):
         self.StartButton.config(state=NORMAL)
-        self.ContinueButton.config(state=DISABLED)
         self.FinalizeButton.config(state=DISABLED)
         self.e_exposure_time.config(state=NORMAL)
         self.e_stepsize.config(state=NORMAL)
@@ -129,7 +125,7 @@ def acquire_data_RED(controller, **kwargs):
         expdir = controller.module_io.get_new_experiment_directory()
         expdir.mkdir(exist_ok=True, parents=True)
 
-        controller.red_exp = RED.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
+        controller.red_exp = TOMO.Experiment(ctrl=controller.ctrl, path=expdir, log=controller.log,
                                             flatfield=flatfield)
         controller.red_exp.start_collection(exposure_time=exposure_time, end_angle=end_angle, stepsize=stepsize)
     elif task == 'stop':

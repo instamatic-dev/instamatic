@@ -386,13 +386,12 @@ class JeolMicroscope:
         mode, name, result = self.eos3.GetFunctionMode()
         return self.FUNCTION_MODES[mode]
 
-    def setFunctionMode(self, value: int):
+    def setFunctionMode(self, value: str):
         """mag1, mag2, lowmag, samag, diff."""
-        if isinstance(value, str):
-            try:
-                value = self.FUNCTION_MODES.index(value)
-            except ValueError:
-                raise JEOLValueError(f'Unrecognized function mode: {value}')
+        try:
+            alue = self.FUNCTION_MODES.index(value)
+        except ValueError:
+            raise JEOLValueError(f'Unrecognized function mode: {value}')
         self.eos3.SelectFunctionMode(value)
 
     def getDiffFocus(self, confirm_mode: bool = True) -> int:
