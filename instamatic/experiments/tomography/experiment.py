@@ -71,9 +71,9 @@ class Experiment:
         self.spotsize = self.ctrl.spotsize
         ctrl = self.ctrl
         frametime = config.settings.default_frame_time
-        self.magnification = int(self.ctrl.magnification.get())
+        self.magnification = int(self.ctrl.magnification.value)
 
-        image_mode = ctrl.mode.get()
+        image_mode = ctrl.mode.state
         if image_mode in ('D', 'LAD', 'diff'):
             raise RuntimeError("Please set the microscope to IMAGE mode")
 

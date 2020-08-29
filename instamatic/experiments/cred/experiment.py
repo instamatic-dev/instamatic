@@ -345,7 +345,7 @@ class Experiment:
 
         self.end_position = self.ctrl.stage.get()
         self.end_angle = self.end_position[3]
-        self.camera_length = int(self.ctrl.magnification.get())
+        self.camera_length = int(self.ctrl.magnification.value)
         self.stage_positions.append((99999, self.end_position))
 
         is_moving = bool(self.ctrl.stage.is_moving())
@@ -370,10 +370,8 @@ class Experiment:
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        if config.settings.microscope[:3] == "fei":
-            self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
-        else:
-            self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
+        self.pixelsize = config.calibration[self.ctrl.mode.state]['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
+
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth  # deg
