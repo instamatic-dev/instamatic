@@ -113,12 +113,15 @@ class TEMController:
         self.screen = Screen(tem)
         self.mode = Mode(tem)
 
-        if self.mode.state in ('diff', 'D', 'LAD'):
-            self.difffocus = DiffFocus(tem)
-            self.objfocus = None
+        if self.tem.name[:3] == 'fei':
+            if self.mode.state in ('D', 'LAD'):
+                self.difffocus = DiffFocus(tem)
+                self.objfocus = None
+            else:
+                self.difffocus = None
+                self.objfocus = ObjFocus(tem)
         else:
-            self.difffocus = None
-            self.objfocus = ObjFocus(tem)
+            self.difffocus = DiffFocus(tem)
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
@@ -129,7 +132,10 @@ class TEMController:
 
     def __repr__(self):
         current = f'Current: {self.current:.2f} nA\n' if self.tem.name[:3] == "fei" else f'Current density: {self.current_density:.2f} pA/cm2\n'
-        focus = f'{self.difffocus}\n' if self.mode.state in ('diff', 'D', 'LAD') else f'{self.objfocus}\n'
+        if self.tem.name[:3] == 'fei':
+            focus = f'{self.difffocus}\n' if self.mode.state in ('diff', 'D', 'LAD') else f'{self.objfocus}\n'
+        else:
+            focus = f'{self.difffocus}\n'
         return (f'{self.mode}\n'
                 f'High tension: {self.high_tension/1000:.0f} kV\n'
                 f'{current}'
@@ -455,37 +461,29 @@ class TEMController:
 
         # Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
         mode = self.tem.getFunctionMode()
-        if mode in ('diff', 'D', 'LAD'):
-            funcs = {
-                'GunShift': self.gunshift.get,
-                'GunTilt': self.guntilt.get,
-                'BeamShift': self.beamshift.get,
-                'BeamTilt': self.beamtilt.get,
-                'ImageShift1': self.imageshift1.get,
-                'ImageShift2': self.imageshift2.get,
-                'DiffShift': self.diffshift.get,
-                'StagePosition': self.stage.get,
-                'Magnification': self.magnification.get,
-                'DiffFocus': self.difffocus.get,
-                'Brightness': self.brightness.get,
-                'SpotSize': self.tem.getSpotSize,
-            }
-        else:
-            funcs = {
-                'GunShift': self.gunshift.get,
-                'GunTilt': self.guntilt.get,
-                'BeamShift': self.beamshift.get,
-                'BeamTilt': self.beamtilt.get,
-                'ImageShift1': self.imageshift1.get,
-                'ImageShift2': self.imageshift2.get,
-                'DiffShift': self.diffshift.get,
-                'StagePosition': self.stage.get,
-                'Magnification': self.magnification.get,
-                'ObjFocus': self.objfocus.get,
-                'Brightness': self.brightness.get,
-                'SpotSize': self.tem.getSpotSize,
-            }
 
+        funcs = {
+            'GunShift': self.gunshift.get,
+            'GunTilt': self.guntilt.get,
+            'BeamShift': self.beamshift.get,
+            'BeamTilt': self.beamtilt.get,
+            'ImageShift1': self.imageshift1.get,
+            'ImageShift2': self.imageshift2.get,
+            'DiffShift': self.diffshift.get,
+            'StagePosition': self.stage.get,
+            'Magnification': self.magnification.get,
+            'DiffFocus': self.difffocus.get,
+            'Brightness': self.brightness.get,
+            'SpotSize': self.tem.getSpotSize,
+        }
+        if self.tem.name[:3] == 'fei':
+            if mode not in ('diff', 'D', 'LAD'):
+                funcs.pop('DiffFocus')
+                funcs['ObjFocus'] = self.objfocus.get
+        else:
+            if mode not in ('diff'):
+                funcs.pop('DiffFocus')
+                
         dct = {}
         dct['FunctionMode'] = mode
         if 'all' in keys or not keys:
@@ -505,36 +503,29 @@ class TEMController:
 
         mode = dct['FunctionMode']
         self.tem.setFunctionMode(mode)
-        if mode in ('diff', 'D', 'LAD'):
-             funcs = {
-                'GunShift': self.gunshift.set,
-                'GunTilt': self.guntilt.set,
-                'BeamShift': self.beamshift.set,
-                'BeamTilt': self.beamtilt.set,
-                'ImageShift1': self.imageshift1.set,
-                'ImageShift2': self.imageshift2.set,
-                'DiffShift': self.diffshift.set,
-                'StagePosition': self.stage.set,
-                'Magnification': self.magnification.set,
-                'DiffFocus': self.difffocus.set,
-                'Brightness': self.brightness.set,
-                'SpotSize': self.tem.setSpotSize,
-            }
+
+        funcs = {
+            'GunShift': self.gunshift.set,
+            'GunTilt': self.guntilt.set,
+            'BeamShift': self.beamshift.set,
+            'BeamTilt': self.beamtilt.set,
+            'ImageShift1': self.imageshift1.set,
+            'ImageShift2': self.imageshift2.set,
+            'DiffShift': self.diffshift.set,
+            'StagePosition': self.stage.set,
+            'Magnification': self.magnification.set,
+            'DiffFocus': self.difffocus.set,
+            'Brightness': self.brightness.set,
+            'SpotSize': self.tem.setSpotSize,
+        }
+
+        if self.tem.name[:3] == 'fei':
+            if mode not in ('D', 'LAD'):
+                funcs.pop('DiffFocus')
+                funcs[ObjFocus] = self.objfocus.set
         else:
-            funcs = {
-                'GunShift': self.gunshift.set,
-                'GunTilt': self.guntilt.set,
-                'BeamShift': self.beamshift.set,
-                'BeamTilt': self.beamtilt.set,
-                'ImageShift1': self.imageshift1.set,
-                'ImageShift2': self.imageshift2.set,
-                'DiffShift': self.diffshift.set,
-                'StagePosition': self.stage.set,
-                'Magnification': self.magnification.set,
-                'ObjFocus': self.objfocus.set,
-                'Brightness': self.brightness.set,
-                'SpotSize': self.tem.setSpotSize,
-            }
+            if mode not in ('diff'):
+                funcs.pop('DiffFocus')
 
         for k, v in dct.items():
             if k in funcs:

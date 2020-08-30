@@ -109,7 +109,7 @@ class ExperimentalcRED(LabelFrame):
         self.stopEvent = threading.Event()
 
     def init_vars(self):
-        self.var_exposure_time = DoubleVar(value=0.3)
+        self.var_exposure_time = DoubleVar(value=0.1)
         self.var_unblank_beam = BooleanVar(value=False)
         self.var_image_interval = IntVar(value=10)
         if config.settings.microscope[:3] == "fei":

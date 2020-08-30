@@ -389,7 +389,7 @@ class JeolMicroscope:
     def setFunctionMode(self, value: str):
         """mag1, mag2, lowmag, samag, diff."""
         try:
-            alue = self.FUNCTION_MODES.index(value)
+            value = self.FUNCTION_MODES.index(value)
         except ValueError:
             raise JEOLValueError(f'Unrecognized function mode: {value}')
         self.eos3.SelectFunctionMode(value)

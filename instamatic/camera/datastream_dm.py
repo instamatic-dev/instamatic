@@ -47,7 +47,9 @@ class CameraDataStream:
                 self.stop()
 
             while not self.stopProcEvent.is_set():
-                arr = self.cam.getImage(frametime=self.cam.frametime).astype(np.uint16)
+                arr = self.cam.getImage(frametime=self.cam.frametime)
+                arr[arr < 0] = 0
+                arr = arr.astype(np.uint16)
                 self.put_arr(queue, arr, read_event, write_event, shared_mem)
                 #if i%10 == 0:
                     #print(f"Number of images produced: {i}")
@@ -176,7 +178,7 @@ class StreamBufferThread(StreamBuffer):
         self.collectEvent = threading.Event()
 
     def run(self, queue_in, queue_out, read_event, write_event, shared_mem):        
-        # i = 0
+        i = 0
         try:
             self.stopEvent.clear()
             self.collectEvent.set()
@@ -200,13 +202,12 @@ class StreamBufferThread(StreamBuffer):
                 dt = time.perf_counter() - t0
                 image = arr / (j + 1)
                 queue_out.put_nowait(image)
-                #if i%2 == 0:
-                    #print(f"Number of images processed: {i} {n}")
-                if queue_in is None:
-                    print(f"Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
-                else:
-                    print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
-                #i = i + 1
+                if i%10 == 0:
+                    if queue_in is None:
+                        print(f"Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                    else:
+                        print(f"Frame Buffer: {queue_in.qsize()}, Stream Buffer: {queue_out.qsize()}, Actual time: {dt}")
+                i = i + 1
         except:
             raise StreamBufferError(f"StreamBuffer encountered en error!")
 

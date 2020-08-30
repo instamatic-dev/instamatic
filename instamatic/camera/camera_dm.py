@@ -83,7 +83,7 @@ class CameraDM:
         pyDM.stopAcquireImgStack()
 
     def getImage(self, frametime=0.1, wait=0.02):
-        #time.sleep(0.05)
+        #time.sleep(0.005)
         return pyDM.onAcquireImgStack(wait).squeeze()
         #return np.random.randint(65535, size=(self.dimensions[0], self.dimensions[1]))
 
@@ -101,7 +101,7 @@ class CameraDM:
             self.clear_buffer(queue)
             n = int(decimal.Decimal(str(exposure)) / decimal.Decimal(str(self.frametime)))
             arr = queue.get()
-            if n < 1:
+            if n <= 1:
                 return arr.astype(np.uint16)
             for j in range(n-1):
                 tmp = queue.get()
@@ -114,7 +114,7 @@ class CameraDM:
 
     def clear_buffer(self, queue):
         while not queue.empty():
-            #print('Queue not empty!')
+            print('Queue not empty!')
             queue.get()
 
     def getCameraDimensions(self) -> (int, int):
@@ -187,7 +187,7 @@ if __name__ == '__main__':
         t = threading.Thread(target=run, args=(), daemon=True)
         t.start()
     if True:
-        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMfaux'), daemon=True)
+        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMorius'), daemon=True)
         p.start()
         #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
         #t.start()

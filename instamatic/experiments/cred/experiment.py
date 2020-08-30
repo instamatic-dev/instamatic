@@ -324,8 +324,9 @@ class Experiment:
 
             i += 1
 
-            if not self.ctrl.tem.isStageMoving():
-                self.stopEvent.set()
+            if self.ctrl.tem.name[:3] == 'fei':
+                if not self.ctrl.tem.isStageMoving():
+                    self.stopEvent.set()
 
         t1 = time.perf_counter()
 
