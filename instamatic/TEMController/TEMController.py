@@ -472,17 +472,17 @@ class TEMController:
             'DiffShift': self.diffshift.get,
             'StagePosition': self.stage.get,
             'Magnification': self.magnification.get,
-            'DiffFocus': self.difffocus.get,
             'Brightness': self.brightness.get,
             'SpotSize': self.tem.getSpotSize,
         }
         if self.tem.name[:3] == 'fei':
-            if mode not in ('diff', 'D', 'LAD'):
-                funcs.pop('DiffFocus')
+            if mode in ('D', 'LAD'):
+                funcs['DiffFocus'] = self.difffocus.get
+            else:
                 funcs['ObjFocus'] = self.objfocus.get
         else:
-            if mode not in ('diff'):
-                funcs.pop('DiffFocus')
+            if mode in ('diff'):
+                funcs['DiffFocus'] = self.difffocus.get
                 
         dct = {}
         dct['FunctionMode'] = mode
@@ -520,12 +520,13 @@ class TEMController:
         }
 
         if self.tem.name[:3] == 'fei':
-            if mode not in ('D', 'LAD'):
-                funcs.pop('DiffFocus')
-                funcs[ObjFocus] = self.objfocus.set
+            if mode in ('D', 'LAD'):
+                funcs['DiffFocus'] = self.difffocus.set
+            else:
+                funcs['ObjFocus'] = self.objfocus.set
         else:
-            if mode not in ('diff'):
-                funcs.pop('DiffFocus')
+            if mode in ('diff'):
+                funcs['DiffFocus'] = self.difffocus.set
 
         for k, v in dct.items():
             if k in funcs:

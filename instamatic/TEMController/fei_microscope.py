@@ -38,6 +38,7 @@ LAD    Diffraction, LAD mode (the mode entered from LM imaging)
 D      Diffraction mode as entered from higher magnification imaging modes
 """
 FUNCTION_MODES = {1: 'LM', 2: 'Mi', 3: 'SA', 4: 'Mh', 5: 'LAD', 6: 'D'}
+STEM_FOCUS_STRATEGY = {1: 'Intensity', 2: 'Objective', 3: 'StepSize', 4: 'Both'}
 
 # Need more checking
 MagnificationMapping = {
@@ -826,13 +827,15 @@ class FEIMicroscope:
     def getProbeMode(self):
         """Mode of the illumination system (either nanoprobe or microprobe). 
            (Nearly) no effect for low magnifications (LM)."""
-        return self.tem.Illumination.Mode
+        dct = {0: 'micro', 1: 'nano'}
+        return dct[self.tem.Illumination.Mode]
 
     def setProbeMode(self, value):
         """Mode of the illumination system (either nanoprobe or microprobe). 
            (Nearly) no effect for low magnifications (LM)."""
-        if value != 0 or value != 1:
-            raise FEIValueError('The probe mode must be 0 or 1.')
+        dct = {'micro': 0, 'nano': 1}
+        if value != 'micro' or value != 'nano':
+            raise FEIValueError('The probe mode must be \'micro\' or \'nano\'.')
         self.tem.Illumination.Mode = value
 
     def isIntensityZoomEnabled(self):
