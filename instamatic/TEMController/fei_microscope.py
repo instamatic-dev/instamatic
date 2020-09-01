@@ -11,6 +11,7 @@ from instamatic.exceptions import FEIValueError
 from instamatic.exceptions import TEMCommunicationError
 logger = logging.getLogger(__name__)
 
+USETOM = TRUE
 
 # speed table (deg/s):
 # 1.00: 21.14
@@ -208,14 +209,22 @@ class FEIMicroscope:
         self.tem = comtypes.client.CreateObject('TEMScripting.Instrument', comtypes.CLSCTX_ALL)
         # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
-        # tom interfaces the Instrument, Projection objects
+        # tom interfaces the Instrument, Projection objects, much faster than tem interfaces
         self.tom = comtypes.client.CreateObject('TEM.Instrument', comtypes.CLSCTX_ALL)
 
         # TEM Status constants
         self.tem_constant = comtypes.client.Constants(self.tem)
 
-        self.stage = self.tem.Stage
-        self.proj = self.tom.Projection
+        if USETOM:
+            self.gun = self.tom.Gun
+            self.illu = self.tom.Illumination
+            self.stage = self.tom.Stage
+            self.proj = self.tom.Projection
+        else:
+            self.gun = self.tem.Gun
+            self.illu = self.tem.Illumination
+            self.stage = self.tem.Stage
+            self.proj = self.tem.Projection
         t = 0
         while True:
             ht = self.tem.GUN.HTValue
@@ -337,79 +346,75 @@ class FEIMicroscope:
 
     def getGunShift(self):
         """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units).150 ms per call"""
-        x = self.tem.GUN.Shift.X
-        y = self.tem.GUN.Shift.Y
+        x = self.gun.Shift.X
+        y = self.gun.Shift.Y
         return x, y
 
-    def setGunShift(self, x, y):
+    def setGunShift(self, x=None, y=None):
         """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 150 ms per call"""
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
-        gs = self.tem.GUN.Shift
+        gs = self.gun.Shift
 
         if x is not None:
             gs.X = x
         if y is not None:
             gs.Y = y
 
-        self.tem.GUN.Shift = gs
+        self.gun.Shift = gs
 
     def getGunTilt(self):
         """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
            The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
            the beamblanker is active. 150ms per call"""
-        x = self.tem.GUN.Tilt.X
-        y = self.tem.GUN.Tilt.Y
+        x = self.gun.Tilt.X
+        y = self.gun.Tilt.Y
         return x, y
 
-    def setGunTilt(self, x, y):
+    def setGunTilt(self, x=None, y=None):
         """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
            The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
            the beamblanker is active. 150ms per call"""
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
 
-        gt = self.tem.Gun.Tilt
+        gt = self.gun.Tilt
 
         if x is not None:
             gt.X = x
         if y is not None:
             gt.Y = y
 
-        self.tem.Gun.Tilt = gt
+        self.gun.Tilt = gt
 
     def getBeamShift(self):
         """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 6ms per call"""
         '1.19 ms in communication. Super fast!'
-        x = self.tem.Illumination.Shift.X * 1e9
-        y = self.tem.Illumination.Shift.Y * 1e9
+        if USETOM:
+            x = self.tom.Illumination.Shift.X * 1e9
+            y = self.tom.Illumination.Shift.Y * 1e9
+        else:
+            x = self.tem.Illumination.Shift.X * 1e9
+            y = self.tem.Illumination.Shift.Y * 1e9
         return x, y
 
-    def setBeamShift(self, x, y):
+    def setBeamShift(self, x=None, y=None):
         """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 10ms per call"""
-        bs = self.tem.Illumination.Shift
-        if x is not None:
-            bs.X = x * 1e-9
-        if y is not None:
-            bs.Y = y * 1e-9
-        self.tem.Illumination.Shift = bs
-
-    def getBeamShift_Tom(self):
-        """User Shift. Beam shift relative to the origin stored at alignment time. Units: unknown. 6ms per call"""
-        '1.19 ms in communication. Super fast!'
-        x = self.tom.Illumination.BeamShift.X * 1e9
-        y = self.tom.Illumination.BeamShift.Y * 1e9
-        return x, y
-
-    def setBeamShift_Tom(self, x, y):
-        """User Shift. Beam shift relative to the origin stored at alignment time. Units: unknown. 10ms per call"""
-        bs = self.tom.Illumination.BeamShift
-        if x is not None:
-            bs.X = x * 1e-9
-        if y is not None:
-            bs.Y = y * 1e-9
-        self.tom.Illumination.BeamShift = bs
+        if USETOM:
+            bs = self.tom.Illumination.Shift
+            if x is not None:
+                bs.X = x * 1e-9
+            if y is not None:
+                bs.Y = y * 1e-9
+            self.tom.Illumination.Shift = bs
+        else:
+            bs = self.tem.Illumination.Shift
+            if x is not None:
+                bs.X = x * 1e-9
+            if y is not None:
+                bs.Y = y * 1e-9
+            self.tem.Illumination.Shift = bs
 
     def getBeamAlignShift(self):
         """Align Shift. I suppose the units is unknown."""
@@ -417,7 +422,7 @@ class FEIMicroscope:
         y = self.tom.Illumination.BeamAlignShift.Y * 1e9
         return x, y
 
-    def setBeamAlignShift(self, x, y):
+    def setBeamAlignShift(self, x=None, y=None):
         """Align Shift. I suppose the units is unknown."""
         bs = self.tom.Illumination.BeamAlignShift
 
@@ -432,7 +437,7 @@ class FEIMicroscope:
         bs = self.tom.Illumination.BeamShiftCalibration
         return bs.X, bs.Y
 
-    def setBeamShiftCalibration(self, x, y):
+    def setBeamShiftCalibration(self, x=None, y=None):
         """Not sure what it does. I suppose the units is unknown."""
         bs = self.tom.Illumination.BeamShiftCalibration
 
@@ -447,7 +452,7 @@ class FEIMicroscope:
         bs = self.tom.Illumination.BeamShiftPhysical
         return bs.X, bs.Y
 
-    def setBeamShiftPhysical(self, x, y):
+    def setBeamShiftPhysical(self, x=None, y=None):
         """Not sure what it does. I suppose the units is unknown."""
         bs = self.tom.Illumination.BeamShiftPhysical
 
@@ -459,99 +464,89 @@ class FEIMicroscope:
 
     def getBeamTilt(self):
         """rotation center in FEI. 5ms per call"""
-        x = self.tem.Illumination.RotationCenter.X *180 / pi
-        y = self.tem.Illumination.RotationCenter.Y *180 / pi
+        if USETOM:
+            x = self.tom.Illumination.BeamAlignmentTilt.X *180 / pi
+            y = self.tom.Illumination.BeamAlignmentTilt.Y *180 / pi
+        else:
+            x = self.tem.Illumination.RotationCenter.X *180 / pi
+            y = self.tem.Illumination.RotationCenter.Y *180 / pi
         return x, y
 
-    def setBeamTilt(self, x, y):
+    def setBeamTilt(self, x=None, y=None):
         """rotation center in FEI. 9.8ms per call"""
-        bt = self.tem.Illumination.RotationCenter
-
-        if x is not None:
-            bt.X = x * pi / 180
-        if y is not None:
-            bt.Y = y * pi / 180
-        self.tem.Illumination.RotationCenter = bt
-
-    def getBeamTilt_Tom(self):
-        """rotation center in FEI. 5ms per call. Unit unknown"""
-        x = self.tom.Illumination.BeamAlignmentTilt.X *180 / pi
-        y = self.tom.Illumination.BeamAlignmentTilt.Y *180 / pi
-        return x, y
-
-    def setBeamTilt_Tom(self, x, y):
-        """rotation center in FEI. 9.8ms per call. Unit unknown"""
-        bt = self.tom.Illumination.BeamAlignmentTilt
-
-        if x is not None:
-            bt.X = x * pi / 180
-        if y is not None:
-            bt.Y = y * pi / 180
-        self.tom.Illumination.BeamAlignmentTilt = bt
-
+        if USETOM:
+            bt = self.tom.Illumination.BeamAlignmentTilt
+            if x is not None:
+                bt.X = x * pi / 180
+            if y is not None:
+                bt.Y = y * pi / 180
+            self.tom.Illumination.BeamAlignmentTilt = bt
+        else:
+            bt = self.tem.Illumination.RotationCenter
+            if x is not None:
+                bt.X = x * pi / 180
+            if y is not None:
+                bt.Y = y * pi / 180
+            self.tem.Illumination.RotationCenter = bt
+        
     def getImageShift1(self):
         """User image shift. 5ms per call
            The image shift with respect to the origin that is defined by alignment. Units: nm."""
-        return self.tem.Projection.ImageShift.X * 1e9, self.tem.Projection.ImageShift.Y * 1e9
+        if USETOM:
+            return self.tom.Projection.ImageShift.X * 1e9, self.tom.Projection.ImageShift.Y * 1e9
+        else:
+            return self.tem.Projection.ImageShift.X * 1e9, self.tem.Projection.ImageShift.Y * 1e9
 
-    def setImageShift1(self, x, y):
+    def setImageShift1(self, x=None, y=None):
         """9.8ms per call
            The image shift with respect to the origin that is defined by alignment. Units: nm."""
-        is1 = self.tem.Projection.ImageShift
-
-        if x is not None:
-            is1.X = x * 1e-9
-        if y is not None:
-            is1.Y = y * 1e-9
-
-        self.tem.Projection.ImageShift = is1
-
-    def getImageShift1_Tom(self):
-        """User image shift. 5ms per call
-           The image shift with respect to the origin that is defined by alignment. Units: unknown."""
-        return self.tom.Projection.ImageShift.X * 1e9, self.tom.Projection.ImageShift.Y * 1e9
-
-    def setImageShift1_Tom(self, x, y):
-        """9.8ms per call
-           The image shift with respect to the origin that is defined by alignment. Units: unknown."""
-        is1 = self.tom.Projection.ImageShift
-
-        if x is not None:
-            is1.X = x * 1e-9
-        if y is not None:
-            is1.Y = y * 1e-9
-
-        self.tom.Projection.ImageShift = is1
+        if USETOM:
+            is1 = self.tom.Projection.ImageShift
+            if x is not None:
+                is1.X = x * 1e-9
+            if y is not None:
+                is1.Y = y * 1e-9
+            self.tom.Projection.ImageShift = is1
+        else:
+            is1 = self.tem.Projection.ImageShift
+            if x is not None:
+                is1.X = x * 1e-9
+            if y is not None:
+                is1.Y = y * 1e-9
+            self.tem.Projection.ImageShift = is1
 
     def getImageShift2(self):
-        return 0, 0
-
-    def setImageShift2(self, x, y):
-        return 0
-
-    def getImageBeamShift(self):
-        """image-beam shift. 5ms per call
+        """image-beam shift. 5ms per call    def getImageBeamShift(self)?
            Image shift with respect to the origin that is defined by alignment. The apparent beam shift is compensated for, 
            without affecting the Shift-property of the Illumination-object. Units: nm.
            Attention: Avoid intermixing ImageShift and ImageBeamShift, otherwise it would mess up the beam shift 
            (=Illumination.Shift). If you want to use both alternately, then reset the other to zero first."""
-        return self.tem.Projection.ImageBeamShift.X * 1e9, self.tem.Projection.ImageBeamShift.Y * 1e9
+        if USETOM:
+            return self.tom.Projection.ImageBeamShift.X * 1e9, self.tom.Projection.ImageBeamShift.Y * 1e9
+        else:
+            return self.tem.Projection.ImageBeamShift.X * 1e9, self.tem.Projection.ImageBeamShift.Y * 1e9
 
-    def setImageBeamShift(self, x, y):
-        """9.8ms per call
+    def setImageShift2(self, x=None, y=None):
+        """9.8ms per call     def setImageBeamShift(self, x, y)?
            Image shift with respect to the origin that is defined by alignment. The apparent beam shift is compensated for, 
            without affecting the Shift-property of the Illumination-object. Units: nm.
            Attention: Avoid intermixing ImageShift and ImageBeamShift, otherwise it would mess up the beam shift 
            (=Illumination.Shift). If you want to use both alternately, then reset the other to zero first."""
-        is1 = self.tem.Projection.ImageBeamShift
-
-        if x is not None:
-            is1.X = x / 1e9
-        if y is not None:
-            is1.Y = y / 1e9
-
-        self.tem.Projection.ImageBeamShift = is1
-
+        if USETOM:
+            is1 = self.tom.Projection.ImageBeamShift
+            if x is not None:
+                is1.X = x / 1e9
+            if y is not None:
+                is1.Y = y / 1e9
+            self.tom.Projection.ImageBeamShift = is1
+        else:
+            is1 = self.tem.Projection.ImageBeamShift
+            if x is not None:
+                is1.X = x / 1e9
+            if y is not None:
+                is1.Y = y / 1e9
+            self.tem.Projection.ImageBeamShift = is1
+        
     def getImageBeamTilt(self):
         """Beam tilt with respect to the origin that is defined by alignment (rotation center). The resulting 
            diffraction shift is compensated for, without affecting the DiffractionShift-property of the Projection 
@@ -559,23 +554,32 @@ class FEIMicroscope:
            (for more information, see a0050100.htm on the TEM software installation CD under privada\beamtiltdiffshift). Units: radians.
            Attention: Avoid intermixing Tilt (of the beam in Illumination) and ImageBeamTilt. If you want to 
            use both alternately, then reset the other to zero first."""
-        return self.tem.Projection.ImageBeamTilt.X * 1e9, self.tem.Projection.ImageBeamTilt.Y * 1e9
+        if USETOM:
+            return self.tom.Projection.ImageBeamTilt.X * 1e9, self.tom.Projection.ImageBeamTilt.Y * 1e9
+        else:
+            return self.tem.Projection.ImageBeamTilt.X * 1e9, self.tem.Projection.ImageBeamTilt.Y * 1e9
 
-    def setImageBeamTilt(self, x, y):
+    def setImageBeamTilt(self, x=None, y=None):
         """Beam tilt with respect to the origin that is defined by alignment (rotation center). The resulting 
            diffraction shift is compensated for, without affecting the DiffractionShift-property of the Projection 
            object. For proper operation requires calibration (alignment) of the Beam Tilt - Diffraction Shift 
            (for more information, see a0050100.htm on the TEM software installation CD under privada\beamtiltdiffshift). Units: radians.
            Attention: Avoid intermixing Tilt (of the beam in Illumination) and ImageBeamTilt. If you want to 
            use both alternately, then reset the other to zero first."""
-        is1 = self.tem.Projection.ImageBeamTilt
-
-        if x is not None:
-            is1.X = x / 1e9
-        if y is not None:
-            is1.Y = y / 1e9
-
-        self.tem.Projection.ImageBeamTilt = is1
+        if USETOM:
+            is1 = self.tom.Projection.ImageBeamTilt
+            if x is not None:
+                is1.X = x / 1e9
+            if y is not None:
+                is1.Y = y / 1e9
+            self.tom.Projection.ImageBeamTilt = is1
+        else:
+            is1 = self.tem.Projection.ImageBeamTilt
+            if x is not None:
+                is1.X = x / 1e9
+            if y is not None:
+                is1.Y = y / 1e9
+            self.tem.Projection.ImageBeamTilt = is1
 
     def isStageMoving(self):
         """Check if sample stage is moving"""
@@ -593,7 +597,7 @@ class FEIMicroscope:
     def getFunctionMode(self):
         """read only! {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
            LAD or D). The imaging submode can change, when the magnification is changed."""
-        mode = self.tom.Projection.Submode
+        mode = self.projection.Submode
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
@@ -609,17 +613,23 @@ class FEIMicroscope:
         self.FunctionMode_value = value
 
     def getHolderType(self):
-        return self.stage.Holder
+        return self.tem.Stage.Holder
 
     def getDiffFocus(self, confirm_mode=True):
         if confirm_mode and (self.getFunctionMode() not in ("LAD", "D")):
             raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
-        return self.tem.Projection.Defocus * 1e9
+        if USETOM:
+            return self.tom.Projection.Defocus * 1e9
+        else:
+            return self.tem.Projection.Defocus * 1e9
 
     def setDiffFocus(self, value, confirm_mode=True):
         if confirm_mode and (self.getFunctionMode() not in ("LAD", "D")):
             raise FEIValueError("Must be in 'LAD' or 'D' mode to get DiffFocus")
-        self.tem.Projection.Defocus = value * 1e-9
+        if USETOM:
+            self.tom.Projection.Defocus = value * 1e-9
+        else:
+            self.tem.Projection.Defocus = value * 1e-9
 
     def getDefocus(self, confirm_mode=True):
         """1.2ms per call. 
@@ -628,7 +638,10 @@ class FEIMicroscope:
            be set by using ‘ResetDefocus()’."""
         if confirm_mode and (self.getFunctionMode() not in ('LM','Mi','SA','Mh')):
             raise FEIValueError("Must be in ('LM','Mi','SA','Mh') mode to get Defocus")
-        return self.tem.Projection.Defocus * 1e9
+        if USETOM:
+            return self.tom.Projection.Defocus * 1e9
+        else:
+            return self.tem.Projection.Defocus * 1e9
 
     def setDefocus(self, value, confirm_mode=True):
         """defocus value in unit m. 6ms per call. 
@@ -637,18 +650,24 @@ class FEIMicroscope:
            be set by using ‘ResetDefocus()’."""
         if confirm_mode and (self.getFunctionMode() not in ('LM','Mi','SA','Mh')):
             raise FEIValueError("Must be in ('LM','Mi','SA','Mh') mode to get Defocus")
-        self.tem.Projection.Defocus = value * 1e-9
+        if USETOM:
+            self.tom.Projection.Defocus = value * 1e-9
+        else:
+            self.tem.Projection.Defocus = value * 1e-9
 
     def ResetDefocus(self):
         """Resets the current ‘Defocus’ to 0 nm. This does not change the ‘Focus’ value (the focussing lens current). 
            Use it when the image is properly focussed to adjust the ‘Defocus’ scale."""
-        self.tem.ResetDefocus()
+        self.tem.Projection.ResetDefocus()
 
     def getFocus(self):
         """1.2ms per call
            Focus setting of the currently active mode. Range: maximum between -1.0  (= underfocussed) and 
            1.0 (= overfocussed), but the exact limits are mode dependent and may be a lot lower."""
-        return self.tem.Projection.Focus
+        if USETOM:
+            return self.tom.Projection.Focus
+        else:
+            return self.tem.Projection.Focus
 
     def setFocus(self, value):
         """6.5ms per call
@@ -656,7 +675,10 @@ class FEIMicroscope:
            1.0 (= overfocussed), but the exact limits are mode dependent and may be a lot lower."""
         if value < -1 or value > 1:
             raise FEIValueError("Value must within -1 and 1")
-        self.tem.Projection.Focus = value
+        if USETOM:
+            self.tom.Projection.Focus = value
+        else:
+            self.tem.Projection.Focus = value
 
     def getApertureSize(self, aperture):
         '''Not sure about the unit'''
@@ -669,31 +691,45 @@ class FEIMicroscope:
 
     def getScreenCurrent(self):
         """return screen current in nA."""
-        return self.tem.Camera.ScreenCurrent * 1e9
+        if USETOM:
+            return self.tom.Screen.Current * 1e9
+        else:
+            return self.tem.Camera.ScreenCurrent * 1e9
 
     def isfocusscreenin(self):
-        return self.tom.Screen.IsFocusScreenIn
+        if USETOM:
+            return self.tom.Screen.IsFocusScreenIn
+        else:
+            return self.tem.Camera.IsSmallScreenDown
 
     def getScreenPosition(self):
         """return value: 'up' or 'down'"""
-        dic = {0:'down', 1:'up'}
-        return dic[self.tom.Screen.Position]
+        if USETOM:
+            dic = {0: 'down', 1: 'up'}
+            return dic[self.tom.Screen.Position]
+        else:
+            dic = {0: 'unknown', 1: 'up', 2: 'down'}
+            return dic[self.tem.Camera.MainScreen]
 
     def setScreenPosition(self, value):
         """value = 'up' or 'down'"""
-        dic = {'down':0, 'up':1}
-        self.tom.Screen.SetScreenPosition(dict[value])
+        if USETOM:
+            dic = {'down': 0, 'up': 1}
+            self.tom.Screen.SetScreenPosition(dic[value])
+        else:
+            dic = {'unknown': 1, 'up': 2, 'down': 3}
+            self.tem.Camera.MainScreen(dic[value])
 
     def getDiffShift(self):
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 
            180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough
            The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
-        return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
+            return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
 
-    def setDiffShift(self, x, y):
+    def setDiffShift(self, x=None, y=None):
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 
            180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough
-           The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
+           The diffraction pattern shift with respect to the origin that is defined by alignment. Units: degree."""
         ds1 = self.tem.Projection.DiffractionShift
 
         if x is not None:
@@ -720,46 +756,91 @@ class FEIMicroscope:
         self.tem.Illumination.BeamBlanked = 0
 
     def getCondenserLensStigmator(self):
-        return self.tem.Illumination.CondenserStigmator.X, self.tem.Illumination.CondenserStigmator.Y
+        if USETOM:
+            return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
+        else:
+            return self.tem.Illumination.CondenserStigmator.X, self.tem.Illumination.CondenserStigmator.Y
 
-    def setCondenserLensStigmator(self, x, y):
+    def setCondenserLensStigmator(self, x=None, y=None):
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError('Invalid condenser lens stigmator setting: can only be float numbers between -1 and 1.')
-        self.tem.Illumination.CondenserStigmator.X = x
-        self.tem.Illumination.CondenserStigmator.Y = y
+        if USETOM:
+            ds1 = self.tom.Illumination.CondenserStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tom.Illumination.CondenserStigmator = ds1
+        else:
+            ds1 = self.tem.Illumination.CondenserStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tem.Illumination.CondenserStigmator = ds1
 
     def getIntermediateLensStigmator(self):
         """diffraction stigmator."""
-        return self.tem.Projection.DiffractionStigmator.X, self.tem.Projection.DiffractionStigmator.Y
+        if USETOM:
+            return self.tom.Projection.DiffractionStigmator.X, self.tom.Projection.DiffractionStigmator.Y
+        else:
+            return self.tem.Projection.DiffractionStigmator.X, self.tem.Projection.DiffractionStigmator.Y
 
-    def setIntermediateLensStigmator(self, x, y):
+    def setIntermediateLensStigmator(self, x=None, y=None):
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError('Invalid intermediate lens stigmator setting: can only be float numbers between -1 and 1.')
-        self.tem.Projection.DiffractionStigmator.X = x
-        self.tem.Projection.DiffractionStigmator.Y = y
+        if USETOM:
+            ds1 = self.tom.Projection.DiffractionStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tom.Projection.DiffractionStigmator = ds1
+        else:
+            ds1 = self.tem.Projection.DiffractionStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tem.Projection.DiffractionStigmator = ds1
 
     def getObjectiveLensStigmator(self):
-        return self.tem.Projection.ObjectiveStigmator.X, self.tem.Projection.ObjectiveStigmator.Y
+        if USETOM:
+            return self.tom.Projection.ObjectiveStigmator.X, self.tom.Projection.ObjectiveStigmator.Y
+        else:
+            return self.tem.Projection.ObjectiveStigmator.X, self.tem.Projection.ObjectiveStigmator.Y
 
-    def setObjectiveLensStigmator(self, x, y):
+    def setObjectiveLensStigmator(self, x=None, y=None):
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError('Invalid objective lens stigmator setting: can only be float numbers between -1 and 1.')
-        self.tem.Projection.ObjectiveStigmator.X = x
-        self.tem.Projection.ObjectiveStigmator.Y = y
+        if USETOM:
+            ds1 = self.tom.Projection.ObjectiveStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tom.Projection.ObjectiveStigmator = ds1
+        else:
+            ds1 = self.tem.Projection.ObjectiveStigmator
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tem.Projection.ObjectiveStigmator = ds1
 
     def getSpotSize(self):
         """The spot size index (usually ranging from 1 to 11). Adjust C1 current. 220ms per call."""
-        return self.tem.Illumination.SpotsizeIndex
+        return self.illu.SpotsizeIndex
 
     def setSpotSize(self, value):
         """The spot size index (usually ranging from 1 to 11). Adjust C1 current. 224ms per call."""
         if value < 1 or value > 11:
             raise FEIValueError('The range of spot size is from 1 to 11.')
-        self.tem.Illumination.SpotsizeIndex = value
+        self.illu.SpotsizeIndex = value
 
     def getMagnificationIndex(self):
         """"""
-        if self.tom.Projection.Mode != 1:
+        if self.proj.Mode != 1:
             ind = self.proj.MagnificationIndex
             return ind
         else:
@@ -770,42 +851,49 @@ class FEIMicroscope:
         raise NotImplementedError
 
     def setMagnificationIndex(self, index):
-        if self.tom.Projection.Mode != 1:
+        if self.proj.Mode != 1:
             self.proj.MagnificationIndex = index
         else:
             self.proj.CameraLengthIndex = index
-
-    def getIlluminatedAreaDiameter(self):
-        """return diameter in unknown unit."""
-        return self.tom.Illumination.IlluminatedAreaDiameter * 1e9
-
-    def setIlluminatedAreaDiameter(self, value):
-        """return diameter in unknown unit."""
-        self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-9
-
+        
     def getBrightness(self):
         """Intensity value of the current mode (typically ranging from 0 to 1.0, 
            but on some microscopes the minimum may be higher"""
-        return self.tem.Illumination.Intensity
+        if USETOM:
+            return self.tom.Illumination.Intensity
+        else:
+            return self.tem.Illumination.Intensity
 
     def setBrightness(self, value):
         """Intensity value of the current mode (typically ranging from 0 to 1.0, 
            but on some microscopes the minimum may be higher"""
         if value < 0 or value > 1:
             raise FEIValueError('The range of intensity of probe is from 0 to 1.')
-        self.tem.Illumination.Intensity = value
+        if USETOM:
+            self.tom.Illumination.Intensity = value
+        else:
+            self.tem.Illumination.Intensity = value
 
     def getIlluminatedArea(self):
         """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
-        return self.tem.Illumination.IlluminatedArea * 1e9
+        if USETOM:
+            return self.tom.Illumination.IlluminatedAreaDiameter * 1e9
+        else:
+            return self.tem.Illumination.IlluminatedArea * 1e9
 
     def setIlluminatedArea(self, value):
         """return diameter in nm. The size of the illuminated area. Accessible only in Parallel mode."""
-        self.tem.Illumination.IlluminatedArea = value * 1e-9
+        if USETOM:
+            self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-9
+        else:
+            self.tem.Illumination.IlluminatedArea = value * 1e-9
 
     def isStemAvailable(self):
         """Returns whether themicroscope has a STEM system or not."""
-        return self.tem.InstrumentModeControl.StemAvailable
+        if USETOM:
+            return self.tom.StemAvailable
+        else:
+            return self.tem.InstrumentModeControl.StemAvailable
 
     def getInstrumentMode(self):
         """Switches between TEM and STEM modes."""
@@ -828,7 +916,10 @@ class FEIMicroscope:
         """Mode of the illumination system (either nanoprobe or microprobe). 
            (Nearly) no effect for low magnifications (LM)."""
         dct = {0: 'micro', 1: 'nano'}
-        return dct[self.tem.Illumination.Mode]
+        if USETOM:
+            return dct[self.tem.Illumination.ProbeMode]
+        else:
+            return dct[self.tem.Illumination.Mode]
 
     def setProbeMode(self, value):
         """Mode of the illumination system (either nanoprobe or microprobe). 
@@ -836,87 +927,148 @@ class FEIMicroscope:
         dct = {'micro': 0, 'nano': 1}
         if value != 'micro' or value != 'nano':
             raise FEIValueError('The probe mode must be \'micro\' or \'nano\'.')
-        self.tem.Illumination.Mode = value
+        if USETOM:
+            self.tem.Illumination.ProbeMode = value
+        else:
+            self.tem.Illumination.Mode = value
 
     def isIntensityZoomEnabled(self):
         """Activates/deactivates the intensity zoom in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        return self.tem.Illumination.IntensityZoomEnabled
+        if USETOM:
+            return self.tom.Illumination.IntensityZoomEnabled
+        else:
+            return self.tem.Illumination.IntensityZoomEnabled
 
     def setIntensityZoomEnabled(self, value: bool):
         """Activates/deactivates the intensity zoom in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        self.tem.Illumination.IntensityZoomEnabled = value
+        if USETOM:
+            self.tom.Illumination.IntensityZoomEnabled = value
+        else:
+            self.tem.Illumination.IntensityZoomEnabled = value
 
     def isIntensityLimitEnabled(self):
         """Activates/deactivates the intensity limit in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        return self.tem.Illumination.IntensityLimitEnabled
+        if USETOM:
+            return self.tom.Illumination.IntensityLimitEnabled
+        else:
+            return self.tem.Illumination.IntensityLimitEnabled
 
     def setIntensityLimitEnabled(self, value: bool):
         """Activates/deactivates the intensity limit in the current mode. This function only works, 
            when it has been initialized by means of the microscope alignments (it needs to know at which 
            intensity setting the spot is focused)."""
-        self.tem.Illumination.IntensityLimitEnabled = value
+        if USETOM:
+            self.tom.Illumination.IntensityLimitEnabled = value
+        else:
+            self.tem.Illumination.IntensityLimitEnabled = value
 
     def getProbeShift(self):
         """Beam shift relative to the origin stored at alignment time. Units: nm."""
-        return self.tem.Illumination.Shift.X * 1e9, self.tem.Illumination.Shift.Y * 1e9
+        if USETOM:
+            return self.tom.Illumination.Shift.X * 1e9, self.tom.Illumination.Shift.Y * 1e9
+        else:
+            return self.tem.Illumination.Shift.X * 1e9, self.tem.Illumination.Shift.Y * 1e9
 
-    def setProbeShift(self, x, y):
+    def setProbeShift(self, x=None, y=None):
         """Beam shift relative to the origin stored at alignment time. Units: nm."""
-        self.tem.Illumination.Shift.X = x / 1e9
-        self.tem.Illumination.Shift.Y = y / 1e9
+        if USETOM:
+            ds1 = self.tom.Illumination.Shift
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tom.Illumination.Shift = ds1
+        else:
+            ds1 = self.tem.Illumination.Shift
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tem.Illumination.Shift = ds1
 
     def getDarkFieldTilt(self):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
            if dark field mode is active. Units: degree, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        return self.tem.Illumination.Tilt.X / pi * 180, self.tem.Illumination.Tilt.Y / pi * 180
+        if USETOM:
+            return self.tom.Illumination.Tilt.X / pi * 180, self.tom.Illumination.Tilt.Y / pi * 180
+        else:
+            return self.tem.Illumination.Tilt.X / pi * 180, self.tem.Illumination.Tilt.Y / pi * 180
 
-    def setDarkFieldTilt(self, x, y):
+    def setDarkFieldTilt(self, x=None, y=None):
         """Dark field beam tilt relative to the origin stored at alignment time. Only operational, 
            if dark field mode is active. Units: degree, either in Cartesian (x,y) or polar (conical) tilt angles. 
            The accuracy of the beam tilt physical units depends on a calibration of the tilt angles"""
-        self.tem.Illumination.Tilt.X = x / 180 * pi
-        self.tem.Illumination.Tilt.Y = y / 180 * pi
+        if USETOM:
+            ds1 = self.tom.Illumination.Tilt
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tom.Illumination.Tilt = ds1
+        else:
+            ds1 = self.tem.Illumination.Tilt
+            if x is not None:
+                ds1.X = x
+            if y is not None:
+                ds1.Y = y
+            self.tem.Illumination.Tilt = ds1
 
     def getRotationCenter(self):
         """Corresponds to the alignment beam tilt value. Units are degree, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
         return self.tem.Illumination.RotationCenter.X / pi * 180, self.tem.Illumination.RotationCenter.Y / pi * 180
 
-    def setRotationCenter(self, x, y):
+    def setRotationCenter(self, x=None, y=None):
         """Corresponds to the alignment beam tilt value. Units are degree, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
         if abs(x) > 0.3 or abs(y) > 0.3:
             raise FEIValueError('Invalid rotation center setting: can only be float numbers between -0.3 and 0.3.')
-        self.tem.Illumination.RotationCenter.X = x / 180 * pi
-        self.tem.Illumination.RotationCenter.Y = y / 180 * pi
+        ds1 = self.tem.Illumination.RotationCenter
+        if x is not None:
+            ds1.X = x
+        if y is not None:
+            ds1.Y = y
+        self.tem.Illumination.RotationCenter = ds1
 
     def getStemMagnification(self):
         """The magnification value in STEM mode. You can change the magnification only in discrete steps 
            (the same as on the microscope). If you specify a value that is not one of those steps, the scripting 
            will select the nearest available step."""
-        return self.tem.Illumination.StemMagnification
+        if USETOM:
+            return self.tom.STEM.Magnification
+        else:
+            return self.tem.Illumination.StemMagnification
 
     def setStemMagnification(self, value):
         """The magnification value in STEM mode. You can change the magnification only in discrete steps 
            (the same as on the microscope). If you specify a value that is not one of those steps, the scripting 
            will select the nearest available step."""
-        self.tem.Illumination.StemMagnification = value
+        if USETOM:
+            self.tom.STEM.Magnification = value
+        else:
+            self.tem.Illumination.StemMagnification = value
 
     def getStemRotation(self):
         """The STEM rotation angle (in radians)."""
-        return self.tem.Illumination.StemRotation / pi * 180
+        if USETOM:
+            return self.tom.STEM.Rotation / pi * 180
+        else:
+            return self.tem.Illumination.StemRotation / pi * 180
 
     def setStemRotation(self, value):
         """The STEM rotation angle (in radians)."""
         value = value * pi / 180
-        self.tem.Illumination.StemRotation = value
+        if USETOM:
+            self.tom.STEM.Rotation = value
+        else:
+            self.tem.Illumination.StemRotation = value
 
     def getProbeDefocus(self):
         """The amount of probe defocus (in nm). Accessible only in Probe mode."""
@@ -928,11 +1080,17 @@ class FEIMicroscope:
 
     def getConvergenceAngle(self):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        return self.tem.Illumination.ConvergenceAngle / pi * 180
+        if USETOM:
+            return self.tom.Illumination.ProbConvergenceAngle / pi * 180
+        else:
+            return self.tem.Illumination.ConvergenceAngle / pi * 180
 
     def setConvergenceAngle(self, value):
         """The convergence angle (in radians). Accessible only in Probe mode."""
-        self.tem.Illumination.ConvergenceAngle = value / 180 * pi
+        if USETOM:
+            self.tom.Illumination.ProbConvergenceAngle = value / 180 * pi
+        else:
+            self.tem.Illumination.ConvergenceAngle = value / 180 * pi
 
     def NormalizeCondenser(self, index):
         """Normalizes the condenser lenses and/or the minicondenser lens, dependent on the choice of ‘Norm’.
@@ -1134,3 +1292,59 @@ class FEIMicroscope:
         print('IS2', self.def3.GetIS2())     # image shift 2
         print('OLs', self.def3.GetOLs())     # objective lens stigmator
         print('PLA', self.def3.GetPLA())     # projector lens alignment
+
+    def test_timing(self):
+        import time
+        t0 = time.perf_counter()
+        mode = self.getFunctionMode()
+        dt = time.perf_counter() - t0
+        print(f'Execution time for getFunctionMode: {dt}')
+
+        funcs = {
+            'GunShift': self.getGunShift,
+            'GunTilt': self.getGunTilt,
+            'BeamShift': self.getBeamShift,
+            'BeamTilt': self.getBeamTilt,
+            'ImageShift1': self.getImageShift1,
+            'ImageShift2': self.getImageShift2,
+            'DiffShift': self.getDiffShift,
+            'StagePosition': self.getStagePosition,
+            'Magnification': self.getMagnification,
+            'Brightness': self.getBrightness,
+            'SpotSize': self.getSpotSize,
+        }
+        if mode in ('D', 'LAD'):
+            funcs['DiffFocus'] = self.getDiffFocus
+        else:
+            funcs['ObjFocus'] = self.getDefocus
+
+        for key in funcs.keys():
+            t0 = time.perf_counter()
+            funcs[key]()
+            dt = time.perf_counter() - t0
+            print(f'Execution time for {funcs[key].__name__}: {dt}')
+
+        funcs_set = {
+            'GunShift': self.setGunShift,
+            'GunTilt': self.setGunTilt,
+            'BeamShift': self.setBeamShift,
+            'BeamTilt': self.setBeamTilt,
+            'ImageShift1': self.setImageShift1,
+            'ImageShift2': self.setImageShift2,
+            'DiffShift': self.setDiffShift,
+            'StagePosition': self.setStagePosition,
+            'Magnification': self.setMagnification,
+            'Brightness': self.setBrightness,
+            'SpotSize': self.setSpotSize,
+        }
+        if mode in ('D', 'LAD'):
+                funcs_set['DiffFocus'] = self.setDiffFocus
+            else:
+                funcs_set['ObjFocus'] = self.setDefocus
+
+        for key in funcs.keys():
+            t0 = time.perf_counter()
+            funcs_set[key]()
+            dt = time.perf_counter() - t0
+            print(f'Execution time for {funcs_set[key].__name__}: {dt}')
+            
