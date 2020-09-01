@@ -228,7 +228,7 @@ class FEIMicroscope:
             self.proj = self.tem.Projection
         t = 0
         while True:
-            ht = self.tem.Gun.HTValue
+            ht = self.getHTValue()
             if ht > 0:
                 break
             time.sleep(1)
@@ -305,7 +305,8 @@ class FEIMicroscope:
 
     def getStagePosition(self):
         """return numbers in microns, angles in degs. 3ms per call"""
-        return self.stage.Position.X * 1e9, self.stage.Position.Y * 1e9, self.stage.Position.Z * 1e9, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
+        pos = self.stage.Position
+        return pos.X * 1e9, pos.Y * 1e9, pos.Z * 1e9, pos.A / pi * 180, pos.B / pi * 180
     
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """x, y, z in the system are in unit of nm, angles in radians. 1s per call (without moving anything)."""
