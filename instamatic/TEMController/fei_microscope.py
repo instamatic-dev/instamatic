@@ -11,7 +11,7 @@ from instamatic.exceptions import FEIValueError
 from instamatic.exceptions import TEMCommunicationError
 logger = logging.getLogger(__name__)
 
-USETOM = TRUE
+USETOM = True
 
 # speed table (deg/s):
 # 1.00: 21.14
@@ -179,19 +179,20 @@ def move_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
     if b is not None:
         pos.B = b / 180 * pi
         axis += 16
-    if speed == 1:
-        tem.Stage.Goto(pos, axis)
-    else:
-        if x is not None:
-            tem.Stage.GotoWithSpeed(pos, 1, goniospeed)
-        if y is not None:
-            tem.Stage.GotoWithSpeed(pos, 2, goniospeed)
-        if z is not None:
-            tem.Stage.GotoWithSpeed(pos, 4, goniospeed)
-        if a is not None:
-            tem.Stage.GotoWithSpeed(pos, 8, goniospeed)
-        if b is not None:
-            tem.Stage.GotoWithSpeed(pos, 16, goniospeed)
+    if axis != 0:
+        if speed == 1:
+            tem.Stage.Goto(pos, axis)
+        else:
+            if x is not None:
+                tem.Stage.GotoWithSpeed(pos, 1, goniospeed)
+            if y is not None:
+                tem.Stage.GotoWithSpeed(pos, 2, goniospeed)
+            if z is not None:
+                tem.Stage.GotoWithSpeed(pos, 4, goniospeed)
+            if a is not None:
+                tem.Stage.GotoWithSpeed(pos, 8, goniospeed)
+            if b is not None:
+                tem.Stage.GotoWithSpeed(pos, 16, goniospeed)
 
 class FEIMicroscope:
     """Python bindings to the FEI microscope using the COM interface."""
@@ -227,7 +228,7 @@ class FEIMicroscope:
             self.proj = self.tem.Projection
         t = 0
         while True:
-            ht = self.tem.GUN.HTValue
+            ht = self.tem.Gun.HTValue
             if ht > 0:
                 break
             time.sleep(1)
@@ -251,11 +252,17 @@ class FEIMicroscope:
 
     def getHTValue(self):
         '''The value of the HT setting as displayed in the TEM user interface. Units: Volts.'''
-        return self.tem.GUN.HTValue
+        if USETOM:
+            return self.tom.Gun.HT
+        else:
+            return self.tem.Gun.HTValue
 
     def setHTValue(self, htvalue):
         '''The value of the HT setting as displayed in the TEM user interface. Units: Volts.'''
-        self.tem.GUN.HTValue = htvalue
+        if USETOM:
+            self.tom.Gun.HT = htvalue
+        else:
+            self.tem.Gun.HTValue = htvalue
 
     def getCurrentDensity(self) -> float:
         """Need to get the current density from the fluorescence screen in nA? Call it current density 
@@ -263,7 +270,7 @@ class FEIMicroscope:
         raise FEIValueError("Cannot obtain current density in FEI microscope")
 
     def getMagnification(self):
-        if self.tom.Projection.Mode != 1:
+        if self.getProjectionMode() == 'imaging':
             ind = self.proj.MagnificationIndex
             return MagnificationMapping[ind]
         else:
@@ -272,7 +279,7 @@ class FEIMicroscope:
 
     def setMagnification(self, value):
         """value has to be the index."""
-        if self.tom.Projection.Mode != 1:
+        if self.getProjectionMode() == 'imaging':
             ind = [key for key, v in MagnificationMapping.items() if v == value][0]
             try:
                 self.proj.MagnificationIndex = ind
@@ -280,7 +287,7 @@ class FEIMicroscope:
                 pass
         else:
             ind = [key for key, v in CameraLengthMapping.items() if v == value][0]
-            self.tom.Projection.CameraLengthIndex = ind
+            self.proj.CameraLengthIndex = ind
 
     def getMagnificationRanges(self) -> dict:
         raise NotImplementedError
@@ -309,7 +316,7 @@ class FEIMicroscope:
             if wait:
                 self.tom.Stage.Speed = speed
                 goniospeed = self.tom.Stage.Speed
-                pos = self.tem.Stage.Position
+                pos = self.stage.Position
                 axis = 0
 
                 if x is not None:
@@ -327,73 +334,80 @@ class FEIMicroscope:
                 if b is not None:
                     pos.B = b / 180 * pi
                     axis += 16
-                if speed == 1:
-                    self.tem.Stage.Goto(pos, axis)
-                else:
-                    if x is not None:
-                        self.tem.Stage.GotoWithSpeed(pos, 1, goniospeed)
-                    if y is not None:
-                        self.tem.Stage.GotoWithSpeed(pos, 2, goniospeed)
-                    if z is not None:
-                        self.tem.Stage.GotoWithSpeed(pos, 4, goniospeed)
-                    if a is not None:
-                        self.tem.Stage.GotoWithSpeed(pos, 8, goniospeed)
-                    if b is not None:
-                        self.tem.Stage.GotoWithSpeed(pos, 16, goniospeed)
+                if axis != 0:
+                    if speed == 1:
+                        self.stage.Goto(pos, axis)
+                    else:
+                        if x is not None:
+                            self.stage.GotoWithSpeed(pos, 1, goniospeed)
+                        if y is not None:
+                            self.stage.GotoWithSpeed(pos, 2, goniospeed)
+                        if z is not None:
+                            self.stage.GotoWithSpeed(pos, 4, goniospeed)
+                        if a is not None:
+                            self.stage.GotoWithSpeed(pos, 8, goniospeed)
+                        if b is not None:
+                            self.stage.GotoWithSpeed(pos, 16, goniospeed)
             else:
                 p = multiprocessing.Process(target=move_stage, args=(x,y,z,a,b,speed,))
                 p.start()
 
     def getGunShift(self):
         """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units).150 ms per call"""
-        x = self.gun.Shift.X
-        y = self.gun.Shift.Y
+        x = self.tem.Gun.Shift.X
+        y = self.tem.Gun.Shift.Y
         return x, y
 
     def setGunShift(self, x=None, y=None):
         """The gunshift alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 150 ms per call"""
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        try:
+            if abs(x) > 1 or abs(y) > 1:
+                raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        except TypeError:
+            pass
 
-        gs = self.gun.Shift
+        gs = self.tem.Gun.Shift
 
         if x is not None:
             gs.X = x
         if y is not None:
             gs.Y = y
 
-        self.gun.Shift = gs
+        self.tem.Gun.Shift = gs
 
     def getGunTilt(self):
         """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
            The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
            the beamblanker is active. 150ms per call"""
-        x = self.gun.Tilt.X
-        y = self.gun.Tilt.Y
+        x = self.tem.Gun.Tilt.X
+        y = self.tem.Gun.Tilt.Y
         return x, y
 
     def setGunTilt(self, x=None, y=None):
         """The gun tilt alignment values. Range from -1.0 to +1.0 in x and y directions (logical units). 
            The beamblanker changes the gun tilt. Therefore changing the gun tilt alignment is blocked as long as 
            the beamblanker is active. 150ms per call"""
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        try:
+            if abs(x) > 1 or abs(y) > 1:
+                raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+        except TypeError:
+            pass
 
-        gt = self.gun.Tilt
+        gt = self.tem.Gun.Tilt
 
         if x is not None:
             gt.X = x
         if y is not None:
             gt.Y = y
 
-        self.gun.Tilt = gt
+        self.tem.Gun.Tilt = gt
 
     def getBeamShift(self):
         """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 6ms per call"""
         '1.19 ms in communication. Super fast!'
         if USETOM:
-            x = self.tom.Illumination.Shift.X * 1e9
-            y = self.tom.Illumination.Shift.Y * 1e9
+            x = self.tom.Illumination.BeamShift.X * 1e9
+            y = self.tom.Illumination.BeamShift.Y * 1e9
         else:
             x = self.tem.Illumination.Shift.X * 1e9
             y = self.tem.Illumination.Shift.Y * 1e9
@@ -402,7 +416,7 @@ class FEIMicroscope:
     def setBeamShift(self, x=None, y=None):
         """User Shift. Beam shift relative to the origin stored at alignment time. Units: nm. 10ms per call"""
         if USETOM:
-            bs = self.tom.Illumination.Shift
+            bs = self.tom.Illumination.BeamShift
             if x is not None:
                 bs.X = x * 1e-9
             if y is not None:
@@ -597,7 +611,7 @@ class FEIMicroscope:
     def getFunctionMode(self):
         """read only! {1:'LM',2:'Mi',3:'SA',4:'Mh',5:'LAD',6:'D'} Submode of the projection system (either LM, Mi, ..., 
            LAD or D). The imaging submode can change, when the magnification is changed."""
-        mode = self.projection.Submode
+        mode = self.proj.Submode
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value):
@@ -724,7 +738,7 @@ class FEIMicroscope:
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 
            180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough
            The diffraction pattern shift with respect to the origin that is defined by alignment. Units: radians."""
-            return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
+        return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
 
     def setDiffShift(self, x=None, y=None):
         """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 
@@ -762,8 +776,12 @@ class FEIMicroscope:
             return self.tem.Illumination.CondenserStigmator.X, self.tem.Illumination.CondenserStigmator.Y
 
     def setCondenserLensStigmator(self, x=None, y=None):
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError('Invalid condenser lens stigmator setting: can only be float numbers between -1 and 1.')
+        try:
+            if abs(x) > 1 or abs(y) > 1:
+                raise FEIValueError('Invalid condenser lens stigmator setting: can only be float numbers between -1 and 1.')
+        except TypeError:
+            pass
+
         if USETOM:
             ds1 = self.tom.Illumination.CondenserStigmator
             if x is not None:
@@ -787,8 +805,12 @@ class FEIMicroscope:
             return self.tem.Projection.DiffractionStigmator.X, self.tem.Projection.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x=None, y=None):
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError('Invalid intermediate lens stigmator setting: can only be float numbers between -1 and 1.')
+        try:
+            if abs(x) > 1 or abs(y) > 1:
+                raise FEIValueError('Invalid intermediate lens stigmator setting: can only be float numbers between -1 and 1.')
+        except TypeError:
+            pass
+
         if USETOM:
             ds1 = self.tom.Projection.DiffractionStigmator
             if x is not None:
@@ -811,8 +833,12 @@ class FEIMicroscope:
             return self.tem.Projection.ObjectiveStigmator.X, self.tem.Projection.ObjectiveStigmator.Y
 
     def setObjectiveLensStigmator(self, x=None, y=None):
-        if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError('Invalid objective lens stigmator setting: can only be float numbers between -1 and 1.')
+        try:
+            if abs(x) > 1 or abs(y) > 1:
+                raise FEIValueError('Invalid objective lens stigmator setting: can only be float numbers between -1 and 1.')
+        except TypeError:
+            pass
+
         if USETOM:
             ds1 = self.tom.Projection.ObjectiveStigmator
             if x is not None:
@@ -840,7 +866,7 @@ class FEIMicroscope:
 
     def getMagnificationIndex(self):
         """"""
-        if self.proj.Mode != 1:
+        if self.getProjectionMode() == 'imaging':
             ind = self.proj.MagnificationIndex
             return ind
         else:
@@ -851,7 +877,7 @@ class FEIMicroscope:
         raise NotImplementedError
 
     def setMagnificationIndex(self, index):
-        if self.proj.Mode != 1:
+        if self.getProjectionMode() == 'imaging':
             self.proj.MagnificationIndex = index
         else:
             self.proj.CameraLengthIndex = index
@@ -1028,8 +1054,12 @@ class FEIMicroscope:
     def setRotationCenter(self, x=None, y=None):
         """Corresponds to the alignment beam tilt value. Units are degree, range is ± 0.2-0.3rad. 
            Do not confuse RotationCenter with dark field (Tilt). Be aware that this is an alignment function."""
-        if abs(x) > 0.3 or abs(y) > 0.3:
-            raise FEIValueError('Invalid rotation center setting: can only be float numbers between -0.3 and 0.3.')
+        try:
+            if abs(x) > 0.3 or abs(y) > 0.3:
+                raise FEIValueError('Invalid rotation center setting: can only be float numbers between -0.3 and 0.3.')
+        except TypeError:
+            pass
+
         ds1 = self.tem.Illumination.RotationCenter
         if x is not None:
             ds1.X = x
@@ -1141,27 +1171,43 @@ class FEIMicroscope:
         """Main mode of the projection system (either imaging or diffraction).
            1: Imaging          Projector in imaging mode
            2: Diffraction      Projector in diffraction  mode"""
-        return self.tem.Projection.Mode
+        if USETOM:
+            dct = {0: 'imaging', 1: 'diffraction'}
+        else:
+            dct = {1: 'imaging', 2: 'diffraction'}
+        return dct[self.proj.Mode]
 
     def setProjectionMode(self, value):
         """Main mode of the projection system (either imaging or diffraction).
            1: Imaging          Projector in imaging mode
            2: Diffraction      Projector in diffraction  mode"""
-        self.tem.Projection.Mode = value
+        if USETOM:
+            dct = {'imaging': 0, 'diffraction': 1}
+        else:
+            dct = {'imaging': 1, 'diffraction': 2}
+        try:
+            self.proj.Mode = dct[value]
+        except KeyError:
+            raise FEIValueError('Input must be \'imaging\' or \'diffraction\'') 
 
     def getLensProgram(self):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
            characterize a mode of the projection system.
            1: Regular        The default lens program
            2: EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
-        return self.tem.Projection.LensProgram
+        dct = {1: 'regular', 2: 'EFTEM'}
+        return dct[self.proj.LensProgram]
 
     def setLensProgram(self, value):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
            characterize a mode of the projection system.
            1: Regular        The default lens program
            2: EFTEM          Lens program used for EFTEM (energy-filtered TEM)"""
-        self.tem.Projection.LensProgram = value
+        dct = {'regular': 1, 'EFTEM': 2}
+        try:
+            self.proj.LensProgram = dct[value]
+        except KeyError:
+            raise FEIValueError('Input must be \'regular\' or \'EFTEM\'') 
 
     def getImageRotation(self):
         """The rotation of the image or diffraction pattern on the fluorescent screen 
@@ -1298,7 +1344,7 @@ class FEIMicroscope:
         t0 = time.perf_counter()
         mode = self.getFunctionMode()
         dt = time.perf_counter() - t0
-        print(f'Execution time for getFunctionMode: {dt}')
+        print(f'Execution time for getFunctionMode: {dt*1000:.2f}ms')
 
         funcs = {
             'GunShift': self.getGunShift,
@@ -1322,7 +1368,7 @@ class FEIMicroscope:
             t0 = time.perf_counter()
             funcs[key]()
             dt = time.perf_counter() - t0
-            print(f'Execution time for {funcs[key].__name__}: {dt}')
+            print(f'Execution time for {funcs[key].__name__}: {dt*1000:.2f}ms')
 
         funcs_set = {
             'GunShift': self.setGunShift,
@@ -1333,18 +1379,11 @@ class FEIMicroscope:
             'ImageShift2': self.setImageShift2,
             'DiffShift': self.setDiffShift,
             'StagePosition': self.setStagePosition,
-            'Magnification': self.setMagnification,
-            'Brightness': self.setBrightness,
-            'SpotSize': self.setSpotSize,
         }
-        if mode in ('D', 'LAD'):
-                funcs_set['DiffFocus'] = self.setDiffFocus
-            else:
-                funcs_set['ObjFocus'] = self.setDefocus
 
-        for key in funcs.keys():
+        for key in funcs_set.keys():
             t0 = time.perf_counter()
             funcs_set[key]()
             dt = time.perf_counter() - t0
-            print(f'Execution time for {funcs_set[key].__name__}: {dt}')
+            print(f'Execution time for {funcs_set[key].__name__}: {dt*1000:.2f}ms')
             
