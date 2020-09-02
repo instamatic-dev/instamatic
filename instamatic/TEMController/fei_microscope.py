@@ -164,38 +164,71 @@ def move_stage(x=None, y=None, z=None, a=None, b=None, speed=1):
 
     stage_tom.Speed = speed
     goniospeed = stage_tom.Speed
-    pos = stage_tem.Position
-    axis = 0
+    if USETOM:
+        pos = stage_tom.Position
+        axis = 0
+        if x is not None:
+            pos.X = x * 1e-9
+            axis += 1
+        if y is not None:
+            pos.Y = y * 1e-9
+            axis += 2
+        if z is not None:
+            pos.Z = z * 1e-9
+            axis += 4
+        if a is not None:
+            pos.A = a / 180 * pi
+            axis += 8
+        if b is not None:
+            pos.B = b / 180 * pi
+            axis += 16
+        if axis != 0:
+            if speed == 1:
+                stage_tom.Goto(pos, axis)
+            else:
+                if x is not None:
+                    stage_tom.GotoWithSpeed(0, pos.X)
+                if y is not None:
+                    stage_tom.GotoWithSpeed(1, pos.Y)
+                if z is not None:
+                    stage_tom.GotoWithSpeed(2, pos.Z)
+                if a is not None:
+                    stage_tom.GotoWithSpeed(3, pos.A)
+                if b is not None:
+                    raise FEIValueError("Beta tilt cannot be moved with speed")
+    else:
+        pos = stage_tem.Position
+        axis = 0
 
-    if x is not None:
-        pos.X = x * 1e-9
-        axis += 1
-    if y is not None:
-        pos.Y = y * 1e-9
-        axis += 2
-    if z is not None:
-        pos.Z = z * 1e-9
-        axis += 4
-    if a is not None:
-        pos.A = a / 180 * pi
-        axis += 8
-    if b is not None:
-        pos.B = b / 180 * pi
-        axis += 16
-    if axis != 0:
-        if speed == 1:
-            stage_tem.Goto(pos, axis)
-        else:
-            if x is not None:
-                stage_tem.GotoWithSpeed(pos, 1, goniospeed)
-            if y is not None:
-                stage_tem.GotoWithSpeed(pos, 2, goniospeed)
-            if z is not None:
-                stage_tem.GotoWithSpeed(pos, 4, goniospeed)
-            if a is not None:
-                stage_tem.GotoWithSpeed(pos, 8, goniospeed)
-            if b is not None:
-                stage_tem.GotoWithSpeed(pos, 16, goniospeed)
+        if x is not None:
+            pos.X = x * 1e-9
+            axis += 1
+        if y is not None:
+            pos.Y = y * 1e-9
+            axis += 2
+        if z is not None:
+            pos.Z = z * 1e-9
+            axis += 4
+        if a is not None:
+            pos.A = a / 180 * pi
+            axis += 8
+        if b is not None:
+            pos.B = b / 180 * pi
+            axis += 16
+        if axis != 0:
+            if speed == 1:
+                stage_tem.Goto(pos, axis)
+            else:
+                if x is not None:
+                    stage_tem.GotoWithSpeed(pos, 1, goniospeed)
+                if y is not None:
+                    stage_tem.GotoWithSpeed(pos, 2, goniospeed)
+                if z is not None:
+                    stage_tem.GotoWithSpeed(pos, 4, goniospeed)
+                if a is not None:
+                    stage_tem.GotoWithSpeed(pos, 8, goniospeed)
+                if b is not None:
+                    raise FEIValueError("Beta tilt cannot be moved with speed")
 
 class FEIMicroscope:
     """Python bindings to the FEI microscope using the COM interface."""
@@ -336,38 +369,72 @@ class FEIMicroscope:
             if wait:
                 self.stage_tom.Speed = speed
                 goniospeed = self.stage_tom.Speed
-                pos = self.stage_tem.Position
-                axis = 0
+                if USETOM:
+                    pos = self.stage_tom.Position
+                    axis = 0
 
-                if x is not None:
-                    pos.X = x * 1e-9
-                    axis += 1
-                if y is not None:
-                    pos.Y = y * 1e-9
-                    axis += 2
-                if z is not None:
-                    pos.Z = z * 1e-9
-                    axis += 4
-                if a is not None:
-                    pos.A = a / 180 * pi
-                    axis += 8
-                if b is not None:
-                    pos.B = b / 180 * pi
-                    axis += 16
-                if axis != 0:
-                    if speed == 1:
-                        self.stage_tem.Goto(pos, axis)
-                    else:
-                        if x is not None:
-                            self.stage_tem.GotoWithSpeed(pos, 1, goniospeed)
-                        if y is not None:
-                            self.stage_tem.GotoWithSpeed(pos, 2, goniospeed)
-                        if z is not None:
-                            self.stage_tem.GotoWithSpeed(pos, 4, goniospeed)
-                        if a is not None:
-                            self.stage_tem.GotoWithSpeed(pos, 8, goniospeed)
-                        if b is not None:
-                            self.stage_tem.GotoWithSpeed(pos, 16, goniospeed)
+                    if x is not None:
+                        pos.X = x * 1e-9
+                        axis += 1
+                    if y is not None:
+                        pos.Y = y * 1e-9
+                        axis += 2
+                    if z is not None:
+                        pos.Z = z * 1e-9
+                        axis += 4
+                    if a is not None:
+                        pos.A = a / 180 * pi
+                        axis += 8
+                    if b is not None:
+                        pos.B = b / 180 * pi
+                        axis += 16
+                    if axis != 0:
+                        if speed == 1:
+                            self.stage_tom.Goto(pos, axis)
+                        else:
+                            if x is not None:
+                                self.stage_tom.GotoWithSpeed(0, pos.X)
+                            if y is not None:
+                                self.stage_tom.GotoWithSpeed(1, pos.Y)
+                            if z is not None:
+                                self.stage_tom.GotoWithSpeed(2, pos.Z)
+                            if a is not None:
+                                self.stage_tom.GotoWithSpeed(3, pos.A)
+                            if b is not None:
+                                raise FEIValueError("Beta tilt cannot be moved with speed")
+                else:
+                    pos = self.stage_tem.Position
+                    axis = 0
+
+                    if x is not None:
+                        pos.X = x * 1e-9
+                        axis += 1
+                    if y is not None:
+                        pos.Y = y * 1e-9
+                        axis += 2
+                    if z is not None:
+                        pos.Z = z * 1e-9
+                        axis += 4
+                    if a is not None:
+                        pos.A = a / 180 * pi
+                        axis += 8
+                    if b is not None:
+                        pos.B = b / 180 * pi
+                        axis += 16
+                    if axis != 0:
+                        if speed == 1:
+                            self.stage_tem.Goto(pos, axis)
+                        else:
+                            if x is not None:
+                                self.stage_tem.GotoWithSpeed(pos, 1, goniospeed)
+                            if y is not None:
+                                self.stage_tem.GotoWithSpeed(pos, 2, goniospeed)
+                            if z is not None:
+                                self.stage_tem.GotoWithSpeed(pos, 4, goniospeed)
+                            if a is not None:
+                                self.stage_tem.GotoWithSpeed(pos, 8, goniospeed)
+                            if b is not None:
+                                raise FEIValueError("Beta tilt cannot be moved with speed")
             else:
                 p = multiprocessing.Process(target=move_stage, args=(x,y,z,a,b,speed,))
                 p.start()
@@ -617,10 +684,26 @@ class FEIMicroscope:
 
     def isStageMoving(self):
         """Check if sample stage is moving"""
-        if USETOM:
-            return self.stage_tom.Status
+        if self.getStageStatus() == 'Ready':
+            return False
+        elif self.getStageStatus() == 'Going':
+            return True
         else:
-            return self.stage_tem.Status
+            raise FEIValueError('The microscope is not ready for checking stage movement')
+
+    def getStageStatus(self):
+        """stReady    The stage is ready (capable to perform all position management functions)
+        stDisabled    The stage has been disabled either by the user or due to an error.
+        stNotReady    The stage is not (yet) ready to perform position management functions for reasons other than already accounted for by the other constants
+        stGoing       The stage is performing a ‘GoTo()’
+        stMoving      The stage is performing a ‘MoveTo()’
+        stWobbling    The stage is wobbling"""
+        dct = {0: 'Ready', 1: 'Disabled', 2: 'NotReady', 
+               3: 'Going', 4: 'Moving', 5: 'Wobbling'}
+        if USETOM:
+            return dct[self.stage_tom.Status]
+        else:
+            return dct[self.stage_tem.Status]
 
     def stopStage(self):
         """Stop the sample stage, not working for FEI microscope now"""
