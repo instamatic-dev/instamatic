@@ -569,3 +569,49 @@ class JeolMicroscope:
         print('IS2', self.def3.GetIS2())     # image shift 2
         print('OLs', self.def3.GetOLs())     # objective lens stigmator
         print('PLA', self.def3.GetPLA())     # projector lens alignment
+
+    def test_timing(self):
+        import time
+        t0 = time.perf_counter()
+        mode = self.getFunctionMode()
+        dt = time.perf_counter() - t0
+        print(f'Execution time for getFunctionMode: {dt*1000:.2f}ms')
+
+        funcs = {
+            'GunShift': self.getGunShift,
+            'GunTilt': self.getGunTilt,
+            'BeamShift': self.getBeamShift,
+            'BeamTilt': self.getBeamTilt,
+            'ImageShift1': self.getImageShift1,
+            'ImageShift2': self.getImageShift2,
+            'DiffShift': self.getDiffShift,
+            'DiffFocus': self.getDiffFocus
+            'StagePosition': self.getStagePosition,
+            'Magnification': self.getMagnification,
+            'Brightness': self.getBrightness,
+            'SpotSize': self.getSpotSize,
+        }
+
+        for key in funcs.keys():
+            t0 = time.perf_counter()
+            funcs[key]()
+            dt = time.perf_counter() - t0
+            print(f'Execution time for {funcs[key].__name__}: {dt*1000:.2f}ms')
+
+        funcs_set = {
+            'GunShift': self.setGunShift,
+            'GunTilt': self.setGunTilt,
+            'BeamShift': self.setBeamShift,
+            'BeamTilt': self.setBeamTilt,
+            'ImageShift1': self.setImageShift1,
+            'ImageShift2': self.setImageShift2,
+            'DiffShift': self.setDiffShift,
+            'StagePosition': self.setStagePosition,
+        }
+
+        for key in funcs_set.keys():
+            t0 = time.perf_counter()
+            funcs_set[key]()
+            dt = time.perf_counter() - t0
+            print(f'Execution time for {funcs_set[key].__name__}: {dt*1000:.2f}ms')
+            

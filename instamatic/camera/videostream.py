@@ -8,7 +8,6 @@ from instamatic import config
 
 # can add a configuration to hide when buffers are not needed
 if config.settings.camera[:2]=="DM":
-    from .datastream_dm import frame_buffer
     if config.settings.buffer_stream_use_thread:
         from .datastream_dm import stream_buffer_thread as stream_buffer
     else:
