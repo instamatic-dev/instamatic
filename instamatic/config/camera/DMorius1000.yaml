@@ -1,0 +1,25 @@
+calib_beamshift:
+  gridsize: 5
+  stepsize: 2500
+calib_directbeam:
+  BeamShift:
+    gridsize: 5
+    stepsize: 350
+  DiffShift:
+    gridsize: 5
+    stepsize: 1500
+camera_rotation_vs_stage_xy: 0.925
+default_binsize: 3
+default_exposure: 0.1
+dimensions: [1336, 890]
+CCD_area: [0, 0, 2672, 4008]
+dynamic_range: 65535
+interface: DM
+physical_pixelsize: 0.009
+possible_binsizes: [1, 2, 3, 4]
+stretch_amplitude: 0
+stretch_azimuth: 0
+processing: 3
+read_mode: 0
+quality_level: 0
+is_continuous: "\x01"

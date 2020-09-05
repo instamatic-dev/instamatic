@@ -64,14 +64,14 @@ class ImageGrabber:
                     if self.name[:2]=="DM":
                         frame = self.cam.get_from_buffer(queue, exposure=self.exposure, multiple=True, align=False)
                     else:
-                        frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
+                        frame = self.cam.getImage(exposure=self.exposure)
                     self.callback(frame, acquire=True)
                 elif not self.continuousCollectionEvent.is_set():
                     if self.name[:2]=="DM":
                         #print(f"frametime: {self.frametime}")
                         frame = self.cam.get_from_buffer(queue, exposure=self.frametime)
                     else:
-                        frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
+                        frame = self.cam.getImage(exposure=self.frametime)
                     self.callback(frame)
                 #if i%10 == 0:
                 #    print(f"Number of images consumed: {i}")
@@ -89,7 +89,10 @@ class ImageGrabber:
 
     def stop(self):
         self.stopEvent.set()
-        #self.thread.join() Cannot use this join in here. Otherwise the closing of the program may not responsive
+        if config.settings.camera[:2]!="DM":
+            # For DM cameras, cannot use this join in here. Otherwise the closing of the program may not responsive
+            # For Timepix cameras, must use this join in here. Otherwise errors will orrur when closing the program
+            self.thread.join() 
 
 
 class VideoStream(threading.Thread):
