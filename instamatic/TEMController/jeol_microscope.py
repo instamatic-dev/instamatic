@@ -68,6 +68,7 @@ class JeolMicroscope:
         # self.filter3 = self.tem3.CreateFilter3()
         # self.gun3 = self.tem3.CreateGun3()
         # self.mds3 = self.tem3.CreateMDS3()
+        # self.scan3 = self.tem3.CreateScan3()
         self.apt3 = self.tem3.CreateApt3()
         self.screen2 = self.tem3.CreateScreen2()
         self.def3 = self.tem3.CreateDef3()
@@ -90,7 +91,7 @@ class JeolMicroscope:
         # faster stage readout using gonio2
         # self.gonio2.GetPosition() -> get stage position, 78 ms
         # self.stage3.GetPos() -> 277 ms
-        # self.gonio2 = self.tem3.CreateGonio2()  # buggy on NeoArm200
+        self.gonio2 = self.tem3.CreateGonio2()  # buggy on NeoArm200, OK on 2100, 2100F...
 
         # wait for interface to activate
         t = 0
@@ -277,11 +278,13 @@ class JeolMicroscope:
 
     def getStagePosition(self) -> Tuple[int, int, int, int, int]:
         """x, y, z in nanometer a and b in degrees."""
-        x, y, z, a, b, result = self.stage3.GetPos()
+        # x, y, z, a, b, result = self.stage3.GetPos()
+        x, y, z, a, b, result = self.gonio2.GetPosition()
         return x, y, z, a, b
 
     def isStageMoving(self):
-        x, y, z, a, b, result = self.stage3.GetStatus()
+        # x, y, z, a, b, result = self.stage3.GetStatus()
+        x, y, z, a, b, result = self.gonio2.GetStatus()
         return x or y or z or a or b
 
     def waitForStage(self, delay: float = 0.0, skip_delay: float = 0.5):
@@ -585,7 +588,7 @@ class JeolMicroscope:
             'ImageShift1': self.getImageShift1,
             'ImageShift2': self.getImageShift2,
             'DiffShift': self.getDiffShift,
-            'DiffFocus': self.getDiffFocus
+            'DiffFocus': self.getDiffFocus,
             'StagePosition': self.getStagePosition,
             'Magnification': self.getMagnification,
             'Brightness': self.getBrightness,
@@ -597,21 +600,3 @@ class JeolMicroscope:
             funcs[key]()
             dt = time.perf_counter() - t0
             print(f'Execution time for {funcs[key].__name__}: {dt*1000:.2f}ms')
-
-        funcs_set = {
-            'GunShift': self.setGunShift,
-            'GunTilt': self.setGunTilt,
-            'BeamShift': self.setBeamShift,
-            'BeamTilt': self.setBeamTilt,
-            'ImageShift1': self.setImageShift1,
-            'ImageShift2': self.setImageShift2,
-            'DiffShift': self.setDiffShift,
-            'StagePosition': self.setStagePosition,
-        }
-
-        for key in funcs_set.keys():
-            t0 = time.perf_counter()
-            funcs_set[key]()
-            dt = time.perf_counter() - t0
-            print(f'Execution time for {funcs_set[key].__name__}: {dt*1000:.2f}ms')
-            
