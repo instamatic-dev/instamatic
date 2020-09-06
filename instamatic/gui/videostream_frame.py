@@ -33,7 +33,7 @@ class VideoStreamFrame(LabelFrame):
 
         self.frame_delay = 50
 
-        self.frametime = self.stream.frametime
+        self.frametime = self.stream.frametime / 2
         self.brightness = 1.0
         self.display_range = self.display_range_default = self.stream.cam.dynamic_range
         # Maximum number from image readout
@@ -281,11 +281,11 @@ module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFr
 commands = {}
 
 
-def start_gui(stream):
+def start_gui(stream, image_stream):
     """Pass a camera stream object, and open a simple live-view window This is
     meant to be used in an interactive python shell."""
     root = Tk()
-    vsframe = VideoStreamFrame(root, stream=stream)
+    vsframe = VideoStreamFrame(root, stream=stream, image_stream=image_stream)
     vsframe.pack(side='top', fill='both', expand=True)
     root.mainloop()
     root.destroy()

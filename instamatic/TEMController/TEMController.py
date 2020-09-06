@@ -1,3 +1,4 @@
+import atexit
 import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +19,8 @@ from instamatic.image_utils import rotate_image, translate_image
 
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
+_data_stream = None
+_image_stream = None
 
 default_cam = config.camera.name
 default_tem = config.microscope.name
@@ -62,8 +65,14 @@ def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream:
     else:
         cam = None
 
+    global _data_stream, _image_stream
+    if not config.settings.simulate and config.settings.camera[:2]=="DM":
+        from instamatic.camera.datastream_dm import start_streaming
+        if _data_stream is None and _image_stream is None:
+            _data_stream, _image_stream = start_streaming()
+
     global _ctrl
-    ctrl = _ctrl = TEMController(tem=tem, cam=cam)
+    ctrl = _ctrl = TEMController(tem=tem, cam=cam, data_stream=_data_stream, image_stream=_image_stream)
 
     return ctrl
 
@@ -90,13 +99,15 @@ class TEMController:
     cam: Camera control object (see instamatic.camera) [optional]
     """
 
-    def __init__(self, tem, cam=None):
+    def __init__(self, tem, cam=None, data_stream=None, image_stream=None):
         super().__init__()
 
         self._executor = ThreadPoolExecutor(max_workers=1)
 
         self.tem = tem
         self.cam = cam
+        self.data_stream = data_stream
+        self.image_stream = image_stream
 
         self.gunshift = GunShift(tem)
         self.guntilt = GunTilt(tem)
@@ -125,6 +136,8 @@ class TEMController:
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
+
+        atexit.register(self.close)
 
         print()
         print(self)
@@ -735,6 +748,9 @@ class TEMController:
         print(f"Microscope alignment restored from '{name}'")
 
     def close(self):
+        if self.data_stream is not None and self.image_stream is not None:
+            self.data_stream.stop()
+            self.image_stream.stop()
         try:
             self.cam.close()
         except AttributeError:
@@ -744,7 +760,7 @@ class TEMController:
         """If the camera has been opened as a stream, start a live view in a
         tkinter window."""
         try:
-            self.cam.show_stream()
+            self.cam.show_stream(image_stream=self.image_stream)
         except AttributeError:
             print('Cannot open live view. The camera interface must be initialized as a stream object.')
 
@@ -790,7 +806,9 @@ def main_entry():
 if __name__ == '__main__':
     from IPython import embed
     ctrl = initialize()
+    
 
     embed(banner1='\nAssuming direct control.\n')
 
     ctrl.close()
+

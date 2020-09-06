@@ -21,6 +21,18 @@ writeEvent.clear()
 readEvent = multiprocessing.Event()
 readEvent.set()
 
+def start_streaming():
+    data_stream = CameraDataStream(cam=config.camera.name, frametime=config.settings.default_frame_time)
+    data_stream.start_loop()
+    if config.settings.buffer_stream_use_thread:
+        image_stream = StreamBufferThread(exposure=config.settings.default_frame_time, frametime=config.settings.default_frame_time)
+        image_stream.start_loop()
+    else:
+        image_stream = StreamBufferProc(exposure=config.settings.default_frame_time, frametime=config.settings.default_frame_time)
+        image_stream.start_loop()
+    time.sleep(8)
+    return data_stream, image_stream
+
 class DataStreamError(RuntimeError):
     pass
 
