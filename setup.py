@@ -52,6 +52,7 @@ setup(
             'instamatic.calibrate_stage_lowmag = instamatic.calibrate.calibrate_stage_lowmag:main_entry',
             'instamatic.calibrate_stage_mag1 = instamatic.calibrate.calibrate_stage_mag1:main_entry',
             'instamatic.calibrate_beamshift = instamatic.calibrate.calibrate_beamshift:main_entry',
+            'instamatic.calibrate_electron_dose = instamatic.calibrate.calibrate_electron_dose:main_entry',
             'instamatic.calibrate_directbeam = instamatic.calibrate.calibrate_directbeam:main_entry',
             'instamatic.calibrate_stagematrix = instamatic.calibrate.calibrate_stagematrix:main_entry',
             'instamatic.flatfield = instamatic.processing.flatfield:main_entry',
@@ -125,7 +126,8 @@ setup(
         'scipy>=1.3.2',
         'tifffile>=2019.7.26.2',
         'tqdm>=4.41.1',
-        'virtualbox>=2.0.0'],
+        'virtualbox>=2.0.0',
+        'msgpack>=1.0.0'],
     extras_require={
         'dev': [
             'check-manifest',

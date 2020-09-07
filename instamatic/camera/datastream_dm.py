@@ -7,6 +7,7 @@ import decimal
 import numpy as np
 from abc import ABC, abstractmethod
 
+from instamatic.tools import printer
 from instamatic import config
 from .camera_dm import CameraDM
 
@@ -91,7 +92,8 @@ class CameraDataStream:
         if not self.stopProcEvent.is_set():
             self.stopProcEvent.set()
             time.sleep(0.5)
-            print('\nStopping the data stream.\n')
+            printer('Stopping the data stream.')
+            print()
 
 
 class StreamBuffer(ABC):
@@ -128,9 +130,8 @@ class StreamBuffer(ABC):
         if not self.stopEvent.is_set():
             self.stopEvent.set()
             time.sleep(0.1)
-            print('\nStopping the buffer stream.\n')
-
-    
+            printer('Stopping the buffer stream.')
+            print()
 
 class StreamBufferProc(StreamBuffer):
     """

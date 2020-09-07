@@ -167,7 +167,15 @@ class ExperimentalCtrl(LabelFrame):
         self.q = q
 
     def set_mode(self, event=None):
-        self.ctrl.mode.set(self.var_mode.get())
+        if self.ctrl.cam.name[:2] == 'DM':
+            if self.var_mode.get() in ('D', 'LAD'):
+                self.ctrl.tem.setProjectionMode('diffraction')
+                self.var_mode.set(self.ctrl.mode.state)
+            else:
+                self.ctrl.tem.setProjectionMode('imaging')
+                self.var_mode.set(self.ctrl.mode.state)
+        else:
+            self.ctrl.mode.set(self.var_mode.get())
 
     def set_brightness(self, event=None):
         self.var_brightness.set(self.var_brightness.get())

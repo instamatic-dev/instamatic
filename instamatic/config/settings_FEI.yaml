@@ -11,10 +11,10 @@ flatfield:
 
 # Run the TEM connection in a different process (recommended)
 use_tem_server: False
-tem_server_host: 'localhost'
+tem_server_host: '0.0.0.0'
 tem_server_port: 8088
 tem_require_admin: True
-tem_communication_protocol: 'pickle'  # pickle, json, msgpack, yaml, marshal
+tem_communication_protocol: 'marshal'  # marshal, pickle, json, msgpack, yaml, marshal
 
 # Run the Camera connection in a different process
 use_cam_server: False
