@@ -147,7 +147,7 @@ def main():
         ctrl.run_script(options.script)
     elif options.start_gui:
         from instamatic.gui import start_gui
-        start_gui(ctrl, ctrl.data_stream, ctrl.image_stream, log=log)
+        start_gui(ctrl, log=log)
 
 
 if __name__ == '__main__':

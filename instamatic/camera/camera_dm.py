@@ -180,14 +180,8 @@ if __name__ == '__main__':
     from IPython import embed
     import threading
     
-
-    if False:
-        run()
-    if False:
-        t = threading.Thread(target=run, args=(), daemon=True)
-        t.start()
     if True:
-        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,'DMorius1000'), daemon=True)
+        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,config.settings.camera), daemon=True)
         p.start()
         #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
         #t.start()

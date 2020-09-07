@@ -14,20 +14,21 @@ from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
+from instamatic import TEMController
 
 
 class VideoStreamFrame(LabelFrame):
     """GUI panel to continuously display the last frame streamed from the
     camera."""
 
-    def __init__(self, parent, stream, app=None, image_stream=None):
+    def __init__(self, parent, stream, app=None):
         LabelFrame.__init__(self, parent, text='Stream')
 
         self.parent = parent
 
         self.stream = stream
         self.app = app
-        self.image_stream = image_stream
+        self.image_stream = TEMController.get_instance().image_stream
 
         self.panel = None
 
@@ -281,11 +282,11 @@ module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFr
 commands = {}
 
 
-def start_gui(stream, image_stream):
+def start_gui(stream):
     """Pass a camera stream object, and open a simple live-view window This is
     meant to be used in an interactive python shell."""
     root = Tk()
-    vsframe = VideoStreamFrame(root, stream=stream, image_stream=image_stream)
+    vsframe = VideoStreamFrame(root, stream=stream)
     vsframe.pack(side='top', fill='both', expand=True)
     root.mainloop()
     root.destroy()
@@ -300,21 +301,12 @@ def ipy_embed(*args, **kwargs):
 if __name__ == '__main__':
     from instamatic import config
     from instamatic.camera.videostream import VideoStream
-    from instamatic.camera.datastream_dm import CameraDataStream
-
-    p = CameraDataStream(cam=config.camera.name, frametime=0.1)
-    p.start_loop()
-    time.sleep(10)
 
     stream = VideoStream(cam=config.camera.name)
 
-    if False:
-        threading.Thread(target=ipy_embed).start()
-        start_gui()
-    else:
-        t = threading.Thread(target=start_gui, args=(stream,))
-        t.start()
+    t = threading.Thread(target=start_gui, args=(stream,))
+    t.start()
 
-        import IPython
-        IPython.embed()
-        p.stop()
+    import IPython
+    IPython.embed()
+    t.stop()

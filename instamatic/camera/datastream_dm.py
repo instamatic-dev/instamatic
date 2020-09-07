@@ -88,9 +88,10 @@ class CameraDataStream:
         self.proc.start()
 
     def stop(self):
-        self.stopProcEvent.set()
-        time.sleep(0.5)
-        print('\nStopping the data stream.\n')
+        if not self.stopProcEvent.is_set():
+            self.stopProcEvent.set()
+            time.sleep(0.5)
+            print('\nStopping the data stream.\n')
 
 
 class StreamBuffer(ABC):
@@ -124,9 +125,10 @@ class StreamBuffer(ABC):
         pass
 
     def stop(self):
-        self.stopEvent.set()
-        time.sleep(0.1)
-        print('\nStopping the buffer stream.\n')
+        if not self.stopEvent.is_set():
+            self.stopEvent.set()
+            time.sleep(0.1)
+            print('\nStopping the buffer stream.\n')
 
     
 

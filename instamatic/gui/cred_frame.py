@@ -7,6 +7,7 @@ from tkinter.ttk import *
 from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
 from instamatic import config
+from instamatic import TEMController
 
 ENABLE_FOOTFREE_OPTION = False
 
@@ -14,10 +15,10 @@ ENABLE_FOOTFREE_OPTION = False
 class ExperimentalcRED(LabelFrame):
     """GUI panel for doing cRED experiments on a Timepix camera and Gatan camera."""
 
-    def __init__(self, parent, image_stream):
+    def __init__(self, parent):
         LabelFrame.__init__(self, parent, text='Continuous rotation electron diffraction')
         self.parent = parent
-        self.image_stream = image_stream
+        self.image_stream = TEMController.get_instance().image_stream
 
         sbwidth = 10
 
