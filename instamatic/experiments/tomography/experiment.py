@@ -100,9 +100,6 @@ class Experiment:
 
         self.img_ref, h = self.ctrl.get_image(exposure_time)
 
-        if ctrl.cam.streamable:
-            ctrl.cam.block()
-
         isFocused = False
         isAligned = False
 
@@ -143,9 +140,6 @@ class Experiment:
         self.nframes = j
 
         self.end_angle = end_angle = ctrl.stage.a
-
-        if ctrl.cam.streamable:
-            ctrl.cam.unblock()
 
         self.stepsize = stepsize
         self.exposure_time = exposure_time

@@ -181,7 +181,7 @@ if __name__ == '__main__':
     import threading
     
     if True:
-        p = multiprocessing.Process(target = run_proc, args = (frame_buffer,config.settings.camera), daemon=True)
+        p = multiprocessing.Process(target=run_proc, args=(frame_buffer,config.settings.camera), daemon=True)
         p.start()
         #t = threading.Thread(target=run_thread, args=(frame_buffer,0.1,), daemon=True)
         #t.start()

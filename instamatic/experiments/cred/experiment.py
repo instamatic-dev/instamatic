@@ -268,13 +268,13 @@ class Experiment:
 
         if self.ctrl.tem.name[:3]=="fei":
             if self.ctrl.mode not in ('D','LAD'):
-                self.ctrl.tem.setProjectionMode(2)
+                self.ctrl.tem.setProjectionMode('diffraction')
         else:
             if self.ctrl.mode != 'diff':
                 self.ctrl.mode.set('diff')
 
         if self.ctrl.difffocus is None:
-            self.ctrl.difffocus = instamatic.TEMController.DiffFocus(self.ctrl.tem)
+            self.ctrl.difffocus = instamatic.TEMController.lenses.DiffFocus(self.ctrl.tem)
 
         self.diff_focus_proper = self.ctrl.difffocus.value
         self.diff_focus_defocused = self.diff_defocus + self.diff_focus_proper

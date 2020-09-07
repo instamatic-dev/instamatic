@@ -109,7 +109,10 @@ class VideoStream(threading.Thread):
 
         self.name = self.cam.name
         
-        self.frametime = 0.1
+        if config.settings.camera[:2] == 'DM':
+            self.frametime = config.settings.default_frame_time
+        else:
+            self.frametime = 0.1
         self.grabber = self.setup_grabber()
 
 
@@ -217,22 +220,20 @@ class VideoStream(threading.Thread):
         if not callback:
             return buffer
 
-    def show_stream(self, image_stream):
+    def show_stream(self):
         from instamatic.gui import videostream_frame
-        t = threading.Thread(target=videostream_frame.start_gui, args=(self,image_stream), daemon=True)
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self,), daemon=True)
         t.start()
 
 
 if __name__ == '__main__':
     from multiprocessing import Event
-    from .datastream_dm import CameraDataStream
 
-    camera = 'simulate'
+    camera = config.settings.camera
     stream = VideoStream(cam=camera)
     #data_stream = CameraDataStream(cam=camera, frametime=0.1)
     #data_stream.start_loop()
     from IPython import embed
-    print('test')
     embed()
     #data_stream.stop()
     stream.close()

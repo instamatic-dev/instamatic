@@ -1078,7 +1078,7 @@ class FEIMicroscope:
            (Nearly) no effect for low magnifications (LM)."""
         dct = {'micro': 0, 'nano': 1}
         if value != 'micro' or value != 'nano':
-            raise FEIValueError('The probe mode must be \'micro\' or \'nano\'.')
+            raise FEIValueError("The probe mode must be 'micro' or 'nano'.")
         if USETOM:
             self.illu_tom.ProbeMode = value
         else:
@@ -1316,7 +1316,7 @@ class FEIMicroscope:
                 dct = {'imaging': 1, 'diffraction': 2}
                 self.proj_tem.Mode = dct[value]
         except KeyError:
-            raise FEIValueError('Input must be \'imaging\' or \'diffraction\'') 
+            raise FEIValueError("Input must be 'imaging' or 'diffraction'") 
 
     def getLensProgram(self):
         """The lens program setting (currently EFTEM or Regular). This is the third property to 
@@ -1343,26 +1343,31 @@ class FEIMicroscope:
                 dct = {'regular': 1, 'EFTEM': 2}
                 self.proj_tem.LensProgram = dct[value]
         except KeyError:
-            raise FEIValueError('Input must be \'regular\' or \'EFTEM\'') 
+            raise FEIValueError("Input must be 'regular' or 'EFTEM'") 
 
     def getImageRotation(self):
         """The rotation of the image or diffraction pattern on the fluorescent screen 
            with respect to the specimen. Units: radians."""
-        return self.proj_tem.ImageRotation
+        return dct[self.proj_tem.ImageRotation]
 
     def getDetectorShift(self):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
            0: pdsOnAxis       Does not shift the image/diffraction pattern
            1: pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
            2: pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
-        return self.proj_tem.DetectorShift
+        dct = {0:'OnAxis', 1: 'NearAxis', 2: 'OffAxis'}
+        return dct[self.proj_tem.DetectorShift]
 
     def setDetectorShift(self, value):
         """Sets the extra shift that projects the image/diffraction pattern onto a detector.
            0: pdsOnAxis       Does not shift the image/diffraction pattern
            1: pdsNearAxis     Shifts the image/diffraction pattern onto a near-axis detector/camera
            2: pdsOffAxis      Shifts the image/diffraction pattern onto an off-axis detector/camera"""
-        self.proj_tem.DetectorShift = value
+        try:
+            dct = {'OnAxis': 0, 'NearAxis': 1, 'OffAxis': 2}
+            self.proj_tem.DetectorShift = dct[value]
+        except KeyError:
+            raise FEIValueError("Input must be 'OnAxis', 'NearAxis' or 'OffAxis'")
 
     def getDetectorShiftMode(self):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
@@ -1373,7 +1378,8 @@ class FEIMicroscope:
            2: pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
-        return self.proj_tem.DetectorShiftMode
+        dct = {0:'AutoIgnore', 1: 'Manual', 2: 'Alignment'}
+        return dct[self.proj_tem.DetectorShiftMode]
 
     def setDetectorShiftMode(self, value):
         """This property determines, whether the chosen DetectorShift is changed when the fluorescent screen is moved down.
@@ -1384,7 +1390,11 @@ class FEIMicroscope:
            2: pdsmAlignment        The detector shift is (temporarily) controlled by an active alignment procedure. 
                                 Clients cannot set this value. Clients cannot set the 'DetectorShiftMode' to another 
                                 value either, if this is the current value. They have to wait until the alignment is finished."""
-        self.proj_tem.DetectorShiftMode = value 
+        try:
+            dct = {'AutoIgnore': 0, 'Manual': 1, 'Alignment': 2}
+            self.proj_tem.DetectorShiftMode = dct[value]
+        except KeyError:
+            raise FEIValueError("Input must be 'AutoIgnore', 'Manual' or 'Alignment'")
 
     def isShutterOverrideOn(self) -> bool:
         """The BlankerShutter object has only one property, ShutterOverrideOn. This property can be used in 

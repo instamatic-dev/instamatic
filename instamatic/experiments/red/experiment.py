@@ -81,16 +81,13 @@ class Experiment:
         print(f'\nStart_angle: {start_angle:.3f}')
         # print "Angles:", tilt_positions
 
-        if ctrl.cam.streamable:
-            ctrl.cam.block()
-
         image_mode = ctrl.mode.get()
         if ctrl.tem.name[:3] == "fei":
             if image_mode not in ('D', 'LAD'):
                 fn = self.tiff_image_path / f'image_{self.offset}.tiff'
                 img, h = self.ctrl.get_image(exposure_time / 5)
                 write_tiff(fn, img, header=h)
-                ctrl.tem.setProjectionMode(2) # 2 represents diffraction mode
+                ctrl.tem.setProjectionMode('diffraction')
                 time.sleep(1.0)  # add some delay to account for beam lag
         else:
             if image_mode != 'diff':
@@ -115,9 +112,6 @@ class Experiment:
 
         self.end_angle = end_angle = ctrl.stage.a
 
-        if ctrl.cam.streamable:
-            ctrl.cam.unblock()
-
         self.camera_length = int(self.ctrl.magnification.get())
         self.stepsize = stepsize
         self.exposure_time = exposure_time
@@ -133,7 +127,7 @@ class Experiment:
 
         if ctrl.tem.name[:3] == "fei":
             if image_mode  not in ('D', 'LAD'):
-                ctrl.tem.setProjectionMode(1) # 1 represents image mode
+                ctrl.tem.setProjectionMode('imaging') 
         else:
             if image_mode != 'diff':
                 ctrl.mode.set(image_mode)
@@ -146,10 +140,10 @@ class Experiment:
         self.logger.info(f'Data saving path: {self.path}')
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        if ctrl.tem.name[:3] == "fei":
-            self.ctrl.tem.setProjectionMode(2)
+        if self.ctrl.tem.name[:3] == "fei":
+            self.ctrl.tem.setProjectionMode('diffraction')
             self.pixelsize = config.calibration[self.ctrl.mode.get()]['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
-            self.ctrl.tem.setProjectionMode(1)
+            self.ctrl.tem.setProjectionMode('imaging')
         else:
             self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # Angstrom^(-1)/pixel
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
