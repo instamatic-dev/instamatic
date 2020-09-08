@@ -126,11 +126,9 @@ class TEMController:
 
         if self.tem.name[:3] == 'fei':
             if self.mode.state in ('D', 'LAD'):
-                self.difffocus = DiffFocus(tem)
-                self.objfocus = None
+                self.in_diff_state()
             else:
-                self.difffocus = None
-                self.objfocus = ObjFocus(tem)
+                self.in_img_state()
         else:
             self.difffocus = DiffFocus(tem)
 
@@ -188,6 +186,14 @@ class TEMController:
     @spotsize.setter
     def spotsize(self, value: int):
         self.tem.setSpotSize(value)
+
+    def in_diff_state(self):
+        self.difffocus = DiffFocus(self.tem)
+        self.objfocus = None
+
+    def in_img_state(self):
+        self.difffocus = None
+        self.objfocus = ObjFocus(self.tem)
 
     def acquire_at_items(self, *args, **kwargs) -> None:
         """Class to automated acquisition at many stage locations. The
@@ -760,7 +766,7 @@ class TEMController:
         """If the camera has been opened as a stream, start a live view in a
         tkinter window."""
         try:
-            self.cam.show_stream(image_stream=self.image_stream)
+            self.cam.show_stream()
         except AttributeError:
             print('Cannot open live view. The camera interface must be initialized as a stream object.')
 

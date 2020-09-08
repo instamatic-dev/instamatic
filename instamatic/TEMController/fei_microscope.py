@@ -1019,8 +1019,8 @@ class FEIMicroscope:
     def setBrightness(self, value):
         """Intensity value of the current mode (typically ranging from 0 to 1.0, 
            but on some microscopes the minimum may be higher"""
-        if value < 0 or value > 1:
-            raise FEIValueError('The range of intensity of probe is from 0 to 1.')
+        if value < -1 or value > 1:
+            raise FEIValueError('The range of intensity of probe is from -1 to 1.')
         if USETOM:
             self.illu_tom.Intensity = value
         else:

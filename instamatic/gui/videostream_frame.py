@@ -14,7 +14,7 @@ from instamatic.formats import read_tiff
 from instamatic.formats import write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
-from instamatic import TEMController
+from instamatic.TEMController import get_instance
 
 
 class VideoStreamFrame(LabelFrame):
@@ -28,7 +28,7 @@ class VideoStreamFrame(LabelFrame):
 
         self.stream = stream
         self.app = app
-        self.image_stream = TEMController.get_instance().image_stream
+        self.image_stream = get_instance().image_stream
 
         self.panel = None
 
