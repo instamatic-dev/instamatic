@@ -22,6 +22,7 @@ _config = 'config'
 _microscope = 'microscope'
 _calibration = 'calibration'
 _camera = 'camera'
+_holder = 'holder'
 _scripts = 'scripts'
 _alignments = 'alignments'
 _instamatic = 'instamatic'
@@ -49,7 +50,7 @@ def initialize_in_appData():
     print(f'No config directory found, creating new one in {dst}')
 
     config_drc = dst / _config
-    for sub_drc in (_microscope, _calibration, _camera):
+    for sub_drc in (_microscope, _calibration, _camera, _holder):
         shutil.copytree(src / sub_drc, config_drc / sub_drc)
 
     shutil.copy(src / _settings_yaml, config_drc / _settings_yaml)
@@ -199,6 +200,24 @@ def load_camera_config(camera_name: str = None):
 
     settings.camera = camera.name
 
+def load_holder_config(holder_name: str = None):
+    global holder
+
+    if not holder_name:
+        holder_name = settings.holder
+
+    holder_yaml = holder_drc / f'{holder_name}.yaml'
+
+    if holder_name:
+        holder_config = ConfigObject.from_file(holder_yaml)
+    else:
+        holder_config = ConfigObject({}, name='NoHolder')
+        print('No external holder controller config is loaded.')
+
+    holder = holder_config
+    holder.name = holder_name
+
+    settings.holder = holder.name
 
 def load_defaults():
     global defaults
@@ -226,6 +245,7 @@ def load_settings():
 def load_all(microscope_name: str = None,
              calibration_name: str = None,
              camera_name: str = None,
+             holder_name: str = None,
              ):
     """Load the settings.yaml file and microscope/calib/camera configs The
     config files to load can be overridden by specifying
@@ -236,7 +256,7 @@ def load_all(microscope_name: str = None,
     load_microscope_config(microscope_name)
     load_camera_config(camera_name)
     load_calibration(calibration_name)
-
+    load_holder_config(holder_name)
 
 base_drc = get_base_drc()
 config_drc = base_drc / _config
@@ -245,10 +265,11 @@ assert config_drc.exists(), f'Configuration directory `{config_drc}` does not ex
 
 scripts_drc = base_drc / _scripts
 logs_drc = base_drc / _logs
-alignments_drc = base_drc / _alignments
+alignments_drc = config_drc / _alignments
 microscope_drc = config_drc / _microscope
 calibration_drc = config_drc / _calibration
 camera_drc = config_drc / _camera
+holder_drc = config_drc / _holder
 
 scripts_drc.mkdir(exist_ok=True)
 logs_drc.mkdir(exist_ok=True)
@@ -260,6 +281,7 @@ defaults = None
 microscope = None
 calibration = None
 camera = None
+holder = None
 
 load_all()
 
@@ -268,15 +290,16 @@ locations = {
     'config': config_drc,
     'logs': logs_drc,
     'scripts': scripts_drc,
-    'camera': alignments_drc,
-    'microscope': calibration.location,
-    'calibration': microscope.location,
-    'alignments': camera.location,
+    'camera': camera.location,
+    'microscope': microscope.location,
+    'holder': holder.location,
+    'calibration': calibration.location,
+    'alignments': alignments_drc,
     'data': settings.data_directory,
     'work': settings.work_directory,
-    'microscope_config': calibration.location,
-    'calibration_config': microscope.location,
-    'alignments_config': camera.location,
+    'microscope_config': microscope.location,
+    'calibration_config': calibration.location,
+    'camera_config': camera.location,
     'settings': config_drc / _settings_yaml,
     'defaults': config_drc / _defaults_yaml,
 }

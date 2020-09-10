@@ -1,6 +1,7 @@
 microscope: simulate
 camera: DMfaux
 calibration: simulate
+holder: XNano
 
 # Global toggle to force simulated camera/microscope interface
 simulate: False

@@ -1,22 +1,23 @@
 class TEMCommunicationError(ConnectionError):
     pass
 
-
 class TEMValueError(ValueError):
     pass
-
 
 class JEOLValueError(TEMValueError):
     pass
 
-
 class FEIValueError(TEMValueError):
     pass
-
 
 class TEMControllerError(Exception):
     pass
 
+class HolderControllerError(Exception):
+    pass
+
+class HolderCommunicationError(Exception):
+    pass
 
 exception_list = {
     'TEMValueError': TEMValueError,

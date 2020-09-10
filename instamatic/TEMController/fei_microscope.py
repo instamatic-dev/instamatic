@@ -342,7 +342,66 @@ class FEIMicroscope:
                 self.proj_tem.CameraLengthIndex = ind
 
     def getMagnificationRanges(self) -> dict:
-        raise NotImplementedError
+        dct = {}
+        if USETOM:
+            self.setProjectionMode('imaging')
+            i = 0 
+            prev = 0
+            mode = self.getFunctionMode()
+            lst = []
+            while True:
+                self.proj_tom.MagnificationIndex = i
+                num = self.proj_tom.Magnification
+                if num == prev:
+                    break
+                lst.append(num)
+                i = i + 1
+                prev = num
+            dct[mode] = lst
+
+            self.setProjectionMode('diffraction') 
+            i = 0
+            prev = 0
+            mode = self.getFunctionMode()
+            lst = []
+            while True:
+                self.proj_tom.CameraLengthIndex = i
+                num = self.proj_tom.CameraLengthIndex
+                if num == prev:
+                    break
+                lst.append(num)
+                i = i + 1
+                prev = num
+            dct[mode] = lst
+        else:
+            self.setProjectionMode('imaging') 
+            i = 0
+            prev = 0
+            mode = self.getFunctionMode()
+            lst = []
+            while True:
+                self.proj_tem.CameraLengthIndex = i
+                num = self.proj_tem.CameraLengthIndex
+                if num == prev:
+                    break
+                lst.append(num)
+                i = i + 1
+                prev = num
+
+            self.setProjectionMode('diffraction') 
+            i = 0
+            prev = 0
+            mode = self.getFunctionMode()
+            lst = []
+            while True:
+                self.proj_tem.CameraLengthIndex = i
+                num = self.proj_tem.CameraLengthIndex
+                if num == prev:
+                    break
+                lst.append(num)
+                i = i + 1
+                prev = num
+        return dct
 
     def setStageSpeed(self, value):
         """Value be 0 - 1. 1.9ms per call"""

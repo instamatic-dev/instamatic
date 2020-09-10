@@ -88,7 +88,7 @@ It establishes a connection to the microscope and reads out the camera lengths a
 
     # Connect to microscope
 
-    tem_name = choice_prompt(choices='jeol fei simulate'.split(),
+    tem_name = choice_prompt(choices='jeol fei_themisZ simulate'.split(),
                              default='simulate',
                              question='Which microscope can I connect to?')
 

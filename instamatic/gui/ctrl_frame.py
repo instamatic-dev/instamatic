@@ -25,34 +25,26 @@ class ExperimentalCtrl(LabelFrame):
 
         frame = Frame(self)
 
-        if config.settings.microscope[:3] != "fei":
-            b_stage_stop = Button(frame, text='Stop stage', command=self.stage_stop)
-            b_stage_stop.grid(row=0, column=2, sticky='W')
-
-        cb_nowait = Checkbutton(frame, text='Wait for stage', variable=self.var_stage_wait)
-        cb_nowait.grid(row=0, column=3)
-
-        b_find_eucentric_height = Button(frame, text='Find eucentric height', command=self.find_eucentric_height)
-        b_find_eucentric_height.grid(row=0, column=0, sticky='EW', columnspan=2)
-
-        Label(frame, text='             Mode:').grid(row=0, column=4, columnspan=3, sticky='E')
-        
-        if config.settings.microscope[:3] == "fei":
-            self.o_mode = OptionMenu(frame, self.var_mode, self.mode, 'LM', 'Mi', 'SA', 'Mh', 'LAD', 'D', command=self.set_mode)
-        else:
-            self.o_mode = OptionMenu(frame, self.var_mode, self.mode, 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
-        self.o_mode.grid(row=0, column=7, sticky='E', padx=10)
-
-        frame.pack(side='top', fill='x', padx=10, pady=10)
-
-        frame = Frame(self)
-
         Label(frame, text='Alpha Angle', width=15).grid(row=1, column=0, sticky='W')
         Label(frame, text='Wobbler (±)', width=15).grid(row=2, column=0, sticky='W')
         Label(frame, text='Stage(XYZ)', width=15).grid(row=3, column=0, sticky='W')
 
         e_alpha_angle = Spinbox(frame, width=10, textvariable=self.var_alpha_angle, from_=-90, to=90, increment=5)
         e_alpha_angle.grid(row=1, column=1, sticky='EW')
+        b_alpha_angle = Button(frame, text='Set', command=self.set_alpha_angle)
+        b_alpha_angle.grid(row=1, column=2, sticky='W')
+        b_alpha_angle_get = Button(frame, text='Get', command=self.get_alpha_angle)
+        b_alpha_angle_get.grid(row=1, column=3, sticky='W')
+
+        b_find_eucentric_height = Button(frame, text='Eucentric Height', command=self.find_eucentric_height)
+        b_find_eucentric_height.grid(row=1, column=4, sticky='EW', columnspan=2)
+
+        if config.settings.microscope[:3] != "fei":
+            b_stage_stop = Button(frame, text='Stop stage', command=self.stage_stop)
+            b_stage_stop.grid(row=1, column=5, sticky='W')
+
+        cb_nowait = Checkbutton(frame, text='Wait for stage', variable=self.var_stage_wait)
+        cb_nowait.grid(row=1, column=6, sticky='W')
 
         e_alpha_wobbler = Spinbox(frame, width=10, textvariable=self.var_alpha_wobbler, from_=-90, to=90, increment=1)
         e_alpha_wobbler.grid(row=2, column=1, sticky='EW')
@@ -60,6 +52,14 @@ class ExperimentalCtrl(LabelFrame):
         self.b_start_wobble.grid(row=2, column=2, sticky='W')
         self.b_stop_wobble = Button(frame, text='Stop', command=self.stop_alpha_wobbler, state=DISABLED)
         self.b_stop_wobble.grid(row=2, column=3, sticky='W')
+
+        Label(frame, text='Select TEM Mode:').grid(row=2, column=4, columnspan=2, sticky='E')
+        
+        if config.settings.microscope[:3] == "fei":
+            self.o_mode = OptionMenu(frame, self.var_mode, self.mode, 'LM', 'Mi', 'SA', 'Mh', 'LAD', 'D', command=self.set_mode)
+        else:
+            self.o_mode = OptionMenu(frame, self.var_mode, self.mode, 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
+        self.o_mode.grid(row=2, column=6, sticky='E', padx=10)
 
         e_stage_x = Entry(frame, width=10, textvariable=self.var_stage_x)
         e_stage_x.grid(row=3, column=1, sticky='EW')
@@ -76,9 +76,6 @@ class ExperimentalCtrl(LabelFrame):
             b_goniotool_set.grid(row=4, column=2, sticky='W')
             b_goniotool_default = Button(frame, text='Default', command=self.set_goniotool_tx_default)
             b_goniotool_default.grid(row=4, column=3, sticky='W')
-
-        b_alpha_angle = Button(frame, text='Set', command=self.set_alpha_angle)
-        b_alpha_angle.grid(row=1, column=2, sticky='W')
 
         b_stage = Button(frame, text='Set', command=self.set_stage)
         b_stage.grid(row=3, column=4, sticky='W')
@@ -110,10 +107,10 @@ class ExperimentalCtrl(LabelFrame):
         self.b_difffocus_get.grid(row=6, column=3, sticky='W')
 
         if self.ctrl.tem.name[:3] == 'fei':
-            self.difffocus_slider = tkinter.Scale(frame, variable=self.var_difffocus, from_=-600000, to=600000, length=180, 
+            self.difffocus_slider = tkinter.Scale(frame, variable=self.var_difffocus, from_=-600000, to=600000, length=250, 
                 showvalue=0, orient=HORIZONTAL, command=self.set_difffocus)
         else:
-            self.difffocus_slider = tkinter.Scale(frame, variable=self.var_difffocus, from_=0, to=65535, length=180, 
+            self.difffocus_slider = tkinter.Scale(frame, variable=self.var_difffocus, from_=0, to=65535, length=250, 
                 showvalue=0, orient=HORIZONTAL, command=self.set_difffocus)
         self.difffocus_slider.grid(row=6, column=4, columnspan=3, sticky='W')
 
@@ -128,10 +125,10 @@ class ExperimentalCtrl(LabelFrame):
         self.b_objfocus_get.grid(row=7, column=3, sticky='W')
 
         if self.ctrl.tem.name[:3] == 'fei':
-            self.objfocus_slider = tkinter.Scale(frame, variable=self.var_objfocus, from_=-600000, to=600000, length=180, 
+            self.objfocus_slider = tkinter.Scale(frame, variable=self.var_objfocus, from_=-600000, to=600000, length=250, 
                 showvalue=0, orient=HORIZONTAL, command=self.set_objfocus)
         else:
-            self.objfocus_slider = tkinter.Scale(frame, variable=self.var_objfocus, from_=0, to=65535, length=180, 
+            self.objfocus_slider = tkinter.Scale(frame, variable=self.var_objfocus, from_=0, to=65535, length=250, 
                 showvalue=0, orient=HORIZONTAL, command=self.set_objfocus)
         self.objfocus_slider.grid(row=7, column=4, columnspan=3, sticky='W')
 
@@ -148,10 +145,10 @@ class ExperimentalCtrl(LabelFrame):
         b_brightness_get.grid(row=8, column=3, sticky='W')
 
         if self.ctrl.tem.name[:3] == 'fei':
-            slider = tkinter.Scale(frame, variable=self.var_brightness, from_=-1.0, to=1.0, resolution=0.01, length=180, 
+            slider = tkinter.Scale(frame, variable=self.var_brightness, from_=-1.0, to=1.0, resolution=0.01, length=250, 
                 showvalue=0, orient=HORIZONTAL, command=self.set_brightness)
         else:
-            slider = tkinter.Scale(frame, variable=self.var_brightness, from_=0, to=65535, length=180, orient=HORIZONTAL, 
+            slider = tkinter.Scale(frame, variable=self.var_brightness, from_=0, to=65535, length=250, orient=HORIZONTAL, 
                 showvalue=0, command=self.set_brightness)
         slider.grid(row=8, column=4, columnspan=3, sticky='W')
 
@@ -278,9 +275,12 @@ class ExperimentalCtrl(LabelFrame):
     def get_objfocus(self, event=None):
         self.var_objfocus.set(self.ctrl.objfocus.get())
 
+    def get_alpha_angle(self):
+        self.var_alpha_angle.set(self.ctrl.stage.a)
+
     def set_alpha_angle(self):
         self.q.put(('ctrl', {'task': 'stage.set',
-                             'a': self.var_alpla_angle.get(),
+                             'a': self.var_alpha_angle.get(),
                              'wait': self.var_stage_wait.get()}))
         self.triggerEvent.set()
 
