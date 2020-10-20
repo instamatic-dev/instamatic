@@ -1,6 +1,6 @@
 # Setting up Instamatic
 
-Download the latest zip package from the [releases page](https://github.com/stefsmeets/instamatic/releases). This installation is fully portable, and can be copied directly to the microscope computer.
+Download the latest zip package from the [releases page](https://github.com/instamatic-dev/instamatic/releases). This installation is fully portable, and can be copied directly to the microscope computer.
 
 Running the program `start_Cmder` will run a terminal which has already been set up.
 
@@ -14,7 +14,7 @@ For FEI microscopes, `instamatic` must be installed on the microscope control PC
 
 ## Development version
 
-The latest, bleeding edge development version of `instamatic` is available from [here](https://github.com/stefsmeets/instamatic/archive/master.zip).
+The latest, bleeding edge development version of `instamatic` is available from [here](https://github.com/instamatic-dev/instamatic/archive/master.zip).
 
 If you run the portable installation, just extract and replace the `instamatic` directory in the root directory of the installation (the one that contains `start_Cmder.exe`). Make sure to delete the old one before.
 
