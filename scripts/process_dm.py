@@ -7,7 +7,7 @@ from PIL import Image
 from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
 
 # Script to process cRED data collecting using the DigitalMicrograph script `insteaDMatic`
-# https://github.com/stefsmeets/instamatic/tree/master/dmscript
+# https://github.com/instamatic-dev/instamatic/tree/master/dmscript
 #
 # To use:
 #     Run `python process_dm.py cred_log.txt`

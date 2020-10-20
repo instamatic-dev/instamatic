@@ -1,5 +1,6 @@
 """Utility script to enable rotation control from a dmscript See
-`https://github.com/stefsmeets/instamatic/tree/master/dmscript` for usage."""
+`https://github.com/instamatic-dev/instamatic/tree/master/dmscript` for
+usage."""
 import datetime
 import logging
 import subprocess as sp
@@ -47,7 +48,7 @@ def main():
     import argparse
 
     description = """
-Utility script to enable rotation control from a dmscript. See [https://github.com/stefsmeets/instamatic/tree/master/dmscript] for usage.
+Utility script to enable rotation control from a dmscript. See [https://github.com/instamatic-dev/instamatic/tree/master/dmscript] for usage.
 """
 
     parser = argparse.ArgumentParser(

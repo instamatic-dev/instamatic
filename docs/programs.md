@@ -511,7 +511,7 @@ show this help message and exit
 
 ## instamatic.temserver_fei
 
-Utility script to enable rotation control from a dmscript. See [https://github.com/stefsmeets/instamatic/tree/master/dmscript] for usage.
+Utility script to enable rotation control from a dmscript. See [https://github.com/instamatic-dev/instamatic/tree/master/dmscript] for usage.
 
 **Usage:**  
 ```bash
