@@ -1,4 +1,4 @@
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/stefsmeets/instamatic/build)](https://github.com/stefsmeets/instamatic/actions)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/instamatic-dev/instamatic/build)](https://github.com/instamatic-dev/instamatic/actions)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)](https://pypi.org/project/instamatic/)
 [![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/instamatic/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/instamatic)](https://pypi.org/project/instamatic/)
@@ -8,7 +8,7 @@
 
 Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL/FEI microscopes and interfaces to the gatan/timepix/tvips cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED), and stepwise rotation electron diffraction (RED) data.
 
-Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/stefsmeets/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
+Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/instamatic-dev/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
 
 Electron microscopes supported:
 
@@ -23,7 +23,7 @@ Cameras supported:
 
 Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and is currently being developed on a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-[1]: A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/stefsmeets/InsteaDMatic).
+[1]: A DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
 
 ## Installation
 
@@ -31,7 +31,7 @@ Instamatic has been extensively tested on a JEOL-2100 with a Timepix camera, and
 pip install instamatic
 ```
 
-Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/stefsmeets/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
+Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/instamatic-dev/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
 ## Documentation
 
