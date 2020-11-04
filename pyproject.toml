@@ -15,11 +15,11 @@ classifiers = [
     'Topic :: Scientific/Engineering :: Chemistry',
     'Topic :: Software Development :: Libraries',
 ]
-homepage = 'http://github.com/stefsmeets/instamatic'
-repository = 'http://github.com/stefsmeets/instamatic'
-documentation = 'http://github.com/stefsmeets/instamatic'
-authors = ["Stef Smeets <s.smeets@tudelft.nl>"]
-maintainers = ['Stef Smeets <s.smeets@tudelft.nl>']
+homepage = 'http://github.com/instamatic-dev/instamatic'
+repository = 'http://github.com/instamatic-dev/instamatic'
+documentation = 'http://github.com/instamatic-dev/instamatic'
+authors = ["Stef Smeets <s.smeets@esciencecenter.nl>"]
+maintainers = ['Stef Smeets <s.smeets@esciencecenter.nl>']
 readme = "readme.md"
 keywords = [
     'electron-crystallography',
@@ -109,7 +109,7 @@ instamatic = 'instamatic.main:main'
 "instamatic.autoconfig" = 'instamatic.config.autoconfig:main'
 
 [tool.poetry.urls]
-'Bug Reports' = 'https://github.com/stefsmeets/instamatic/issues'
+'Bug Reports' = 'https://github.com/instamatic-dev/instamatic/issues'
 
 [tool.dephell.main]
 from = {format = 'poetry', path = 'pyproject.toml'}

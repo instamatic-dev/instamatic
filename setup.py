@@ -25,9 +25,9 @@ setup(
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.6.1',
     project_urls={
-        'documentation': 'http://github.com/stefsmeets/instamatic',
-        'homepage': 'http://github.com/stefsmeets/instamatic',
-        'repository': 'http://github.com/stefsmeets/instamatic'},
+        'documentation': 'http://github.com/instamatic-dev/instamatic',
+        'homepage': 'http://github.com/instamatic-dev/instamatic',
+        'repository': 'http://github.com/instamatic-dev/instamatic'},
     author='Stef Smeets',
     author_email='s.smeets@tudelft.nl',
     license='GPL-3.0-only',
