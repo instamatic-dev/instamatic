@@ -157,7 +157,7 @@ class JeolMicroscope:
         return bool(value)
 
     def getCL1(self) -> int:
-        value, result = self.lens3.GetCL2()
+        value, result = self.lens3.GetCL1()
         return value
 
     def getCL2(self) -> int:
