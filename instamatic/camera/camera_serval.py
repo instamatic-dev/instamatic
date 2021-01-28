@@ -1,10 +1,9 @@
 import atexit
 import logging
-import time
 from pathlib import Path
 
 import numpy as np
-import pyserval
+from pyserval import Camera as ServalCamera
 
 from instamatic import config
 logger = logging.getLogger(__name__)
@@ -36,14 +35,6 @@ class CameraServal:
 
         self.__dict__.update(config.camera.mapping)
 
-        cam = 'tpx3'
-
-        base_path = Path('C:/', 'Users', 'Stef', 'python', 'pyserval', 'server', '20210113 ASI Server 2.1.0', 'samples') / cam
-        self.bpc_file_path = base_path / f'{cam}-demo.bpc'
-        self.dacs_file_path = base_path / f'{cam}-demo.dacs'
-
-        self.url = 'http://localhost:8080'
-
     def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
@@ -61,10 +52,6 @@ class CameraServal:
         arr = self.conn.get_image(ExposureTime=exposure)
 
         return arr
-
-    def isCameraInfoAvailable(self) -> bool:
-        """Check if the camera is available."""
-        return True
 
     def getImageDimensions(self) -> (int, int):
         """Get the binned dimensions reported by the camera."""
@@ -86,21 +73,14 @@ class CameraServal:
 
     def establishConnection(self) -> None:
         """Establish connection to the camera."""
-        from pyserval import Camera as ServalCamera
         self.conn = ServalCamera(self.url,
-                                 str(self.bpc_file_path),
-                                 str(self.dacs_file_path),
+                                 self.bpc_file_path,
+                                 self.dacs_file_path,
                                  )
 
         self.conn.connect()
         self.conn.configure()
-        self.conn.set_detector_config(
-            BiasVoltage=100,
-            BiasEnabled=True,
-            TriggerMode='AUTOTRIGSTART_TIMERSTOP',
-            ExposureTime=1.0,
-            TriggerPeriod=1.05,
-        )
+        self.conn.set_detector_config(**self.detector_config)
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
