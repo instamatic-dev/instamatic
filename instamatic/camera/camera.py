@@ -20,12 +20,14 @@ def get_cam(interface: str = None):
         from instamatic.camera.camera_gatan import CameraDLL as cam
     elif interface in ('orius', 'gatan'):
         from instamatic.camera.camera_gatan import CameraDLL as cam
-    elif interface in ('gatansocket'):
+    elif interface == 'gatansocket':
         from instamatic.camera.camera_gatan2 import CameraGatan2 as cam
     elif interface in ('timepix', 'pytimepix'):
         from instamatic.camera import camera_timepix as cam
     elif interface in ('emmenu', 'tvips'):
         from instamatic.camera.camera_emmenu import CameraEMMENU as cam
+    elif interface == 'serval':
+        from instamatic.camera.camera_serval import CameraServal as cam
     else:
         raise ValueError(f'No such camera interface: {interface}')
 
