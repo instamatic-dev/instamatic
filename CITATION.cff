@@ -17,5 +17,5 @@ doi: "10.5281/zenodo.4072976"
 license: "GPL-3.0"
 message: "If you use this software, please cite it using these metadata."
 title: Instamatic
-version: "1.6.0"
+version: "1.6.1"
 ...
