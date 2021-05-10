@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
-from pyserval import Camera as ServalCamera
+from serval_toolkit.camera import Camera as ServalCamera
 
 from instamatic import config
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
-        arr = self.conn.get_image(ExposureTime=exposure)
+        arr = self.conn.get_image(ExposureTime=exposure) # also set TriggerPeriod?
 
         return arr
 
@@ -72,7 +72,7 @@ class CameraServal:
         arr = self.conn.get_images(
             nTriggers=n_frames,
             ExposureTime=exposure,
-            TriggerPeriod=0.05)
+            TriggerPeriod=exposure) # TODO only for continuous mode
 
         return arr
 
@@ -96,13 +96,10 @@ class CameraServal:
 
     def establishConnection(self) -> None:
         """Establish connection to the camera."""
-        self.conn = ServalCamera(self.url,
-                                 self.bpc_file_path,
-                                 self.dacs_file_path,
-                                 )
-
-        self.conn.connect()
-        self.conn.configure()
+        self.conn = ServalCamera(self.url)
+        self.conn.set_chip_config_files(
+            bpc_file_path = self.bpc_file_path,
+            dacs_file_path = self.dacs_file_path)
         self.conn.set_detector_config(**self.detector_config)
 
     def releaseConnection(self) -> None:
