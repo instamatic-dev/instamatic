@@ -8,6 +8,11 @@ from serval_toolkit.camera import Camera as ServalCamera
 from instamatic import config
 logger = logging.getLogger(__name__)
 
+# Start servers in serval_toolkit:
+# 1. `java -jar .\emu\tpx3_emu.jar`
+# 2. `java -jar .\server\serv-2.1.3.jar`
+# 3. launch `instamatic`
+
 
 class CameraServal:
     """Interfaces with Serval from ASI."""
@@ -31,7 +36,7 @@ class CameraServal:
         if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
 
-        self.streamable = True
+        self.streamable = False
 
         self.__dict__.update(config.camera.mapping)
 
@@ -49,7 +54,7 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
-        arr = self.conn.get_image(ExposureTime=exposure) # also set TriggerPeriod?
+        arr = self.conn.get_image(ExposureTime=exposure)  # also set TriggerPeriod?
 
         return arr
 
@@ -72,7 +77,7 @@ class CameraServal:
         arr = self.conn.get_images(
             nTriggers=n_frames,
             ExposureTime=exposure,
-            TriggerPeriod=exposure) # TODO only for continuous mode
+            TriggerPeriod=exposure)  # TODO only for continuous mode
 
         return arr
 
@@ -96,10 +101,11 @@ class CameraServal:
 
     def establishConnection(self) -> None:
         """Establish connection to the camera."""
-        self.conn = ServalCamera(self.url)
+        self.conn = ServalCamera()
+        self.conn.connect(self.url)
         self.conn.set_chip_config_files(
-            bpc_file_path = self.bpc_file_path,
-            dacs_file_path = self.dacs_file_path)
+            bpc_file_path=self.bpc_file_path,
+            dacs_file_path=self.dacs_file_path)
         self.conn.set_detector_config(**self.detector_config)
 
     def releaseConnection(self) -> None:
