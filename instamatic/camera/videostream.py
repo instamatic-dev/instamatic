@@ -81,6 +81,7 @@ class VideoStream(threading.Thread):
         self.name = self.cam.name
 
         self.frametime = self.default_exposure
+        self.frame = None
 
         self.grabber = self.setup_grabber()
 

@@ -36,7 +36,7 @@ class CameraServal:
         if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
 
-        self.streamable = False
+        self.streamable = True
 
         self.__dict__.update(config.camera.mapping)
 
@@ -54,9 +54,15 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
-        arr = self.conn.get_image(ExposureTime=exposure)  # also set TriggerPeriod?
-
-        return arr
+        try:
+            arr = self.conn.get_image(
+                ExposureTime=exposure,
+                TriggerPeriod=exposure,
+            )
+        except RuntimeError as e:
+            print(f'Frame dropped, reason: {repr(e)}')
+        else:
+            return arr
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -77,7 +83,10 @@ class CameraServal:
         arr = self.conn.get_images(
             nTriggers=n_frames,
             ExposureTime=exposure,
-            TriggerPeriod=exposure)  # TODO only for continuous mode
+            TriggerPeriod=exposure,
+        )  # TODO only for continuous mode
+
+        # add measurement stop
 
         return arr
 
