@@ -11,9 +11,9 @@ stretch_azimuth: 0.0
 detector_config:
   BiasVoltage: 100
   BiasEnabled: True
-  TriggerMode: AUTOTRIGSTART_TIMERSTOP
+  TriggerMode: CONTINUOUS
   ExposureTime: 1.0
-  TriggerPeriod: 1.05
-bpc_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\tpx3\tpx3-demo.bpc'
-dacs_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\tpx3\tpx3-demo.dacs'
+  TriggerPeriod: 1.0
+bpc_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\mpx3\mpx3-demo.bpc'
+dacs_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\mpx3\mpx3-demo.dacs'
 url: 'http://localhost:8080'
