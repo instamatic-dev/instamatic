@@ -8,8 +8,10 @@ import os.path
 
 readme = ''
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'readme.rst'), 'rb') as stream:
-    readme = stream.read().decode('utf8')
+readme_path = os.path.join(here, 'readme.rst')
+if os.path.exists(readme_path):
+    with open(readme_path, 'rb') as stream:
+        readme = stream.read().decode('utf8')
 
 
 setup(
