@@ -54,15 +54,25 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
-        try:
-            arr = self.conn.get_image(
-                ExposureTime=exposure,
-                TriggerPeriod=exposure,
-            )
-        except RuntimeError as e:
-            print(f'Frame dropped, reason: {repr(e)}')
-        else:
-            return arr
+        # Upload exposure settings (Note: will do nothing if no change in settings)
+        self.conn.set_detector_config(ExposureTime=exposure,
+                TriggerPeriod=exposure + 0.00050001)
+
+        # Check if measurement is running. If not: start
+        db = self.conn.dashboard
+        if db['Measurement'] is None or db['Measurement']['Status'] != 'DA_RECORDING':
+            self.conn.measurement_start()
+
+        # Start the acquisition
+        print('Trigger!')
+        self.conn.trigger_start()
+
+        # Request a frame. Will be streamed *after* the exposure finishes
+        print('Get stream!')
+        img = self.conn.get_image_stream(nTriggers = 1, disable_tqdm = True)[0]
+        print('Got the image!')
+        arr = np.array(img)
+        return arr
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -116,9 +126,21 @@ class CameraServal:
             bpc_file_path=self.bpc_file_path,
             dacs_file_path=self.dacs_file_path)
         self.conn.set_detector_config(**self.detector_config)
+        self.conn.destination = {
+                "Image":
+                    [{
+                    # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
+                    "Base": "http://localhost",
+                    # What (image) format to provide the files in.
+                    "Format": 'pgm',
+                    # What data to build a frame from
+                    "Mode": "count"
+            }]
+        }
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
+        self.conn.measurement_stop()
         name = self.getName()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
