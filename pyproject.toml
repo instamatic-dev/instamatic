@@ -1,6 +1,6 @@
 [tool.poetry]
 name = 'instamatic'
-version = '1.6.0'
+version = "1.6.1"
 description = 'Python program for automated electron diffraction data collection'
 license = 'GPL-3.0-only'
 classifiers = [

@@ -140,7 +140,7 @@ class CameraDLL:
 
     def load_defaults(self):
         if self.name != config.settings.camera:
-            config.load(camera_name=self.name)
+            config.load_camera_config(camera_name=self.name)
 
         self.__dict__.update(config.camera.mapping)
 
