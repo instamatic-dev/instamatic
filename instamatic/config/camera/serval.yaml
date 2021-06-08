@@ -14,6 +14,8 @@ detector_config:
   TriggerMode: SOFTWARESTART_TIMERSTOP
   ExposureTime: 1.0
   TriggerPeriod: 1.001
-bpc_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\mpx3\mpx3-demo.bpc'
-dacs_file_path: 'C:\Users\Stef\python\pyserval\server\20210113 ASI Server 2.1.0\samples\mpx3\mpx3-demo.dacs'
+  nTriggers: 1000000000
+  GainMode: HGM
+bpc_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.bpc'
+dacs_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.dacs'
 url: 'http://localhost:8080'

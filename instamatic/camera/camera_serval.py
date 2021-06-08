@@ -64,13 +64,10 @@ class CameraServal:
             self.conn.measurement_start()
 
         # Start the acquisition
-        print('Trigger!')
         self.conn.trigger_start()
 
         # Request a frame. Will be streamed *after* the exposure finishes
-        print('Get stream!')
         img = self.conn.get_image_stream(nTriggers = 1, disable_tqdm = True)[0]
-        print('Got the image!')
         arr = np.array(img)
         return arr
 
