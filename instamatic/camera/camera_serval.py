@@ -87,13 +87,13 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
+        self.conn.set_detector_config(TriggerMode = 'CONTINUOUS')
+
         arr = self.conn.get_images(
             nTriggers=n_frames,
             ExposureTime=exposure,
             TriggerPeriod=exposure,
-        )  # TODO only for continuous mode
-
-        # add measurement stop
+        )
 
         return arr
 
@@ -123,13 +123,21 @@ class CameraServal:
             bpc_file_path=self.bpc_file_path,
             dacs_file_path=self.dacs_file_path)
         self.conn.set_detector_config(**self.detector_config)
+        # Check pixel depth. If 24 bit mode is used, the pgm format does not work
+        # (has support up to 16 bits) so use tiff in that case. In other cases (1, 6, 12 bits)
+        # use pgm since it is more efficient
+        self.pixel_depth = self.conn.detector_config['PixelDepth']
+        if self.pixel_depth == 24:
+            file_format = 'tiff'
+        else:
+            file_format = 'pgm'
         self.conn.destination = {
                 "Image":
                     [{
                     # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
                     "Base": "http://localhost",
                     # What (image) format to provide the files in.
-                    "Format": 'pgm',
+                    "Format": file_format,
                     # What data to build a frame from
                     "Mode": "count"
             }]
