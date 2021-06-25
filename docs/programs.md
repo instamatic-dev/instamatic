@@ -276,7 +276,7 @@ show this help message and exit
 
 ## instamatic.browser
 
-Program for indexing electron diffraction images.
+Program for browsing through electron diffraction images collected by `instamatic`.
 
 Example:
 
