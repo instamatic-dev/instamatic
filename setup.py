@@ -29,7 +29,7 @@ setup(
         'homepage': 'http://github.com/instamatic-dev/instamatic',
         'repository': 'http://github.com/instamatic-dev/instamatic'},
     author='Stef Smeets',
-    author_email='s.smeets@tudelft.nl',
+    author_email='s.smeets@esciencecenter.nl',
     license='GPL-3.0-only',
     keywords='electron-crystallography electron-microscopy electron-diffraction serial-crystallography 3D-electron-diffraction micro-ed data-collection automation',
     classifiers=[
