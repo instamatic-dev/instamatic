@@ -23,7 +23,7 @@ setup(
     name='instamatic',
     version='1.6.1',
     description='Python program for automated electron diffraction data collection',
-    python_requires='>=3.6.1',
+    python_requires='>=3.7',
     project_urls={
         'documentation': 'http://github.com/instamatic-dev/instamatic',
         'homepage': 'http://github.com/instamatic-dev/instamatic',
@@ -33,9 +33,9 @@ setup(
     license='GPL-3.0-only',
     keywords='electron-crystallography electron-microscopy electron-diffraction serial-crystallography 3D-electron-diffraction micro-ed data-collection automation',
     classifiers=[
-            'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
