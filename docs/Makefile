@@ -29,3 +29,4 @@ install.rst:
 
 clean:
 	rm -rvf "$(BUILDDIR)" "$(STATICDIR)/examples" instamatic*.rst README.rst examples.*rst
+	rm -rvf config.rst formats.rst gui.rst programs.rst setup.rst tem_api.rst tvips.rst

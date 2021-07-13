@@ -27,18 +27,26 @@ def run_apidoc(app):
     apidoc.main(args)
 
 
-# Convert readme.md to rst to be included in index.html
-def make_readme(app):
+# Convert readme.md and others to rst to be included in index.html
+def make_markdown(app):
     import subprocess
-    cmd = 'pandoc --from=markdown --to=rst --output=README.rst ../readme.md'
-    args = cmd.split()
-    subprocess.run(args)
+    for inp, out in (('setup.md', 'setup.rst'),
+                     ('config.md', 'config.rst'),
+                     ('formats.md', 'formats.rst'),
+                     ('gui.md', 'gui.rst'),
+                     ('programs.md', 'programs.rst'),
+                     ('tem_api.md', 'tem_api.rst'),
+                     ('tvips.md', 'tvips.rst'),
+                     ('../README.md', 'readme.rst')):
+        cmd = f'pandoc --from=markdown --to=rst --output={out} {inp}'
+        args = cmd.split()
+        subprocess.run(args)
 
 
 # https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx-core-events
 # https://github.com/readthedocs/readthedocs.org/issues/2276
 def setup(app):
-    app.connect('builder-inited', make_readme)
+    app.connect('builder-inited', make_markdown)
     app.connect('builder-inited', run_apidoc)
 
 
