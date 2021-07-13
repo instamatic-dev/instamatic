@@ -125,6 +125,11 @@ autodoc_mock_imports = [
     'virtualbox',
     'pywinauto',
     'pyserialem',
+    'predicrystal',
+    'lmfit',
+    'mrcfile',
+    'comtypes',
+    'msvcrt',
 ]
 
 intersphinx_mapping = {
