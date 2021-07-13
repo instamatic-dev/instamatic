@@ -30,7 +30,7 @@ def run_apidoc(app):
 # Convert readme.md to rst to be included in index.html
 def make_readme(app):
     import subprocess
-    cmd = 'pandoc --from=markdown --to=rst --output=README.rst ../README.md'
+    cmd = 'pandoc --from=markdown --to=rst --output=README.rst ../readme.md'
     args = cmd.split()
     subprocess.run(args)
 
@@ -120,7 +120,12 @@ autodoc_default_options = {
 nbsphinx_allow_errors = True
 nbsphinx_execute = 'never'
 
-autodoc_mock_imports = []
+autodoc_mock_imports = [
+    'h5py',
+    'virtualbox',
+    'pywinauto',
+    'pyserialem',
+]
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),

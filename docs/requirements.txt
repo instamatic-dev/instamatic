@@ -10,3 +10,5 @@ scipy
 scikit-image
 scikit-learn
 ipython
+tqdm
+pyyaml
