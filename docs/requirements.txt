@@ -12,3 +12,4 @@ scikit-learn
 ipython
 tqdm
 pyyaml
+pandas
