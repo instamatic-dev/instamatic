@@ -1,0 +1,15 @@
+sphinx
+sphinx_rtd_theme
+readthedocs-sphinx-search
+nbsphinx
+nbsphinx-link
+autodocsumm
+numpy
+matplotlib
+scipy
+scikit-image
+scikit-learn
+ipython
+tqdm
+pyyaml
+pandas

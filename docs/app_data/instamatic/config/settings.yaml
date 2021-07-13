@@ -1,0 +1,18 @@
+microscope: test
+camera: test
+calibration: test
+
+# Global toggle to force simulated camera/microscope interface
+simulate: True
+
+data_directory: C:/instamatic
+flatfield:
+
+# Run the TEM connection in a different process (recommended)
+use_tem_server: False
+
+# Run the Camera connection in a different process
+use_cam_server: False
+
+# Submit collected data to an indexing server (CRED only)
+use_indexing_server_exe: False
