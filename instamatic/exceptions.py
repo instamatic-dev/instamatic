@@ -42,5 +42,10 @@ exception_list = {
     'StopIteration': StopIteration,
     'TypeError': TypeError,
     'ValueError': ValueError,
-    'WindowsError': WindowsError,
 }
+
+try:
+    # avoid crash on linux instances
+    exception_list['WindowsError'] = WindowsError
+except NameError:
+    pass
