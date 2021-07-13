@@ -12,11 +12,11 @@ BUILDDIR      = _build
 TEMPLATESDIR  = _templates
 STATICDIR     = _static
 
-html: conf.py instamatic.rst README.rst install.rst
+html: conf.py instamatic.rst readme.rst install.rst
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-README.rst: ../README.md
-	pandoc --from=markdown --to=rst --output=README.rst ../README.md
+readme.rst: ../readme.md
+	pandoc --from=markdown --to=rst --output=readme.rst ../readme.md
 
 instamatic.rst:
 	$(SPHINXGEN) -eTf -t "$(TEMPLATESDIR)" -o "$(SOURCEDIR)" ../instamatic
@@ -28,5 +28,5 @@ install.rst:
 	touch install.rst
 
 clean:
-	rm -rvf "$(BUILDDIR)" "$(STATICDIR)/examples" instamatic*.rst README.rst examples.*rst
+	rm -rvf "$(BUILDDIR)" "$(STATICDIR)/examples" instamatic*.rst readme.rst examples.*rst
 	rm -rvf config.rst formats.rst gui.rst programs.rst setup.rst tem_api.rst tvips.rst

@@ -37,7 +37,7 @@ def make_markdown(app):
                      ('programs.md', 'programs.rst'),
                      ('tem_api.md', 'tem_api.rst'),
                      ('tvips.md', 'tvips.rst'),
-                     ('../README.md', 'readme.rst')):
+                     ('../readme.md', 'readme.rst')):
         cmd = f'pandoc --from=markdown --to=rst --output={out} {inp}'
         args = cmd.split()
         subprocess.run(args)
