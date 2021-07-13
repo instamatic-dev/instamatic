@@ -11,7 +11,6 @@ Getting started
    config
    formats
    gui
-   install
    programs
    tem_api
    tvips
