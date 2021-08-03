@@ -68,7 +68,7 @@ tifffile = '>=2019.7.26.2'
 tqdm = '>=4.41.1'
 virtualbox = '>=2.0.0'
 pyserialem = '>=0.3.2'
-serval-toolkit = { version = ">=0.05", optional = true }
+# serval-toolkit = { version = ">=0.05", optional = true }
 
 [tool.poetry.dev-dependencies]
 check-manifest = '*'
