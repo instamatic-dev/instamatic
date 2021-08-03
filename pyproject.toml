@@ -4,9 +4,9 @@ version = "1.6.1"
 description = 'Python program for automated electron diffraction data collection'
 license = 'GPL-3.0-only'
 classifiers = [
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
@@ -35,9 +35,9 @@ include = [
     '.pre-commit-config.yaml',
     'THANKS.md',
     'LICENCE',
-    'demos/*.ipynb',
-    'demos/nav.nav',
-    'demos/readme.md',
+    'notebooks/*.ipynb',
+    'notebooks/nav.nav',
+    'notebooks/readme.md',
     'docs/*.md',
     'docs/*.png',
     'docs/*.py',
@@ -50,7 +50,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = '>=3.6.1'
+python = ">=3.7.0"
 comtypes = '>=1.1.7'
 h5py = '>=2.10.0'
 ipython = '>=7.11.1'

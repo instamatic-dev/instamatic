@@ -1,7 +1,9 @@
 import importlib
+import logging
 
 from .jobs import JOBS  # Import central list of jobs
 from instamatic import config
+logger = logging.getLogger(__name__)
 
 all_modules = (
     'cred',
@@ -41,7 +43,8 @@ for module in modules:
     try:
         for job, function in lib.commands.items():
             if job in JOBS:
-                raise NameError(f'New job `{job}` already exists in `JOBS` listsing!')
-            JOBS[job] = function
+                logger.info(f'New job `{job}` already exists in `JOBS` listsing!')
+            else:
+                JOBS[job] = function
     except AttributeError:
         print(f'No jobs from `{module}`!')
