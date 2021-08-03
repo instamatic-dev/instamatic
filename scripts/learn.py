@@ -93,7 +93,7 @@ def main(file_pattern):
         frame = int(str(fn)[-12:-8])
         number = int(str(fn)[-7:-3])
 
-        img_processed = neural_network.preprocess(img.astype(np.float))
+        img_processed = neural_network.preprocess(img.astype(float))
         prediction = neural_network.predict(img_processed)
 
         if prediction < 0.5:

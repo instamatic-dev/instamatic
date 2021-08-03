@@ -92,7 +92,7 @@ class Message:
 
     def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
         # Strings are packaged as long array using np.frombuffer(buffer,np.int_)
-        # and can be converted back with longarray.tostring()
+        # and can be converted back with longarray.tobytes()
         # add final longarg with size of the longarray
         if len(longarray):
             longargs = list(longargs)
@@ -621,7 +621,7 @@ class GatanSocket:
 
         bkg = r'// $BACKGROUND$\n\n'
 
-        with open(fn, 'r') as f:
+        with open(fn) as f:
             cmd_str = ''.join(f.readlines())
 
         if background:

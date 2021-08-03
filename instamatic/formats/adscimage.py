@@ -28,7 +28,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
 
     out = b'{\n'
     for key in header:
-        out += '{:}={:};\n'.format(key, header[key]).encode()
+        out += f'{key}={header[key]};\n'.encode()
     if 'HEADER_BYTES' in header:
         pad = int(header['HEADER_BYTES']) - len(out) - 2
     else:
@@ -47,7 +47,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
 
     with open(fname, 'wb') as outf:
         outf.write(out)
-        outf.write(data.tostring())
+        outf.write(data.tobytes())
 
 
 def readheader(infile):

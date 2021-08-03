@@ -91,7 +91,7 @@ def radial_average(z, center, as_radial_map=False):
     """
     y, x = np.indices(z.shape)
     r = np.sqrt((x - center[1])**2 + (y - center[0])**2)
-    r = r.astype(np.int)
+    r = r.astype(int)
 
     tbin = np.bincount(r.ravel(), z.ravel())
     nr = np.bincount(r.ravel())
