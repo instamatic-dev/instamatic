@@ -9,14 +9,16 @@ __banner__ = r"""
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 """
 
-__version__ = '1.6.1'
+__version__ = '1.7.0'
 __title__ = 'instamatic'
 __long_title__ = f'{__title__} v{__version__}'
 __author__ = 'Stef Smeets'
-__author_email__ = 's.smeets@tudelft.nl'
+__author_email__ = 's.smeets@esciencecenter.nl'
 __description__ = 'Python program for automated serial electron diffraction data collection'
 __license__ = 'GPLv3'
-__url__ = 'http://github.com/instamatic-dev/instamatic'
+__url__ = 'https://github.com/instamatic-dev/instamatic'
+__issues__ = __url__ + '/issues'
+__docs__ = 'https://instamatic.readthedocs.io'
 __doi__ = 'https://doi.org/10.5281/zenodo.1090388'
 __citation__ = f'Instamatic (v.{__version__}), Zenodo, {__doi__}'
 __citation_cred__ = 'J. Appl. Cryst. (2018). 51, 1652–1661, https://doi.org/10.1107/S1600576718015145'

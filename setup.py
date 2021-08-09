@@ -21,7 +21,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='instamatic',
-    version='1.6.1',
+    version='1.7.0',
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.7',
     project_urls={

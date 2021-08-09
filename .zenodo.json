@@ -9,7 +9,11 @@
     {
       "affiliation": "Stockholm University",
       "name": "Bin Wang"
-    }
+    },
+    {
+      "affiliation": "Amsterdam Scientific Instruments",
+      "name": "Erik Hogenbirk",
+    },
   ],
   "keywords": [
     "electron-crystallography",
