@@ -605,7 +605,7 @@ class Experiment:
 
                 img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)"""
 
-            img0_p = preprocess(img0.astype(np.float))
+            img0_p = preprocess(img0.astype(float))
             scorefromCNN = predict(img0_p)
             # self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
             self.logger.debug(f'Score for the DP: {scorefromCNN}')
@@ -773,7 +773,7 @@ class Experiment:
                         self.logger.debug(f'Imageshift close to limit warning: is_x0 = {is_x0}, is_y0 = {is_y0}, is2_x0 = {is2_x0}, is2_y0 = {is2_y0}')
                         self.stopEvent.set()
 
-                    self.logger.debug('Image Interval: {}, Imgvar/Img0var:{}'.format(self.image_interval, imgvar / img0var))
+                    self.logger.debug(f'Image Interval: {self.image_interval}, Imgvar/Img0var:{imgvar / img0var}')
 
                     next_interval = t_start + acquisition_time
 
@@ -792,7 +792,7 @@ class Experiment:
                         imgscale0 = np.sum(img)
                     else:
                         imgscale = np.sum(img)
-                        self.logger.debug('Image scale variation: {}'.format(imgscale / imgscale0))
+                        self.logger.debug(f'Image scale variation: {imgscale / imgscale0}')
 
                     buffer.append((i, img, h))
 
@@ -843,9 +843,9 @@ class Experiment:
         rotrange = abs(self.endangle - self.startangle)
 
         if self.verbose:
-            print('Rotated {:.2f} degrees from {:.2f} to {:.2f}'.format(abs(self.endangle - self.startangle), self.startangle, self.endangle))
+            print(f'Rotated {abs(self.endangle - self.startangle):.2f} degrees from {self.startangle:.2f} to {self.endangle:.2f}')
 
-        self.logger.info('Rotated {:.2f} degrees from {:.2f} to {:.2f}'.format(abs(self.endangle - self.startangle), self.startangle, self.endangle))
+        self.logger.info(f'Rotated {abs(self.endangle - self.startangle):.2f} degrees from {self.startangle:.2f} to {self.endangle:.2f}')
 
         nframes = i - 1  # i + 1 is not correct since i+=1 was executed before next image is taken???
         osangle = abs(self.endangle - self.startangle) / nframes
@@ -1162,7 +1162,7 @@ class Experiment:
 
                 h['exp_magnification'] = self.ctrl.magnification.get()
 
-                write_tiff(path / f'Overall_view', img, h)
+                write_tiff(path / 'Overall_view', img, h)
 
                 crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
@@ -1177,7 +1177,7 @@ class Experiment:
 
                 img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
                 h['exp_magnification'] = self.ctrl.magnification.get()
-                write_tiff(path / f'Overall_view', img, h)
+                write_tiff(path / 'Overall_view', img, h)
 
                 crystal_positions = find_crystals_timepix(img, self.magnification, spread=self.spread, offset=self.offset)
                 crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
@@ -1197,7 +1197,7 @@ class Experiment:
                         self.print_and_del('Lost targeted isolated crystal.')
                         return 0
 
-                self.logger.info('{} {} crystals found.'.format(datetime.datetime.now(), n_crystals))
+                self.logger.info(f'{datetime.datetime.now()} {n_crystals} crystals found.')
 
                 k = 0
 
@@ -1207,7 +1207,7 @@ class Experiment:
                         self.ctrl.brightness.value = img_brightness
 
                         if self.verbose:
-                            print('Collecting on crystal {}/{}. Beamshift coordinates: {}'.format(k + 1, n_crystals, self.ctrl.beamshift.get()))
+                            print(f'Collecting on crystal {k + 1}/{n_crystals}. Beamshift coordinates: {self.ctrl.beamshift.get()}')
 
                         outfile = path / f'crystal_{k:04d}'
                         comment = f'crystal {k}'
@@ -1288,7 +1288,7 @@ class Experiment:
 
                         else:
                             if self.verbose:
-                                print('Crystal {} not isolated: not suitable for cred collection'.format(k + 1))
+                                print(f'Crystal {k + 1} not isolated: not suitable for cred collection')
 
                         k = k + 1
                         if k >= n_crystals:

@@ -56,7 +56,7 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
 
     # newline='\n' to have unix line endings
     with open(path / 'dials_variables.sh', 'w', newline='\n') as f:
-        print(f'#!/usr/bin/env bash', file=f)
+        print('#!/usr/bin/env bash', file=f)
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
         if rotation_xyz:
@@ -521,19 +521,19 @@ class ImgConversion:
             print(f'ROTATIONAXIS    {omega:5f}', file=f)
             print(f'CCDPIXELSIZE    {self.pixelsize:5f}', file=f)
             print(f'GONIOTILTSTEP    {self.osc_angle:5f}', file=f)
-            print(f'BEAMTILTSTEP    0', file=f)
-            print(f'BEAMTILTRANGE    0.000', file=f)
-            print(f'STRETCHINGMP    0.0', file=f)
-            print(f'STRETCHINGAZIMUTH    0.0', file=f)
-            print(f'', file=f)
-            print(f'FILELIST', file=f)
+            print('BEAMTILTSTEP    0', file=f)
+            print('BEAMTILTRANGE    0.000', file=f)
+            print('STRETCHINGMP    0.0', file=f)
+            print('STRETCHINGAZIMUTH    0.0', file=f)
+            print('', file=f)
+            print('FILELIST', file=f)
 
             for i in self.observed_range:
                 fn = f'{i:05d}.mrc'
                 angle = self.start_angle + sign * self.osc_angle * i
                 print(f'FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}', file=f)
 
-            print(f'ENDFILELIST', file=f)
+            print('ENDFILELIST', file=f)
 
         logger.debug(f'ED3D file created in path: {path}')
 
@@ -597,7 +597,7 @@ class ImgConversion:
 
     def write_beam_centers(self, path: str) -> None:
         """Write list of beam centers to file `beam_centers.txt` in `path`"""
-        centers = np.zeros((max(self.observed_range), 2), dtype=np.float)
+        centers = np.zeros((max(self.observed_range), 2), dtype=float)
         for i, h in self.headers.items():
             centers[i - 1] = h['beam_center']
         for i in self.missing_range:
@@ -629,11 +629,11 @@ class ImgConversion:
             print('', file=f)
             print(f'lambda {self.wavelength}', file=f)
             print(f'Aperpixel {self.pixelsize}', file=f)
-            print(f'phi 0.0', file=f)
+            print('phi 0.0', file=f)
             print(f'omega {omega}', file=f)
-            print(f'bin 1', file=f)
-            print(f'reflectionsize 20', file=f)
-            print(f'noiseparameters 3.5 38', file=f)
+            print('bin 1', file=f)
+            print('reflectionsize 20', file=f)
+            print('noiseparameters 3.5 38', file=f)
             print('', file=f)
             # print("reconstructions", file=f)
             # print("endreconstructions", file=f)

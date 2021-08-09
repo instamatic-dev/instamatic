@@ -209,30 +209,31 @@ class VideoStreamFrame(LabelFrame):
         self.frame = frame = self.stream.frame
         self.stream.lock.release()
 
-        # the display range in ImageTk is from 0 to 256
-        if self.auto_contrast:
-            frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
+        if frame is not None:
+            # the display range in ImageTk is from 0 to 256
+            if self.auto_contrast:
+                frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
 
-            image = Image.fromarray(frame)
-        elif self.display_range != self.display_range_default:
-            image = np.clip(frame, 0, self.display_range)
-            image = (256.0 / self.display_range) * image
-            image = Image.fromarray(image)
-        else:
-            image = Image.fromarray(frame)
+                image = Image.fromarray(frame)
+            elif self.display_range != self.display_range_default:
+                image = np.clip(frame, 0, self.display_range)
+                image = (256.0 / self.display_range) * image
+                image = Image.fromarray(image)
+            else:
+                image = Image.fromarray(frame)
 
-        if self.brightness != 1:
-            image = ImageEnhance.Brightness(image.convert('L')).enhance(self.brightness)
-            # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+            if self.brightness != 1:
+                image = ImageEnhance.Brightness(image.convert('L')).enhance(self.brightness)
+                # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
 
-        if self.resize_image:
-            image = image.resize((950, 950))
+            if self.resize_image:
+                image = image.resize((950, 950))
 
-        image = ImageTk.PhotoImage(image=image)
+            image = ImageTk.PhotoImage(image=image)
 
-        self.panel.configure(image=image)
-        # keep a reference to avoid premature garbage collection
-        self.panel.image = image
+            self.panel.configure(image=image)
+            # keep a reference to avoid premature garbage collection
+            self.panel.image = image
 
         self.update_frametimes()
         # self.parent.update_idletasks()

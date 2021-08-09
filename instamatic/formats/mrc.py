@@ -44,7 +44,6 @@ numpy2mrc = {
     # convert these to int8
     numpy.int8: 0,
     #    numpy.uint8: 0,
-    numpy.bool: 0,
     numpy.bool_: 0,
 
     # convert these to int16
@@ -56,12 +55,10 @@ numpy2mrc = {
     numpy.float64: 2,
     numpy.int32: 2,
     numpy.int64: 2,
-    numpy.int: 2,
     numpy.uint32: 2,
     numpy.uint64: 2,
 
     # convert these to complex64
-    numpy.complex: 4,
     numpy.complex64: 4,
     numpy.complex128: 4,
 
@@ -455,7 +452,7 @@ def iter_images(filename, index=None, header=None, no_strict_mrc=False):
         try:
             f.seek(int(offset))
         except BaseException:
-            _logger.error('{} -- {}'.format(str(offset), str(offset.__class__.__name__)))
+            _logger.error(f'{str(offset)} -- {str(offset.__class__.__name__)}')
             raise
         if not hasattr(index, '__iter__'):
             index = range(index, count)

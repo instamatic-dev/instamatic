@@ -33,7 +33,7 @@ jobs:
 
     - name: Install with poetry
       run: |
-        pip install poetry==1.0.5
+        pip install poetry
         # poetry install --no-dev
         poetry install
 
