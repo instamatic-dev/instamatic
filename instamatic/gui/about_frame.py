@@ -95,7 +95,7 @@ class AboutFrame(LabelFrame):
 
         Label(frame, text='').grid(row=0, column=0, sticky='W')
         Label(frame, text='Contact:').grid(row=1, column=0, sticky='W', padx=10)
-        Label(frame, text='Stef Smeets (stef.smeets@tudelft.nl)').grid(row=1, column=1, sticky='W')
+        Label(frame, text=f'{instamatic.__author__} ({instamatic.__author_email__}').grid(row=1, column=1, sticky='W')
         Label(frame, text='').grid(row=5, column=0, sticky='W')
 
         Label(frame, text='Source code:').grid(row=10, column=0, sticky='W', padx=10)
@@ -103,13 +103,13 @@ class AboutFrame(LabelFrame):
         link.grid(row=10, column=1, sticky='W')
         Label(frame, text='').grid(row=12, column=0, sticky='W')
 
-        Label(frame, text='Manual:').grid(row=20, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__url__ + '/docs', action=self.link_github)
+        Label(frame, text='Docs:').grid(row=20, column=0, sticky='W', padx=10)
+        link = Link_Button(frame, text=instamatic.__docs__, action=self.link_github)
         link.grid(row=20, column=1, sticky='W')
         Label(frame, text='').grid(row=22, column=0, sticky='W')
 
         Label(frame, text='Bugs:').grid(row=30, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__url__ + '/issues', action=self.link_github)
+        link = Link_Button(frame, text=instamatic.__issues__, action=self.link_github)
         link.grid(row=30, column=1, sticky='W')
         Label(frame, text='').grid(row=32, column=0, sticky='W')
 

@@ -6,12 +6,6 @@ See [Github contributors list](https://github.com/nipy/nipype/graphs/contributor
 Special thanks
 --------------
 
-- Bin Wang
-  - Many tweaks and bug fixes
-  - FEI API implementation
-  - Development and testing of cRED integration and automated tracking
-  - Development and testing of SerialRED automated data collection
-
 - Magdalena O. Cichocka
   - Testing and feedback on cRED implementation
 

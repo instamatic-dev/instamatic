@@ -11,11 +11,15 @@ authors:
     affiliation: Vironova
     family-names: Wang
     given-names: Bin
+  -
+    affiliation: "Amsterdam Scientific Instruments"
+    family-names: Hogenbirk
+    given-names: Erik
 cff-version: "1.1.0"
-date-released: 2020-06-02
-doi: "10.5281/zenodo.4072976"
+date-released: 2021-08-09
+doi: "10.5281/zenodo.1090388"
 license: "GPL-3.0"
 message: "If you use this software, please cite it using these metadata."
 title: Instamatic
-version: "1.6.1"
+version: "1.7.0"
 ...
