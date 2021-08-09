@@ -174,7 +174,7 @@ def run(filepat='images/image_*.tiff', results=None, stitch=False):
 
             img, h = read_image(fn_diff)
 
-            img_processed = neural_network.preprocess(img.astype(np.float))
+            img_processed = neural_network.preprocess(img.astype(float))
             quality = neural_network.predict(img_processed)
             ax3.set_xlabel(f'Crystal quality: {quality:.2%}')
 

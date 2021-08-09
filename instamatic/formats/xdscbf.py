@@ -39,30 +39,30 @@ def compByteOffset(data):
     binary_blob = b''
     for stop in exceptions:
         if stop - start > 0:
-            binary_blob += delta[start:stop].astype(np.int8).tostring()
+            binary_blob += delta[start:stop].astype(np.int8).tobytes()
         exc = delta[stop]
         absexc = abs(exc)
         if absexc > 2147483647:  # 2**31-1
             binary_blob += b'\x80\x00\x80\x00\x00\x00\x80'
             if byteswap:
-                binary_blob += delta[stop:stop + 1].byteswap().tostring()
+                binary_blob += delta[stop:stop + 1].byteswap().tobytes()
             else:
-                binary_blob += delta[stop:stop + 1].tostring()
+                binary_blob += delta[stop:stop + 1].tobytes()
         elif absexc > 32767:  # 2**15-1
             binary_blob += b'\x80\x00\x80'
             if byteswap:
-                binary_blob += delta[stop:stop + 1].astype(np.int32).byteswap().tostring()
+                binary_blob += delta[stop:stop + 1].astype(np.int32).byteswap().tobytes()
             else:
-                binary_blob += delta[stop:stop + 1].astype(np.int32).tostring()
+                binary_blob += delta[stop:stop + 1].astype(np.int32).tobytes()
         else:  # >127
             binary_blob += b'\x80'
             if byteswap:
-                binary_blob += delta[stop:stop + 1].astype(np.int16).byteswap().tostring()
+                binary_blob += delta[stop:stop + 1].astype(np.int16).byteswap().tobytes()
             else:
-                binary_blob += delta[stop:stop + 1].astype(np.int16).tostring()
+                binary_blob += delta[stop:stop + 1].astype(np.int16).tobytes()
         start = stop + 1
     if start < delta.size:
-        binary_blob += delta[start:].astype(np.int8).tostring()
+        binary_blob += delta[start:].astype(np.int8).tobytes()
     return binary_blob
 
 

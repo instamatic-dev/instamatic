@@ -1,0 +1,21 @@
+camera_rotation_vs_stage_xy: 0.0
+default_binsize: 1
+default_exposure: 0.02
+dimensions: [512, 512]
+dynamic_range: 11800
+interface: serval
+physical_pixelsize: 0.055
+possible_binsizes: [1]
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0
+detector_config:
+  BiasVoltage: 100
+  BiasEnabled: True
+  TriggerMode: SOFTWARESTART_TIMERSTOP
+  ExposureTime: 1.0
+  TriggerPeriod: 1.001
+  nTriggers: 1000000000
+  GainMode: HGM
+bpc_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.bpc'
+dacs_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.dacs'
+url: 'http://localhost:8080'

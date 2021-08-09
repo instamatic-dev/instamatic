@@ -518,7 +518,7 @@ class Experiment:
                 h['total_area_micrometer'] = crystal_positions[k].area_micrometer
                 h['total_area_pixel'] = crystal_positions[k].area_pixel
 
-                # img_processed = neural_network.preprocess(img.astype(np.float))
+                # img_processed = neural_network.preprocess(img.astype(float))
                 # quality = neural_network.predict(img_processed)
                 # h["crystal_quality"] = quality
 
@@ -558,7 +558,7 @@ def main():
     from instamatic import TEMController
 
     try:
-        params = json.load(open('params.json', 'r'))
+        params = json.load(open('params.json'))
     except OSError:
         params = {}
 
