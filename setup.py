@@ -21,9 +21,9 @@ setup(
     description='Python program for automated electron diffraction data collection',
     python_requires='>=3.7',
     project_urls={
-        'homepage': 'https://instamatic.readthedocs.io/',
+        'homepage': 'https://github.com/instamatic-dev/instamatic',
         'repository': 'https://github.com/instamatic-dev/instamatic',
-        'documentation': 'https://github.com/instamatic-dev/instamatic'},
+        'documentation': 'https://instamatic.readthedocs.io/'},
     author='Stef Smeets',
     author_email='s.smeets@esciencecenter.nl',
     keywords='electron-crystallography electron-microscopy electron-diffraction serial-crystallography 3D-electron-diffraction micro-ed data-collection automation',
