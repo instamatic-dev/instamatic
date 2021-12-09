@@ -2,22 +2,22 @@
 name = 'instamatic'
 version = "1.7.0"
 description = 'Python program for automated electron diffraction data collection'
-license = 'GPL-3.0-only'
+license = 'BSD-3-Clause'
 classifiers = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'License :: OSI Approved :: BSD License',
     'Operating System :: Microsoft :: Windows',
     'Topic :: Scientific/Engineering :: Human Machine Interfaces',
     'Topic :: Scientific/Engineering :: Chemistry',
     'Topic :: Software Development :: Libraries',
 ]
 homepage = 'http://github.com/instamatic-dev/instamatic'
-repository = 'http://github.com/instamatic-dev/instamatic'
-documentation = 'http://github.com/instamatic-dev/instamatic'
+repository = 'https://github.com/instamatic-dev/instamatic'
+documentation = 'https://instamatic.readthedocs.io/'
 authors = ['Stef Smeets <s.smeets@esciencecenter.nl>']
 maintainers = ['Stef Smeets <s.smeets@esciencecenter.nl>']
 readme = 'readme.md'
