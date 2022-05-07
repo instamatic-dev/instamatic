@@ -43,6 +43,18 @@ pip install instamatic
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/instamatic-dev/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
 
+Installation should take less than 1 minute on a normal desktop.
+
+Find the latest [releases](https://github.com/instamatic-dev/instamatic/releases) for the versions that have been tested on.
+
+## OS requirement
+
+The package has been mainly developed and tested under windows 7 and windows 10.
+
+## Package dependencies
+
+Check [requirements.txt](https://github.com/instamatic-dev/instamatic/blob/master/requirements.txt) for an updated package dependency list and versions.
+
 ## Documentation
 
 See [the documentation](https://instamatic.readthedocs.io) for how to set up and use Instamatic.
