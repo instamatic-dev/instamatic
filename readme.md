@@ -53,7 +53,7 @@ The package requires Windows 7 or higher. It has been mainly developed and teste
 
 ## Package dependencies
 
-Check [requirements.txt](https://github.com/instamatic-dev/instamatic/blob/master/requirements.txt) for an updated package dependency list and versions.
+Check [pyproject.toml](pyproject.toml) for the full dependency list and versions.
 
 ## Documentation
 
