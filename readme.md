@@ -49,7 +49,7 @@ Find the latest [releases](https://github.com/instamatic-dev/instamatic/releases
 
 ## OS requirement
 
-The package has been mainly developed and tested under windows 7 and windows 10.
+The package requires Windows 7 or higher. It has been mainly developed and tested under windows 7 and windows 10.
 
 ## Package dependencies
 
