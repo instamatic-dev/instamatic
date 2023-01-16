@@ -26,7 +26,6 @@
 /parse_logs
 /pytimepix
 /RED_CCD_plugin
-/scripts
 /utils
 generate_old_style.bat
 htmlcov

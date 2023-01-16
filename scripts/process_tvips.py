@@ -28,7 +28,7 @@ def extract_image_number(s):
     return int(p.stem.split('_')[-1])
 
 
-def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
+def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_path='SMV'):
     credlog = Path(credlog)
     drc = credlog.parent
 
@@ -81,7 +81,7 @@ def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
                 physical_pixelsize = float(line.split()[2])
             if line.startswith('Wavelength:'):
                 wavelength = float(line.split()[1])
-
+                
     beamstop = True
 
     # from cred_log
@@ -126,7 +126,7 @@ def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
     print(f'Pixelsize:                {pixelsize} px/Ångstrom')
     print(f'Physical Pixelsize:       {physical_pixelsize} mm')
     print(f'Wavelength:               {wavelength} Ångstrom')
-    print(f'TEM Camera length:        {camera_length:.1f} cm')
+    print(f'TEM Camera length:        {camera_length:.1f} mm')
 
     print()
     print('# TVIPS header')
@@ -140,7 +140,7 @@ def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
     print(f'Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm')
     print(f'High tension:             {high_tension/1000} kV')
     print(f'Wavelength:               {wavelength_tvips} Ångstrom')
-    print(f'Camera length:            {camera_length_tvips} cm')
+    print(f'Camera length:            {camera_length_tvips} mm')
 
     # implement this later if it turns out to be necessary
     assert pixelsize_x_tvips == pixelsize_y_tvips, 'Pixelsize is different in X / Y direction'
@@ -195,6 +195,8 @@ def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
     if tiff_path:
         tiff_drc_name = tiff_path
         tiff_path = drc / tiff_path
+    if pets_path:
+        pets_path = drc / pets_path
 
     print('Writing data')
     img_conv.threadpoolwriter(tiff_path=tiff_path,
@@ -213,6 +215,11 @@ def img_convert(credlog, tiff_path=None, mrc_path='RED', smv_path='SMV'):
 
     if tiff_path:
         img_conv.write_pets_inp(path=drc, tiff_path=tiff_drc_name)
+
+    if pets_path:
+        pets_tiff_path = '../tiff'
+        img_conv.write_pets2_inp(pets_path, tiff_path=pets_tiff_path)
+
     img_conv.write_beam_centers(path=drc)
 
 
@@ -224,14 +231,14 @@ def main():
 
     if credlog == 'all':
         fns = Path('.').glob('**/cRED_log.txt')
-
+        
         for fn in fns:
             print(fn)
             img_convert(fn)
 
     else:
         img_convert(credlog)
-
+        
 
 if __name__ == '__main__':
     main()
