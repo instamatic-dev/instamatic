@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -17,26 +17,26 @@ repos:
     # -   id: check-json
     # -   id: check-added-large-files
 -   repo: https://github.com/myint/docformatter
-    rev: v1.4
+    rev: v1.5.0
     hooks:
     -   id: docformatter
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.5.0
+    rev: v3.9.0
     hooks:
     -   id: reorder-python-imports
         args: [--py3-plus]
 -   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.5.7
+    rev: v2.0.1
     hooks:
     -   id: autopep8
         args: ['--in-place', '--ignore=E501,W504']
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.15.0
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: ['--py36-plus']
-  - repo: https://github.com/PyCQA/flake8
-    rev: '5.0.4'
+-   repo: https://github.com/PyCQA/flake8
+    rev: '6.0.0'
     hooks:
     -   id: flake8
         args: ['--statistics', '--ignore=F401,F403,F405,F821,F841,E265,E501,A003']
@@ -51,8 +51,8 @@ repos:
           'flake8-type-annotations',
           'flake8-builtins',
           ]
-- repo: https://github.com/kynan/nbstripout
-  rev: 0.4.0
-  hooks:
-    - id: nbstripout
-      files: ".ipynb"
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+    -   id: nbstripout
+        files: ".ipynb"
