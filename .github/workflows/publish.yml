@@ -9,19 +9,19 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
-        python-version: 3.7
-        architecture: x64
+        python-version: 3.9
 
-    - name: Install with poetry
+    - name: Install dependencies
       run: |
-        pip install poetry
-
-    - name: Build with poetry
-      run: poetry build
-
-    - name: Publish with poetry
-      run: |
-        poetry publish -u ${{ secrets.pypi_user }} -p ${{ secrets.pypi_pw }}
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+        python setup.py sdist bdist_wheel
+    
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
