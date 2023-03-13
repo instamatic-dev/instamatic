@@ -17,7 +17,7 @@ repos:
     # -   id: check-json
     # -   id: check-added-large-files
 -   repo: https://github.com/myint/docformatter
-    rev: v1.5.0
+    rev: v1.5.1
     hooks:
     -   id: docformatter
 -   repo: https://github.com/asottile/reorder_python_imports
@@ -26,7 +26,7 @@ repos:
     -   id: reorder-python-imports
         args: [--py3-plus]
 -   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v2.0.1
+    rev: v2.0.2
     hooks:
     -   id: autopep8
         args: ['--in-place', '--ignore=E501,W504']
@@ -48,7 +48,7 @@ repos:
           'flake8-mutable',
           'flake8-quotes',
           'flake8-tidy-imports',
-          'flake8-type-annotations',
+          # 'flake8-type-annotations',
           'flake8-builtins',
           ]
 -   repo: https://github.com/kynan/nbstripout
