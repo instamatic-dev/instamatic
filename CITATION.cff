@@ -11,14 +11,20 @@ authors:
     affiliation: Vironova
     family-names: Wang
     given-names: Bin
+    orcid: "https://orcid.org/0000-0002-4327-6424"
   -
     affiliation: "Amsterdam Scientific Instruments"
     family-names: Hogenbirk
     given-names: Erik
+  -
+    affiliation: "Charles University"
+    family-names: Daniel
+    given-names: Rainer
+    orcid: "https://orcid.org/0000-0002-3272-3161"
 cff-version: "1.1.0"
 date-released: 2021-08-09
 doi: "10.5281/zenodo.1090388"
-license: "GPL-3.0"
+license: "BSD-3"
 message: "If you use this software, please cite it using these metadata."
 title: Instamatic
 version: "1.8.0"
