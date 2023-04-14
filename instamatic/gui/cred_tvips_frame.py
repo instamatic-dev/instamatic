@@ -4,9 +4,10 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import *
 
-from .base_module import BaseModule
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
+
+from .base_module import BaseModule
 
 barrier = threading.Barrier(2, timeout=60)
 

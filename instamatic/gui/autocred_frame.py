@@ -8,10 +8,11 @@ from tkinter.ttk import *
 
 import matplotlib.pyplot as plt
 
-from .base_module import BaseModule
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.filenames import *
+
+from .base_module import BaseModule
 
 
 class ExperimentalautocRED(LabelFrame):
@@ -19,7 +20,8 @@ class ExperimentalautocRED(LabelFrame):
     Timepix camera using automated screening and crystal tracking.
 
     Related publication:     IUCrJ (2019). 6(5), 854-867
-    https://doi.org/10.1107/S2052252519007681 .
+    https://doi.org/10.1107/S2052252519007681
+    .
     """
 
     def __init__(self, parent):

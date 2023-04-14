@@ -32,12 +32,13 @@ class InstamaticMontage(Montage):
     def from_montage_yaml(cls, filename: str = 'montage.yaml'):
         """Load montage from a series of tiff files + `montage.yaml`"""
         import yaml
+
         from instamatic.formats import read_tiff
 
         p = Path(filename)
         drc = p.parent
 
-        d = yaml.safe_load(open(p, 'r'))
+        d = yaml.safe_load(open(p))
         fns = (drc / fn for fn in d['filenames'])
 
         d['stagecoords'] = np.array(d['stagecoords'])

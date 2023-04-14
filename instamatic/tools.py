@@ -4,8 +4,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from scipy import interpolate
-from scipy import ndimage
+from scipy import interpolate, ndimage
 from skimage import exposure
 from skimage.measure import regionprops
 
@@ -72,8 +71,8 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
 def find_subranges(lst: list) -> (int, int):
     """Takes a range of sequential numbers (possibly with gaps) and splits them
     in sequential sub-ranges defined by the minimum and maximum value."""
-    from operator import itemgetter
     from itertools import groupby
+    from operator import itemgetter
 
     for key, group in groupby(enumerate(lst), lambda i: i[0] - i[1]):
         group = list(map(itemgetter(1), group))
@@ -141,7 +140,6 @@ def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=Fal
     z = thresh: percentile to segment the image at (99)
         gauss: standard deviation for the gaussian blurring (50)
     """
-
     if method == 'gauss':
         if not z:
             z = 50
@@ -162,8 +160,8 @@ def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=Fal
         dy = (prop.bbox[1] + prop.bbox[3]) / 2
 
         if plot:
-            import matplotlib.pyplot as plt
             import matplotlib.patches as mpatches
+            import matplotlib.pyplot as plt
 
             fig, (ax1, ax2) = plt.subplots(ncols=2)
 
@@ -223,9 +221,9 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
     -------
     Namespace with acquisition/exposure/overhead time in s
     """
+    from types import SimpleNamespace
 
     from scipy.stats import linregress
-    from types import SimpleNamespace
 
     timestamps = np.array(timestamps)
 
@@ -260,7 +258,6 @@ def relativistic_wavelength(voltage: float = 200_000) -> float:
     Input: Voltage in V
     Output: Wavelength in Angstrom
     """
-
     h = 6.626070150e-34  # planck constant J.s
     m = 9.10938356e-31   # electron rest mass kg
     e = 1.6021766208e-19  # elementary charge C

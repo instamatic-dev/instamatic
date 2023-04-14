@@ -7,10 +7,10 @@ import socket
 import threading
 import traceback
 
-from .serializer import dumper
-from .serializer import loader
 from instamatic import config
 from instamatic.TEMController import Microscope
+
+from .serializer import dumper, loader
 
 condition = threading.Condition()
 box = []

@@ -40,9 +40,8 @@ def read_ycsv(f):
         ---
         $CSV_BLOCK
     """
-
     if isinstance(f, str):
-        f = open(f, 'r')
+        f = open(f)
 
     first_line = f.tell()
 
@@ -88,7 +87,6 @@ def write_ycsv(f, data, metadata):
         ---
         $CSV_BLOCK
     """
-
     if isinstance(f, str):
         f = open(f, 'w')
 

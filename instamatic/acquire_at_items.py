@@ -66,7 +66,7 @@ class AcquireAtItems:
 
         if post_acquire:
             self._post_acquire = self.validate(post_acquire)
-            print(f'Post-acquire:', ', '.join([func.__name__ for func in self._post_acquire]))
+            print('Post-acquire:', ', '.join([func.__name__ for func in self._post_acquire]))
 
         self.backlash = backlash
 
@@ -139,8 +139,8 @@ class AcquireAtItems:
         start_index : int
             Start acquisition from this item.
         """
-        import time
         import msvcrt
+        import time
 
         ctrl = self.ctrl
         nav_items = self.nav_items[start_index:]

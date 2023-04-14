@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from instamatic import config
+
 logger = logging.getLogger(__name__)
 
 __all__ = ['Camera']
@@ -75,6 +76,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 
 def main_entry():
     import argparse
+
     from instamatic.formats import write_tiff
 
     description = """Simple program to acquire image data from the camera."""

@@ -6,9 +6,10 @@ from tkinter.ttk import *
 import matplotlib.pyplot as plt
 import numpy as np
 
+from instamatic.formats import read_image
+
 from .base_module import BaseModule
 from .mpl_frame import ShowMatplotlibFig
-from instamatic.formats import read_image
 
 
 def treeview_sort_column(tv, col, reverse):
@@ -87,7 +88,7 @@ class MachineLearningFrame(LabelFrame):
 
         import csv
 
-        with open(fn, 'r') as f:
+        with open(fn) as f:
             reader = csv.reader(f)
             for row in reader:
                 if not row:

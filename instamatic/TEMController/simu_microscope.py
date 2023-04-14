@@ -5,7 +5,6 @@ from typing import Tuple
 from instamatic import config
 from instamatic.exceptions import TEMValueError
 
-
 NTRLMAPPING = {
     'GUN1': 0,
     'GUN2': 1,

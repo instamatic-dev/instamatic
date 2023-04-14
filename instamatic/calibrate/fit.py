@@ -3,7 +3,6 @@ from collections import namedtuple
 import lmfit
 import numpy as np
 
-
 FitResult = namedtuple('FitResult', 'r t angle sx sy tx ty k1 k2 params'.split())
 
 

@@ -4,6 +4,7 @@ import pickle
 import yaml
 
 from instamatic.config import settings
+
 PROTOCOL = settings.tem_communication_protocol
 
 # %timeit ctrl.stage.get()

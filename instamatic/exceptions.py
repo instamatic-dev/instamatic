@@ -21,7 +21,6 @@ class TEMControllerError(Exception):
 exception_list = {
     'TEMValueError': TEMValueError,
     'TEMCommunicationError': TEMCommunicationError,
-    'TEMValueError': TEMValueError,
     'JEOLValueError': JEOLValueError,
     'FEIValueError': FEIValueError,
     'TEMControllerError   ': TEMControllerError,

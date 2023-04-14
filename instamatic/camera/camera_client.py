@@ -7,11 +7,9 @@ from functools import wraps
 import numpy as np
 
 from instamatic import config
-from instamatic.exceptions import exception_list
-from instamatic.exceptions import TEMCommunicationError
+from instamatic.exceptions import TEMCommunicationError, exception_list
 from instamatic.server.serializer import pickle_dumper as dumper
 from instamatic.server.serializer import pickle_loader as loader
-
 
 if config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
@@ -100,7 +98,6 @@ class CamClient:
         print(f'Connected to CAM server ({HOST}:{PORT})')
 
     def __getattr__(self, attr_name):
-
         if attr_name in self._dct:
             wrapped = self._dct[attr_name]
         elif attr_name in self._attr_dct:

@@ -7,10 +7,8 @@ from functools import wraps
 from pywinauto import Application
 
 from instamatic import config
-from instamatic.exceptions import exception_list
-from instamatic.exceptions import TEMCommunicationError
-from instamatic.server.serializer import dumper
-from instamatic.server.serializer import loader
+from instamatic.exceptions import TEMCommunicationError, exception_list
+from instamatic.server.serializer import dumper, loader
 
 GONIOTOOL_EXE = 'C:\\JEOL\\TOOL\\GonioTool.exe'
 DEFAULT_SPEED = 12
@@ -96,7 +94,6 @@ class GonioToolClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-
         self.s.send(dumper(dct))
         response = self.s.recv(self._bufsize)
         if response:
@@ -191,7 +188,7 @@ class GonioToolWrapper:
     def set_rate(self, speed: int):
         """Set rate value for TX."""
         assert isinstance(speed, int), f'Variable `speed` must be of type `int`, is `{type(speed)}`'
-        assert 0 < speed <= 12, f'Variable `speed` must have a value of 1 to 12.'
+        assert 0 < speed <= 12, 'Variable `speed` must have a value of 1 to 12.'
 
         s = self.edit.select()
         s.set_text(speed)

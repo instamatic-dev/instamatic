@@ -11,6 +11,7 @@ import numpy as np
 
 from instamatic import config
 from instamatic.utils import high_precision_timers
+
 high_precision_timers.enable()
 
 # SoPhy > File > Medipix/Timepix control > Save parametrized settings
@@ -218,7 +219,6 @@ class CameraTPX:
 
         i16 *data # data storage array u32 sz    # size of array
         """
-
         if arr is None:
             arr = np.empty(sz, dtype=np.int16)
 
@@ -240,7 +240,6 @@ class CameraTPX:
         bool enable
         int us = 10 # microseconds
         """
-
         enable = c_bool(enable)
         us = c_int(us)
 
@@ -254,14 +253,12 @@ class CameraTPX:
 
     def setAcqPars(self, pars):
         """AcqParams *pars."""
-
         raise NotImplementedError
         pars = AcqParams
         self.lib.EMCameraObj_setAcqPars(self.obj, byref(pars))
 
     def isBusy(self, busy):
         """bool *busy."""
-
         busy = c_bool(busy)
         self.lib.EMCameraObj_isBusy(self.obj, byref(busy))
 
@@ -314,7 +311,7 @@ def initialize(config, name='pytimepix'):
     base = Path(config).parent
 
     # read config.txt
-    with open(config, 'r') as f:
+    with open(config) as f:
         for line in f:
             inp = line.split()
             if inp[0] == 'HWID':

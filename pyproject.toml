@@ -62,7 +62,7 @@ ignore = [
 
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ['A', 'B', 'C', 'D', 'E', 'F', 'I']
+fixable = ['A', 'B', 'C', 'D', 'E', 'F', 'I', 'UP', 'BLE', 'COM', 'C4', 'TID',]
 unfixable = []
 
 exclude = [

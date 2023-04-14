@@ -5,13 +5,14 @@ import time
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
-from .calibrate_stage_lowmag import CalibStage
-from .filenames import *
 from instamatic import config
 from instamatic.formats import read_image
-from instamatic.image_utils import autoscale
-from instamatic.image_utils import imgscale
+from instamatic.image_utils import autoscale, imgscale
 from instamatic.io import get_new_work_subdirectory
+
+from .calibrate_stage_lowmag import CalibStage
+from .filenames import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +60,6 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     return:
         instance of Calibration class with conversion methods
     """
-
     work_drc = get_new_work_subdirectory(stem='calib_mag1')
 
     settle_delay = 1.0  # seconds

@@ -2,8 +2,7 @@ import os
 import shutil
 import sys
 import time
-from math import cos
-from math import radians
+from math import cos, radians
 from pathlib import Path
 
 
@@ -34,7 +33,7 @@ class xds_parser:
 
         fn = self.filename
 
-        f = open(fn, 'r')
+        f = open(fn)
 
         in_block = False
         block = []

@@ -7,9 +7,7 @@ import subprocess as sp
 import threading
 from socket import *
 
-from instamatic import config
-from instamatic import TEMController
-
+from instamatic import TEMController, config
 
 HOST = config.settings.fei_server_host
 PORT = config.settings.fei_server_port

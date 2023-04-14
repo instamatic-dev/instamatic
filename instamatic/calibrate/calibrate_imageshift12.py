@@ -5,11 +5,11 @@ from skimage.registration import phase_cross_correlation
 from tqdm.auto import tqdm
 
 from instamatic.calibrate.fit import fit_affine_transformation
+
 logger = logging.getLogger(__name__)
 
 
 def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
-
     if key != 'S':
         input(f"""Calibrate {key}
     -------------------

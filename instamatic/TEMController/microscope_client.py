@@ -9,11 +9,8 @@ import time
 from functools import wraps
 
 from instamatic import config
-from instamatic.exceptions import exception_list
-from instamatic.exceptions import TEMCommunicationError
-from instamatic.server.serializer import dumper
-from instamatic.server.serializer import loader
-
+from instamatic.exceptions import TEMCommunicationError, exception_list
+from instamatic.server.serializer import dumper, loader
 
 HOST = config.settings.tem_server_host
 PORT = config.settings.tem_server_port
@@ -78,7 +75,6 @@ class MicroscopeClient:
         print(f'Connected to TEM server ({HOST}:{PORT})')
 
     def __getattr__(self, func_name):
-
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
@@ -95,7 +91,6 @@ class MicroscopeClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-
         self.s.send(dumper(dct))
 
         response = self.s.recv(self._bufsize)

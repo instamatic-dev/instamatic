@@ -128,7 +128,7 @@ class Browser:
             self.update_ax3(ind)
 
         if ind == self.current_ind and (t1 - self.t0 < double_click_delay):
-            print(f'Moving stage to:', self.coord)
+            print('Moving stage to:', self.coord)
             self.ctrl.stage.xy = self.coord
 
         self.t0 = time.perf_counter()

@@ -7,9 +7,9 @@ from tkinter import *
 from tkinter.ttk import *
 
 import instamatic
-from .modules import JOBS
-from .modules import MODULES
 from instamatic.formats import *
+
+from .modules import JOBS, MODULES
 
 
 class DataCollectionController(threading.Thread):
@@ -94,7 +94,6 @@ class AppLoader:
         self.locations = ['left', 'top', 'bottom', 'right']
 
     def load(self, modules, master):
-
         panels = {}
 
         for location in self.locations:

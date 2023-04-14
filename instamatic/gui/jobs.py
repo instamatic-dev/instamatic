@@ -6,8 +6,7 @@ Should be generally applicable.
 import time
 from datetime import datetime
 
-from instamatic.formats import read_tiff
-from instamatic.formats import write_tiff
+from instamatic.formats import read_tiff, write_tiff
 
 
 def microscope_control(controller, **kwargs):

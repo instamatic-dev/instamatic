@@ -7,16 +7,15 @@ from math import cos
 import numpy as np
 
 from instamatic import config
-from instamatic.formats import read_tiff
-from instamatic.formats import write_adsc
-from instamatic.formats import write_mrc
-from instamatic.formats import write_tiff
+from instamatic.formats import read_tiff, write_adsc, write_mrc, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.processing.stretch_correction import affine_transform_ellipse_to_circle
-from instamatic.tools import find_beam_center
-from instamatic.tools import find_beam_center_with_beamstop
-from instamatic.tools import find_subranges
-from instamatic.tools import to_xds_untrusted_area
+from instamatic.tools import (
+    find_beam_center,
+    find_beam_center_with_beamstop,
+    find_subranges,
+    to_xds_untrusted_area,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +170,9 @@ class ImgConversion:
 
         self.name = 'Instamatic'
 
-        from .XDS_template import XDS_template  # hook XDS_template here, because it is difficult to override as a global
+        from .XDS_template import (
+            XDS_template,  # hook XDS_template here, because it is difficult to override as a global
+        )
         self.XDS_template = XDS_template
 
         self.check_settings()  # check if all required parameters are present, and fill default values if needed
@@ -647,7 +648,7 @@ class ImgConversion:
                 angle = self.start_angle + sign * self.osc_angle * i
                 print(f'{tiff_path}/{fn} {angle:10.4f} 0.00', file=f)
             print('endimagelist', file=f)
-    
+
     def write_pets2_inp(self, path: str, tiff_path: str = 'tiff') -> None:
         """Write PETS 2 input file `pets.pts2` in directory `path`"""
         path.mkdir(exist_ok=True, parents=True)
@@ -677,7 +678,7 @@ class ImgConversion:
             print('i/sigma    5.00   10.00', file=f)
             print('', file=f)
             print('imagelist', file=f)
-            tiff_set = set([0])
+            tiff_set = {0}
             last_img = len(self.observed_range)
             tiff_set.update(self.observed_range)
             tiff_set.remove(last_img)

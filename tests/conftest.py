@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 
-
 base_drc = Path(__file__).parent
 os.environ['instamatic'] = str(base_drc.absolute())
 

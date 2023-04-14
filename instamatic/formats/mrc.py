@@ -20,6 +20,7 @@ import sys
 import numpy
 
 from . import util
+
 # import util
 
 _logger = logging.getLogger(__name__)
@@ -70,9 +71,7 @@ numpy2mrc = {
 intbyteorder = {
     0x11110000: 'big',
     0x44440000: 'little',  # hack
-    0x44410000: 'little',  # 0x4144 - 16708
-    286326784: 'big',
-    1145110528: 'little',
+    0x44410000: 'little',
 }
 byteorderint = {
     'big': 0x11110000,
@@ -704,9 +703,9 @@ def write_image(filename, img, index=None, header=None, inplace=False):
 
 
 if __name__ == '__main__':
-    import numpy as np
-
     from pathlib import Path
+
+    import numpy as np
 
     fn = Path('test.mrc')
     img = (np.random.random((512, 512)) * 100000).astype(np.uint16)

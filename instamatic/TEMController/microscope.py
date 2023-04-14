@@ -7,7 +7,6 @@ __all__ = ['Microscope', 'get_tem']
 
 def get_tem(interface: str):
     """Grab tem class with the specific 'interface'."""
-
     simulate = config.settings.simulate
 
     if config.settings.tem_require_admin:
@@ -39,7 +38,6 @@ def Microscope(name: str = None, use_server: bool = False):
 
     returns: TEM interface class
     """
-
     if name is None:
         interface = default_tem_interface
         name = interface

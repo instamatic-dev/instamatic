@@ -126,6 +126,7 @@ def remove_argument(parser: object, arg: str) -> None:
 
 def main_entry():
     import argparse
+
     from predicrystal import parsers
 
     # Re-use parsers from `predicrystal`

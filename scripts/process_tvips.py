@@ -1,16 +1,16 @@
 """Script to process cRED data collecting using instamatic with the EMMENU
 plugin.
 
-To use:
-    Run `python process_tvips.py cred_log.txt`
+To use, run: `python process_tvips.py cred_log.txt`
 
-Where the first argument is the path to the cred_log.txt file. Assumes the data are stored
-in a subdirectory `tiff/*.tif` from where cred_log.txt is stored.
+Where the first argument is the path to the cred_log.txt file. Assumes
+the data are stored in a subdirectory `tiff/*.tif` from where
+cred_log.txt is stored.
 
 Defaults to `cred_log.txt` in the current directory if left blank.
 
-If the first argument is given as `all`, the script will look for
-all `cred_log.txt` files in the subdirectories, and iterate over those.
+If the first argument is given as `all`, the script will look for all
+`cred_log.txt` files in the subdirectories, and iterate over those.
 """
 import sys
 from pathlib import Path
@@ -81,7 +81,7 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
                 physical_pixelsize = float(line.split()[2])
             if line.startswith('Wavelength:'):
                 wavelength = float(line.split()[1])
-                
+
     beamstop = True
 
     # from cred_log
@@ -231,14 +231,14 @@ def main():
 
     if credlog == 'all':
         fns = Path('.').glob('**/cRED_log.txt')
-        
+
         for fn in fns:
             print(fn)
             img_convert(fn)
 
     else:
         img_convert(credlog)
-        
+
 
 if __name__ == '__main__':
     main()

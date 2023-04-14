@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
+from instamatic import config
+from instamatic.image_utils import autoscale, imgscale
+from instamatic.tools import printer
+
 from .filenames import *
 from .fit import fit_affine_transformation
-from instamatic import config
-from instamatic.image_utils import autoscale
-from instamatic.image_utils import imgscale
-from instamatic.tools import printer
+
 logger = logging.getLogger(__name__)
 
 
@@ -195,7 +196,6 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
     return:
         instance of Calibration class with conversion methods
     """
-
     if ctrl.mode != 'diff':
         print(' >> Switching to diffraction mode')
         ctrl.mode.set('diff')

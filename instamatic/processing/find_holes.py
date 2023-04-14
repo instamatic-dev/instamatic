@@ -3,11 +3,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
-from skimage import color
-from skimage import filters
-from skimage import measure
-from skimage import morphology
-from skimage import segmentation
+from skimage import color, filters, measure, morphology, segmentation
 
 from instamatic.config import calibration
 from instamatic.image_utils import autoscale
@@ -49,7 +45,7 @@ def plot_props(img, props, fname=None, scale=1):
     plt.imshow(img, interpolation='none')
 
     for i, prop in enumerate(props):
-        y1, x1, y2, x2 = [x * scale for x in prop.bbox]
+        y1, x1, y2, x2 = (x * scale for x in prop.bbox)
 
         color = 'red'
 
@@ -116,7 +112,6 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
         area: float,
             apprximate feature size in pixels
     """
-
     px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
     px *= (binsize / img_scale)
     py *= (binsize / img_scale)

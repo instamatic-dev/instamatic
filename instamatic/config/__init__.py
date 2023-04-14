@@ -8,10 +8,13 @@ from pathlib import Path
 
 import yaml
 
-from .config_updater import check_defaults_yaml
-from .config_updater import check_settings_yaml
-from .config_updater import convert_config
-from .config_updater import is_oldstyle
+from .config_updater import (
+    check_defaults_yaml,
+    check_settings_yaml,
+    convert_config,
+    is_oldstyle,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -113,11 +116,11 @@ class ConfigObject:
     def from_file(cls, path: str):
         """Read configuration from yaml file, returns namespace."""
         name = Path(path).stem
-        return cls(yaml.load(open(path, 'r'), Loader=yaml.Loader), name=name, location=path)
+        return cls(yaml.load(open(path), Loader=yaml.Loader), name=name, location=path)
 
     def update_from_file(self, path: str) -> None:
         """Update configuration from yaml file."""
-        self.update(yaml.load(open(path, 'r'), Loader=yaml.Loader))
+        self.update(yaml.load(open(path), Loader=yaml.Loader))
         self.location = path
 
     def update(self, mapping: dict):
@@ -205,8 +208,8 @@ def load_defaults():
 
     check_defaults_yaml(config_drc, _defaults_yaml)
 
-    defaults = ConfigObject.from_file(Path(__file__).parent / _defaults_yaml)  # load defaults
-    defaults.update_from_file(config_drc / _defaults_yaml)             # update user parameters
+    defaults = ConfigObject.from_file(Path(__file__).parent / _defaults_yaml)
+    defaults.update_from_file(config_drc / _defaults_yaml)
 
 
 def load_settings():
@@ -214,8 +217,8 @@ def load_settings():
 
     check_settings_yaml(config_drc / 'global.yaml', config_drc / _settings_yaml)
 
-    settings = ConfigObject.from_file(Path(__file__).parent / _settings_yaml)  # load defaults
-    settings.update_from_file(config_drc / _settings_yaml)             # update user parameters
+    settings = ConfigObject.from_file(Path(__file__).parent / _settings_yaml)
+    settings.update_from_file(config_drc / _settings_yaml)
 
     settings.data_directory = Path(settings.data_directory)
 

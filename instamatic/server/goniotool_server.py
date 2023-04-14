@@ -6,10 +6,10 @@ import socket
 import threading
 import traceback
 
-from .serializer import dumper
-from .serializer import loader
 from instamatic import config
 from instamatic.goniotool import GonioToolWrapper
+
+from .serializer import dumper, loader
 
 barrier = threading.Barrier(2, timeout=60)
 
@@ -46,7 +46,7 @@ class GonioToolServer(threading.Thread):
     def run(self):
         """Start the server thread."""
         self.goniotool = GonioToolWrapper(barrier=barrier)
-        print(f'Initialized connection to GonioTool')
+        print('Initialized connection to GonioTool')
 
         while True:
             now = datetime.datetime.now().strftime('%H:%M:%S.%f')

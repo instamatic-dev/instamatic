@@ -4,8 +4,9 @@ from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
 
-from .base_module import BaseModule
 from instamatic import config
+
+from .base_module import BaseModule
 
 scripts_drc = config.locations['scripts']
 
@@ -232,7 +233,7 @@ class DebugFrame(LabelFrame):
         script = self.scripts_drc / 'close_down.py'
         # print(script, script.exists())
         if not script.exists():
-            return IOError(f'No such script: {script}')
+            return OSError(f'No such script: {script}')
         self.q.put(('debug', {'task': 'run_script', 'script': script}))
         self.triggerEvent.set()
 
@@ -290,7 +291,6 @@ def debug(controller, **kwargs):
 
 
 def autoindex(controller, **kwargs):
-
     task = kwargs.get('task')
     if task == 'start_server':
         import subprocess as sp
@@ -327,7 +327,6 @@ def autoindex(controller, **kwargs):
 
 
 def autoindex_xdsVM(controller, **kwargs):
-
     task = kwargs.get('task')
     if task == 'start_server_xdsVM':
         import subprocess as sp
@@ -355,13 +354,13 @@ def autoindex_xdsVM(controller, **kwargs):
 
         controller.indexing_server_process = sp.call(cmd, shell=True)
         print(f'Indexing server `{VM_SERVER_EXE}` starting on {VMHOST}:{VMPORT}')
-        #controller.use_indexing_server_xds = True
+        # controller.use_indexing_server_xds = True
         print('VM XDS Indexing server registered. Please wait for around 2 min before XDS server is ready.')
         print('Please refer to the server console for the current status of the server.')
         return
 
     elif task == 'register_server_xdsVM':
-        #controller.use_indexing_server_xds = True
+        # controller.use_indexing_server_xds = True
         print('VM XDS Indexing server registered')
         return
 

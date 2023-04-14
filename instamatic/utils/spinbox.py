@@ -14,7 +14,8 @@ class Spinbox(Entry):
         STANDARD OPTIONS: class, cursor, style, takefocus, validate,
         validatecommand, xscrollcommand, invalidcommand
 
-        WIDGET-SPECIFIC OPTIONS: to, from_, increment, values, wrap, format, command
+        WIDGET-SPECIFIC OPTIONS: to, from_, increment, values, wrap,
+        format, command
         """
         Entry.__init__(self, master, 'ttk::spinbox', **kw)
 
