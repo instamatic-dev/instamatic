@@ -17,40 +17,19 @@ repos:
     # -   id: check-json
     # -   id: check-added-large-files
 -   repo: https://github.com/myint/docformatter
-    rev: v1.5.1
+    rev: v1.6.0
     hooks:
     -   id: docformatter
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.9.0
-    hooks:
-    -   id: reorder-python-imports
-        args: [--py3-plus]
 -   repo: https://github.com/pre-commit/mirrors-autopep8
     rev: v2.0.2
     hooks:
     -   id: autopep8
         args: ['--in-place', '--ignore=E501,W504']
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.261'
     hooks:
-    -   id: pyupgrade
-        args: ['--py36-plus']
--   repo: https://github.com/PyCQA/flake8
-    rev: '6.0.0'
-    hooks:
-    -   id: flake8
-        args: ['--statistics', '--ignore=F401,F403,F405,F821,F841,E265,E501,A003']
-        additional_dependencies: [
-          'flake8-blind-except',
-          'flake8-commas',
-          'flake8-comprehensions',
-          'flake8-deprecated',
-          'flake8-mutable',
-          'flake8-quotes',
-          'flake8-tidy-imports',
-          # 'flake8-type-annotations',
-          'flake8-builtins',
-          ]
+    -   id: ruff
+        args: [--fix]
 -   repo: https://github.com/kynan/nbstripout
     rev: 0.6.1
     hooks:
