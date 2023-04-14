@@ -8,11 +8,12 @@ import traceback
 
 import numpy as np
 
-from .serializer import dumper
-from .serializer import loader
 from instamatic import config
 from instamatic.camera import Camera
 from instamatic.utils import high_precision_timers
+
+from .serializer import dumper, loader
+
 high_precision_timers.enable()
 
 if config.settings.cam_use_shared_memory:

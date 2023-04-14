@@ -5,15 +5,13 @@ from tkinter import *
 from tkinter.ttk import *
 
 import numpy as np
-from PIL import Image
-from PIL import ImageEnhance
-from PIL import ImageTk
+from PIL import Image, ImageEnhance, ImageTk
 
-from .base_module import BaseModule
-from instamatic.formats import read_tiff
-from instamatic.formats import write_tiff
+from instamatic.formats import read_tiff, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
+
+from .base_module import BaseModule
 
 
 class VideoStreamFrame(LabelFrame):

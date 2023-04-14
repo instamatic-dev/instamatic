@@ -1,6 +1,5 @@
 import numpy as np
-from numpy.fft import fft2
-from numpy.fft import ifft2
+from numpy.fft import fft2, ifft2
 
 
 def translation(im0,

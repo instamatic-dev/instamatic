@@ -3,21 +3,24 @@ import ctypes
 import logging
 import platform
 import time
-from ctypes import addressof
-from ctypes import byref
-from ctypes import c_bool
-from ctypes import c_double
-from ctypes import c_float
-from ctypes import c_int
-from ctypes import c_long
-from ctypes import c_wchar_p
-from ctypes import create_unicode_buffer
-from ctypes import POINTER
+from ctypes import (
+    POINTER,
+    addressof,
+    byref,
+    c_bool,
+    c_double,
+    c_float,
+    c_int,
+    c_long,
+    c_wchar_p,
+    create_unicode_buffer,
+)
 from pathlib import Path
 
 import numpy as np
 
 from instamatic import config
+
 logger = logging.getLogger(__name__)
 
 

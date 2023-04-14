@@ -1,10 +1,10 @@
 from tkinter import *
 from tkinter import Label as tkLabel
-from tkinter.font import Font
-from tkinter.font import nametofont
+from tkinter.font import Font, nametofont
 from tkinter.ttk import *
 
 import instamatic
+
 from .base_module import BaseModule
 
 

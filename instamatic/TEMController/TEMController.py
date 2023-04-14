@@ -5,17 +5,17 @@ from typing import Tuple
 
 import numpy as np
 
-from .deflectors import *
-from .lenses import *
-from .microscope import Microscope
-from .stage import *
-from .states import *
 from instamatic import config
 from instamatic.camera import Camera
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 
+from .deflectors import *
+from .lenses import *
+from .microscope import Microscope
+from .stage import *
+from .states import *
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 
@@ -44,7 +44,6 @@ def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream:
     ctrl : `TEMController`
         Return TEM control object
     """
-
     print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
     tem = Microscope(tem_name, use_server=use_tem_server)
 
@@ -267,7 +266,6 @@ class TEMController:
         stagematrix : np.array[2, 2]
             Affine transformation matrix to convert from stage to pixel coordinates
         """
-
         if not mode:
             mode = self.mode.get()
         if not mag:
@@ -443,7 +441,6 @@ class TEMController:
 
         self.to_dict('all') or self.to_dict() will return all properties
         """
-
         # Each of these costs about 40-60 ms per call on a JEOL 2100, stage is 265 ms per call
         funcs = {
             'FunctionMode': self.tem.getFunctionMode,
@@ -477,7 +474,6 @@ class TEMController:
 
     def from_dict(self, dct: dict):
         """Restore microscope parameters from dict."""
-
         funcs = {
             # 'FunctionMode': self.tem.setFunctionMode,
             'GunShift': self.gunshift.set,

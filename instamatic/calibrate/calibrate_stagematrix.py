@@ -8,8 +8,7 @@ from skimage.registration import phase_cross_correlation
 
 from instamatic import config
 from instamatic.calibrate.fit import fit_affine_transformation
-from instamatic.formats import read_tiff
-from instamatic.formats import write_tiff
+from instamatic.formats import read_tiff, write_tiff
 from instamatic.image_utils import rotate_image
 from instamatic.io import get_new_work_subdirectory
 
@@ -69,7 +68,7 @@ def calibrate_stage_from_file(drc: str, plot: bool = False):
     drc = Path(drc)
     fn = drc / 'log.yaml'
 
-    d = yaml.full_load(open(fn, 'r'))
+    d = yaml.full_load(open(fn))
 
     binning = d['binning']
     args = d['args']

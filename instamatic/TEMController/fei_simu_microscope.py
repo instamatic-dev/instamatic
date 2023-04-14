@@ -6,8 +6,8 @@ import time
 import comtypes.client
 
 from instamatic import config
-from instamatic.exceptions import FEIValueError
-from instamatic.exceptions import TEMCommunicationError
+from instamatic.exceptions import FEIValueError, TEMCommunicationError
+
 logger = logging.getLogger(__name__)
 
 

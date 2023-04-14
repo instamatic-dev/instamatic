@@ -7,8 +7,7 @@ from pathlib import Path
 import numpy as np
 from tqdm.auto import tqdm
 
-from instamatic import config
-from instamatic import TEMController
+from instamatic import TEMController, config
 from instamatic.formats import *
 
 
@@ -60,7 +59,6 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
 
     https://en.wikipedia.org/wiki/Flat-field_correction
     """
-
     if flatfield.shape != img.shape:
         msg = f'Flatfield not applied: image {img.shape} and flatfield {flatfield.shape} do not match shapes.'
         warnings.warn(msg)

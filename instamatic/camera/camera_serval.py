@@ -6,6 +6,7 @@ import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
 
 from instamatic import config
+
 logger = logging.getLogger(__name__)
 
 # Start servers in serval_toolkit:
@@ -56,7 +57,7 @@ class CameraServal:
 
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(ExposureTime=exposure,
-                TriggerPeriod=exposure + 0.00050001)
+                                      TriggerPeriod=exposure + 0.00050001)
 
         # Check if measurement is running. If not: start
         db = self.conn.dashboard
@@ -67,7 +68,7 @@ class CameraServal:
         self.conn.trigger_start()
 
         # Request a frame. Will be streamed *after* the exposure finishes
-        img = self.conn.get_image_stream(nTriggers = 1, disable_tqdm = True)[0]
+        img = self.conn.get_image_stream(nTriggers=1, disable_tqdm=True)[0]
         arr = np.array(img)
         return arr
 
@@ -87,7 +88,7 @@ class CameraServal:
         if not binsize:
             binsize = self.default_binsize
 
-        self.conn.set_detector_config(TriggerMode = 'CONTINUOUS')
+        self.conn.set_detector_config(TriggerMode='CONTINUOUS')
 
         arr = self.conn.get_images(
             nTriggers=n_frames,
@@ -132,15 +133,15 @@ class CameraServal:
         else:
             file_format = 'pgm'
         self.conn.destination = {
-                "Image":
-                    [{
-                    # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
-                    "Base": "http://localhost",
-                    # What (image) format to provide the files in.
-                    "Format": file_format,
-                    # What data to build a frame from
-                    "Mode": "count"
-            }]
+            'Image':
+            [{
+                # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
+                'Base': 'http://localhost',
+                        # What (image) format to provide the files in.
+                        'Format': file_format,
+                        # What data to build a frame from
+                        'Mode': 'count',
+            }],
         }
 
     def releaseConnection(self) -> None:

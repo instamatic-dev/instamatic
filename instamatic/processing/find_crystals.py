@@ -6,14 +6,10 @@ import numpy as np
 from scipy import ndimage
 from scipy._lib._util import _asarray_validated
 from scipy.cluster.vq import kmeans2
-from skimage import filters
-from skimage import measure
-from skimage import morphology
-from skimage import segmentation
+from skimage import filters, measure, morphology, segmentation
 
 from instamatic.config import calibration
 from instamatic.image_utils import autoscale
-
 
 CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel'])
 
@@ -207,8 +203,9 @@ def main_entry():
     options = parser.parse_args()
     args = options.args
 
-    from instamatic.formats import read_image
     import warnings
+
+    from instamatic.formats import read_image
     warnings.simplefilter('ignore')
 
     for fn in args:

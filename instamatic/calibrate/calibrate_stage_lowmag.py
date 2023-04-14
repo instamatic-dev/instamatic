@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
+from instamatic.formats import read_image
+from instamatic.image_utils import autoscale, imgscale
+
 from .filenames import *
 from .fit import fit_affine_transformation
-from instamatic.formats import read_image
-from instamatic.image_utils import autoscale
-from instamatic.image_utils import imgscale
+
 logger = logging.getLogger(__name__)
 
 
@@ -225,7 +226,6 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     return:
         instance of Calibration class with conversion methods
     """
-
     exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 

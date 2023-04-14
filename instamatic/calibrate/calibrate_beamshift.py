@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
+from instamatic import config
+from instamatic.image_utils import autoscale, imgscale
+from instamatic.processing.find_holes import find_holes
+from instamatic.tools import find_beam_center, printer
+
 from .filenames import *
 from .fit import fit_affine_transformation
-from instamatic import config
-from instamatic.image_utils import autoscale
-from instamatic.image_utils import imgscale
-from instamatic.processing.find_holes import find_holes
-from instamatic.tools import find_beam_center
-from instamatic.tools import printer
+
 logger = logging.getLogger(__name__)
 
 
@@ -133,7 +133,6 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     return:
         instance of Calibration class with conversion methods
     """
-
     exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
@@ -170,7 +169,7 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         ctrl.beamshift.set(x=x_cent + dx, y=y_cent + dy)
 
-        printer('Position: {}/{}: {}'.format(i + 1, tot, ctrl.beamshift))
+        printer(f'Position: {i + 1}/{tot}: {ctrl.beamshift}')
 
         outfile = os.path.join(outdir, 'calib_beamshift_{i:04d}') if save_images else None
 

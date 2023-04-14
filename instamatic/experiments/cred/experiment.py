@@ -185,9 +185,10 @@ class Experiment:
     def start_rotation(self) -> float:
         """Controls the starting of the rotation of the experiment.
 
-        In the default mode, wait for rotation to start (i.e. controlled via the pedals)
-        In `footfree` mode, initialize rotation from current angle to target angle.
-        In `simulate` mode, simulate the start condition.
+        In the default mode, wait for rotation to start (i.e. controlled
+        via the pedals) In `footfree` mode, initialize rotation from
+        current angle to target angle. In `simulate` mode, simulate the
+        start condition.
 
         Returns the starting value for the rotation.
         """
@@ -231,10 +232,10 @@ class Experiment:
         for i in range(n_cycles):
             self.ctrl.difffocus.set(self.diff_focus_defocused)
             time.sleep(0.5)
-            print(f'.', end='')
+            print('.', end='')
             self.ctrl.difffocus.set(self.diff_focus_proper)
             time.sleep(0.5)
-            print(f'.', end='')
+            print('.', end='')
 
         print('Done.')
 
@@ -327,7 +328,7 @@ class Experiment:
 
         # in case something went wrong starting data collection, return gracefully
         if i == 1:
-            print_and_log(f'Data collection interrupted', logger=self.logger)
+            print_and_log('Data collection interrupted', logger=self.logger)
             return False
 
         self.spotsize = self.ctrl.spotsize
@@ -376,8 +377,9 @@ class Experiment:
     def write_data(self, buffer: list):
         """Write diffraction data in the buffer.
 
-        The image buffer is passed as a list of tuples, where each tuple contains the
-        index (int), image data (2D numpy array), metadata/header (dict).
+        The image buffer is passed as a list of tuples, where each tuple
+        contains the index (int), image data (2D numpy array),
+        metadata/header (dict).
 
         The buffer index must start at 1.
         """

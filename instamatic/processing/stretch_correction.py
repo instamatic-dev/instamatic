@@ -4,11 +4,9 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider
-from scipy.ndimage import interpolation
-from scipy.ndimage import morphology
+from scipy.ndimage import interpolation, morphology
 from skimage.feature import canny
-from skimage.measure import label
-from skimage.measure import regionprops
+from skimage.measure import label, regionprops
 
 from instamatic.formats import read_tiff
 from instamatic.image_utils import autoscale

@@ -8,13 +8,10 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from instamatic import config
-from instamatic.calibrate import CalibBeamShift
-from instamatic.calibrate import CalibDirectBeam
+from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
 from instamatic.formats import *
-from instamatic.processing.find_crystals import find_crystals
-from instamatic.processing.find_crystals import find_crystals_timepix
-from instamatic.processing.flatfield import apply_flatfield_correction
-from instamatic.processing.flatfield import remove_deadpixels
+from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
+from instamatic.processing.flatfield import apply_flatfield_correction, remove_deadpixels
 
 
 def make_grid_on_stage(startpoint, endpoint, padding=2.0):

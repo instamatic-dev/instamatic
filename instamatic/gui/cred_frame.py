@@ -2,8 +2,9 @@ import threading
 from tkinter import *
 from tkinter.ttk import *
 
-from .base_module import BaseModule
 from instamatic.utils.spinbox import Spinbox
+
+from .base_module import BaseModule
 
 ENABLE_FOOTFREE_OPTION = False
 

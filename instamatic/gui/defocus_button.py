@@ -76,7 +76,7 @@ def main():
     # keep window in front of other windows
     root.attributes('-topmost', True)
 
-    root.title(f'Instamatic defocus helper')
+    root.title('Instamatic defocus helper')
     root.mainloop()
 
 

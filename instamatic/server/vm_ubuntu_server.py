@@ -19,7 +19,7 @@ VM_PWD = config.settings.VM_PWD
 VM_DELAY1 = config.settings.VM_STARTUP_DELAY
 VM_DELAY2 = config.settings.VM_DESKTOP_DELAY
 VM_SF = config.settings.VM_SHARED_FOLDER
-#ENABLE_SHELXT = config.settings.ENABLE_SHELXT
+# ENABLE_SHELXT = config.settings.ENABLE_SHELXT
 BUFF = 1024
 
 
@@ -75,7 +75,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
     """incoming conn should contain a path that is shared already between VBox
     and windows."""
 
-    #path = "/media/sf_SharedWithVM/test_vm_server"
+    # path = "/media/sf_SharedWithVM/test_vm_server"
 
     while True:
 
@@ -147,7 +147,7 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
     composition = comp2dict(composition)
 
     if unitcell is None:
-        with open(Path(path) / 'CORRECT.LP', 'r') as f:
+        with open(Path(path) / 'CORRECT.LP') as f:
             for line in f:
                 if line.startswith(' UNIT_CELL_CONSTANTS='):
                     cell = list(map(float, line.strip('\n').split()[1:7]))
@@ -157,7 +157,7 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
         cell = [float(ucl) for ucl in unitcell]
 
     if spgr is None:
-        with open(Path(path) / 'CORRECT.LP', 'r') as f:
+        with open(Path(path) / 'CORRECT.LP') as f:
             for line in f:
                 if line.startswith(' SPACE GROUP NUMBER'):
                     spgr = int(line.strip('\n').split()[-1])
@@ -175,7 +175,7 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
 
     print(f'TITL {spgr}', file=f)
     print(f'CELL {wavelength:.4f} {a:6.3f} {b:6.3f} {c:6.3f} {al:7.3f} {be:7.3f} {ga:7.3f}', file=f)
-    print(f'ZERR 1.00    0.000  0.000  0.000   0.000   0.000   0.000', file=f)
+    print('ZERR 1.00    0.000  0.000  0.000   0.000   0.000   0.000', file=f)
 
     LATT, SYMM = get_latt_symm_cards(spgr)
 
@@ -264,7 +264,7 @@ The host and port are defined in `config/settings.yaml`.
     spgr = options.spgr
     composition = options.composition
 
-    #print(shelxt, unitcell, spgr, composition)
+    # print(shelxt, unitcell, spgr, composition)
 
     total_wait_sec = VM_DELAY1 + VM_DELAY2 + 10
     print('Starting Ubuntu server installed in VirtualBox...')
@@ -301,7 +301,7 @@ The host and port are defined in `config/settings.yaml`.
     # time.sleep(5)
     # close_down_vm_process(session)
     # time.sleep(5)
-    #print("VM server closed down safely!")
+    # print("VM server closed down safely!")
 
 
 if __name__ == '__main__':

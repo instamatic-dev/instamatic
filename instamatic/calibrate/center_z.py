@@ -29,8 +29,8 @@ def eliminate_backlash_in_tiltx(ctrl):
 def center_z_height(ctrl, verbose=False):
     """Automated routine to find the z-height.
 
-    Koster, A. J., et al. "Automated microscopy for electron tomography."
-    Ultramicroscopy 46.1-4 (1992): 207-227.
+    Koster, A. J., et al. "Automated microscopy for electron
+    tomography." Ultramicroscopy 46.1-4 (1992): 207-227.
     http://www.msg.ucsf.edu/agard/Publications/52-Koster.pdf
     """
     print('\033[k', 'Finding eucentric height...', end='\r')
@@ -89,7 +89,6 @@ def center_z_height(ctrl, verbose=False):
 
 
 def find_crystal_max(img, magnification, spread, offset):
-
     crystal_positions = find_crystals_timepix(img, magnification, spread=spread, offset=offset)
     crystal_area = [crystal.area_pixel for crystal in crystal_positions if crystal.isolated]
     maxind = crystal_area.index(max(crystal_area))
@@ -106,7 +105,6 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     Rotate the stage positively. If the particle moves upwards, adjust
     height to be higher. Vice versa.
     """
-
     print('\033[k', 'Finding eucentric height...', end='\r')
     if ctrl.mode != 'mag1':
         ctrl.mode.set('mag1')

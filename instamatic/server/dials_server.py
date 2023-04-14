@@ -9,7 +9,6 @@ from socket import *
 
 from instamatic import config
 
-
 try:
     EXE = Path(sys.argv[1])
 except BaseException:

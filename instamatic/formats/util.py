@@ -11,7 +11,6 @@ import numpy
 import numpy as np
 from scipy import ndimage
 
-
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 
@@ -24,7 +23,6 @@ class InvalidHeaderException(Exception):
 
 def fromfile(fin, dtype, count, sep=''):
     """"""
-
     if hasattr(fin, 'fileno'):
         return np.fromfile(fin, dtype, count, sep)
     else:
@@ -46,7 +44,6 @@ def uopen(filename, mode):
     fd : File
          File descriptor
     """
-
     try:
         os.fspath(filename)
     except BaseException:
@@ -71,7 +68,6 @@ def close(filename, fd):
     fd : File
          File descriptor
     """
-
     if fd != filename:
         fd.close()
 
@@ -95,7 +91,6 @@ def update_header(dest, source, header_map, tag=None):
     dest : array or dict
            Destination of the header values
     """
-
     if source is None:
         return dest
     keys = dest.dtype.names if hasattr(dest, 'dtype') else dest.keys()
@@ -137,7 +132,6 @@ def read_image(f, header, dtype, dlen, shape, swap, order='C'):
     out : ndarray
           Array of image data
     """
-
     out = np.fromfile(f, dtype=dtype, count=dlen)
     out.shape = shape
     out = out.squeeze()

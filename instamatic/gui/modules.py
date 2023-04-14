@@ -1,8 +1,10 @@
 import importlib
 import logging
 
-from .jobs import JOBS  # Import central list of jobs
 from instamatic import config
+
+from .jobs import JOBS  # Import central list of jobs
+
 logger = logging.getLogger(__name__)
 
 all_modules = (

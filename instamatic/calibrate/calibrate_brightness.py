@@ -5,10 +5,12 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .filenames import *
 from instamatic.image_utils import autoscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
+
+from .filenames import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +90,6 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
     return:
         instance of CalibBrightness class with conversion methods
     """
-
     raise NotImplementedError('calibrate_brightness_live function needs fixing...')
 
     exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
@@ -140,7 +141,6 @@ def calibrate_brightness_from_image_fn(fns):
     return:
         instance of Calibration class with conversion methods
     """
-
     values = []
 
     for fn in fns:

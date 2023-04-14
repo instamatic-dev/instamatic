@@ -9,7 +9,6 @@ from instamatic.tools import relativistic_wavelength
 
 def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
     """Loop over magnification ranges and return calibrations from EMMENU."""
-
     if mode == 'diff':
         print('Warning: Pixelsize can be a factor 10 off in diff mode (bug in EMMENU)')
 
@@ -53,7 +52,7 @@ def choice_prompt(choices: list = [], default=None, question: str = 'Which one?'
         suffix = f' [{default}]'
     except ValueError:
         default_choice = 0
-        suffix = f''
+        suffix = ''
 
     for i, choice in enumerate(choices):
         print(f'{i+1: 2d}: {choice}')
@@ -110,8 +109,8 @@ It establishes a connection to the microscope and reads out the camera lengths a
 
     # Instantiate microscope / camera connection
 
-    from instamatic.TEMController.microscope import get_tem
     from instamatic.camera.camera import get_cam
+    from instamatic.TEMController.microscope import get_tem
     from instamatic.TEMController.TEMController import TEMController
 
     cam = get_cam(cam_name)() if cam_name else None
@@ -171,7 +170,7 @@ It establishes a connection to the microscope and reads out the camera lengths a
     settings_yaml = config.locations['settings']
 
     print()
-    print(f'Wrote files config files:')
+    print('Wrote files config files:')
     print(f'    Copy {tem_config_fn} -> `{microscope_drc / tem_config_fn}`')
     print(f'    Copy {calib_config_fn} -> `{calibration_drc / calib_config_fn}`')
     if cam_config:

@@ -5,6 +5,7 @@ import time
 import numpy as np
 
 from instamatic import config
+
 logger = logging.getLogger(__name__)
 
 

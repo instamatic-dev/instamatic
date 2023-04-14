@@ -1,7 +1,6 @@
 from collections import namedtuple
 from typing import Tuple
 
-
 DeflectorTuple = namedtuple('DeflectorTuple', ['x', 'y'])
 
 

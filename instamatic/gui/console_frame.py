@@ -7,8 +7,9 @@ from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 from tkinter.ttk import *
 
-from .base_module import BaseModule
 from instamatic import config
+
+from .base_module import BaseModule
 
 
 class Writer:
@@ -127,7 +128,6 @@ class Console(LabelFrame):
 
     def export_text(self):
         """Export text from the text widget to a file."""
-
         drc = config.settings.work_directory
 
         f = filedialog.asksaveasfile(mode='w',

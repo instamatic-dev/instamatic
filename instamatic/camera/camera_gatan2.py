@@ -8,6 +8,7 @@ import numpy as np
 
 from instamatic import config
 from instamatic.camera.gatansocket3 import GatanSocket
+
 logger = logging.getLogger(__name__)
 
 
@@ -178,7 +179,6 @@ class CameraGatan2:
         get_tag = f'number value\nGetPersistentNumberNote("{key}", value)\nExit(value)'
         value = self.g.ExecuteGetDoubleScript(get_tag)
         """
-
         if delete:
             self.delete_tag(key)
 

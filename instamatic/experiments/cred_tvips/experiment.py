@@ -36,7 +36,7 @@ class SerialExperiment:
             self.start_angle = target_angle / 2
             self.end_angle = -self.start_angle
         else:
-            self.tracks = open(self.instruction_file, 'r').readlines()
+            self.tracks = open(self.instruction_file).readlines()
             self.run = self.run_from_tracking_file
 
         self.log = log
@@ -555,15 +555,15 @@ class Experiment:
 
                 d['i'] = 0
 
-                fn = self.path / f'track.pickle'
+                fn = self.path / 'track.pickle'
                 pickle.dump(d, open(fn, 'wb'))
 
                 print(f'Wrote file {fn.name}')
 
 
 if __name__ == '__main__':
-    from instamatic.io import get_new_work_subdirectory
     from instamatic import TEMController
+    from instamatic.io import get_new_work_subdirectory
 
     ctrl = TEMController.initialize()
 

@@ -407,7 +407,7 @@ class Experiment:
 
                 d['i'] = 0
 
-                fn = self.path / f'track.pickle'
+                fn = self.path / 'track.pickle'
                 pickle.dump(d, open(fn, 'wb'))
 
                 print(f'Wrote file {fn.name}')

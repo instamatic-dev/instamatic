@@ -4,10 +4,11 @@ from pathlib import Path
 from tkinter import *
 from tkinter.ttk import *
 
-from .base_module import BaseModule
 from instamatic.calibrate import CalibDirectBeam
-from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
-from instamatic.calibrate.filenames import CALIB_DIRECTBEAM
+from instamatic.calibrate.filenames import CALIB_BEAMSHIFT, CALIB_DIRECTBEAM
+
+from .base_module import BaseModule
+
 # import matplotlib
 # matplotlib.use('TkAgg')
 
@@ -173,7 +174,7 @@ def acquire_data_SED(controller, **kwargs):
 
     params = workdir / 'params.json'
     try:
-        params = json.load(open(params, 'r'))
+        params = json.load(open(params))
     except OSError:
         params = PARAMS
 
