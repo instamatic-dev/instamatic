@@ -10,7 +10,6 @@ from instamatic import config
 logger = logging.getLogger(__name__)
 
 
-# convert command to generate TCP/IP Merlin string
 def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     """Generate TCP command bytes for Merlin software.
 
@@ -58,9 +57,9 @@ class CameraMerlin:
 
         self.name = name
 
-        self.establishConnection()
-
         self.load_defaults()
+
+        self.establishConnection()
 
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
@@ -87,6 +86,14 @@ class CameraMerlin:
         return self.getMovie(n_frames=1, exposure=exposure, binsize=binsize)
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
+        """Movie acquisition routine. If the exposure and binsize are not
+        given, the default values are read from the config file.
+
+        exposure:
+            Exposure time in seconds.
+        binsize:
+            Which binning to use.
+        """
         if exposure is None:
             exposure = self.default_exposure
         if not binsize:
@@ -95,16 +102,11 @@ class CameraMerlin:
         # convert s to ms
         exposure_ms = exposure * 1000
 
-        self.s_cmd.sendall(MPX_CMD('SET', 'HVBIAS,120'))
-        self.s_cmd.sendall(MPX_CMD('SET', 'THRESHOLD0,40'))
-        self.s_cmd.sendall(MPX_CMD('SET', 'THRESHOLD1,511'))
         # Set continuous mode on
         self.s_cmd.sendall(MPX_CMD('SET', 'CONTINUOUSRW,1'))
-        # Set dynamic range
-        self.s_cmd.sendall(MPX_CMD('SET', 'COUNTERDEPTH,12'))
         # Set frame time in miliseconds
         self.s_cmd.sendall(MPX_CMD('SET', f'ACQUISITIONTIME,{exposure_ms}'))
-        # Set gap time in milliseconds (The number fire corresponds to sum of frame and gap time)
+        # Set gap time in milliseconds (The number corresponds to sum of frame and gap time)
         self.s_cmd.sendall(MPX_CMD('SET', f'ACQUISITIONPERIOD,{exposure_ms}'))
         # Set number of frames to be acquired
         self.s_cmd.sendall(MPX_CMD('SET', 'NUMFRAMESTOACQUIRE,{n_frames}'))
@@ -114,22 +116,22 @@ class CameraMerlin:
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
         # check TCP header for acquisition header (hdr) file
-        data = s_data.recv(14)
+        data = self.s_data.recv(14)
         start = data.decode()
 
         # add the rest
-        header = s_data.recv(int(start[4:]))
+        header = self.s_data.recv(int(start[4:]))
 
         if (len(header) == int(start[4:])):
             logger.info('Header data received.')
 
         for x in range(n_frames):
-            tcpheader = s_data.recv(14)
-            framedata = s_data.recv(int(tcpheader[4:]))
+            tcpheader = self.s_data.recv(14)
+            framedata = self.s_data.recv(int(tcpheader[4:]))
 
             while (len(framedata) != int(tcpheader[4:])):
                 logger.info('\tframe %s partially received with length %s', x, len(framedata))
-                framedata += s_data.recv(int(tcpheader[4:]) - len(framedata))
+                framedata += self.s_data.recv(int(tcpheader[4:]) - len(framedata))
 
         logger.info('%s frames received.', n_frames)
 
@@ -165,7 +167,7 @@ class CameraMerlin:
         s_cmd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect sockets and probe for the detector status
         try:
-            s_cmd.connect((self.hostname, self.commandport))
+            s_cmd.connect((self.host, self.commandport))
 
             s_cmd.sendall(MPX_CMD('GET', 'SOFTWAREVERSION'))
             version = s_cmd.recv(1024)
@@ -176,13 +178,17 @@ class CameraMerlin:
             logger.info(f'Status CMD: {status.decode()}')
 
         except ConnectionRefusedError:
-            raise RunTimeError(
-                'Could not establish command connection to {self.name}, '
+            raise RuntimeError(
+                f'Could not establish command connection to {self.name}, '
                 '(Merlin command port not responding).')
         except OSError:
-            raise RunTimeError(
-                'Could not establish command connection to {self.name}, '
+            raise RuntimeError(
+                f'Could not establish command connection to {self.name}, '
                 '(Merlin command port already connected).')
+
+        for key, value in self.detector_config.items():
+            logger.info(f'Setting: {key},{value}')
+            self.s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
 
         self.s_cmd = s_cmd
 
@@ -192,10 +198,10 @@ class CameraMerlin:
         s_data = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect sockets and probe for the detector status
         try:
-            s_data.connect((HOST, DATAPORT))
+            s_data.connect((self.host, self.dataport))
         except ConnectionRefusedError:
-            raise RunTimeError(
-                'Could not establish data connection to {self.name}, '
+            raise RuntimeError(
+                f'Could not establish data connection to {self.name}, '
                 '(Merlin data port not responding).')
 
         self.s_data = s_data
@@ -203,8 +209,18 @@ class CameraMerlin:
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
         self.s_cmd.close()
+
         self.s_data.close()
 
         name = self.getName()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    logger.info('Testing merlin detector')
+
+    cam = CameraMerlin()
+    from IPython import embed
+    embed()
