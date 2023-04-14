@@ -29,6 +29,8 @@ def get_cam(interface: str = None):
         from instamatic.camera.camera_emmenu import CameraEMMENU as cam
     elif interface == 'serval':
         from instamatic.camera.camera_serval import CameraServal as cam
+    elif interface == 'merlin':
+        from instamatic.camera.camera_merlin import CameraMerlin as cam
     else:
         raise ValueError(f'No such camera interface: {interface}')
 

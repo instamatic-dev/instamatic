@@ -1,0 +1,15 @@
+camera_rotation_vs_stage_xy: 0.0
+default_binsize: 1
+default_exposure: 0.02
+dimensions: [512, 512]
+dynamic_range: 11800
+interface: serval
+physical_pixelsize: 0.055
+possible_binsizes: [1]
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0
+detector_config:
+  dummy_value: 123
+bpc_file_path: ''
+dacs_file_path: ''
+url: 'http://localhost:8080'
