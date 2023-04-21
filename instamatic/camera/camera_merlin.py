@@ -3,11 +3,15 @@ import logging
 import socket
 import time
 
+import mib
 import numpy as np
 
 from instamatic import config
 
 logger = logging.getLogger(__name__)
+
+# socket.settimeout(5)  # seconds
+socket.setdefaulttimeout(5)  # seconds
 
 
 def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
@@ -31,13 +35,37 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     length = len(cmd)
     # tmp = 'MPX,00000000' + str(length+5) + ',' + type_cmd + ',' + cmd
     tmp = f'MPX,00000000{length+5},{type_cmd},{cmd}'
+    logger.debug(tmp)
     return tmp.encode()
 
 
 def mib2numpy(buffer):
-    merlin_frame_dtype = np.dtype([('header', np.string_, 768), ('data', np.dtype('>u2'), (512, 512))])
+    data = mib.loadMib(buffer[1:], scan_size=(1, 1))
+    return data
+
+
+def mib2numpy2(buffer, *, single=False, dimensions=(512, 512)):
+    head = buffer[:384].decode().split(',')
+
+    assert head[4] == dimensions[0]
+    assert head[5] == dimensions[1]
+    assert head[6] == 'U16'  # np.dtype('>u2')
+
+    if single:
+        header_length = 384
+        assert head[2] == '00384'
+    else:
+        header_length = 768
+        assert head[2] == '00768'
+
+    merlin_frame_dtype = np.dtype([
+        ('header', np.string_, header_length),
+        ('data', np.dtype('>u2'), dimensions),
+    ],
+    )
     # frame_data = np.memmap('path_to_mib', dtype=merlin_frame_dtype, shape = (1), mode='r')
-    frame_data = np.ndarray(shape=(1), dtype=merlin_frame_dtype, buffer=buffer)
+    # frame_data = np.ndarray(shape=(1), dtype=merlin_frame_dtype, buffer=buffer)
+    frame_data = np.frombuffer(buffer, dtype=merlin_frame_dtype)
 
     # get detected data
     frame_data_no_header = frame_data['data']
@@ -109,31 +137,47 @@ class CameraMerlin:
         # Set gap time in milliseconds (The number corresponds to sum of frame and gap time)
         self.s_cmd.sendall(MPX_CMD('SET', f'ACQUISITIONPERIOD,{exposure_ms}'))
         # Set number of frames to be acquired
-        self.s_cmd.sendall(MPX_CMD('SET', 'NUMFRAMESTOACQUIRE,{n_frames}'))
+        self.s_cmd.sendall(MPX_CMD('SET', f'NUMFRAMESTOACQUIRE,{n_frames}'))
         # Disable file saving
         self.s_cmd.sendall(MPX_CMD('SET', 'FILEENABLE,0'))
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
-        # check TCP header for acquisition header (hdr) file
+        # Needs a delay otherwise we won't get the data
+        time.sleep(1.0)
+
         data = self.s_data.recv(14)
         start = data.decode()
 
+        header_size = int(start[4:])
         # add the rest
-        header = self.s_data.recv(int(start[4:]))
+        header = self.s_data.recv(header_size)
+        # header += self.s_data.recv(703)
 
-        if (len(header) == int(start[4:])):
-            logger.info('Header data received.')
+        if (len(header) == header_size):
+            logger.info('Header data received (%s).', header_size)
+        else:
+            raise OSError('Wrong header data received')
+
+        frames = []
 
         for x in range(n_frames):
-            tcpheader = self.s_data.recv(14)
-            framedata = self.s_data.recv(int(tcpheader[4:]))
+            mpx_header = self.s_data.recv(14)
+            size = int(mpx_header[4:])
 
-            while (len(framedata) != int(tcpheader[4:])):
+            logger.info('Receiving frame %s: %s', x, size)
+
+            framedata = self.s_data.recv(size)
+
+            while (len(framedata) != size):
                 logger.info('\tframe %s partially received with length %s', x, len(framedata))
-                framedata += self.s_data.recv(int(tcpheader[4:]) - len(framedata))
+                framedata += self.s_data.recv(size - len(framedata))
+
+            frames.append(framedata)
 
         logger.info('%s frames received.', n_frames)
+
+        return frames
 
         # TODO: decode framedata
 
@@ -166,6 +210,9 @@ class CameraMerlin:
         # Create command socket
         s_cmd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect sockets and probe for the detector status
+
+        logger.info('Connecting to Merlin on %s:%s', self.host, self.commandport)
+
         try:
             s_cmd.connect((self.host, self.commandport))
 
@@ -187,8 +234,7 @@ class CameraMerlin:
                 '(Merlin command port already connected).')
 
         for key, value in self.detector_config.items():
-            logger.info(f'Setting: {key},{value}')
-            self.s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
+            s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
 
         self.s_cmd = s_cmd
 
@@ -222,5 +268,19 @@ if __name__ == '__main__':
     logger.info('Testing merlin detector')
 
     cam = CameraMerlin()
+
+    cam.establishDataConnection()
+
+    frames = cam.getMovie(5, exposure=0.02)
+
+    frame = frames[0]
+    header = frame[:384].decode().split(',')
+
+    # data comes in 4x512 ??
+
+    print()
+
+    arr = mib.loadMib(frames[0])
+
     from IPython import embed
     embed()
