@@ -165,7 +165,7 @@ class CameraMerlin:
             mpx_header = self.s_data.recv(14)
             size = int(mpx_header[4:])
 
-            logger.info('Receiving frame %s: %s', x, size)
+            logger.info('Receiving frame %s: %s (%s)', x, size, mpx_header)
 
             framedata = self.s_data.recv(size)
 
@@ -173,6 +173,7 @@ class CameraMerlin:
                 logger.info('\tframe %s partially received with length %s', x, len(framedata))
                 framedata += self.s_data.recv(size - len(framedata))
 
+            logger.info('\tframe %s received with length %s', x, len(framedata))
             frames.append(framedata)
 
         logger.info('%s frames received.', n_frames)
@@ -271,16 +272,20 @@ if __name__ == '__main__':
 
     cam.establishDataConnection()
 
-    frames = cam.getMovie(5, exposure=0.02)
+    frames = cam.getMovie(3, exposure=0.05)
 
     frame = frames[0]
     header = frame[:384].decode().split(',')
 
-    # data comes in 4x512 ??
-
     print()
 
-    arr = mib.loadMib(frames[0])
+    arr = mib.loadMib(frames[0][1:])
 
-    from IPython import embed
-    embed()
+    import numpy as np
+
+    arr = arr.squeeze()
+    arr = np.flipud(arr)
+
+    import matplotlib.pyplot as plt
+    plt.imshow(arr.squeeze())
+    plt.show()
