@@ -75,7 +75,8 @@ class CameraMerlin:
         binsize:
             Which binning to use.
         """
-        return self.getMovie(n_frames=1, exposure=exposure, binsize=binsize)
+        frames = self.getMovie(n_frames=1, exposure=exposure, binsize=binsize)
+        return frames[0]
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -114,9 +115,7 @@ class CameraMerlin:
         start = data.decode()
 
         header_size = int(start[4:])
-        # add the rest
         header = self.s_data.recv(header_size)
-        # header += self.s_data.recv(703)
 
         if (len(header) == header_size):
             logger.info('Header data received (%s).', header_size)
@@ -142,11 +141,8 @@ class CameraMerlin:
 
         logger.info('%s frames received.', n_frames)
 
-        return frames
-
-        # TODO: decode framedata
-
-        return mib2numpy(framedata)
+        # Must skip first byte when loading data to avoid off-by-one error
+        return [load_mib(frame[1:]) for frame in frames]
 
     def isCameraInfoAvailable(self) -> bool:
         """Check if the camera is available."""
@@ -238,7 +234,7 @@ if __name__ == '__main__':
 
     frames = cam.getMovie(3, exposure=0.05)
 
-    arr = load_mib(frames[0][1:])
+    arr = frames[0]
 
     import numpy as np
 

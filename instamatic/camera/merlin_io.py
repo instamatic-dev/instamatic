@@ -103,12 +103,13 @@ def load_mib(buffer: bytes):
         ('header', np.string_, props.headsize),
         ('data', props.pixeltype, props.merlin_size),
     ])
-    assert merlin_frame_dtype.itemsize == len(buffer)
+
+    assert len(buffer) % merlin_frame_dtype.itemsize == 0, 'buffer size must be a multiple of item size'
 
     data = np.frombuffer(
         buffer,
         dtype=merlin_frame_dtype,
-        count=1,
+        count=-1,
         offset=0,
     )
 
