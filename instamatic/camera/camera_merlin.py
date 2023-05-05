@@ -5,6 +5,7 @@ import time
 
 import mib
 import numpy as np
+from merlin_io import load_mib
 
 from instamatic import config
 
@@ -37,43 +38,6 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     tmp = f'MPX,00000000{length+5},{type_cmd},{cmd}'
     logger.debug(tmp)
     return tmp.encode()
-
-
-def mib2numpy(buffer):
-    data = mib.loadMib(buffer[1:], scan_size=(1, 1))
-    return data
-
-
-def mib2numpy2(buffer, *, single=False, dimensions=(512, 512)):
-    head = buffer[:384].decode().split(',')
-
-    assert head[4] == dimensions[0]
-    assert head[5] == dimensions[1]
-    assert head[6] == 'U16'  # np.dtype('>u2')
-
-    if single:
-        header_length = 384
-        assert head[2] == '00384'
-    else:
-        header_length = 768
-        assert head[2] == '00768'
-
-    merlin_frame_dtype = np.dtype([
-        ('header', np.string_, header_length),
-        ('data', np.dtype('>u2'), dimensions),
-    ],
-    )
-    # frame_data = np.memmap('path_to_mib', dtype=merlin_frame_dtype, shape = (1), mode='r')
-    # frame_data = np.ndarray(shape=(1), dtype=merlin_frame_dtype, buffer=buffer)
-    frame_data = np.frombuffer(buffer, dtype=merlin_frame_dtype)
-
-    # get detected data
-    frame_data_no_header = frame_data['data']
-
-    # get frame header
-    frame_header = frame_data['header']
-
-    return frame_data_no_header
 
 
 class CameraMerlin:
@@ -274,12 +238,7 @@ if __name__ == '__main__':
 
     frames = cam.getMovie(3, exposure=0.05)
 
-    frame = frames[0]
-    header = frame[:384].decode().split(',')
-
-    print()
-
-    arr = mib.loadMib(frames[0][1:])
+    arr = load_mib(frames[0][1:])
 
     import numpy as np
 
