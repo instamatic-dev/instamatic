@@ -95,7 +95,7 @@ class MIBProperties:
 
 def load_mib(buffer: bytes):
     """Load Quantum Detectors MIB file from a memory buffer."""
-    assert isinstance(buffer, bytes)
+    assert isinstance(buffer, (bytes, bytearray))
 
     props = MIBProperties.from_buffer(buffer)
 

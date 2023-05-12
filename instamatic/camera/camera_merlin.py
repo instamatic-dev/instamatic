@@ -3,7 +3,6 @@ import logging
 import socket
 import time
 
-import mib
 import numpy as np
 from merlin_io import load_mib
 
@@ -52,6 +51,7 @@ class CameraMerlin:
         self.load_defaults()
 
         self.establishConnection()
+        self.establishDataConnection()
 
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
@@ -87,6 +87,9 @@ class CameraMerlin:
         binsize:
             Which binning to use.
         """
+        times = {}
+        times['start'] = time.perf_counter()
+
         if exposure is None:
             exposure = self.default_exposure
         if not binsize:
@@ -94,6 +97,8 @@ class CameraMerlin:
 
         # convert s to ms
         exposure_ms = exposure * 1000
+
+        times['set parameters'] = time.perf_counter()
 
         # Set continuous mode on
         self.s_cmd.sendall(MPX_CMD('SET', 'CONTINUOUSRW,1'))
@@ -108,8 +113,15 @@ class CameraMerlin:
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
-        # Needs a delay otherwise we won't get the data
-        time.sleep(1.0)
+        times['set parameters done'] = time.perf_counter()
+
+        # Needs a delay otherwise we get a crash because the system is not ready yet
+        # round-trip time to server is ~28 ms
+        min_delay = max(n_frames * exposure - 0.001, 0.3)
+        logger.info('Waiting for %s s.', min_delay)
+        time.sleep(min_delay)
+
+        times['after delay'] = time.perf_counter()
 
         data = self.s_data.recv(14)
         start = data.decode()
@@ -117,32 +129,56 @@ class CameraMerlin:
         header_size = int(start[4:])
         header = self.s_data.recv(header_size)
 
-        if (len(header) == header_size):
-            logger.info('Header data received (%s).', header_size)
-        else:
+        times['header received'] = time.perf_counter()
+
+        if (len(header) != header_size):
             raise OSError('Wrong header data received')
+
+        logger.info('Header data received (%s).', header_size)
 
         frames = []
 
+        times['pre-acquire'] = time.perf_counter()
+
         for x in range(n_frames):
+            # time.sleep(0.2)
+            times[f'## Frame {x}'] = time.perf_counter()
+
             mpx_header = self.s_data.recv(14)
             size = int(mpx_header[4:])
 
+            times[f'    header received {x}'] = time.perf_counter()
+
             logger.info('Receiving frame %s: %s (%s)', x, size, mpx_header)
 
-            framedata = self.s_data.recv(size)
-
+            framedata = bytearray()
+            trips = 0
             while (len(framedata) != size):
-                logger.info('\tframe %s partially received with length %s', x, len(framedata))
-                framedata += self.s_data.recv(size - len(framedata))
+                raw_data = self.s_data.recv(size - len(framedata))
+                framedata.extend(raw_data)
+                # logger.info('\t(%s) frame %s received %s bytes, total length %s', trips, x, len(raw_data), len(framedata))
+                trips += 1
 
-            logger.info('\tframe %s received with length %s', x, len(framedata))
+            times[f'    data received {x}'] = time.perf_counter()
+
+            logger.info('\tframe %s received with length %s (trips=%s)', x, len(framedata), trips)
             frames.append(framedata)
+
+            times[f'    done {x}'] = time.perf_counter()
 
         logger.info('%s frames received.', n_frames)
 
         # Must skip first byte when loading data to avoid off-by-one error
-        return [load_mib(frame[1:]) for frame in frames]
+        data = [load_mib(frame[1:]) for frame in frames]
+
+        times['done'] = time.perf_counter()
+
+        prev = times['start']
+        for k, v in times.items():
+            print(f'{k:22s} - {v:.3f} - {v-prev:.3f}')
+            prev = v
+
+        return data
 
     def isCameraInfoAvailable(self) -> bool:
         """Check if the camera is available."""
@@ -225,14 +261,24 @@ class CameraMerlin:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger.info('Testing merlin detector')
 
     cam = CameraMerlin()
 
-    cam.establishDataConnection()
+    t0 = time.perf_counter()
 
-    frames = cam.getMovie(3, exposure=0.05)
+    n_frames = 50
+    frames = cam.getMovie(n_frames, exposure=0.05)
+
+    t1 = time.perf_counter()
+
+    print(f'Total time: {t1-t0:.3f} s - {(t1-t0) / n_frames:.3f} per frame')
+
+    for frame in frames:
+        print(frame.shape)
+
+    exit()
 
     arr = frames[0]
 
