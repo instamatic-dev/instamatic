@@ -4,9 +4,10 @@ import socket
 import time
 
 import numpy as np
-from merlin_io import load_mib
 
 from instamatic import config
+
+from .merlin_io import load_mib
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,14 @@ class CameraMerlin:
         frames = self.getMovie(n_frames=1, exposure=exposure, binsize=binsize)
         return frames[0]
 
+    def receive_data(self, *, nbytes: int) -> bytearray:
+        """Safely receive from the socket until `n_bytes` of data are
+        received."""
+        data = bytearray()
+        while len(data) != nbytes:
+            data.extend(self.s_data.recv(nbytes - len(data)))
+        return data
+
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
@@ -87,9 +96,6 @@ class CameraMerlin:
         binsize:
             Which binning to use.
         """
-        times = {}
-        times['start'] = time.perf_counter()
-
         if exposure is None:
             exposure = self.default_exposure
         if not binsize:
@@ -97,8 +103,6 @@ class CameraMerlin:
 
         # convert s to ms
         exposure_ms = exposure * 1000
-
-        times['set parameters'] = time.perf_counter()
 
         # Set continuous mode on
         self.s_cmd.sendall(MPX_CMD('SET', 'CONTINUOUSRW,1'))
@@ -113,70 +117,31 @@ class CameraMerlin:
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
-        times['set parameters done'] = time.perf_counter()
-
-        # Needs a delay otherwise we get a crash because the system is not ready yet
-        # round-trip time to server is ~28 ms
-        min_delay = max(n_frames * exposure - 0.001, 0.3)
-        logger.info('Waiting for %s s.', min_delay)
-        time.sleep(min_delay)
-
-        times['after delay'] = time.perf_counter()
-
-        data = self.s_data.recv(14)
-        start = data.decode()
+        start = self.receive_data(nbytes=14)
 
         header_size = int(start[4:])
-        header = self.s_data.recv(header_size)
 
-        times['header received'] = time.perf_counter()
-
-        if (len(header) != header_size):
-            raise OSError('Wrong header data received')
+        header = self.receive_data(nbytes=header_size)
 
         logger.info('Header data received (%s).', header_size)
 
         frames = []
 
-        times['pre-acquire'] = time.perf_counter()
-
+        # overhead ~300 ms per frame, round-trips to server ~28 ms
         for x in range(n_frames):
-            # time.sleep(0.2)
-            times[f'## Frame {x}'] = time.perf_counter()
-
-            mpx_header = self.s_data.recv(14)
+            mpx_header = self.receive_data(nbytes=14)
             size = int(mpx_header[4:])
-
-            times[f'    header received {x}'] = time.perf_counter()
 
             logger.info('Receiving frame %s: %s (%s)', x, size, mpx_header)
 
-            framedata = bytearray()
-            trips = 0
-            while (len(framedata) != size):
-                raw_data = self.s_data.recv(size - len(framedata))
-                framedata.extend(raw_data)
-                # logger.info('\t(%s) frame %s received %s bytes, total length %s', trips, x, len(raw_data), len(framedata))
-                trips += 1
+            framedata = self.receive_data(nbytes=size)
 
-            times[f'    data received {x}'] = time.perf_counter()
-
-            logger.info('\tframe %s received with length %s (trips=%s)', x, len(framedata), trips)
             frames.append(framedata)
-
-            times[f'    done {x}'] = time.perf_counter()
 
         logger.info('%s frames received.', n_frames)
 
         # Must skip first byte when loading data to avoid off-by-one error
-        data = [load_mib(frame[1:]) for frame in frames]
-
-        times['done'] = time.perf_counter()
-
-        prev = times['start']
-        for k, v in times.items():
-            print(f'{k:22s} - {v:.3f} - {v-prev:.3f}')
-            prev = v
+        data = [load_mib(frame[1:]).squeeze() for frame in frames]
 
         return data
 
@@ -268,7 +233,7 @@ if __name__ == '__main__':
 
     t0 = time.perf_counter()
 
-    n_frames = 50
+    n_frames = 1
     frames = cam.getMovie(n_frames, exposure=0.05)
 
     t1 = time.perf_counter()
@@ -278,7 +243,9 @@ if __name__ == '__main__':
     for frame in frames:
         print(frame.shape)
 
-    exit()
+    for i in range(10):
+        frame = cam.getImage(exposure=0.05)
+        print(i, frame.shape)
 
     arr = frames[0]
 
