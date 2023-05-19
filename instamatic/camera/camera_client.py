@@ -184,3 +184,9 @@ class CamClient:
         data = buffer[:]
 
         return data
+
+    def block(self):
+        raise NotImplementedError('This camera cannot be streamed.')
+
+    def unblock(self):
+        raise NotImplementedError('This camera cannot be streamed.')
