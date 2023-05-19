@@ -6,7 +6,7 @@ from typing import Tuple
 import comtypes.client
 
 from instamatic import config
-from instamatic.exceptions import JEOLValueError, TEMCommunicationError
+from instamatic.exceptions import JEOLValueError, TEMCommunicationError, TEMValueError
 
 logger = logging.getLogger(__name__)
 
