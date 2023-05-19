@@ -20,6 +20,7 @@ Cameras supported:
 - ASI CheeTah through `serval-toolkit` library
 - Gatan cameras through DM plugin [1]
 - TVIPS cameras through EMMENU4 API
+- Quantum Detectors Merlin
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
@@ -34,7 +35,7 @@ conda create -n instamatic python=3.7
 conda activate instamatic
 ```
 
-Install using pip, works with python versions 3.7 and 3.8:
+Install using pip, works with python versions 3.7 or newer:
 
 ```bash
 pip install instamatic

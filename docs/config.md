@@ -211,7 +211,7 @@ mag:
 This file holds the specifications of the camera. This file is must be located the `config/camera` directory, and can have any name as defined in `settings.yaml`.
 
 **interface**  
-Give the interface of the camera interface to connect to, for example: `timepix`/`emmenu`/`simulate`/`gatan`. Leave blank to load the camera specs, but do not load the camera module (this also turns off the videostream gui).
+Give the interface of the camera interface to connect to, for example: `timepix`/`emmenu`/`simulate`/`gatan`/'merlin'. Leave blank to load the camera specs, but do not load the camera module (this also turns off the videostream gui).
 
 **default_binsize**  
 Set the default binsize, default: `1`.
