@@ -67,24 +67,24 @@ class MIBProperties:
         Use get_mib_properties(path/buffer) to populate
         """
         if not self.buffer:
-            print('\nPath:', self.path)
+            print(f'\nPath: {self.path}')
         else:
             print('\nData is from a buffer')
         if self.single:
             print('\tData is single')
         if self.quad:
             print('\tData is quad')
-            print('\tDetector geometry', self.detectorgeometry)
-        print('\tData pixel size', self.merlin_size)
+            print(f'\tDetector geometry {self.detectorgeometry}')
+        print(f'\tData pixel size {self.merlin_size}')
         if self.raw:
             print('\tData is RAW')
         else:
             print('\tData is processed')
 
-        print('\tPixel type:', np.dtype(self.pixeltype))
-        print('\tDynamic range:', self.dyn_range)
-        print('\tHeader size:', self.headsize, 'bytes')
-        print('\tNumber of frames to be read:', self.xy)
+        print(f'\tPixel type: {np.dtype(self.pixeltype)}')
+        print(f'\tDynamic range: {self.dyn_range}')
+        print(f'\tHeader size: {self.headsize} bytes')
+        print(f'\tNumber of frames to be read: {self.xy}')
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
