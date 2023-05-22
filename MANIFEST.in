@@ -26,4 +26,4 @@ include instamatic/config/calibration/*.yaml
 include instamatic/config/camera/*.yaml
 include instamatic/config/microscope/*.yaml
 include instamatic/config/scripts/*.md
-include instamatic.neural_network/*.p
+include instamatic/neural_network/*.p
