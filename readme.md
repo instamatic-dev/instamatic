@@ -3,6 +3,8 @@
 [![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/instamatic/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
 
+![Instamatic banner](./docs/banner.png)
+
 # Instamatic
 
 Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL/FEI microscopes and interfaces to the ASI/TVIPS/Gatan cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED, aka 3D-ED / microED), and stepwise rotation electron diffraction (RED) data. For streaming cameras, instamatic includes a live-view GUI.
