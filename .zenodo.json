@@ -12,8 +12,8 @@
     },
     {
       "affiliation": "Amsterdam Scientific Instruments",
-      "name": "Erik Hogenbirk",
-    },
+      "name": "Erik Hogenbirk"
+    }
   ],
   "keywords": [
     "electron-crystallography",
@@ -25,6 +25,6 @@
     "data-collection",
     "automation"
   ],
-  "license": "GPL-3.0",
+  "license": "BSD-3",
   "upload_type": "software"
 }
