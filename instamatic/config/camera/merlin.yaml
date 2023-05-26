@@ -13,6 +13,7 @@ detector_config:
   THRESHOLD1: 40
   HVBIAS: 511
   COUNTERDEPTH: 12
+  FILEENABLE: 0
 bpc_file_path: ''
 dacs_file_path: ''
 # server hostname or IP address and port used to send commands

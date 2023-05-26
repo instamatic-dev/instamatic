@@ -2,6 +2,7 @@ import atexit
 import logging
 import socket
 import time
+from typing import Any
 
 import numpy as np
 
@@ -54,6 +55,8 @@ class CameraMerlin:
         self.establishConnection()
         self.establishDataConnection()
 
+        self._state = {}
+
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
@@ -83,9 +86,22 @@ class CameraMerlin:
         """Safely receive from the socket until `n_bytes` of data are
         received."""
         data = bytearray()
+        n = 0
+        t0 = time.perf_counter()
         while len(data) != nbytes:
             data.extend(self.s_data.recv(nbytes - len(data)))
+            n += 1
+        t1 = time.perf_counter()
+        logger.info('Received %d bytes in %d steps (%f s)', len(data), n, t1 - t0)
         return data
+
+    def set_mpx_cmd(self, *, key: str, value: Any):
+        if self._state.get(key) == value:
+            return
+
+        self.s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
+        self._state[key] = value
+        logger.info('Remembering state for %s value %s', key, value)
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -104,16 +120,12 @@ class CameraMerlin:
         # convert s to ms
         exposure_ms = exposure * 1000
 
-        # Set continuous mode on
-        self.s_cmd.sendall(MPX_CMD('SET', 'CONTINUOUSRW,1'))
-        # Set frame time in miliseconds
-        self.s_cmd.sendall(MPX_CMD('SET', f'ACQUISITIONTIME,{exposure_ms}'))
-        # Set gap time in milliseconds (The number corresponds to sum of frame and gap time)
-        self.s_cmd.sendall(MPX_CMD('SET', f'ACQUISITIONPERIOD,{exposure_ms}'))
-        # Set number of frames to be acquired
-        self.s_cmd.sendall(MPX_CMD('SET', f'NUMFRAMESTOACQUIRE,{n_frames}'))
-        # Disable file saving
-        self.s_cmd.sendall(MPX_CMD('SET', 'FILEENABLE,0'))
+        self.set_mpx_cmd(key='CONTINUOUSRW', value=1)
+        self.set_mpx_cmd(key='ACQUISITIONTIME', value=exposure_ms)
+        self.set_mpx_cmd(key='ACQUISITIONPERIOD', value=exposure_ms)
+        self.set_mpx_cmd(key='NUMFRAMESTOACQUIRE', value=n_frames)
+        self.set_mpx_cmd(key='FILEENABLE', value=0)
+
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
@@ -132,9 +144,9 @@ class CameraMerlin:
             mpx_header = self.receive_data(nbytes=14)
             size = int(mpx_header[4:])
 
-            logger.info('Receiving frame %s: %s (%s)', x, size, mpx_header)
-
             framedata = self.receive_data(nbytes=size)
+
+            logger.info('Received frame %s: %s (%s)', x, size, mpx_header)
 
             frames.append(framedata)
 
