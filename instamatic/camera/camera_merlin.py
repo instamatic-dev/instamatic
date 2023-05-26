@@ -49,13 +49,12 @@ class CameraMerlin:
         super().__init__()
 
         self.name = name
+        self._state = {}
 
         self.load_defaults()
 
         self.establishConnection()
         self.establishDataConnection()
-
-        self._state = {}
 
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
@@ -102,6 +101,14 @@ class CameraMerlin:
         self.s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
         self._state[key] = value
         logger.info('Remembering state for %s value %s', key, value)
+
+    def get_mpx_cmd(self, *, key: str):
+        self.s_cmd.sendall(MPX_CMD('GET', key))
+        response = self.s_cmd.recv(1024).decode()
+        *_, value, status = response.split(',')
+        if status == '2':
+            logger.warning('Merlin did not understand: %s' % response)
+        return value
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -182,21 +189,13 @@ class CameraMerlin:
     def establishConnection(self) -> None:
         """Establish connection to command port of the merlin software."""
         # Create command socket
-        s_cmd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s_cmd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect sockets and probe for the detector status
 
         logger.info('Connecting to Merlin on %s:%s', self.host, self.commandport)
 
         try:
-            s_cmd.connect((self.host, self.commandport))
-
-            s_cmd.sendall(MPX_CMD('GET', 'SOFTWAREVERSION'))
-            version = s_cmd.recv(1024)
-            logger.info(f'Version CMD: {version.decode()}')
-
-            s_cmd.sendall(MPX_CMD('GET', 'DETECTORSTATUS'))
-            status = s_cmd.recv(1024)
-            logger.info(f'Status CMD: {status.decode()}')
+            self.s_cmd.connect((self.host, self.commandport))
 
         except ConnectionRefusedError:
             raise RuntimeError(
@@ -207,10 +206,14 @@ class CameraMerlin:
                 f'Could not establish command connection to {self.name}, '
                 '(Merlin command port already connected).')
 
-        for key, value in self.detector_config.items():
-            s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
+        version = self.get_mpx_cmd(key='SOFTWAREVERSION')
+        logger.info('Merlin version: %s', version)
 
-        self.s_cmd = s_cmd
+        status = self.get_mpx_cmd(key='DETECTORSTATUS')
+        logger.info('Merlin status: %s', status)
+
+        for key, value in self.detector_config.items():
+            self.set_mpx_cmd(key=key, value=value)
 
     def establishDataConnection(self) -> None:
         """Establish connection to the dataport of the merlin software."""
