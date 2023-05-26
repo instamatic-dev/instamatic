@@ -94,21 +94,36 @@ class CameraMerlin:
         logger.info('Received %d bytes in %d steps (%f s)', len(data), n, t1 - t0)
         return data
 
-    def set_mpx_cmd(self, *, key: str, value: Any):
+    def merlin_set(self, key: str, value: Any):
         if self._state.get(key) == value:
             return
 
         self.s_cmd.sendall(MPX_CMD('SET', f'{key},{value}'))
-        self._state[key] = value
-        logger.info('Remembering state for %s value %s', key, value)
+        response = self.s_cmd.recv(1024).decode()
+        logger.debug(response)
+        *_, status = response.rsplit(',', 1)
+        if status == '2':
+            logger.warning('Merlin did not understand: %s' % response)
+        else:
+            self._state[key] = value
+            logger.info('Remembering state for %s value %s', key, value)
 
-    def get_mpx_cmd(self, *, key: str):
+    def merlin_get(self, key: str):
         self.s_cmd.sendall(MPX_CMD('GET', key))
         response = self.s_cmd.recv(1024).decode()
-        *_, value, status = response.split(',')
+        logger.debug(response)
+        _, value, status = response.rsplit(',', 2)
         if status == '2':
             logger.warning('Merlin did not understand: %s' % response)
         return value
+
+    def merlin_cmd(self, key: str):
+        self.s_cmd.sendall(MPX_CMD('CMD', key))
+        response = self.s_cmd.recv(1024).decode()
+        logger.info(response)
+        _, status = response.rsplit(',', 1)
+        if status == '2':
+            raise ValueError('Merlin did not understand: {response}')
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
@@ -127,14 +142,21 @@ class CameraMerlin:
         # convert s to ms
         exposure_ms = exposure * 1000
 
-        self.set_mpx_cmd(key='CONTINUOUSRW', value=1)
-        self.set_mpx_cmd(key='ACQUISITIONTIME', value=exposure_ms)
-        self.set_mpx_cmd(key='ACQUISITIONPERIOD', value=exposure_ms)
-        self.set_mpx_cmd(key='NUMFRAMESTOACQUIRE', value=n_frames)
-        self.set_mpx_cmd(key='FILEENABLE', value=0)
+        self.merlin_set('CONTINUOUSRW', 1)
+        self.merlin_set('ACQUISITIONTIME', exposure_ms)
+        self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
+        self.merlin_set('NUMFRAMESTOACQUIRE', n_frames)
+        self.merlin_set('FILEENABLE', 0)
+
+        # experimental
+        self.merlin_set('RUNHEADLESS', 0)
 
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
+
+        # self.merlin_set('TRIGGERSTART', 5)
+        # self.merlin_set('NUMFRAMESPERTRIGGER', 1)
+        # self.merlin_cmd(key='SOFTTRIGGER')
 
         start = self.receive_data(nbytes=14)
 
@@ -206,14 +228,14 @@ class CameraMerlin:
                 f'Could not establish command connection to {self.name}, '
                 '(Merlin command port already connected).')
 
-        version = self.get_mpx_cmd(key='SOFTWAREVERSION')
+        version = self.merlin_get(key='SOFTWAREVERSION')
         logger.info('Merlin version: %s', version)
 
-        status = self.get_mpx_cmd(key='DETECTORSTATUS')
+        status = self.merlin_get(key='DETECTORSTATUS')
         logger.info('Merlin status: %s', status)
 
         for key, value in self.detector_config.items():
-            self.set_mpx_cmd(key=key, value=value)
+            self.merlin_set(key, value)
 
     def establishDataConnection(self) -> None:
         """Establish connection to the dataport of the merlin software."""
@@ -246,21 +268,42 @@ if __name__ == '__main__':
 
     cam = CameraMerlin()
 
-    t0 = time.perf_counter()
+    if True:
+        print('Movie frame acquisition')
 
-    n_frames = 1
-    frames = cam.getMovie(n_frames, exposure=0.05)
+        n_frames = 100
+        exposure = 0.05
 
-    t1 = time.perf_counter()
+        t0 = time.perf_counter()
 
-    print(f'Total time: {t1-t0:.3f} s - {(t1-t0) / n_frames:.3f} per frame')
+        frames = cam.getMovie(n_frames, exposure=exposure)
 
-    for frame in frames:
-        print(frame.shape)
+        t1 = time.perf_counter()
 
-    for i in range(10):
-        frame = cam.getImage(exposure=0.05)
-        print(i, frame.shape)
+        avg_frametime = (t1 - t0) / n_frames
+        overhead = avg_frametime - exposure
+
+        print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+
+    exit()
+
+    if False:
+        print('Single frame acquisition')
+
+        n_frames = 10
+        exposure = 0.1
+
+        t0 = time.perf_counter()
+
+        for i in range(n_frames):
+            frame = cam.getImage(exposure=exposure)
+
+        t1 = time.perf_counter()
+
+        avg_frametime = (t1 - t0) / n_frames
+        overhead = avg_frametime - exposure
+
+        print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
     arr = frames[0]
 
