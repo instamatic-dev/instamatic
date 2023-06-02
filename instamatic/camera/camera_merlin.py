@@ -262,50 +262,50 @@ class CameraMerlin:
         logger.info(msg)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    logger.info('Testing merlin detector')
+def test_movie(cam):
+    print('Movie acquisition')
 
-    cam = CameraMerlin()
+    n_frames = 10
+    exposure = 0.05
 
-    if True:
-        print('Movie frame acquisition')
+    t0 = time.perf_counter()
 
-        n_frames = 100
-        exposure = 0.05
+    frames = cam.getMovie(n_frames, exposure=exposure)
 
-        t0 = time.perf_counter()
+    t1 = time.perf_counter()
 
-        frames = cam.getMovie(n_frames, exposure=exposure)
+    avg_frametime = (t1 - t0) / n_frames
+    overhead = avg_frametime - exposure
 
-        t1 = time.perf_counter()
+    print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
-        avg_frametime = (t1 - t0) / n_frames
-        overhead = avg_frametime - exposure
 
-        print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+def test_single_frame(cam):
+    print('Single frame acquisition')
 
-    exit()
+    n_frames = 10
+    exposure = 0.1
 
-    if False:
-        print('Single frame acquisition')
+    t0 = time.perf_counter()
 
-        n_frames = 10
-        exposure = 0.1
+    cam.setup_soft_trigger()
 
-        t0 = time.perf_counter()
+    for i in range(n_frames):
+        frame = cam.getImage(exposure=exposure)
+        print(i, frame.shape)
 
-        for i in range(n_frames):
-            frame = cam.getImage(exposure=exposure)
+    cam.teardown_soft_trigger()
 
-        t1 = time.perf_counter()
+    t1 = time.perf_counter()
 
-        avg_frametime = (t1 - t0) / n_frames
-        overhead = avg_frametime - exposure
+    avg_frametime = (t1 - t0) / n_frames
+    overhead = avg_frametime - exposure
 
-        print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
-    arr = frames[0]
+
+def test_plot_single_image(cam):
+    arr = cam.getImage(exposure=0.1)
 
     import numpy as np
 
@@ -313,5 +313,19 @@ if __name__ == '__main__':
     arr = np.flipud(arr)
 
     import matplotlib.pyplot as plt
+
     plt.imshow(arr.squeeze())
     plt.show()
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    logger.info('Testing merlin detector')
+
+    cam = CameraMerlin()
+
+    test_movie(cam)
+
+    # test_single_frame(cam)
+
+    # test_plot_single_image(cam)
