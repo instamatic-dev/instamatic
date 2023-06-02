@@ -8,7 +8,10 @@ import numpy as np
 
 from instamatic import config
 
-from .merlin_io import load_mib
+try:
+    from .merlin_io import load_mib
+except ImportError:
+    from merlin_io import load_mib
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +54,9 @@ class CameraMerlin:
 
         self.name = name
         self._state = {}
+
+        self._soft_trigger_mode = False
+        self._soft_trigger_exposure = None
 
         self.load_defaults()
 
@@ -121,10 +127,18 @@ class CameraMerlin:
         # convert s to ms
         exposure_ms = exposure * 1000
 
+        if self._soft_trigger_mode:
+            self.teardown_soft_trigger()
+
+        self._soft_trigger_mode = True
+        self._soft_trigger_exposure = exposure
+
         self.merlin_set('CONTINUOUSRW', 1)
         self.merlin_set('ACQUISITIONTIME', exposure_ms)
         self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
         self.merlin_set('FILEENABLE', 0)
+
+        self._frame_number = 0
 
         # Set NUMFRAMESTOACQUIRE to a large number
         # Merlin will only collect this number of frames with SOFTTRIGGER
@@ -143,6 +157,8 @@ class CameraMerlin:
 
     def teardown_soft_trigger(self):
         self.merlin_cmd('STOPACQUISITION')
+        self._soft_trigger_mode = False
+        self._soft_trigger_exposure = None
 
     def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -153,6 +169,17 @@ class CameraMerlin:
         binsize:
             Which binning to use.
         """
+        if not exposure:
+            exposure = self.default_exposure
+
+        if not self._soft_trigger_mode:
+            logger.info('Set up soft trigger with exposure %s s', exposure)
+            self.setup_soft_trigger(exposure=exposure)
+        elif exposure != self._soft_trigger_exposure:
+            logger.info('Change exposure to %s s', exposure)
+            self.teardown_soft_trigger()
+            self.setup_soft_trigger(exposure=exposure)
+
         self.merlin_cmd('SOFTTRIGGER')
 
         if not self._frame_length:
@@ -169,8 +196,12 @@ class CameraMerlin:
             framedata = self.receive_data(nbytes=self._frame_length)
             skip = self.START_SIZE
 
+        self._frame_number += 1
+
         # Must skip first byte when loading data to avoid off-by-one error
         data = load_mib(framedata, skip=1 + skip).squeeze()
+
+        # data[self._frame_number % 512] = 10000
 
         return data
 
@@ -183,6 +214,9 @@ class CameraMerlin:
         binsize:
             Which binning to use.
         """
+        if self._soft_trigger_mode:
+            self.teardown_soft_trigger()
+
         if exposure is None:
             exposure = self.default_exposure
         if not binsize:
@@ -269,14 +303,14 @@ class CameraMerlin:
         try:
             self.s_cmd.connect((self.host, self.commandport))
 
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as e:
             raise RuntimeError(
                 f'Could not establish command connection to {self.name}, '
-                '(Merlin command port not responding).')
-        except OSError:
+                '(Merlin command port not responding).') from e
+        except OSError as e:
             raise RuntimeError(
                 f'Could not establish command connection to {self.name}, '
-                '(Merlin command port already connected).')
+                '(Merlin command port already connected).') from e
 
         version = self.merlin_get(key='SOFTWAREVERSION')
         logger.info('Merlin version: %s', version)
@@ -294,15 +328,19 @@ class CameraMerlin:
         # Connect sockets and probe for the detector status
         try:
             s_data.connect((self.host, self.dataport))
-        except ConnectionRefusedError:
+        except ConnectionRefusedError as e:
             raise RuntimeError(
                 f'Could not establish data connection to {self.name}, '
-                '(Merlin data port not responding).')
+                '(Merlin data port not responding).') from e
 
         self.s_data = s_data
 
     def releaseConnection(self) -> None:
         """Release the connection to the camera."""
+        if self._soft_trigger_mode:
+            logger.info('Stopping acquisition')
+            self.teardown_soft_trigger()
+
         self.s_cmd.close()
 
         self.s_data.close()
@@ -337,10 +375,8 @@ def test_movie(cam):
 def test_single_frame(cam):
     print('\n\nSingle frame acquisition\n---\n')
 
-    n_frames = 10
+    n_frames = 100
     exposure = 0.01
-
-    cam.setup_soft_trigger(exposure=exposure)
 
     t0 = time.perf_counter()
 
@@ -349,8 +385,6 @@ def test_single_frame(cam):
         assert frame.shape == (512, 512)
 
     t1 = time.perf_counter()
-
-    cam.teardown_soft_trigger()
 
     avg_frametime = (t1 - t0) / n_frames
     overhead = avg_frametime - exposure
@@ -383,12 +417,15 @@ if __name__ == '__main__':
 
     test_single_frame(cam)
 
+    test_movie(cam)
+
     # test_plot_single_image(cam)
 
     # Overhead on movie acquisition: < 1ms
     # Overhead single image acquisition: ~ 3-4 ms
 
     # TODO
+    # - How to manage soft trigger mode best?
     # - set large n_frames for getImage
     # - track current frame number and refresh when n_frames gets hit
     # - track when in SOFTTRIGGER mode

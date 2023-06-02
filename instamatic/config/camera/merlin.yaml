@@ -1,6 +1,6 @@
 camera_rotation_vs_stage_xy: 0.0
 default_binsize: 1
-default_exposure: 0.2
+default_exposure: 0.02
 dimensions: [512, 512]
 dynamic_range: 11800
 interface: merlin
