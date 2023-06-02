@@ -61,7 +61,6 @@ class CameraMerlin:
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
-        atexit.register(self.teardown_soft_trigger)
 
     def load_defaults(self):
         if self.name != config.settings.camera:
@@ -126,6 +125,10 @@ class CameraMerlin:
         self.merlin_set('ACQUISITIONTIME', exposure_ms)
         self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
         self.merlin_set('FILEENABLE', 0)
+
+        # Set NUMFRAMESTOACQUIRE to a large number
+        # Merlin will only collect this number of frames with SOFTTRIGGER
+        self.merlin_set('NUMFRAMESTOACQUIRE', 10_000)
 
         self.merlin_set('TRIGGERSTART', '5')
         self.merlin_set('NUMFRAMESPERTRIGGER', '1')
@@ -335,14 +338,14 @@ def test_single_frame(cam):
     print('\n\nSingle frame acquisition\n---\n')
 
     n_frames = 10
-    exposure = 0.1
+    exposure = 0.01
 
-    cam.setup_soft_trigger()
+    cam.setup_soft_trigger(exposure=exposure)
 
     t0 = time.perf_counter()
 
     for i in range(n_frames):
-        frame = cam.getImage(exposure=exposure)
+        frame = cam.getImage()
         assert frame.shape == (512, 512)
 
     t1 = time.perf_counter()
@@ -381,3 +384,13 @@ if __name__ == '__main__':
     test_single_frame(cam)
 
     # test_plot_single_image(cam)
+
+    # Overhead on movie acquisition: < 1ms
+    # Overhead single image acquisition: ~ 3-4 ms
+
+    # TODO
+    # - set large n_frames for getImage
+    # - track current frame number and refresh when n_frames gets hit
+    # - track when in SOFTTRIGGER mode
+    # - seamlessly switch to soft trigger / internal
+    #   trigger when calling getMovie / getImage
