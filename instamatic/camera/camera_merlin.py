@@ -43,6 +43,7 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
 
 class CameraMerlin:
     """Camera interface for the Quantum Detectors Merlin camera."""
+    START_SIZE = 14
 
     def __init__(self, name='merlin'):
         """Initialize camera module."""
@@ -60,6 +61,7 @@ class CameraMerlin:
         logger.info(msg)
 
         atexit.register(self.releaseConnection)
+        atexit.register(self.teardown_soft_trigger)
 
     def load_defaults(self):
         if self.name != config.settings.camera:
@@ -68,18 +70,6 @@ class CameraMerlin:
         self.streamable = True
 
         self.__dict__.update(config.camera.mapping)
-
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine. If the exposure and binsize are not
-        given, the default values are read from the config file.
-
-        exposure:
-            Exposure time in seconds.
-        binsize:
-            Which binning to use.
-        """
-        frames = self.getMovie(n_frames=1, exposure=exposure, binsize=binsize)
-        return frames[0]
 
     def receive_data(self, *, nbytes: int) -> bytearray:
         """Safely receive from the socket until `n_bytes` of data are
@@ -124,6 +114,61 @@ class CameraMerlin:
         _, status = response.rsplit(',', 1)
         if status == '2':
             raise ValueError('Merlin did not understand: {response}')
+
+    def setup_soft_trigger(self, exposure=None):
+        if exposure is None:
+            exposure = self.default_exposure
+
+        # convert s to ms
+        exposure_ms = exposure * 1000
+
+        self.merlin_set('CONTINUOUSRW', 1)
+        self.merlin_set('ACQUISITIONTIME', exposure_ms)
+        self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
+        self.merlin_set('FILEENABLE', 0)
+
+        self.merlin_set('TRIGGERSTART', '5')
+        self.merlin_set('NUMFRAMESPERTRIGGER', '1')
+        self.merlin_cmd('STARTACQUISITION')
+
+        start = self.receive_data(nbytes=self.START_SIZE)
+
+        self._header_size = int(start[4:])
+        self._header = self.receive_data(nbytes=self._header_size)
+        self._frame_length = None
+
+    def teardown_soft_trigger(self):
+        self.merlin_cmd('STOPACQUISITION')
+
+    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+        """Image acquisition routine. If the exposure and binsize are not
+        given, the default values are read from the config file.
+
+        exposure:
+            Exposure time in seconds.
+        binsize:
+            Which binning to use.
+        """
+        self.merlin_cmd('SOFTTRIGGER')
+
+        if not self._frame_length:
+            mpx_header = self.receive_data(nbytes=self.START_SIZE)
+            size = int(mpx_header[4:])
+
+            logger.info('Received header: %s (%s)', size, mpx_header)
+
+            framedata = self.receive_data(nbytes=size)
+            skip = 0
+
+            self._frame_length = self.START_SIZE + size
+        else:
+            framedata = self.receive_data(nbytes=self._frame_length)
+            skip = self.START_SIZE
+
+        # Must skip first byte when loading data to avoid off-by-one error
+        data = load_mib(framedata, skip=1 + skip).squeeze()
+
+        return data
 
     def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
