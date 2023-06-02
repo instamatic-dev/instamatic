@@ -96,7 +96,7 @@ class CameraMerlin:
             logger.warning('Merlin did not understand: %s' % response)
         else:
             self._state[key] = value
-            logger.info('Remembering state for %s value %s', key, value)
+            logger.debug('Remembering state for %s value %s', key, value)
 
     def merlin_get(self, key: str):
         self.s_cmd.sendall(MPX_CMD('GET', key))
@@ -110,7 +110,7 @@ class CameraMerlin:
     def merlin_cmd(self, key: str):
         self.s_cmd.sendall(MPX_CMD('CMD', key))
         response = self.s_cmd.recv(1024).decode()
-        logger.info(response)
+        logger.debug(response)
         _, status = response.rsplit(',', 1)
         if status == '2':
             raise ValueError('Merlin did not understand: {response}')
@@ -133,8 +133,9 @@ class CameraMerlin:
 
         start = self.receive_data(nbytes=self.START_SIZE)
 
-        self._header_size = int(start[4:])
-        self._header = self.receive_data(nbytes=self._header_size)
+        header_size = int(start[4:])
+        header = self.receive_data(nbytes=header_size)
+
         self._frame_length = None
 
     def teardown_soft_trigger(self):
@@ -188,6 +189,7 @@ class CameraMerlin:
         exposure_ms = exposure * 1000
 
         self.merlin_set('CONTINUOUSRW', 1)
+        self.merlin_set('TRIGGERSTART', 0)
         self.merlin_set('ACQUISITIONTIME', exposure_ms)
         self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
         self.merlin_set('NUMFRAMESTOACQUIRE', n_frames)
@@ -199,35 +201,35 @@ class CameraMerlin:
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))
 
-        # self.merlin_set('TRIGGERSTART', 5)
-        # self.merlin_set('NUMFRAMESPERTRIGGER', 1)
-        # self.merlin_cmd(key='SOFTTRIGGER')
-
-        start = self.receive_data(nbytes=14)
+        start = self.receive_data(nbytes=self.START_SIZE)
 
         header_size = int(start[4:])
 
         header = self.receive_data(nbytes=header_size)
 
-        logger.info('Header data received (%s).', header_size)
+        logger.debug('Header data received (%s).', header_size)
 
         frames = []
+        full_framesize = 0
 
-        # overhead ~300 ms per frame, round-trips to server ~28 ms
         for x in range(n_frames):
-            mpx_header = self.receive_data(nbytes=14)
-            size = int(mpx_header[4:])
+            if not full_framesize:
+                mpx_header = self.receive_data(nbytes=self.START_SIZE)
+                size = int(mpx_header[4:])
 
-            framedata = self.receive_data(nbytes=size)
+                framedata = self.receive_data(nbytes=size)
+                logger.info('Received frame %s: %s (%s)', x, size, mpx_header)
 
-            logger.info('Received frame %s: %s (%s)', x, size, mpx_header)
+                full_framesize = self.START_SIZE + size
+            else:
+                framedata = self.receive_data(nbytes=full_framesize)[self.START_SIZE:]
 
             frames.append(framedata)
 
         logger.info('%s frames received.', n_frames)
 
         # Must skip first byte when loading data to avoid off-by-one error
-        data = [load_mib(frame[1:]).squeeze() for frame in frames]
+        data = [load_mib(frame, skip=1).squeeze() for frame in frames]
 
         return data
 
@@ -308,10 +310,10 @@ class CameraMerlin:
 
 
 def test_movie(cam):
-    print('Movie acquisition')
+    print('\n\nMovie acquisition\n---\n')
 
-    n_frames = 10
-    exposure = 0.05
+    n_frames = 50
+    exposure = 0.01
 
     t0 = time.perf_counter()
 
@@ -322,30 +324,35 @@ def test_movie(cam):
     avg_frametime = (t1 - t0) / n_frames
     overhead = avg_frametime - exposure
 
-    print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'\nExposure: {exposure}, frames: {n_frames}')
+    print(f'\nTotal time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+
+    for frame in frames:
+        assert frame.shape == (512, 512)
 
 
 def test_single_frame(cam):
-    print('Single frame acquisition')
+    print('\n\nSingle frame acquisition\n---\n')
 
     n_frames = 10
     exposure = 0.1
 
-    t0 = time.perf_counter()
-
     cam.setup_soft_trigger()
+
+    t0 = time.perf_counter()
 
     for i in range(n_frames):
         frame = cam.getImage(exposure=exposure)
-        print(i, frame.shape)
-
-    cam.teardown_soft_trigger()
+        assert frame.shape == (512, 512)
 
     t1 = time.perf_counter()
+
+    cam.teardown_soft_trigger()
 
     avg_frametime = (t1 - t0) / n_frames
     overhead = avg_frametime - exposure
 
+    print(f'\nExposure: {exposure}, frames: {n_frames}')
     print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
 
@@ -371,6 +378,6 @@ if __name__ == '__main__':
 
     test_movie(cam)
 
-    # test_single_frame(cam)
+    test_single_frame(cam)
 
     # test_plot_single_image(cam)
