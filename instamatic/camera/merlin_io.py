@@ -93,8 +93,14 @@ class MIBProperties:
         return cls(head)
 
 
-def load_mib(buffer: bytes):
-    """Load Quantum Detectors MIB file from a memory buffer."""
+def load_mib(buffer: bytes, skip: int = 0):
+    """Load Quantum Detectors MIB file from a memory buffer.
+
+    skip : int, optional
+        Skip first n bytes.
+    """
+    buffer = buffer[skip:]
+
     assert isinstance(buffer, (bytes, bytearray))
 
     props = MIBProperties.from_buffer(buffer)
