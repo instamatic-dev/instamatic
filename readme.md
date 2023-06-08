@@ -9,7 +9,7 @@
 
 Instamatic is a Python program that is being developed with the aim to automate the collection of electron diffraction data. At the core is a Python library for transmission electron microscope experimental control with bindings for the JEOL/FEI microscopes and interfaces to the ASI/TVIPS/Gatan cameras. Routines have been implemented for collecting serial electron diffraction (serialED), continuous rotation electron diffraction (cRED, aka 3D-ED / microED), and stepwise rotation electron diffraction (RED) data. For streaming cameras, instamatic includes a live-view GUI.
 
-Instamatic is distributed as a portable stand-alone installation that includes all the needed libraries from: https://github.com/instamatic-dev/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
+Instamatic is distributed via [pypi](https://pypi.org/project/instamatic) and https://github.com/instamatic-dev/instamatic/releases. However, the most up-to-date version of the code (including bugs!) is available from this repository.
 
 Electron microscopes supported:
 
@@ -20,20 +20,20 @@ Cameras supported:
 
 - ASI Timepix
 - ASI CheeTah through `serval-toolkit` library
-- Gatan cameras through DM plugin [1]
 - TVIPS cameras through EMMENU4 API
 - Quantum Detectors Merlin
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-[1]: Alternatively, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
+Support for Gatan cameras is incomplete. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
+
 
 ## Installation
 
 If you use conda, create a new environment:
 
 ```
-conda create -n instamatic python=3.7
+conda create -n instamatic python=3.11
 conda activate instamatic
 ```
 
@@ -43,19 +43,13 @@ Install using pip, works with python versions 3.7 or newer:
 pip install instamatic
 ```
 
-Alternatively, download the portable installation with all libraries/dependencies included: https://github.com/instamatic-dev/instamatic/releases/latest. Extract the archive, and open a terminal by double-clicking `start_Cmder.exe`.
-
-Installation should take less than 1 minute on a normal desktop.
-
-Find the latest [releases](https://github.com/instamatic-dev/instamatic/releases) for the versions that have been tested on.
-
 ## OS requirement
 
-The package requires Windows 7 or higher. It has been mainly developed and tested under windows 7 and windows 10.
+The package requires Windows 7 or higher. It has been mainly developed and tested under windows 7 and higher.
 
 ## Package dependencies
 
-Check [pyproject.toml](pyproject.toml) for the full dependency list and versions.
+Check [setup.cfg](setup.cfg) for the full dependency list and versions.
 
 ## Documentation
 
@@ -108,5 +102,5 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
   * **`navigation.py`** - Optimize navigation paths
   * **`tools.py`** - Collection of functions used throughout the code
 * **`scripts/`** - Helpful scripts
-* **`pyproject.toml`** - Dependency/build system declaration (poetry)
+* **`setup.cfg`** - Dependency/build system declaration
 * **`setup.py`** - Old-style build script
