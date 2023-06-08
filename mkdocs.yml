@@ -12,6 +12,8 @@ nav:
   - setup.md
   - tem_api.md
   - tvips.md
+  - merlin.md
+  - network.md
   - Examples:
     - Basic data collection: rawr
     - Grid montage: rawr2

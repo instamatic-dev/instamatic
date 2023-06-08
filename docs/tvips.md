@@ -1,4 +1,4 @@
-# cRED data collection with TVIPS
+# TVIPS cRED
 
 Module: `cred_tvips`
 
