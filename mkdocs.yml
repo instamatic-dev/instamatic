@@ -1,0 +1,75 @@
+site_name: instamatic
+site_url: https://instamatic.readthedocs.io
+repo_url: https://github.com/instamatic-dev/instamatic
+repo_name: GitHub
+
+nav:
+  - Home: index.md
+  - config.md
+  - formats.md
+  - gui.md
+  - programs.md
+  - setup.md
+  - tem_api.md
+  - tvips.md
+  - Examples:
+    - Basic data collection: rawr
+    - Grid montage: rawr2
+    - Montaging: rawr3
+  - Contributing: CONTRIBUTING.md
+  - Code of Conduct: CODE_OF_CONDUCT.md
+  - 🔗 Source code: https://github.com/instamatic/instamatic
+  - 🔗 Issues: https://github.com/instamatic/instamatic/issues
+
+
+theme:
+  name: material
+  primary: blue
+  accent: red
+  custom_dir: docs/overrides
+  palette:
+    accent: indigo
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - markdown_include.include:
+      base_path: docs
+  - pymdownx.extra
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+- search
+- mkdocstrings:
+    # https://mkdocstrings.github.io/usage/
+    handlers:
+      python:
+        import:
+        - https://docs.python.org/3/objects.inv
+        - https://numpy.org/doc/stable/objects.inv
+        - https://docs.scipy.org/doc/scipy/objects.inv
+        - https://pandas.pydata.org/docs/objects.inv
+        options:
+          docstring_style: numpy
+          docstring_options:
+            ignore_init_summary: yes
+          show_submodules: no
+          show_source: true
+          docstring_section_style: list
+          members_order: alphabetical
+          show_category_heading: no
+          merge_init_into_class: yes
+- mkdocs-jupyter:
+    include_source: True
+
+watch:
+  - instamatic/
+  - docs/

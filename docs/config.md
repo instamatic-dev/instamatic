@@ -26,7 +26,7 @@ instamatic.autoconfig.exe
 ```
 To help generate some of the input files (in particular templates for the microscope/calibration files).
 
-Examples of configuration files can be found [here](https://github.com/instamatic-dev/instamatic/tree/master/instamatic/config).
+Examples of configuration files can be found [here](https://github.com/instamatic-dev/instamatic/tree/main/instamatic/config).
 
 ## settings.yaml
 
@@ -235,7 +235,7 @@ Give here a list of possible binnings, for example: `[1]` or `[1, 2, 4]`.
 In radians, give here the rotation of the position of the rotation axis with respect to the horizontal. Used for diffraction only. Corresponds to the rotation axis in RED and PETS, for example: `-2.24`. You can find the rotation axis for your setup using the script `edtools.find_rotation_axis` available from [here](https://github.com/instamatic-dev/edtools#find_rotation_axispy).
 
 **stretch_amplitude**  
-Use `instamatic.stretch_correction` to characterize the lens distortion. The numbers here are used to calculate the XCORR/YCORR maps. The amplitude is the percentage difference between the maximum and minimum eigenvectors of the ellipsoid, i.e. if the amplitude is `2.43`, eig(max)/eig(min) = 1.0243. You can use the program `instamatic.stretch_correction` available [here](https://github.com/instamatic-dev/instamatic/blob/master/docs/programs.md#instamaticstretch_correction) on some powder patterns to define these numbers.
+Use `instamatic.stretch_correction` to characterize the lens distortion. The numbers here are used to calculate the XCORR/YCORR maps. The amplitude is the percentage difference between the maximum and minimum eigenvectors of the ellipsoid, i.e. if the amplitude is `2.43`, eig(max)/eig(min) = 1.0243. You can use the program `instamatic.stretch_correction` available [here](https://github.com/instamatic-dev/instamatic/blob/main/docs/programs.md#instamaticstretch_correction) on some powder patterns to define these numbers.
 
 **stretch_azimuth**  
 The azimuth is gives the direction of the maximum eigenvector with respect to the horizontal X-axis (pointing right) in degrees, for example: `83.37`.

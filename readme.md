@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/instamatic/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
 
-![Instamatic banner](./docs/banner.png)
+![Instamatic banner](https://raw.githubusercontent.com/instamatic-dev/instamatic/main/docs/banner.png)
 
 # Instamatic
 
