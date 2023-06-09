@@ -25,6 +25,7 @@ class Stage:
 
     @property
     def name(self) -> str:
+        """Get name of the class."""
         return self.__class__.__name__
 
     def set(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True) -> None:
@@ -82,6 +83,7 @@ class Stage:
 
     @property
     def x(self) -> int:
+        """X position."""
         x, y, z, a, b = self.get()
         return x
 
@@ -91,6 +93,7 @@ class Stage:
 
     @property
     def y(self) -> int:
+        """Y position."""
         x, y, z, a, b = self.get()
         return y
 
@@ -100,6 +103,7 @@ class Stage:
 
     @property
     def xy(self) -> Tuple[int, int]:
+        """XY position as a tuple."""
         x, y, z, a, b = self.get()
         return x, y
 
@@ -140,6 +144,7 @@ class Stage:
 
     @property
     def z(self) -> int:
+        """Stage height Z."""
         x, y, z, a, b = self.get()
         return z
 
@@ -149,6 +154,7 @@ class Stage:
 
     @property
     def a(self) -> int:
+        """Rotation angle."""
         x, y, z, a, b = self.get()
         return a
 
@@ -158,6 +164,7 @@ class Stage:
 
     @property
     def b(self) -> int:
+        """Secondary rotation angle."""
         x, y, z, a, b = self.get()
         return b
 

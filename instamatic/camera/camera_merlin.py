@@ -133,10 +133,8 @@ class CameraMerlin:
         self._soft_trigger_mode = True
         self._soft_trigger_exposure = exposure
 
-        self.merlin_set('CONTINUOUSRW', 1)
         self.merlin_set('ACQUISITIONTIME', exposure_ms)
         self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
-        self.merlin_set('FILEENABLE', 0)
 
         self._frame_number = 0
 
@@ -225,15 +223,10 @@ class CameraMerlin:
         # convert s to ms
         exposure_ms = exposure * 1000
 
-        self.merlin_set('CONTINUOUSRW', 1)
         self.merlin_set('TRIGGERSTART', 0)
         self.merlin_set('ACQUISITIONTIME', exposure_ms)
         self.merlin_set('ACQUISITIONPERIOD', exposure_ms)
         self.merlin_set('NUMFRAMESTOACQUIRE', n_frames)
-        self.merlin_set('FILEENABLE', 0)
-
-        # experimental
-        self.merlin_set('RUNHEADLESS', 0)
 
         # Start acquisition
         self.s_cmd.sendall(MPX_CMD('CMD', 'STARTACQUISITION'))

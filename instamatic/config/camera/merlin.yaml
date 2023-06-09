@@ -14,10 +14,7 @@ detector_config:
   HVBIAS: 511
   COUNTERDEPTH: 12
   FILEENABLE: 0
-bpc_file_path: ''
-dacs_file_path: ''
 # server hostname or IP address and port used to send commands
-# host: 'http://127.0.0.1'
-host: '10.0.0.130'
+host: '127.0.0.1'
 commandport: 6341
 dataport: 6342

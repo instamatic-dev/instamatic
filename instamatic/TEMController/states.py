@@ -2,7 +2,7 @@ import time
 
 
 class State:
-    """Class for describing microscope state objects."""
+    """Generic class for describing microscope state objects."""
 
     def __init__(self, tem):
         super().__init__()
@@ -21,6 +21,7 @@ class State:
 
     @property
     def name(self) -> str:
+        """Return name of the state control."""
         return self.__class__.__name__
 
 
@@ -58,11 +59,13 @@ class Beam(State):
             time.sleep(delay)
 
     def set(self, state: str, delay: float = 0.0):
+        """Set state of the beam, with optional delay in ms."""
         index = self._states.index(state)
         f = (self.unblank, self.blank)[index]
         f(delay=delay)
 
     def get(self) -> str:
+        """Get current state of the beam."""
         return self._states[self.is_blanked]
 
 
@@ -76,6 +79,7 @@ class Mode(State):
 
     @property
     def state(self) -> str:
+        """Return magnification mode."""
         return self.get()
 
     def set(self, mode: str) -> None:

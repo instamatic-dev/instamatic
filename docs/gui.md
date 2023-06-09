@@ -22,26 +22,26 @@ This panel deals with input and output of the experimental data.
 ![Input and output](images/gui_io.png)
 
 **Directory**  
-Root directory to work in. By default this is `C:/instamatic/$date/`
+: Root directory to work in. By default this is `C:/instamatic/$date/`
 
 **Sample name and number**  
-This determines the subdirectory where experimental data are stored.
+: This determines the subdirectory where experimental data are stored.
 The number is automatically incremented when a new experiment is started. Data are never overwritten.
 
 **Flatfield**  
-Here the path to the flatfield image can be specified. The default
+: Here the path to the flatfield image can be specified. The default
 value is read from `config/settings.yaml` and can be left blank if no flatfield should be used.
 
 **Open work directory**  
-Open the current work directory, which is a combination of the root
+: Open the current work directory, which is a combination of the root
 directory, sample name, and experiment number. In this case `C:/instamatic/work_2017-11-19/experiment_1`. All experimental data for the current experiment will be saved here.
 
 **Open config directory**  
-By default `%APPDATA%/instamatic/`. The configuration files for the
+: By default `%APPDATA%/instamatic/`. The configuration files for the
 microscope, camera, and calibration files go here.
 
 **Delete last experiment**  
-Sometimes, a data collection will go wrong... Pressing this button will
+: Sometimes, a data collection will go wrong... Pressing this button will
 mark the last experiment directy for deletion. It will not actually delete anything, but you will at least know which ones to delete afterwards :-)
 
 
@@ -52,19 +52,19 @@ Module: `console`
 If enabled, this panel logs the console output.
 
 **Test**  
-Print a test message.
+: Print a test message.
 
 **Clear**  
-Clears the console.
+: Clears the console.
 
 **Export**  
-Opens a file browser to export the console output to a text file
+: Opens a file browser to export the console output to a text file
 
 **Capture**  
-Check this toggle to redirect the output from `stdout`.
+: Check this toggle to redirect the output from `stdout`.
 
 **Timestamp**  
-Check this toggle to prepend timestamps to each message.
+: Check this toggle to prepend timestamps to each message.
 
 ![Console](images/gui_console.png)
 
@@ -80,19 +80,19 @@ Serial electron diffraction (serialED) is a technique to collect diffraction dat
 Data collection can be started from the ‘serialED’ tab by pressing the ‘Start Collection’ button. Follow the instructions in the terminal to setup and calibrate the experiment.
 
 **Scan area**  
-Radius for the area to scan area for crystals (in micrometer).
+: Radius for the area to scan area for crystals (in micrometer).
 
 **Exp. time image**  
-Exposure time for images.
+: Exposure time for images.
 
 **Exp. time diff**  
-Exposure time for diffraction pattern.
+: Exposure time for diffraction pattern.
 
 **Brightness**  
-Default value for the brightness of the focused beam.
+: Default value for the brightness of the focused beam.
 
 **Spot size**  
-Spot size to use.
+: Spot size to use.
 
 
 ## cRED data collection
@@ -106,10 +106,10 @@ The data collection procedure can be initiated by pressing ‘Start Collection�
 ![Continous rotation electron diffraction pane](images/gui_cred.png)
 
 **Exposure time**  
-change the data collection time for each image.
+: change the data collection time for each image.
 
 **Beam unblanker**  
-If this option is selected, the beam will be automatically unblanked
+: If this option is selected, the beam will be automatically unblanked
 when data collection starts, and blanked after data collection has finished (i.e. after ‘Stop Collection’ has been pressed)
 
 ### Image interval
@@ -117,18 +117,18 @@ when data collection starts, and blanked after data collection has finished (i.e
 With this feature, an image of the crystal will be shown every N frames. This is useful to control the position of the crystal in the beam for more reliable and reproducable data collections. This is achieved by applying a small defocus (diffraction focus) to every Nth image. a small defocus of the diffraction focus. If the defocus is large enough, this will show a view of the crystal in the aperture.
 
 **Enable Image interval**  
-This option will enable the image interval.
+: This option will enable the image interval.
 
 **Image interval**  
-Change the interval at which the image will be defocused. For example,
+: Change the interval at which the image will be defocused. For example,
 if the value is 10, then every 10th image will be defocused.
 
 **Diff. defocus**  
-This is the defocus value to apply. It is better not to make this value
+: This is the defocus value to apply. It is better not to make this value
 too large, because the larger the difference with the proper diffraction focus, the longer the lenses need to recover. The microscope has to switch to the defocus value, take an image, and back within the time it takes to collect a single image (i.e. 0.5 s in this example).
 
 **Toggle defocus**  
-This toggle applies the defocus value, which is used for checking. It
+: This toggle applies the defocus value, which is used for checking. It
 does not affect the data collection.
 
 Other specific cRED modules: `cred_fei`, `cred_tvips`, `autocred`
@@ -143,13 +143,13 @@ Simple module to collect electron diffraction using discrete rotation steps.
 Pressing `Start Collection` will collect a series of frames with the given tilt step and range. The data collection is then paused, enabling the user to recenter the crystal or finalize the data collection. The program will automatically switch to diffraction mode if it is in image mode, and go back to image mode afterwards. Pressing `Continue` will continue from the current point, and collect another series of frames with the given tilt range. Pressing `Finalize` will, not unsurprisingly, finalize the data collection, save the data, and write any input files.
 
 **Exposure time**  
-The exposure time for each frame in seconds
+: The exposure time for each frame in seconds
 
 **Tilt range**  
-The total tilt range for the next sequence in degrees
+: The total tilt range for the next sequence in degrees
 
 **Step size**  
-The step size in degrees
+: The step size in degrees
 
 Data are output to `.tiff` and `.mrc`, including input files to read the data in PETS and REDp.
 

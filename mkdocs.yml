@@ -1,0 +1,90 @@
+site_name: instamatic
+site_url: https://instamatic.readthedocs.io
+repo_url: https://github.com/instamatic-dev/instamatic
+repo_name: GitHub
+
+nav:
+  - Home: index.md
+  - setup.md
+  - config.md
+  - formats.md
+  - gui.md
+  - programs.md
+  - tem_api.md
+  - tvips.md
+  - merlin.md
+  - network.md
+  - Python API:
+    - instamatic.TEMController:
+      - TEMController: api/TEMController_TEMController.md
+      - Deflectors: api/TEMController_deflectors.md
+      - Lenses: api/TEMController_lenses.md
+      - States: api/TEMController_states.md
+      - Stage: api/TEMController_stage.md
+    - instamatic.tools: api/instamatic_tools.md
+    - instamatic.montage: api/instamatic_montage.md
+    - instamatic.gridmontage: api/instamatic_gridmontage.md
+    - instamatic.acquireatitems: api/instamatic_acquireatitems.md
+    - instamatic.formats: api/instamatic_formats.md
+  - Examples:
+    - Overview: examples/index.md
+    - Basic data collection: examples/data_collection.ipynb
+    - Grid montage: examples/grid_montage_collection.ipynb
+    - Montaging: examples/montage_processing.ipynb
+  - Contributing: CONTRIBUTING.md
+  - Code of Conduct: CODE_OF_CONDUCT.md
+  - 🔗 Source code: https://github.com/instamatic-dev/instamatic
+  - 🔗 Issues: https://github.com/instamatic-dev/instamatic/issues
+
+
+theme:
+  name: material
+  primary: blue
+  accent: red
+  custom_dir: docs/overrides
+  palette:
+    accent: indigo
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - markdown_include.include:
+      base_path: docs
+  - pymdownx.extra
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+- search
+- mkdocstrings:
+    # https://mkdocstrings.github.io/usage/
+    handlers:
+      python:
+        import:
+        - https://docs.python.org/3/objects.inv
+        - https://numpy.org/doc/stable/objects.inv
+        - https://docs.scipy.org/doc/scipy/objects.inv
+        - https://pandas.pydata.org/docs/objects.inv
+        options:
+          docstring_style: numpy
+          docstring_options:
+            ignore_init_summary: yes
+          show_submodules: yes
+          show_source: true
+          docstring_section_style: list
+          members_order: alphabetical
+          show_category_heading: yes
+          merge_init_into_class: yes
+- mkdocs-jupyter:
+    include_source: True
+
+watch:
+  - instamatic/
+  - docs/
