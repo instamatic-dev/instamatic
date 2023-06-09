@@ -297,13 +297,13 @@ class CameraMerlin:
             self.s_cmd.connect((self.host, self.commandport))
 
         except ConnectionRefusedError as e:
-            raise RuntimeError(
-                f'Could not establish command connection to {self.name}, '
-                '(Merlin command port not responding).') from e
+            raise ConnectionRefusedError(
+                f'Could not establish command connection to {self.name}. '
+                'The Merlin command port is not responding.') from e
         except OSError as e:
-            raise RuntimeError(
-                f'Could not establish command connection to {self.name}, '
-                '(Merlin command port already connected).') from e
+            raise OSError(
+                f'Could not establish command connection to {self.name} ({e.args[0]}).'
+                'Did you start the Merlin software? Is the IP correct? Is the Merlin command port already connected?).') from e
 
         version = self.merlin_get(key='SOFTWAREVERSION')
         logger.info('Merlin version: %s', version)
@@ -322,9 +322,9 @@ class CameraMerlin:
         try:
             s_data.connect((self.host, self.dataport))
         except ConnectionRefusedError as e:
-            raise RuntimeError(
-                f'Could not establish data connection to {self.name}, '
-                '(Merlin data port not responding).') from e
+            raise ConnectionRefusedError(
+                f'Could not establish data connection to {self.name} ({e.args[0]}). '
+                'The Merlin data port is not responding.') from e
 
         self.s_data = s_data
 

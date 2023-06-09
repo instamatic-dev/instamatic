@@ -87,15 +87,9 @@ It establishes a connection to the microscope and reads out the camera lengths a
 
     # Connect to microscope
 
-    tem_name = choice_prompt(choices='jeol fei simulate'.split(),
+    tem_name = choice_prompt(choices=['jeol', 'fei', 'simulate'],
                              default='simulate',
                              question='Which microscope can I connect to?')
-
-    # Connect to camera
-
-    cam_name = choice_prompt(choices=[None, 'gatan', 'tvips', 'simulate'],
-                             default='simulate',
-                             question='Which camera can I connect to?')
 
     # Fetch camera config
 
@@ -107,13 +101,28 @@ It establishes a connection to the microscope and reads out the camera lengths a
                                default=None,
                                question='Which camera type do you want to use (select closest one and modify if needed)?')
 
-    # Instantiate microscope / camera connection
+    if cam_config:
+        with open(cam_config) as f:
+            cam_config_dict = yaml.safe_load(f)
+            cam_name = cam_config_dict['interface']
+
+            cam_connect = input(
+                f'\nShould I connect to `{cam_name}` immediately?'
+                '\nThis is usually OK for gatan/simulate/TVIPS. [y/N] >> ',
+            ) == 'y'
+    else:
+        cam_connect = False
+        cam_name = None
 
     from instamatic.camera.camera import get_cam
     from instamatic.TEMController.microscope import get_tem
     from instamatic.TEMController.TEMController import TEMController
 
-    cam = get_cam(cam_name)() if cam_name else None
+    if cam_connect:
+        cam = get_cam(cam_name)() if cam_name else None
+    else:
+        cam = None
+
     tem = get_tem(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)

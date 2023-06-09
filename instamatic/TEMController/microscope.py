@@ -49,9 +49,9 @@ def Microscope(name: str = None, use_server: bool = False):
 
     if use_server:
         from .microscope_client import MicroscopeClient
-        tem = MicroscopeClient(name=name)
+        tem = MicroscopeClient(interface=interface)
     else:
-        cls = get_tem(interface)
+        cls = get_tem(interface=interface)
         tem = cls(name=name)
 
     return tem

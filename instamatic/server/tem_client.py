@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # First run tem_server.py (or `instamatic.temserver.exe`)
     # Second, run tem_client.py
 
-    tem = MicroscopeClient(microscope_id)
+    tem = MicroscopeClient(interface=microscope_id)
 
     from IPython import embed
     embed()
