@@ -1,0 +1,6 @@
+markdown-include
+mkdocs
+mkdocs-jupyter
+mkdocs-gen-files
+mkdocs-material
+mkdocstrings[python]
