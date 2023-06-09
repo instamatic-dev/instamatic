@@ -5,23 +5,23 @@ repo_name: GitHub
 
 nav:
   - Home: index.md
+  - setup.md
   - config.md
   - formats.md
   - gui.md
   - programs.md
-  - setup.md
   - tem_api.md
   - tvips.md
   - merlin.md
   - network.md
   - Examples:
-    - Basic data collection: rawr
-    - Grid montage: rawr2
-    - Montaging: rawr3
+    - Basic data collection: examples/data_collection.ipynb
+    - Grid montage: examples/grid_montage_collection.ipynb
+    - Montaging: examples/montage_processing.ipynb
   - Contributing: CONTRIBUTING.md
   - Code of Conduct: CODE_OF_CONDUCT.md
-  - 🔗 Source code: https://github.com/instamatic/instamatic
-  - 🔗 Issues: https://github.com/instamatic/instamatic/issues
+  - 🔗 Source code: https://github.com/instamatic-dev/instamatic
+  - 🔗 Issues: https://github.com/instamatic-dev/instamatic/issues
 
 
 theme:
