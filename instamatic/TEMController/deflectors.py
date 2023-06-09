@@ -5,8 +5,11 @@ DeflectorTuple = namedtuple('DeflectorTuple', ['x', 'y'])
 
 
 class Deflector:
-    """Generic microscope deflector object defined by X/Y values Must be
-    subclassed to set the self._getter, self._setter functions."""
+    """Generic microscope deflector object defined by X/Y values.
+
+    Must be subclassed to set the `self._getter`, `self._setter`
+    functions.
+    """
 
     def __init__(self, tem):
         super().__init__()
@@ -21,16 +24,20 @@ class Deflector:
 
     @property
     def name(self) -> str:
+        """Return name of the deflector."""
         return self.__class__.__name__
 
     def set(self, x: int, y: int):
+        """Set the X and Y values of the deflector."""
         self._setter(x, y)
 
     def get(self) -> Tuple[int, int]:
+        """Get X and Y values of the deflector."""
         return DeflectorTuple(*self._getter())
 
     @property
     def x(self) -> int:
+        """Get/set X value."""
         x, y = self.get()
         return x
 
@@ -40,6 +47,7 @@ class Deflector:
 
     @property
     def y(self) -> int:
+        """Get/set Y value."""
         x, y = self.get()
         return y
 
@@ -49,6 +57,7 @@ class Deflector:
 
     @property
     def xy(self) -> Tuple[int, int]:
+        """Get/set x and y values as a tuple."""
         return self.get()
 
     @xy.setter
@@ -57,6 +66,7 @@ class Deflector:
         self.set(x=x, y=y)
 
     def neutral(self):
+        """Return deflector to stored neutral values."""
         self._tem.setNeutral(self.key)
 
 

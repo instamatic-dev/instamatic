@@ -22,10 +22,11 @@ Cameras supported:
 - ASI CheeTah through `serval-toolkit` library
 - TVIPS cameras through EMMENU4 API
 - Quantum Detectors Merlin
+- (Gatan cameras through DM plugin [1])
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-Support for Gatan cameras is incomplete. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
+[1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
 
 
 ## Installation
