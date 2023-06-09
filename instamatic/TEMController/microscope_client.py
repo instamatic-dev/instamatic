@@ -41,10 +41,11 @@ class MicroscopeClient:
     API.
     """
 
-    def __init__(self, name):
+    def __init__(self, *, interface: str):
         super().__init__()
 
-        self.name = name
+        self.interface = interface
+        self.name = interface
         self._bufsize = BUFSIZE
 
         try:
@@ -110,7 +111,7 @@ class MicroscopeClient:
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
-        tem = get_tem(self.name)
+        tem = get_tem(interface=self.interface)
 
         self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith('_')}
 
