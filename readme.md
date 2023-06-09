@@ -21,7 +21,7 @@ Cameras supported:
 - ASI Timepix
 - ASI CheeTah through `serval-toolkit` library
 - TVIPS cameras through EMMENU4 API
-- Quantum Detectors Merlin
+- Quantum Detectors MerlinEM
 - (Gatan cameras through DM plugin [1])
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
