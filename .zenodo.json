@@ -13,6 +13,11 @@
     {
       "affiliation": "Amsterdam Scientific Instruments",
       "name": "Erik Hogenbirk"
+    },
+    {
+      "affiliation": "Charles University",
+      "name": "Daniel Rainer",
+      "orcid": "0000-0002-3272-3161",
     }
   ],
   "keywords": [
@@ -25,6 +30,6 @@
     "data-collection",
     "automation"
   ],
-  "license": "BSD-3",
+  "license": "BSD-3-Clause",
   "upload_type": "software"
 }

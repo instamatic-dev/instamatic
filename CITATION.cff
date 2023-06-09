@@ -24,7 +24,7 @@ authors:
 cff-version: "1.1.0"
 date-released: 2021-08-09
 doi: "10.5281/zenodo.1090388"
-license: "BSD-3"
+license: "BSD-3-Clause"
 message: "If you use this software, please cite it using these metadata."
 title: Instamatic
 version: "1.10.0"
