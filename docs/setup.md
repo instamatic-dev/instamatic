@@ -62,11 +62,11 @@ instamatic.autoconfig.exe
 
 To help generate some of the input files (in particular templates for the microscope/calibration files). This should give you a working setup for the microscope.
 
-## Other directories
+## Installing the Gatan CCD plugin
 
-- `cmder`: Contains the [Cmder](https://cmder.net/) software package. The file `cmder\config\user-profile.ps1` can be used to set up the environment variables, and extra programs can go into `cmder\bin`.
-- `config`: Contains all the config files for instamatic
-- `instamatic`: Source code for `instamatic`. Replace this directory if you want to update `instamatic`.
-- `logs`: Log files from `instamatic` are stored here.
-- `python36`: This contains the portable [python](https://www.python.org/) installation and libraries
-- `scripts`: The instamatic GUI picks up scripts from this directory.
+To work with the gatan camera, instamatic needs a plugin for GMS.
+For this, instamatic depends on the RED CCD Plugin. You can download it [here](https://zenodo.org/record/2545322).
+
+The plugin can be found in the package `REDc.rar`, in `.\CCD_plugins\Gatan\Normal Gatan cameras\REDCCDPlugin`.
+
+Place `REDCCDPlugin.dll` in your Gatan plugin directory, which can usually be found here: `C:\Program files\Gatan\DigitalMicrgraph\Plugins`. For more information, have a look at the RED installation instructions manual.
