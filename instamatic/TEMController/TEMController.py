@@ -724,11 +724,11 @@ def main_entry():
                         help='Simulate microscope connection (default: False)')
 
     parser.add_argument('-c', '--camera',
-                        action='store', type=str, dest='tem_name',
+                        action='store', type=str, dest='cam_name',
                         help='Camera configuration to load.')
 
     parser.add_argument('-t', '--tem',
-                        action='store', type=str, dest='cam_name',
+                        action='store', type=str, dest='tem_name',
                         help='TEM configuration to load.')
 
     parser.set_defaults(
