@@ -140,7 +140,8 @@ class CameraMerlin:
 
         # Set NUMFRAMESTOACQUIRE to a large number
         # Merlin will only collect this number of frames with SOFTTRIGGER
-        self.merlin_set('NUMFRAMESTOACQUIRE', 10_000)
+        self._frame_number_max = 10_000
+        self.merlin_set('NUMFRAMESTOACQUIRE', self._frame_number_max)
 
         self.merlin_set('TRIGGERSTART', '5')
         self.merlin_set('NUMFRAMESPERTRIGGER', '1')
@@ -175,7 +176,10 @@ class CameraMerlin:
             self.setup_soft_trigger(exposure=exposure)
         elif exposure != self._soft_trigger_exposure:
             logger.info('Change exposure to %s s', exposure)
-            self.teardown_soft_trigger()
+            self.setup_soft_trigger(exposure=exposure)
+        elif self._frame_number == self._frame_number_max:
+            logger.debug(('Maximum frame number reached for this acquisition, '
+                          'resetting soft trigger.') % self._frame_number_max)
             self.setup_soft_trigger(exposure=exposure)
 
         self.merlin_cmd('SOFTTRIGGER')
