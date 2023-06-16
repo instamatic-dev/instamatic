@@ -306,7 +306,7 @@ class FEISimuMicroscope:
         self.tom.Illumination.CondenserStigmator.Y = y
 
     def getIntermediateLensStigmator(self):
-        """diffraction stigmator."""
+        """Diffraction stigmator."""
         return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x, y):
@@ -332,7 +332,7 @@ class FEISimuMicroscope:
         return self.screenposition_value
 
     def setScreenPosition(self, value):
-        """value = 'up' or 'down'"""
+        """Value = 'up' or 'down'."""
         self.screenposition_value = value
 
     def getCondensorLens1(self):

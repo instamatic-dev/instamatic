@@ -436,12 +436,12 @@ class SimuMicroscope:
         self._stage_dict['a']['speed'] = 10.0 * (value / 12)
 
     def getFunctionMode(self) -> str:
-        """mag1, mag2, lowmag, samag, diff."""
+        """Mag1, mag2, lowmag, samag, diff."""
         mode = self.FunctionMode_value
         return FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value: int):
-        """mag1, mag2, lowmag, samag, diff."""
+        """Mag1, mag2, lowmag, samag, diff."""
         if isinstance(value, str):
             try:
                 value = FUNCTION_MODES.index(value)
@@ -514,7 +514,7 @@ class SimuMicroscope:
         return self.screenposition_value
 
     def setScreenPosition(self, value: int):
-        """value = 'up' or 'down'"""
+        """Value = 'up' or 'down'."""
         if value not in ('up', 'down'):
             raise TEMValueError(f'No such screen position: `{value}`.')
         self.screenposition_value = value

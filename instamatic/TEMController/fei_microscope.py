@@ -188,7 +188,7 @@ class FEIMicroscope:
             return CameraLengthMapping[ind]
 
     def setMagnification(self, value):
-        """value has to be the index."""
+        """Value has to be the index."""
         if self.tom.Projection.Mode != 1:
             ind = [key for key, v in MagnificationMapping.items() if v == value][0]
             try:
@@ -213,11 +213,11 @@ class FEIMicroscope:
         return self.tom.Stage.Speed
 
     def getStagePosition(self):
-        """return numbers in microns, angles in degs."""
+        """Return numbers in microns, angles in degs."""
         return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
-        """x, y, z in the system are in unit of meters, angles in radians."""
+        """X, y, z in the system are in unit of meters, angles in radians."""
         pos = self.stage.Position
         axis = 0
 
@@ -263,7 +263,7 @@ class FEIMicroscope:
         return x, y
 
     def setGunShift(self, x, y):
-        """x y can only be float numbers between -1 and 1."""
+        """X y can only be float numbers between -1 and 1."""
         gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
             raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
@@ -331,13 +331,13 @@ class FEIMicroscope:
         self.tom.Illumination.BeamAlignShift = bs
 
     def getBeamTilt(self):
-        """rotation center in FEI."""
+        """Rotation center in FEI."""
         x = self.tom.Illumination.BeamAlignmentTilt.X
         y = self.tom.Illumination.BeamAlignmentTilt.Y
         return x, y
 
     def setBeamTilt(self, x, y):
-        """rotation center in FEI."""
+        """Rotation center in FEI."""
         bt = self.tom.Illumination.BeamAlignmentTilt
 
         if x is not None:
@@ -373,7 +373,7 @@ class FEIMicroscope:
         return 0
 
     def getImageBeamShift(self):
-        """image-beam shift."""
+        """Image-beam shift."""
         return self.tom.Projection.ImageBeamShift.X, self.tom.Projection.ImageBeamShift.Y
 
     def setImageBeamShift(self, x, y):
@@ -422,7 +422,7 @@ class FEIMicroscope:
         return self.tom.Projection.Defocus
 
     def setDiffFocus(self, value):
-        """defocus value in unit m."""
+        """Defocus value in unit m."""
         self.tom.Projection.Defocus = value
 
     def getFocus(self):
@@ -443,18 +443,22 @@ class FEIMicroscope:
         return self.tom.Illumination.DarkfieldTilt.X, self.tom.Illumination.DarkfieldTilt.Y
 
     def setDarkFieldTilt(self, x, y):
-        """does not set."""
+        """Does not set."""
         return 0
 
     def getScreenCurrent(self):
-        """return screen current in nA."""
+        """Return screen current in nA."""
         return self.tom.Screen.Current * 1e9
 
     def isfocusscreenin(self):
         return self.tom.Screen.IsFocusScreenIn
 
     def getDiffShift(self):
-        """user diff shift, encoded in a different way than system status on TEM USER INTERFACE: 180/pi*number = number on TEM USER INTERFACE. Not exactly though, close enough"""
+        """User diff shift, encoded in a different way than system status on
+        TEM USER INTERFACE: 180/pi*number = number on TEM USER INTERFACE.
+
+        Not exactly though, close enough
+        """
         return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
 
     def setDiffShift(self, x, y):
@@ -476,7 +480,7 @@ class FEIMicroscope:
         print('Connection to microscope released')
 
     def isBeamBlanked(self):
-        """to be tested."""
+        """To be tested."""
         return self.tem.Illumination.BeamBlanked
 
     def setBeamBlank(self, value):
@@ -494,7 +498,7 @@ class FEIMicroscope:
         self.tom.Illumination.CondenserStigmator.Y = y
 
     def getIntermediateLensStigmator(self):
-        """diffraction stigmator."""
+        """Diffraction stigmator."""
         return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
 
     def setIntermediateLensStigmator(self, x, y):
@@ -533,7 +537,7 @@ class FEIMicroscope:
             self.proj.CameraLengthIndex = index
 
     def getBrightness(self):
-        """return diameter in microns."""
+        """Return diameter in microns."""
         return self.tom.Illumination.IlluminatedAreaDiameter * 1e6
 
     def setBrightness(self, value):

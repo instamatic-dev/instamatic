@@ -27,6 +27,7 @@ print(n)
 def find_beam_center_blur(z: np.ndarray, sigma: int = 30) -> np.ndarray:
     """Estimate direct beam position by blurring the image with a large
     Gaussian kernel and finding the maximum.
+
     Parameters
     ----------
     sigma : float

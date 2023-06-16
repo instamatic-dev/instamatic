@@ -24,7 +24,7 @@ BUFF = 1024
 
 
 def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mode='headless'):
-    """mode can be either gui or headless."""
+    """Mode can be either gui or headless."""
     try:
         vbox = virtualbox.VirtualBox()
     except ModuleNotFoundError:
@@ -48,7 +48,7 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mo
 
 
 def vm_ubuntu_start_terminal(session):
-    """type ctrl+alt+t to bring up terminal in the ubuntu machine."""
+    """Type ctrl+alt+t to bring up terminal in the ubuntu machine."""
     session.console.keyboard.put_keys(press_keys='t', hold_keys=['CTRL', 'ALT'])
 
 
@@ -72,7 +72,7 @@ def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachi
 
 
 def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composition):
-    """incoming conn should contain a path that is shared already between VBox
+    """Incoming conn should contain a path that is shared already between VBox
     and windows."""
 
     # path = "/media/sf_SharedWithVM/test_vm_server"

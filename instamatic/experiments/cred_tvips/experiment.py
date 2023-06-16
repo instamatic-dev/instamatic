@@ -282,10 +282,8 @@ class Experiment:
         return a
 
     def start_collection(self, target_angle: float, start_angle: float = None, manual_control: bool = False):
-        """
-        manual_control : bool
-            Control the rotation using the buttons or pedals
-        """
+        """manual_control : bool Control the rotation using the buttons or
+        pedals."""
         angle_tolerance = 0.5  # degrees
 
         self.now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

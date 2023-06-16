@@ -126,7 +126,7 @@ class Message:
         return self.array.data
 
     def unpack(self, buf):
-        """unpack buffer into our data structure."""
+        """Unpack buffer into our data structure."""
         self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
 

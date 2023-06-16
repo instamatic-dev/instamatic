@@ -699,5 +699,5 @@ class ImgConversion:
                 print(f'{i:4d}{0:8.2f}{0:8.2f}', file=f)
 
     def add_beamstop(self, rect):
-        """rect must be a 2x4 coordinate array."""
+        """Rect must be a 2x4 coordinate array."""
         self.untrusted_areas.append(('quadrilateral', rect))

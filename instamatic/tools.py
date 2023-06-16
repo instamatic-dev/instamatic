@@ -204,7 +204,7 @@ def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
 
 
 def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None) -> object:
-    """take a list of timestamps and return the acquisition time and overhead.
+    """Take a list of timestamps and return the acquisition time and overhead.
 
     Parameters
     ----------

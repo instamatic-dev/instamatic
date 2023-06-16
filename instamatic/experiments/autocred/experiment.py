@@ -325,7 +325,7 @@ class Experiment:
             return np.var(img)
 
     def check_img_outsidebeam_byscale(self, img1_scale, img2_scale):
-        """img1 is the original image for reference, img2 is the new image."""
+        """`img1` is the original image for reference, `img2` is the new image."""
         if img2_scale / img1_scale < 0.5 or img2_scale / img1_scale > 2:
             return 1
         else:

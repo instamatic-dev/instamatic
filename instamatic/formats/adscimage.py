@@ -51,7 +51,7 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
 
 
 def readheader(infile):
-    """read an adsc header."""
+    """Read an adsc header."""
     header = {}
     line = infile.readline()
     bytesread = len(line)
@@ -68,7 +68,7 @@ def readheader(infile):
 
 
 def read_adsc(fname: str) -> (np.array, dict):
-    """read in the file."""
+    """Read in the file."""
     with open(fname, 'rb', buffering=0) as infile:
         try:
             header = readheader(infile)

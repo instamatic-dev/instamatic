@@ -276,7 +276,7 @@ class JeolMicroscope:
         self.def3.SetIS2(x, y)
 
     def getStagePosition(self) -> Tuple[int, int, int, int, int]:
-        """x, y, z in nanometer a and b in degrees."""
+        """X, y, z in nanometer a and b in degrees."""
         x, y, z, a, b, result = self.stage3.GetPos()
         return x, y, z, a, b
 
@@ -382,12 +382,12 @@ class JeolMicroscope:
         print('Goniometer stopped moving.')
 
     def getFunctionMode(self) -> str:
-        """mag1, mag2, lowmag, samag, diff."""
+        """Mag1, mag2, lowmag, samag, diff."""
         mode, name, result = self.eos3.GetFunctionMode()
         return self.FUNCTION_MODES[mode]
 
     def setFunctionMode(self, value: int):
-        """mag1, mag2, lowmag, samag, diff."""
+        """Mag1, mag2, lowmag, samag, diff."""
         if isinstance(value, str):
             try:
                 value = self.FUNCTION_MODES.index(value)
@@ -493,7 +493,7 @@ class JeolMicroscope:
             return value
 
     def setScreenPosition(self, value: str):
-        """value = 'up' or 'down'"""
+        """Value = 'up' or 'down'."""
         UP, DOWN = 2, 0
         if value == 'up':
             self.screen2.SelectAngle(UP)

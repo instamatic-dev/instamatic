@@ -67,7 +67,7 @@ def compByteOffset(data):
 
 
 def write(fname, data, header={}):
-    """write the file in CBF format.
+    """Write the file in CBF format.
 
     :param str fname: name of the file
     """

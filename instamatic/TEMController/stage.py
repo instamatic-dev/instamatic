@@ -29,7 +29,7 @@ class Stage:
         return self.__class__.__name__
 
     def set(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True) -> None:
-        """wait: bool, block until stage movement is complete (JEOL only)"""
+        """Wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
 
     def set_with_speed(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True, speed: float = 1.0) -> None:
@@ -113,7 +113,7 @@ class Stage:
         self.set(x=x, y=y, wait=self._wait)
 
     def move_in_projection(self, delta_x: int, delta_y: int) -> None:
-        r"""y and z are always perpendicular to the sample stage. To achieve the
+        r"""Y and z are always perpendicular to the sample stage. To achieve the
         movement in the projection, x and yshould be broken down into the
         components z' and y'.
 
