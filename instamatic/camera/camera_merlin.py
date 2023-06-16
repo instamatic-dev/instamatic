@@ -47,6 +47,7 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
 class CameraMerlin:
     """Camera interface for the Quantum Detectors Merlin camera."""
     START_SIZE = 14
+    MAX_NUMFRAMESTOACQUIRE = 42_949_672_950
 
     def __init__(self, name='merlin'):
         """Initialize camera module."""
@@ -140,11 +141,10 @@ class CameraMerlin:
 
         # Set NUMFRAMESTOACQUIRE to maximum
         # Merlin collects up to this number of frames with a single SOFTTRIGGER acquisition
-        self._frame_number_max = 42_949_672_950
-        self.merlin_set('NUMFRAMESTOACQUIRE', self._frame_number_max)
+        self.merlin_set('NUMFRAMESTOACQUIRE', self.MAX_NUMFRAMESTOACQUIRE)
 
-        self.merlin_set('TRIGGERSTART', '5')
-        self.merlin_set('NUMFRAMESPERTRIGGER', '1')
+        self.merlin_set('TRIGGERSTART', 5)
+        self.merlin_set('NUMFRAMESPERTRIGGER', 1)
         self.merlin_cmd('STARTACQUISITION')
 
         start = self.receive_data(nbytes=self.START_SIZE)
@@ -177,9 +177,9 @@ class CameraMerlin:
         elif exposure != self._soft_trigger_exposure:
             logger.info('Change exposure to %s s', exposure)
             self.setup_soft_trigger(exposure=exposure)
-        elif self._frame_number == self._frame_number_max:
+        elif self._frame_number == self.MAX_NUMFRAMESTOACQUIRE:
             logger.debug(('Maximum frame number reached for this acquisition, '
-                          'resetting soft trigger.') % self._frame_number_max)
+                          'resetting soft trigger.') % self.MAX_NUMFRAMESTOACQUIRE)
             self.setup_soft_trigger(exposure=exposure)
 
         self.merlin_cmd('SOFTTRIGGER')
