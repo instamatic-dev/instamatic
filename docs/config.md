@@ -271,13 +271,17 @@ This file holds all the specifications of the microscope as necessary. It is imp
 **ranges**
 : In the child items, all the magnification ranges must be defined. They can be obtained through the API using: `ctrl.magnification.get_ranges()`. This will step through all the magnifications and return them as a dictionary.
 
-**range/diff**
+**ranges/diff**
 : List here the available camera lengths available on the microscope in ascending order:
 ```yaml
 ranges:
   diff: [150, 200, 250, 300, 400, 500, 600, 800, 1000,
     1200, 1500, 2000, 2500, 3000, 3500, 4000, 4500]
 ```
+
+!!! note
+
+    For FEI/TFS machines, use `range/D` instead of `ranges/diff`.
 
 **ranges/mag**
 : Here, mag must be one of the known mag ranges, i.e. `lowmag`, `mag1`, `samag`. What follows is a list of all available magnifications on the microscope in ascending order, for example:
@@ -289,3 +293,7 @@ ranges:
     400000, 500000, 600000, 800000, 1000000, 1200000,
     1500000, 2000000]
 ```
+
+!!! note
+
+    For FEI/TFS machines, the ranges are instead set as: `LM` (lowmag), `Mi` (low/intermediate mag), `SA` (high mag), `Mh` (highest mag), and `D` (diffraction mode).
