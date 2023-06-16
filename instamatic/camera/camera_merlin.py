@@ -90,6 +90,15 @@ class CameraMerlin:
         return data
 
     def merlin_set(self, key: str, value: Any):
+        """Set state on Merlin parameter through command socket.
+
+        Parameters
+        ----------
+        key : str
+            Name of parameter
+        value : Any
+            Value to set
+        """
         if self._state.get(key) == value:
             return
 
@@ -103,7 +112,18 @@ class CameraMerlin:
             self._state[key] = value
             logger.debug('Remembering state for %s value %s', key, value)
 
-    def merlin_get(self, key: str):
+    def merlin_get(self, key: str) -> str:
+        """Get state of Merlin parameter through command socket.
+
+        Parameters
+        ----------
+        key : str
+            Name of parameter
+
+        Returns
+        -------
+        value : str
+        """
         self.s_cmd.sendall(MPX_CMD('GET', key))
         response = self.s_cmd.recv(1024).decode()
         logger.debug(response)
@@ -113,6 +133,7 @@ class CameraMerlin:
         return value
 
     def merlin_cmd(self, key: str):
+        """Send Merlin command through command socket."""
         self.s_cmd.sendall(MPX_CMD('CMD', key))
         response = self.s_cmd.recv(1024).decode()
         logger.debug(response)
@@ -120,7 +141,9 @@ class CameraMerlin:
         if status == '2':
             raise ValueError('Merlin did not understand: {response}')
 
-    def setup_soft_trigger(self, exposure=None):
+    def setup_soft_trigger(self, exposure: float = None):
+        """Set up for repeated acquisition using soft trigger, and start
+        acquisition."""
         if exposure is None:
             exposure = self.default_exposure
 
@@ -154,18 +177,23 @@ class CameraMerlin:
         self._frame_length = None
 
     def teardown_soft_trigger(self):
+        """Stop soft trigger acquisition."""
         self.merlin_cmd('STOPACQUISITION')
         self._soft_trigger_mode = False
         self._soft_trigger_exposure = None
 
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine. If the exposure and binsize are not
-        given, the default values are read from the config file.
+    def getImage(self, exposure: float = None, **kwargs) -> np.ndarray:
+        """Image acquisition routine. If the exposure is not given, the default
+        value is read from the config file.
 
-        exposure:
+        Parameters
+        ----------
+        exposure : float, optional
             Exposure time in seconds.
-        binsize:
-            Which binning to use.
+
+        Returns
+        -------
+        data : np.ndarray
         """
         if not exposure:
             exposure = self.default_exposure
@@ -203,14 +231,21 @@ class CameraMerlin:
 
         return data
 
-    def getMovie(self, n_frames, exposure=None, binsize=None, **kwargs):
-        """Movie acquisition routine. If the exposure and binsize are not
-        given, the default values are read from the config file.
+    def getMovie(self, n_frames: int, exposure: float = None, **kwargs) -> List[np.ndarray]:
+        """Gapless movie acquisition routine. If the exposure is not given, the
+        default value is read from the config file.
 
-        exposure:
+        Parameters
+        ----------
+        n_frames : int
+            Number of frames to collect
+        exposure : float, optional
             Exposure time in seconds.
-        binsize:
-            Which binning to use.
+
+        Returns
+        -------
+        List[np.ndarray]
+            List of image data
         """
         if self._soft_trigger_mode:
             self.teardown_soft_trigger()
@@ -416,11 +451,3 @@ if __name__ == '__main__':
 
     # Overhead on movie acquisition: < 1ms
     # Overhead single image acquisition: ~ 3-4 ms
-
-    # TODO
-    # - How to manage soft trigger mode best?
-    # - set large n_frames for getImage
-    # - track current frame number and refresh when n_frames gets hit
-    # - track when in SOFTTRIGGER mode
-    # - seamlessly switch to soft trigger / internal
-    #   trigger when calling getMovie / getImage
