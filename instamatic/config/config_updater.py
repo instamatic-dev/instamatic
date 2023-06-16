@@ -79,7 +79,7 @@ if __name__ == '__main__':
     class config:
         def __init__(self, fn):
             self.fn = fn
-            self.mapping = yaml.full_load(open(fn, 'r'))
+            self.mapping = yaml.full_load(open(fn))
             self.name = self.fn.parent.name
 
         def update(self):
