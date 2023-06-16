@@ -138,9 +138,9 @@ class CameraMerlin:
 
         self._frame_number = 0
 
-        # Set NUMFRAMESTOACQUIRE to a large number
-        # Merlin will only collect this number of frames with SOFTTRIGGER
-        self._frame_number_max = 10_000
+        # Set NUMFRAMESTOACQUIRE to maximum
+        # Merlin collects up to this number of frames with a single SOFTTRIGGER acquisition
+        self._frame_number_max = 42_949_672_950
         self.merlin_set('NUMFRAMESTOACQUIRE', self._frame_number_max)
 
         self.merlin_set('TRIGGERSTART', '5')
