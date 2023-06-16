@@ -28,95 +28,28 @@ logger = logging.getLogger(__name__)
 # 0.02: 0.593
 # 0.01: 0.297
 
+# LM - Imaging mode, low magnification
+# Mi - Imaging mode, lower intermediate magnification range
+# SA - Imaging mode, high magnification
+# Mh - Imaging mode, highest magnification range
+# LAD- Diffraction, LAD mode (the mode entered from LM imaging)
+# D -  Diffraction mode as entered from higher magnification imaging modes
 
 FUNCTION_MODES = {0: 'LM', 1: 'Mi', 2: 'SA', 3: 'Mh', 4: 'LAD', 5: 'D'}
 
-MagnificationMapping = {
-    1: 45,
-    2: 58,
-    3: 73,
-    4: 89,
-    5: 115,
-    6: 145,
-    7: 185,
-    8: 235,
-    9: 300,
-    10: 380,
-    11: 470,
-    12: 600,
-    13: 760,
-    14: 950,
-    15: 1200,
-    16: 1550,
-    17: 3400,
-    18: 4400,
-    19: 5600,
-    20: 7200,
-    21: 8800,
-    22: 11500,
-    23: 14500,
-    24: 18500,
-    25: 24000,
-    26: 30000,
-    27: 38000,
-    28: 49000,
-    29: 61000,
-    30: 77000,
-    31: 100000,
-    32: 130000,
-    33: 165000,
-    34: 215000,
-    35: 265000,
-    36: 340000,
-    37: 430000,
-    38: 550000,
-    39: 700000,
-    40: 890000,
-    41: 1150000,
-    42: 1250000,
-    43: 960000,
-    44: 750000,
-    45: 600000,
-    46: 470000,
-    47: 360000,
-    48: 285000,
-    49: 225000,
-    50: 175000,
-    51: 145000,
-    52: 115000,
-    53: 89000,
-    54: 66000,
-    55: 52000,
-    56: 41000,
-    57: 32000,
-    58: 26000,
-    59: 21000,
-    60: 8300,
-    61: 6200,
-    62: 3100}
 
-CameraLengthMapping = {
-    1: 34,
-    2: 42,
-    3: 53,
-    4: 68,
-    5: 90,
-    6: 115,
-    7: 140,
-    8: 175,
-    9: 215,
-    10: 265,
-    11: 330,
-    12: 420,
-    13: 530,
-    14: 680,
-    15: 830,
-    16: 1050,
-    17: 1350,
-    18: 1700,
-    19: 2100,
-    20: 2700,
-    21: 3700}
+def get_magnification_mapping():
+    functions = ('LM', 'Mi', 'SA', 'Mh')
+    values = (val for function in functions for val in config.microscope.ranges[function])
+    return {num + 1: val for num, val in enumerate(values)}
+
+
+def get_camera_length_mapping():
+    return {num + 1: val for num, val in enumerate(config.microscope.ranges['D'])}
+
+
+MagnificationMapping = get_magnification_mapping()
+CameraLengthMapping = get_camera_length_mapping()
 
 
 class FEIMicroscope:
