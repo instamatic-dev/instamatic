@@ -191,9 +191,11 @@ It establishes a connection to the microscope and reads out the camera lengths a
     if cam_config:
         print(f'    camera: {cam_name}_cam')
     print()
-    print(f'Todo: Check and update the pixelsizes in `{calib_config_fn}`')
-    print('    In real space, pixelsize in nm')
-    print('    In reciprocal space, pixelsize in px/Angstrom')
+    print('Todo:')
+    print(f' 1. Check and update the pixelsizes in `{calib_config_fn}`')
+    print('    - In real space, pixelsize in nm')
+    print('    - In reciprocal space, pixelsize in px/Angstrom')
+    print(f' 2. Check and update magnification ranges in `{microscope_config_fn}`')
 
 
 if __name__ == '__main__':

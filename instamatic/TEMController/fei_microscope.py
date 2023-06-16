@@ -28,13 +28,6 @@ logger = logging.getLogger(__name__)
 # 0.02: 0.593
 # 0.01: 0.297
 
-# LM - Imaging mode, low magnification
-# Mi - Imaging mode, lower intermediate magnification range
-# SA - Imaging mode, high magnification
-# Mh - Imaging mode, highest magnification range
-# LAD- Diffraction, LAD mode (the mode entered from LM imaging)
-# D -  Diffraction mode as entered from higher magnification imaging modes
-
 FUNCTION_MODES = {0: 'LM', 1: 'Mi', 2: 'SA', 3: 'Mh', 4: 'LAD', 5: 'D'}
 
 
