@@ -104,7 +104,7 @@ class CameraEMMENU:
 
         # check if exists
         if not self._immgr.DirectoryExist(self.top_drc_index, drc_name):
-            if self.getEMMenuVersion().startswith('4.'):
+            if self.get_emmenu_version().startswith('4.'):
                 self._immgr.CreateNewSubDirectory(self.top_drc_index, drc_name, 2, 2)
             else:
                 # creating new subdirectories is bugged in EMMENU 5.0.9.0/5.0.10.0
@@ -132,7 +132,7 @@ class CameraEMMENU:
 
         self.streamable = False
 
-    def listConfigs(self) -> list:
+    def list_configs(self) -> list:
         """List the configs from the Configuration Manager."""
         print(f'Configurations for camera {self.name}')
         current = self._vp.Configuration
@@ -147,13 +147,13 @@ class CameraEMMENU:
 
         return lst
 
-    def getCurrentConfigName(self) -> str:
+    def get_current_config_name(self) -> str:
         """Return the name of the currently selected configuration in
         EMMENU."""
-        cfg = self.getCurrentConfig(as_dict=False)
+        cfg = self.get_current_config(as_dict=False)
         return cfg.Name
 
-    def getCurrentConfig(self, as_dict: bool = True) -> dict:
+    def get_current_config(self, as_dict: bool = True) -> dict:
         """Get selected config object currently associated with the
         viewport."""
         vp_cfg_name = self._vp.Configuration
@@ -214,15 +214,15 @@ class CameraEMMENU:
         else:
             return cfg
 
-    def selectConfig(self) -> None:
+    def select_config(self) -> None:
         """Select config by name."""
-        cfgs = self.listConfigs()
+        cfgs = self.list_configs()
         if config not in cfgs:
             raise ValueError(f'No such config: {config} -> must be one of {cfgs}')
 
         raise NotImplementedError
 
-    def getCurrentCameraInfo(self) -> dict:
+    def get_current_camera_info(self) -> dict:
         """Gets the current camera object."""
         cam = self._cam
 
@@ -242,12 +242,12 @@ class CameraEMMENU:
         d['CamCGroup'] = cam.CamCGroup  # int
         return d
 
-    def getCameraType(self) -> str:
+    def get_camera_type(self) -> str:
         """Get the name of the camera currently in use."""
-        cfg = self.getCurrentConfig(as_dict=False)
+        cfg = self.get_current_config(as_dict=False)
         return cfg.CameraType
 
-    def getEMMenuVersion(self) -> str:
+    def get_emmenu_version(self) -> str:
         """Get the version number of EMMENU."""
         return self._obj.EMMENUVersion
 
@@ -265,7 +265,7 @@ class CameraEMMENU:
         """Unlock emmenu after it has been locked down with `self.lock`"""
         self._obj.EnableMainframe(0)
 
-    def listDirectories(self) -> dict:
+    def list_directories(self) -> dict:
         """List subdirectories of the top directory."""
         top_j = self._immgr.TopDirectory
         top_name = self._immgr.FullDirectoryName(top_j)
@@ -285,14 +285,14 @@ class CameraEMMENU:
 
         return d
 
-    def getEMVectorByIndex(self, img_index: int, drc_index: int = None) -> dict:
+    def get_emvector_by_index(self, img_index: int, drc_index: int = None) -> dict:
         """Returns the EMVector by index as a python dictionary."""
-        p = self.getImageByIndex(img_index, drc_index)
+        p = self.get_image_by_index(img_index, drc_index)
         v = p.EMVector
         d = EMVector2dict(v)
         return d
 
-    def deleteAllImages(self) -> None:
+    def delete_all_images(self) -> None:
         """Clears all images currently stored in EMMENU buffers."""
         for i, p in enumerate(self._emi):
             try:
@@ -301,12 +301,12 @@ class CameraEMMENU:
                 # sometimes EMMenu also loses track of image pointers...
                 print(f'Failed to delete buffer {i} ({p})')
 
-    def deleteImageByIndex(self, img_index: int, drc_index: int = None) -> int:
+    def delete_image_by_index(self, img_index: int, drc_index: int = None) -> int:
         """Delete the image from EMMENU by its index."""
-        p = self.getImageByIndex(img_index, drc_index)
+        p = self.get_image_by_index(img_index, drc_index)
         self._emi.DeleteImage(p)  # alternative: self._emi.Remove(p.ImgHandle)
 
-    def getImageByIndex(self, img_index: int, drc_index: int = None) -> int:
+    def get_image_by_index(self, img_index: int, drc_index: int = None) -> int:
         """Grab data from the image manager by index. Return image pointer
         (COM).
 
@@ -319,12 +319,12 @@ class CameraEMMENU:
 
         return p
 
-    def getImageDataByIndex(self, img_index: int, drc_index: int = None) -> 'np.array':
+    def get_image_data_by_index(self, img_index: int, drc_index: int = None) -> 'np.array':
         """Grab data from the image manager by index.
 
         Return numpy 2D array
         """
-        p = self.getImageByIndex(img_index, drc_index)
+        p = self.get_image_by_index(img_index, drc_index)
 
         tpe = p.DataType
         method = type_dict[tpe]
@@ -336,7 +336,7 @@ class CameraEMMENU:
 
     def get_camera_dimensions(self) -> (int, int):
         """Get the maximum dimensions reported by the camera."""
-        # cfg = self.getCurrentConfig()
+        # cfg = self.get_current_config()
         # return cfg.DimensionX, cfg.DimensionY
         return self._cam.RealSizeX, self._cam.RealSizeY
         # return self._cam.MaximumSizeX, self._cam.MaximumSizeY
@@ -353,7 +353,7 @@ class CameraEMMENU:
     def get_binning(self) -> int:
         """Returns the binning corresponding to the currently selected camera
         config."""
-        cfg = self.getCurrentConfig(as_dict=False)
+        cfg = self.get_current_config(as_dict=False)
         bin_x = cfg.BinningX
         bin_y = cfg.BinningY
         assert bin_x == bin_y, 'Binnings differ in X and Y direction! (X: {bin_x} | Y: {bin_y})'
@@ -372,7 +372,7 @@ class CameraEMMENU:
         """Write tiff file using the EMMENU machinery `image_index` is the
         index in the current directory of the image to be written."""
         drc_index = self.drc_index
-        p = self.getImageByIndex(image_index, drc_index)
+        p = self.get_image_by_index(image_index, drc_index)
 
         self.write_tiff_from_pointer(p, filename)
 
@@ -386,7 +386,7 @@ class CameraEMMENU:
             raise IndexError(f'`stop_index`: {stop_index} >= `start_index`: {start_index}')
 
         for i, image_index in enumerate(range(start_index, stop_index + 1)):
-            p = self.getImageByIndex(image_index, drc_index)
+            p = self.get_image_by_index(image_index, drc_index)
 
             fn = str(path / f'{i:04d}.tiff')
             print(f'Image #{image_index} -> {fn}')
@@ -406,7 +406,7 @@ class CameraEMMENU:
         """Acquire image through EMMENU and return data as np array."""
         self._vp.AcquireAndDisplayImage()
         i = self.get_image_index()
-        return self.getImageDataByIndex(i)
+        return self.get_image_data_by_index(i)
 
     def acquire_image(self, **kwargs) -> int:
         """Acquire image through EMMENU and store in the Image Manager Returns
@@ -486,7 +486,7 @@ class CameraEMMENU:
         drc_index = self.drc_index
         timestamps = []
         for i, image_index in enumerate(range(start_index, end_index + 1)):
-            p = self.getImageByIndex(image_index, drc_index)
+            p = self.get_image_by_index(image_index, drc_index)
             t = p.EMVector.lImgCreationTime
             timestamps.append(t)
         return timestamps

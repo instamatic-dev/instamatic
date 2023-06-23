@@ -132,13 +132,13 @@ class CameraSimu:
 
     # Mimic EMMENU API
 
-    def getEMMenuVersion(self) -> str:
+    def get_emmenu_version(self) -> str:
         return 'simu'
 
-    def getCameraType(self) -> str:
+    def get_camera_type(self) -> str:
         return 'SimuType'
 
-    def getCurrentConfigName(self) -> str:
+    def get_current_config_name(self) -> str:
         return 'SimuCfg'
 
     def set_autoincrement(self, value):

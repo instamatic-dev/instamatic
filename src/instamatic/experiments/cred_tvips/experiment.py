@@ -478,11 +478,11 @@ class Experiment:
         print(f'Rotation speed: {self.rotation_speed:.3f} degrees/s')
 
         with open(self.path / 'cRED_log.txt', 'w') as f:
-            print(f'Program: {instamatic.__long_title__} + EMMenu {self.emmenu.getEMMenuVersion()}', file=f)
+            print(f'Program: {instamatic.__long_title__} + EMMenu {self.emmenu.get_emmenu_version()}', file=f)
             print(f'Camera: {config.camera.name}', file=f)
             print(f'Microscope: {config.microscope.name}', file=f)
-            print(f'Camera type: {self.emmenu.getCameraType()}', file=f)
-            print(f'Camera config: {self.emmenu.getCurrentConfigName()}', file=f)
+            print(f'Camera type: {self.emmenu.get_camera_type()}', file=f)
+            print(f'Camera config: {self.emmenu.get_current_config_name()}', file=f)
             print(f'Mode: {self.mode}', file=f)
             print(f'Data Collection Time: {self.now}', file=f)
             print(f'Time Period Start: {self.t_start}', file=f)

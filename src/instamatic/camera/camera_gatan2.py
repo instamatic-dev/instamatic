@@ -41,11 +41,11 @@ class CameraGatan2:
 
         self.streamable = False
 
-    def getCameraType(self) -> str:
+    def get_camera_type(self) -> str:
         """Get the name of the camera currently in use."""
         raise NotImplementedError
 
-    def getDMVersion(self) -> str:
+    def get_dm_version(self) -> str:
         """Get the version number of DM."""
         return self.g.GetDMVersion()
 

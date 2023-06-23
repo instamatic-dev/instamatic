@@ -332,10 +332,10 @@ class Experiment:
         print(f'Rotation speed: {self.rotation_speed:.3f} degrees/s')
 
         with open(self.path / 'cRED_log.txt', 'w') as f:
-            print(f'Program: {instamatic.__long_title__} + GMS {self.cam.getDMVersion()}', file=f)
+            print(f'Program: {instamatic.__long_title__} + GMS {self.cam.get_dm_version()}', file=f)
             print(f'Camera: {config.camera.name}', file=f)
             print(f'Microscope: {config.microscope.name}', file=f)
-            # print(f"Camera type: {self.cam.getCameraType()}", file=f)
+            # print(f"Camera type: {self.cam.get_camera_type()}", file=f)
             print(f'Mode: {self.mode}', file=f)
             print(f'Data Collection Time: {self.now}', file=f)
             print(f'Time Period Start: {self.t_start}', file=f)
