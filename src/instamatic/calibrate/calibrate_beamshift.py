@@ -105,7 +105,7 @@ class CalibBeamShift:
 
     def center(self, ctrl):
         """Return beamshift values to center the beam in the frame."""
-        pixel_center = [val / 2.0 for val in ctrl.cam.getImageDimensions()]
+        pixel_center = [val / 2.0 for val in ctrl.cam.get_image_dimensions()]
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:

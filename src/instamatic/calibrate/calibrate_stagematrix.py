@@ -293,7 +293,7 @@ def calibrate_stage(ctrl,
 
     print(f'\nCalibrating stagematrix mode=`{mode}` mag={mag}\n')
 
-    camera_shape = ctrl.cam.getCameraDimensions()
+    camera_shape = ctrl.cam.get_camera_dimensions()
     pixelsize = config.calibration[mode]['pixelsize'][mag]
 
     if pixelsize == 1.0 or pixelsize == 0.0:

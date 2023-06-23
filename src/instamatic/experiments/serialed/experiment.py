@@ -213,7 +213,7 @@ class Experiment:
             self.log.info('Brightness=%s', self.ctrl.brightness)
 
         self.pixelsize_mag1 = config.calibration['mag1']['pixelsize'][self.magnification] / 1000  # nm -> um
-        xdim, ydim = self.ctrl.cam.getCameraDimensions()
+        xdim, ydim = self.ctrl.cam.get_camera_dimensions()
         self.image_dimensions = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
         self.log.info('Image dimensions %s', self.image_dimensions)
 

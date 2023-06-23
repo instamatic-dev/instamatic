@@ -83,7 +83,7 @@ class CamClient:
 
         atexit.register(self.s.close)
 
-        xres, yres = self.getImageDimensions()
+        xres, yres = self.get_image_dimensions()
         bitdepth = 4
         self._imagebufsize = bitdepth * xres * yres + self._bufsize
 

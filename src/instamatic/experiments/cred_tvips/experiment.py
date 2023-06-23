@@ -464,8 +464,8 @@ class Experiment:
         physical_pixelsize = config.camera.physical_pixelsize  # mm
 
         binning = self.emmenu.get_binning()
-        image_dimensions_x, image_dimensions_y = self.emmenu.getImageDimensions()
-        camera_dimensions_x, camera_dimensions_y = self.emmenu.getCameraDimensions()
+        image_dimensions_x, image_dimensions_y = self.emmenu.get_image_dimensions()
+        camera_dimensions_x, camera_dimensions_y = self.emmenu.get_camera_dimensions()
 
         pixelsize *= binning
         physical_pixelsize *= binning

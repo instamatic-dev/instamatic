@@ -334,19 +334,19 @@ class CameraEMMENU:
 
         return np.array(arr)
 
-    def getCameraDimensions(self) -> (int, int):
+    def get_camera_dimensions(self) -> (int, int):
         """Get the maximum dimensions reported by the camera."""
         # cfg = self.getCurrentConfig()
         # return cfg.DimensionX, cfg.DimensionY
         return self._cam.RealSizeX, self._cam.RealSizeY
         # return self._cam.MaximumSizeX, self._cam.MaximumSizeY
 
-    def getImageDimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> (int, int):
         """Get the dimensions of the image."""
         binning = self.get_binning()
         return int(self._cam.RealSizeX / binning), int(self._cam.RealSizeY / binning)
 
-    def getPhysicalPixelsize(self) -> (int, int):
+    def get_physical_pixelsize(self) -> (int, int):
         """Returns the physical pixel size of the camera nanometers."""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
 

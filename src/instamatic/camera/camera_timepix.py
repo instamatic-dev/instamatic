@@ -293,7 +293,7 @@ class CameraTPX:
     def getName(self):
         return 'timepix'
 
-    def getCameraDimensions(self) -> (int, int):
+    def get_camera_dimensions(self) -> (int, int):
         return self.dimensions
 
     def load_defaults(self):
@@ -332,7 +332,7 @@ def initialize(config, name='pytimepix'):
     cam.readPixelsCfg(pixelsCfg)
     cam.readRealDacs(realDacs)
 
-    print(f'Camera {cam.getName()} initialized (resolution: {cam.getCameraDimensions()})')
+    print(f'Camera {cam.getName()} initialized (resolution: {cam.get_camera_dimensions()})')
 
     return cam
 
