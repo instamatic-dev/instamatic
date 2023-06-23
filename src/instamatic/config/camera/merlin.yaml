@@ -1,0 +1,19 @@
+camera_rotation_vs_stage_xy: 0.0
+default_binsize: 1
+default_exposure: 0.02
+dimensions: [512, 512]
+dynamic_range: 11800
+interface: merlin
+physical_pixelsize: 0.055
+possible_binsizes: [1]
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0
+detector_config:
+  CONTINUOUSRW: 1
+  COUNTERDEPTH: 12
+  FILEENABLE: 0
+  RUNHEADLESS: 1
+# server hostname or IP address and port used to send commands
+host: '127.0.0.1'
+commandport: 6341
+dataport: 6342

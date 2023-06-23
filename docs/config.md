@@ -26,7 +26,7 @@ instamatic.autoconfig.exe
 ```
 To help generate some of the input files (in particular templates for the microscope/calibration files).
 
-Examples of configuration files can be found [here](https://github.com/instamatic-dev/instamatic/tree/main/instamatic/config).
+Examples of configuration files can be found [here](https://github.com/instamatic-dev/instamatic/tree/main/src/instamatic/config).
 
 ## settings.yaml
 

@@ -19,6 +19,6 @@ def test_get_image(ctrl):
 
 
 def test_functions(ctrl):
-    dims = ctrl.cam.getImageDimensions()
+    dims = ctrl.cam.get_image_dimensions()
     assert isinstance(dims, tuple)
     assert len(dims) == 2

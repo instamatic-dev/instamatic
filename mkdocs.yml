@@ -86,5 +86,5 @@ plugins:
     include_source: True
 
 watch:
-  - instamatic/
+  - src/instamatic/
   - docs/

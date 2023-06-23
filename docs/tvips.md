@@ -71,7 +71,7 @@ Stop live view
 : Stop the live view in EMMENU.
 
 Search
-: Switch the microscope to search mode. Internally, these are defined as [`instamatic` scripts](https://github.com/instamatic-dev/instamatic/tree/main/instamatic/config/scripts) and can therefore be easily modified. The parameters of the search mode are defined in `$instamatic\scripts\search_mode.py`, for example to put the screen down, unblank the beam, and switch to MAG1 mode:
+: Switch the microscope to search mode. Internally, these are defined as [`instamatic` scripts](https://github.com/instamatic-dev/instamatic/tree/main/src/instamatic/config/scripts) and can therefore be easily modified. The parameters of the search mode are defined in `$instamatic\scripts\search_mode.py`, for example to put the screen down, unblank the beam, and switch to MAG1 mode:
 
 ```python
 ctrl.screen.down()
