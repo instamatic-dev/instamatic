@@ -26,7 +26,7 @@ Cameras supported:
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-[1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found at [dmscript](https://github.com/instamatic-dev/InsteaDMatic).
+[1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found [here](https://github.com/instamatic-dev/InsteaDMatic).
 
 
 ## Installation
@@ -50,7 +50,7 @@ The package requires Windows 7 or higher. It has been mainly developed and teste
 
 ## Package dependencies
 
-Check [setup.cfg](setup.cfg) for the full dependency list and versions.
+Check [pypoject.toml](pypoject.toml) for the full dependency list and versions.
 
 ## Documentation
 
@@ -76,7 +76,8 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
 
 * **`demos/`** - Jupyter demo notebooks
 * **`docs/`** - Documentation
-* **`instamatic/`**
+* **`src/`** - Source code for instamatic
+* **`src/instamatic/`**
   * **`TEMController/`** - Microscope interaction code
   * **`calibrate/`** - Tools for calibration
   * **`camera/`** - Camera interaction code
@@ -103,5 +104,4 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
   * **`navigation.py`** - Optimize navigation paths
   * **`tools.py`** - Collection of functions used throughout the code
 * **`scripts/`** - Helpful scripts
-* **`setup.cfg`** - Dependency/build system declaration
-* **`setup.py`** - Old-style build script
+* **`pyproject.toml`** - Dependency/build system declaration

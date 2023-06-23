@@ -16,7 +16,7 @@ camera: merlin
 
 You can set up the parameters for the Merlin camera through `camera/merlin.yaml` in your config directory.
 
-For an example config file, see: [`camera/merlin.yaml`](https://github.com/instamatic-dev/instamatic/blob/main/instamatic/config/camera/merlin.yaml). [Click here](/config.md#camerayaml) to go to the page with all common camera configuration parameters.
+For an example config file, see: [`camera/merlin.yaml`](https://github.com/instamatic-dev/instamatic/blob/main/src/instamatic/config/camera/merlin.yaml). [Click here](/config.md#camerayaml) to go to the page with all common camera configuration parameters.
 
 In addition, the Merlin camera has the following parameters to configure:
 

@@ -31,7 +31,7 @@ ctrl = TEMController.initialize(tem_name='jeol', cam_name=None)
 
 Once a `ctrl` (control) object has been initialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `TEMController.initialize?`).
 
-Based on this you can write your own python scripts to control the microscope and/or camera. See in `instamatic/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `instamatic/TEMController/`
+Based on this you can write your own python scripts to control the microscope and/or camera. See in `src/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `src/instamatic/TEMController/`
 
 The `ctrl` object allows full control over the electron microscope. For example, to read out the position of the sample stage:
 ```python

@@ -37,7 +37,7 @@ jobs:
       id: cache-python-env
       with:
         path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('setup.cfg') }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}
 
     - name: Install
       if: steps.cache-python-env.outputs.cache-hit != 'true'

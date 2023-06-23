@@ -604,7 +604,7 @@ instamatic.xdsserver [-h]
 
 ## instamatic.temserver_fei
 
-Utility script to enable rotation control from a dmscript. See [https://github.com/instamatic-dev/instamatic/tree/master/dmscript] for usage.
+Utility script to enable rotation control from a dmscript. See [https://github.com/instamatic-dev/InsteaDMatic] for usage.
 
 **Usage:**  
 ```bash
