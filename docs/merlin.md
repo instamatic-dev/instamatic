@@ -4,7 +4,7 @@ The [MerlinEM detector](https://quantumdetectors.com/products/merlinem/) by Quan
 
 Instamatic communicates with the Merlin control software via TCP/IP connection. This means that there is a fast connection with little overhead when collecting data.
 
-In continous read/write mode, instamatic can achieve gapless data acquisition `MerlinCamera.getMovie()`. When continuously collecting single images using `MerlinCamera.get_image()`, there is a ~3 ms overhead per frame.
+In continous read/write mode, instamatic can achieve gapless data acquisition `MerlinCamera.get_movie()`. When continuously collecting single images using `MerlinCamera.get_image()`, there is a ~3 ms overhead per frame.
 
 ## Setup
 

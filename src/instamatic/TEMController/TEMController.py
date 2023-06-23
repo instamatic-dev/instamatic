@@ -698,7 +698,7 @@ class TEMController:
         if self.autoblank:
             self.beam.unblank()
 
-        stack = self.cam.getMovie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        stack = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
 
         if self.autoblank:
             self.beam.blank()

@@ -19,7 +19,7 @@ cam.merlin_set('COUNTERDEPTH', 12)
 frame = cam.get_image(exposure=0.1)
 
 # acquire multiple frames with gapless acquisition
-frames = cam.getMovie(n_frames=10, exposure=0.1)
+frames = cam.get_movie(n_frames=10, exposure=0.1)
 ```
 """
 
@@ -271,7 +271,7 @@ class CameraMerlin:
 
         return data
 
-    def getMovie(self, n_frames: int, exposure: float = None, **kwargs) -> List[np.ndarray]:
+    def get_movie(self, n_frames: int, exposure: float = None, **kwargs) -> List[np.ndarray]:
         """Gapless movie acquisition routine. If the exposure is not given, the
         default value is read from the config file.
 
@@ -422,7 +422,7 @@ def test_movie(cam):
 
     t0 = time.perf_counter()
 
-    frames = cam.getMovie(n_frames, exposure=exposure)
+    frames = cam.get_movie(n_frames, exposure=exposure)
 
     t1 = time.perf_counter()
 

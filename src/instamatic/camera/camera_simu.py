@@ -73,7 +73,7 @@ class CameraSimu:
 
         return arr
 
-    def getMovie(self, n_frames, *, exposure: float = None, binsize: int = None, **kwargs):
+    def get_movie(self, n_frames, *, exposure: float = None, binsize: int = None, **kwargs):
         """"Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
