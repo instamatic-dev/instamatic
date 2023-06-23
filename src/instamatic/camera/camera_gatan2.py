@@ -72,7 +72,7 @@ class CameraGatan2:
         """Get the name reported by the camera."""
         return self.name
 
-    def writeTiff(self, filename: str) -> None:
+    def write_tiff(self, filename: str) -> None:
         """Write tiff file using the DM machinery."""
         raise NotImplementedError
 

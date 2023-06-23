@@ -363,18 +363,18 @@ class CameraEMMENU:
         """Get the name reported by the camera."""
         return self._cam.name
 
-    def writeTiffFromPointer(self, image_pointer, filename: str) -> None:
+    def write_tiff_from_pointer(self, image_pointer, filename: str) -> None:
         """Write tiff file using the EMMENU machinery `image_pointer` is the
         memory address returned by `getImageIndex()`"""
         self._emf.WriteTiff(image_pointer, filename)
 
-    def writeTiff(self, image_index, filename: str) -> None:
+    def write_tiff(self, image_index, filename: str) -> None:
         """Write tiff file using the EMMENU machinery `image_index` is the
         index in the current directory of the image to be written."""
         drc_index = self.drc_index
         p = self.getImageByIndex(image_index, drc_index)
 
-        self.writeTiffFromPointer(p, filename)
+        self.write_tiff_from_pointer(p, filename)
 
     def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
         """Write a series of data in tiff format and writes them to the given
@@ -394,7 +394,7 @@ class CameraEMMENU:
             # TODO: wrap writeTiff in try/except
             # writeTiff causes vague error if image does not exist
 
-            self.writeTiffFromPointer(p, fn)
+            self.write_tiff_from_pointer(p, fn)
 
             if clear_buffer:
                 # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
