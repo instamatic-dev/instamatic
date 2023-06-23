@@ -120,6 +120,10 @@ class CamClient:
         self.s.send(dumper(dct))
 
         acquiring_image = dct['attr_name'] == 'get_image'
+        acquiring_movie = dct['attr_name'] == 'get_movie'
+
+        if acquiring_movie:
+            raise NotImplementedError('Acquiring movies over a socket is not supported.')
 
         if acquiring_image and not self.use_shared_memory:
             response = self.s.recv(self._imagebufsize)
