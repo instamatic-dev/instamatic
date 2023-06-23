@@ -660,6 +660,51 @@ class TEMController:
 
         return arr, h
 
+    def get_movie(self,
+                  n_frames: int,
+                  *,
+                  exposure: float = None,
+                  binsize: int = None,
+                  out: str = None) -> Tuple[np.ndarray]:
+        """Collect a stack of images using the camera's movie mode, if
+        available.
+
+        This minimizes the gap between frames.
+
+        Parameters
+        ----------
+        n_frames : int
+            Number of frames to collect
+        exposure : float, optional
+            Exposure time in seconds
+        binsize : int, optional
+            Binning to use for the image, must be 1, 2, or 4, etc
+        out : str, optional
+            Path or filename to which the image/header is saved (defaults to tiff)
+
+        Returns
+        -------
+        stack : Tuple[np.ndarray]
+            List of numpy arrays with image data.
+        """
+        if not self.cam:
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
+
+        if not binsize:
+            binsize = self.cam.default_binsize
+        if not exposure:
+            exposure = self.cam.default_exposure
+
+        if self.autoblank:
+            self.beam.unblank()
+
+        stack = self.cam.getMovie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+
+        if self.autoblank:
+            self.beam.blank()
+
+        return stack
+
     def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for
         dose control), diffraction focus, spot size, brightness, and the

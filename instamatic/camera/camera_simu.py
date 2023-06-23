@@ -46,12 +46,17 @@ class CameraSimu:
         """Image acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
-        exposure:
+        Parameters
+        ----------
+        exposure : float
             Exposure time in seconds.
-        binsize:
+        binsize : int
             Which binning to use.
-        """
 
+        Returns
+        -------
+        arr : np.ndarray
+        """
         if exposure is None:
             exposure = self.default_exposure
         if not binsize:
@@ -67,6 +72,25 @@ class CameraSimu:
         arr = np.random.randint(256, size=(dim_x, dim_y))
 
         return arr
+
+    def getMovie(self, n_frames, *, exposure: float = None, binsize: int = None, **kwargs):
+        """"Movie acquisition routine. If the exposure and binsize are not
+        given, the default values are read from the config file.
+
+        Parameters
+        ----------
+        n_frames : int
+            Number of frames to collect
+        exposure : float
+            Exposure time in seconds.
+        binsize : int
+            Which binning to use.
+
+        Returns
+        -------
+        stack : List[np.ndarray]
+        """
+        return [self.getImage(exposure=exposure, binsize=binsize) for _ in range(n_frames)]
 
     def acquireImage(self) -> int:
         """For TVIPS compatibility."""
