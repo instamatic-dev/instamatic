@@ -13,6 +13,7 @@ nav:
   - tem_api.md
   - tvips.md
   - merlin.md
+  - gonio.md
   - network.md
   - Python API:
     - instamatic.TEMController:
