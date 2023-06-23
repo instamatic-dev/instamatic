@@ -34,18 +34,24 @@ host: '10.0.0.123'
 
 **detector_config**
 : The parameters under `detector_config` are directly sent to the Merlin software when instamatic starts.
-These can be used to put the Merlin in the desired state for data acquisition. Check the Merlin documention for more information.
+These can be used to put the Merlin in the desired state for data acquisition. Any command with a `SET` type can be adjusted. Check the Merlin EM documention for more information.
 
-: For example:
+: The default sets continuous read-write mode and 12-bit mode to minimize the gap between frames. It also disables automatic file writing (`FILEENABLE`) and image processing by Merlin, and enables headless `RUNHEADLESS` mode for faster throughput. If you don't want this, you can delete these lines or modify them.
+
+```yaml
+detector_config:
+  CONTINUOUSRW: 1
+  COUNTERDEPTH: 12
+  FILEENABLE: 0
+  RUNHEADLESS: 1
+```
+
+: You could for example also set the thresholds and bias in the instamatic config by adding these lines:
 ```yaml
 detector_config:
   THRESHOLD0: 120
   THRESHOLD1: 40
   HVBIAS: 511
-  COUNTERDEPTH: 12
-  FILEENABLE: 0
-  CONTINUOUSRW: 1
-  RUNHEADLESS: 0
 ```
 
 ## Notes on using instamatic with Merlin

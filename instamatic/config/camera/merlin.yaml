@@ -9,11 +9,10 @@ possible_binsizes: [1]
 stretch_amplitude: 0.0
 stretch_azimuth: 0.0
 detector_config:
-  THRESHOLD0: 120
-  THRESHOLD1: 40
-  HVBIAS: 511
+  CONTINUOUSRW: 1
   COUNTERDEPTH: 12
   FILEENABLE: 0
+  RUNHEADLESS: 1
 # server hostname or IP address and port used to send commands
 host: '127.0.0.1'
 commandport: 6341

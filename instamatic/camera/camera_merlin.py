@@ -1,3 +1,28 @@
+"""Camera module for connecting with the Merlin EM detector.
+
+The module communicates over TCP/IP with the camera.
+
+Example usage:
+
+```
+# initialize
+cam = CameraMerlin()
+
+# get values
+cam.merlin_get('DETECTORSTATUS')
+
+# set continuous read/write mode
+cam.merlin_set('CONTINUOUSRW', 1)
+cam.merlin_set('COUNTERDEPTH', 12)
+
+# acquire single frame (uses soft trigger)
+frame = cam.getImage(exposure=0.1)
+
+# acquire multiple frames with gapless acquisition
+frames = cam.getMovie(n_frames=10, exposure=0.1)
+```
+"""
+
 import atexit
 import logging
 import socket
@@ -134,7 +159,18 @@ class CameraMerlin:
         return value
 
     def merlin_cmd(self, key: str):
-        """Send Merlin command through command socket."""
+        """Send Merlin command through command socket.
+
+        Parameters
+        ----------
+        key : str
+            Name of the command
+
+        Raises
+        ------
+        ValueError
+            If the command failed
+        """
         self.s_cmd.sendall(MPX_CMD('CMD', key))
         response = self.s_cmd.recv(1024).decode()
         logger.debug(response)
