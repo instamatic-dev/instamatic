@@ -296,7 +296,7 @@ class ExperimentalTVIPS(LabelFrame):
         self.ctrl.run_script('focus_mode.py')
 
     def get_image(self):
-        self.ctrl.cam.acquireImage()
+        self.ctrl.cam.acquire_image()
 
 
 def acquire_data_CRED_TVIPS(controller, **kwargs):

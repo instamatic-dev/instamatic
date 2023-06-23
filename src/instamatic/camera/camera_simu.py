@@ -92,7 +92,7 @@ class CameraSimu:
         """
         return [self.get_image(exposure=exposure, binsize=binsize) for _ in range(n_frames)]
 
-    def acquireImage(self) -> int:
+    def acquire_image(self) -> int:
         """For TVIPS compatibility."""
         return 1
 

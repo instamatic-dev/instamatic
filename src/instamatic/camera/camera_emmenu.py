@@ -408,7 +408,7 @@ class CameraEMMENU:
         i = self.get_image_index()
         return self.getImageDataByIndex(i)
 
-    def acquireImage(self, **kwargs) -> int:
+    def acquire_image(self, **kwargs) -> int:
         """Acquire image through EMMENU and store in the Image Manager Returns
         the image index."""
         self._vp.AcquireAndDisplayImage()

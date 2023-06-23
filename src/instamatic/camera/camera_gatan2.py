@@ -113,7 +113,7 @@ class CameraGatan2:
 
         return arr
 
-    def acquireImage(self, **kwargs) -> 'np.array':
+    def acquire_image(self, **kwargs) -> 'np.array':
         """Acquire image through DM."""
         return self.get_image(**kwargs)
 
