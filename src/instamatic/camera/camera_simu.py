@@ -188,5 +188,5 @@ class CameraSimu:
     def getBinning(self):
         return self.default_binsize
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
+    def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
         pass

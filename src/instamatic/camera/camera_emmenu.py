@@ -376,7 +376,7 @@ class CameraEMMENU:
 
         self.writeTiffFromPointer(p, filename)
 
-    def writeTiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
+    def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
         """Write a series of data in tiff format and writes them to the given
         `path` using EMMENU machinery."""
         path = Path(path)

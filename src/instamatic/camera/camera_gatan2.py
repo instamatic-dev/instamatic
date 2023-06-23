@@ -76,7 +76,7 @@ class CameraGatan2:
         """Write tiff file using the DM machinery."""
         raise NotImplementedError
 
-    def writeTiffs(self) -> None:
+    def write_tiffs(self) -> None:
         """Write a series of data in tiff format and writes them to the given
         `path`"""
         raise NotImplementedError

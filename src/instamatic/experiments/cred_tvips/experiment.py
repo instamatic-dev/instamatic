@@ -430,7 +430,7 @@ class Experiment:
         path_data = self.path / 'tiff'
         path_data.mkdir(exist_ok=True, parents=True)
 
-        self.emmenu.writeTiffs(start_index, end_index, path=path_data)
+        self.emmenu.write_tiffs(start_index, end_index, path=path_data)
 
         if self.track:
             # Center crystal position
