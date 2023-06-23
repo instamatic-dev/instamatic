@@ -14,7 +14,7 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
 
     calib_range = {}
 
-    binning = ctrl.cam.getBinning()
+    binning = ctrl.cam.get_binning()
 
     ctrl.mode.set(mode)
 

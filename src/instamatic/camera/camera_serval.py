@@ -100,7 +100,7 @@ class CameraServal:
 
     def getImageDimensions(self) -> (int, int):
         """Get the binned dimensions reported by the camera."""
-        binning = self.getBinning()
+        binning = self.get_binning()
         dim_x, dim_y = self.getCameraDimensions()
 
         dim_x = int(dim_x / binning)

@@ -343,14 +343,14 @@ class CameraEMMENU:
 
     def getImageDimensions(self) -> (int, int):
         """Get the dimensions of the image."""
-        binning = self.getBinning()
+        binning = self.get_binning()
         return int(self._cam.RealSizeX / binning), int(self._cam.RealSizeY / binning)
 
     def getPhysicalPixelsize(self) -> (int, int):
         """Returns the physical pixel size of the camera nanometers."""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
 
-    def getBinning(self) -> int:
+    def get_binning(self) -> int:
         """Returns the binning corresponding to the currently selected camera
         config."""
         cfg = self.getCurrentConfig(as_dict=False)

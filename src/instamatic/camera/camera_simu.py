@@ -102,7 +102,7 @@ class CameraSimu:
 
     def getImageDimensions(self) -> (int, int):
         """Get the binned dimensions reported by the camera."""
-        binning = self.getBinning()
+        binning = self.get_binning()
         dim_x, dim_y = self.getCameraDimensions()
 
         dim_x = int(dim_x / binning)
@@ -185,7 +185,7 @@ class CameraSimu:
     def get_timestamps(self, start_index, end_index):
         return list(range(20))
 
-    def getBinning(self):
+    def get_binning(self):
         return self.default_binsize
 
     def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:

@@ -271,7 +271,7 @@ class TEMController:
         if not mag:
             mag = self.magnification.value
         if not binning:
-            binning = self.cam.getBinning()
+            binning = self.cam.get_binning()
 
         stagematrix = config.calibration[mode]['stagematrix'][mag]
         stagematrix = np.array(stagematrix).reshape(2, 2) * binning  # um -> nm
