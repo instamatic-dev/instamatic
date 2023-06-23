@@ -139,7 +139,7 @@ class CameraDLL:
         # print(f"Dimensions {dim_x}x{dim_y}")
         # print(f"Info {self.isCameraInfoAvailable()} | Count {self.getCameraCount()}")
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
     def load_defaults(self):
         if self.name != config.settings.camera:
@@ -149,7 +149,7 @@ class CameraDLL:
 
         self.streamable = False
 
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+    def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine.
 
         exposure: exposure time in seconds
@@ -218,7 +218,7 @@ class CameraDLL:
         if res != 1:
             raise RuntimeError(f'Could not establish camera connection to {self.name}')
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         name = self.getName()
         self._releaseCCDCOM()

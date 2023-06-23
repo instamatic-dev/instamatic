@@ -106,7 +106,7 @@ class JeolMicroscope:
                 raise TEMCommunicationError('Cannot establish microscope connection (timeout).')
 
         logger.info('Microscope connection established')
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
         self._x_direction = 0
         self._y_direction = 0
@@ -427,7 +427,7 @@ class JeolMicroscope:
     def setDiffShift(self, x: int, y: int):
         self.def3.SetPLA(x, y)
 
-    def releaseConnection(self):
+    def release_connection(self):
         comtypes.CoUninitialize()
         logger.info('Connection to microscope released')
 

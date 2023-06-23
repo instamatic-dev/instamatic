@@ -16,7 +16,7 @@ cam.merlin_set('CONTINUOUSRW', 1)
 cam.merlin_set('COUNTERDEPTH', 12)
 
 # acquire single frame (uses soft trigger)
-frame = cam.getImage(exposure=0.1)
+frame = cam.get_image(exposure=0.1)
 
 # acquire multiple frames with gapless acquisition
 frames = cam.getMovie(n_frames=10, exposure=0.1)
@@ -92,7 +92,7 @@ class CameraMerlin:
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
     def load_defaults(self):
         if self.name != config.settings.camera:
@@ -219,7 +219,7 @@ class CameraMerlin:
         self._soft_trigger_mode = False
         self._soft_trigger_exposure = None
 
-    def getImage(self, exposure: float = None, **kwargs) -> np.ndarray:
+    def get_image(self, exposure: float = None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure is not given, the default
         value is read from the config file.
 
@@ -403,7 +403,7 @@ class CameraMerlin:
 
         self.s_data = s_data
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         if self._soft_trigger_mode:
             logger.info('Stopping acquisition')
@@ -449,7 +449,7 @@ def test_single_frame(cam):
     t0 = time.perf_counter()
 
     for i in range(n_frames):
-        frame = cam.getImage()
+        frame = cam.get_image()
         assert frame.shape == (512, 512)
 
     t1 = time.perf_counter()
@@ -462,7 +462,7 @@ def test_single_frame(cam):
 
 
 def test_plot_single_image(cam):
-    arr = cam.getImage(exposure=0.1)
+    arr = cam.get_image(exposure=0.1)
 
     import numpy as np
 

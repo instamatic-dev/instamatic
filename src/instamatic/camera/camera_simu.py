@@ -26,7 +26,7 @@ class CameraSimu:
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
         # EMMENU variables
         self._image_index = 0
@@ -42,7 +42,7 @@ class CameraSimu:
 
         self.__dict__.update(config.camera.mapping)
 
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+    def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
@@ -90,7 +90,7 @@ class CameraSimu:
         -------
         stack : List[np.ndarray]
         """
-        return [self.getImage(exposure=exposure, binsize=binsize) for _ in range(n_frames)]
+        return [self.get_image(exposure=exposure, binsize=binsize) for _ in range(n_frames)]
 
     def acquireImage(self) -> int:
         """For TVIPS compatibility."""
@@ -124,7 +124,7 @@ class CameraSimu:
         if res != 1:
             raise RuntimeError(f'Could not establish camera connection to {self.name}')
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         name = self.getName()
         msg = f"Connection to camera '{name}' released"

@@ -475,7 +475,7 @@ class SimuMicroscope:
         self.DiffractionShift_x = x
         self.DiffractionShift_y = y
 
-    def releaseConnection(self):
+    def release_connection(self):
         print('Connection to microscope released')
 
     def isBeamBlanked(self) -> bool:

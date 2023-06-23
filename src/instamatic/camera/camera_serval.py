@@ -31,7 +31,7 @@ class CameraServal:
         msg = f'Camera {self.getName()} initialized'
         logger.info(msg)
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
     def load_defaults(self):
         if self.name != config.settings.camera:
@@ -41,7 +41,7 @@ class CameraServal:
 
         self.__dict__.update(config.camera.mapping)
 
-    def getImage(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+    def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
@@ -144,7 +144,7 @@ class CameraServal:
             }],
         }
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
         name = self.getName()

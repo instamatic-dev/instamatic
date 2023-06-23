@@ -82,7 +82,7 @@ class FEIMicroscope:
                 raise TEMCommunicationError('Cannot establish microscope connection (timeout).')
 
         logger.info('Microscope connection established')
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
         self.name = name
         self.FUNCTION_MODES = FUNCTION_MODES
@@ -400,7 +400,7 @@ class FEIMicroscope:
 
         self.tem.Projection.DiffractionShift = ds1
 
-    def releaseConnection(self):
+    def release_connection(self):
         comtypes.CoUninitialize()
         logger.info('Connection to microscope released')
         print('Connection to microscope released')

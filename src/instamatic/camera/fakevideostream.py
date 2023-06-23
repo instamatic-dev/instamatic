@@ -46,8 +46,8 @@ class VideoStream(threading.Thread):
             except AttributeError:
                 raise reraise_on_fail
 
-    def getImage(self, exposure=None, binsize=None):
-        frame = self.cam.getImage(exposure=exposure, binsize=binsize)
+    def get_image(self, exposure=None, binsize=None):
+        frame = self.cam.get_image(exposure=exposure, binsize=binsize)
 
         self.frame, scale = autoscale(frame, maxdim=self.display_dim)
 
@@ -87,7 +87,7 @@ class VideoStream(threading.Thread):
         while go_on:
             i += 1
 
-            img = self.getImage(exposure=exposure)
+            img = self.get_image(exposure=exposure)
 
             if callback:
                 go_on = callback(img)

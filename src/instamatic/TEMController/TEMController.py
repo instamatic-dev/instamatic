@@ -520,7 +520,7 @@ class TEMController:
         arr : np.array
             Image as 2D numpy array.
         """
-        return self.cam.getImage(exposure=exposure, binsize=binsize)
+        return self.cam.get_image(exposure=exposure, binsize=binsize)
 
     def get_future_image(self, exposure: float = None, binsize: int = None) -> 'future':
         """Simplified function equivalent to `get_image` that returns the raw

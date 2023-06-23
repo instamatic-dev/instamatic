@@ -192,7 +192,7 @@ def main_entry():
 if __name__ == '__main__':
     # main_entry()
     cam = Camera(use_server=True)
-    arr = cam.getImage(exposure=0.1)
+    arr = cam.get_image(exposure=0.1)
     print(arr)
     print(arr.shape)
 

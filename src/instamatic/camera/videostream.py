@@ -49,11 +49,11 @@ class ImageGrabber:
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
 
-                frame = self.cam.getImage(exposure=self.exposure, binsize=self.binsize)
+                frame = self.cam.get_image(exposure=self.exposure, binsize=self.binsize)
                 self.callback(frame, acquire=True)
 
             elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.getImage(exposure=self.frametime, binsize=self.binsize)
+                frame = self.cam.get_image(exposure=self.frametime, binsize=self.binsize)
                 self.callback(frame)
 
     def start_loop(self):
@@ -122,7 +122,7 @@ class VideoStream(threading.Thread):
         atexit.register(grabber.stop)
         return grabber
 
-    def getImage(self, exposure=None, binsize=None):
+    def get_image(self, exposure=None, binsize=None):
         current_frametime = self.grabber.frametime
 
         # set to 0 to prevent it lagging data acquisition
@@ -179,7 +179,7 @@ class VideoStream(threading.Thread):
         while go_on:
             i += 1
 
-            img = self.getImage(exposure=exposure)
+            img = self.get_image(exposure=exposure)
 
             if callback:
                 go_on = callback(img)

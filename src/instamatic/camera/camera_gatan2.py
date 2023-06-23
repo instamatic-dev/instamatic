@@ -31,7 +31,7 @@ class CameraGatan2:
         # print(msg)
         logger.info(msg)
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
     def load_defaults(self) -> None:
         if self.name != config.settings.camera:
@@ -86,11 +86,11 @@ class CameraGatan2:
 
         print(f'Wrote {i+1} images to {path}')
 
-    def getImage(self,
-                 exposure=0.400,
-                 binning=1,
-                 processing='gain normalized',
-                 ) -> 'np.array':
+    def get_image(self,
+                  exposure=0.400,
+                  binning=1,
+                  processing='gain normalized',
+                  ) -> 'np.array':
         """Acquire image through DM and return data as np array."""
 
         width, height = self.dimensions
@@ -99,23 +99,23 @@ class CameraGatan2:
         bottom = height
         right = width
 
-        arr = self.g.getImage(processing=processing,
-                              height=height,
-                              width=width,
-                              binning=binning,
-                              top=top,
-                              left=left,
-                              bottom=bottom,
-                              right=right,
-                              exposure=exposure,
-                              shutterDelay=0,
-                              )
+        arr = self.g.get_image(processing=processing,
+                               height=height,
+                               width=width,
+                               binning=binning,
+                               top=top,
+                               left=left,
+                               bottom=bottom,
+                               right=right,
+                               exposure=exposure,
+                               shutterDelay=0,
+                               )
 
         return arr
 
     def acquireImage(self, **kwargs) -> 'np.array':
         """Acquire image through DM."""
-        return self.getImage(**kwargs)
+        return self.get_image(**kwargs)
 
     def get_ready_for_record(self) -> None:
         self.reset_record_vars()
@@ -157,7 +157,7 @@ class CameraGatan2:
         """Return exposure time in ms."""
         raise NotImplementedError
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         msg = f'Connection to camera `{self.getCameraName()}` ({self.name}) released'
         # print(msg)

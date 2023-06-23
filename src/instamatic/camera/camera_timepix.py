@@ -287,7 +287,7 @@ class CameraTPX:
 
         return out
 
-    def getImage(self, exposure):
+    def get_image(self, exposure):
         return self.acquireData(exposure=exposure)
 
     def getName(self):

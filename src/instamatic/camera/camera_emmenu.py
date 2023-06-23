@@ -122,7 +122,7 @@ class CameraEMMENU:
         # print(msg)
         logger.info(msg)
 
-        atexit.register(self.releaseConnection)
+        atexit.register(self.release_connection)
 
     def load_defaults(self) -> None:
         if self.name != config.settings.camera:
@@ -402,7 +402,7 @@ class CameraEMMENU:
 
         print(f'Wrote {i+1} images to {path}')
 
-    def getImage(self, **kwargs) -> 'np.array':
+    def get_image(self, **kwargs) -> 'np.array':
         """Acquire image through EMMENU and return data as np array."""
         self._vp.AcquireAndDisplayImage()
         i = self.get_image_index()
@@ -491,7 +491,7 @@ class CameraEMMENU:
             timestamps.append(t)
         return timestamps
 
-    def releaseConnection(self) -> None:
+    def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.stop_liveview()
 

@@ -105,7 +105,7 @@ class CamServer(threading.Thread):
                     status = 500
                 else:
                     if self.use_shared_memory:
-                        if attr_name == 'getImage':
+                        if attr_name == 'get_image':
                             self.copy_data_to_shared_buffer(ret)
                             ret = {
                                 'shape': ret.shape,
