@@ -23,7 +23,7 @@ class LockingError(RuntimeError):
     pass
 
 
-def arrangeData(raw, out=None):
+def arrange_data(raw, out=None):
     """10000 loops, best of 3: 81.3 s per loop."""
     s = 256 * 256
     q1 = raw[0:s].reshape(256, 256)
@@ -41,7 +41,7 @@ def arrangeData(raw, out=None):
     return out
 
 
-def correctCross(raw, factor=2.15):
+def correct_cross(raw, factor=2.15):
     """100000 loops, best of 3: 18 us per loop."""
     raw[255:258] = raw[255] / factor
     raw[:, 255:258] = raw[:, 255:256] / factor
@@ -118,10 +118,10 @@ class CameraTPX:
             print('Camera disconnect failed...')
         return ret
 
-    def getFrameSize(self):
+    def get_frame_size(self):
         return self.lib.EMCameraObj_getFrameSize(self.obj)
 
-    def readRealDacs(self, filename):
+    def read_real_dacs(self, filename):
         """std::string filename."""
         if not os.path.exists(filename):
             raise OSError(f'Cannot find `RealDacs` file: {filename}')
@@ -137,7 +137,7 @@ class CameraTPX:
             self.disconnect()
             sys.exit()
 
-    def readHwDacs(self, filename):
+    def read_hw_dacs(self, filename):
         """std::string filename."""
         if not os.path.exists(filename):
             raise OSError(f'Cannot find `HwDacs` file: {filename}')
@@ -153,7 +153,7 @@ class CameraTPX:
             self.disconnect()
             sys.exit()
 
-    def readPixelsCfg(self, filename):
+    def read_pixels_cfg(self, filename):
         """std::string filename."""
         'int mode = TPX_MODE_DONT_SET  ->  set in header file'
         if not os.path.exists(filename):
@@ -170,7 +170,7 @@ class CameraTPX:
             self.disconnect()
             sys.exit()
 
-    def processRealDac(self, chipnr=None, index=None, key=None, value=None):
+    def process_real_dac(self, chipnr=None, index=None, key=None, value=None):
         """int *chipnr."""
         'int *index'
         'std::string *key'
@@ -183,7 +183,7 @@ class CameraTPX:
 
         self.lib.EMCameraObj_processRealDac(self.obj, byref(chipnr), byref(index), key, value)
 
-    def processHwDac(self, key, value):
+    def process_hw_dac(self, key, value):
         """std::string *key."""
         'std::string *value'
 
@@ -191,15 +191,15 @@ class CameraTPX:
         value = create_unicode_buffer(20)
         self.lib.EMCameraObj_processHwDac(self.obj, byref(key), byref(value))
 
-    def startAcquisition(self):
-        """Equivalent to openShutteR?"""
+    def start_acquisition(self):
+        """Equivalent to openShutter?"""
         self.lib.EMCameraObj_startAcquisition(self.obj)
 
-    def stopAcquisition(self):
-        """Equivalent to closeShutter?"""
+    def stop_acquisition(self):
+        """Equivalent to close_shutter?"""
         self.lib.EMCameraObj_stopAcquisition(self.obj)
 
-    def openShutter(self):
+    def open_shutter(self):
         """Opens the Relaxd shutter under software control.
 
         Note that opening and closing the shutter under software control
@@ -209,11 +209,11 @@ class CameraTPX:
         """
         self.lib.EMCameraObj_openShutter(self.obj)
 
-    def closeShutter(self):
+    def close_shutter(self):
         """Closes shutter under software control."""
         self.lib.EMCameraObj_closeShutter(self.obj)
 
-    def readMatrix(self, arr=None, sz=512 * 512):
+    def read_matrix(self, arr=None, sz=512 * 512):
         """Reads a frame from all connected devices, decodes the data and
         stores the pixel counts in array data.
 
@@ -231,7 +231,7 @@ class CameraTPX:
 
         return arr
 
-    def enableTimer(self, enable, us):
+    def enable_timer(self, enable, us):
         """Disables (enable is false) or enables the timer and sets the timer
         time-out to us microseconds. Note that the timer resolution is 10 us.
         After the Relaxd shutter opens (either explicitly by software or by an
@@ -245,50 +245,50 @@ class CameraTPX:
 
         self.lib.EMCameraObj_enableTimer(self.obj, enable, us)
 
-    def resetMatrix(self):
+    def reset_matrix(self):
         self.lib.EMCameraObj_resetMatrix(self.obj)
 
-    def timerExpired(self):
+    def timer_expired(self):
         return self.lib.EMCameraObj_timerExpired(self.obj)
 
-    def setAcqPars(self, pars):
+    def set_acq_pars(self, pars):
         """AcqParams *pars."""
         raise NotImplementedError
         pars = AcqParams
         self.lib.EMCameraObj_setAcqPars(self.obj, byref(pars))
 
-    def isBusy(self, busy):
+    def is_busy(self, busy):
         """bool *busy."""
         busy = c_bool(busy)
         self.lib.EMCameraObj_isBusy(self.obj, byref(busy))
 
-    def acquireData(self, exposure=0.001):
+    def acquire_data(self, exposure=0.001):
         microseconds = int(exposure * 1e6)  # seconds to microseconds
-        self.enableTimer(True, microseconds)
+        self.enable_timer(True, microseconds)
 
-        self.openShutter()
+        self.open_shutter()
 
         # sleep here to avoid burning cycles
         # only sleep if exposure is longer than Windows timer resolution, i.e. 1 ms
         if exposure > 0.001:
             time.sleep(exposure - 0.001)
 
-        while not self.timerExpired():
+        while not self.timer_expired():
             pass
 
-        # self.closeShutter()
+        # self.close_shutter()
 
-        arr = self.readMatrix()
+        arr = self.read_matrix()
 
-        out = arrangeData(arr)
-        correctCross(out, factor=self.correction_ratio)
+        out = arrange_data(arr)
+        correct_cross(out, factor=self.correction_ratio)
 
         out = np.rot90(out, k=3)
 
         return out
 
     def get_image(self, exposure):
-        return self.acquireData(exposure=exposure)
+        return self.acquire_data(exposure=exposure)
 
     def get_name(self):
         return 'timepix'
@@ -328,9 +328,9 @@ def initialize(config, name='pytimepix'):
 
     cam.init()
 
-    cam.readHwDacs(hwDacs)
-    cam.readPixelsCfg(pixelsCfg)
-    cam.readRealDacs(realDacs)
+    cam.read_hw_dacs(hwDacs)
+    cam.read_pixels_cfg(pixelsCfg)
+    cam.read_real_dacs(realDacs)
 
     print(f'Camera {cam.get_name()} initialized (resolution: {cam.get_camera_dimensions()})')
 
@@ -359,11 +359,11 @@ if __name__ == '__main__':
         t = 0.01
         n = 100
 
-        arr = cam.acquireData(t)
+        arr = cam.acquire_data(t)
         print(f'[ py hardware timer] -> shape: {arr.shape}')
         t0 = time.perf_counter()
         for x in range(n):
-            cam.acquireData(t)
+            cam.acquire_data(t)
         dt = time.perf_counter() - t0
         print(f'Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms')
 
