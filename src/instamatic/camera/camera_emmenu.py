@@ -118,7 +118,7 @@ class CameraEMMENU:
 
         self.load_defaults()
 
-        msg = f'Camera `{self.getCameraName()}` ({self.name}) initialized'
+        msg = f'Camera `{self.get_camera_name()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
 
@@ -359,7 +359,7 @@ class CameraEMMENU:
         assert bin_x == bin_y, 'Binnings differ in X and Y direction! (X: {bin_x} | Y: {bin_y})'
         return bin_x
 
-    def getCameraName(self) -> str:
+    def get_camera_name(self) -> str:
         """Get the name reported by the camera."""
         return self._cam.name
 
@@ -500,7 +500,7 @@ class CameraEMMENU:
         self.set_image_index(0)
         # self._immgr.DeleteDirectory(self.drc_index)  # bugged in EMMENU 5.0.9.0/5.0.10.0, FIXME later
 
-        msg = f'Connection to camera `{self.getCameraName()}` ({self.name}) released'
+        msg = f'Connection to camera `{self.get_camera_name()}` ({self.name}) released'
         # print(msg)
         logger.info(msg)
 

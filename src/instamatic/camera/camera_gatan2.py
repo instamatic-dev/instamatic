@@ -27,7 +27,7 @@ class CameraGatan2:
 
         self.load_defaults()
 
-        msg = f'Camera `{self.getCameraName()}` ({self.name}) initialized'
+        msg = f'Camera `{self.get_camera_name()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
 
@@ -68,7 +68,7 @@ class CameraGatan2:
         config."""
         raise NotImplementedError
 
-    def getCameraName(self) -> str:
+    def get_camera_name(self) -> str:
         """Get the name reported by the camera."""
         return self.name
 
@@ -159,7 +159,7 @@ class CameraGatan2:
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
-        msg = f'Connection to camera `{self.getCameraName()}` ({self.name}) released'
+        msg = f'Connection to camera `{self.get_camera_name()}` ({self.name}) released'
         # print(msg)
         logger.info(msg)
 
