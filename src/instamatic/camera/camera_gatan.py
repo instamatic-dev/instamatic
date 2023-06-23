@@ -128,16 +128,16 @@ class CameraDLL:
 
         self._releaseCCDCOM = getattr(lib, symbols['releaseCCDCOM'])
 
-        self.establishConnection()
+        self.establish_connection()
 
         self.load_defaults()
 
-        msg = f'Camera {self.getName()} initialized'
+        msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
         # dim_x, dim_y = self.get_image_dimensions()
         # print(f"Dimensions {dim_x}x{dim_y}")
-        # print(f"Info {self.isCameraInfoAvailable()} | Count {self.getCameraCount()}")
+        # print(f"Info {self.is_camera_info_available()} | Count {self.getCameraCount()}")
 
         atexit.register(self.release_connection)
 
@@ -195,7 +195,7 @@ class CameraDLL:
 
         return arr
 
-    def isCameraInfoAvailable(self) -> bool:
+    def is_camera_info_available(self) -> bool:
         """Return the status of the camera."""
         return self._isCameraInfoAvailable()
 
@@ -206,13 +206,13 @@ class CameraDLL:
         self._cameraDimensions(byref(pnWidth), byref(pnHeight))
         return pnWidth.value, pnHeight.value
 
-    def getName(self) -> str:
+    def get_name(self) -> str:
         """Return the name reported by the camera."""
         buf = create_unicode_buffer(20)
         self._cameraName(buf, 20)
         return buf.value
 
-    def establishConnection(self) -> None:
+    def establish_connection(self) -> None:
         """Establish connection to the camera."""
         res = self._initCCDCOM(20120101)
         if res != 1:
@@ -220,7 +220,7 @@ class CameraDLL:
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
-        name = self.getName()
+        name = self.get_name()
         self._releaseCCDCOM()
         msg = f'Connection to camera {name} released'
         logger.info(msg)

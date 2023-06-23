@@ -86,10 +86,10 @@ class CameraMerlin:
 
         self.load_defaults()
 
-        self.establishConnection()
-        self.establishDataConnection()
+        self.establish_connection()
+        self.establish_data_connection()
 
-        msg = f'Camera {self.getName()} initialized'
+        msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
         atexit.register(self.release_connection)
@@ -338,10 +338,6 @@ class CameraMerlin:
 
         return data
 
-    def isCameraInfoAvailable(self) -> bool:
-        """Check if the camera is available."""
-        return True
-
     def get_image_dimensions(self) -> (int, int):
         """Get the binned dimensions reported by the camera."""
         binning = self.get_binning()
@@ -356,11 +352,11 @@ class CameraMerlin:
         """Get the dimensions reported by the camera."""
         return self.dimensions
 
-    def getName(self) -> str:
+    def get_name(self) -> str:
         """Get the name reported by the camera."""
         return self.name
 
-    def establishConnection(self) -> None:
+    def establish_connection(self) -> None:
         """Establish connection to command port of the merlin software."""
         # Create command socket
         self.s_cmd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -389,7 +385,7 @@ class CameraMerlin:
         for key, value in self.detector_config.items():
             self.merlin_set(key, value)
 
-    def establishDataConnection(self) -> None:
+    def establish_data_connection(self) -> None:
         """Establish connection to the dataport of the merlin software."""
         # Create command socket
         s_data = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -413,7 +409,7 @@ class CameraMerlin:
 
         self.s_data.close()
 
-        name = self.getName()
+        name = self.get_name()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
 

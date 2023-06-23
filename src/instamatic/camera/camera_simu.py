@@ -19,11 +19,11 @@ class CameraSimu:
 
         self.name = name
 
-        self.establishConnection()
+        self.establish_connection()
 
         self.load_defaults()
 
-        msg = f'Camera {self.getName()} initialized'
+        msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
         atexit.register(self.release_connection)
@@ -96,7 +96,7 @@ class CameraSimu:
         """For TVIPS compatibility."""
         return 1
 
-    def isCameraInfoAvailable(self) -> bool:
+    def is_camera_info_available(self) -> bool:
         """Check if the camera is available."""
         return True
 
@@ -114,11 +114,11 @@ class CameraSimu:
         """Get the dimensions reported by the camera."""
         return self.dimensions
 
-    def getName(self) -> str:
+    def get_name(self) -> str:
         """Get the name reported by the camera."""
         return self.name
 
-    def establishConnection(self) -> None:
+    def establish_connection(self) -> None:
         """Establish connection to the camera."""
         res = 1
         if res != 1:
@@ -126,7 +126,7 @@ class CameraSimu:
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
-        name = self.getName()
+        name = self.get_name()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
 

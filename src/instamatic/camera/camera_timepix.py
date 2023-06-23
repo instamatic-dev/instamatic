@@ -73,7 +73,7 @@ class CameraTPX:
         atexit.register(self.disconnect)
         self.is_connected = None
 
-        self.name = self.getName()
+        self.name = self.get_name()
         self.load_defaults()
 
     def acquire_lock(self):
@@ -290,7 +290,7 @@ class CameraTPX:
     def get_image(self, exposure):
         return self.acquireData(exposure=exposure)
 
-    def getName(self):
+    def get_name(self):
         return 'timepix'
 
     def get_camera_dimensions(self) -> (int, int):
@@ -332,7 +332,7 @@ def initialize(config, name='pytimepix'):
     cam.readPixelsCfg(pixelsCfg)
     cam.readRealDacs(realDacs)
 
-    print(f'Camera {cam.getName()} initialized (resolution: {cam.get_camera_dimensions()})')
+    print(f'Camera {cam.get_name()} initialized (resolution: {cam.get_camera_dimensions()})')
 
     return cam
 

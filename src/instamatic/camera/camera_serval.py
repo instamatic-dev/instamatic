@@ -26,9 +26,9 @@ class CameraServal:
 
         self.load_defaults()
 
-        self.establishConnection()
+        self.establish_connection()
 
-        msg = f'Camera {self.getName()} initialized'
+        msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
         atexit.register(self.release_connection)
@@ -112,11 +112,11 @@ class CameraServal:
         """Get the dimensions reported by the camera."""
         return self.dimensions
 
-    def getName(self) -> str:
+    def get_name(self) -> str:
         """Get the name reported by the camera."""
         return self.name
 
-    def establishConnection(self) -> None:
+    def establish_connection(self) -> None:
         """Establish connection to the camera."""
         self.conn = ServalCamera()
         self.conn.connect(self.url)
@@ -147,7 +147,7 @@ class CameraServal:
     def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
-        name = self.getName()
+        name = self.get_name()
         msg = f"Connection to camera '{name}' released"
         logger.info(msg)
 
