@@ -60,7 +60,7 @@ tem_server_host: 10.0.0.20
 tem_server_port: 8088
 ```
 
-```yaml title = "camera/merlin.yaml"
+```yaml title="camera/merlin.yaml"
 host: 10.0.0.30
 ```
 
