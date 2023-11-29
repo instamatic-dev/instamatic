@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from skimage.exposure import rescale_intensity
 from PIL import Image
 
 from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
@@ -123,7 +124,7 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
 
         if img.dtype != np.uint16:
             # cast to 16 bit uint16
-            img = (2**16 - 1) * (img - img.min()) / (img.max() - img.min())
+            img = rescale_intensity(img, out_range='uint16')
 
         h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
         buffer.append((j, img, h))
