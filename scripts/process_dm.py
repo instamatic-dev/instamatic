@@ -122,12 +122,15 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
         j = extract_image_number(fn)
         img = np.array(Image.open(fn))
 
-        if img.dtype != np.uint16:
-            # cast to 16 bit uint16
-            img = rescale_intensity(img, out_range='uint16')
-
         h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
         buffer.append((j, img, h))
+
+    if img.dtype != np.uint16:
+        max_val = max(img.max() for _, img, _ in buffer)
+        min_val = min(img.min() for _, img, _ in buffer)
+        for item in buffer:
+            # cast to 16 bit uint16
+            item[1] = rescale_intensity(item[1], out_range='uint16', in_range=(min_val, max_val))
 
     img_conv = ImgConversion(buffer=buffer,
                              osc_angle=osc_angle,
