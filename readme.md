@@ -26,8 +26,9 @@ Cameras supported:
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-[1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found [here](https://github.com/instamatic-dev/InsteaDMatic).
+See [instamatic-dev/instamatic-tecnai-server](https://github.com/instamatic-dev/instamatic-tecnai-server) for a TEM interface to control a FEI Tecnai-TEM on Windows XP/Python 3.4 via instamatic.
 
+[1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found [here](https://github.com/instamatic-dev/InsteaDMatic).
 
 ## Installation
 
