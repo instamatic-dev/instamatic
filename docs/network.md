@@ -38,7 +38,7 @@ use_cam_server: False
 ```
 
 
-## Example 3
+## Example 2
 
 This is an example where the microscope and camera PCs should be controlled through an intermediate support PC.
 
