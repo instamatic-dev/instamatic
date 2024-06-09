@@ -500,7 +500,7 @@ class SimuMicroscope:
         self.intermediatelensstigmator_y = y
 
     def getObjectiveLensStigmator(self) -> Tuple[int, int]:
-        return self.objectivelensstigmator_x, self.objectivelensstigmatir_y
+        return self.objectivelensstigmator_x, self.objectivelensstigmator_y
 
     def setObjectiveLensStigmator(self, x: int, y: int):
         self.objectivelensstigmator_x = x
