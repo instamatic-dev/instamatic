@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 # https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
 [project]
 name = "instamatic"
-version = "2.0.1"
+version = "2.0.2"
 description = "Python program for automated electron diffraction data collection"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -125,19 +125,14 @@ target-version = 'py37'
 line-length = 96
 
 [tool.ruff.lint]
-# Enable Pyflakes `E` and `F` codes by default.
 select = [
-	'F',  # Pyflakes
-	'E',  # pycodestyle (error)
-	'W',    # pycodestyle (warning)
-	'I',    # isort
-	'UP',   # pyupgrade
-	'A',    # flake8-builtins
-	'COM',  # flake8-commas
-	'C4',   # flake8-comprehensions
-	'TID',  # flake8-tidy-imports
-    'NPY201',  # numpy deprecation
+    "F",  # Pyflakes
+    "E",  # pycodestyle (error)
+    "W",  # pycodestyle (warning)
+    "I",  # isort
+    "NPY201",  # numpy deprecations
 ]
+
 ignore = [
     'F401',
     'F403',
@@ -148,38 +143,27 @@ ignore = [
     'A003',
 ]
 
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ['A', 'B', 'C', 'D', 'E', 'F', 'I', 'UP', 'BLE', 'COM', 'C4', 'TID',]
-unfixable = []
-
-exclude = [
-    '.bzr',
-    '.direnv',
-    '.eggs',
-    '.git',
-    '.hg',
-    '.mypy_cache',
-    '.nox',
-    '.pants.d',
-    '.ruff_cache',
-    '.svn',
-    '.tox',
-    '.venv',
-    '__pypackages__',
-    '_build',
-    'buck-out',
-    'build',
-    'dist',
-    'node_modules',
-    'venv',
-    '.venv',
-    'scripts',
-]
-per-file-ignores = {}
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = '^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$'
-
 [tool.ruff.lint.isort]
 known-first-party = ['instamatic']
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+
+[tool.bumpversion]
+current_version = "2.0.2"
+
+[[tool.bumpversion.files]]
+filename = "src/instamatic/__init__.py"
+search = "__version__ = '{current_version}'"
+replace = "__version__ = '{new_version}'"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+search = "version: {current_version}"
+replace = "version: {new_version}"

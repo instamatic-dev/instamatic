@@ -171,7 +171,7 @@ class CameraTPX:
             sys.exit()
 
     def process_real_dac(self, chipnr=None, index=None, key=None, value=None):
-        """int *chipnr."""
+        """Int *chipnr."""
         'int *index'
         'std::string *key'
         'std::string *value'
@@ -237,7 +237,7 @@ class CameraTPX:
         After the Relaxd shutter opens (either explicitly by software or by an
         external trigger), it closes again after the set time.
 
-        bool enable
+        bool enable  
         int us = 10 # microseconds
         """
         enable = c_bool(enable)
@@ -258,7 +258,7 @@ class CameraTPX:
         self.lib.EMCameraObj_setAcqPars(self.obj, byref(pars))
 
     def is_busy(self, busy):
-        """bool *busy."""
+        """Bool *busy."""
         busy = c_bool(busy)
         self.lib.EMCameraObj_isBusy(self.obj, byref(busy))
 

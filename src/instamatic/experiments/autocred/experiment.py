@@ -325,7 +325,8 @@ class Experiment:
             return np.var(img)
 
     def check_img_outsidebeam_byscale(self, img1_scale, img2_scale):
-        """`img1` is the original image for reference, `img2` is the new image."""
+        """`img1` is the original image for reference, `img2` is the new
+        image."""
         if img2_scale / img1_scale < 0.5 or img2_scale / img1_scale > 2:
             return 1
         else:
@@ -595,15 +596,6 @@ class Experiment:
 
             img0, h = self.defocus_and_image(difffocus=self.diff_defocus, exp_t=self.exposure_time_image)
 
-            """if trackmethod == "p":
-                shift = self.tracking_by_particlerecog(img0)
-                delta_beamshiftcoord = np.matmul(self.calib_beamshift.transform, shift)
-                self.logger.debug("Beam shift coordinates: {}".format(delta_beamshiftcoord))
-
-                bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
-
-                img0, h = self.defocus_and_image(difffocus = self.diff_defocus, exp_t = self.exposure_time_image)"""
-
             img0_p = preprocess(img0.astype(float))
             scorefromCNN = predict(img0_p)
             # self.print_and_log(logger = self.logger, msg = "Score for the DP: {}".format(scorefromCNN))
@@ -645,8 +637,8 @@ class Experiment:
         numb_robustTrack = 0
         """Turn on and off for crystal movement guess here."""
         self.guess_crystmove = False
-
-        """set acquisition time to be around 0.52 s in order to fix the image interval times."""
+        """Set acquisition time to be around 0.52 s in order to fix the image
+        interval times."""
         acquisition_time = self.expt + 0.02
 
         self.ctrl.cam.block()
@@ -665,8 +657,8 @@ class Experiment:
                     numb_robustTrack += 1
                 else:
                     self.image_interval = self.nom_ii
-
-                    """If variance changed over 20%, do a robust check to ensure crystal is back"""
+                    """If variance changed over 20%, do a robust check to
+                    ensure crystal is back."""
 
                     if imgvar / img0var < 0.5 or imgvar / img0var > 2 or imgscale / imgscale0 > 1.15 or imgscale / imgscale0 < 0.85:
                         self.image_interval = self.robust_ii
@@ -683,8 +675,8 @@ class Experiment:
 
                 if i % self.image_interval == 0:  # aim to make this more dynamically adapted...
                     t_start = time.perf_counter()
-
-                    """Guessing the next particle position by simply apply the same beamshift change as previous"""
+                    """Guessing the next particle position by simply apply the
+                    same beamshift change as previous."""
                     if self.guess_crystmove and i >= self.nom_ii:
                         bs_x0, bs_y0 = self.setandupdate_bs(bs_x0, bs_y0, delta_beamshiftcoord)
 
@@ -701,8 +693,8 @@ class Experiment:
                     imgvar = self.img_var(img_cropped, crystal_pos)
 
                     self.logger.debug(f'Image variance: {imgvar}')
-
-                    """If variance changed over 50%, then the crystal is outside the beam and stop data collection"""
+                    """If variance changed over 50%, then the crystal is
+                    outside the beam and stop data collection."""
                     if imgvar / img0var < 0.2 or imgvar / img0var > 5:
                         self.print_and_del('Collection stopping because crystal out of the beam...')
                         self.stopEvent.set()

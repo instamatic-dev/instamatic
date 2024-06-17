@@ -36,11 +36,9 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mo
     machine = vbox.find_machine(vmname)
     progress = machine.launch_vm_process(session, mode, '')
     progress.wait_for_completion()
-
-    """wait for certain sec to ensure a normal vm startup"""
+    """Wait for certain sec to ensure a normal vm startup."""
     time.sleep(time_delay)
-
-    """assume vm is password protected"""
+    """Assume vm is password protected."""
     session.console.keyboard.put_keys(vmachine_pwd)
     session.console.keyboard.put_keys(['ENTER'])
     print('password delivered!')
@@ -117,8 +115,8 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
 
             session.console.keyboard.put_keys('xds')
             session.console.keyboard.put_keys(['ENTER'])
-
-            """Not sure if I should put some delay here, but just to avoid neglected communication"""
+            """Not sure if I should put some delay here, but just to avoid
+            neglected communication."""
             time.sleep(120)
 
             if shelxt:
