@@ -77,7 +77,7 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path='SMV_reprocessed'
 
     n = len(image_fns)
     if n == 0:
-        print(f'No files found matching `tiff/*.tiff`')
+        print('No files found matching `tiff/*.tiff`')
         exit()
     else:
         print(n)
@@ -89,7 +89,7 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path='SMV_reprocessed'
 
     # osc_angle = 0.53
 
-    with open(credlog, 'r') as f:
+    with open(credlog) as f:
         for line in f:
             if line.startswith('Camera length'):
                 camera_length = float(line.split()[2])

@@ -602,7 +602,7 @@ class ImgConversion:
         for i, h in self.headers.items():
             centers[i - 1] = h['beam_center']
         for i in self.missing_range:
-            centers[i - 1] = [np.NaN, np.NaN]
+            centers[i - 1] = [np.nan, np.nan]
 
         np.savetxt(path / 'beam_centers.txt', centers, fmt='%10.4f')
 

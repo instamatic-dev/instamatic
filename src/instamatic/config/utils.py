@@ -43,7 +43,6 @@ for np_type in [
 ]:
     representer.add_representer(np_type, representer.represent_int)
 for np_type in [
-    np.float_,
     np.float16,
     np.float32,
     np.float64,

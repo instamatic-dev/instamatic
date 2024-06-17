@@ -306,7 +306,7 @@ def is_readable(filename, no_strict_mrc=False):
         else:
             _logger.debug('Failed to read proper machine stamp - not MRC!')
             # return False
-    if not numpy.alltrue([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]):
+    if not numpy.all([h[v][0] > 0 for v in ('nx', 'ny', 'nz')]):
         _logger.debug('Failed to read proper dimensions - not MRC!')
         return False
     return True
@@ -549,7 +549,7 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
             out = out.byteswap()
     finally:
         util.close(filename, f)
-    # assert(numpy.alltrue(numpy.logical_not(numpy.isnan(out))))
+    # assert(numpy.all(numpy.logical_not(numpy.isnan(out))))
     # if header_image_dtype.newbyteorder()==h.dtype:out = out.byteswap()
     return out, header
 
@@ -638,7 +638,7 @@ def write_image(filename, img, index=None, header=None, inplace=False):
     try:
         img = img.astype(mrc2numpy[numpy2mrc[img.dtype.type]])
     except BaseException:
-        raise TypeError('Unsupported type for MRC writing: %s' % str(img.dtype))
+        raise TypeError(f'Unsupported type for MRC writing: {img.dtype}')
 
     mode = 'rb+' if index is not None and (index > 0 or inplace and index > -1) else 'wb+'
     f = util.uopen(filename, mode)

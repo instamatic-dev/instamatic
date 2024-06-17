@@ -19,8 +19,7 @@ import numpy as np
 import tifffile
 
 from instamatic.processing.ImgConversionTVIPS import ImgConversionTVIPS as ImgConversion
-from instamatic.tools import get_acquisition_time
-from instamatic.tools import relativistic_wavelength
+from instamatic.tools import get_acquisition_time, relativistic_wavelength
 
 
 def extract_image_number(s):
@@ -59,7 +58,7 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     acquisition_time = res.acquisition_time
     overhead = res.overhead
 
-    with open(credlog, 'r') as f:
+    with open(credlog) as f:
         for line in f:
             if line.startswith('Data Collection Time'):
                 timestamp = line.split(':', 1)[-1].strip()

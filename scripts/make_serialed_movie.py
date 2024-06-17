@@ -21,7 +21,7 @@ def get_files(file_pat: str) -> list:
             df, d = read_ycsv(file_pat)
             fns = df.index.tolist()
         else:
-            f = open(file_pat, 'r')
+            f = open(file_pat)
             fns = [line.split('#')[0].strip() for line in f if not line.startswith('#')]
     else:
         fns = glob.glob(file_pat)

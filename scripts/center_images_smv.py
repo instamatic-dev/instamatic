@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage as ndi
 
-from instamatic.formats import read_adsc
-from instamatic.formats import write_adsc
+from instamatic.formats import read_adsc, write_adsc
 
 # Script to center the beam
 #

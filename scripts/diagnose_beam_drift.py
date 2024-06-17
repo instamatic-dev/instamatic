@@ -7,8 +7,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from instamatic.formats import adscimage
-from instamatic.tools import find_beam_center
-from instamatic.tools import find_subranges
+from instamatic.tools import find_beam_center, find_subranges
 
 
 def insert_nan(arr, interval=10):
@@ -16,7 +15,7 @@ def insert_nan(arr, interval=10):
     new = []
     for i, row in enumerate(arr):
         if not (i) % repeat:
-            new.append(np.array([np.NaN, np.NaN]))
+            new.append(np.array([np.nan, np.nan]))
         new.append(row)
     return np.array(new)
 
@@ -64,7 +63,7 @@ def get_drifts_per_scan_range(xy):
         drifts.append(distance)
 
         normalized_xy.append(sub_xy - o)
-        normalized_xy.append([np.NaN, np.NaN])
+        normalized_xy.append([np.nan, np.nan])
 
     normalized_xy = np.vstack(normalized_xy)
     drifts = np.array(drifts)
@@ -110,7 +109,7 @@ if __name__ == '__main__':
         xy = insert_nan(xy, interval=10)
 
     i = np.sum(xy, axis=1) == 0
-    xy[i] = np.NaN
+    xy[i] = np.nan
 
     print()
     print('                   mean            std dev             diff        ')

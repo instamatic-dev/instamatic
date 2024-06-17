@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from skimage.exposure import rescale_intensity
 from PIL import Image
+from skimage.exposure import rescale_intensity
 
 from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
 
@@ -45,14 +45,14 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
 
     n = len(image_fns)
     if n == 0:
-        print(f'No files found matching `tiff/*.tif`')
+        print('No files found matching `tiff/*.tif`')
         exit()
     else:
         print(n)
 
     buffer = []
 
-    with open(credlog, 'r') as f:
+    with open(credlog) as f:
         for line in f:
             if line.startswith('Data Collection Time'):
                 timestamp = line.split(':', 1)[-1].strip()

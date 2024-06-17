@@ -106,7 +106,7 @@ def load_mib(buffer: bytes, skip: int = 0):
     props = MIBProperties.from_buffer(buffer)
 
     merlin_frame_dtype = np.dtype([
-        ('header', np.string_, props.headsize),
+        ('header', np.bytes_, props.headsize),
         ('data', props.pixeltype, props.merlin_size),
     ])
 
