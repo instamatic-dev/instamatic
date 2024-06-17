@@ -26,8 +26,7 @@ jobs:
     - name: Create requirements files
       run: |
         python tools/generate_requirements_txt.py
-        pip-compile -o requirements_full.txt pyproject.toml
-        git add requirements_full.txt requirements.txt
+        git add requirements.txt
         git commit -m "Updated requirements.txt files" || true
 
     - name: Bump version to new tag
