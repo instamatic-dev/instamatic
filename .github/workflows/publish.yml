@@ -5,9 +5,9 @@ on:
     types: [created]
 
 jobs:
-  build:
+  fix_release_deps:
+    permissions: write-all
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -16,12 +16,55 @@ jobs:
 
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip pip-tools setuptools
+
+    - name: Set configuration
+      run: |
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+
+    - name: Create requirements files
+      run: |
+        python tools/generate_requirements_txt.py
+        pip-compile -o requirements_full.txt pyproject.toml
+        git add requirements_full.txt requirements.txt
+        git commit -m "Updated requirements.txt files" || true
+
+    - name: Bump version to new tag
+      run: |
+        python -m pip install bump-my-version
+        bump-my-version bump --new-version $GITHUB_REF_NAME patch
+        git commit -am "Bump version to: $GITHUB_REF_NAME"
+
+    - name: Push back changes to main and tag
+      run: |
+        git tag --force $GITHUB_REF_NAME HEAD
+        git push --force --tags
+        git switch -C main
+        git push --set-upstream -f origin main
+
+  deploy:
+    needs: fix_release_deps
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref_name }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
         python -m pip install --upgrade pip
-        pip install -U build setuptools wheel
+        python -m pip install build setuptools>=61.2 wheel
         python -m build --no-isolation
 
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
