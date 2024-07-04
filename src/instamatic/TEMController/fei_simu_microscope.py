@@ -347,8 +347,14 @@ class FEISimuMicroscope:
     def getObjectiveLenseCoarse(self):
         return self.objectivelensecoarse_value
 
+    def setObjectiveLenseCoarse(self, value: int):
+        self.objectivelensecoarse_value = value
+
     def getObjectiveLenseFine(self):
         return self.objectivelensefine_value
+
+    def setObjectiveLenseFine(self, value: int):
+        self.objectivelensefine_value = value
 
     def getObjectiveMiniLens(self):
         return self.objectiveminilens_value

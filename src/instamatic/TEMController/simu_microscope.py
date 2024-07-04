@@ -534,8 +534,14 @@ class SimuMicroscope:
     def getObjectiveLenseCoarse(self) -> int:
         return self.objectivelensecoarse_value
 
+    def setObjectiveLenseCoarse(self, value: int):
+        self.objectivelensecoarse_value = value
+
     def getObjectiveLenseFine(self) -> int:
         return self.objectivelensefine_value
+
+    def setObjectiveLenseFine(self, value: int):
+        self.objectivelensefine_value = value
 
     def getObjectiveMiniLens(self) -> int:
         return self.objectiveminilens_value

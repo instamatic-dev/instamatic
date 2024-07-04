@@ -522,10 +522,16 @@ class JeolMicroscope:
         value, result = self.lens3.GetOLc()
         return value
 
+    def setObjectiveLenseCoarse(self, value: int):
+        self.lens3.SetOLc(value)
+
     def getObjectiveLenseFine(self) -> int:
         # fine objective focus
         value, result = self.lens3.GetOLf()
         return value
+
+    def setObjectiveLenseFine(self, value: int):
+        self.lens3.SetOLf(value)
 
     def getObjectiveMiniLens(self) -> int:
         # no setter
