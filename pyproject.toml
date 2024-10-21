@@ -38,7 +38,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
 ]
 dependencies = [
-    "comtypes >= 1.1.7; sys_platform == 'windows'",
+    "comtypes >= 1.1.7; sys_platform == 'win32'",
     "h5py >= 2.10.0",
     "ipython >= 7.11.1",
     "lmfit >= 1.0.0",
