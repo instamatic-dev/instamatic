@@ -10,9 +10,9 @@ from scipy.interpolate import interp1d
 
 import instamatic
 from instamatic import config
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import write_tiff
 from instamatic.tools import get_acquisition_time
-from instamatic.experiments.experiment_base import ExperimentBase
 
 
 class SerialExperiment:
@@ -269,7 +269,7 @@ class Experiment(ExperimentBase):
         self.emmenu.start_liveview()
 
         print('Ready...')
-    
+
     def setup(self):
         self.get_ready()
 

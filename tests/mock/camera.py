@@ -1,10 +1,10 @@
+from instamatic.camera.camera_base import CameraBase
+from instamatic.camera.camera_emmenu import CameraEMMENU
+from instamatic.camera.camera_gatan import CameraDLL
 from instamatic.camera.camera_gatan2 import CameraGatan2
 from instamatic.camera.camera_merlin import CameraMerlin
 from instamatic.camera.camera_simu import CameraSimu
-from instamatic.camera.camera_gatan import CameraDLL
 from instamatic.camera.camera_timepix import CameraTPX
-from instamatic.camera.camera_emmenu import CameraEMMENU
-from instamatic.camera.camera_base import CameraBase
 
 try:
     from instamatic.camera.camera_serval import CameraServal
@@ -16,7 +16,7 @@ except ImportError:
 
 from instamatic import config
 
-from .socket import SockMock, GatanSocketMock
+from .socket import GatanSocketMock, SockMock
 
 __all__ = [
     "CameraDLLMock",

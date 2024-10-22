@@ -1,9 +1,11 @@
 import threading
-from unittest.mock import MagicMock
-from instamatic.experiments.experiment_base import ExperimentBase
-from instamatic.experiments import cRED, cRED_tvips, RED
 from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
+
+from instamatic.experiments import RED, cRED, cRED_tvips
+from instamatic.experiments.experiment_base import ExperimentBase
 
 
 def test_autoCRED(ctrl):
@@ -76,7 +78,7 @@ def test_experiment(
     stop_event = init_kwargs.get("stop_event")
     if stop_event is not None:
         stop_event.set()
-    
+
     with exp_cls(**init_kwargs) as exp:
         for _ in range(num_collections):
             exp.start_collection(**collect_kwargs)

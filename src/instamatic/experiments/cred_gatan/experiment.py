@@ -9,8 +9,8 @@ from scipy.interpolate import interp1d
 
 import instamatic
 from instamatic import config
-from instamatic.formats import write_tiff
 from instamatic.experiments.experiment_base import ExperimentBase
+from instamatic.formats import write_tiff
 
 
 class Experiment(ExperimentBase):

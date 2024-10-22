@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 # Actually importing the controller class breaks the tests
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from instamatic.TEMController.TEMController import TEMController
 

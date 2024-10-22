@@ -7,9 +7,10 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from instamatic import config
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
-from instamatic.experiments.experiment_base import ExperimentBase
+
 
 class Experiment(ExperimentBase):
     """Initialize stepwise rotation electron diffraction experiment.
@@ -186,7 +187,7 @@ class Experiment(ExperimentBase):
 
     def teardown(self):
         self.finalize()
-        
+
 def main():
     from instamatic import TEMController
     ctrl = TEMController.initialize()
