@@ -30,6 +30,7 @@ from instamatic.neural_network import predict, preprocess
 from instamatic.processing.find_crystals import find_crystals_timepix
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 from instamatic.tools import find_beam_center, find_defocused_image_center
+from instamatic.experiments.experiment_base import ExperimentBase
 
 # SerialRED:
 #  Currently only working if live view can be read directly from camera via Python API
@@ -121,7 +122,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
     return transform_imgshift, c
 
 
-class Experiment:
+class Experiment(BaseException):
     def __init__(self, ctrl,
                  exposure_time,
                  exposure_time_image,

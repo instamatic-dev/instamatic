@@ -10,9 +10,10 @@ from scipy.interpolate import interp1d
 import instamatic
 from instamatic import config
 from instamatic.formats import write_tiff
+from instamatic.experiments.experiment_base import ExperimentBase
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Class to control data collection through DM to collect continuous
     rotation electron diffraction data.
 

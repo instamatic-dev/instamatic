@@ -12,6 +12,7 @@ import instamatic
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.tools import get_acquisition_time
+from instamatic.experiments.experiment_base import ExperimentBase
 
 
 class SerialExperiment:
@@ -143,7 +144,7 @@ class SerialExperiment:
         print(f'Data directory: {self.path}')
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Class to control data collection through EMMenu to collect continuous
     rotation electron diffraction data.
 

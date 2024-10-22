@@ -9,9 +9,9 @@ from tqdm.auto import tqdm
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+from instamatic.experiments.experiment_base import ExperimentBase
 
-
-class Experiment:
+class Experiment(ExperimentBase):
     """Initialize stepwise rotation electron diffraction experiment.
 
     ctrl:

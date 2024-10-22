@@ -10,6 +10,7 @@ import instamatic
 from instamatic import config
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
+from instamatic.experiments.experiment_base import ExperimentBase
 
 # degrees to rotate before activating data collection procedure
 ACTIVATION_THRESHOLD = 0.2
@@ -23,7 +24,7 @@ def print_and_log(msg, logger=None):
         logger.info(msg)
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Initialize continuous rotation electron diffraction experiment.
 
     ctrl:
