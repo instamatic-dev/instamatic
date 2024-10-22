@@ -10,6 +10,7 @@ from instamatic.camera import Camera
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 from .deflectors import *
 from .lenses import *
@@ -89,7 +90,7 @@ class TEMController:
     cam: Camera control object (see instamatic.camera) [optional]
     """
 
-    def __init__(self, tem, cam=None):
+    def __init__(self, tem: MicroscopeBase, cam=None):
         super().__init__()
 
         self._executor = ThreadPoolExecutor(max_workers=1)

@@ -7,6 +7,7 @@ import comtypes.client
 
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ MIN = 0.0
 MAX = 1.0
 
 
-class FEISimuMicroscope:
+class FEISimuMicroscope(MicroscopeBase):
     """Python bindings to the FEI simulated microscope using the COM
     interface."""
 

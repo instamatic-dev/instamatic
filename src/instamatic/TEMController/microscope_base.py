@@ -52,7 +52,7 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def getImageShift2(self) -> None:
+    def getImageShift2(self) -> Tuple[int, int]:
         pass
 
     @abstractmethod
@@ -168,7 +168,7 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def setStagePosition(self, x: int, y: int, z: int, a: int, b: int, speed: float, wait: bool) -> None:
+    def setStagePosition(self, x: int, y: int, z: int, a: int, b: int, wait: bool) -> None:
         pass
 
     @abstractmethod

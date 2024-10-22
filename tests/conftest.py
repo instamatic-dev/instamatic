@@ -3,6 +3,12 @@ from pathlib import Path
 
 import pytest
 
+# Actually importing the controller class breaks the tests
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from instamatic.TEMController.TEMController import TEMController
+
+
 base_drc = Path(__file__).parent
 os.environ['instamatic'] = str(base_drc.absolute())
 
@@ -12,7 +18,7 @@ def pytest_configure():
 
 
 @pytest.fixture(scope='module')
-def ctrl():
+def ctrl() -> "TEMController":
     from instamatic.TEMController import initialize
     ctrl = initialize()
 
