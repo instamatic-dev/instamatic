@@ -107,7 +107,8 @@ class CameraTPX(CameraBase):
         else:
             raise OSError('Could not establish connection to camera.')
         return ret
-    connect = establish_connection
+    def connect(self):
+        self.establish_connection()
 
     def release_connection(self):
         if not self.is_connected:
@@ -119,7 +120,8 @@ class CameraTPX(CameraBase):
         else:
             print('Camera disconnect failed...')
         return ret
-    disconnect = release_connection
+    def disconnect(self):
+        self.release_connection()
 
     def get_frame_size(self):
         return self.lib.EMCameraObj_getFrameSize(self.obj)

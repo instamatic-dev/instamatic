@@ -61,7 +61,7 @@ def test_serialED(ctrl):
     ],
 )
 def test_experiment(
-    exp_cls: type[ExperimentBase],
+    exp_cls: "type[ExperimentBase]",
     init_kwargs: dict,
     collect_kwargs: dict,
     num_collections: int,

@@ -1,17 +1,17 @@
 import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
 from instamatic import config
 from instamatic.camera import Camera
+from instamatic.camera.camera_base import CameraBase
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 from instamatic.TEMController.microscope_base import MicroscopeBase
-from instamatic.camera.camera_base import CameraBase
 
 from .deflectors import *
 from .lenses import *
@@ -91,7 +91,7 @@ class TEMController:
     cam: Camera control object (see instamatic.camera) [optional]
     """
 
-    def __init__(self, tem: MicroscopeBase, cam: CameraBase = None):
+    def __init__(self, tem: MicroscopeBase, cam: Optional[CameraBase] = None):
         super().__init__()
 
         self._executor = ThreadPoolExecutor(max_workers=1)
