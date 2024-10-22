@@ -7,11 +7,12 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from instamatic import config
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Initialize stepwise rotation electron diffraction experiment.
 
     ctrl:
@@ -141,7 +142,7 @@ class Experiment:
         self.stretch_amplitude = config.camera.stretch_amplitude
 
         with open(self.path / 'summary.txt', 'a') as f:
-            print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
+            print(f'Rotation range: {self.end_angle - self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} mm', file=f)
@@ -183,6 +184,9 @@ class Experiment:
         print()
 
         return True
+
+    def teardown(self):
+        self.finalize()
 
 
 def main():

@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 from instamatic.utils import high_precision_timers
 
 high_precision_timers.enable()
@@ -50,8 +51,11 @@ def correct_cross(raw, factor=2.15):
     raw[:, 258:261] = raw[:, 260:261] / factor
 
 
-class CameraTPX:
+class CameraTPX(CameraBase):
+    streamable = True
+
     def __init__(self, name='pytimepix'):
+        super().__init__(name)
         libdrc = Path(__file__).parent
 
         self.lockfile = libdrc / 'timepix.lockfile'
@@ -70,11 +74,8 @@ class CameraTPX:
         self.lib.EMCameraObj_timerExpired.restype = c_bool
 
         self.obj = self.lib.EMCameraObj_new()
-        atexit.register(self.disconnect)
+        atexit.register(self.release_connection)
         self.is_connected = None
-
-        self.name = self.get_name()
-        self.load_defaults()
 
     def acquire_lock(self):
         try:
@@ -97,7 +98,7 @@ class CameraTPX:
         """Doesn't do anything."""
         self.lib.EMCameraObj_UnInit(self.obj)
 
-    def connect(self, hwId):
+    def establish_connection(self, hwId):
         hwId = c_int(hwId)
         ret = self.lib.EMCameraObj_Connect(self.obj, hwId)
         if ret:
@@ -107,7 +108,10 @@ class CameraTPX:
             raise OSError('Could not establish connection to camera.')
         return ret
 
-    def disconnect(self):
+    def connect(self):
+        self.establish_connection()
+
+    def release_connection(self):
         if not self.is_connected:
             return True
         ret = self.lib.EMCameraObj_Disconnect(self.obj)
@@ -117,6 +121,9 @@ class CameraTPX:
         else:
             print('Camera disconnect failed...')
         return ret
+
+    def disconnect(self):
+        self.release_connection()
 
     def get_frame_size(self):
         return self.lib.EMCameraObj_getFrameSize(self.obj)
@@ -134,7 +141,7 @@ class CameraTPX:
             self.lib.EMCameraObj_readRealDacs(self.obj, buffer)
         except BaseException:
             traceback.print_exc()
-            self.disconnect()
+            self.release_connection()
             sys.exit()
 
     def read_hw_dacs(self, filename):
@@ -150,7 +157,7 @@ class CameraTPX:
             self.lib.EMCameraObj_readHwDacs(self.obj, buffer)
         except BaseException:
             traceback.print_exc()
-            self.disconnect()
+            self.release_connection()
             sys.exit()
 
     def read_pixels_cfg(self, filename):
@@ -167,7 +174,7 @@ class CameraTPX:
             self.lib.EMCameraObj_readPixelsCfg(self.obj, buffer)
         except BaseException:
             traceback.print_exc()
-            self.disconnect()
+            self.release_connection()
             sys.exit()
 
     def process_real_dac(self, chipnr=None, index=None, key=None, value=None):
@@ -293,19 +300,8 @@ class CameraTPX:
     def get_name(self):
         return 'timepix'
 
-    def get_camera_dimensions(self) -> (int, int):
-        return self.dimensions
 
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.__dict__.update(config.camera.mapping)
-
-        self.streamable = True
-
-
-def initialize(config, name='pytimepix'):
+def initialize(config, name='pytimepix') -> CameraTPX:
     from pathlib import Path
 
     base = Path(config).parent
@@ -324,7 +320,7 @@ def initialize(config, name='pytimepix'):
                 pixelsCfg = base / inp[1]
 
     cam = CameraTPX(name=name)
-    cam.connect(hwId)
+    cam.establish_connection(hwId)
 
     cam.init()
 
@@ -365,8 +361,8 @@ if __name__ == '__main__':
         for x in range(n):
             cam.acquire_data(t)
         dt = time.perf_counter() - t0
-        print(f'Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms')
+        print(f'Total time: {dt:.1f} s, acquisition time: {1000 * (dt / n):.2f} ms, overhead: {1000 * (dt / n - t):.2f} ms')
 
     embed(banner1='')
 
-    isDisconnected = cam.disconnect()
+    isDisconnected = cam.release_connection()

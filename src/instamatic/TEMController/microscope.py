@@ -1,11 +1,12 @@
 from instamatic import config
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 default_tem_interface = config.microscope.interface
 
 __all__ = ['Microscope', 'get_tem']
 
 
-def get_tem(interface: str):
+def get_tem(interface: str) -> 'type[MicroscopeBase]':
     """Grab tem class with the specific 'interface'."""
     simulate = config.settings.simulate
 
@@ -28,7 +29,7 @@ def get_tem(interface: str):
     return cls
 
 
-def Microscope(name: str = None, use_server: bool = False):
+def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
     """Generic class to load microscope interface class.
 
     name: str

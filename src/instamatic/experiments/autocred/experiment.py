@@ -25,6 +25,7 @@ from instamatic.calibrate.calibrate_imageshift12 import (
 )
 from instamatic.calibrate.center_z import center_z_height_HYMethod
 from instamatic.calibrate.filenames import *
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import write_tiff
 from instamatic.neural_network import predict, preprocess
 from instamatic.processing.find_crystals import find_crystals_timepix
@@ -121,7 +122,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
     return transform_imgshift, c
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     def __init__(self, ctrl,
                  exposure_time,
                  exposure_time_image,

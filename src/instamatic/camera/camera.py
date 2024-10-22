@@ -24,7 +24,7 @@ def get_cam(interface: str = None):
     elif interface == 'gatansocket':
         from instamatic.camera.camera_gatan2 import CameraGatan2 as cam
     elif interface in ('timepix', 'pytimepix'):
-        from instamatic.camera import camera_timepix as cam
+        from instamatic.camera.camera_timepix import CameraTPX as cam
     elif interface in ('emmenu', 'tvips'):
         from instamatic.camera.camera_emmenu import CameraEMMENU as cam
     elif interface == 'serval':

@@ -7,6 +7,7 @@ import comtypes.client
 
 from instamatic import config
 from instamatic.exceptions import JEOLValueError, TEMCommunicationError, TEMValueError
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ MIN = 0
 # Piezo stage seems to operate on a different level than standard XY
 
 
-class JeolMicroscope:
+class JeolMicroscope(MicroscopeBase):
     """Python bindings to the JEOL microscope using the COM interface."""
 
     def __init__(self, name: str = 'jeol'):

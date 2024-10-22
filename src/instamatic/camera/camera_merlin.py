@@ -27,11 +27,12 @@ import atexit
 import logging
 import socket
 import time
-from typing import Any
+from typing import Any, List
 
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 try:
     from .merlin_io import load_mib
@@ -64,27 +65,25 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     """
     length = len(cmd)
     # tmp = 'MPX,00000000' + str(length+5) + ',' + type_cmd + ',' + cmd
-    tmp = f'MPX,00000000{length+5},{type_cmd},{cmd}'
+    tmp = f'MPX,00000000{length + 5},{type_cmd},{cmd}'
     logger.debug(tmp)
     return tmp.encode()
 
 
-class CameraMerlin:
+class CameraMerlin(CameraBase):
     """Camera interface for the Quantum Detectors Merlin camera."""
     START_SIZE = 14
     MAX_NUMFRAMESTOACQUIRE = 42_949_672_950
+    streamable = True
 
     def __init__(self, name='merlin'):
         """Initialize camera module."""
-        super().__init__()
+        super().__init__(name)
 
-        self.name = name
         self._state = {}
 
         self._soft_trigger_mode = False
         self._soft_trigger_exposure = None
-
-        self.load_defaults()
 
         self.establish_connection()
         self.establish_data_connection()
@@ -93,14 +92,6 @@ class CameraMerlin:
         logger.info(msg)
 
         atexit.register(self.release_connection)
-
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.streamable = True
-
-        self.__dict__.update(config.camera.mapping)
 
     def receive_data(self, *, nbytes: int) -> bytearray:
         """Safely receive from the socket until `n_bytes` of data are
@@ -348,14 +339,6 @@ class CameraMerlin:
 
         return dim_x, dim_y
 
-    def get_camera_dimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
-        return self.dimensions
-
-    def get_name(self) -> str:
-        """Get the name reported by the camera."""
-        return self.name
-
     def establish_connection(self) -> None:
         """Establish connection to command port of the merlin software."""
         # Create command socket
@@ -430,7 +413,7 @@ def test_movie(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'\nTotal time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'\nTotal time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
     for frame in frames:
         assert frame.shape == (512, 512)
@@ -454,7 +437,7 @@ def test_single_frame(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'Total time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
 
 def test_plot_single_image(cam):

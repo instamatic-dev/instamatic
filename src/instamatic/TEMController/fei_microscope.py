@@ -7,6 +7,7 @@ from numpy import pi
 
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ MagnificationMapping = get_magnification_mapping()
 CameraLengthMapping = get_camera_length_mapping()
 
 
-class FEIMicroscope:
+class FEIMicroscope(MicroscopeBase):
     """Python bindings to the FEI microscope using the COM interface."""
 
     def __init__(self, name='fei'):

@@ -7,19 +7,19 @@ from pathlib import Path
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 from instamatic.camera.gatansocket3 import GatanSocket
 
 logger = logging.getLogger(__name__)
 
 
-class CameraGatan2:
+class CameraGatan2(CameraBase):
     """Connect to Digital Microsgraph using the SerialEM Plugin."""
+    streamable = False
 
     def __init__(self, name: str = 'gatan2'):
         """Initialize camera module."""
-        super().__init__()
-
-        self.name = name
+        super().__init__(name)
 
         self.g = GatanSocket()
 
@@ -33,14 +33,6 @@ class CameraGatan2:
 
         atexit.register(self.release_connection)
 
-    def load_defaults(self) -> None:
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.__dict__.update(config.camera.mapping)
-
-        self.streamable = False
-
     def get_camera_type(self) -> str:
         """Get the name of the camera currently in use."""
         raise NotImplementedError
@@ -48,10 +40,6 @@ class CameraGatan2:
     def get_dm_version(self) -> str:
         """Get the version number of DM."""
         return self.g.GetDMVersion()
-
-    def get_camera_dimensions(self) -> (int, int):
-        """Get the maximum dimensions reported by the camera."""
-        raise NotImplementedError
 
     def get_image_dimensions(self) -> (int, int):
         """Get the dimensions of the image."""
@@ -84,7 +72,7 @@ class CameraGatan2:
         path = Path(path)
         i = 0
 
-        print(f'Wrote {i+1} images to {path}')
+        print(f'Wrote {i + 1} images to {path}')
 
     def get_image(self,
                   exposure=0.400,
@@ -157,8 +145,14 @@ class CameraGatan2:
         """Return exposure time in ms."""
         raise NotImplementedError
 
+    def establish_connection(self):
+        # Already done by the constructor of GatanSocket
+        # self.g.connect()
+        pass
+
     def release_connection(self) -> None:
         """Release the connection to the camera."""
+        self.g.disconnect()
         msg = f'Connection to camera `{self.get_camera_name()}` ({self.name}) released'
         # print(msg)
         logger.info(msg)

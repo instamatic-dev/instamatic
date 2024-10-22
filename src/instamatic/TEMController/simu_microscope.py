@@ -4,6 +4,7 @@ from typing import Tuple
 
 from instamatic import config
 from instamatic.exceptions import TEMValueError
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 NTRLMAPPING = {
     'GUN1': 0,
@@ -30,7 +31,7 @@ MAX = 65535
 MIN = 0
 
 
-class SimuMicroscope:
+class SimuMicroscope(MicroscopeBase):
     """Simulates a microscope connection.
 
     Has the same variables as the real JEOL/FEI equivalents, but does

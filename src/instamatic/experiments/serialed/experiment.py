@@ -9,6 +9,7 @@ from tqdm.auto import tqdm
 
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift, CalibDirectBeam
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import *
 from instamatic.processing.find_crystals import find_crystals, find_crystals_timepix
 from instamatic.processing.flatfield import apply_flatfield_correction, remove_deadpixels
@@ -131,7 +132,7 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
     return np.vstack((x_offsets, y_offsets)).T
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Data collection protocol for serial electron diffraction.
 
     Related publication:     J. Appl. Cryst. (2018). 51, 1262-1273
@@ -540,6 +541,9 @@ class Experiment:
             self.image_mode()
 
         print('\n\nData collection finished.')
+
+    def start_collection(self, ctrl=None, **kwargs):
+        self.run(ctrl=ctrl, **kwargs)
 
 
 def main():

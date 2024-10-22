@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,9 @@ else:
     SYMBOLS['simu'] = SYMBOLS['actual']
 
 
-class CameraDLL:
+class CameraDLL(CameraBase):
     """Interface with the CCDCOM DLLs to connect to the gatan software."""
+    streamable = False
 
     def __init__(self, name: str = 'gatan'):
         """Initialize camera module.
@@ -81,7 +83,7 @@ class CameraDLL:
             'gatan'
             'simulateDLL'
         """
-        super().__init__()
+        super().__init__(name)
 
         cameradir = Path(__file__).parent
 
@@ -93,8 +95,6 @@ class CameraDLL:
             symbols = SYMBOLS['actual']
         else:
             raise ValueError(f'No such camera: {name}')
-
-        self.name = name
 
         try:
             lib = ctypes.cdll.LoadLibrary(str(libpath))
@@ -130,8 +130,6 @@ class CameraDLL:
 
         self.establish_connection()
 
-        self.load_defaults()
-
         msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
@@ -140,14 +138,6 @@ class CameraDLL:
         # print(f"Info {self.is_camera_info_available()} | Count {self.getCameraCount()}")
 
         atexit.register(self.release_connection)
-
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.__dict__.update(config.camera.mapping)
-
-        self.streamable = False
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine.

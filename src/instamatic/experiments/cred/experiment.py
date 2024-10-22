@@ -8,6 +8,7 @@ import numpy as np
 
 import instamatic
 from instamatic import config
+from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.formats import write_tiff
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
@@ -23,7 +24,7 @@ def print_and_log(msg, logger=None):
         logger.info(msg)
 
 
-class Experiment:
+class Experiment(ExperimentBase):
     """Initialize continuous rotation electron diffraction experiment.
 
     ctrl:
@@ -149,7 +150,7 @@ class Experiment:
             print(f'Time Period End: {self.t_end}', file=f)
             print(f'Starting angle: {self.start_angle:.2f} degrees', file=f)
             print(f'Ending angle: {self.end_angle:.2f} degrees', file=f)
-            print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
+            print(f'Rotation range: {self.end_angle - self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure:.3f} s', file=f)
             print(f'Acquisition time: {self.acquisition_time:.3f} s', file=f)
             print(f'Total time: {self.total_time:.3f} s', file=f)

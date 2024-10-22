@@ -1,90 +1,86 @@
-import tempfile
 import threading
+from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 
-def test_cred(ctrl):
-    """This one is difficult to test with threads and events."""
-    from instamatic.experiments import cred
+from instamatic.experiments import RED, cRED, cRED_tvips
+from instamatic.experiments.experiment_base import ExperimentBase
 
-    stopEvent = threading.Event()
-    stopEvent.set()
 
-    tempdrc = tempfile.TemporaryDirectory()
-    expdir = tempdrc.name
+def test_autoCRED(ctrl):
+    from instamatic.experiments import autocRED
+    assert issubclass(autocRED.Experiment, ExperimentBase)
+    exp = autocRED.Experiment(ctrl, *[None] * 17, path=Path())
+    pytest.xfail('Too complex to test at this point')
+
+
+def test_serialED(ctrl):
+    from instamatic.experiments import serialED
+    assert issubclass(serialED.Experiment, ExperimentBase)
+    with pytest.raises(OSError):
+        exp = serialED.Experiment(ctrl, {})
+    pytest.xfail('TODO')
+
+
+@pytest.mark.parametrize(
+    ['exp_cls', 'init_kwargs', 'collect_kwargs', 'num_collections'],
+    [
+        (
+            cRED.Experiment,
+            {
+                'stop_event': threading.Event(),
+                'mode': 'simulate',
+            },
+            {},
+            1,
+        ),
+        (
+            cRED_tvips.Experiment,
+            {
+                'mode': 'diff',
+                'track': None,
+                'exposure': 0.1,
+            },
+            {
+                'target_angle': -20,
+                'manual_control': False,
+            },
+            1,
+        ),
+        (
+            RED.Experiment,
+            {
+                'flatfield': None,
+            },
+            {
+                'exposure_time': 0.01,
+                'tilt_range': 5,
+                'stepsize': 1.0,
+            },
+            2,
+        ),
+    ],
+)
+def test_experiment(
+    exp_cls: 'type[ExperimentBase]',
+    init_kwargs: dict,
+    collect_kwargs: dict,
+    num_collections: int,
+    ctrl,
+    tmp_path
+):
+    init_kwargs['ctrl'] = ctrl
+
+    init_kwargs['path'] = tmp_path
 
     logger = MagicMock()
+    init_kwargs['log'] = logger
 
-    cexp = cred.experiment.Experiment(
-        ctrl,
-        path=expdir,
-        stop_event=stopEvent,
-        log=logger,
-        mode='simulate',
-    )
-    cexp.start_collection()
+    stop_event = init_kwargs.get('stop_event')
+    if stop_event is not None:
+        stop_event.set()
 
-    tempdrc.cleanup()
-
-
-def test_cred_tvips(ctrl):
-    from instamatic.experiments import cRED_tvips
-
-    tempdrc = tempfile.TemporaryDirectory()
-    expdir = tempdrc.name
-
-    logger = MagicMock()
-
-    ctrl.stage.a = 20
-    target_angle = -20
-    exposure = 0.1
-    manual_control = False
-    mode = 'diff'
-
-    exp = cRED_tvips.Experiment(
-        ctrl=ctrl,
-        path=expdir,
-        log=logger,
-        mode=mode,
-        track=None,
-        exposure=exposure,
-    )
-    exp.get_ready()
-
-    exp.start_collection(
-        target_angle=target_angle,
-        manual_control=manual_control,
-    )
-
-    tempdrc.cleanup()
-
-
-def test_red(ctrl):
-    from instamatic.experiments import RED
-
-    tempdrc = tempfile.TemporaryDirectory()
-    expdir = tempdrc.name
-
-    logger = MagicMock()
-
-    exposure_time = 0.01
-    tilt_range = 5
-    stepsize = 1.0
-
-    red_exp = RED.Experiment(
-        ctrl=ctrl,
-        path=expdir,
-        log=logger,
-        flatfield=None,
-    )
-
-    for x in range(2):
-        red_exp.start_collection(
-            exposure_time=exposure_time,
-            tilt_range=tilt_range,
-            stepsize=stepsize,
-        )
-
-    red_exp.finalize()
-
-    tempdrc.cleanup()
+    with exp_cls(**init_kwargs) as exp:
+        for _ in range(num_collections):
+            exp.start_collection(**collect_kwargs)

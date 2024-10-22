@@ -1,15 +1,17 @@
 import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
 from instamatic import config
 from instamatic.camera import Camera
+from instamatic.camera.camera_base import CameraBase
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
+from instamatic.TEMController.microscope_base import MicroscopeBase
 
 from .deflectors import *
 from .lenses import *
@@ -89,7 +91,7 @@ class TEMController:
     cam: Camera control object (see instamatic.camera) [optional]
     """
 
-    def __init__(self, tem, cam=None):
+    def __init__(self, tem: MicroscopeBase, cam: Optional[CameraBase] = None):
         super().__init__()
 
         self._executor = ThreadPoolExecutor(max_workers=1)
@@ -122,7 +124,7 @@ class TEMController:
 
     def __repr__(self):
         return (f'Mode: {self.tem.getFunctionMode()}\n'
-                f'High tension: {self.high_tension/1000:.0f} kV\n'
+                f'High tension: {self.high_tension / 1000:.0f} kV\n'
                 f'Current density: {self.current_density:.2f} pA/cm2\n'
                 f'{self.gunshift}\n'
                 f'{self.guntilt}\n'
@@ -244,7 +246,7 @@ class TEMController:
         t1 = time.perf_counter()
 
         if verbose:
-            print(f'\nScript finished in {t1-t0:.4f} s')
+            print(f'\nScript finished in {t1 - t0:.4f} s')
 
     def get_stagematrix(self, binning: int = None, mag: int = None, mode: int = None):
         """Helper function to get the stage matrix from the config file. The
