@@ -18,8 +18,8 @@ def header():
     return {'value': 123, 'string': 'test'}
 
 
-def test_tiff(data, header):
-    out = 'out.tiff'
+def test_tiff(tmp_path, data, header):
+    out = tmp_path / 'out.tiff'
 
     formats.write_tiff(out, data, header)
 
@@ -31,8 +31,8 @@ def test_tiff(data, header):
     assert header == h
 
 
-def test_cbf(data, header):
-    out = 'out.cbf'
+def test_cbf(tmp_path, data, header):
+    out = tmp_path / 'out.cbf'
 
     formats.write_cbf(out, data, header)
 
@@ -43,8 +43,8 @@ def test_cbf(data, header):
         img, h = formats.read_image(out)
 
 
-def test_mrc(data, header):
-    out = 'out.mrc'
+def test_mrc(tmp_path, data, header):
+    out = tmp_path / 'out.mrc'
 
     # Header not supported
     formats.write_mrc(out, data)
@@ -57,8 +57,8 @@ def test_mrc(data, header):
     assert isinstance(header, dict)
 
 
-def test_smv(data, header):
-    out = 'out.smv'
+def test_smv(tmp_path, data, header):
+    out = tmp_path / 'out.smv'
 
     formats.write_adsc(out, data, header)
 
@@ -71,8 +71,8 @@ def test_smv(data, header):
     assert h['string'] == header['string']
 
 
-def test_hdf5(data, header):
-    out = 'out.h5'
+def test_hdf5(tmp_path, data, header):
+    out = tmp_path / 'out.h5'
 
     formats.write_hdf5(out, data, header)
 
