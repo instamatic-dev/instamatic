@@ -124,7 +124,7 @@ class TEMController:
 
     def __repr__(self):
         return (f'Mode: {self.tem.getFunctionMode()}\n'
-                f'High tension: {self.high_tension/1000:.0f} kV\n'
+                f'High tension: {self.high_tension / 1000:.0f} kV\n'
                 f'Current density: {self.current_density:.2f} pA/cm2\n'
                 f'{self.gunshift}\n'
                 f'{self.guntilt}\n'
@@ -246,7 +246,7 @@ class TEMController:
         t1 = time.perf_counter()
 
         if verbose:
-            print(f'\nScript finished in {t1-t0:.4f} s')
+            print(f'\nScript finished in {t1 - t0:.4f} s')
 
     def get_stagematrix(self, binning: int = None, mag: int = None, mode: int = None):
         """Helper function to get the stage matrix from the config file. The

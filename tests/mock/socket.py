@@ -2,7 +2,7 @@ from instamatic.camera.gatansocket3 import GatanSocket
 
 
 class SockMock:
-    """Class to mock a socket connection"""
+    """Class to mock a socket connection."""
 
     def __init__(self):
         self.sent = []

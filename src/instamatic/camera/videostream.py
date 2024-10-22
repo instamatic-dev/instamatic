@@ -1,8 +1,9 @@
 import atexit
 import threading
 
-from .camera import Camera
 from instamatic.camera.camera_base import CameraBase
+
+from .camera import Camera
 
 
 class ImageGrabber:

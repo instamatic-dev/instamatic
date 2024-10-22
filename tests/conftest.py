@@ -18,7 +18,7 @@ def pytest_configure():
 
 
 @pytest.fixture(scope='module')
-def ctrl() -> "TEMController":
+def ctrl() -> 'TEMController':
     from instamatic.TEMController import initialize
     ctrl = initialize()
 

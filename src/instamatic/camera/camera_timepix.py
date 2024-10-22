@@ -53,6 +53,7 @@ def correct_cross(raw, factor=2.15):
 
 class CameraTPX(CameraBase):
     streamable = True
+
     def __init__(self, name='pytimepix'):
         super().__init__(name)
         libdrc = Path(__file__).parent
@@ -75,7 +76,6 @@ class CameraTPX(CameraBase):
         self.obj = self.lib.EMCameraObj_new()
         atexit.register(self.release_connection)
         self.is_connected = None
-
 
     def acquire_lock(self):
         try:
@@ -107,6 +107,7 @@ class CameraTPX(CameraBase):
         else:
             raise OSError('Could not establish connection to camera.')
         return ret
+
     def connect(self):
         self.establish_connection()
 
@@ -120,6 +121,7 @@ class CameraTPX(CameraBase):
         else:
             print('Camera disconnect failed...')
         return ret
+
     def disconnect(self):
         self.release_connection()
 
@@ -359,7 +361,7 @@ if __name__ == '__main__':
         for x in range(n):
             cam.acquire_data(t)
         dt = time.perf_counter() - t0
-        print(f'Total time: {dt:.1f} s, acquisition time: {1000*(dt/n):.2f} ms, overhead: {1000*(dt/n - t):.2f} ms')
+        print(f'Total time: {dt:.1f} s, acquisition time: {1000 * (dt / n):.2f} ms, overhead: {1000 * (dt / n - t):.2f} ms')
 
     embed(banner1='')
 

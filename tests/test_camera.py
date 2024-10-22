@@ -46,13 +46,13 @@ def test_functions(ctrl):
 
 
 @pytest.mark.parametrize(
-    "cam",
+    'cam',
     [
-        pytest.param(CameraDLLMock, marks=pytest.mark.xfail(reason="establish_connection opens a popup window which halts execution")),
-        pytest.param(CameraEMMENUMock, marks=pytest.mark.xfail(reason="Not implemented")),
+        pytest.param(CameraDLLMock, marks=pytest.mark.xfail(reason='establish_connection opens a popup window which halts execution')),
+        pytest.param(CameraEMMENUMock, marks=pytest.mark.xfail(reason='Not implemented')),
         CameraGatan2Mock,
         CameraMerlinMock,
-        pytest.param(CameraServalMock, marks=pytest.mark.xfail(reason="Not implemented")),
+        pytest.param(CameraServalMock, marks=pytest.mark.xfail(reason='Not implemented')),
         CameraSimuMock,
         CameraTPXMock,
     ],
@@ -60,18 +60,19 @@ def test_functions(ctrl):
 def test_init_mock(cam):
     c = cam()
 
+
 @pytest.mark.parametrize(
-        "cam",
-        [
-            CameraSimu,
-            pytest.param(CameraDLL, marks=pytest.mark.xfail(reason="Needs config")),
-            pytest.param(CameraGatan2, marks=pytest.mark.xfail(reason="Needs config + server")),
-            CameraTPX,
-            pytest.param(CameraEMMENU, marks=pytest.mark.xfail(reason="WinError: Invalid class string")),
-            pytest.param(CameraMerlin, marks=pytest.mark.xfail(reason="Needs config + server")),
-        ]
+    'cam',
+    [
+        CameraSimu,
+        pytest.param(CameraDLL, marks=pytest.mark.xfail(reason='Needs config')),
+        pytest.param(CameraGatan2, marks=pytest.mark.xfail(reason='Needs config + server')),
+        CameraTPX,
+        pytest.param(CameraEMMENU, marks=pytest.mark.xfail(reason='WinError: Invalid class string')),
+        pytest.param(CameraMerlin, marks=pytest.mark.xfail(reason='Needs config + server')),
+    ]
 )
 def test_init(cam):
     # Use "test" as the name of the camera, as this is where the settings are read from
-    c = cam(name="test")
+    c = cam(name='test')
     assert isinstance(c, CameraBase)

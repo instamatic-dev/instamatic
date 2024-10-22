@@ -16,23 +16,23 @@ def data():
 
 @pytest.fixture()
 def header():
-    return {"value": 123, "string": "test"}
+    return {'value': 123, 'string': 'test'}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope='module')
 def temp_data_file(tmp_path_factory) -> str:
-    return str(tmp_path_factory.mktemp("data", numbered=True) / "out.")
+    return str(tmp_path_factory.mktemp('data', numbered=True) / 'out.')
 
 
 @pytest.mark.parametrize(
-    ["format", "write_func", "with_header"],
+    ['format', 'write_func', 'with_header'],
     [
-        ("tiff", formats.write_tiff, True),
-        ("cbf", formats.write_cbf, True),
-        ("mrc", formats.write_mrc, False),
-        ("smv", formats.write_adsc, True),
-        ("img", formats.write_adsc, True),
-        ("h5", formats.write_hdf5, True),
+        ('tiff', formats.write_tiff, True),
+        ('cbf', formats.write_cbf, True),
+        ('mrc', formats.write_mrc, False),
+        ('smv', formats.write_adsc, True),
+        ('img', formats.write_adsc, True),
+        ('h5', formats.write_hdf5, True),
     ],
 )
 def test_write(format, write_func, with_header, data, header, temp_data_file):
@@ -44,15 +44,15 @@ def test_write(format, write_func, with_header, data, header, temp_data_file):
 
 
 @pytest.mark.parametrize(
-    ["format", "write_func", "alt"],
+    ['format', 'write_func', 'alt'],
     [
-        ("tif", formats.write_tiff, "tiff"),
-        ("hdf5", formats.write_hdf5, "h5"),
+        ('tif', formats.write_tiff, 'tiff'),
+        ('hdf5', formats.write_hdf5, 'h5'),
     ],
 )
 def test_write_rename_ext(format, write_func, alt, data, header, temp_data_file):
-    out = temp_data_file + "alt." + format
-    out_alt = temp_data_file + "alt." + alt
+    out = temp_data_file + 'alt.' + format
+    out_alt = temp_data_file + 'alt.' + alt
 
     write_func(out, data, header)
 
@@ -60,18 +60,18 @@ def test_write_rename_ext(format, write_func, alt, data, header, temp_data_file)
 
 
 @pytest.mark.parametrize(
-    ["format", "write_func", "with_header", "raises"],
+    ['format', 'write_func', 'with_header', 'raises'],
     [
 
-        ("tiff", formats.write_tiff, True, does_not_raise()),
-        ("smv", formats.write_adsc, True, does_not_raise()),
-        ("img", formats.write_adsc, True, does_not_raise()),
-        ("h5", formats.write_hdf5, True, does_not_raise()),
+        ('tiff', formats.write_tiff, True, does_not_raise()),
+        ('smv', formats.write_adsc, True, does_not_raise()),
+        ('img', formats.write_adsc, True, does_not_raise()),
+        ('h5', formats.write_hdf5, True, does_not_raise()),
         # Header is not supported
-        ("mrc", formats.write_mrc, False, pytest.raises(ValueError, match="Header mismatch")),
-        ("cbf", formats.write_cbf, True, pytest.raises(NotImplementedError)),
-        ("invalid_extension", lambda *args: None, False, pytest.raises(OSError)),
-        ("does_not_exist.h5", lambda *args: None, False, pytest.raises(FileNotFoundError)),
+        ('mrc', formats.write_mrc, False, pytest.raises(ValueError, match='Header mismatch')),
+        ('cbf', formats.write_cbf, True, pytest.raises(NotImplementedError)),
+        ('invalid_extension', lambda *args: None, False, pytest.raises(OSError)),
+        ('does_not_exist.h5', lambda *args: None, False, pytest.raises(FileNotFoundError)),
     ],
 )
 def test_read(format, write_func, with_header, raises, data, header, temp_data_file):
@@ -89,4 +89,4 @@ def test_read(format, write_func, with_header, raises, data, header, temp_data_f
 
         # Check if the header we want is in the header we read
         if not all(str(v) == str(h.get(k)) for k, v in header.items()):
-            raise ValueError("Header mismatch")
+            raise ValueError('Header mismatch')

@@ -65,7 +65,7 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     """
     length = len(cmd)
     # tmp = 'MPX,00000000' + str(length+5) + ',' + type_cmd + ',' + cmd
-    tmp = f'MPX,00000000{length+5},{type_cmd},{cmd}'
+    tmp = f'MPX,00000000{length + 5},{type_cmd},{cmd}'
     logger.debug(tmp)
     return tmp.encode()
 
@@ -92,7 +92,6 @@ class CameraMerlin(CameraBase):
         logger.info(msg)
 
         atexit.register(self.release_connection)
-
 
     def receive_data(self, *, nbytes: int) -> bytearray:
         """Safely receive from the socket until `n_bytes` of data are
@@ -340,7 +339,6 @@ class CameraMerlin(CameraBase):
 
         return dim_x, dim_y
 
-
     def establish_connection(self) -> None:
         """Establish connection to command port of the merlin software."""
         # Create command socket
@@ -415,7 +413,7 @@ def test_movie(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'\nTotal time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'\nTotal time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
     for frame in frames:
         assert frame.shape == (512, 512)
@@ -439,7 +437,7 @@ def test_single_frame(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'Total time: {t1-t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(f'Total time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
 
 
 def test_plot_single_image(cam):

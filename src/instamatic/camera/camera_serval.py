@@ -24,14 +24,12 @@ class CameraServal(CameraBase):
         """Initialize camera module."""
         super().__init__(name)
 
-
         self.establish_connection()
 
         msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
         atexit.register(self.release_connection)
-
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -99,8 +97,6 @@ class CameraServal(CameraBase):
         dim_y = int(dim_y / binning)
 
         return dim_x, dim_y
-
-
 
     def establish_connection(self) -> None:
         """Establish connection to the camera."""

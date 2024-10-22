@@ -142,7 +142,7 @@ class Experiment(ExperimentBase):
         self.stretch_amplitude = config.camera.stretch_amplitude
 
         with open(self.path / 'summary.txt', 'a') as f:
-            print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
+            print(f'Rotation range: {self.end_angle - self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure_time:.3f} s', file=f)
             print(f'Spot Size: {self.spotsize}', file=f)
             print(f'Camera length: {self.camera_length} mm', file=f)
@@ -187,6 +187,7 @@ class Experiment(ExperimentBase):
 
     def teardown(self):
         self.finalize()
+
 
 def main():
     from instamatic import TEMController

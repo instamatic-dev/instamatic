@@ -545,6 +545,7 @@ class Experiment(ExperimentBase):
     def start_collection(self, ctrl=None, **kwargs):
         self.run(ctrl=ctrl, **kwargs)
 
+
 def main():
     import argparse
     description = """Command line program to run the serial ED data collection routine."""

@@ -130,7 +130,6 @@ class CameraDLL(CameraBase):
 
         self.establish_connection()
 
-
         msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
 
@@ -139,7 +138,6 @@ class CameraDLL(CameraBase):
         # print(f"Info {self.is_camera_info_available()} | Count {self.getCameraCount()}")
 
         atexit.register(self.release_connection)
-
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine.

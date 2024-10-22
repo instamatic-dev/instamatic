@@ -19,9 +19,7 @@ class CameraSimu(CameraBase):
         """Initialize camera module."""
         super().__init__(name)
 
-
         self.establish_connection()
-
 
         msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
@@ -101,8 +99,6 @@ class CameraSimu(CameraBase):
         dim_y = int(dim_y / binning)
 
         return dim_x, dim_y
-
-
 
     def establish_connection(self) -> None:
         """Establish connection to the camera."""

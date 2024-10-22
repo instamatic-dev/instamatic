@@ -150,7 +150,7 @@ class Experiment(ExperimentBase):
             print(f'Time Period End: {self.t_end}', file=f)
             print(f'Starting angle: {self.start_angle:.2f} degrees', file=f)
             print(f'Ending angle: {self.end_angle:.2f} degrees', file=f)
-            print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
+            print(f'Rotation range: {self.end_angle - self.start_angle:.2f} degrees', file=f)
             print(f'Exposure Time: {self.exposure:.3f} s', file=f)
             print(f'Acquisition time: {self.acquisition_time:.3f} s', file=f)
             print(f'Total time: {self.total_time:.3f} s', file=f)

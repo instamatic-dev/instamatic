@@ -19,32 +19,35 @@ from instamatic import config
 from .socket import GatanSocketMock, SockMock
 
 __all__ = [
-    "CameraDLLMock",
-    "CameraEMMENUMock",
-    "CameraGatan2Mock",
-    "CameraMerlinMock",
-    "CameraServalMock",
-    "CameraSimuMock",
-    "CameraTPXMock",
-    "CameraMock",
+    'CameraDLLMock',
+    'CameraEMMENUMock',
+    'CameraGatan2Mock',
+    'CameraMerlinMock',
+    'CameraServalMock',
+    'CameraSimuMock',
+    'CameraTPXMock',
+    'CameraMock',
 ]
 
 
 class CameraMockBase:
-    """Override `load_defaults` as the config file for each microscope is not present"""
+    """Override `load_defaults` as the config file for each microscope is not
+    present."""
+
     def load_defaults(self):
         for key, val in config.camera.mapping.items():
             setattr(self, key, val)
 
 
 class CameraGatan2Mock(CameraMockBase, CameraGatan2):
-    def __init__(self, name: str = "gatan2"):
+    def __init__(self, name: str = 'gatan2'):
         self.name = name
-        self.g = GatanSocketMock(port="")
+        self.g = GatanSocketMock(port='')
         self._recording = False
 
+
 class CameraMerlinMock(CameraMockBase, CameraMerlin):
-    host = "127.0.0.1"
+    host = '127.0.0.1'
     commandport = 0
     dataport = 1
 
@@ -70,7 +73,7 @@ class CameraDLLMock(CameraMockBase, CameraDLL):
 class CameraTPXMock(CameraMockBase, CameraTPX):
     def acquire_lock(self):
         from pathlib import Path
-        self.lockfile = Path(__file__).with_name("timepix_mock.lockfile")
+        self.lockfile = Path(__file__).with_name('timepix_mock.lockfile')
         return super().acquire_lock()
 
 

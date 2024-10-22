@@ -116,7 +116,6 @@ class CameraEMMENU(CameraBase):
 
         self._vp.DirectoryHandle = self.drc_index  # set current directory
 
-
         msg = f'Camera `{self.get_camera_name()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
@@ -133,7 +132,7 @@ class CameraEMMENU(CameraBase):
         for i, cfg in enumerate(self._obj.CameraConfigurations):
             is_selected = (current == cfg.Name)
             end = ' (selected)' if is_selected else ''
-            print(f'{i+1:2d} - {cfg.Name}{end}')
+            print(f'{i + 1:2d} - {cfg.Name}{end}')
             lst.append(cfg.Name)
 
         return lst
@@ -391,7 +390,7 @@ class CameraEMMENU(CameraBase):
                 # self._immgr.DeleteImageBuffer(drc_index, image_index)  # does not work on 3200
                 self._emi.DeleteImage(p)  # also clears from buffer
 
-        print(f'Wrote {i+1} images to {path}')
+        print(f'Wrote {i + 1} images to {path}')
 
     def get_image(self, **kwargs) -> 'np.array':
         """Acquire image through EMMENU and return data as np array."""

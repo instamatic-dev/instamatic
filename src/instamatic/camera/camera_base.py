@@ -44,7 +44,8 @@ class CameraBase(ABC):
     def get_movie(
         self, n_frames: int, exposure: float = None, binsize: int = None, **kwargs
     ) -> List[ndarray]:
-        """Basic implementation, subclasses should override with appropriate optimization"""
+        """Basic implementation, subclasses should override with appropriate
+        optimization."""
         return [
             self.get_image(exposure=exposure, binsize=binsize, **kwargs)
             for _ in range(n_frames)

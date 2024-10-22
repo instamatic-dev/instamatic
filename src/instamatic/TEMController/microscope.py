@@ -6,7 +6,7 @@ default_tem_interface = config.microscope.interface
 __all__ = ['Microscope', 'get_tem']
 
 
-def get_tem(interface: str) -> "type[MicroscopeBase]":
+def get_tem(interface: str) -> 'type[MicroscopeBase]':
     """Grab tem class with the specific 'interface'."""
     simulate = config.settings.simulate
 

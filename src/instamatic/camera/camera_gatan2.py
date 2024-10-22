@@ -21,7 +21,6 @@ class CameraGatan2(CameraBase):
         """Initialize camera module."""
         super().__init__(name)
 
-
         self.g = GatanSocket()
 
         self._recording = False
@@ -73,7 +72,7 @@ class CameraGatan2(CameraBase):
         path = Path(path)
         i = 0
 
-        print(f'Wrote {i+1} images to {path}')
+        print(f'Wrote {i + 1} images to {path}')
 
     def get_image(self,
                   exposure=0.400,

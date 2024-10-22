@@ -140,7 +140,7 @@ class SerialExperiment:
         t1 = time.perf_counter()
         dt = t1 - t0
         print(f'Serial experiment finished -> {n_measured} crystals measured')
-        print(f'Time taken: {dt:.1f} s, {dt/n_measured:.1f} s/crystal')
+        print(f'Time taken: {dt:.1f} s, {dt / n_measured:.1f} s/crystal')
         print(f'Data directory: {self.path}')
 
 
@@ -229,7 +229,7 @@ class Experiment(ExperimentBase):
             y_offset = int(self.track_func(start_angle))
             x_offset = self.x_offset
 
-            print(f'(autotracking) setting a={start_angle:.0f}, x={self.start_x+x_offset:.0f}, y={self.start_y+y_offset:.0f}, z={self.start_z:.0f}')
+            print(f'(autotracking) setting a={start_angle:.0f}, x={self.start_x + x_offset:.0f}, y={self.start_y + y_offset:.0f}, z={self.start_z:.0f}')
             self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x + x_offset, y=self.start_y + y_offset, step=10000)
             self.ctrl.stage.set(a=start_angle, z=self.start_z)
 
@@ -494,7 +494,7 @@ class Experiment(ExperimentBase):
             print(f'Number of frames: {self.nframes}', file=f)
             print(f'Starting angle: {self.start_angle:.2f} degrees', file=f)
             print(f'Ending angle: {self.end_angle:.2f} degrees', file=f)
-            print(f'Rotation range: {self.end_angle-self.start_angle:.2f} degrees', file=f)
+            print(f'Rotation range: {self.end_angle - self.start_angle:.2f} degrees', file=f)
             print(f'Rotation speed: {self.rotation_speed:.3f} degrees/s', file=f)
             print(f'Exposure Time: {self.timings.exposure_time:.3f} s', file=f)
             print(f'Acquisition time: {self.timings.acquisition_time:.3f} s', file=f)
