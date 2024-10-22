@@ -2,6 +2,7 @@ import atexit
 import threading
 
 from .camera import Camera
+from instamatic.camera.camera_base import CameraBase
 
 
 class ImageGrabber:
@@ -15,7 +16,7 @@ class ImageGrabber:
     routine.
     """
 
-    def __init__(self, cam, callback, frametime: float = 0.05):
+    def __init__(self, cam: CameraBase, callback, frametime: float = 0.05):
         super().__init__()
 
         self.callback = callback
@@ -117,7 +118,7 @@ class VideoStream(threading.Thread):
             self.frame = frame
             self.grabber.lock.release()
 
-    def setup_grabber(self):
+    def setup_grabber(self) -> ImageGrabber:
         grabber = ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
         atexit.register(grabber.stop)
         return grabber
