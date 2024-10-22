@@ -6,6 +6,7 @@ import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +16,14 @@ logger = logging.getLogger(__name__)
 # 3. launch `instamatic`
 
 
-class CameraServal:
+class CameraServal(CameraBase):
     """Interfaces with Serval from ASI."""
+    streamable = True
 
     def __init__(self, name='serval'):
         """Initialize camera module."""
-        super().__init__()
+        super().__init__(name)
 
-        self.name = name
-
-        self.load_defaults()
 
         self.establish_connection()
 
@@ -33,13 +32,6 @@ class CameraServal:
 
         atexit.register(self.release_connection)
 
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.streamable = True
-
-        self.__dict__.update(config.camera.mapping)
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -108,13 +100,7 @@ class CameraServal:
 
         return dim_x, dim_y
 
-    def get_camera_dimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
-        return self.dimensions
 
-    def get_name(self) -> str:
-        """Get the name reported by the camera."""
-        return self.name
 
     def establish_connection(self) -> None:
         """Establish connection to the camera."""

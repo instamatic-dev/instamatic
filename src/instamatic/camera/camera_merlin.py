@@ -27,11 +27,12 @@ import atexit
 import logging
 import socket
 import time
-from typing import Any
+from typing import Any, List
 
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 try:
     from .merlin_io import load_mib
@@ -69,22 +70,20 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
     return tmp.encode()
 
 
-class CameraMerlin:
+class CameraMerlin(CameraBase):
     """Camera interface for the Quantum Detectors Merlin camera."""
     START_SIZE = 14
     MAX_NUMFRAMESTOACQUIRE = 42_949_672_950
+    streamable = True
 
     def __init__(self, name='merlin'):
         """Initialize camera module."""
-        super().__init__()
+        super().__init__(name)
 
-        self.name = name
         self._state = {}
 
         self._soft_trigger_mode = False
         self._soft_trigger_exposure = None
-
-        self.load_defaults()
 
         self.establish_connection()
         self.establish_data_connection()
@@ -94,13 +93,6 @@ class CameraMerlin:
 
         atexit.register(self.release_connection)
 
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.streamable = True
-
-        self.__dict__.update(config.camera.mapping)
 
     def receive_data(self, *, nbytes: int) -> bytearray:
         """Safely receive from the socket until `n_bytes` of data are
@@ -348,13 +340,6 @@ class CameraMerlin:
 
         return dim_x, dim_y
 
-    def get_camera_dimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
-        return self.dimensions
-
-    def get_name(self) -> str:
-        """Get the name reported by the camera."""
-        return self.name
 
     def establish_connection(self) -> None:
         """Establish connection to command port of the merlin software."""

@@ -7,6 +7,7 @@ import comtypes.client
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def EMVector2dict(vec):
     return d
 
 
-class CameraEMMENU:
+class CameraEMMENU(CameraBase):
     """Software interface for the EMMENU program.
 
     Communicates with EMMENU over the COM interface defined by TVIPS
@@ -58,6 +59,7 @@ class CameraEMMENU:
     name : str
         Name of the interface
     """
+    streamable = False
 
     def __init__(
         self,
@@ -65,14 +67,12 @@ class CameraEMMENU:
         name: str = 'emmenu',
     ):
         """Initialize camera module."""
-        super().__init__()
+        super().__init__(name)
 
         try:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
         except OSError:
             comtypes.CoInitialize()
-
-        self.name = name
 
         self._obj = comtypes.client.CreateObject('EMMENU4.EMMENUApplication.1', comtypes.CLSCTX_ALL)
 
@@ -116,21 +116,12 @@ class CameraEMMENU:
 
         self._vp.DirectoryHandle = self.drc_index  # set current directory
 
-        self.load_defaults()
 
         msg = f'Camera `{self.get_camera_name()}` ({self.name}) initialized'
         # print(msg)
         logger.info(msg)
 
         atexit.register(self.release_connection)
-
-    def load_defaults(self) -> None:
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.__dict__.update(config.camera.mapping)
-
-        self.streamable = False
 
     def list_configs(self) -> list:
         """List the configs from the Configuration Manager."""
@@ -505,6 +496,10 @@ class CameraEMMENU:
         logger.info(msg)
 
         comtypes.CoUninitialize()
+
+    def establish_connection(self):
+        # All is handled in the constructor
+        pass
 
 
 if __name__ == '__main__':

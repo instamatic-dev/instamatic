@@ -23,7 +23,8 @@ class CameraBase(ABC):
     stretch_azimuth: float
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self, name: str):
+        self.name = name
         self.load_defaults()
 
     @abstractmethod
@@ -65,5 +66,5 @@ class CameraBase(ABC):
     def load_defaults(self):
         if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
-        for key, val in config.camera.mapping:
+        for key, val in config.camera.mapping.items():
             setattr(self, key, val)

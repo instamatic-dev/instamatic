@@ -5,23 +5,23 @@ import time
 import numpy as np
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
 
 
-class CameraSimu:
+class CameraSimu(CameraBase):
     """Simple class that simulates the camera interface and mocks the method
     calls."""
+    streamable = True
 
     def __init__(self, name='simulate'):
         """Initialize camera module."""
-        super().__init__()
+        super().__init__(name)
 
-        self.name = name
 
         self.establish_connection()
 
-        self.load_defaults()
 
         msg = f'Camera {self.get_name()} initialized'
         logger.info(msg)
@@ -33,14 +33,6 @@ class CameraSimu:
         self._exposure = self.default_exposure
         self._autoincrement = True
         self._start_record_time = -1
-
-    def load_defaults(self):
-        if self.name != config.settings.camera:
-            config.load_camera_config(camera_name=self.name)
-
-        self.streamable = True
-
-        self.__dict__.update(config.camera.mapping)
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -110,13 +102,7 @@ class CameraSimu:
 
         return dim_x, dim_y
 
-    def get_camera_dimensions(self) -> (int, int):
-        """Get the dimensions reported by the camera."""
-        return self.dimensions
 
-    def get_name(self) -> str:
-        """Get the name reported by the camera."""
-        return self.name
 
     def establish_connection(self) -> None:
         """Establish connection to the camera."""
