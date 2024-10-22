@@ -269,6 +269,9 @@ class Experiment(ExperimentBase):
         self.emmenu.start_liveview()
 
         print('Ready...')
+    
+    def setup(self):
+        self.get_ready()
 
     def manual_activation(self) -> float:
         ACTIVATION_THRESHOLD = 0.2

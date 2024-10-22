@@ -122,7 +122,7 @@ def load_IS_Calibrations(imageshift, ctrl, diff_defocus, logger, mode):
     return transform_imgshift, c
 
 
-class Experiment(BaseException):
+class Experiment(ExperimentBase):
     def __init__(self, ctrl,
                  exposure_time,
                  exposure_time_image,

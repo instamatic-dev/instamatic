@@ -184,7 +184,9 @@ class Experiment(ExperimentBase):
 
         return True
 
-
+    def teardown(self):
+        self.finalize()
+        
 def main():
     from instamatic import TEMController
     ctrl = TEMController.initialize()
