@@ -23,6 +23,8 @@ frames = cam.get_movie(n_frames=10, exposure=0.1)
 ```
 """
 
+from __future__ import annotations
+
 import atexit
 import logging
 import socket
@@ -72,6 +74,7 @@ def MPX_CMD(type_cmd: str = 'GET', cmd: str = 'DETECTORSTATUS') -> bytes:
 
 class CameraMerlin(CameraBase):
     """Camera interface for the Quantum Detectors Merlin camera."""
+
     START_SIZE = 14
     MAX_NUMFRAMESTOACQUIRE = 42_949_672_950
     streamable = True
@@ -233,8 +236,13 @@ class CameraMerlin(CameraBase):
             logger.info('Change exposure to %s s', exposure)
             self.setup_soft_trigger(exposure=exposure)
         elif self._frame_number == self.MAX_NUMFRAMESTOACQUIRE:
-            logger.debug(('Maximum frame number reached for this acquisition, '
-                          'resetting soft trigger.') % self.MAX_NUMFRAMESTOACQUIRE)
+            logger.debug(
+                (
+                    'Maximum frame number reached for this acquisition, '
+                    'resetting soft trigger.'
+                )
+                % self.MAX_NUMFRAMESTOACQUIRE
+            )
             self.setup_soft_trigger(exposure=exposure)
 
         self.merlin_cmd('SOFTTRIGGER')
@@ -318,7 +326,7 @@ class CameraMerlin(CameraBase):
 
                 full_framesize = self.START_SIZE + size
             else:
-                framedata = self.receive_data(nbytes=full_framesize)[self.START_SIZE:]
+                framedata = self.receive_data(nbytes=full_framesize)[self.START_SIZE :]
 
             frames.append(framedata)
 
@@ -353,11 +361,13 @@ class CameraMerlin(CameraBase):
         except ConnectionRefusedError as e:
             raise ConnectionRefusedError(
                 f'Could not establish command connection to {self.name}. '
-                'The Merlin command port is not responding.') from e
+                'The Merlin command port is not responding.'
+            ) from e
         except OSError as e:
             raise OSError(
                 f'Could not establish command connection to {self.name} ({e.args[0]}).'
-                'Did you start the Merlin software? Is the IP correct? Is the Merlin command port already connected?).') from e
+                'Did you start the Merlin software? Is the IP correct? Is the Merlin command port already connected?).'
+            ) from e
 
         version = self.merlin_get(key='SOFTWAREVERSION')
         logger.info('Merlin version: %s', version)
@@ -378,7 +388,8 @@ class CameraMerlin(CameraBase):
         except ConnectionRefusedError as e:
             raise ConnectionRefusedError(
                 f'Could not establish data connection to {self.name} ({e.args[0]}). '
-                'The Merlin data port is not responding.') from e
+                'The Merlin data port is not responding.'
+            ) from e
 
         self.s_data = s_data
 
@@ -413,7 +424,9 @@ def test_movie(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'\nTotal time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(
+        f'\nTotal time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}'
+    )
 
     for frame in frames:
         assert frame.shape == (512, 512)
@@ -437,7 +450,9 @@ def test_single_frame(cam):
     overhead = avg_frametime - exposure
 
     print(f'\nExposure: {exposure}, frames: {n_frames}')
-    print(f'Total time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}')
+    print(
+        f'Total time: {t1 - t0:.3f} s - acq. time: {avg_frametime:.3f} s - overhead: {overhead:.3f}'
+    )
 
 
 def test_plot_single_image(cam):

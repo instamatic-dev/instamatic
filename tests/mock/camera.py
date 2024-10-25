@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from instamatic.camera.camera_base import CameraBase
 from instamatic.camera.camera_emmenu import CameraEMMENU
 from instamatic.camera.camera_gatan import CameraDLL
@@ -73,6 +75,7 @@ class CameraDLLMock(CameraMockBase, CameraDLL):
 class CameraTPXMock(CameraMockBase, CameraTPX):
     def acquire_lock(self):
         from pathlib import Path
+
         self.lockfile = Path(__file__).with_name('timepix_mock.lockfile')
         return super().acquire_lock()
 

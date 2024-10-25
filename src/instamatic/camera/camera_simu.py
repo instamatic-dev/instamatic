@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import time
@@ -13,6 +15,7 @@ logger = logging.getLogger(__name__)
 class CameraSimu(CameraBase):
     """Simple class that simulates the camera interface and mocks the method
     calls."""
+
     streamable = True
 
     def __init__(self, name='simulate'):
@@ -64,7 +67,7 @@ class CameraSimu(CameraBase):
         return arr
 
     def get_movie(self, n_frames, *, exposure: float = None, binsize: int = None, **kwargs):
-        """"Movie acquisition routine. If the exposure and binsize are not
+        """Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
         Parameters
@@ -170,5 +173,7 @@ class CameraSimu(CameraBase):
     def get_binning(self):
         return self.default_binsize
 
-    def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer=True) -> None:
+    def write_tiffs(
+        self, start_index: int, stop_index: int, path: str, clear_buffer=True
+    ) -> None:
         pass

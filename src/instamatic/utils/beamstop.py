@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -35,11 +37,9 @@ def minimum_bounding_rectangle(points):
     angles = np.unique(angles)
 
     # find rotation matrices
-    rotations = np.vstack([
-        np.cos(angles),
-        np.cos(angles - pi2),
-        np.cos(angles + pi2),
-        np.cos(angles)]).T
+    rotations = np.vstack(
+        [np.cos(angles), np.cos(angles - pi2), np.cos(angles + pi2), np.cos(angles)]
+    ).T
 
     rotations = rotations.reshape((-1, 2, 2))
 
@@ -90,7 +90,7 @@ def radial_average(z, center, as_radial_map=False):
         Radial profile of the diffraction pattern.
     """
     y, x = np.indices(z.shape)
-    r = np.sqrt((x - center[1])**2 + (y - center[0])**2)
+    r = np.sqrt((x - center[1]) ** 2 + (y - center[0]) ** 2)
     r = r.astype(int)
 
     tbin = np.bincount(r.ravel(), z.ravel())
@@ -103,7 +103,9 @@ def radial_average(z, center, as_radial_map=False):
         return averaged
 
 
-def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc='.'):
+def find_beamstop_rect(
+    img, center=None, threshold=0.5, pad=1, minsize=500, savefig=False, drc='.'
+):
     """Find rectangle fitting the beamstop.
 
     1. Radially scale the image (divide each point in the image by the radial average)
@@ -163,6 +165,7 @@ def find_beamstop_rect(img, center=None, threshold=0.5, pad=1, minsize=500, save
 
     if savefig:
         import matplotlib
+
         matplotlib.use('pdf')
         import matplotlib.pyplot as plt
 

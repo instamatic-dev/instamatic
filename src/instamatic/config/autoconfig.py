@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from math import sin
 from pathlib import Path
@@ -29,7 +31,9 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         PixelSizeX = v['fImgDistX']
         PixelSizeY = v['fImgDistY']
 
-        assert PixelSizeX == PixelSizeY, 'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
+        assert (
+            PixelSizeX == PixelSizeY
+        ), 'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
 
         if mode == 'diff':
             pixelsize = sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
@@ -80,16 +84,18 @@ It establishes a connection to the microscope and reads out the camera lengths a
 """
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     options = parser.parse_args()
 
     # Connect to microscope
 
-    tem_name = choice_prompt(choices=['jeol', 'fei', 'simulate'],
-                             default='simulate',
-                             question='Which microscope can I connect to?')
+    tem_name = choice_prompt(
+        choices=['jeol', 'fei', 'simulate'],
+        default='simulate',
+        question='Which microscope can I connect to?',
+    )
 
     # Fetch camera config
 
@@ -97,19 +103,24 @@ It establishes a connection to the microscope and reads out the camera lengths a
     choices = list(drc.glob('camera/*.yaml'))
     choices.append(None)
 
-    cam_config = choice_prompt(choices=choices,
-                               default=None,
-                               question='Which camera type do you want to use (select closest one and modify if needed)?')
+    cam_config = choice_prompt(
+        choices=choices,
+        default=None,
+        question='Which camera type do you want to use (select closest one and modify if needed)?',
+    )
 
     if cam_config:
         with open(cam_config) as f:
             cam_config_dict = yaml.safe_load(f)
             cam_name = cam_config_dict['interface']
 
-            cam_connect = input(
-                f'\nShould I connect to `{cam_name}` immediately?'
-                '\nThis is usually OK for gatan/simulate/TVIPS. [y/N] >> ',
-            ) == 'y'
+            cam_connect = (
+                input(
+                    f'\nShould I connect to `{cam_name}` immediately?'
+                    '\nThis is usually OK for gatan/simulate/TVIPS. [y/N] >> ',
+                )
+                == 'y'
+            )
     else:
         cam_connect = False
         cam_name = None

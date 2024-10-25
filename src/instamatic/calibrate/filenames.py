@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 CALIB_STAGE_LOWMAG = 'calib_stage_lowmag.pickle'
 CALIB_BEAMSHIFT = 'calib_beamshift.pickle'
 CALIB_BRIGHTNESS = 'calib_brightness.pickle'

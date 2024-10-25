@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import queue
 import sys
@@ -137,6 +139,7 @@ class MainFrame:
         # to the cam module
         if cam and cam.streamable:
             from .videostream_frame import module as stream_module
+
             stream_module.set_kwargs(stream=cam)
             modules.insert(0, stream_module)
 
@@ -168,7 +171,9 @@ def start_gui(ctrl, log=None):
 
     gui = MainFrame(root, cam=ctrl.cam, modules=MODULES)
 
-    experiment_ctrl = DataCollectionController(ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, log=log)
+    experiment_ctrl = DataCollectionController(
+        ctrl=ctrl, stream=ctrl.cam, beam_ctrl=None, app=gui.app, log=log
+    )
     experiment_ctrl.start()
 
     root.mainloop()
@@ -176,5 +181,6 @@ def start_gui(ctrl, log=None):
 
 if __name__ == '__main__':
     from instamatic import TEMController
+
     ctrl = TEMController.initialize()
     start_gui(ctrl)

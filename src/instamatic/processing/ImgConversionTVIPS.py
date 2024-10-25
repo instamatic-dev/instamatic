@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .ImgConversion import *
 
 
@@ -10,18 +12,19 @@ class ImgConversionTVIPS(ImgConversion):
     metadata/header (dict). The buffer index must start at 1.
     """
 
-    def __init__(self,
-                 buffer: list,                     # image buffer, list of (index [int], image data [2D numpy array], header [dict])
-                 osc_angle: float,                 # degrees, oscillation angle of the rotation
-                 start_angle: float,               # degrees, start angle of the rotation
-                 end_angle: float,                 # degrees, end angle of the rotation
-                 rotation_axis: float,             # radians, specifies the position of the rotation axis
-                 acquisition_time: float,          # seconds, acquisition time (exposure time + overhead)
-                 flatfield: str = 'flatfield.tiff',
-                 pixelsize: float = None,          # p/Angstrom, size of the pixels (overrides camera_length)
-                 physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
-                 wavelength: float = None,         # Angstrom, relativistic wavelength of the electron beam
-                 ):
+    def __init__(
+        self,
+        buffer: list,  # image buffer, list of (index [int], image data [2D numpy array], header [dict])
+        osc_angle: float,  # degrees, oscillation angle of the rotation
+        start_angle: float,  # degrees, start angle of the rotation
+        end_angle: float,  # degrees, end angle of the rotation
+        rotation_axis: float,  # radians, specifies the position of the rotation axis
+        acquisition_time: float,  # seconds, acquisition time (exposure time + overhead)
+        flatfield: str = 'flatfield.tiff',
+        pixelsize: float = None,  # p/Angstrom, size of the pixels (overrides camera_length)
+        physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
+        wavelength: float = None,  # Angstrom, relativistic wavelength of the electron beam
+    ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
@@ -70,6 +73,7 @@ class ImgConversionTVIPS(ImgConversion):
         self.name = 'TVIPS F416'
 
         from .XDS_templateTVIPS import XDS_template
+
         self.XDS_template = XDS_template
 
         self.check_settings()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import datetime
 import json
@@ -61,7 +63,9 @@ class MicroscopeClient:
                     if t > 3:
                         print('Waiting for server')
                     if t > 30:
-                        raise TEMCommunicationError('Cannot establish server connection (timeout)')
+                        raise TEMCommunicationError(
+                            'Cannot establish server connection (timeout)'
+                        )
                 else:
                     break
 
@@ -79,13 +83,13 @@ class MicroscopeClient:
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
-            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{func_name}`') from e
+            raise AttributeError(
+                f'`{self.__class__.__name__}` object has no attribute `{func_name}`'
+            ) from e
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {'func_name': func_name,
-                   'args': args,
-                   'kwargs': kwargs}
+            dct = {'func_name': func_name, 'args': args, 'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -111,9 +115,12 @@ class MicroscopeClient:
 
     def _init_dict(self):
         from instamatic.TEMController.microscope import get_tem
+
         tem = get_tem(interface=self.interface)
 
-        self._dct = {key: value for key, value in tem.__dict__.items() if not key.startswith('_')}
+        self._dct = {
+            key: value for key, value in tem.__dict__.items() if not key.startswith('_')
+        }
 
     def __dir__(self):
         return self._dct.keys()
@@ -136,12 +143,13 @@ class TraceVariable:
         values = t.stop()
     """
 
-    def __init__(self,
-                 func,
-                 interval: float = 1.0,
-                 name: str = 'variable',
-                 verbose: bool = False,
-                 ):
+    def __init__(
+        self,
+        func,
+        interval: float = 1.0,
+        name: str = 'variable',
+        verbose: bool = False,
+    ):
         super().__init__()
         self.name = name
         self.func = func

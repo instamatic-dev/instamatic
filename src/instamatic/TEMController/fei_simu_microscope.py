@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import random
@@ -30,9 +32,13 @@ class FEISimuMicroscope(MicroscopeBase):
         except OSError:
             comtypes.CoInitialize()
 
-        print('BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU')
+        print(
+            'BETA version of the FEI microscope interface for MMK/SU, can only be tested on MMK/bwang computer in room C564, MMK, SU'
+        )
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject(
+            'TEMScripting.Instrument.1', comtypes.CLSCTX_ALL
+        )
         # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
@@ -70,7 +76,9 @@ class FEISimuMicroscope(MicroscopeBase):
             try:
                 rng = getattr(config.microscope, attrname)
             except AttributeError:
-                print(f'Warning: No magnfication ranges were found for mode `{mode}` in the config file')
+                print(
+                    f'Warning: No magnfication ranges were found for mode `{mode}` in the config file'
+                )
             else:
                 setattr(self, attrname, rng)
 
@@ -126,7 +134,13 @@ class FEISimuMicroscope(MicroscopeBase):
         raise NotImplementedError
 
     def getStagePosition(self):
-        return self.stage.Position.X, self.stage.Position.Y, self.stage.Position.Z, self.stage.Position.A, self.stage.Position.B
+        return (
+            self.stage.Position.X,
+            self.stage.Position.Y,
+            self.stage.Position.Z,
+            self.stage.Position.A,
+            self.stage.Position.B,
+        )
 
     def getGunShift(self):
         x = self.tem.GUN.Shift.X
@@ -300,7 +314,10 @@ class FEISimuMicroscope(MicroscopeBase):
         self.beamblank = mode
 
     def getCondensorLensStigmator(self):
-        return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
+        return (
+            self.tom.Illumination.CondenserStigmator.X,
+            self.tom.Illumination.CondenserStigmator.Y,
+        )
 
     def setCondensorLensStigmator(self, x, y):
         self.tom.Illumination.CondenserStigmator.X = x
@@ -308,14 +325,20 @@ class FEISimuMicroscope(MicroscopeBase):
 
     def getIntermediateLensStigmator(self):
         """Diffraction stigmator."""
-        return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
+        return (
+            self.tom.Illumination.DiffractionStigmator.X,
+            self.tom.Illumination.DiffractionStigmator.Y,
+        )
 
     def setIntermediateLensStigmator(self, x, y):
         self.tom.Illumination.DiffractionStigmator.X = x
         self.tom.Illumination.DiffractionStigmator.Y = y
 
     def getObjectiveLensStigmator(self):
-        return self.tom.Illumination.ObjectiveStigmator.X, self.tom.Illumination.ObjectiveStigmator.Y
+        return (
+            self.tom.Illumination.ObjectiveStigmator.X,
+            self.tom.Illumination.ObjectiveStigmator.Y,
+        )
 
     def setObjectiveLensStigmator(self, x, y):
         self.tom.Illumination.ObjectiveStigmator.X = x

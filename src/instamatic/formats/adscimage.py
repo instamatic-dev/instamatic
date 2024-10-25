@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 # from https://github.com/silx-kit/fabio/blob/master/fabio/adscimage.py
@@ -41,7 +43,9 @@ def write_adsc(fname: str, data: np.array, header: dict = {}):
 
     # NOTE: XDS can handle only "SMV" images of TYPE=unsigned_short.
     dtype = np.uint16
-    data = np.round(data, 0).astype(dtype, copy=False)  # copy=False ensures that no copy is made if dtype is already satisfied
+    data = np.round(data, 0).astype(
+        dtype, copy=False
+    )  # copy=False ensures that no copy is made if dtype is already satisfied
     if swap_needed(header):
         data.byteswap(True)
 
@@ -95,7 +99,9 @@ def read_adsc(fname: str) -> (np.array, dict):
     try:
         data.shape = (dim2, dim1)
     except ValueError:
-        raise OSError(f'Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}')
+        raise OSError(
+            f'Size spec in ADSC-header does not match size of image data field {dim1}x{dim2} != {data.size}'
+        )
 
     return data, header
 

@@ -1,7 +1,11 @@
+from __future__ import annotations
+
+
 def is_admin():
     """Check if the current python instance has admin rights."""
     import ctypes
     import os
+
     try:
         is_admin = os.getuid() == 0
     except AttributeError:

@@ -3,6 +3,9 @@ function they were originally written for.
 
 Should be generally applicable.
 """
+
+from __future__ import annotations
+
 import time
 from datetime import datetime
 
@@ -36,7 +39,9 @@ def save_image(controller, **kwargs):
     drc = module_io.get_experiment_directory()
     drc.mkdir(exist_ok=True, parents=True)
 
-    timestamp = datetime.now().strftime('%H-%M-%S.%f')[:-3]  # cut last 3 digits for ms resolution
+    timestamp = datetime.now().strftime('%H-%M-%S.%f')[
+        :-3
+    ]  # cut last 3 digits for ms resolution
     outfile = drc / f'frame_{timestamp}.tiff'
 
     try:
@@ -83,5 +88,4 @@ JOBS = {
     'save_image': save_image,
     'toggle_difffocus': toggle_difffocus,
     'relax_beam': relax_beam,
-
 }

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import os
 import tkinter.filedialog
@@ -44,7 +46,14 @@ class IOFrame(LabelFrame):
         Label(frame, text='Sample name:').grid(row=3, column=0, sticky='W')
         Label(frame, text='Flatfield:').grid(row=4, column=0, sticky='W')
 
-        self.incrementer = Spinbox(frame, width=10, from_=0, to=999, increment=1, textvariable=self.var_experiment_number)
+        self.incrementer = Spinbox(
+            frame,
+            width=10,
+            from_=0,
+            to=999,
+            increment=1,
+            textvariable=self.var_experiment_number,
+        )
         self.incrementer.grid(row=3, column=2)
 
         frame.grid_columnconfigure(1, weight=1)
@@ -52,13 +61,19 @@ class IOFrame(LabelFrame):
         frame.pack(side='top', fill='x', padx=10)
 
         frame = Frame(self)
-        self.OpenDatadirButton = Button(frame, text='Open work directory', command=self.open_data_directory)
+        self.OpenDatadirButton = Button(
+            frame, text='Open work directory', command=self.open_data_directory
+        )
         self.OpenDatadirButton.grid(row=1, column=0, sticky='EW')
 
-        self.OpenConfigdirButton = Button(frame, text='Open settings directory', command=self.open_config_directory)
+        self.OpenConfigdirButton = Button(
+            frame, text='Open settings directory', command=self.open_config_directory
+        )
         self.OpenConfigdirButton.grid(row=1, column=1, sticky='EW')
 
-        self.DeleteButton = Button(frame, text='Delete last experiment', command=self.delete_last)
+        self.DeleteButton = Button(
+            frame, text='Delete last experiment', command=self.delete_last
+        )
         self.DeleteButton.grid(row=1, column=2, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -108,17 +123,21 @@ class IOFrame(LabelFrame):
         return path
 
     def browse_directory(self):
-        drc = tkinter.filedialog.askdirectory(parent=self.parent, title='Select working directory')
+        drc = tkinter.filedialog.askdirectory(
+            parent=self.parent, title='Select working directory'
+        )
         if not drc:
             return
         drc = Path(drc).absolute()
         self.var_directory.set(drc)
         print(self.get_experiment_directory())
-        self.update_experiment_number()       # TODO: set to 1 on experiment update
+        self.update_experiment_number()  # TODO: set to 1 on experiment update
         return drc
 
     def browse_flatfield(self):
-        ff = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title='Select flatfield')
+        ff = tkinter.filedialog.askopenfilename(
+            parent=self.parent, initialdir=self.var_directory.get(), title='Select flatfield'
+        )
         if not ff:
             return
         ff = Path(ff).absolute()

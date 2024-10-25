@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from collections import namedtuple
 from contextlib import contextmanager
@@ -28,11 +30,28 @@ class Stage:
         """Get name of the class."""
         return self.__class__.__name__
 
-    def set(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True) -> None:
+    def set(
+        self,
+        x: int = None,
+        y: int = None,
+        z: int = None,
+        a: int = None,
+        b: int = None,
+        wait: bool = True,
+    ) -> None:
         """Wait: bool, block until stage movement is complete (JEOL only)"""
         self._setter(x, y, z, a, b, wait=wait)
 
-    def set_with_speed(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True, speed: float = 1.0) -> None:
+    def set_with_speed(
+        self,
+        x: int = None,
+        y: int = None,
+        z: int = None,
+        a: int = None,
+        b: int = None,
+        wait: bool = True,
+        speed: float = 1.0,
+    ) -> None:
         """Note that this function only works on FEI machines.
 
         wait: ignored, but necessary for compatibility with JEOL API
@@ -232,7 +251,9 @@ class Stage:
         movement."""
         pass
 
-    def set_xy_with_backlash_correction(self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200) -> None:
+    def set_xy_with_backlash_correction(
+        self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200
+    ) -> None:
         """Move to new x/y position with backlash correction. This is done by
         approaching the target x/y position always from the same direction.
 
@@ -252,7 +273,14 @@ class Stage:
         if settle_delay:
             time.sleep(settle_delay)
 
-    def move_xy_with_backlash_correction(self, shift_x: int = None, shift_y: int = None, step: float = 5000, settle_delay: float = 0.200, wait=True) -> None:
+    def move_xy_with_backlash_correction(
+        self,
+        shift_x: int = None,
+        shift_y: int = None,
+        step: float = 5000,
+        settle_delay: float = 0.200,
+        wait=True,
+    ) -> None:
         """Move xy by given shifts in stage coordinates with backlash
         correction. This is done by moving backwards from the targeted position
         by `step`, before moving to the targeted position. This function is
@@ -310,9 +338,17 @@ class Stage:
             delay between movements in seconds to allow the stage to settle
         """
         stage = self.get()
-        self.set_xy_with_backlash_correction(x=stage.x, y=stage.y, step=step, settle_delay=settle_delay)
+        self.set_xy_with_backlash_correction(
+            x=stage.x, y=stage.y, step=step, settle_delay=settle_delay
+        )
 
-    def eliminate_backlash_a(self, target_angle: float = 0.0, step: float = 1.0, n_steps: int = 3, settle_delay: float = 0.200) -> None:
+    def eliminate_backlash_a(
+        self,
+        target_angle: float = 0.0,
+        step: float = 1.0,
+        n_steps: int = 3,
+        settle_delay: float = 0.200,
+    ) -> None:
         """Eliminate backlash by relaxing the position. The routine will move
         in opposite direction of the targeted angle by `n_steps`*`step`, and
         walk up to the current tilt angle in `n_steps`. Based on Suloway et

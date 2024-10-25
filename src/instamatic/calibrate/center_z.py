@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 
 import numpy as np
@@ -72,7 +74,9 @@ def center_z_height(ctrl, verbose=False):
         z_f.append(z[d.index(e)])
     p = np.polyfit(z, d, 1)
     z_center = -p[1] / p[0]
-    satisfied = input(f'Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.')
+    satisfied = input(
+        f'Found eucentric height: {z_center}. Press ENTER to set the height, x to cancel setting.'
+    )
     if satisfied == 'x':
         ctrl.stage.set(a=a0, z=z0)
         if verbose:
@@ -85,7 +89,11 @@ def center_z_height(ctrl, verbose=False):
             ctrl.stage.set(a=a0, z=z_center + 2000)
             ctrl.stage.set(a=a0, z=z_center)
 
-        print('\033[k', 'Eucentric height set. Find the crystal again and start data collection!', end='\r')
+        print(
+            '\033[k',
+            'Eucentric height set. Find the crystal again and start data collection!',
+            end='\r',
+        )
 
 
 def find_crystal_max(img, magnification, spread, offset):
@@ -99,7 +107,9 @@ def find_crystal_max(img, magnification, spread, offset):
     return crystal_inter, crystal_inter_pos
 
 
-def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset=10, verbose=False):
+def center_z_height_HYMethod(
+    ctrl, increment=2000, rotation=15, spread=2, offset=10, verbose=False
+):
     """Hongyi's empirical method for centering z height on our JEOL LAB6.
 
     Rotate the stage positively. If the particle moves upwards, adjust
@@ -116,7 +126,9 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     x0, y0, z0, a0, b0 = ctrl.stage.get()
     img0, h = ctrl.get_image(exposure=0.01, comment='z height finding HY')
     try:
-        crystal_inter, crystal_inter_pos = find_crystal_max(img0, magnification, spread=spread, offset=offset)
+        crystal_inter, crystal_inter_pos = find_crystal_max(
+            img0, magnification, spread=spread, offset=offset
+        )
         if verbose:
             print(f'Feature Captured. Area: {crystal_inter} pixels')
     except BaseException:
@@ -138,7 +150,9 @@ def center_z_height_HYMethod(ctrl, increment=2000, rotation=15, spread=2, offset
     while ctrl.stage.is_moving():
         img, h = ctrl.get_image(exposure=0.01, comment='z height finding HY')
         try:
-            crystal_inter1, crystal_inter1_pos = find_crystal_max(img, magnification, spread=spread, offset=offset)
+            crystal_inter1, crystal_inter1_pos = find_crystal_max(
+                img, magnification, spread=spread, offset=offset
+            )
 
             if crystal_inter1 / crystal_inter < 2 and crystal_inter1 / crystal_inter > 0.5:
                 # print(f"Feature Captured. Area: {crystal_inter1} pixels")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import glob
 import sys
@@ -13,8 +15,8 @@ def closest_distance(node, nodes):
     """Get shortest between a node and a list of nodes (that includes the given
     node)"""
     nodes = np.asarray(nodes)
-    dist_2 = np.sum((nodes - node)**2, axis=1)
-    return np.sort(dist_2)[1]**0.5
+    dist_2 = np.sum((nodes - node) ** 2, axis=1)
+    return np.sort(dist_2)[1] ** 0.5
 
 
 def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
@@ -61,10 +63,11 @@ def find_isolated_crystals(fns, min_separation=1.5, boundary=0.5, plot=False):
 
         if plot and n_isolated:
             import matplotlib.pyplot as plt
+
             fig, ax = plt.subplots()
             ax.imshow(img)
 
-            for (x, y, color) in objects:
+            for x, y, color in objects:
                 ax.scatter(y, x, color=color)
 
             # diff_img, _ = read_hdf5(isolated[-1])
@@ -129,15 +132,22 @@ def main(file_pattern):
 
 def main_entry():
     import argparse
-    description = """Predict whether a crystal is of good or bad quality by its diffraction pattern."""
+
+    description = (
+        """Predict whether a crystal is of good or bad quality by its diffraction pattern."""
+    )
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs=1, metavar='PAT',
-                        help='File pattern to glob for images (HDF5), i.e. `images/*.h5`.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs=1,
+        metavar='PAT',
+        help='File pattern to glob for images (HDF5), i.e. `images/*.h5`.',
+    )
 
     options = parser.parse_args()
     args = options.args

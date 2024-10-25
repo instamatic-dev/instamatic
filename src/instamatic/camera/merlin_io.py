@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import List
 
@@ -26,7 +28,7 @@ class MIBProperties:
             self.single = False
             self.quad = True
 
-        self.raw = (head[6] == 'R64')
+        self.raw = head[6] == 'R64'
 
         if not self.raw:
             if head[6] == 'U08':
@@ -105,12 +107,16 @@ def load_mib(buffer: bytes, skip: int = 0):
 
     props = MIBProperties.from_buffer(buffer)
 
-    merlin_frame_dtype = np.dtype([
-        ('header', np.bytes_, props.headsize),
-        ('data', props.pixeltype, props.merlin_size),
-    ])
+    merlin_frame_dtype = np.dtype(
+        [
+            ('header', np.bytes_, props.headsize),
+            ('data', props.pixeltype, props.merlin_size),
+        ]
+    )
 
-    assert len(buffer) % merlin_frame_dtype.itemsize == 0, 'buffer size must be a multiple of item size'
+    assert (
+        len(buffer) % merlin_frame_dtype.itemsize == 0
+    ), 'buffer size must be a multiple of item size'
 
     data = np.frombuffer(
         buffer,

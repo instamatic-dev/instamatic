@@ -23,6 +23,9 @@ To connect to DigitalMicrograph through a socket interface on the same or a diff
 
 [1]. https://bio3d.colorado.edu/SerialEM/hlp/html/setting_up_serialem.htm
 """
+
+from __future__ import annotations
+
 import os
 import socket
 import time
@@ -122,7 +125,9 @@ class Message:
         """Serialize the data."""
         data_size = self.array.data.itemsize
         if self.array.data.itemsize > ARGS_BUFFER_SIZE:
-            raise RuntimeError(f'Message packet size {data_size} is larger than maximum {ARGS_BUFFER_SIZE}')
+            raise RuntimeError(
+                f'Message packet size {data_size} is larger than maximum {ARGS_BUFFER_SIZE}'
+            )
         return self.array.data
 
     def unpack(self, buf):
@@ -143,6 +148,7 @@ def log(message):
 
 def logwrap(func):
     """Decorator for socket send and recv calls, so they can make log."""
+
     def newfunc(*args, **kwargs):
         log(f'{func}\t{args}\t{kwargs}')
         try:
@@ -151,6 +157,7 @@ def logwrap(func):
             log(f'EXCEPTION: {exc}')
             raise
         return result
+
     return newfunc
 
 
@@ -162,7 +169,9 @@ class GatanSocket:
         elif 'SERIALEMCCD_PORT' in os.environ:
             self.port = os.environ['SERIALEMCCD_PORT']
         else:
-            raise ValueError('Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT')
+            raise ValueError(
+                'Must specify a port to GatanSocket instance, or set environment variable SERIALEMCCD_PORT'
+            )
 
         self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
         if self.debug:
@@ -200,7 +209,10 @@ class GatanSocket:
                 self.filter_functions[method_name] = name
             if self.debug:
                 print(name, method_name, hasScriptFunction)
-        if 'SetEnergyFilter' in self.filter_functions.keys() and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn':
+        if (
+            'SetEnergyFilter' in self.filter_functions.keys()
+            and self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn'
+        ):
             self.wait_for_filter = 'IFWaitForFilter();'
         else:
             self.wait_for_filter = ''
@@ -309,7 +321,17 @@ class GatanSocket:
         self.ExchangeMessages(message_send, message_recv)
 
     @logwrap
-    def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac, frameTime, alignFrames, saveFrames, filt=''):
+    def SetK2Parameters(
+        self,
+        readMode,
+        scaling,
+        hardwareProc,
+        doseFrac,
+        frameTime,
+        alignFrames,
+        saveFrames,
+        filt='',
+    ):
         funcCode = enum_gs['GS_SetK2Parameters']
 
         self.save_frames = saveFrames
@@ -337,7 +359,9 @@ class GatanSocket:
             frameTime,
         ]
 
-        message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray)
+        message_send = Message(
+            longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray
+        )
         message_recv = Message(longargs=(0,))  # just return code
         self.ExchangeMessages(message_send, message_recv)
 
@@ -349,7 +373,17 @@ class GatanSocket:
         return self.num_grab_sum
 
     @logwrap
-    def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage, doEarlyReturn, earlyReturnFrameCount=0, earlyReturnRamGrabs=0, lzwtiff=False):
+    def SetupFileSaving(
+        self,
+        rotationFlip,
+        dirname,
+        rootname,
+        filePerImage,
+        doEarlyReturn,
+        earlyReturnFrameCount=0,
+        earlyReturnRamGrabs=0,
+        lzwtiff=False,
+    ):
         pixelSize = 1.0
         self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
         if self.save_frames and (doEarlyReturn or lzwtiff):
@@ -358,7 +392,7 @@ class GatanSocket:
             numGrabSum = self.getNumGrabSum()
             # set values to pass
             longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag]
-            dbls = [pixelSize, numGrabSum, 0., 0., 0.]
+            dbls = [pixelSize, numGrabSum, 0.0, 0.0, 0.0]
         else:
             longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
             dbls = [pixelSize]
@@ -369,7 +403,9 @@ class GatanSocket:
             npad = 4 - extra
             names_str = names_str + npad * '\0'
         longarray = np.frombuffer(names_str.encode(), dtype=np.int_)
-        message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
+        message_send = Message(
+            longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray
+        )
         message_recv = Message(longargs=(0, 0))
         self.ExchangeMessages(message_send, message_recv)
 
@@ -447,18 +483,19 @@ class GatanSocket:
         return self.ExecuteGetDoubleScript(script)
 
     @logwrap
-    def GetImage(self,
-                 processing,
-                 height,
-                 width,
-                 binning,
-                 top,
-                 left,
-                 bottom,
-                 right,
-                 exposure,        # s
-                 shutterDelay=0,  # ms
-                 ):
+    def GetImage(
+        self,
+        processing,
+        height,
+        width,
+        binning,
+        top,
+        left,
+        bottom,
+        right,
+        exposure,  # s
+        shutterDelay=0,  # ms
+    ):
         """
         processing : str
             Must be one of 'dark', 'unprocessed', 'dark subtracted', 'gain normalized'
@@ -477,27 +514,37 @@ class GatanSocket:
             longargs = [enum_gs['GS_GetDarkReference']]
         else:
             longargs = [enum_gs['GS_GetAcquiredImage']]
-        longargs.extend([
-            arrSize,  # pixels in the image
-            width, height,
-        ])
+        longargs.extend(
+            [
+                arrSize,  # pixels in the image
+                width,
+                height,
+            ]
+        )
         if processing == 'unprocessed':
             longargs.append(0)
         elif processing == 'dark subtracted':
             longargs.append(1)
         elif processing == 'gain normalized':
             longargs.append(2)
-        longargs.extend([
-            binning,
-            top, left, bottom, right,
-            shutter,
-        ])
+        longargs.extend(
+            [
+                binning,
+                top,
+                left,
+                bottom,
+                right,
+                shutter,
+            ]
+        )
         if processing != 'dark':
             longargs.append(shutterDelay)
-        longargs.extend([
-            divideBy2,
-            corrections,
-        ])
+        longargs.extend(
+            [
+                divideBy2,
+                corrections,
+            ]
+        )
         dblargs = [
             exposure,
             settling,
@@ -536,7 +583,7 @@ class GatanSocket:
             while chunkRemain:
                 new_recv = self.recv_data(chunkRemain)
                 len_recv = len(new_recv)
-                imArray.data[received: received + len_recv] = new_recv
+                imArray.data[received : received + len_recv] = new_recv
                 chunkReceived += len_recv
                 chunkRemain -= len_recv
                 remain -= len_recv
@@ -551,7 +598,9 @@ class GatanSocket:
         """Execute DM script function that requires camera object as input and
         output one long integer."""
         recv_longargs_init = (0,)
-        result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_longargs_init=recv_longargs_init)
+        result = self.ExecuteCameraObjectFunction(
+            function_name, camera_id, recv_longargs_init=recv_longargs_init
+        )
         if result is False:
             return 1
         return result.array['longargs'][0]
@@ -560,21 +609,34 @@ class GatanSocket:
         """Execute DM script function that requires camera object as input and
         output double floating point number."""
         recv_dblargs_init = (0,)
-        result = self.ExecuteCameraObjectFunction(function_name, camera_id, recv_dblargs_init=recv_dblargs_init)
+        result = self.ExecuteCameraObjectFunction(
+            function_name, camera_id, recv_dblargs_init=recv_dblargs_init
+        )
         if result is False:
             return -999.0
         return result.array['dblargs'][0]
 
-    def ExecuteCameraObjectFunction(self, function_name, camera_id=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+    def ExecuteCameraObjectFunction(
+        self,
+        function_name,
+        camera_id=0,
+        recv_longargs_init=(0,),
+        recv_dblargs_init=(0.0,),
+        recv_longarray_init=[],
+    ):
         """Execute DM script function that requires camera object as input."""
         if not self.hasScriptFunction(function_name):
             # unsuccessful
             return False
-        fullcommand = (f'Object manager = CM_GetCameraManager();\n'
-                       f'Object cameraList = CM_GetCameras(manager);\n'
-                       f'Object camera = ObjectAt(cameraList,{camera_id});\n'
-                       f'{function_name}(camera);\n')
-        result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init)
+        fullcommand = (
+            f'Object manager = CM_GetCameraManager();\n'
+            f'Object cameraList = CM_GetCameras(manager);\n'
+            f'Object camera = ObjectAt(cameraList,{camera_id});\n'
+            f'{function_name}(camera);\n'
+        )
+        result = self.ExecuteScript(
+            fullcommand, camera_id, recv_longargs_init, recv_dblargs_init, recv_longarray_init
+        )
         return result
 
     def ExecuteSendScript(self, command_line, select_camera=0):
@@ -591,10 +653,19 @@ class GatanSocket:
     def ExecuteGetDoubleScript(self, command_line, select_camera=0):
         """Execute DM script that gets one double float number."""
         recv_dblargs_init = (0.0,)
-        result = self.ExecuteScript(command_line, select_camera, recv_dblargs_init=recv_dblargs_init)
+        result = self.ExecuteScript(
+            command_line, select_camera, recv_dblargs_init=recv_dblargs_init
+        )
         return result.array['dblargs'][0]
 
-    def ExecuteScript(self, command_line, select_camera=0, recv_longargs_init=(0,), recv_dblargs_init=(0.0,), recv_longarray_init=[]):
+    def ExecuteScript(
+        self,
+        command_line,
+        select_camera=0,
+        recv_longargs_init=(0,),
+        recv_dblargs_init=(0.0,),
+        recv_longarray_init=[],
+    ):
         funcCode = enum_gs['GS_ExecuteScript']
         cmd_str = command_line + '\0'
         extra = len(cmd_str) % 4
@@ -604,8 +675,14 @@ class GatanSocket:
         # send the command string as 1D longarray
         longarray = np.frombuffer(cmd_str.encode(), dtype=np.int_)
         # print(longaray)
-        message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
-        message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init, longarray=recv_longarray_init)
+        message_send = Message(
+            longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray
+        )
+        message_recv = Message(
+            longargs=recv_longargs_init,
+            dblargs=recv_dblargs_init,
+            longarray=recv_longarray_init,
+        )
         self.ExchangeMessages(message_send, message_recv)
         return message_recv
 
@@ -641,6 +718,7 @@ def test1():
     g.ExecuteScript(s)
 
     from IPython import embed
+
     embed()
 
 
@@ -648,4 +726,5 @@ if __name__ == '__main__':
     g = GatanSocket()
 
     from IPython import embed
+
     embed()

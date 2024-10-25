@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from collections import namedtuple
 
@@ -11,7 +13,9 @@ from skimage import filters, measure, morphology, segmentation
 from instamatic.config import calibration
 from instamatic.image_utils import autoscale
 
-CrystalPosition = namedtuple('CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel'])
+CrystalPosition = namedtuple(
+    'CrystalPosition', ['x', 'y', 'isolated', 'n_clusters', 'area_micrometer', 'area_pixel']
+)
 
 
 def isedge(prop):
@@ -21,11 +25,12 @@ def isedge(prop):
     a histogram to determine if an edge is detected. If the lowest bin
     is the dominant one, assume black area is measured (the edge)
     """
-    if (prop._slice[0].start == 0) or \
-        (prop._slice[1].start == 0) or \
-        (prop._slice[0].stop == prop._intensity_image.shape[0]) or \
-            (prop._slice[1].stop == prop._intensity_image.shape[1]):
-
+    if (
+        (prop._slice[0].start == 0)
+        or (prop._slice[1].start == 0)
+        or (prop._slice[0].stop == prop._intensity_image.shape[0])
+        or (prop._slice[1].stop == prop._intensity_image.shape[1])
+    ):
         hist, edges = np.histogram(prop.intensity_image[prop.image])
         if np.sum(hist) // hist[0] < 2:
             # print " >> Edge detected"
@@ -41,7 +46,9 @@ def whiten(obs, check_finite=False):
     zero_std_mask = std_dev == 0
     if zero_std_mask.any():
         std_dev[zero_std_mask] = 1.0
-        raise RuntimeWarning('Some columns have standard deviation zero. The values of these columns will not change.')
+        raise RuntimeWarning(
+            'Some columns have standard deviation zero. The values of these columns will not change.'
+        )
     return obs / std_dev, std_dev
 
 
@@ -103,14 +110,16 @@ def find_crystals_timepix(img, magnification, spread=0.6, plot=False, **kwargs):
     offset = kwargs.get('offset', 15)
     footprint = kwargs.get('footprint', 3)
 
-    return find_crystals(img=img,
-                         magnification=magnification,
-                         spread=spread,
-                         plot=plot,
-                         footprint=footprint,
-                         offset=offset,
-                         r=r,
-                         remove_carbon_lacing=False)
+    return find_crystals(
+        img=img,
+        magnification=magnification,
+        spread=spread,
+        plot=plot,
+        footprint=footprint,
+        offset=offset,
+        r=r,
+        remove_carbon_lacing=False,
+    )
 
 
 def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
@@ -166,14 +175,20 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
             w, std = whiten(coordinates)
 
             # nclust must be an integer for some reason
-            cluster_centroids, closest_centroids = kmeans2(w, nclust, iter=iters, minit='points')
+            cluster_centroids, closest_centroids = kmeans2(
+                w, nclust, iter=iters, minit='points'
+            )
 
             # convert to image coordinates
             xy = (cluster_centroids * std + origin[0:2]) / scale
-            crystals.extend([CrystalPosition(x, y, False, nclust, area, prop.area) for x, y in xy])
+            crystals.extend(
+                [CrystalPosition(x, y, False, nclust, area, prop.area) for x, y in xy]
+            )
         else:
             x, y = prop.centroid
-            crystals.append(CrystalPosition(x / scale, y / scale, True, nclust, area, prop.area))
+            crystals.append(
+                CrystalPosition(x / scale, y / scale, True, nclust, area, prop.area)
+            )
 
     if plot:
         plt.imshow(img)
@@ -190,15 +205,16 @@ def find_crystals(img, magnification, spread=2.0, plot=False, **kwargs):
 
 def main_entry():
     import argparse
+
     description = """Find crystals in images."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Images to find crystals in.')
+    parser.add_argument(
+        'args', type=str, nargs='*', metavar='IMG', help='Images to find crystals in.'
+    )
 
     options = parser.parse_args()
     args = options.args
@@ -206,6 +222,7 @@ def main_entry():
     import warnings
 
     from instamatic.formats import read_image
+
     warnings.simplefilter('ignore')
 
     for fn in args:

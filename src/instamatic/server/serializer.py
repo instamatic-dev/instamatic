@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import pickle
 
@@ -44,6 +46,7 @@ except ImportError:
     if PROTOCOL == 'msgpack':
         raise
 else:
+
     def msgpack_loader(data):
         return msgpack.loads(data)
 

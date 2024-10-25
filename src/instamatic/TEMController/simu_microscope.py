@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 import time
 from typing import Tuple
@@ -142,6 +144,7 @@ class SimuMicroscope(MicroscopeBase):
         self.goniotool_available = config.settings.use_goniotool
         if self.goniotool_available:
             from instamatic.goniotool import GonioToolClient
+
             try:
                 self.goniotool = GonioToolClient()
             except Exception as e:
@@ -301,7 +304,9 @@ class SimuMicroscope(MicroscopeBase):
         try:
             value = config.microscope.ranges[current_mode][index]
         except IndexError:
-            raise TEMValueError(f'No such camera length or magnification index: {index}') from None
+            raise TEMValueError(
+                f'No such camera length or magnification index: {index}'
+            ) from None
 
         self.setMagnification(value)
 
@@ -368,7 +373,13 @@ class SimuMicroscope(MicroscopeBase):
         self.ImageShift2_y = y
 
     def getStagePosition(self) -> Tuple[int, int, int, int, int]:
-        return self.StagePosition_x, self.StagePosition_y, self.StagePosition_z, self.StagePosition_a, self.StagePosition_b
+        return (
+            self.StagePosition_x,
+            self.StagePosition_y,
+            self.StagePosition_z,
+            self.StagePosition_a,
+            self.StagePosition_b,
+        )
 
     def isStageMoving(self) -> bool:
         self.getStagePosition()  # trigger update of self._is_moving
@@ -413,7 +424,16 @@ class SimuMicroscope(MicroscopeBase):
     def stopStage(self):
         pass
 
-    def setStagePosition(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, speed: float = -1, wait: bool = True):
+    def setStagePosition(
+        self,
+        x: int = None,
+        y: int = None,
+        z: int = None,
+        a: int = None,
+        b: int = None,
+        speed: float = -1,
+        wait: bool = True,
+    ):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:

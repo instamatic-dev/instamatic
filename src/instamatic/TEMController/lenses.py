@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Lens:
     """Generic microscope lens object defined by one value Must be subclassed
     to set the self._getter, self._setter functions."""

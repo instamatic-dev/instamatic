@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -7,17 +9,22 @@ from instamatic.formats import read_image
 
 def main():
     import argparse
+
     description = """
 Simple image viewer to open any image collected collected using instamatic. Supported formats include `TIFF`, `MRC`, [`HDF5`](http://www.h5py.org/), and [`SMV`](https://strucbio.biologie.uni-konstanz.de/ccp4wiki/index.php/SMV_file_format).
 """
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs=1, metavar='IMG',
-                        help='Image to display (TIFF, HDF5, MRC, SMV).')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs=1,
+        metavar='IMG',
+        help='Image to display (TIFF, HDF5, MRC, SMV).',
+    )
 
     options = parser.parse_args()
     args = options.args

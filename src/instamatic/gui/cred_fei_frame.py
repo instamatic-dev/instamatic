@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tkinter import *
 from tkinter.ttk import *
 
@@ -20,23 +22,48 @@ class ExperimentalcRED_FEI(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text='Exposure time (s):').grid(row=4, column=0, sticky='W')
-        self.e_exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.1, to=9999, increment=0.1)
+        self.e_exposure_time = Spinbox(
+            frame,
+            textvariable=self.var_exposure_time,
+            width=sbwidth,
+            from_=0.1,
+            to=9999,
+            increment=0.1,
+        )
         self.e_exposure_time.grid(row=4, column=1, sticky='W', padx=10)
 
         Label(frame, text='Target angle (deg):').grid(row=5, column=0, sticky='W')
-        self.e_endangle = Spinbox(frame, textvariable=self.var_endangle, width=sbwidth, from_=0.1, to=9999, increment=0.5)
+        self.e_endangle = Spinbox(
+            frame,
+            textvariable=self.var_endangle,
+            width=sbwidth,
+            from_=0.1,
+            to=9999,
+            increment=0.5,
+        )
         self.e_endangle.grid(row=5, column=1, sticky='W', padx=10)
 
         Label(frame, text='Rotation speed (0 - 1):').grid(row=6, column=0, sticky='W')
-        self.e_rotspeed = Spinbox(frame, textvariable=self.var_rotspeed, width=sbwidth, from_=-10.0, to=10.0, increment=0.2)
+        self.e_rotspeed = Spinbox(
+            frame,
+            textvariable=self.var_rotspeed,
+            width=sbwidth,
+            from_=-10.0,
+            to=10.0,
+            increment=0.2,
+        )
         self.e_rotspeed.grid(row=6, column=1, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
         Label(frame, text='Output formats:').grid(row=5, columnspan=2, sticky='EW')
-        Checkbutton(frame, text='PETS (.tiff)', variable=self.var_save_tiff, state=DISABLED).grid(row=5, column=2, sticky='EW')
-        Checkbutton(frame, text='REDp (.mrc)', variable=self.var_save_red, state=DISABLED).grid(row=5, column=3, sticky='EW')
+        Checkbutton(
+            frame, text='PETS (.tiff)', variable=self.var_save_tiff, state=DISABLED
+        ).grid(row=5, column=2, sticky='EW')
+        Checkbutton(frame, text='REDp (.mrc)', variable=self.var_save_red, state=DISABLED).grid(
+            row=5, column=3, sticky='EW'
+        )
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(1, weight=1)
         frame.grid_columnconfigure(2, weight=1)
@@ -48,7 +75,9 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.StartButton = Button(frame, text='Start Rotation', command=self.start_collection)
         self.StartButton.grid(row=1, column=0, sticky='EW')
 
-        self.FinalizeButton = Button(frame, text='Stop Rotation', command=self.stop_collection, state=DISABLED)
+        self.FinalizeButton = Button(
+            frame, text='Stop Rotation', command=self.stop_collection, state=DISABLED
+        )
         self.FinalizeButton.grid(row=1, column=2, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -75,9 +104,16 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.e_exposure_time.config(state=DISABLED)
         self.e_rotspeed.config(state=DISABLED)
 
-        self.q.put(('credfei', {'task': 'stage.set_with_speed',
-                                'a': self.var_endangle.get(),
-                                'speed': self.var_rotspeed.get()}))
+        self.q.put(
+            (
+                'credfei',
+                {
+                    'task': 'stage.set_with_speed',
+                    'a': self.var_endangle.get(),
+                    'speed': self.var_rotspeed.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def stop_collection(self):
@@ -90,10 +126,12 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.triggerEvent.set()
 
     def get_params(self, task=None):
-        params = {'exposure_time': self.var_exposure_time.get(),
-                  'endangle': self.var_endangle.get(),
-                  'rotspeed': self.var_rotspeed.get(),
-                  'task': task}
+        params = {
+            'exposure_time': self.var_exposure_time.get(),
+            'endangle': self.var_endangle.get(),
+            'rotspeed': self.var_rotspeed.get(),
+            'task': task,
+        }
         return params
 
 
@@ -109,7 +147,9 @@ def acquire_data_cREDfei(controller, **kwargs):
         f(**kwargs)
 
 
-module = BaseModule(name='credfei', display_name='cRED_FEI', tk_frame=ExperimentalcRED_FEI, location='bottom')
+module = BaseModule(
+    name='credfei', display_name='cRED_FEI', tk_frame=ExperimentalcRED_FEI, location='bottom'
+)
 commands = {'credfei': acquire_data_cREDfei}
 
 

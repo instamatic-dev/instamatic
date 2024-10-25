@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import namedtuple
 
 import lmfit
@@ -6,15 +8,17 @@ import numpy as np
 FitResult = namedtuple('FitResult', 'r t angle sx sy tx ty k1 k2 params'.split())
 
 
-def fit_affine_transformation(a, b,
-                              rotation: bool = True,
-                              scaling: bool = True,
-                              translation: bool = False,
-                              shear: bool = False,
-                              as_params: bool = False,
-                              verbose: bool = False,
-                              **x0,
-                              ):
+def fit_affine_transformation(
+    a,
+    b,
+    rotation: bool = True,
+    scaling: bool = True,
+    translation: bool = False,
+    shear: bool = False,
+    as_params: bool = False,
+    verbose: bool = False,
+    **x0,
+):
     """Fit an affine transformation matrix to transform `a` to `b` using linear
     least-squares.
 
@@ -62,9 +66,7 @@ def fit_affine_transformation(a, b,
         sin = np.sin(angle)
         cos = np.cos(angle)
 
-        r = np.array([
-            [sx * cos, -sy * k1 * sin],
-            [sx * k2 * sin, sy * cos]])
+        r = np.array([[sx * cos, -sy * k1 * sin], [sx * k2 * sin, sy * cos]])
         t = np.array([tx, ty])
 
         fit = np.dot(arr1, r) + t
@@ -90,9 +92,7 @@ def fit_affine_transformation(a, b,
     sin = np.sin(angle)
     cos = np.cos(angle)
 
-    r = np.array([
-        [sx * cos, -sy * k1 * sin],
-        [sx * k2 * sin, sy * cos]])
+    r = np.array([[sx * cos, -sy * k1 * sin], [sx * k2 * sin, sy * cos]])
     t = np.array([tx, ty])
 
     return FitResult(r, t, angle, sx, sy, tx, ty, k1, k2, params)

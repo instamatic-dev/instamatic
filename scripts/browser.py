@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import glob
 import os
@@ -16,9 +18,7 @@ from instamatic.formats import *
 CMAP = 'gray'  # "viridis", "gray"
 
 ANGLE = -0.88 + np.pi / 2
-R = np.array([
-    [np.cos(ANGLE), -np.sin(ANGLE)],
-    [np.sin(ANGLE), np.cos(ANGLE)]])
+R = np.array([[np.cos(ANGLE), -np.sin(ANGLE)], [np.sin(ANGLE), np.cos(ANGLE)]])
 
 
 def get_stage_coords(fns, return_ims=False):
@@ -74,9 +74,13 @@ def run(filepat='images/image_*.tiff', results=None, stitch=False):
         df.index = df.index.map(os.path.relpath)
         if isinstance(d['cell'], (tuple, list)):
             pixelsize = d['experiment']['pixelsize']
-            indexer = IndexerMulti.from_cells(d['cell'], pixelsize=pixelsize, **d['projections'])
+            indexer = IndexerMulti.from_cells(
+                d['cell'], pixelsize=pixelsize, **d['projections']
+            )
         else:
-            projector = Projector.from_parameters(thickness=d['projections']['thickness'], **d['cell'])
+            projector = Projector.from_parameters(
+                thickness=d['projections']['thickness'], **d['cell']
+            )
             indexer = Indexer.from_projector(projector, pixelsize=d['experiment']['pixelsize'])
 
     coords, has_crystals, imgs = get_stage_coords(fns, return_ims=stitch)
@@ -96,25 +100,32 @@ def run(filepat='images/image_*.tiff', results=None, stitch=False):
     if stitch:
         for mini_img, coord in zip(imgs, coords):
             sx, sy = coord
-            ax1.imshow(mini_img, interpolation='bilinear', extent=[sx - imdim_x, sx + imdim_x, sy - imdim_y, sy + imdim_y], cmap=CMAP)
+            ax1.imshow(
+                mini_img,
+                interpolation='bilinear',
+                extent=[sx - imdim_x, sx + imdim_x, sy - imdim_y, sy + imdim_y],
+                cmap=CMAP,
+            )
 
-    ax1.scatter(coords[has_crystals, 0], coords[has_crystals, 1], marker='o', facecolor=coord_color)
+    ax1.scatter(
+        coords[has_crystals, 0], coords[has_crystals, 1], marker='o', facecolor=coord_color
+    )
     ax1.scatter(coords[:, 0], coords[:, 1], marker='.', color=coord_color, picker=8)
-    highlight1, = ax1.plot([], [], marker='o', color=picked_color)
+    (highlight1,) = ax1.plot([], [], marker='o', color=picked_color)
 
     ax1.set_xlabel('Stage X')
     ax1.set_ylabel('Stage Y')
 
     ax2 = plt.subplot(132, title=f'{fn}\nx={0}, y={0}')
     im2 = ax2.imshow(img, cmap=CMAP, vmax=np.percentile(img, 99.5))
-    plt_crystals, = ax2.plot([], [], marker='+', color='red', mew=2, picker=8, lw=0)
-    highlight2, = ax2.plot([], [], marker='+', color='blue', mew=2)
+    (plt_crystals,) = ax2.plot([], [], marker='+', color='red', mew=2, picker=8, lw=0)
+    (highlight2,) = ax2.plot([], [], marker='+', color='blue', mew=2)
 
     ax3 = plt.subplot(133, title='Diffraction pattern')
     im3 = ax3.imshow(np.zeros_like(img), vmax=np.percentile(img, 99.5), cmap=CMAP)
 
     class plt_diff:
-        center, = ax3.plot([], [], 'o', color='red', lw=0)
+        (center,) = ax3.plot([], [], 'o', color='red', lw=0)
         data = None
 
     def onclick(event):
@@ -136,7 +147,10 @@ def run(filepat='images/image_*.tiff', results=None, stitch=False):
             crystal_coords = np.array(h['exp_crystal_coords'])
 
             if results:
-                crystal_fns = [fn.parents[1] / 'data' / f'{fn.stem}_{i:04d}{fn.suffix}' for i in range(len(crystal_coords))]
+                crystal_fns = [
+                    fn.parents[1] / 'data' / f'{fn.stem}_{i:04d}{fn.suffix}'
+                    for i in range(len(crystal_coords))
+                ]
                 df.ix[crystal_fns]
 
                 for coord, crystal_fn in zip(crystal_coords, crystal_fns):
@@ -201,7 +215,9 @@ def run(filepat='images/image_*.tiff', results=None, stitch=False):
                     proj = indexer.get_projection(r)
                     pks = proj[:, 3:5]
 
-                    i, j, proj = get_indices(pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj)
+                    i, j, proj = get_indices(
+                        pks, r.scale, (r.center_x, r.center_y), img.shape, hkl=proj
+                    )
                     shape_vector = proj[:, 5]
 
                     plt_diff.center.set_xdata(r.center_y)
@@ -233,17 +249,18 @@ Example:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument('args',
-                        type=str, metavar='FILE', nargs='?',
-                        help='File pattern to image files')
+    parser.add_argument(
+        'args', type=str, metavar='FILE', nargs='?', help='File pattern to image files'
+    )
 
-    parser.add_argument('-s', '--stitch',
-                        action='store_true', dest='stitch',
-                        help='Stitch images together.')
+    parser.add_argument(
+        '-s', '--stitch', action='store_true', dest='stitch', help='Stitch images together.'
+    )
 
-    parser.set_defaults(results=None,
-                        stitch=False,
-                        )
+    parser.set_defaults(
+        results=None,
+        stitch=False,
+    )
 
     options = parser.parse_args()
     arg = options.args

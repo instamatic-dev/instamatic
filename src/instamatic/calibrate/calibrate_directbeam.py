@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import pickle
@@ -38,7 +40,7 @@ def optimize_diffraction_focus(ctrl, steps=(50, 15, 5)):
 
             img, h = ctrl.get_image(header_keys=None)
 
-            score = np.sum(img > img.max() / 2)**2
+            score = np.sum(img > img.max() / 2) ** 2
 
             if score < best_score:
                 best_score = score
@@ -131,6 +133,7 @@ class CalibDirectBeam:
     @classmethod
     def from_file(cls, fn=CALIB_DIRECTBEAM):
         import pickle
+
         try:
             return pickle.load(open(fn, 'rb'))
         except OSError as e:
@@ -157,7 +160,7 @@ class CalibDirectBeam:
         self._dct[key] = dct
 
     def plot(self, key, to_file=None, outdir=''):
-        data_shifts = self._dct[key]['data_shifts']   # pixelshifts
+        data_shifts = self._dct[key]['data_shifts']  # pixelshifts
         data_readout = self._dct[key]['data_readout']  # microscope readout
 
         if to_file:
@@ -176,7 +179,9 @@ class CalibDirectBeam:
             plt.show()
 
 
-def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs):
+def calibrate_directbeam_live(
+    ctrl, key='DiffShift', gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs
+):
     """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
@@ -204,14 +209,20 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = config.camera.calib_directbeam.get(key, {}).get('gridsize', 5)    # dat syntax...
+        gridsize = config.camera.calib_directbeam.get(key, {}).get(
+            'gridsize', 5
+        )  # dat syntax...
     if not stepsize:
-        stepsize = config.camera.calib_directbeam.get(key, {}).get('stepsize', 750)  # just to fit everything on 1 line =)
+        stepsize = config.camera.calib_directbeam.get(key, {}).get(
+            'stepsize', 750
+        )  # just to fit everything on 1 line =)
 
     attr = getattr(ctrl, key.lower())
 
     outfile = os.path.join(outdir, f'calib_db_{key}_0000') if save_images else None
-    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, comment='Beam in center of image', out=outfile)
+    img_cent, h_cent = ctrl.get_image(
+        exposure=exposure, binsize=binsize, comment='Beam in center of image', out=outfile
+    )
     x_cent, y_cent = readout_cent = np.array(h_cent[key])
 
     img_cent, scale = autoscale(img_cent)
@@ -222,7 +233,9 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
     readouts = []
 
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    x_grid, y_grid = np.meshgrid(
+        np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize
+    )
     tot = gridsize * gridsize
 
     for i, (dx, dy) in enumerate(np.stack([x_grid, y_grid]).reshape(2, -1).T):
@@ -235,7 +248,9 @@ def calibrate_directbeam_live(ctrl, key='DiffShift', gridsize=None, stepsize=Non
         outfile = os.path.join(outdir, f'calib_db_{key}_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
-        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key)
+        img, h = ctrl.get_image(
+            exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key
+        )
         img = imgscale(img, scale)
 
         shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
@@ -302,8 +317,11 @@ def calibrate_directbeam_from_file(center_fn, other_fn, key='DiffShift'):
     return c
 
 
-def calibrate_directbeam(patterns=None, ctrl=None, save_images=True, outdir='.', confirm=True, auto_diff_focus=False):
+def calibrate_directbeam(
+    patterns=None, ctrl=None, save_images=True, outdir='.', confirm=True, auto_diff_focus=False
+):
     import glob
+
     keys = ('BeamShift', 'DiffShift')
     if not patterns:
         if confirm and input("""
@@ -320,11 +338,15 @@ Calibrate direct beam position
                 print('Optimizing diffraction focus')
                 current_difffocus = ctrl.difffocus.value
                 difffocus = optimize_diffraction_focus(ctrl)
-                logger.info('Optimized diffraction focus from %s to %s', current_difffocus, difffocus)
+                logger.info(
+                    'Optimized diffraction focus from %s to %s', current_difffocus, difffocus
+                )
 
             cs = []
             for key in keys:
-                c = calibrate_directbeam_live(ctrl, save_images=save_images, outdir=outdir, key=key)
+                c = calibrate_directbeam_live(
+                    ctrl, save_images=save_images, outdir=outdir, key=key
+                )
                 cs.append(c)
             calib = CalibDirectBeam.combine(cs)
     else:
@@ -350,15 +372,20 @@ Calibrate direct beam position
 
 def main_entry():
     import argparse
+
     description = """Program to calibrate the diffraction shift (PLA) to correct for beamshift movements (Deprecated)."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Perform calibration using pre-collected images. They must be formatted as such: DiffShift:pattern.tiff BeamShift:pattern.tiff, where `pattern` is a globbing pattern that finds the images corresponding to the key BeamShift or DiffShift. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs='*',
+        metavar='IMG',
+        help='Perform calibration using pre-collected images. They must be formatted as such: DiffShift:pattern.tiff BeamShift:pattern.tiff, where `pattern` is a globbing pattern that finds the images corresponding to the key BeamShift or DiffShift. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.',
+    )
 
     options = parser.parse_args()
     args = options.args
@@ -367,6 +394,7 @@ def main_entry():
         calibrate_directbeam(patterns=args)
     else:
         from instamatic import TEMController
+
         ctrl = TEMController.initialize()
         calibrate_directbeam(ctrl=ctrl)
 

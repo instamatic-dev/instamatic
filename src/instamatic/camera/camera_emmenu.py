@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import time
@@ -59,6 +61,7 @@ class CameraEMMENU(CameraBase):
     name : str
         Name of the interface
     """
+
     streamable = False
 
     def __init__(
@@ -74,7 +77,9 @@ class CameraEMMENU(CameraBase):
         except OSError:
             comtypes.CoInitialize()
 
-        self._obj = comtypes.client.CreateObject('EMMENU4.EMMENUApplication.1', comtypes.CLSCTX_ALL)
+        self._obj = comtypes.client.CreateObject(
+            'EMMENU4.EMMENUApplication.1', comtypes.CLSCTX_ALL
+        )
 
         self._recording = False
 
@@ -86,7 +91,7 @@ class CameraEMMENU(CameraBase):
         self._vp.SetCaption('Instamatic viewport')  # 2.5 ms
         self._vp.FlapState = 2  # pull out the flap, because we can :-) [0, 1, 2]
 
-        self._obj.Option('ClearBufferOnDeleteImage')   # `Delete` -> Clear buffer (preferable)
+        self._obj.Option('ClearBufferOnDeleteImage')  # `Delete` -> Clear buffer (preferable)
         # other choices: DeleteBufferOnDeleteImage / Default
 
         # Image manager for managing image buffers (left panel)
@@ -109,7 +114,9 @@ class CameraEMMENU(CameraBase):
             else:
                 # creating new subdirectories is bugged in EMMENU 5.0.9.0/5.0.10.0
                 # No work-around -> raise exception for now until it is fixed
-                raise ValueError(f'Directory `{drc_name}` does not exist in the EMMENU Image manager.')
+                raise ValueError(
+                    f'Directory `{drc_name}` does not exist in the EMMENU Image manager.'
+                )
 
         self.drc_name = drc_name
         self.drc_index = self._immgr.DirectoryHandleFromName(drc_name)
@@ -130,7 +137,7 @@ class CameraEMMENU(CameraBase):
         lst = []
 
         for i, cfg in enumerate(self._obj.CameraConfigurations):
-            is_selected = (current == cfg.Name)
+            is_selected = current == cfg.Name
             end = ' (selected)' if is_selected else ''
             print(f'{i + 1:2d} - {cfg.Name}{end}')
             lst.append(cfg.Name)
@@ -166,11 +173,15 @@ class CameraEMMENU(CameraBase):
             d['GainValue'] = cfg.GainValue  # float
             d['SpeedValue'] = cfg.SpeedValue  # int
             d['FlatMode'] = cfg.FlatMode  # int
-            d['FlatModeStr'] = ('Uncorrected', 'Dark subtracted', None, 'Gain corrected')[cfg.FlatMode]  # str, 2 undefined
+            d['FlatModeStr'] = ('Uncorrected', 'Dark subtracted', None, 'Gain corrected')[
+                cfg.FlatMode
+            ]  # str, 2 undefined
             d['PreExposureTime'] = cfg.PreExposureTime  # int
             d['UsePreExposure'] = bool(cfg.UsePreExposure)
             d['ReadoutMode'] = cfg.ReadoutMode  # int
-            d['ReadoutModeStr'] = (None, 'Normal', 'Frame transfer', 'Rolling shutter')[cfg.ReadoutMode]  # str, 0 undefined
+            d['ReadoutModeStr'] = (None, 'Normal', 'Frame transfer', 'Rolling shutter')[
+                cfg.ReadoutMode
+            ]  # str, 0 undefined
             d['UseRollingAverage'] = bool(cfg.UseRollingAverage)
             d['RollingAverageValue'] = cfg.RollingAverageValue  # int
             d['UseRollingShutter'] = bool(cfg.UseRollingShutter)
@@ -185,10 +196,14 @@ class CameraEMMENU(CameraBase):
             d['ScriptPathWithinSeries'] = cfg.ScriptPathWithinSeries  # str
             d['ScriptPathAfterSeries'] = cfg.ScriptPathAfterSeries  # str
             d['SCXAmplifier'] = cfg.SCXAmplifier  # int
-            d['SCXAmplifierStr'] = ('Unknown', 'Low noise', 'High capacity')[cfg.SCXAmplifier]  # str
+            d['SCXAmplifierStr'] = ('Unknown', 'Low noise', 'High capacity')[
+                cfg.SCXAmplifier
+            ]  # str
             d['CenterOnChip'] = bool(cfg.CenterOnChip)
             d['SeriesType'] = cfg.SeriesType  # int
-            d['SeriesTypeStr'] = ('Single image', 'Delay series', 'Script series')[cfg.SeriesType]  # str
+            d['SeriesTypeStr'] = ('Single image', 'Delay series', 'Script series')[
+                cfg.SeriesType
+            ]  # str
             d['SeriesNumberOfImages'] = cfg.SeriesNumberOfImages
             d['SeriesDelay'] = cfg.SeriesDelay  # int
             d['SeriesAlignImages'] = bool(cfg.SeriesAlignImages)
@@ -199,7 +214,15 @@ class CameraEMMENU(CameraBase):
             d['UseScriptWithinSeries'] = bool(cfg.UseScriptWithinSeries)
             d['UseScriptAfterSeries'] = bool(cfg.UseScriptAfterSeries)
             d['ShutterMode'] = cfg.ShutterMode  # int
-            d['ShutterModeStr'] = ('None', 'SH', 'BB', 'SH/BB', 'Dark/SH', 'Dark/BB', 'Dark/SH/BB')[cfg.ShutterMode]  # str
+            d['ShutterModeStr'] = (
+                'None',
+                'SH',
+                'BB',
+                'SH/BB',
+                'Dark/SH',
+                'Dark/BB',
+                'Dark/SH/BB',
+            )[cfg.ShutterMode]  # str
             return d
         else:
             return cfg
@@ -366,7 +389,9 @@ class CameraEMMENU(CameraBase):
 
         self.write_tiff_from_pointer(p, filename)
 
-    def write_tiffs(self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False) -> None:
+    def write_tiffs(
+        self, start_index: int, stop_index: int, path: str, clear_buffer: bool = False
+    ) -> None:
         """Write a series of data in tiff format and writes them to the given
         `path` using EMMENU machinery."""
         path = Path(path)
@@ -505,4 +530,5 @@ if __name__ == '__main__':
     cam = CameraEMMENU()
 
     from IPython import embed
+
     embed()

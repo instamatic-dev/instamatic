@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 from pyserialem.montage import make_grid, sorted_grid_indices
@@ -29,11 +31,14 @@ class GridMontage:
         }
         return gridspec
 
-    def setup(self,
-              nx: int, ny: int,
-              overlap: float = defaults.gridmontage['overlap'],
-              stage_shift: tuple = (0.0, 0.0),
-              binning: int = None) -> 'np.array':
+    def setup(
+        self,
+        nx: int,
+        ny: int,
+        overlap: float = defaults.gridmontage['overlap'],
+        stage_shift: tuple = (0.0, 0.0),
+        binning: int = None,
+    ) -> 'np.array':
         """Set up the experiment, run `GridMontage.start` to acquire data.
 
         Parameters
@@ -93,7 +98,9 @@ class GridMontage:
         print('Setting up gridscan.')
         print(f'  Mag: {self.magnification}x')
         print(f'  Mode: `{self.mode}`')
-        print(f'  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip: {self.flip}')
+        print(
+            f'  Grid: {nx} x {ny}; {self.direction}; zigzag: {self.zigzag}; flip: {self.flip}'
+        )
         print(f'  Overlap: {self.overlap}')
         print()
         print(f'  Image shape: {res_x} x {res_y}')
@@ -118,10 +125,12 @@ class GridMontage:
         def post_acquire(ctrl):
             pass
 
-        ctrl.acquire_at_items(self.stagecoords,
-                              acquire=acquire_image,
-                              pre_acquire=eliminate_backlash,
-                              post_acquire=None)
+        ctrl.acquire_at_items(
+            self.stagecoords,
+            acquire=acquire_image,
+            pre_acquire=eliminate_backlash,
+            post_acquire=None,
+        )
 
         self.buffer = buffer
 
@@ -130,13 +139,14 @@ class GridMontage:
     def to_montage(self):
         """Convert the experimental data to a `Montage` object."""
         images = [im for im, h in self.buffer]
-        m = Montage(images=images,
-                    gridspec=self.gridspec,
-                    overlap=self.overlap,
-                    stagematrix=self.stagematrix,
-                    stagecoords=self.stagecoords,
-                    pixelsize=self.pixelsize,
-                    )
+        m = Montage(
+            images=images,
+            gridspec=self.gridspec,
+            overlap=self.overlap,
+            stagematrix=self.stagematrix,
+            stagecoords=self.stagecoords,
+            pixelsize=self.pixelsize,
+        )
         m.update_gridspec(flip=not self.flip)  # BUG: Work-around for gridspec madness
         # Possibly related is that images are rotated 90 deg. in SerialEM mrc files
 
@@ -180,6 +190,7 @@ class GridMontage:
         }
 
         import yaml
+
         yaml.dump(d, stream=open(drc / 'montage.yaml', 'w'))
         print(f' >> Wrote {n_images} montage images to {drc}')
 
@@ -197,6 +208,7 @@ class GridMontage:
 
 if __name__ == '__main__':
     from instamatic import TEMController
+
     ctrl = TEMController.initialize()
     ctrl.mode.set('lowmag')
     ctrl.magnification.value = 100

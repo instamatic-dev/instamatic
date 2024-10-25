@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 from tkinter import *
 from tkinter.ttk import *
@@ -26,11 +28,23 @@ class ExperimentalCtrl(LabelFrame):
         cb_nowait = Checkbutton(frame, text='Wait for stage', variable=self.var_stage_wait)
         cb_nowait.grid(row=0, column=3)
 
-        b_find_eucentric_height = Button(frame, text='Find eucentric height', command=self.find_eucentric_height)
+        b_find_eucentric_height = Button(
+            frame, text='Find eucentric height', command=self.find_eucentric_height
+        )
         b_find_eucentric_height.grid(row=0, column=0, sticky='EW', columnspan=2)
 
         Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
-        self.o_mode = OptionMenu(frame, self.var_mode, 'diff', 'diff', 'mag1', 'mag2', 'lowmag', 'samag', command=self.set_mode)
+        self.o_mode = OptionMenu(
+            frame,
+            self.var_mode,
+            'diff',
+            'diff',
+            'mag1',
+            'mag2',
+            'lowmag',
+            'samag',
+            command=self.set_mode,
+        )
         self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
@@ -43,18 +57,28 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text='Alpha wobbler (±)', width=20).grid(row=4, column=0, sticky='W')
         Label(frame, text='Stage(XY)', width=20).grid(row=6, column=0, sticky='W')
 
-        e_negative_angle = Spinbox(frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5)
+        e_negative_angle = Spinbox(
+            frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5
+        )
         e_negative_angle.grid(row=1, column=1, sticky='EW')
-        e_neutral_angle = Spinbox(frame, width=10, textvariable=self.var_neutral_angle, from_=-90, to=90, increment=5)
+        e_neutral_angle = Spinbox(
+            frame, width=10, textvariable=self.var_neutral_angle, from_=-90, to=90, increment=5
+        )
         e_neutral_angle.grid(row=2, column=1, sticky='EW')
-        e_positive_angle = Spinbox(frame, width=10, textvariable=self.var_positive_angle, from_=-90, to=90, increment=5)
+        e_positive_angle = Spinbox(
+            frame, width=10, textvariable=self.var_positive_angle, from_=-90, to=90, increment=5
+        )
         e_positive_angle.grid(row=3, column=1, sticky='EW')
 
-        e_alpha_wobbler = Spinbox(frame, width=10, textvariable=self.var_alpha_wobbler, from_=-90, to=90, increment=1)
+        e_alpha_wobbler = Spinbox(
+            frame, width=10, textvariable=self.var_alpha_wobbler, from_=-90, to=90, increment=1
+        )
         e_alpha_wobbler.grid(row=4, column=1, sticky='EW')
         self.b_start_wobble = Button(frame, text='Start', command=self.start_alpha_wobbler)
         self.b_start_wobble.grid(row=4, column=2, sticky='W')
-        self.b_stop_wobble = Button(frame, text='Stop', command=self.stop_alpha_wobbler, state=DISABLED)
+        self.b_stop_wobble = Button(
+            frame, text='Stop', command=self.stop_alpha_wobbler, state=DISABLED
+        )
         self.b_stop_wobble.grid(row=4, column=3, sticky='W')
 
         e_stage_x = Entry(frame, width=10, textvariable=self.var_stage_x)
@@ -64,11 +88,15 @@ class ExperimentalCtrl(LabelFrame):
 
         if config.settings.use_goniotool:
             Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
-            e_goniotool_tx = Spinbox(frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1)
+            e_goniotool_tx = Spinbox(
+                frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
+            )
             e_goniotool_tx.grid(row=5, column=1, sticky='EW')
             b_goniotool_set = Button(frame, text='Set', command=self.set_goniotool_tx)
             b_goniotool_set.grid(row=5, column=2, sticky='W')
-            b_goniotool_default = Button(frame, text='Default', command=self.set_goniotool_tx_default)
+            b_goniotool_default = Button(
+                frame, text='Default', command=self.set_goniotool_tx_default
+            )
             b_goniotool_default.grid(row=5, column=3, sticky='W')
 
         b_negative_angle = Button(frame, text='Set', command=self.set_negative_angle)
@@ -85,13 +113,27 @@ class ExperimentalCtrl(LabelFrame):
 
         # defocus button
         Label(frame, text='Diff defocus:', width=20).grid(row=13, column=0, sticky='W')
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=10, from_=-10000, to=10000, increment=100)
+        self.e_diff_defocus = Spinbox(
+            frame,
+            textvariable=self.var_diff_defocus,
+            width=10,
+            from_=-10000,
+            to=10000,
+            increment=100,
+        )
         self.e_diff_defocus.grid(row=13, column=1, sticky='EW')
 
-        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
+        self.c_toggle_defocus = Checkbutton(
+            frame,
+            text='Toggle defocus',
+            variable=self.var_toggle_diff_defocus,
+            command=self.toggle_diff_defocus,
+        )
         self.c_toggle_defocus.grid(row=13, column=2, sticky='W', columnspan=2)
 
-        self.b_reset_defocus = Button(frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED)
+        self.b_reset_defocus = Button(
+            frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED
+        )
         self.b_reset_defocus.grid(row=13, column=4, sticky='EW')
 
         # frame.grid_columnconfigure(1, weight=1)
@@ -109,7 +151,14 @@ class ExperimentalCtrl(LabelFrame):
         b_brightness_get = Button(frame, text='Get', command=self.get_brightness)
         b_brightness_get.grid(row=11, column=3, sticky='W')
 
-        slider = Scale(frame, variable=self.var_brightness, from_=0, to=2**16 - 1, orient=HORIZONTAL, command=self.set_brightness)
+        slider = Scale(
+            frame,
+            variable=self.var_brightness,
+            from_=0,
+            to=2**16 - 1,
+            orient=HORIZONTAL,
+            command=self.set_brightness,
+        )
         slider.grid(row=12, column=0, columnspan=3, sticky='EW')
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
@@ -126,12 +175,20 @@ class ExperimentalCtrl(LabelFrame):
         b_difffocus_get = Button(frame, text='Get', command=self.get_difffocus)
         b_difffocus_get.grid(row=11, column=3, sticky='W')
 
-        slider = Scale(frame, variable=self.var_difffocus, from_=0, to=2**16 - 1, orient=HORIZONTAL, command=self.set_difffocus)
+        slider = Scale(
+            frame,
+            variable=self.var_difffocus,
+            from_=0,
+            to=2**16 - 1,
+            orient=HORIZONTAL,
+            command=self.set_difffocus,
+        )
         slider.grid(row=12, column=0, columnspan=3, sticky='EW')
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         from instamatic import TEMController
+
         self.ctrl = TEMController.get_instance()
 
     def init_vars(self):
@@ -165,8 +222,7 @@ class ExperimentalCtrl(LabelFrame):
 
     def set_brightness(self, event=None):
         self.var_brightness.set(self.var_brightness.get())
-        self.q.put(('ctrl', {'task': 'brightness.set',
-                             'value': self.var_brightness.get()}))
+        self.q.put(('ctrl', {'task': 'brightness.set', 'value': self.var_brightness.get()}))
         self.triggerEvent.set()
 
     def get_brightness(self, event=None):
@@ -174,29 +230,49 @@ class ExperimentalCtrl(LabelFrame):
 
     def set_difffocus(self, event=None):
         self.var_difffocus.set(self.var_difffocus.get())
-        self.q.put(('ctrl', {'task': 'difffocus.set',
-                             'value': self.var_difffocus.get()}))
+        self.q.put(('ctrl', {'task': 'difffocus.set', 'value': self.var_difffocus.get()}))
         self.triggerEvent.set()
 
     def get_difffocus(self, event=None):
         self.var_difffocus.set(self.ctrl.difffocus.get())
 
     def set_negative_angle(self):
-        self.q.put(('ctrl', {'task': 'stage.set',
-                             'a': self.var_negative_angle.get(),
-                             'wait': self.var_stage_wait.get()}))
+        self.q.put(
+            (
+                'ctrl',
+                {
+                    'task': 'stage.set',
+                    'a': self.var_negative_angle.get(),
+                    'wait': self.var_stage_wait.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def set_neutral_angle(self):
-        self.q.put(('ctrl', {'task': 'stage.set',
-                             'a': self.var_neutral_angle.get(),
-                             'wait': self.var_stage_wait.get()}))
+        self.q.put(
+            (
+                'ctrl',
+                {
+                    'task': 'stage.set',
+                    'a': self.var_neutral_angle.get(),
+                    'wait': self.var_stage_wait.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def set_positive_angle(self):
-        self.q.put(('ctrl', {'task': 'stage.set',
-                             'a': self.var_positive_angle.get(),
-                             'wait': self.var_stage_wait.get()}))
+        self.q.put(
+            (
+                'ctrl',
+                {
+                    'task': 'stage.set',
+                    'a': self.var_positive_angle.get(),
+                    'wait': self.var_stage_wait.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def set_goniotool_tx(self, event=None, value=None):
@@ -209,10 +285,17 @@ class ExperimentalCtrl(LabelFrame):
         self.set_goniotool_tx(value=value)
 
     def set_stage(self):
-        self.q.put(('ctrl', {'task': 'stage.set',
-                             'x': self.var_stage_x.get(),
-                             'y': self.var_stage_y.get(),
-                             'wait': self.var_stage_wait.get()}))
+        self.q.put(
+            (
+                'ctrl',
+                {
+                    'task': 'stage.set',
+                    'x': self.var_stage_x.get(),
+                    'y': self.var_stage_y.get(),
+                    'wait': self.var_stage_wait.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def get_stage(self, event=None):
@@ -226,9 +309,16 @@ class ExperimentalCtrl(LabelFrame):
         self.b_stop_wobble.config(state=NORMAL)
         self.b_start_wobble.config(state=DISABLED)
 
-        self.q.put(('ctrl', {'task': 'stage.alpha_wobbler',
-                             'delta': self.var_alpha_wobbler.get(),
-                             'event': self.wobble_stop_event}))
+        self.q.put(
+            (
+                'ctrl',
+                {
+                    'task': 'stage.alpha_wobbler',
+                    'delta': self.var_alpha_wobbler.get(),
+                    'event': self.wobble_stop_event,
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def stop_alpha_wobbler(self):
@@ -264,7 +354,9 @@ class ExperimentalCtrl(LabelFrame):
         self.get_difffocus()
 
 
-module = BaseModule(name='ctrl', display_name='control', tk_frame=ExperimentalCtrl, location='bottom')
+module = BaseModule(
+    name='ctrl', display_name='control', tk_frame=ExperimentalCtrl, location='bottom'
+)
 commands = {}
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import logging
 import time
@@ -59,7 +61,10 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
         print(f"scan_range='{scanrange}'", file=f)
         print(f"exclude_images='exclude_images={excludeimages}'", file=f)
         if rotation_xyz:
-            print(f"rotation_axis='geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}'", file=f)
+            print(
+                f"rotation_axis='geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}'",
+                file=f,
+            )
         print('#', file=f)
         print('# To run:', file=f)
         print('#     source dials_variables.sh', file=f)
@@ -76,7 +81,10 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
         print(f'set scan_range={scanrange}', file=f)
         print(f'set exclude_images=exclude_images={excludeimages}', file=f)
         if rotation_xyz:
-            print(f'set rotation_axis=geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}', file=f)
+            print(
+                f'set rotation_axis=geometry.goniometer.axes={rot_x:.4f},{rot_y:.4f},{rot_z:.4f}',
+                file=f,
+            )
         print('', file=f)
         print(':: To run:', file=f)
         print('::     call dials_variables.bat', file=f)
@@ -94,9 +102,13 @@ def get_calibrated_rotation_speed(val):
     and matches them to the observed one
     """
 
-    rotation_speeds = set(config.microscope.rotation_speeds['coarse'] + config.microscope.rotation_speeds['fine'])
+    rotation_speeds = set(
+        config.microscope.rotation_speeds['coarse'] + config.microscope.rotation_speeds['fine']
+    )
     calibrated_value = min(rotation_speeds, key=lambda x: abs(x - val))
-    logger.info(f'Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}')
+    logger.info(
+        f'Correcting oscillation angle from {val:.3f} to calibrated value {calibrated_value:.3f}'
+    )
     return calibrated_value
 
 
@@ -109,16 +121,17 @@ class ImgConversion:
     metadata/header (dict). The buffer index must start at 1.
     """
 
-    def __init__(self,
-                 buffer: list,                   # image buffer, list of (index [int], image data [2D numpy array], header [dict])
-                 camera_length: float,           # virtual camera length read from the microscope
-                 osc_angle: float,               # degrees, oscillation angle of the rotation
-                 start_angle: float,             # degrees, start angle of the rotation
-                 end_angle: float,               # degrees, end angle of the rotation
-                 rotation_axis: float,           # radians, specifies the position of the rotation axis
-                 acquisition_time: float,        # seconds, acquisition time (exposure time + overhead)
-                 flatfield: str = 'flatfield.tiff',
-                 ):
+    def __init__(
+        self,
+        buffer: list,  # image buffer, list of (index [int], image data [2D numpy array], header [dict])
+        camera_length: float,  # virtual camera length read from the microscope
+        osc_angle: float,  # degrees, oscillation angle of the rotation
+        start_angle: float,  # degrees, start angle of the rotation
+        end_angle: float,  # degrees, end angle of the rotation
+        rotation_axis: float,  # radians, specifies the position of the rotation axis
+        acquisition_time: float,  # seconds, acquisition time (exposure time + overhead)
+        flatfield: str = 'flatfield.tiff',
+    ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
         self.flatfield = flatfield
@@ -146,11 +159,17 @@ class ImgConversion:
 
         self.data_shape = img.shape
         try:
-            self.pixelsize = config.calibration['diff']['pixelsize'][camera_length]  # px / Angstrom
+            self.pixelsize = config.calibration['diff']['pixelsize'][
+                camera_length
+            ]  # px / Angstrom
         except KeyError:
             self.pixelsize = 1
-            print(f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.')
-            logger.warning(f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.')
+            print(
+                f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.'
+            )
+            logger.warning(
+                f'No calibrated pixelsize for camera length={camera_length}. Setting pixelsize to 1.'
+            )
 
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
@@ -173,6 +192,7 @@ class ImgConversion:
         from .XDS_template import (
             XDS_template,  # hook XDS_template here, because it is difficult to override as a global
         )
+
         self.XDS_template = XDS_template
 
         self.check_settings()  # check if all required parameters are present, and fill default values if needed
@@ -227,9 +247,13 @@ class ImgConversion:
         if self.do_stretch_correction:
             stretch_attrs = ('stretch_amplitude', 'stretch_azimuth')
             if not all(hasattr(self, attr) for attr in stretch_attrs):
-                raise AttributeError(f'`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`')
+                raise AttributeError(
+                    f'`{self.__class__.__name__}` is missing stretch attrs `{stretch_attrs[0]}/{stretch_attrs[1]}`'
+                )
 
-    def get_beam_centers(self, invert_x: bool = False, invert_y: bool = False) -> (float, float):
+    def get_beam_centers(
+        self, invert_x: bool = False, invert_y: bool = False
+    ) -> (float, float):
         """Obtain beam centers from the diffraction data Returns a tuple with
         the median beam center and its standard deviation."""
         shape_x, shape_y = self.data_shape
@@ -278,7 +302,7 @@ class ImgConversion:
 
         shape = self.data_shape
 
-        xi, yi = np.mgrid[0:shape[0], 0:shape[1]]
+        xi, yi = np.mgrid[0 : shape[0], 0 : shape[1]]
         coords = np.stack([xi.flatten(), yi.flatten()], axis=1) - center
 
         s = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
@@ -330,7 +354,13 @@ class ImgConversion:
 
         logger.debug(f'MRC files created in folder: {path}')
 
-    def threadpoolwriter(self, tiff_path: str = None, smv_path: str = None, mrc_path: str = None, workers: int = 8) -> None:
+    def threadpoolwriter(
+        self,
+        tiff_path: str = None,
+        smv_path: str = None,
+        mrc_path: str = None,
+        workers: int = 8,
+    ) -> None:
         """Efficiently write all data to the specified formats using a
         threadpool.
 
@@ -355,10 +385,10 @@ class ImgConversion:
             logger.debug(f'MRC files saved in folder: {mrc_path}')
 
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
             futures = []
             for i in self.observed_range:
-
                 if write_tiff:
                     futures.append(executor.submit(self.write_tiff, tiff_path, i))
                 if write_mrc:
@@ -378,9 +408,16 @@ class ImgConversion:
         self.missing_range = self.missing_range
 
         invert_rotation_axis = self.start_angle > self.end_angle
-        rotation_xyz = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis, setting='dials')
+        rotation_xyz = rotation_axis_to_xyz(
+            self.rotation_axis, invert=invert_rotation_axis, setting='dials'
+        )
 
-        export_dials_variables(smv_path, sequence=observed_range, missing=self.missing_range, rotation_xyz=rotation_xyz)
+        export_dials_variables(
+            smv_path,
+            sequence=observed_range,
+            missing=self.missing_range,
+            rotation_xyz=rotation_xyz,
+        )
 
         path = smv_path / self.smv_subdrc
 
@@ -454,8 +491,8 @@ class ImgConversion:
         header['BIN_TYPE'] = 'HW'
         header['ADC'] = 'fast'
         header['CREV'] = 1
-        header['BEAMLINE'] = self.name      # special ID for DIALS
-        header['DETECTOR_SN'] = 901         # special ID for DIALS
+        header['BEAMLINE'] = self.name  # special ID for DIALS
+        header['DETECTOR_SN'] = 901  # special ID for DIALS
         header['DATE'] = date
         header['TIME'] = str(h['ImageExposureTime'])
         header['DISTANCE'] = f'{self.distance:.4f}'
@@ -546,7 +583,9 @@ class ImgConversion:
         nframes = max(self.complete_range)
 
         invert_rotation_axis = self.start_angle > self.end_angle
-        rot_x, rot_y, rot_z = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rotation_axis)
+        rot_x, rot_y, rot_z = rotation_axis_to_xyz(
+            self.rotation_axis, invert=invert_rotation_axis
+        )
 
         shape_x, shape_y = self.data_shape
 
@@ -557,7 +596,9 @@ class ImgConversion:
             stretch_correction = ''
 
         if self.missing_range:
-            exclude = '\n'.join([f'EXCLUDE_DATA_RANGE={i} {j}' for i, j in find_subranges(self.missing_range)])
+            exclude = '\n'.join(
+                [f'EXCLUDE_DATA_RANGE={i} {j}' for i, j in find_subranges(self.missing_range)]
+            )
         else:
             exclude = '!EXCLUDE_DATA_RANGE='
 
@@ -623,7 +664,10 @@ class ImgConversion:
 
         with open(path / 'pets.pts', 'w') as f:
             date = str(time.ctime())
-            print('# PETS input file for Rotation Electron Diffraction generated by `instamatic`', file=f)
+            print(
+                '# PETS input file for Rotation Electron Diffraction generated by `instamatic`',
+                file=f,
+            )
             print(f'# {date}', file=f)
             print('# For definitions of input parameters, see:', file=f)
             print('# http://pets.fzu.cz/ ', file=f)
@@ -662,7 +706,10 @@ class ImgConversion:
 
         with open(path / 'pets.pts2', 'w') as f:
             date = str(time.ctime())
-            print('# PETS 2 input file for Rotation Electron Diffraction generated by `instamatic`', file=f)
+            print(
+                '# PETS 2 input file for Rotation Electron Diffraction generated by `instamatic`',
+                file=f,
+            )
             print(f'# {date}', file=f)
             print('# For definitions of input parameters, see:', file=f)
             print('# http://pets.fzu.cz/ ', file=f)

@@ -3,6 +3,9 @@
 .. Created on Jul 18, 2013 .. codeauthor:: Robert Langlois
 <rl2528@columbia.edu>
 """
+
+from __future__ import annotations
+
 import bz2
 import logging
 import os

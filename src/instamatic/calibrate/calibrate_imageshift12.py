@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import numpy as np
@@ -26,10 +28,12 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
 
         >> Press <ENTER> to start >> \n""")
 
-    d = {'IS1': ctrl.imageshift1,
-         'IS2': ctrl.imageshift2,
-         'BS': ctrl.beamshift,
-         'S': ctrl.stage}
+    d = {
+        'IS1': ctrl.imageshift1,
+        'IS2': ctrl.imageshift2,
+        'BS': ctrl.beamshift,
+        'S': ctrl.stage,
+    }
 
     if diff_defocus != 0:
         diff_focus_proper = ctrl.difffocus.value
@@ -95,19 +99,27 @@ def Calibrate_Imageshift(ctrl, diff_defocus, stepsize, logger, key='IS1'):
 
 
 def Calibrate_Imageshift2(ctrl, diff_defocus, stepsize, logger):
-    return Calibrate_Imageshift(ctrl=ctrl, diff_defocus=diff_defocus, stepsize=stepsize, logger=logger, key='IS2')
+    return Calibrate_Imageshift(
+        ctrl=ctrl, diff_defocus=diff_defocus, stepsize=stepsize, logger=logger, key='IS2'
+    )
 
 
 def Calibrate_Beamshift_D(ctrl, stepsize, logger):
-    return Calibrate_Imageshift(ctrl=ctrl, diff_defocus=0, stepsize=stepsize, logger=logger, key='BS')
+    return Calibrate_Imageshift(
+        ctrl=ctrl, diff_defocus=0, stepsize=stepsize, logger=logger, key='BS'
+    )
 
 
 def Calibrate_Beamshift_D_Defoc(ctrl, diff_defocus, stepsize, logger):
-    return Calibrate_Imageshift(ctrl=ctrl, diff_defocus=diff_defocus, stepsize=stepsize, logger=logger, key='BS')
+    return Calibrate_Imageshift(
+        ctrl=ctrl, diff_defocus=diff_defocus, stepsize=stepsize, logger=logger, key='BS'
+    )
 
 
 def Calibrate_Stage(ctrl, stepsize, logger):
     if ctrl.mode != 'mag1':
         ctrl.mode.set('mag1')
     ctrl.brightness.value = 65535
-    return Calibrate_Imageshift(ctrl=ctrl, diff_defocus=0, stepsize=stepsize, logger=logger, key='S')
+    return Calibrate_Imageshift(
+        ctrl=ctrl, diff_defocus=0, stepsize=stepsize, logger=logger, key='S'
+    )

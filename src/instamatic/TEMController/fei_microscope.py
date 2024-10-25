@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import time
@@ -59,7 +61,9 @@ class FEIMicroscope(MicroscopeBase):
 
         print('FEI Themis Z initializing...')
         # tem interfaces the GUN, stage obj etc but does not communicate with the Instrument objects
-        self.tem = comtypes.client.CreateObject('TEMScripting.Instrument.1', comtypes.CLSCTX_ALL)
+        self.tem = comtypes.client.CreateObject(
+            'TEMScripting.Instrument.1', comtypes.CLSCTX_ALL
+        )
         # tecnai does similar things as tem; the difference is not clear for now
         self.tecnai = comtypes.client.CreateObject('Tecnai.Instrument', comtypes.CLSCTX_ALL)
         # tom interfaces the Instrument, Projection objects
@@ -92,7 +96,9 @@ class FEIMicroscope(MicroscopeBase):
 
         self.goniostopped = self.stage.Status
 
-        input('Please select the type of sample stage before moving on.\nPress <ENTER> to continue...')
+        input(
+            'Please select the type of sample stage before moving on.\nPress <ENTER> to continue...'
+        )
 
     def getHTValue(self):
         return self.tem.GUN.HTValue
@@ -141,7 +147,13 @@ class FEIMicroscope(MicroscopeBase):
 
     def getStagePosition(self):
         """Return numbers in microns, angles in degs."""
-        return self.stage.Position.X * 1e6, self.stage.Position.Y * 1e6, self.stage.Position.Z * 1e6, self.stage.Position.A / pi * 180, self.stage.Position.B / pi * 180
+        return (
+            self.stage.Position.X * 1e6,
+            self.stage.Position.Y * 1e6,
+            self.stage.Position.Z * 1e6,
+            self.stage.Position.A / pi * 180,
+            self.stage.Position.B / pi * 180,
+        )
 
     def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
         """X, y, z in the system are in unit of meters, angles in radians."""
@@ -193,7 +205,9 @@ class FEIMicroscope(MicroscopeBase):
         """X y can only be float numbers between -1 and 1."""
         gs = self.tem.GUN.Shift
         if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(
+                f'GunShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}'
+            )
 
         if x is not None:
             gs.X = x
@@ -210,7 +224,9 @@ class FEIMicroscope(MicroscopeBase):
     def setGunTilt(self, x, y):
         gt = self.tecnai.Gun.Tilt
         if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(
+                f'GunTilt x/y must be a floating number between -1 an 1. Input: x={x}, y={y}'
+            )
 
         if x is not None:
             gt.X = x
@@ -249,7 +265,9 @@ class FEIMicroscope(MicroscopeBase):
         """Align Shift."""
         bs = self.tom.Illumination.BeamAlignShift
         if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(
+                f'BeamAlignShift x/y must be a floating number between -1 an 1. Input: x={x}, y={y}'
+            )
 
         if x is not None:
             bs.X = x
@@ -269,11 +287,15 @@ class FEIMicroscope(MicroscopeBase):
 
         if x is not None:
             if abs(x) > 1:
-                raise FEIValueError(f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}')
+                raise FEIValueError(
+                    f'BeamTilt x must be a floating number between -1 an 1. Input: x={x}'
+                )
             bt.X = x
         if y is not None:
             if abs(y) > 1:
-                raise FEIValueError(f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}')
+                raise FEIValueError(
+                    f'BeamTilt y must be a floating number between -1 an 1. Input: y={y}'
+                )
             bt.Y = y
         self.tom.Illumination.BeamAlignmentTilt = bt
 
@@ -284,7 +306,9 @@ class FEIMicroscope(MicroscopeBase):
     def setImageShift1(self, x, y):
         is1 = self.tom.Projection.ImageShift
         if abs(x) > 1 or abs(y) > 1:
-            raise FEIValueError(f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}')
+            raise FEIValueError(
+                f'ImageShift1 x/y must be a floating number between -1 an 1. Input: x={x}, y={y}'
+            )
 
         if x is not None:
             is1.X = x
@@ -386,7 +410,10 @@ class FEIMicroscope(MicroscopeBase):
 
         Not exactly though, close enough
         """
-        return 180 / pi * self.tem.Projection.DiffractionShift.X, 180 / pi * self.tem.Projection.DiffractionShift.Y
+        return (
+            180 / pi * self.tem.Projection.DiffractionShift.X,
+            180 / pi * self.tem.Projection.DiffractionShift.Y,
+        )
 
     def setDiffShift(self, x, y):
         ds1 = self.tem.Projection.DiffractionShift
@@ -418,7 +445,10 @@ class FEIMicroscope(MicroscopeBase):
         self.tem.Illumination.BeamBlanked = 0
 
     def getCondensorLensStigmator(self):
-        return self.tom.Illumination.CondenserStigmator.X, self.tom.Illumination.CondenserStigmator.Y
+        return (
+            self.tom.Illumination.CondenserStigmator.X,
+            self.tom.Illumination.CondenserStigmator.Y,
+        )
 
     def setCondensorLensStigmator(self, x, y):
         self.tom.Illumination.CondenserStigmator.X = x
@@ -426,14 +456,20 @@ class FEIMicroscope(MicroscopeBase):
 
     def getIntermediateLensStigmator(self):
         """Diffraction stigmator."""
-        return self.tom.Illumination.DiffractionStigmator.X, self.tom.Illumination.DiffractionStigmator.Y
+        return (
+            self.tom.Illumination.DiffractionStigmator.X,
+            self.tom.Illumination.DiffractionStigmator.Y,
+        )
 
     def setIntermediateLensStigmator(self, x, y):
         self.tom.Illumination.DiffractionStigmator.X = x
         self.tom.Illumination.DiffractionStigmator.Y = y
 
     def getObjectiveLensStigmator(self):
-        return self.tom.Illumination.ObjectiveStigmator.X, self.tom.Illumination.ObjectiveStigmator.Y
+        return (
+            self.tom.Illumination.ObjectiveStigmator.X,
+            self.tom.Illumination.ObjectiveStigmator.Y,
+        )
 
     def setObjectiveLensStigmator(self, x, y):
         self.tom.Illumination.ObjectiveStigmator.X = x
