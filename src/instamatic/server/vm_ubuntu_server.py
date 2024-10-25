@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import datetime
 import logging
@@ -28,7 +30,9 @@ def start_vm_process(vmname=VM_ID, vmachine_pwd=VM_PWD, time_delay=VM_DELAY1, mo
     try:
         vbox = virtualbox.VirtualBox()
     except ModuleNotFoundError:
-        print('Please install virtualbox with guest ubuntu and virtualbox SDK first before using this server.')
+        print(
+            'Please install virtualbox with guest ubuntu and virtualbox SDK first before using this server.'
+        )
         print('Download virtualbox python SDK from:')
         print('https://www.virtualbox.org/wiki/Downloads')
 
@@ -50,11 +54,19 @@ def vm_ubuntu_start_terminal(session):
     session.console.keyboard.put_keys(press_keys='t', hold_keys=['CTRL', 'ALT'])
 
 
-def vm_ubuntu_execute_script(vmname=VM_ID, vmachine_username=VM_USERNAME, vmachine_pwd=VM_PWD, time_delay=30, script_path='/usr/loca/bin/xds'):
+def vm_ubuntu_execute_script(
+    vmname=VM_ID,
+    vmachine_username=VM_USERNAME,
+    vmachine_pwd=VM_PWD,
+    time_delay=30,
+    script_path='/usr/loca/bin/xds',
+):
     try:
         vbox = virtualbox.VirtualBox()
     except ModuleNotFoundError:
-        print('Please install virtualbox with guest ubuntu and virtualbox SDK first before using this server.')
+        print(
+            'Please install virtualbox with guest ubuntu and virtualbox SDK first before using this server.'
+        )
         print('Download virtualbox python SDK from:')
         print('https://www.virtualbox.org/wiki/Downloads')
 
@@ -76,7 +88,6 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
     # path = "/media/sf_SharedWithVM/test_vm_server"
 
     while True:
-
         try:
             data = conn.recv(BUFF).decode()
         except ConnectionResetError:
@@ -107,7 +118,7 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
             data = ast.literal_eval(data)
             path = data['path']
             slashindex = VM_SF.rfind('\\')
-            path_vm = path.replace(VM_SF[:slashindex + 1], '\\media\\sf_')
+            path_vm = path.replace(VM_SF[: slashindex + 1], '\\media\\sf_')
             path_vm = path_vm.replace('\\', '/')
             session.console.keyboard.put_keys('cd ')
             session.console.keyboard.put_keys(f'{path_vm}')
@@ -131,7 +142,9 @@ def vm_ubuntu_start_xds_AtFolder(session, conn, shelxt, unitcell, spgr, composit
 
                 except Exception as e:
                     print(e)
-                    print('Because of the error auto structure solution could not be performed.')
+                    print(
+                        'Because of the error auto structure solution could not be performed.'
+                    )
 
     print('Connection closed')
 
@@ -142,6 +155,7 @@ def close_down_vm_process(session):
 
 def generate_shelxt_input(unitcell, spgr, composition, path):
     from edtools.make_shelx import comp2dict, get_latt_symm_cards, get_sfac
+
     composition = comp2dict(composition)
 
     if unitcell is None:
@@ -172,7 +186,10 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
     f = open(out, 'w')
 
     print(f'TITL {spgr}', file=f)
-    print(f'CELL {wavelength:.4f} {a:6.3f} {b:6.3f} {c:6.3f} {al:7.3f} {be:7.3f} {ga:7.3f}', file=f)
+    print(
+        f'CELL {wavelength:.4f} {a:6.3f} {b:6.3f} {c:6.3f} {al:7.3f} {be:7.3f} {ga:7.3f}',
+        file=f,
+    )
     print('ZERR 1.00    0.000  0.000  0.000   0.000   0.000   0.000', file=f)
 
     LATT, SYMM = get_latt_symm_cards(spgr)
@@ -197,11 +214,14 @@ def generate_shelxt_input(unitcell, spgr, composition, path):
 def generate_xdsconv_input(path):
     out = Path(path) / 'XDSCONV.INP'
     f = open(out, 'w')
-    print("""
+    print(
+        """
 INPUT_FILE= XDS_ASCII.HKL
 INCLUDE_RESOLUTION_RANGE= 20 0.8 ! optional
 OUTPUT_FILE= shelx.hkl  SHELX    ! Warning: do _not_ name this file "temp.mtz" !
-FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""", file=f)
+FRIEDEL'S_LAW= FALSE             ! default is FRIEDEL'S_LAW=TRUE""",
+        file=f,
+    )
 
     print(f'Wrote xdsconv input file at {path}.')
 
@@ -230,30 +250,44 @@ After installation of VirtualBox and the corresponding SDK, `XDS` needs to be in
 The host and port are defined in `config/settings.yaml`.
 """
 
-    parser = argparse.ArgumentParser(description=description,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('-shelxt',
-                        action='store_true', dest='shelxt',
-                        help='Run SHELXT when xds ASCII HKL file is generated.')
+    parser.add_argument(
+        '-shelxt',
+        action='store_true',
+        dest='shelxt',
+        help='Run SHELXT when xds ASCII HKL file is generated.',
+    )
 
-    parser.add_argument('-c', '--unitcell',
-                        action='store', type=str, nargs=6, dest='unitcell',
-                        metavar=('a', 'b', 'c', 'al', 'be', 'ga'),
-                        help='Six numbers of the unit cell parameters.')
+    parser.add_argument(
+        '-c',
+        '--unitcell',
+        action='store',
+        type=str,
+        nargs=6,
+        dest='unitcell',
+        metavar=('a', 'b', 'c', 'al', 'be', 'ga'),
+        help='Six numbers of the unit cell parameters.',
+    )
 
-    parser.add_argument('-s', '--spgr',
-                        action='store', type=str, dest='spgr',
-                        help='Space group.')
+    parser.add_argument(
+        '-s', '--spgr', action='store', type=str, dest='spgr', help='Space group.'
+    )
 
-    parser.add_argument('-m', '--composition',
-                        action='store', type=str, nargs='+', dest='composition', metavar=('Xn', 'Ym'),
-                        help='Unit cell composition, i.e. `-m H2 O1`.')
+    parser.add_argument(
+        '-m',
+        '--composition',
+        action='store',
+        type=str,
+        nargs='+',
+        dest='composition',
+        metavar=('Xn', 'Ym'),
+        help='Unit cell composition, i.e. `-m H2 O1`.',
+    )
 
-    parser.set_defaults(shelxt=False,
-                        unitcell=None,
-                        spgr=None,
-                        composition=None)
+    parser.set_defaults(shelxt=False, unitcell=None, spgr=None, composition=None)
 
     options = parser.parse_args()
 
@@ -274,9 +308,11 @@ The host and port are defined in `config/settings.yaml`.
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.locations['logs'] / f'instamatic_xdsVM_server_{date}.log'
-    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-                        filename=logfile,
-                        level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
+        filename=logfile,
+        level=logging.DEBUG,
+    )
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
@@ -292,7 +328,10 @@ The host and port are defined in `config/settings.yaml`.
             conn, addr = s.accept()
             log.info('Connected by %s', addr)
             print('Connected by', addr)
-            threading.Thread(target=vm_ubuntu_start_xds_AtFolder, args=(session, conn, shelxt, unitcell, spgr, composition)).start()
+            threading.Thread(
+                target=vm_ubuntu_start_xds_AtFolder,
+                args=(session, conn, shelxt, unitcell, spgr, composition),
+            ).start()
 
     # time.sleep(5)
     # vm_ubuntu_start_xds_AtFolder(session)

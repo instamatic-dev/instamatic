@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class BaseModule:
     """BaseModule for the gui composition.
 
@@ -5,12 +8,14 @@ class BaseModule:
     are to be passed on to the `tk_frame` class during initialization
     """
 
-    def __init__(self,
-                 name: str,
-                 tk_frame: 'tkinter.Frame',
-                 display_name: str = None,
-                 location: str = 'top',
-                 **kwargs):
+    def __init__(
+        self,
+        name: str,
+        tk_frame: 'tkinter.Frame',
+        display_name: str = None,
+        location: str = 'top',
+        **kwargs,
+    ):
         super().__init__()
 
         self.name = name

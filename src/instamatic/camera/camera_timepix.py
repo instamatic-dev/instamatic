@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import ctypes
 import os
@@ -28,9 +30,9 @@ def arrange_data(raw, out=None):
     """10000 loops, best of 3: 81.3 s per loop."""
     s = 256 * 256
     q1 = raw[0:s].reshape(256, 256)
-    q2 = raw[s:2 * s].reshape(256, 256)
-    q3 = raw[2 * s:3 * s][::-1].reshape(256, 256)
-    q4 = raw[3 * s:4 * s][::-1].reshape(256, 256)
+    q2 = raw[s : 2 * s].reshape(256, 256)
+    q3 = raw[2 * s : 3 * s][::-1].reshape(256, 256)
+    q4 = raw[3 * s : 4 * s][::-1].reshape(256, 256)
 
     if out is None:
         out = np.empty((516, 516), dtype=raw.dtype)
@@ -82,7 +84,9 @@ class CameraTPX(CameraBase):
             os.rename(self.lockfile, self.lockfile)
             # WinError 32 if file is open by the same/another process
         except PermissionError:
-            raise LockingError(f'Cannot establish lock to {self.lockfile} because it is used by another process')
+            raise LockingError(
+                f'Cannot establish lock to {self.lockfile} because it is used by another process'
+            )
         else:
             self._lock = open(self.lockfile)
 
@@ -244,8 +248,7 @@ class CameraTPX(CameraBase):
         After the Relaxd shutter opens (either explicitly by software or by an
         external trigger), it closes again after the set time.
 
-        bool enable  
-        int us = 10 # microseconds
+        bool enable int us = 10 # microseconds
         """
         enable = c_bool(enable)
         us = c_int(us)
@@ -301,13 +304,11 @@ class CameraTPX(CameraBase):
         return 'timepix'
 
 
-def initialize(config, name='pytimepix') -> CameraTPX:
-    from pathlib import Path
-
-    base = Path(config).parent
+def initialize(tpx_config_file, name='pytimepix') -> CameraTPX:
+    base = Path(tpx_config_file).parent
 
     # read config.txt
-    with open(config) as f:
+    with open(tpx_config_file) as f:
         for line in f:
             inp = line.split()
             if inp[0] == 'HWID':
@@ -361,7 +362,9 @@ if __name__ == '__main__':
         for x in range(n):
             cam.acquire_data(t)
         dt = time.perf_counter() - t0
-        print(f'Total time: {dt:.1f} s, acquisition time: {1000 * (dt / n):.2f} ms, overhead: {1000 * (dt / n - t):.2f} ms')
+        print(
+            f'Total time: {dt:.1f} s, acquisition time: {1000 * (dt / n):.2f} ms, overhead: {1000 * (dt / n - t):.2f} ms'
+        )
 
     embed(banner1='')
 

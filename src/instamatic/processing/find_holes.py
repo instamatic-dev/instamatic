@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -20,8 +22,7 @@ def plot_features(img, segmented):
     # plt.imsave("c2.png", segmented)
     # plt.imsave("d2.png", image_label_overlay)
 
-    fig, (ax1, ax2) = plt.subplots(
-        1, 2, figsize=(15, 10), sharex=True, sharey=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 10), sharex=True, sharey=True)
     ax1.imshow(img, interpolation='nearest')
     ax1.contour(segmented, [0.5], linewidths=1.2, colors='r')
 
@@ -49,8 +50,7 @@ def plot_props(img, props, fname=None, scale=1):
 
         color = 'red'
 
-        rect = Rectangle((x1 - 1, y1 - 1), x2 - x1 + 1,
-                         y2 - y1 + 1, fc='none', ec=color, lw=2)
+        rect = Rectangle((x1 - 1, y1 - 1), x2 - x1 + 1, y2 - y1 + 1, fc='none', ec=color, lw=2)
         ax.add_patch(rect)
 
         cy, cx = prop.weighted_centroid * scale
@@ -113,9 +113,9 @@ def calculate_hole_area(diameter, magnification, img_scale=1, binsize=1):
             apprximate feature size in pixels
     """
     px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
-    px *= (binsize / img_scale)
-    py *= (binsize / img_scale)
-    hole_area = (np.pi * (diameter / 2.0)**2) / (px * py)
+    px *= binsize / img_scale
+    py *= binsize / img_scale
+    hole_area = (np.pi * (diameter / 2.0) ** 2) / (px * py)
     return hole_area
 
 
@@ -145,7 +145,9 @@ def find_holes(img, area=0, plot=True, fname=None, verbose=True, max_eccentricit
         print(f'img range: {img.min()} - {img.max()}')
         print(f'otsu: {otsu:.0f} ({lower:.0f} - {i:.0f})')
 
-    markers = get_markers_bounds(img, lower=lower, upper=upper, dark_on_bright=False, verbose=verbose)
+    markers = get_markers_bounds(
+        img, lower=lower, upper=upper, dark_on_bright=False, verbose=verbose
+    )
     segmented = segmentation.random_walker(img, markers, beta=10, mode='bf')
 
     disk = morphology.disk(4)
@@ -199,7 +201,7 @@ def find_holes_entry():
             x, y = hole.centroid
             px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
             area = hole.area * px * py / scale**2
-            d = 2 * (area / np.pi)**0.5
+            d = 2 * (area / np.pi) ** 0.5
             print(f'x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um')
 
 

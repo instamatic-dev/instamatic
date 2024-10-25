@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 from skimage.transform import resize
 
@@ -27,7 +29,7 @@ def preprocess(image, n_std=4):
     mean = np.mean(s_image)
     std = np.std(s_image)
     s_image[s_image > (mean + n_std * std)] = mean + n_std * std
-    div = (np.max(s_image) - np.min(s_image))
+    div = np.max(s_image) - np.min(s_image)
     if div == 0:
         div = 1
     s_image = (s_image - np.min(s_image)) / div

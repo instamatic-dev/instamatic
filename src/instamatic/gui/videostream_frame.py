@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 import time
 from datetime import datetime
@@ -87,8 +89,7 @@ class VideoStreamFrame(LabelFrame):
         self.var_auto_contrast.trace_add('write', self.update_auto_contrast)
 
     def buttonbox(self, master):
-        btn = Button(master, text='Save image',
-                     command=self.saveImage)
+        btn = Button(master, text='Save image', command=self.saveImage)
         btn.pack(side='bottom', fill='both', padx=10, pady=10)
 
     def header(self, master):
@@ -97,14 +98,20 @@ class VideoStreamFrame(LabelFrame):
 
         frame = Frame(master)
 
-        self.cb_resize = Checkbutton(frame, text='Increase size', variable=self.var_resize_image)
+        self.cb_resize = Checkbutton(
+            frame, text='Increase size', variable=self.var_resize_image
+        )
         self.cb_resize.grid(row=1, column=4)
 
-        self.cb_contrast = Checkbutton(frame, text='Auto contrast', variable=self.var_auto_contrast)
+        self.cb_contrast = Checkbutton(
+            frame, text='Auto contrast', variable=self.var_auto_contrast
+        )
         self.cb_contrast.grid(row=1, column=5)
 
         self.e_fps = Entry(frame, width=lwidth, textvariable=self.var_fps, state=DISABLED)
-        self.e_interval = Entry(frame, width=lwidth, textvariable=self.var_interval, state=DISABLED)
+        self.e_interval = Entry(
+            frame, width=lwidth, textvariable=self.var_interval, state=DISABLED
+        )
         # self.e_overhead    = Entry(frame, bd=0, width=ewidth, textvariable=self.var_overhead, state=DISABLED)
 
         Label(frame, width=lwidth, text='fps:').grid(row=1, column=0)
@@ -118,18 +125,39 @@ class VideoStreamFrame(LabelFrame):
 
         frame = Frame(master)
 
-        self.e_frametime = Spinbox(frame, width=ewidth, textvariable=self.var_frametime, from_=0.0, to=1.0, increment=0.01)
+        self.e_frametime = Spinbox(
+            frame,
+            width=ewidth,
+            textvariable=self.var_frametime,
+            from_=0.0,
+            to=1.0,
+            increment=0.01,
+        )
 
         Label(frame, width=lwidth, text='exposure (s)').grid(row=1, column=0)
         self.e_frametime.grid(row=1, column=1)
 
-        self.e_brightness = Spinbox(frame, width=ewidth, textvariable=self.var_brightness, from_=0.0, to=10.0, increment=0.1)
+        self.e_brightness = Spinbox(
+            frame,
+            width=ewidth,
+            textvariable=self.var_brightness,
+            from_=0.0,
+            to=10.0,
+            increment=0.1,
+        )
 
         Label(frame, width=lwidth, text='Brightness').grid(row=1, column=2)
         self.e_brightness.grid(row=1, column=3)
 
         Label(frame, width=lwidth, text='DisplayRange').grid(row=1, column=4)
-        self.e_display_range = Spinbox(frame, width=ewidth, textvariable=self.var_display_range, from_=1, to=self.display_range_default, increment=1000)
+        self.e_display_range = Spinbox(
+            frame,
+            width=ewidth,
+            textvariable=self.var_display_range,
+            from_=1,
+            to=self.display_range_default,
+            increment=1000,
+        )
         self.e_display_range.grid(row=1, column=5)
 
         frame.pack()
@@ -210,7 +238,9 @@ class VideoStreamFrame(LabelFrame):
         if frame is not None:
             # the display range in ImageTk is from 0 to 256
             if self.auto_contrast:
-                frame = frame * (256.0 / (1 + np.percentile(frame[::4, ::4], 99.5)))  # use 128x128 array for faster calculation
+                frame = frame * (
+                    256.0 / (1 + np.percentile(frame[::4, ::4], 99.5))
+                )  # use 128x128 array for faster calculation
 
                 image = Image.fromarray(frame)
             elif self.display_range != self.display_range_default:
@@ -261,7 +291,9 @@ class VideoStreamFrame(LabelFrame):
             self.nframes += 1
 
 
-module = BaseModule(name='stream', display_name='Stream', tk_frame=VideoStreamFrame, location='left')
+module = BaseModule(
+    name='stream', display_name='Stream', tk_frame=VideoStreamFrame, location='left'
+)
 commands = {}
 
 
@@ -278,6 +310,7 @@ def start_gui(stream):
 def ipy_embed(*args, **kwargs):
     """Embed an ipython terminal."""
     import IPython
+
     IPython.embed(*args, **kwargs)
 
 
@@ -295,4 +328,5 @@ if __name__ == '__main__':
         t.start()
 
         import IPython
+
         IPython.embed()

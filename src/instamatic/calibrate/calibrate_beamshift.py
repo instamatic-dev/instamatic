@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import pickle
@@ -62,6 +64,7 @@ class CalibBeamShift:
     def from_file(cls, fn=CALIB_BEAMSHIFT):
         """Read calibration from file."""
         import pickle
+
         try:
             return pickle.load(open(fn, 'rb'))
         except OSError as e:
@@ -114,7 +117,9 @@ class CalibBeamShift:
             return beamshift
 
 
-def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs):
+def calibrate_beamshift_live(
+    ctrl, gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs
+):
     """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
@@ -141,7 +146,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     if not stepsize:
         stepsize = config.camera.calib_beamshift.get('stepsize', 250)
 
-    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, comment='Beam in center of image')
+    img_cent, h_cent = ctrl.get_image(
+        exposure=exposure, binsize=binsize, comment='Beam in center of image'
+    )
     x_cent, y_cent = beamshift_cent = np.array(h_cent['BeamShift'])
 
     magnification = h_cent['Magnification']
@@ -162,7 +169,9 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     beampos = []
 
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    x_grid, y_grid = np.meshgrid(
+        np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize
+    )
     tot = gridsize * gridsize
 
     i = 0
@@ -174,7 +183,13 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
         outfile = os.path.join(outdir, 'calib_beamshift_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
-        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='BeamShift')
+        img, h = ctrl.get_image(
+            exposure=exposure,
+            binsize=binsize,
+            out=outfile,
+            comment=comment,
+            header_keys='BeamShift',
+        )
         img = imgscale(img, scale)
 
         shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
@@ -194,7 +209,13 @@ def calibrate_beamshift_live(ctrl, gridsize=None, stepsize=None, save_images=Fal
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - np.array(beamshift_cent)
 
-    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
+    c = CalibBeamShift.from_data(
+        shifts,
+        beampos,
+        reference_shift=beamshift_cent,
+        reference_pixel=pixel_cent,
+        header=h_cent,
+    )
 
     # Calling c.plot with videostream crashes program
     # if not hasattr(ctrl.cam, "VideoLoop"):
@@ -251,13 +272,21 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     beampos = np.array(beampos) - beamshift_cent
 
-    c = CalibBeamShift.from_data(shifts, beampos, reference_shift=beamshift_cent, reference_pixel=pixel_cent, header=h_cent)
+    c = CalibBeamShift.from_data(
+        shifts,
+        beampos,
+        reference_shift=beamshift_cent,
+        reference_pixel=pixel_cent,
+        header=h_cent,
+    )
     c.plot()
 
     return c
 
 
-def calibrate_beamshift(center_fn=None, other_fn=None, ctrl=None, save_images=True, outdir='.', confirm=True):
+def calibrate_beamshift(
+    center_fn=None, other_fn=None, ctrl=None, save_images=True, outdir='.', confirm=True
+):
     if not (center_fn or other_fn):
         if confirm:
             ctrl.store('calib_beamshift')
@@ -294,21 +323,27 @@ Calibrate beamshift
 
 def main_entry():
     import argparse
+
     description = """Program to calibrate the beamshift of the microscope (Deprecated)."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs='*',
+        metavar='IMG',
+        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.',
+    )
 
     options = parser.parse_args()
     args = options.args
 
     if not args:
         from instamatic import TEMController
+
         ctrl = TEMController.initialize()
         calibrate_beamshift(ctrl=ctrl, save_images=True)
     else:

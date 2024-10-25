@@ -145,6 +145,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ['instamatic']
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.format]
 quote-style = "single"

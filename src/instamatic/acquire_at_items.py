@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 
 import numpy as np
@@ -37,13 +39,16 @@ class AcquireAtItems:
         Returns instance of AcquireAtItems, run `aai.start()` to begin.
     """
 
-    def __init__(self, ctrl,
-                 nav_items: list,
-                 acquire=None,
-                 pre_acquire=None,
-                 post_acquire=None,
-                 every_n: dict = {},
-                 backlash: bool = True):
+    def __init__(
+        self,
+        ctrl,
+        nav_items: list,
+        acquire=None,
+        pre_acquire=None,
+        post_acquire=None,
+        every_n: dict = {},
+        backlash: bool = True,
+    ):
         super().__init__()
 
         self.nav_items = nav_items
@@ -119,7 +124,9 @@ class AcquireAtItems:
             elif len(item) == 3:
                 x, y, z = item
             else:
-                raise IndexError(f'Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}')
+                raise IndexError(
+                    f'Coordinate must have 2 (x, y) or 3 (x, y, z) elements: {item}'
+                )
 
         if z is not None:
             self.ctrl.stage.set(z=z)

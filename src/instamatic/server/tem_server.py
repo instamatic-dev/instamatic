@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import json
 import logging
@@ -107,6 +109,7 @@ def handle(conn, q):
 def main():
     if config.settings.tem_require_admin:
         from instamatic import admin
+
         if not admin.is_admin():
             admin.run_as_admin(__file__)
             exit()
@@ -130,11 +133,16 @@ The response is returned as a serialized object.
 """
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('-t', '--microscope', action='store', dest='microscope',
-                        help="""Override microscope to use.""")
+    parser.add_argument(
+        '-t',
+        '--microscope',
+        action='store',
+        dest='microscope',
+        help="""Override microscope to use.""",
+    )
 
     parser.set_defaults(microscope=None)
     options = parser.parse_args()
@@ -142,9 +150,11 @@ The response is returned as a serialized object.
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.locations['logs'] / f'instamatic_TEMServer_{date}.log'
-    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-                        filename=logfile,
-                        level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
+        filename=logfile,
+        level=logging.DEBUG,
+    )
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 

@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import numpy as np
 from numpy.fft import fft2, ifft2
 
 
-def translation(im0,
-                im1,
-                limit_shift: bool = False,
-                return_fft: bool = False,
-                ):
+def translation(
+    im0,
+    im1,
+    limit_shift: bool = False,
+    return_fft: bool = False,
+):
     """Return translation vector to register images.
 
     Parameters

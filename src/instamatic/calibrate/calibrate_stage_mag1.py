@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sys
 import time
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 def plot_it(arr1, arr2, params):
     import matplotlib.pyplot as plt
+
     angle = params['angle'].value
     sx = params['sx'].value
     sy = params['sy'].value
@@ -29,9 +32,7 @@ def plot_it(arr1, arr2, params):
     sin = np.sin(angle)
     cos = np.cos(angle)
 
-    r = np.array([
-        [sx * cos, -sy * k1 * sin],
-        [sx * k2 * sin, sy * cos]])
+    r = np.array([[sx * cos, -sy * k1 * sin], [sx * k2 * sin, sy * cos]])
     t = np.array([tx, ty])
 
     fit = np.dot(arr1, r) + t
@@ -41,7 +42,9 @@ def plot_it(arr1, arr2, params):
     plt.show()
 
 
-def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True, save_images=False, **kwargs):
+def calibrate_mag1_live(
+    ctrl, gridsize=5, stepsize=5000, minimize_backlash=True, save_images=False, **kwargs
+):
     """Calibrate pixel->stageposition coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
@@ -79,7 +82,9 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
+    img_cent, h_cent = ctrl.get_image(
+        exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)'
+    )
     stage_cent = ctrl.stage.get()
 
     cam_dimensions = h_cent['ImageCameraDimensions']
@@ -98,7 +103,9 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
     shifts = []
 
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    x_grid, y_grid = np.meshgrid(
+        np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize
+    )
     tot = gridsize * gridsize
 
     i = 0
@@ -127,7 +134,9 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
             outfile = work_drc / f'calib_{i:04d}' if save_images else None
 
             comment = f'Calib image {i}: dx={dx} - dy={dy}'
-            img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment)
+            img, h = ctrl.get_image(
+                exposure=exposure, binsize=binsize, out=outfile, comment=comment
+            )
 
             img = imgscale(img, scale)
 
@@ -158,15 +167,21 @@ def calibrate_mag1_live(ctrl, gridsize=5, stepsize=5000, minimize_backlash=True,
 
     m = gridsize**2 // 2
     if gridsize % 2 and stagepos[m].max() > 50:
-        print(f' >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.')
+        print(
+            f' >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.'
+        )
         print('    Difference:', stagepos[m])
         print()
 
     if save_images:
         outfile = work_drc / 'calib_end'
-        ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (end)')
+        ctrl.get_image(
+            exposure=exposure, binsize=binsize, out=outfile, comment='Center image (end)'
+        )
 
-    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
+    c = CalibStage.from_data(
+        shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions
+    )
     c.plot()
     c.to_file(work_drc / 'calib.pickle')
 
@@ -224,7 +239,9 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
     shifts = np.array(shifts) * binsize / scale
     stagepos = np.array(stagepos) - xy_cent
 
-    c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions)
+    c = CalibStage.from_data(
+        shifts, stagepos, reference_position=xy_cent, camera_dimensions=cam_dimensions
+    )
     c.plot()
     c.to_file()
 
@@ -233,7 +250,14 @@ def calibrate_mag1_from_image_fn(center_fn, other_fn):
 
 def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
     if not (center_fn or other_fn):
-        if confirm and not input("\n >> Go to 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): "'') == 'go':
+        if (
+            confirm
+            and not input(
+                "\n >> Go to 5000x mag, and move the sample stage\nso that a strong feature is clearly in the middle \nof the image (type 'go'): "
+                ''
+            )
+            == 'go'
+        ):
             return
         else:
             calib = calibrate_mag1_live(ctrl, save_images=True)
@@ -246,21 +270,27 @@ def calibrate_mag1(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_
 
 def main_entry():
     import argparse
+
     description = """Program to calibrate the mag1 mode of the microscope (Deprecated)."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs='*',
+        metavar='IMG',
+        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.',
+    )
 
     options = parser.parse_args()
     args = options.args
 
     if not args:
         from instamatic import TEMController
+
         ctrl = TEMController.initialize()
         calibrate_mag1(ctrl=ctrl, save_images=True)
     else:

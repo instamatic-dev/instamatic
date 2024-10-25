@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import time
 
@@ -42,7 +44,7 @@ class Progress:
 
     def remaining(self) -> int:
         """Return the current remaining time estimate (seconds)"""
-        eta = ((self.total - self.i) * self.interval)  # s
+        eta = (self.total - self.i) * self.interval  # s
         return int(eta)
 
     def remaining_dt(self) -> int:

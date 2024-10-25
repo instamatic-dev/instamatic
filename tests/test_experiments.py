@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -10,6 +12,7 @@ from instamatic.experiments.experiment_base import ExperimentBase
 
 def test_autoCRED(ctrl):
     from instamatic.experiments import autocRED
+
     assert issubclass(autocRED.Experiment, ExperimentBase)
     exp = autocRED.Experiment(ctrl, *[None] * 17, path=Path())
     pytest.xfail('Too complex to test at this point')
@@ -17,6 +20,7 @@ def test_autoCRED(ctrl):
 
 def test_serialED(ctrl):
     from instamatic.experiments import serialED
+
     assert issubclass(serialED.Experiment, ExperimentBase)
     with pytest.raises(OSError):
         exp = serialED.Experiment(ctrl, {})
@@ -68,7 +72,7 @@ def test_experiment(
     collect_kwargs: dict,
     num_collections: int,
     ctrl,
-    tmp_path
+    tmp_path,
 ):
     init_kwargs['ctrl'] = ctrl
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print('Hello world')
 print()
 print(ctrl)

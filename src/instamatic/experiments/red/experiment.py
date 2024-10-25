@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import os
 import time
@@ -64,7 +66,9 @@ class Experiment(ExperimentBase):
         self.spotsize = self.ctrl.spotsize
         self.now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.logger.info('Data recording started at: {self.now}')
-        self.logger.info(f'Exposure time: {exposure_time} s, Tilt range: {tilt_range}, step size: {stepsize}')
+        self.logger.info(
+            f'Exposure time: {exposure_time} s, Tilt range: {tilt_range}, step size: {stepsize}'
+        )
 
         ctrl = self.ctrl
 
@@ -116,10 +120,17 @@ class Experiment(ExperimentBase):
         self.exposure_time = exposure_time
 
         with open(self.path / 'summary.txt', 'a') as f:
-            print(f'{self.now}: Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.', file=f)
-            print(f'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.')
+            print(
+                f'{self.now}: Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.',
+                file=f,
+            )
+            print(
+                f'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree in {len(tilt_positions)} frames.'
+            )
 
-        self.logger.info('Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).')
+        self.logger.info(
+            'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).'
+        )
 
         self.current_angle = angle
         print(f'Done, current angle = {self.current_angle:.2f} degrees')
@@ -135,7 +146,9 @@ class Experiment(ExperimentBase):
         self.logger.info(f'Data saving path: {self.path}')
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+        self.pixelsize = config.calibration['diff']['pixelsize'][
+            self.camera_length
+        ]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth
@@ -155,24 +168,23 @@ class Experiment(ExperimentBase):
             print(f'Stepsize: {self.stepsize:.4f} degrees', file=f)
             print(f'Number of frames: {self.nframes}', file=f)
 
-        img_conv = ImgConversion(buffer=self.buffer,
-                                 osc_angle=self.stepsize,
-                                 start_angle=self.start_angle,
-                                 end_angle=self.end_angle,
-                                 rotation_axis=self.rotation_axis,
-                                 acquisition_time=self.exposure_time,
-                                 flatfield=self.flatfield,
-                                 pixelsize=self.pixelsize,
-                                 physical_pixelsize=self.physical_pixelsize,
-                                 wavelength=self.wavelength,
-                                 stretch_amplitude=self.stretch_amplitude,
-                                 stretch_azimuth=self.stretch_azimuth,
-                                 )
+        img_conv = ImgConversion(
+            buffer=self.buffer,
+            osc_angle=self.stepsize,
+            start_angle=self.start_angle,
+            end_angle=self.end_angle,
+            rotation_axis=self.rotation_axis,
+            acquisition_time=self.exposure_time,
+            flatfield=self.flatfield,
+            pixelsize=self.pixelsize,
+            physical_pixelsize=self.physical_pixelsize,
+            wavelength=self.wavelength,
+            stretch_amplitude=self.stretch_amplitude,
+            stretch_azimuth=self.stretch_azimuth,
+        )
 
         print('Writing data files...')
-        img_conv.threadpoolwriter(tiff_path=self.tiff_path,
-                                  mrc_path=self.mrc_path,
-                                  workers=8)
+        img_conv.threadpoolwriter(tiff_path=self.tiff_path, mrc_path=self.mrc_path, workers=8)
 
         print('Writing input files...')
         img_conv.write_ed3d(self.mrc_path)
@@ -191,9 +203,11 @@ class Experiment(ExperimentBase):
 
 def main():
     from instamatic import TEMController
+
     ctrl = TEMController.initialize()
 
     import logging
+
     log = logging.getLogger(__name__)
 
     exposure_time = 0.5
@@ -211,12 +225,18 @@ def main():
     print(f'\nData directory: {expdir}')
 
     red_exp = Experiment(ctrl=ctrl, path=expdir, log=log, flatfield=None)
-    red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    red_exp.start_collection(
+        exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize
+    )
 
     input('Press << Enter >> to start the experiment... ')
 
-    while not input(f'\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] '):
-        red_exp.start_collection(exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize)
+    while not input(
+        f'\nPress << Enter >> to continue for another {tilt_range} degrees. [any key to finalize] '
+    ):
+        red_exp.start_collection(
+            exposure_time=exposure_time, tilt_range=tilt_range, stepsize=stepsize
+        )
 
     red_exp.finalize()
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 import datetime
 import logging
@@ -101,16 +103,18 @@ The data sent to the server is a dict containing the following elements:
 """
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     options = parser.parse_args()
 
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.locations['logs'] / f'instamatic_indexing_server_{date}.log'
-    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-                        filename=logfile,
-                        level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
+        filename=logfile,
+        level=logging.DEBUG,
+    )
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 

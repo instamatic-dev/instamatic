@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -232,4 +234,5 @@ if __name__ == '__main__':
     test_ctrl()
 
     from IPython import embed
+
     embed(banner1='')

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 from collections import OrderedDict
 
@@ -8,6 +10,7 @@ import yaml
 def results2df(results, sort=True):
     """Convert a list of IndexingResult objects to pandas DataFrame."""
     import pandas as pd
+
     df = pd.DataFrame(results).T
     df.columns = list(results.values())[0]._fields
     if sort:

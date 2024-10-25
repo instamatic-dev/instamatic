@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from contextlib import nullcontext as does_not_raise
 
@@ -62,7 +64,6 @@ def test_write_rename_ext(format, write_func, alt, data, header, temp_data_file)
 @pytest.mark.parametrize(
     ['format', 'write_func', 'with_header', 'raises'],
     [
-
         ('tiff', formats.write_tiff, True, does_not_raise()),
         ('smv', formats.write_adsc, True, does_not_raise()),
         ('img', formats.write_adsc, True, does_not_raise()),

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 from tkinter import *
 from tkinter.ttk import *
@@ -22,40 +24,99 @@ class ExperimentalcRED(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text='Exposure time (s):').grid(row=1, column=0, sticky='W')
-        exposure_time = Spinbox(frame, textvariable=self.var_exposure_time, width=sbwidth, from_=0.0, to=100.0, increment=0.01)
+        exposure_time = Spinbox(
+            frame,
+            textvariable=self.var_exposure_time,
+            width=sbwidth,
+            from_=0.0,
+            to=100.0,
+            increment=0.01,
+        )
         exposure_time.grid(row=1, column=1, sticky='W', padx=10)
 
-        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=2, sticky='W')
+        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(
+            row=1, column=2, sticky='W'
+        )
 
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
 
-        Checkbutton(frame, text='Enable image interval', variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky='W')
-        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus, state=DISABLED)
+        Checkbutton(
+            frame,
+            text='Enable image interval',
+            variable=self.var_enable_image_interval,
+            command=self.toggle_interval_buttons,
+        ).grid(row=5, column=2, sticky='W')
+        self.c_toggle_defocus = Checkbutton(
+            frame,
+            text='Toggle defocus',
+            variable=self.var_toggle_diff_defocus,
+            command=self.toggle_diff_defocus,
+            state=DISABLED,
+        )
         self.c_toggle_defocus.grid(row=6, column=2, sticky='W')
 
         Label(frame, text='Image interval:').grid(row=5, column=0, sticky='W')
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, width=sbwidth, from_=1, to=9999, increment=1, state=DISABLED)
+        self.e_image_interval = Spinbox(
+            frame,
+            textvariable=self.var_image_interval,
+            width=sbwidth,
+            from_=1,
+            to=9999,
+            increment=1,
+            state=DISABLED,
+        )
         self.e_image_interval.grid(row=5, column=1, sticky='W', padx=10)
 
         Label(frame, text='Diff defocus:').grid(row=6, column=0, sticky='W')
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=sbwidth, from_=-10000, to=10000, increment=100, state=DISABLED)
+        self.e_diff_defocus = Spinbox(
+            frame,
+            textvariable=self.var_diff_defocus,
+            width=sbwidth,
+            from_=-10000,
+            to=10000,
+            increment=100,
+            state=DISABLED,
+        )
         self.e_diff_defocus.grid(row=6, column=1, sticky='W', padx=10)
 
         Label(frame, text='Image exposure (s):').grid(row=7, column=0, sticky='W')
-        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=sbwidth, from_=0.0, to=100.0, increment=0.01, state=DISABLED)
+        self.e_image_exposure = Spinbox(
+            frame,
+            textvariable=self.var_exposure_time_image,
+            width=sbwidth,
+            from_=0.0,
+            to=100.0,
+            increment=0.01,
+            state=DISABLED,
+        )
         self.e_image_exposure.grid(row=7, column=1, sticky='W', padx=10)
 
-        self.RelaxButton = Button(frame, text='Relax beam', command=self.relax_beam, state=DISABLED)
+        self.RelaxButton = Button(
+            frame, text='Relax beam', command=self.relax_beam, state=DISABLED
+        )
         self.RelaxButton.grid(row=7, column=2, sticky='EW')
 
         if ENABLE_FOOTFREE_OPTION:
             Separator(frame, orient=HORIZONTAL).grid(row=8, columnspan=3, sticky='ew', pady=10)
 
             Label(frame, text='Rotate to:').grid(row=9, column=0, sticky='W')
-            self.e_max_rotation = Spinbox(frame, textvariable=self.var_footfree_rotate_to, width=sbwidth, from_=0.0, to=70.0, increment=1.0, state=DISABLED)
+            self.e_max_rotation = Spinbox(
+                frame,
+                textvariable=self.var_footfree_rotate_to,
+                width=sbwidth,
+                from_=0.0,
+                to=70.0,
+                increment=1.0,
+                state=DISABLED,
+            )
             self.e_max_rotation.grid(row=9, column=1, sticky='W', padx=10)
 
-            Checkbutton(frame, text='Footfree mode', variable=self.var_toggle_footfree, command=self.toggle_footfree).grid(row=9, column=2, sticky='W')
+            Checkbutton(
+                frame,
+                text='Footfree mode',
+                variable=self.var_toggle_footfree,
+                command=self.toggle_footfree,
+            ).grid(row=9, column=2, sticky='W')
 
         self.lb_coll0 = Label(frame, text='')
         self.lb_coll1 = Label(frame, text='')
@@ -68,10 +129,18 @@ class ExperimentalcRED(LabelFrame):
 
         frame = Frame(self)
         Label(frame, text='Select output formats:').grid(row=5, columnspan=2, sticky='EW')
-        Checkbutton(frame, text='.tiff', variable=self.var_save_tiff).grid(row=5, column=2, sticky='EW')
-        Checkbutton(frame, text='XDS (.smv)', variable=self.var_save_xds).grid(row=5, column=3, sticky='EW')
-        Checkbutton(frame, text='DIALS (.smv)', variable=self.var_save_dials).grid(row=6, column=2, sticky='EW')
-        Checkbutton(frame, text='REDp (.mrc)', variable=self.var_save_red).grid(row=6, column=3, sticky='EW')
+        Checkbutton(frame, text='.tiff', variable=self.var_save_tiff).grid(
+            row=5, column=2, sticky='EW'
+        )
+        Checkbutton(frame, text='XDS (.smv)', variable=self.var_save_xds).grid(
+            row=5, column=3, sticky='EW'
+        )
+        Checkbutton(frame, text='DIALS (.smv)', variable=self.var_save_dials).grid(
+            row=6, column=2, sticky='EW'
+        )
+        Checkbutton(frame, text='REDp (.mrc)', variable=self.var_save_red).grid(
+            row=6, column=3, sticky='EW'
+        )
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(1, weight=1)
         frame.grid_columnconfigure(2, weight=1)
@@ -80,10 +149,14 @@ class ExperimentalcRED(LabelFrame):
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        self.CollectionButton = Button(frame, text='Start Collection', command=self.start_collection)
+        self.CollectionButton = Button(
+            frame, text='Start Collection', command=self.start_collection
+        )
         self.CollectionButton.grid(row=1, column=0, sticky='EW')
 
-        self.CollectionStopButton = Button(frame, text='Stop Collection', command=self.stop_collection, state=DISABLED)
+        self.CollectionStopButton = Button(
+            frame, text='Stop Collection', command=self.stop_collection, state=DISABLED
+        )
         self.CollectionStopButton.grid(row=1, column=1, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -127,7 +200,9 @@ class ExperimentalcRED(LabelFrame):
             self.lb_coll2.config(text='Click STOP COLLECTION to end the experiment.')
         else:
             self.lb_coll1.config(text='Now you can start to rotate the goniometer at any time.')
-            self.lb_coll2.config(text='Click STOP COLLECTION BEFORE removing your foot from the pedal!')
+            self.lb_coll2.config(
+                text='Click STOP COLLECTION BEFORE removing your foot from the pedal!'
+            )
 
         self.parent.bind_all('<space>', self.stop_collection)
 
@@ -147,19 +222,21 @@ class ExperimentalcRED(LabelFrame):
         self.lb_coll2.config(text='')
 
     def get_params(self):
-        params = {'exposure_time': self.var_exposure_time.get(),
-                  'exposure_time_image': self.var_exposure_time_image.get(),
-                  'unblank_beam': self.var_unblank_beam.get(),
-                  'enable_image_interval': self.var_enable_image_interval.get(),
-                  'image_interval': self.var_image_interval.get(),
-                  'diff_defocus': self.var_diff_defocus.get(),
-                  'mode': self.mode,
-                  'footfree_rotate_to': self.var_footfree_rotate_to.get(),
-                  'write_tiff': self.var_save_tiff.get(),
-                  'write_xds': self.var_save_xds.get(),
-                  'write_dials': self.var_save_dials.get(),
-                  'write_red': self.var_save_red.get(),
-                  'stop_event': self.stopEvent}
+        params = {
+            'exposure_time': self.var_exposure_time.get(),
+            'exposure_time_image': self.var_exposure_time_image.get(),
+            'unblank_beam': self.var_unblank_beam.get(),
+            'enable_image_interval': self.var_enable_image_interval.get(),
+            'image_interval': self.var_image_interval.get(),
+            'diff_defocus': self.var_diff_defocus.get(),
+            'mode': self.mode,
+            'footfree_rotate_to': self.var_footfree_rotate_to.get(),
+            'write_tiff': self.var_save_tiff.get(),
+            'write_xds': self.var_save_xds.get(),
+            'write_dials': self.var_save_dials.get(),
+            'write_red': self.var_save_red.get(),
+            'stop_event': self.stopEvent,
+        }
         return params
 
     def toggle_interval_buttons(self):
@@ -207,7 +284,13 @@ def acquire_data_cRED(controller, **kwargs):
     expdir = controller.module_io.get_new_experiment_directory()
     expdir.mkdir(exist_ok=True, parents=True)
 
-    cexp = cRED.Experiment(ctrl=controller.ctrl, path=expdir, flatfield=controller.module_io.get_flatfield(), log=controller.log, **kwargs)
+    cexp = cRED.Experiment(
+        ctrl=controller.ctrl,
+        path=expdir,
+        flatfield=controller.module_io.get_flatfield(),
+        log=controller.log,
+        **kwargs,
+    )
 
     success = cexp.start_collection()
 
@@ -221,7 +304,9 @@ def acquire_data_cRED(controller, **kwargs):
         controller.triggerEvent.set()
 
 
-module = BaseModule(name='cred', display_name='cRED', tk_frame=ExperimentalcRED, location='bottom')
+module = BaseModule(
+    name='cred', display_name='cRED', tk_frame=ExperimentalcRED, location='bottom'
+)
 commands = {'cred': acquire_data_cRED}
 
 

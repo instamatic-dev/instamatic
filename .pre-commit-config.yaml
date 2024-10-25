@@ -24,13 +24,11 @@ repos:
     rev: master  # https://github.com/PyCQA/docformatter/issues/293
     hooks:
       - id: docformatter
-  - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v2.0.4
-    hooks:
-      - id: autopep8
-        args: ['--in-place', '--ignore=E501,W504']
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: 'v0.7.0'
     hooks:
       - id: ruff
         args: [--fix]
+        types_or: [python, pyi, jupyter]
+      - id: ruff-format
+        types_or: [python, pyi]

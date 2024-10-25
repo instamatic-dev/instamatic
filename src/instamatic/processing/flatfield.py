@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import os
 import time
@@ -24,8 +26,8 @@ def remove_deadpixels(img, deadpixels, d=1):
     """Remove dead pixels from the images by replacing them with the average of
     neighbouring pixels."""
     d = 1
-    for (i, j) in deadpixels:
-        neighbours = img[i - d:i + d + 1, j - d:j + d + 1].flatten()
+    for i, j in deadpixels:
+        neighbours = img[i - d : i + d + 1, j - d : j + d + 1].flatten()
         img[i, j] = np.mean(neighbours)
     return img
 
@@ -74,7 +76,9 @@ def apply_flatfield_correction(img, flatfield, darkfield=None):
     return ret
 
 
-def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc='.', **kwargs):
+def collect_flatfield(
+    ctrl=None, frames=100, save_images=False, collect_darkfield=True, drc='.', **kwargs
+):
     """Routine to collect flatfield correction files.
 
     Spread the beam and focus on an a vacuum area
@@ -110,7 +114,13 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
     print('\nCollecting flatfield images')
     for n in tqdm(range(frames)):
         outfile = drc / f'flatfield_{n:04d}.tiff' if save_images else None
-        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=f'Flat field #{n:04d}', header_keys=None)
+        img, h = ctrl.get_image(
+            exposure=exposure,
+            binsize=binsize,
+            out=outfile,
+            comment=f'Flat field #{n:04d}',
+            header_keys=None,
+        )
         buffer.append(img)
 
     f = np.mean(buffer, axis=0)
@@ -131,7 +141,13 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
         print('\nCollecting darkfield images')
         for n in tqdm(range(frames)):
             outfile = drc / f'darkfield_{n:04d}.tiff' if save_images else None
-            img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=f'Dark field #{n:04d}', header_keys=None)
+            img, h = ctrl.get_image(
+                exposure=exposure,
+                binsize=binsize,
+                out=outfile,
+                comment=f'Dark field #{n:04d}',
+                header_keys=None,
+            )
             buffer.append(img)
 
         d = np.mean(buffer, axis=0)
@@ -149,6 +165,7 @@ def collect_flatfield(ctrl=None, frames=100, save_images=False, collect_darkfiel
 
 def main_entry():
     import argparse
+
     description = """
 This is a program that can collect and apply flatfield/darkfield corrections [link](https://en.wikipedia.org/wiki/Flat-field_correction). To do so, use a spread, bright beam on a hole in the carbon, or a clear piece of carbon film, and run:
 
@@ -161,28 +178,50 @@ This will collect 100 images and average them to determine the flatfield image. 
 This will apply the flatfield correction (`-f`) and optionally the darkfield correction (`-d`) to images given as argument, and place the corrected files in directory `corrected` or as specified using `-o`."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='image.tiff',
-                        help='Image file paths/pattern')
+    parser.add_argument(
+        'args', type=str, nargs='*', metavar='image.tiff', help='Image file paths/pattern'
+    )
 
-    parser.add_argument('-f', '--flatfield',
-                        action='store', type=str, metavar='flatfield.tiff', dest='flatfield',
-                        help="""Path to flatfield file""")
+    parser.add_argument(
+        '-f',
+        '--flatfield',
+        action='store',
+        type=str,
+        metavar='flatfield.tiff',
+        dest='flatfield',
+        help="""Path to flatfield file""",
+    )
 
-    parser.add_argument('-d', '--darkfield',
-                        action='store', type=str, metavar='darkfield.tiff', dest='darkfield',
-                        help="""Path to darkfield file""")
+    parser.add_argument(
+        '-d',
+        '--darkfield',
+        action='store',
+        type=str,
+        metavar='darkfield.tiff',
+        dest='darkfield',
+        help="""Path to darkfield file""",
+    )
 
-    parser.add_argument('-o', '--output',
-                        action='store', type=str, metavar='DRC', dest='drc',
-                        help="""Output directory for image files""")
+    parser.add_argument(
+        '-o',
+        '--output',
+        action='store',
+        type=str,
+        metavar='DRC',
+        dest='drc',
+        help="""Output directory for image files""",
+    )
 
-    parser.add_argument('-c', '--collect',
-                        action='store_true', dest='collect',
-                        help="""Collect flatfield/darkfield images on microscope""")
+    parser.add_argument(
+        '-c',
+        '--collect',
+        action='store_true',
+        dest='collect',
+        help="""Collect flatfield/darkfield images on microscope""",
+    )
 
     parser.set_defaults(
         flatfield=None,

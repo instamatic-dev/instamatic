@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import pickle
 import sys
@@ -48,6 +50,7 @@ class CalibBrightness:
     @classmethod
     def from_file(cls, fn=CALIB_BRIGHTNESS):
         import pickle
+
         try:
             return pickle.load(open(fn, 'rb'))
         except OSError as e:
@@ -105,7 +108,9 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
         outfile = f'calib_brightness_{i:04d}' if save_images else None
 
         comment = f'Calib image {i}: brightness={target}'
-        img, h = ctrl.get_image(exposure=exposure, out=outfile, comment=comment, header_keys='Brightness')
+        img, h = ctrl.get_image(
+            exposure=exposure, out=outfile, comment=comment, header_keys='Brightness'
+        )
 
         img, scale = autoscale(img)
 
@@ -168,7 +173,7 @@ def calibrate_brightness_from_image_fn(fns):
 
 def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     if not fns:
-        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): "'') == 'go':
+        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): " '') == 'go':
             return
         else:
             calib = calibrate_brightness_live(ctrl, save_images=True)
@@ -182,21 +187,27 @@ def calibrate_brightness(fns=None, ctrl=None, confirm=True):
 
 def main_entry():
     import argparse
+
     description = """Program to calibrate the brightness of the microscope (Deprecated)."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Perform calibration using pre-collected images. If no arguments are given, run the live calibration routine.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs='*',
+        metavar='IMG',
+        help='Perform calibration using pre-collected images. If no arguments are given, run the live calibration routine.',
+    )
 
     options = parser.parse_args()
     args = options.args
 
     if not args:
         from instamatic import TEMController
+
         ctrl = TEMController.initialize()
         calibrate_brightness(ctrl, save_images=True)
     else:

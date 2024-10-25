@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import sys
@@ -15,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class CameraGatan2(CameraBase):
     """Connect to Digital Microsgraph using the SerialEM Plugin."""
+
     streamable = False
 
     def __init__(self, name: str = 'gatan2'):
@@ -74,11 +77,12 @@ class CameraGatan2(CameraBase):
 
         print(f'Wrote {i + 1} images to {path}')
 
-    def get_image(self,
-                  exposure=0.400,
-                  binning=1,
-                  processing='gain normalized',
-                  ) -> 'np.array':
+    def get_image(
+        self,
+        exposure=0.400,
+        binning=1,
+        processing='gain normalized',
+    ) -> 'np.array':
         """Acquire image through DM and return data as np array."""
 
         width, height = self.dimensions
@@ -87,17 +91,18 @@ class CameraGatan2(CameraBase):
         bottom = height
         right = width
 
-        arr = self.g.get_image(processing=processing,
-                               height=height,
-                               width=width,
-                               binning=binning,
-                               top=top,
-                               left=left,
-                               bottom=bottom,
-                               right=right,
-                               exposure=exposure,
-                               shutterDelay=0,
-                               )
+        arr = self.g.get_image(
+            processing=processing,
+            height=height,
+            width=width,
+            binning=binning,
+            top=top,
+            left=left,
+            bottom=bottom,
+            right=right,
+            exposure=exposure,
+            shutterDelay=0,
+        )
 
         return arr
 
@@ -187,8 +192,21 @@ class CameraGatan2(CameraBase):
         """Readout tag structure with metadata from last cRED experiment."""
         d = {}
 
-        keys = ('nframes', 'bin_x', 'bin_y', 'cam_res_x', 'cam_res_y', 'image_res_x', 'image_res_y', 'pixelsize_x', 'pixelsize_y',
-                'phys_pixelsize_x', 'phys_pixelsize_y', 'total_time', 'exposure')
+        keys = (
+            'nframes',
+            'bin_x',
+            'bin_y',
+            'cam_res_x',
+            'cam_res_y',
+            'image_res_x',
+            'image_res_y',
+            'pixelsize_x',
+            'pixelsize_y',
+            'phys_pixelsize_x',
+            'phys_pixelsize_y',
+            'total_time',
+            'exposure',
+        )
 
         for key in keys:
             value = self.get_tag(key, delete=True)
@@ -201,6 +219,7 @@ if __name__ == '__main__':
     cam = CameraGatan2()
 
     from IPython import embed
+
     embed()
 
     # set_tag("work_drc", work_drc)  # instamatic work drc

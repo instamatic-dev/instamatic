@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -147,12 +149,15 @@ file compatible with `SerialEM` or `Instamatic`."""
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=parents)
+        parents=parents,
+    )
 
     parser.add_argument(
         '--mapscaleind',
-        action='store_true', dest='generate_map_scale_ind',
-        help='Generate `MapScaleInd.yaml` for `predicrystal` from config.')
+        action='store_true',
+        dest='generate_map_scale_ind',
+        help='Generate `MapScaleInd.yaml` for `predicrystal` from config.',
+    )
 
     parser.set_defaults(
         generate_map_scale_ind=False,

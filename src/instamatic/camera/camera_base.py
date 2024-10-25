@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
@@ -7,7 +9,6 @@ from instamatic import config
 
 
 class CameraBase(ABC):
-
     # Set manually
     name: str
     streamable: bool
@@ -36,9 +37,7 @@ class CameraBase(ABC):
         pass
 
     @abstractmethod
-    def get_image(
-        self, exposure: float = None, binsize: int = None, **kwargs
-    ) -> ndarray:
+    def get_image(self, exposure: float = None, binsize: int = None, **kwargs) -> ndarray:
         pass
 
     def get_movie(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import tkinter.messagebox
 from pathlib import Path
@@ -86,13 +88,25 @@ class ExperimentalSED(LabelFrame):
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        self.ShowCalibBeamshift = Button(frame, text='Show calib beamshift', command=self.show_calib_beamshift, state=NORMAL)
+        self.ShowCalibBeamshift = Button(
+            frame, text='Show calib beamshift', command=self.show_calib_beamshift, state=NORMAL
+        )
         self.ShowCalibBeamshift.grid(row=1, column=0, sticky='EW')
 
-        self.ShowCalibDirectBeam1 = Button(frame, text='Show calib directbeam1', command=self.show_calib_directbeam1, state=NORMAL)
+        self.ShowCalibDirectBeam1 = Button(
+            frame,
+            text='Show calib directbeam1',
+            command=self.show_calib_directbeam1,
+            state=NORMAL,
+        )
         self.ShowCalibDirectBeam1.grid(row=1, column=1, sticky='EW')
 
-        self.ShowCalibDirectBeam2 = Button(frame, text='Show calib directbeam2', command=self.show_calib_directbeam2, state=NORMAL)
+        self.ShowCalibDirectBeam2 = Button(
+            frame,
+            text='Show calib directbeam2',
+            command=self.show_calib_directbeam2,
+            state=NORMAL,
+        )
         self.ShowCalibDirectBeam2.grid(row=1, column=2, sticky='EW')
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -101,7 +115,9 @@ class ExperimentalSED(LabelFrame):
 
         frame = Frame(self)
 
-        self.CollectionButton = Button(frame, text='Start Collection', command=self.start_collection, state=NORMAL)
+        self.CollectionButton = Button(
+            frame, text='Start Collection', command=self.start_collection, state=NORMAL
+        )
         self.CollectionButton.pack(side='bottom', fill='both')
 
         frame.pack(side='bottom', fill='both', padx=10, pady=10)
@@ -155,12 +171,14 @@ class ExperimentalSED(LabelFrame):
             c.plot('BeamShift')
 
     def get_params(self):
-        params = {'image_exposure': self.var_image_exposure.get(),
-                  'image_spotsize': self.var_image_spotsize.get(),
-                  'diff_exposure': self.var_diff_exposure.get(),
-                  'diff_spotsize': self.var_image_spotsize.get(),
-                  'diff_brightness': self.var_diff_brightness.get(),
-                  'scan_radius': self.var_scan_radius.get()}
+        params = {
+            'image_exposure': self.var_image_exposure.get(),
+            'image_spotsize': self.var_image_spotsize.get(),
+            'diff_exposure': self.var_diff_exposure.get(),
+            'diff_spotsize': self.var_image_spotsize.get(),
+            'diff_brightness': self.var_diff_brightness.get(),
+            'scan_radius': self.var_scan_radius.get(),
+        }
         return params
 
 
@@ -185,15 +203,23 @@ def acquire_data_SED(controller, **kwargs):
 
     controller.app.get_module('sed').calib_path = expdir / 'calib'
 
-    exp = serialED.Experiment(controller.ctrl, params, expdir=expdir, log=controller.log,
-                              scan_radius=scan_radius, begin_here=True)
+    exp = serialED.Experiment(
+        controller.ctrl,
+        params,
+        expdir=expdir,
+        log=controller.log,
+        scan_radius=scan_radius,
+        begin_here=True,
+    )
     exp.report_status()
     exp.run()
 
     controller.log.info('Finish serialED experiment')
 
 
-module = BaseModule(name='sed', display_name='serialED', tk_frame=ExperimentalSED, location='bottom')
+module = BaseModule(
+    name='sed', display_name='serialED', tk_frame=ExperimentalSED, location='bottom'
+)
 commands = {'sed': acquire_data_SED}
 
 

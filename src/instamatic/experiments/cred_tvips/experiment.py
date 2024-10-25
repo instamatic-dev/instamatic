@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import msvcrt
 import pickle
@@ -18,14 +20,17 @@ from instamatic.tools import get_acquisition_time
 class SerialExperiment:
     """Class to handle serial red data acquisition using a TVIPS camera."""
 
-    def __init__(self, ctrl,
-                 path: str = None,
-                 log=None,
-                 instruction_file: str = None,
-                 exposure: float = 400,
-                 mode: str = 'diff',
-                 target_angle: float = 40,
-                 rotation_speed=None):
+    def __init__(
+        self,
+        ctrl,
+        path: str = None,
+        log=None,
+        instruction_file: str = None,
+        exposure: float = 400,
+        mode: str = 'diff',
+        target_angle: float = 40,
+        rotation_speed=None,
+    ):
         super().__init__()
 
         self.instruction_file = Path(instruction_file)
@@ -88,10 +93,12 @@ class SerialExperiment:
         def stop_liveview(ctrl):
             ctrl.cam.stop_liveview()
 
-        self.ctrl.acquire_at_items(self.nav_items,
-                                   acquire=acquire_cred_data,
-                                   pre_acquire=go_to_first_position,
-                                   post_acquire=stop_liveview)
+        self.ctrl.acquire_at_items(
+            self.nav_items,
+            acquire=acquire_cred_data,
+            pre_acquire=go_to_first_position,
+            post_acquire=stop_liveview,
+        )
 
         if self.rotation_speed:
             self.ctrl.stage.set_rotation_speed(12)
@@ -121,7 +128,14 @@ class SerialExperiment:
             print(self.ctrl.stage)
             print()
 
-            exp = Experiment(self.ctrl, path=out_path, log=self.log, track=track, exposure=self.exposure, mode=self.mode)
+            exp = Experiment(
+                self.ctrl,
+                path=out_path,
+                log=self.log,
+                track=track,
+                exposure=self.exposure,
+                mode=self.mode,
+            )
 
             exp.get_ready()
 
@@ -159,13 +173,16 @@ class Experiment(ExperimentBase):
     mode: str
     """
 
-    def __init__(self, ctrl,
-                 path: str = None,
-                 log=None,
-                 track: str = None,
-                 exposure: float = 400,
-                 mode: str = 'diff',
-                 rotation_speed: int = None):
+    def __init__(
+        self,
+        ctrl,
+        path: str = None,
+        log=None,
+        track: str = None,
+        exposure: float = 400,
+        mode: str = 'diff',
+        rotation_speed: int = None,
+    ):
         super().__init__()
 
         self.ctrl = ctrl
@@ -224,20 +241,26 @@ class Experiment(ExperimentBase):
             else:
                 start_angle, target_angle = min_angle, max_angle
 
-            print(f'(autotracking) Overriding angle range: {start_angle:.0f} -> {target_angle:.0f}')
+            print(
+                f'(autotracking) Overriding angle range: {start_angle:.0f} -> {target_angle:.0f}'
+            )
 
             y_offset = int(self.track_func(start_angle))
             x_offset = self.x_offset
 
-            print(f'(autotracking) setting a={start_angle:.0f}, x={self.start_x + x_offset:.0f}, y={self.start_y + y_offset:.0f}, z={self.start_z:.0f}')
-            self.ctrl.stage.set_xy_with_backlash_correction(x=self.start_x + x_offset, y=self.start_y + y_offset, step=10000)
+            print(
+                f'(autotracking) setting a={start_angle:.0f}, x={self.start_x + x_offset:.0f}, y={self.start_y + y_offset:.0f}, z={self.start_z:.0f}'
+            )
+            self.ctrl.stage.set_xy_with_backlash_correction(
+                x=self.start_x + x_offset, y=self.start_y + y_offset, step=10000
+            )
             self.ctrl.stage.set(a=start_angle, z=self.start_z)
 
             return start_angle, target_angle
 
     def track_crystal(self, n, angle):
         # tracking routine
-        if (n % self.track_interval == 0):
+        if n % self.track_interval == 0:
             target_y = self.start_y + int(self.track_func(angle))
             self.ctrl.stage.set(y=target_y, wait=False)
             print(f'(autotracking) set y={target_y:.0f}')
@@ -285,7 +308,9 @@ class Experiment(ExperimentBase):
 
         return a
 
-    def start_collection(self, target_angle: float, start_angle: float = None, manual_control: bool = False):
+    def start_collection(
+        self, target_angle: float, start_angle: float = None, manual_control: bool = False
+    ):
         """manual_control : bool Control the rotation using the buttons or
         pedals."""
         angle_tolerance = 0.5  # degrees
@@ -322,7 +347,9 @@ class Experiment(ExperimentBase):
                 self.ctrl.difffocus.refocus()
             time.sleep(3)
 
-        self.ctrl.beam.unblank(delay=0.2)  # give the beamblank some time to dissappear to avoid weak first frame
+        self.ctrl.beam.unblank(
+            delay=0.2
+        )  # give the beamblank some time to dissappear to avoid weak first frame
 
         # with autoincrement(False), otherwise use `get_next_empty_image_index()`
         # start_index is set to 1, because EMMENU always takes a single image (0) when liveview is activated
@@ -333,7 +360,9 @@ class Experiment(ExperimentBase):
             start_angle = self.manual_activation()
             last_angle = 999
         elif self.rotation_speed:
-            self.ctrl.stage.set_a_with_speed(a=target_angle, speed=self.rotation_speed, wait=False)
+            self.ctrl.stage.set_a_with_speed(
+                a=target_angle, speed=self.rotation_speed, wait=False
+            )
         else:
             self.ctrl.stage.set(a=target_angle, wait=False)
 
@@ -355,7 +384,6 @@ class Experiment(ExperimentBase):
                     break
 
             if t - t_delta > interval:
-
                 n += 1
                 x, y, z, a, _ = pos = self.ctrl.stage.get()
                 self.stage_positions.append((t, pos))
@@ -365,7 +393,9 @@ class Experiment(ExperimentBase):
                 if manual_control:
                     current_angle = a
                     if last_angle == current_angle:
-                        print(f'Manual rotation was interrupted (current: {current_angle:.2f} | last {last_angle:.2f})')
+                        print(
+                            f'Manual rotation was interrupted (current: {current_angle:.2f} | last {last_angle:.2f})'
+                        )
                         break
                     last_angle = current_angle
 
@@ -425,7 +455,9 @@ class Experiment(ExperimentBase):
             print(f'Timestamps from {start_index} to {end_index}')
             timestamps = [1, 2, 3, 4, 5]  # just to make it work
 
-        self.timings = get_acquisition_time(timestamps, exp_time=self.exposure_time, savefig=True, drc=self.path)
+        self.timings = get_acquisition_time(
+            timestamps, exp_time=self.exposure_time, savefig=True, drc=self.path
+        )
 
         self.log_end_status()
         self.log_stage_positions()
@@ -460,9 +492,13 @@ class Experiment(ExperimentBase):
         wavelength = config.microscope.wavelength
 
         try:
-            pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+            pixelsize = config.calibration['diff']['pixelsize'][
+                self.camera_length
+            ]  # px / Angstrom
         except KeyError:
-            print(f'Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0')
+            print(
+                f'Warning: No such camera length: {self.camera_length} in diff calibration, defaulting to 1.0'
+            )
             pixelsize = 1.0
 
         physical_pixelsize = config.camera.physical_pixelsize  # mm
@@ -474,15 +510,28 @@ class Experiment(ExperimentBase):
         pixelsize *= binning
         physical_pixelsize *= binning
 
-        print(f'\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f}')
-        print('Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}'.format(*self.start_position))
-        print('End stage position:    X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}'.format(*self.end_position))
+        print(
+            f'\nRotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f}'
+        )
+        print(
+            'Start stage position:  X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}'.format(
+                *self.start_position
+            )
+        )
+        print(
+            'End stage position:    X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:6.1f} | B {:6.1f}'.format(
+                *self.end_position
+            )
+        )
         print(f'Data collection camera length: {self.camera_length} cm')
         print(f'Data collection spot size: {self.spotsize}')
         print(f'Rotation speed: {self.rotation_speed:.3f} degrees/s')
 
         with open(self.path / 'cRED_log.txt', 'w') as f:
-            print(f'Program: {instamatic.__long_title__} + EMMenu {self.emmenu.get_emmenu_version()}', file=f)
+            print(
+                f'Program: {instamatic.__long_title__} + EMMenu {self.emmenu.get_emmenu_version()}',
+                file=f,
+            )
             print(f'Camera: {config.camera.name}', file=f)
             print(f'Microscope: {config.microscope.name}', file=f)
             print(f'Camera type: {self.emmenu.get_camera_type()}', file=f)
@@ -512,7 +561,12 @@ class Experiment(ExperimentBase):
             print(f'Stretch azimuth: {config.camera.stretch_amplitude} degrees', file=f)
             print(f'Rotation axis: {self.rotation_axis} radians', file=f)
             print(f'Oscillation angle: {self.osc_angle:.4f} degrees', file=f)
-            print('Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}'.format(*self.start_position), file=f)
+            print(
+                'Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:8.2f} | B {:8.2f}'.format(
+                    *self.start_position
+                ),
+                file=f,
+            )
             print('Beam stopper: yes', file=f)
 
             if self.track:
@@ -543,7 +597,9 @@ class Experiment(ExperimentBase):
                 x_center = pos[:, 0].mean()
                 y_center = pos[idx, 1]
                 z_pos = pos[0:, 2].mean()
-                f = interp1d(pos[:, 3], pos[:, 1] - y_center, fill_value='extrapolate', kind='quadratic')
+                f = interp1d(
+                    pos[:, 3], pos[:, 1] - y_center, fill_value='extrapolate', kind='quadratic'
+                )
 
                 d = {}
                 d['y_offset'] = f

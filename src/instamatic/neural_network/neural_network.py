@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 from pathlib import Path
 
@@ -8,11 +10,13 @@ with open(Path(__file__).parent / 'weights-py3.p', 'rb') as p_file:
 
 
 def conv_layer(in_layer, weight, offset):
-    first_layer = np.ones([(in_layer.shape[0] - 2) * (in_layer.shape[1] - 2), in_layer.shape[2], 3, 3])
+    first_layer = np.ones(
+        [(in_layer.shape[0] - 2) * (in_layer.shape[1] - 2), in_layer.shape[2], 3, 3]
+    )
     q = 0
     for n in range(in_layer.shape[0] - 2):
         for p in range(in_layer.shape[1] - 2):
-            first_layer[q] = np.transpose(in_layer[n:n + 3, p:p + 3], [2, 0, 1])
+            first_layer[q] = np.transpose(in_layer[n : n + 3, p : p + 3], [2, 0, 1])
             q += 1
     convoluted = np.tensordot(first_layer, weight, axes=(((2, 3, 1), (0, 1, 2))))
     convoluted_reshaped = convoluted.reshape([in_layer.shape[0] - 2, in_layer.shape[1] - 2, 64])
@@ -30,7 +34,9 @@ def max_pooling(convoluted):
     pooled = np.ones((convoluted.shape[0] // 2, convoluted.shape[1] // 2, convoluted.shape[2]))
     for n in range(convoluted.shape[0] // 2):
         for p in range(convoluted.shape[1] // 2):
-            pooled[n, p] = np.amax(convoluted[n * 2:n * 2 + 2, p * 2:p * 2 + 2], axis=(0, 1))
+            pooled[n, p] = np.amax(
+                convoluted[n * 2 : n * 2 + 2, p * 2 : p * 2 + 2], axis=(0, 1)
+            )
     return pooled
 
 
