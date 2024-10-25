@@ -1,0 +1,33 @@
+name: Code style
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  workflow_dispatch:
+
+jobs:
+  codestyle:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v45
+
+    - name: Run Pre-Commit
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      uses: pre-commit/action@v3.0.1
+      with:
+        extra_args: --files $ALL_CHANGED_FILES
