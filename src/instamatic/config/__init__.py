@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import os
@@ -226,10 +228,11 @@ def load_settings():
     settings.work_directory = settings.data_directory / f'{today}'
 
 
-def load_all(microscope_name: str = None,
-             calibration_name: str = None,
-             camera_name: str = None,
-             ):
+def load_all(
+    microscope_name: str = None,
+    calibration_name: str = None,
+    camera_name: str = None,
+):
     """Load the settings.yaml file and microscope/calib/camera configs The
     config files to load can be overridden by specifying
     microscope_name/calibration_name/camera_name."""

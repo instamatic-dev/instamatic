@@ -1,5 +1,7 @@
 """https://stackoverflow.com/q/6760685."""
 
+from __future__ import annotations
+
 
 class Singleton(type):
     _instances = {}

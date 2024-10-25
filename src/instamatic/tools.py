@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import os
 import sys
@@ -79,7 +81,9 @@ def find_subranges(lst: list) -> (int, int):
         yield min(group), max(group)
 
 
-def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3) -> (float, float):
+def find_peak_max(
+    arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: int = 3
+) -> (float, float):
     """Find the index of the pixel corresponding to peak maximum in 1D pattern
     `arr`.
 
@@ -97,7 +101,7 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: i
 
     try:
         r1 = np.linspace(c1 - w, c1 + w, win_len)
-        f = interpolate.interp1d(r1, y1[c1 - w: c1 + w + 1], kind=kind)
+        f = interpolate.interp1d(r1, y1[c1 - w : c1 + w + 1], kind=kind)
         r2 = np.linspace(c1 - w, c1 + w, win_len * m)  # extrapolate for subpixel accuracy
         y2 = f(r2)
         c2 = np.argmax(y2) / m  # find beam center with `m` precision
@@ -107,7 +111,9 @@ def find_peak_max(arr: np.ndarray, sigma: int, m: int = 50, w: int = 10, kind: i
     return c2 + c1 - w
 
 
-def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int = 3) -> (float, float):
+def find_beam_center(
+    img: np.ndarray, sigma: int = 30, m: int = 100, kind: int = 3
+) -> (float, float):
     """Find the center of the primary beam in the image `img` The position is
     determined by summing along X/Y directions and finding the position along
     the two directions independently.
@@ -125,7 +131,9 @@ def find_beam_center(img: np.ndarray, sigma: int = 30, m: int = 100, kind: int =
     return center
 
 
-def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=False) -> (float, float):
+def find_beam_center_with_beamstop(
+    img, z: int = None, method='thresh', plot=False
+) -> (float, float):
     """Find the beam center when a beam stop is present.
 
     methods: gauss, thresh
@@ -175,7 +183,9 @@ def find_beam_center_with_beamstop(img, z: int = None, method='thresh', plot=Fal
 
             minr, minc, maxr, maxc = prop.bbox
 
-            rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr, fill=False, edgecolor='red', linewidth=2)
+            rect = mpatches.Rectangle(
+                (minc, minr), maxc - minc, maxr - minr, fill=False, edgecolor='red', linewidth=2
+            )
             ax2.add_patch(rect)
 
             plt.show()
@@ -203,7 +213,9 @@ def find_defocused_image_center(image: np.ndarray, treshold: int = 1):
     return center, rads
 
 
-def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None) -> object:
+def get_acquisition_time(
+    timestamps: tuple, exp_time: float, savefig: bool = True, drc: str = None
+) -> object:
     """Take a list of timestamps and return the acquisition time and overhead.
 
     Parameters
@@ -237,18 +249,27 @@ def get_acquisition_time(timestamps: tuple, exp_time: float, savefig: bool = Tru
 
     if savefig:
         import matplotlib
+
         matplotlib.use('pdf')  # use non-interactive backend (agg/ps/pdf/svg/cairo/gdk)
         import matplotlib.pyplot as plt
+
         plt.plot(x, y, color='red')
         plt.scatter(x, timestamps, color='blue', marker='+')
-        plt.title(f'f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms')
+        plt.title(
+            f'f(x)={res.intercept:.3f} + {res.slope:.3f}*x\nAcq. time: {acq_time:.0f} ms | Exp. time: {exp_time:.0f} ms | overhead: {overhead:.0f} ms'
+        )
         plt.xlabel('Frame number')
         plt.ylabel('Timestamp (s)')
         fn = Path(drc) / 'acquisition_time.png'
         plt.savefig(fn, dpi=150)
         plt.clf()
 
-    return SimpleNamespace(acquisition_time=acq_time / 1000, exposure_time=exp_time / 1000, overhead=overhead / 1000, units='s')
+    return SimpleNamespace(
+        acquisition_time=acq_time / 1000,
+        exposure_time=exp_time / 1000,
+        overhead=overhead / 1000,
+        units='s',
+    )
 
 
 def relativistic_wavelength(voltage: float = 200_000) -> float:
@@ -259,10 +280,10 @@ def relativistic_wavelength(voltage: float = 200_000) -> float:
     Output: Wavelength in Angstrom
     """
     h = 6.626070150e-34  # planck constant J.s
-    m = 9.10938356e-31   # electron rest mass kg
+    m = 9.10938356e-31  # electron rest mass kg
     e = 1.6021766208e-19  # elementary charge C
-    c = 299792458        # speed of light m/s
+    c = 299792458  # speed of light m/s
 
-    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2)))**0.5
+    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))) ** 0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom

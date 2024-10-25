@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 from scipy import ndimage
 from skimage import exposure
@@ -89,9 +91,8 @@ def bin_ndarray(ndarray, new_shape=None, binning=1, operation='mean'):
         raise ValueError('Operation not supported.')
     if ndarray.ndim != len(new_shape):
         raise ValueError(f'Shape mismatch: {ndarray.shape} -> {new_shape}')
-    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
-                                                     ndarray.shape)]
-    flattened = [l for p in compression_pairs for l in p]
+    compression_pairs = [(d, c // d) for d, c in zip(new_shape, ndarray.shape)]
+    flattened = [val for pair in compression_pairs for val in pair]
     ndarray = ndarray.reshape(flattened)
     for i in range(len(new_shape)):
         op = getattr(ndarray, operation)

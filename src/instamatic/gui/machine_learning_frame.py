@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tkinter.filedialog
 from pathlib import Path
 from tkinter import *
@@ -38,11 +40,19 @@ class MachineLearningFrame(LabelFrame):
         self.tv = tv = Treeview(frame, columns=columns, show='headings')
 
         # for loop does not work here for some reason...
-        tv.heading('frame', text='Frame', command=lambda: treeview_sort_column(tv, 'frame', False))
+        tv.heading(
+            'frame', text='Frame', command=lambda: treeview_sort_column(tv, 'frame', False)
+        )
         tv.column('frame', anchor='center', width=15)
-        tv.heading('number', text='Number', command=lambda: treeview_sort_column(tv, 'number', False))
+        tv.heading(
+            'number', text='Number', command=lambda: treeview_sort_column(tv, 'number', False)
+        )
         tv.column('number', anchor='center', width=15)
-        tv.heading('prediction', text='Prediction', command=lambda: treeview_sort_column(tv, 'prediction', False))
+        tv.heading(
+            'prediction',
+            text='Prediction',
+            command=lambda: treeview_sort_column(tv, 'prediction', False),
+        )
         tv.column('prediction', anchor='center', width=15)
         tv.heading('size', text='Size', command=lambda: treeview_sort_column(tv, 'size', False))
         tv.column('size', anchor='center', width=15)
@@ -81,7 +91,9 @@ class MachineLearningFrame(LabelFrame):
         self.q = q
 
     def load_table(self):
-        fn = tkinter.filedialog.askopenfilename(parent=self.parent, initialdir=self.var_directory.get(), title='Select crystal data')
+        fn = tkinter.filedialog.askopenfilename(
+            parent=self.parent, initialdir=self.var_directory.get(), title='Select crystal data'
+        )
         if not fn:
             return
         fn = Path(fn).resolve()
@@ -94,7 +106,12 @@ class MachineLearningFrame(LabelFrame):
                 if not row:
                     continue
                 fn_patt, frame, number, prediction, size, stage_x, stage_y = row
-                self.tv.insert('', 'end', text=fn_patt, values=(frame, number, prediction, size, stage_x, stage_y))
+                self.tv.insert(
+                    '',
+                    'end',
+                    text=fn_patt,
+                    values=(frame, number, prediction, size, stage_x, stage_y),
+                )
                 self.fns[(int(frame), int(number))] = fn
 
         print(f'CSV data `{fn}` loaded')
@@ -107,9 +124,7 @@ class MachineLearningFrame(LabelFrame):
             print('No row selected')
             return
 
-        self.q.put(('ctrl', {'task': 'stage.set',
-                             'x': float(stage_x),
-                             'y': float(stage_y)}))
+        self.q.put(('ctrl', {'task': 'stage.set', 'x': float(stage_x), 'y': float(stage_y)}))
         self.triggerEvent.set()
 
     def show_image(self):
@@ -140,8 +155,14 @@ class MachineLearningFrame(LabelFrame):
         cryst_x, cryst_y = img_h['exp_crystal_coords'][number]
 
         fig = plt.figure()
-        ax1 = plt.subplot(121, title=f'Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})', aspect='equal')
-        ax2 = plt.subplot(122, title=f'Diffraction pattern\nprediction={prediction}', aspect='equal')
+        ax1 = plt.subplot(
+            121,
+            title=f'Image\nframe={frame} | number={number}\nsize={size} | x,y=({stage_x}, {stage_y})',
+            aspect='equal',
+        )
+        ax2 = plt.subplot(
+            122, title=f'Diffraction pattern\nprediction={prediction}', aspect='equal'
+        )
 
         # img = np.rot90(img, k=3)                            # img needs to be rotated to match display
         cryst_y, cryst_x = img.shape[0] - cryst_x, cryst_y  # rotate coordinates
@@ -159,7 +180,9 @@ class MachineLearningFrame(LabelFrame):
         ShowMatplotlibFig(self, fig, title=fn)
 
 
-module = BaseModule(name='learning', display_name='learning', tk_frame=MachineLearningFrame, location='bottom')
+module = BaseModule(
+    name='learning', display_name='learning', tk_frame=MachineLearningFrame, location='bottom'
+)
 commands = {}
 
 

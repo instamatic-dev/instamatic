@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 controller.ctrl.stage.neutral()
 controller.ctrl.mode.set('mag1')
 controller.ctrl.brightness.max()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import os
 import pickle
@@ -25,7 +27,9 @@ class ExperimentalautocRED(LabelFrame):
     """
 
     def __init__(self, parent):
-        LabelFrame.__init__(self, parent, text='Serial Rotation Electron Diffraction (SerialRED)')
+        LabelFrame.__init__(
+            self, parent, text='Serial Rotation Electron Diffraction (SerialRED)'
+        )
         self.parent = parent
 
         self.init_vars()
@@ -39,24 +43,47 @@ class ExperimentalautocRED(LabelFrame):
         self.exposure_time = Entry(frame, textvariable=self.var_exposure_time)
         self.exposure_time.grid(row=1, column=1, sticky='W', padx=10)
 
-        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(row=1, column=2, sticky='W')
+        Checkbutton(frame, text='Beam unblanker', variable=self.var_unblank_beam).grid(
+            row=1, column=2, sticky='W'
+        )
 
         Separator(frame, orient=HORIZONTAL).grid(row=4, columnspan=3, sticky='ew', pady=10)
 
-        Checkbutton(frame, text='Enable image interval', variable=self.var_enable_image_interval, command=self.toggle_interval_buttons).grid(row=5, column=2, sticky='W')
-        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
+        Checkbutton(
+            frame,
+            text='Enable image interval',
+            variable=self.var_enable_image_interval,
+            command=self.toggle_interval_buttons,
+        ).grid(row=5, column=2, sticky='W')
+        self.c_toggle_defocus = Checkbutton(
+            frame,
+            text='Toggle defocus',
+            variable=self.var_toggle_diff_defocus,
+            command=self.toggle_diff_defocus,
+        )
         self.c_toggle_defocus.grid(row=6, column=2, sticky='W')
 
         Label(frame, text='Image interval:').grid(row=5, column=0, sticky='W')
-        self.e_image_interval = Spinbox(frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1)
+        self.e_image_interval = Spinbox(
+            frame, textvariable=self.var_image_interval, from_=1, to=9999, increment=1
+        )
         self.e_image_interval.grid(row=5, column=1, sticky='W', padx=10)
 
         Label(frame, text='Diff defocus:').grid(row=6, column=0, sticky='W')
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100)
+        self.e_diff_defocus = Spinbox(
+            frame, textvariable=self.var_diff_defocus, from_=-10000, to=10000, increment=100
+        )
         self.e_diff_defocus.grid(row=6, column=1, sticky='W', padx=10)
 
         Label(frame, text='Exposure (image):').grid(row=7, column=0, sticky='W')
-        self.e_image_exposure = Spinbox(frame, textvariable=self.var_exposure_time_image, width=10, from_=0.0, to=100.0, increment=0.01)
+        self.e_image_exposure = Spinbox(
+            frame,
+            textvariable=self.var_exposure_time_image,
+            width=10,
+            from_=0.0,
+            to=100.0,
+            increment=0.01,
+        )
         self.e_image_exposure.grid(row=7, column=1, sticky='W', padx=10)
 
         Label(frame, text='Scan Area (um):').grid(row=8, column=0, sticky='W')
@@ -91,19 +118,38 @@ class ExperimentalautocRED(LabelFrame):
         self.rot_speed = Entry(frame, textvariable=self.var_rotspeed)
         self.rot_speed.grid(row=16, column=2, sticky='E', padx=10)
 
-        self.acred_status = Checkbutton(frame, text='Enable Auto Tracking', variable=self.var_enable_autotrack, command=self.autotrack)
+        self.acred_status = Checkbutton(
+            frame,
+            text='Enable Auto Tracking',
+            variable=self.var_enable_autotrack,
+            command=self.autotrack,
+        )
         self.acred_status.grid(row=7, column=2, sticky='W')
 
-        self.fullacred_status = Checkbutton(frame, text='Enable Full AutocRED Feature', variable=self.var_enable_fullacred, command=self.fullacred)
+        self.fullacred_status = Checkbutton(
+            frame,
+            text='Enable Full AutocRED Feature',
+            variable=self.var_enable_fullacred,
+            command=self.fullacred,
+        )
         self.fullacred_status.grid(row=8, column=2, sticky='W')
 
-        self.fullacred_crystalFinder_status = Checkbutton(frame, text='Enable Full AutocRED + crystal finder Feature', variable=self.var_enable_fullacred_crystalFinder, command=self.fullacred_crystalFinder)
+        self.fullacred_crystalFinder_status = Checkbutton(
+            frame,
+            text='Enable Full AutocRED + crystal finder Feature',
+            variable=self.var_enable_fullacred_crystalFinder,
+            command=self.fullacred_crystalFinder,
+        )
         self.fullacred_crystalFinder_status.grid(row=9, column=2, sticky='W')
 
-        self.zheight = Checkbutton(frame, text='Enable auto z height adjustment', variable=self.var_zheight)
+        self.zheight = Checkbutton(
+            frame, text='Enable auto z height adjustment', variable=self.var_zheight
+        )
         self.zheight.grid(row=10, column=2, sticky='W')
 
-        self.auto_center_SMV = Checkbutton(frame, text='Enable auto center of SMV files', variable=self.var_autoc)
+        self.auto_center_SMV = Checkbutton(
+            frame, text='Enable auto center of SMV files', variable=self.var_autoc
+        )
         self.auto_center_SMV.grid(row=11, column=2, sticky='W')
 
         frame.grid_columnconfigure(1, weight=1)
@@ -111,19 +157,29 @@ class ExperimentalautocRED(LabelFrame):
 
         frame = Frame(self)
 
-        self.CollectionButton = Button(frame, text='Start Collection', command=self.start_collection)
+        self.CollectionButton = Button(
+            frame, text='Start Collection', command=self.start_collection
+        )
         self.CollectionButton.grid(row=1, column=0, sticky='EW')
 
-        self.CollectionStopButton = Button(frame, text='Stop Collection', command=self.stop_collection, state=DISABLED)
+        self.CollectionStopButton = Button(
+            frame, text='Stop Collection', command=self.stop_collection, state=DISABLED
+        )
         self.CollectionStopButton.grid(row=1, column=1, sticky='EW')
 
-        self.ShowCalibBeamshift = Button(frame, text='Stop Rotation', command=self.stop_collection_acred, state=NORMAL)
+        self.ShowCalibBeamshift = Button(
+            frame, text='Stop Rotation', command=self.stop_collection_acred, state=NORMAL
+        )
         self.ShowCalibBeamshift.grid(row=3, column=0, sticky='EW')
 
-        self.ShowCalibBeamshift = Button(frame, text='Show calib_beamshift', command=self.show_calib_beamshift, state=NORMAL)
+        self.ShowCalibBeamshift = Button(
+            frame, text='Show calib_beamshift', command=self.show_calib_beamshift, state=NORMAL
+        )
         self.ShowCalibBeamshift.grid(row=2, column=1, sticky='EW')
 
-        self.acquireTEMStatusButton = Button(frame, text='Show calib_is', command=self.show_calib_is, state=NORMAL)
+        self.acquireTEMStatusButton = Button(
+            frame, text='Show calib_is', command=self.show_calib_is, state=NORMAL
+        )
         self.acquireTEMStatusButton.grid(row=2, column=0, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -186,26 +242,28 @@ class ExperimentalautocRED(LabelFrame):
         self.stopEvent.set()
 
     def get_params(self):
-        params = {'exposure_time': self.var_exposure_time.get(),
-                  'exposure_time_image': self.var_exposure_time_image.get(),
-                  'unblank_beam': self.var_unblank_beam.get(),
-                  'enable_image_interval': self.var_enable_image_interval.get(),
-                  'enable_autotrack': self.var_enable_autotrack.get(),
-                  'enable_fullacred': self.var_enable_fullacred.get(),
-                  'enable_fullacred_crystalfinder': self.var_enable_fullacred_crystalFinder.get(),
-                  'image_interval': self.var_image_interval.get(),
-                  'diff_defocus': self.var_diff_defocus.get(),
-                  'scan_area': self.var_scan_area.get(),
-                  'stop_event': self.stopEvent,
-                  'stop_event_experiment': self.stopEvent_experiment,
-                  'zheight': self.var_zheight.get(),
-                  'autocenterDP': self.var_autoc.get(),
-                  'angle_activation': self.var_activ_thr.get(),
-                  'spread': self.var_spread.get(),
-                  'offset': self.var_offset.get(),
-                  'rotrange': self.var_rotrange.get(),
-                  'backlash_killer': self.var_backlash.get(),
-                  'rotation_speed': self.var_rotspeed.get()}
+        params = {
+            'exposure_time': self.var_exposure_time.get(),
+            'exposure_time_image': self.var_exposure_time_image.get(),
+            'unblank_beam': self.var_unblank_beam.get(),
+            'enable_image_interval': self.var_enable_image_interval.get(),
+            'enable_autotrack': self.var_enable_autotrack.get(),
+            'enable_fullacred': self.var_enable_fullacred.get(),
+            'enable_fullacred_crystalfinder': self.var_enable_fullacred_crystalFinder.get(),
+            'image_interval': self.var_image_interval.get(),
+            'diff_defocus': self.var_diff_defocus.get(),
+            'scan_area': self.var_scan_area.get(),
+            'stop_event': self.stopEvent,
+            'stop_event_experiment': self.stopEvent_experiment,
+            'zheight': self.var_zheight.get(),
+            'autocenterDP': self.var_autoc.get(),
+            'angle_activation': self.var_activ_thr.get(),
+            'spread': self.var_spread.get(),
+            'offset': self.var_offset.get(),
+            'rotrange': self.var_rotrange.get(),
+            'backlash_killer': self.var_backlash.get(),
+            'rotation_speed': self.var_rotspeed.get(),
+        }
         return params
 
     def toggle_interval_buttons(self):
@@ -280,13 +338,14 @@ class ExperimentalautocRED(LabelFrame):
         Only input a number and press ENTER>>""")
         idx = int(idx)
 
-        FLIST = {1: CALIB_IS1_DEFOC,
-                 2: CALIB_IS1_FOC,
-                 3: CALIB_IS2_DEFOC,
-                 4: CALIB_IS2_FOC,
-                 5: CALIB_BEAMSHIFT_DP,
-                 6: CALIB_BEAMSHIFT_DP_DEFOC,
-                 }
+        FLIST = {
+            1: CALIB_IS1_DEFOC,
+            2: CALIB_IS1_FOC,
+            3: CALIB_IS2_DEFOC,
+            4: CALIB_IS2_FOC,
+            5: CALIB_BEAMSHIFT_DP,
+            6: CALIB_BEAMSHIFT_DP_DEFOC,
+        }
 
         path = self.calib_path_is / FLIST[idx]
         print(path)
@@ -317,11 +376,13 @@ def acquire_data_autocRED(controller, **kwargs):
 
     # controller.stream.get_module("sed").calib_path = expdir / "calib"
 
-    cexp = autocRED.Experiment(ctrl=controller.ctrl,
-                               path=expdir,
-                               flatfield=controller.module_io.get_flatfield(),
-                               log=controller.log,
-                               **kwargs)
+    cexp = autocRED.Experiment(
+        ctrl=controller.ctrl,
+        path=expdir,
+        flatfield=controller.module_io.get_flatfield(),
+        log=controller.log,
+        **kwargs,
+    )
     cexp.start_collection()
 
     stop_event.clear()
@@ -329,7 +390,9 @@ def acquire_data_autocRED(controller, **kwargs):
     controller.log.info('Finish autocRED experiment')
 
 
-module = BaseModule(name='autocred', display_name='autocRED', tk_frame=ExperimentalautocRED, location='bottom')
+module = BaseModule(
+    name='autocred', display_name='autocRED', tk_frame=ExperimentalautocRED, location='bottom'
+)
 commands = {'autocred': acquire_data_autocRED}
 
 if __name__ == '__main__':

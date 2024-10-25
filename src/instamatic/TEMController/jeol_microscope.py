@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 import time
@@ -80,6 +82,7 @@ class JeolMicroscope(MicroscopeBase):
         self.goniotool_available = config.settings.use_goniotool
         if self.goniotool_available:
             from instamatic.goniotool import GonioToolClient
+
             try:
                 self.goniotool = GonioToolClient()
             except Exception as e:
@@ -329,7 +332,15 @@ class JeolMicroscope(MicroscopeBase):
     def stopStage(self):
         self.stage3.Stop()
 
-    def setStagePosition(self, x: int = None, y: int = None, z: int = None, a: int = None, b: int = None, wait: bool = True):
+    def setStagePosition(
+        self,
+        x: int = None,
+        y: int = None,
+        z: int = None,
+        a: int = None,
+        b: int = None,
+        wait: bool = True,
+    ):
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:
@@ -544,18 +555,19 @@ class JeolMicroscope(MicroscopeBase):
         print('CL1', self.lens3.GetCL1())  # condensor lens
         print('CL2', self.lens3.GetCL2())  # condensor lens
         print('CL3', self.lens3.GetCL3())  # brightness
-        print('CM', self.lens3.GetCM())   # condensor mini lens
+        print('CM', self.lens3.GetCM())  # condensor mini lens
         print('FLc', self.lens3.GetFLc())  # ?? -> self.lens3.SetFLc()
         print('FLf', self.lens3.GetFLf())  # ?? -> self.lens3.SetFLf()
         print('FLcomp1', self.lens3.GetFLcomp1())  # ??, no setter
         print('FLcomp2', self.lens3.GetFLcomp2())  # ??, no setter
-        print('IL1', self.lens3.GetIL1())  # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        # diffraction focus, use SetDiffFocus in diffraction mode, SetILFocus in image mode
+        print('IL1', self.lens3.GetIL1())
         print('IL2', self.lens3.GetIL2())  # intermediate lens, no setter
         print('IL3', self.lens3.GetIL3())  # intermediate lens, no setter
         print('IL4', self.lens3.GetIL4())  # intermediate lens, no setter
         print('OLc', self.lens3.GetOLc())  # objective focus coarse, SetOLc
         print('OLf', self.lens3.GetOLf())  # objective focus fine, SetOLf
-        print('OM', self.lens3.GetOM())   # Objective mini lens
+        print('OM', self.lens3.GetOM())  # Objective mini lens
         print('OM2', self.lens3.GetOM2())  # Objective mini lens
         print('OM2Flag', self.lens3.GetOM2Flag())  # Objective mini lens 2 flag ??
         print('PL1', self.lens3.GetPL1())  # projector lens, SetPLFocus
@@ -565,15 +577,15 @@ class JeolMicroscope(MicroscopeBase):
         print('## def3')
         print('CLA1', self.def3.GetCLA1())  # beam shift
         print('CLA2', self.def3.GetCLA2())  # beam tilt
-        print('CLs', self.def3.GetCLs())   # condensor lens stigmator
+        print('CLs', self.def3.GetCLs())  # condensor lens stigmator
         print('FLA1', self.def3.GetFLA1())
         print('FLA2', self.def3.GetFLA2())
         print('FLs1', self.def3.GetFLs1())
         print('FLs2', self.def3.GetFLs2())
         print('GUNA1', self.def3.GetGUNA1())  # gunshift
         print('GUNA2', self.def3.GetGUNA2())  # guntilt
-        print('ILs', self.def3.GetILs())     # intermediate lens stigmator
-        print('IS1', self.def3.GetIS1())     # image shift 1
-        print('IS2', self.def3.GetIS2())     # image shift 2
-        print('OLs', self.def3.GetOLs())     # objective lens stigmator
-        print('PLA', self.def3.GetPLA())     # projector lens alignment
+        print('ILs', self.def3.GetILs())  # intermediate lens stigmator
+        print('IS1', self.def3.GetIS1())  # image shift 1
+        print('IS2', self.def3.GetIS2())  # image shift 2
+        print('OLs', self.def3.GetOLs())  # objective lens stigmator
+        print('PLA', self.def3.GetPLA())  # projector lens alignment

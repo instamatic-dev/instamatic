@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import ctypes
 from ctypes import wintypes
@@ -8,8 +10,7 @@ ENABLED = False
 
 
 class TIMECAPS(ctypes.Structure):
-    _fields_ = (('wPeriodMin', wintypes.UINT),
-                ('wPeriodMax', wintypes.UINT))
+    _fields_ = (('wPeriodMin', wintypes.UINT), ('wPeriodMax', wintypes.UINT))
 
 
 def enable(milliseconds: int = 1) -> None:

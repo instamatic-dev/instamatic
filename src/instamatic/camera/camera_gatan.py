@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import ctypes
 import logging
@@ -74,6 +76,7 @@ else:
 
 class CameraDLL(CameraBase):
     """Interface with the CCDCOM DLLs to connect to the gatan software."""
+
     streamable = False
 
     def __init__(self, name: str = 'gatan'):
@@ -104,8 +107,18 @@ class CameraDLL(CameraBase):
 
         # Use dependency walker to get function names from DLL: http://www.dependencywalker.com/
         self._acquireImageNewFloat = getattr(lib, symbols['acquireImageNewFloat'])
-        self._acquireImageNewFloat.argtypes = [c_int, c_int, c_int, c_int, c_int, c_double, c_bool, POINTER(
-            POINTER(c_float)), POINTER(c_int), POINTER(c_int)]
+        self._acquireImageNewFloat.argtypes = [
+            c_int,
+            c_int,
+            c_int,
+            c_int,
+            c_int,
+            c_double,
+            c_bool,
+            POINTER(POINTER(c_float)),
+            POINTER(c_int),
+            POINTER(c_int),
+        ]
 
         # self._cameraCount = getattr(lib, symbols['cameraCount'])
         # self._cameraCount.restype = c_int
@@ -161,18 +174,30 @@ class CameraDLL(CameraBase):
 
         if binsize not in self.possible_binsizes:
             raise ValueError(
-                f'Cannot use binsize={binsize}..., should be one of {self.possible_binsizes}')
+                f'Cannot use binsize={binsize}..., should be one of {self.possible_binsizes}'
+            )
 
         pdata = POINTER(c_float)()
         pnImgWidth = c_int(0)
         pnImgHeight = c_int(0)
-        self._acquireImageNewFloat(ymin, xmin, ymax, xmax, binsize, exposure, showindm, byref(
-            pdata), byref(pnImgWidth), byref(pnImgHeight))
+        self._acquireImageNewFloat(
+            ymin,
+            xmin,
+            ymax,
+            xmax,
+            binsize,
+            exposure,
+            showindm,
+            byref(pdata),
+            byref(pnImgWidth),
+            byref(pnImgHeight),
+        )
         xres = pnImgWidth.value
         yres = pnImgHeight.value
         print(f'shape: {xres} {yres}, binsize: {binsize}')
         arr = np.ctypeslib.as_array(
-            (c_float * xres * yres).from_address(addressof(pdata.contents)))
+            (c_float * xres * yres).from_address(addressof(pdata.contents))
+        )
         # memory is not shared between python and C, so we need to copy array
         arr = arr.copy()
         # next we can release pdata memory so that it isn't kept in memory
@@ -220,4 +245,5 @@ if __name__ == '__main__':
     cam = CameraDLL()
 
     from IPython import embed
+
     embed()

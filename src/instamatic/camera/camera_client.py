@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import socket
 import subprocess as sp
@@ -72,7 +74,9 @@ class CamClient:
                 else:
                     break
 
-        self.use_shared_memory = config.settings.cam_use_shared_memory and self.is_local_connection
+        self.use_shared_memory = (
+            config.settings.cam_use_shared_memory and self.is_local_connection
+        )
         print('Use shared memory:', self.use_shared_memory)
 
         self.buffers = {}
@@ -104,13 +108,13 @@ class CamClient:
             dct = {'attr_name': attr_name}
             return self._eval_dct(dct)
         else:
-            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{attr_name}`')
+            raise AttributeError(
+                f'`{self.__class__.__name__}` object has no attribute `{attr_name}`'
+            )
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {'attr_name': attr_name,
-                   'args': args,
-                   'kwargs': kwargs}
+            dct = {'attr_name': attr_name, 'args': args, 'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -150,9 +154,12 @@ class CamClient:
         """Get list of functions and their doc strings from the uninitialized
         class."""
         from instamatic.camera.camera import get_cam
+
         cam = get_cam(self.interface)
 
-        self._dct = {key: value for key, value in cam.__dict__.items() if not key.startswith('_')}
+        self._dct = {
+            key: value for key, value in cam.__dict__.items() if not key.startswith('_')
+        }
         self._dct['get_attrs'] = None
 
     def _init_attr_dict(self):

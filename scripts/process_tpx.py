@@ -12,6 +12,9 @@ Defaults to `cred_log.txt` in the current directory if left blank.
 If the first argument is given as `all`, the script will look for all
 `cred_log.txt` files in the subdirectories, and iterate over those.
 """
+
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -135,19 +138,20 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path='SMV_reprocessed'
         img, h = read_tiff(fn)
         buffer.append((j, img, h))
 
-    img_conv = ImgConversion(buffer=buffer,
-                             osc_angle=osc_angle,
-                             start_angle=start_angle,
-                             end_angle=end_angle,
-                             rotation_axis=rotation_axis,
-                             acquisition_time=acquisition_time,
-                             flatfield=None,
-                             pixelsize=pixelsize,
-                             physical_pixelsize=physical_pixelsize,
-                             wavelength=wavelength,
-                             stretch_amplitude=stretch_amplitude,
-                             stretch_azimuth=stretch_azimuth,
-                             )
+    img_conv = ImgConversion(
+        buffer=buffer,
+        osc_angle=osc_angle,
+        start_angle=start_angle,
+        end_angle=end_angle,
+        rotation_axis=rotation_axis,
+        acquisition_time=acquisition_time,
+        flatfield=None,
+        pixelsize=pixelsize,
+        physical_pixelsize=physical_pixelsize,
+        wavelength=wavelength,
+        stretch_amplitude=stretch_amplitude,
+        stretch_azimuth=stretch_azimuth,
+    )
 
     # azimuth, amplitude = 83.37, 2.43  # add 90 to azimuth for old files
     # img_conv.stretch_azimuth, img_conv.stretch_amplitude = azimuth, amplitude
@@ -165,10 +169,9 @@ def reprocess(credlog, tiff_path=None, mrc_path=None, smv_path='SMV_reprocessed'
     if tiff_path:
         smv_path = drc / tiff_path
 
-    img_conv.threadpoolwriter(tiff_path=tiff_path,
-                              mrc_path=mrc_path,
-                              smv_path=smv_path,
-                              workers=8)
+    img_conv.threadpoolwriter(
+        tiff_path=tiff_path, mrc_path=mrc_path, smv_path=smv_path, workers=8
+    )
 
     if mrc_path:
         img_conv.write_ed3d(mrc_path)

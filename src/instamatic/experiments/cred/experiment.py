@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import json
 import socket
@@ -54,24 +56,26 @@ class Experiment(ExperimentBase):
         Instance of `threading.Event()` that signals the experiment to be terminated.
     """
 
-    def __init__(self, ctrl,
-                 path: str = None,
-                 log=None,
-                 flatfield: str = None,
-                 exposure_time: float = 0.5,
-                 unblank_beam: bool = False,
-                 mode: str = None,
-                 footfree_rotate_to: float = 60.0,
-                 enable_image_interval: bool = False,
-                 image_interval: int = 99999,
-                 diff_defocus: int = 0,
-                 exposure_time_image: float = 0.01,
-                 write_tiff: bool = True,
-                 write_xds: bool = True,
-                 write_dials: bool = True,
-                 write_red: bool = True,
-                 stop_event=None,
-                 ):
+    def __init__(
+        self,
+        ctrl,
+        path: str = None,
+        log=None,
+        flatfield: str = None,
+        exposure_time: float = 0.5,
+        unblank_beam: bool = False,
+        mode: str = None,
+        footfree_rotate_to: float = 60.0,
+        enable_image_interval: bool = False,
+        image_interval: int = 99999,
+        diff_defocus: int = 0,
+        exposure_time_image: float = 0.01,
+        write_tiff: bool = True,
+        write_xds: bool = True,
+        write_dials: bool = True,
+        write_red: bool = True,
+        stop_event=None,
+    ):
         super().__init__()
         self.ctrl = ctrl
         self.path = Path(path)
@@ -98,11 +102,16 @@ class Experiment(ExperimentBase):
         self.image_interval_enabled = enable_image_interval
         if enable_image_interval:
             self.image_interval = image_interval
-            print_and_log(f'Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_image} s).', logger=self.logger)
+            print_and_log(
+                f'Image interval enabled: every {self.image_interval} frames an image with defocus {self.diff_defocus} will be displayed (t={self.exposure_image} s).',
+                logger=self.logger,
+            )
         else:
             self.image_interval = 99999
 
-        self.relax_beam_before_experiment = self.image_interval_enabled and config.settings.cred_relax_beam_before_experiment
+        self.relax_beam_before_experiment = (
+            self.image_interval_enabled and config.settings.cred_relax_beam_before_experiment
+        )
 
         self.track_stage_position = config.settings.cred_track_stage_positions
         self.stage_positions = []
@@ -131,11 +140,18 @@ class Experiment(ExperimentBase):
         start_xy = np.array(self.start_position[0:2])
         end_xy = np.array(self.end_position[0:2])
 
-        print_and_log(f'Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})', logger=self.logger)
+        print_and_log(
+            f'Rotated {self.total_angle:.2f} degrees from {self.start_angle:.2f} to {self.end_angle:.2f} in {self.nframes} frames (step: {self.osc_angle:.4f})',
+            logger=self.logger,
+        )
 
         def fmt(arr):
             return f'[{arr[0]:.0f} {arr[1]:.0f}]'
-        print_and_log(f'Stage moved from {fmt(start_xy)} to {fmt(end_xy)}, drift: {fmt(start_xy - end_xy)}', logger=self.logger)
+
+        print_and_log(
+            f'Stage moved from {fmt(start_xy)} to {fmt(end_xy)}, drift: {fmt(start_xy - end_xy)}',
+            logger=self.logger,
+        )
         self.logger.info(f'Start stage position: {self.start_position}')
         self.logger.info(f'End stage position: {self.end_position}')
         self.logger.info(f'Data collection camera length: {self.camera_length} mm')
@@ -164,11 +180,24 @@ class Experiment(ExperimentBase):
             print(f'Rotation axis: {self.rotation_axis} radians', file=f)
             print(f'Oscillation angle: {self.osc_angle:.4f} degrees', file=f)
             print(f'Number of frames: {self.nframes_diff}', file=f)
-            print('Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}'.format(*self.start_position), file=f)
-            print('Stage end:   X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}'.format(*self.end_position), file=f)
+            print(
+                'Stage start: X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}'.format(
+                    *self.start_position
+                ),
+                file=f,
+            )
+            print(
+                'Stage end:   X {:6.0f} | Y {:6.0f} | Z {:6.0f} | A {:5.2f} | B {:5.2f}'.format(
+                    *self.end_position
+                ),
+                file=f,
+            )
 
             if self.image_interval_enabled:
-                print(f'Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.exposure_image} s).', file=f)
+                print(
+                    f'Image interval: every {self.image_interval} frames an image with defocus {self.diff_focus_defocused} (t={self.exposure_image} s).',
+                    file=f,
+                )
                 print(f'Number of images: {self.nframes_image}', file=f)
 
             print('', file=f)
@@ -342,7 +371,9 @@ class Experiment(ExperimentBase):
         self.total_angle = abs(self.end_angle - self.start_angle)
         self.rotation_axis = config.camera.camera_rotation_vs_stage_xy
 
-        self.pixelsize = config.calibration['diff']['pixelsize'][self.camera_length]  # px / Angstrom
+        self.pixelsize = config.calibration['diff']['pixelsize'][
+            self.camera_length
+        ]  # px / Angstrom
         self.physical_pixelsize = config.camera.physical_pixelsize  # mm
         self.wavelength = config.microscope.wavelength  # angstrom
         self.stretch_azimuth = config.camera.stretch_azimuth  # deg
@@ -354,7 +385,10 @@ class Experiment(ExperimentBase):
         self.log_end_status()
 
         if self.nframes <= 3:
-            print_and_log(f'Not enough frames collected. Data will not be written (nframes={self.nframes})', logger=self.logger)
+            print_and_log(
+                f'Not enough frames collected. Data will not be written (nframes={self.nframes})',
+                logger=self.logger,
+            )
             return False
 
         self.write_data(buffer)
@@ -363,10 +397,12 @@ class Experiment(ExperimentBase):
         print('Data Collection and Conversion Done.')
 
         pathsmv_str = str(self.smv_path)
-        msg = {'path': pathsmv_str,
-               'rotrange': self.total_angle,
-               'nframes': self.nframes,
-               'osc': self.osc_angle}
+        msg = {
+            'path': pathsmv_str,
+            'rotrange': self.total_angle,
+            'nframes': self.nframes,
+            'osc': self.osc_angle,
+        }
         msg_tosend = json.dumps(msg).encode('utf8')
 
         if self.s2_c:
@@ -385,25 +421,25 @@ class Experiment(ExperimentBase):
         The buffer index must start at 1.
         """
 
-        img_conv = ImgConversion(buffer=buffer,
-                                 osc_angle=self.osc_angle,
-                                 start_angle=self.start_angle,
-                                 end_angle=self.end_angle,
-                                 rotation_axis=self.rotation_axis,
-                                 acquisition_time=self.acquisition_time,
-                                 flatfield=self.flatfield,
-                                 pixelsize=self.pixelsize,
-                                 physical_pixelsize=self.physical_pixelsize,
-                                 wavelength=self.wavelength,
-                                 stretch_amplitude=self.stretch_amplitude,
-                                 stretch_azimuth=self.stretch_azimuth,
-                                 )
+        img_conv = ImgConversion(
+            buffer=buffer,
+            osc_angle=self.osc_angle,
+            start_angle=self.start_angle,
+            end_angle=self.end_angle,
+            rotation_axis=self.rotation_axis,
+            acquisition_time=self.acquisition_time,
+            flatfield=self.flatfield,
+            pixelsize=self.pixelsize,
+            physical_pixelsize=self.physical_pixelsize,
+            wavelength=self.wavelength,
+            stretch_amplitude=self.stretch_amplitude,
+            stretch_azimuth=self.stretch_azimuth,
+        )
 
         print('Writing data files...')
-        img_conv.threadpoolwriter(tiff_path=self.tiff_path,
-                                  mrc_path=self.mrc_path,
-                                  smv_path=self.smv_path,
-                                  workers=8)
+        img_conv.threadpoolwriter(
+            tiff_path=self.tiff_path, mrc_path=self.mrc_path, smv_path=self.smv_path, workers=8
+        )
 
         print('Writing input files...')
         if self.write_dials:

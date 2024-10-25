@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import socket
 import tkinter.filedialog
 from pathlib import Path
@@ -33,7 +35,9 @@ class DebugFrame(LabelFrame):
 
         Label(frame, text='Run custom python scripts').grid(row=1, column=0, sticky='W')
 
-        self.e_script_file = Combobox(frame, width=50, textvariable=self.script_file, values=list(self.scripts.keys()))
+        self.e_script_file = Combobox(
+            frame, width=50, textvariable=self.script_file, values=list(self.scripts.keys())
+        )
         self.e_script_file.grid(row=2, column=0, columnspan=2, sticky='EW')
         self.scripts_combobox_update()
 
@@ -62,7 +66,9 @@ class DebugFrame(LabelFrame):
         self.RunButton = Button(frame, text='Kill', command=self.kill_server)
         self.RunButton.grid(row=2, column=4, sticky='EW')
 
-        Label(frame, text='Indexing server: XDS (Ubuntu in VirtualBox)').grid(row=3, column=0, sticky='W')
+        Label(frame, text='Indexing server: XDS (Ubuntu in VirtualBox)').grid(
+            row=3, column=0, sticky='W'
+        )
 
         self.BrowseButton = Button(frame, text='Start', command=self.start_server_xdsVM)
         self.BrowseButton.grid(row=3, column=2, sticky='EW')
@@ -73,7 +79,12 @@ class DebugFrame(LabelFrame):
         self.RunButton = Button(frame, text='Kill', command=self.kill_server_xdsVM)
         self.RunButton.grid(row=3, column=4, sticky='EW')
 
-        self.use_shelxt_check = Checkbutton(frame, text='Use SHELXT for online structure solution', variable=self.var_use_shelxt, command=self.toggle_use_shelxt)
+        self.use_shelxt_check = Checkbutton(
+            frame,
+            text='Use SHELXT for online structure solution',
+            variable=self.var_use_shelxt,
+            command=self.toggle_use_shelxt,
+        )
         self.use_shelxt_check.grid(row=4, column=0, sticky='W')
 
         Label(frame, text='Space group: ').grid(row=4, column=2, sticky='EW')
@@ -88,7 +99,12 @@ class DebugFrame(LabelFrame):
         self.e_compo = Entry(frame, textvariable=self.var_e_compo, width=15, state=NORMAL)
         self.e_compo.grid(row=6, column=3, sticky='EW', columnspan=2)
 
-        self.use_sendto_AS_check = Checkbutton(frame, text='Send SMV path to autosolution server: ', variable=self.var_send_data_to_AS, command=self.toggle_use_AS)
+        self.use_sendto_AS_check = Checkbutton(
+            frame,
+            text='Send SMV path to autosolution server: ',
+            variable=self.var_send_data_to_AS,
+            command=self.toggle_use_AS,
+        )
         self.use_sendto_AS_check.grid(row=7, column=0, sticky='W')
 
         Label(frame, text='SMV files path: ').grid(row=8, column=0, sticky='EW')
@@ -181,11 +197,18 @@ class DebugFrame(LabelFrame):
 
         print(f'Use ShelXT: {use_shelxt}; Space group: {spgr}')
 
-        self.q.put(('autoindex_xdsVM', {'task': 'start_server_xdsVM',
-                                        'compos': compos,
-                                        'unitcell': unitcell,
-                                        'spgr': spgr,
-                                        'use_shelxt': use_shelxt}))
+        self.q.put(
+            (
+                'autoindex_xdsVM',
+                {
+                    'task': 'start_server_xdsVM',
+                    'compos': compos,
+                    'unitcell': unitcell,
+                    'spgr': spgr,
+                    'use_shelxt': use_shelxt,
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def register_server_xdsVM(self):
@@ -238,7 +261,9 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def browse(self):
-        fn = tkinter.filedialog.askopenfilename(parent=self.parent, title='Select Python script')
+        fn = tkinter.filedialog.askopenfilename(
+            parent=self.parent, title='Select Python script'
+        )
         if not fn:
             return
         fn = Path(fn).absolute()
@@ -254,7 +279,16 @@ class DebugFrame(LabelFrame):
         self.triggerEvent.set()
 
     def run_flatfield_collection(self):
-        self.q.put(('flatfield', {'task': 'collect', 'frames': self.var_ff_frames.get(), 'collect_darkfield': self.var_ff_darkfield.get()}))
+        self.q.put(
+            (
+                'flatfield',
+                {
+                    'task': 'collect',
+                    'frames': self.var_ff_frames.get(),
+                    'collect_darkfield': self.var_ff_darkfield.get(),
+                },
+            )
+        )
         self.triggerEvent.set()
 
     def toggle_use_shelxt(self):
@@ -281,6 +315,7 @@ def debug(controller, **kwargs):
     if task == 'open_ipython':
         ctrl = controller.ctrl
         from IPython import embed
+
         embed(banner1='\nAssuming direct control.\n')
     elif task == 'report_status':
         print(controller.ctrl)
@@ -294,6 +329,7 @@ def autoindex(controller, **kwargs):
     task = kwargs.get('task')
     if task == 'start_server':
         import subprocess as sp
+
         # cmd = "start /wait cmd /c instamatic.dialsserver"
         cmd = f'start {SERVER_EXE}'
         controller.indexing_server_process = sp.call(cmd, shell=True)
@@ -355,7 +391,9 @@ def autoindex_xdsVM(controller, **kwargs):
         controller.indexing_server_process = sp.call(cmd, shell=True)
         print(f'Indexing server `{VM_SERVER_EXE}` starting on {VMHOST}:{VMPORT}')
         # controller.use_indexing_server_xds = True
-        print('VM XDS Indexing server registered. Please wait for around 2 min before XDS server is ready.')
+        print(
+            'VM XDS Indexing server registered. Please wait for around 2 min before XDS server is ready.'
+        )
         print('Please refer to the server console for the current status of the server.')
         return
 
@@ -400,7 +438,9 @@ def autosolution_path(controller, **kwargs):
     print('Sent!')
 
 
-module = BaseModule(name='debug', display_name='advanced', tk_frame=DebugFrame, location='bottom')
+module = BaseModule(
+    name='debug', display_name='advanced', tk_frame=DebugFrame, location='bottom'
+)
 commands = {
     'debug': debug,
     'autoindex': autoindex,

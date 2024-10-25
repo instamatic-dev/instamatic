@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -28,11 +30,11 @@ def relativistic_wavelength(voltage: float = 200):
     voltage *= 1000  # -> V
 
     h = 6.626070150e-34  # planck constant J.s
-    m = 9.10938356e-31   # electron rest mass kg
+    m = 9.10938356e-31  # electron rest mass kg
     e = 1.6021766208e-19  # elementary charge C
-    c = 299792458        # speed of light m/s
+    c = 299792458  # speed of light m/s
 
-    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2)))**0.5
+    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))) ** 0.5
 
     return round(wl * 1e10, 6)  # m -> Angstrom
 
@@ -130,18 +132,22 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
         min_val = min(img.min() for _, img, _ in buffer)
         for item in buffer:
             # cast to 16 bit uint16
-            item[1] = rescale_intensity(item[1], out_range='uint16', in_range=(min_val, max_val))
+            item[1] = rescale_intensity(
+                item[1], out_range='uint16', in_range=(min_val, max_val)
+            )
 
-    img_conv = ImgConversion(buffer=buffer,
-                             osc_angle=osc_angle,
-                             start_angle=start_angle,
-                             end_angle=end_angle,
-                             rotation_axis=rotation_axis,
-                             acquisition_time=acquisition_time,
-                             flatfield=None,
-                             pixelsize=pixelsize,
-                             physical_pixelsize=physical_pixelsize,
-                             wavelength=wavelength)
+    img_conv = ImgConversion(
+        buffer=buffer,
+        osc_angle=osc_angle,
+        start_angle=start_angle,
+        end_angle=end_angle,
+        rotation_axis=rotation_axis,
+        acquisition_time=acquisition_time,
+        flatfield=None,
+        pixelsize=pixelsize,
+        physical_pixelsize=physical_pixelsize,
+        wavelength=wavelength,
+    )
 
     if mrc_path:
         mrc_path = drc / mrc_path
@@ -151,10 +157,9 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
         tiff_drc_name = tiff_path
         tiff_path = drc / tiff_path
 
-    img_conv.threadpoolwriter(tiff_path=tiff_path,
-                              mrc_path=mrc_path,
-                              smv_path=smv_path,
-                              workers=8)
+    img_conv.threadpoolwriter(
+        tiff_path=tiff_path, mrc_path=mrc_path, smv_path=smv_path, workers=8
+    )
 
     if mrc_path:
         img_conv.write_ed3d(mrc_path)

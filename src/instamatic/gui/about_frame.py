@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tkinter import *
 from tkinter import Label as tkLabel
 from tkinter.font import Font, nametofont
@@ -31,7 +33,20 @@ class Link_Button(tkLabel):
     """http://code.activestate.com/recipes/580774-tkinter-link-or-hyperlink-
     button/"""
 
-    def __init__(self, master, text, background=None, font=None, familiy=None, size=None, underline=True, visited_fg='#551A8B', normal_fg='#0000EE', visited=False, action=None):
+    def __init__(
+        self,
+        master,
+        text,
+        background=None,
+        font=None,
+        familiy=None,
+        size=None,
+        underline=True,
+        visited_fg='#551A8B',
+        normal_fg='#0000EE',
+        visited=False,
+        action=None,
+    ):
         self._visited_fg = visited_fg
         self._normal_fg = normal_fg
 
@@ -95,7 +110,9 @@ class AboutFrame(LabelFrame):
 
         Label(frame, text='').grid(row=0, column=0, sticky='W')
         Label(frame, text='Contact:').grid(row=1, column=0, sticky='W', padx=10)
-        Label(frame, text=f'{instamatic.__author__} ({instamatic.__author_email__}').grid(row=1, column=1, sticky='W')
+        Label(frame, text=f'{instamatic.__author__} ({instamatic.__author_email__}').grid(
+            row=1, column=1, sticky='W'
+        )
         Label(frame, text='').grid(row=5, column=0, sticky='W')
 
         Label(frame, text='Source code:').grid(row=10, column=0, sticky='W', padx=10)
@@ -113,7 +130,9 @@ class AboutFrame(LabelFrame):
         link.grid(row=30, column=1, sticky='W')
         Label(frame, text='').grid(row=32, column=0, sticky='W')
 
-        Label(frame, text='If you found this software useful, please cite:').grid(row=40, column=0, sticky='W', columnspan=2, padx=10)
+        Label(frame, text='If you found this software useful, please cite:').grid(
+            row=40, column=0, sticky='W', columnspan=2, padx=10
+        )
         txt = Message(frame, text=instamatic.__citation__, width=320, justify=LEFT)
         txt.grid(row=41, column=1, sticky='W')
 
@@ -123,10 +142,12 @@ class AboutFrame(LabelFrame):
 
     def link_github(self, event=None):
         import webbrowser
+
         webbrowser.open_new(instamatic.__url__)
 
     def link_manual(self, event=None):
         import webbrowser
+
         webbrowser.open_new(instamatic.__url__)
 
 

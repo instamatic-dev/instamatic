@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from instamatic.camera.camera_base import CameraBase
@@ -48,7 +50,12 @@ def test_functions(ctrl):
 @pytest.mark.parametrize(
     'cam',
     [
-        pytest.param(CameraDLLMock, marks=pytest.mark.xfail(reason='establish_connection opens a popup window which halts execution')),
+        pytest.param(
+            CameraDLLMock,
+            marks=pytest.mark.xfail(
+                reason='establish_connection opens a popup window which halts execution'
+            ),
+        ),
         pytest.param(CameraEMMENUMock, marks=pytest.mark.xfail(reason='Not implemented')),
         CameraGatan2Mock,
         CameraMerlinMock,
@@ -68,9 +75,11 @@ def test_init_mock(cam):
         pytest.param(CameraDLL, marks=pytest.mark.xfail(reason='Needs config')),
         pytest.param(CameraGatan2, marks=pytest.mark.xfail(reason='Needs config + server')),
         CameraTPX,
-        pytest.param(CameraEMMENU, marks=pytest.mark.xfail(reason='WinError: Invalid class string')),
+        pytest.param(
+            CameraEMMENU, marks=pytest.mark.xfail(reason='WinError: Invalid class string')
+        ),
         pytest.param(CameraMerlin, marks=pytest.mark.xfail(reason='Needs config + server')),
-    ]
+    ],
 )
 def test_init(cam):
     # Use "test" as the name of the camera, as this is where the settings are read from

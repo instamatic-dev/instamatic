@@ -12,6 +12,9 @@ Defaults to `cred_log.txt` in the current directory if left blank.
 If the first argument is given as `all`, the script will look for all
 `cred_log.txt` files in the subdirectories, and iterate over those.
 """
+
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -106,8 +109,12 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     physical_pixelsize_y_tvips = binning_y * h0['PhysicalPixelSizeY'] / 1_000_000  # nm -> mm
 
     # pixelsize can be a factor 10 off, depending on the mode used
-    pixelsize_x_tvips = np.sin(h0['PixelSizeX'] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
-    pixelsize_y_tvips = np.sin(h0['PixelSizeY'] / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
+    pixelsize_x_tvips = (
+        np.sin(h0['PixelSizeX'] / 1_000_000) / wavelength
+    )  # µrad/px -> rad/px -> px/Å
+    pixelsize_y_tvips = (
+        np.sin(h0['PixelSizeY'] / 1_000_000) / wavelength
+    )  # µrad/px -> rad/px -> px/Å
 
     image_res_x_tvips = h0['ImageSizeX']
     image_res_y_tvips = h0['ImageSizeY']
@@ -120,7 +127,9 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     print(f'End angle:                {end_angle:.2f} degrees')
     print(f'Oscillation angle:        {osc_angle:.2f} degrees')
     print(f'Rotation speed:           {rotation_speed:.2f} degrees/s')
-    print(f'Rotation axis at:         {rotation_axis:.2f} radians ({np.degrees(rotation_axis):.2f} degrees)')
+    print(
+        f'Rotation axis at:         {rotation_axis:.2f} radians ({np.degrees(rotation_axis):.2f} degrees)'
+    )
     print(f'Beamstop:                 {beamstop}')
     print(f'Pixelsize:                {pixelsize} px/Ångstrom')
     print(f'Physical Pixelsize:       {physical_pixelsize} mm')
@@ -135,15 +144,21 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     print(f'Overhead time:            {overhead:.3f} s')
     print(f'Binning (X/Y):            {binning_x} {binning_y} px/bin')
     print(f'Image resolution (X/Y):   {image_res_x_tvips} {image_res_y_tvips} pixels')
-    print(f'Pixelsize (X/Y):          {pixelsize_x_tvips:.5f} {pixelsize_y_tvips:.5f} px/Ångstrom???')
-    print(f'Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm')
+    print(
+        f'Pixelsize (X/Y):          {pixelsize_x_tvips:.5f} {pixelsize_y_tvips:.5f} px/Ångstrom???'
+    )
+    print(
+        f'Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm'
+    )
     print(f'High tension:             {high_tension/1000} kV')
     print(f'Wavelength:               {wavelength_tvips} Ångstrom')
     print(f'Camera length:            {camera_length_tvips} mm')
 
     # implement this later if it turns out to be necessary
     assert pixelsize_x_tvips == pixelsize_y_tvips, 'Pixelsize is different in X / Y direction'
-    assert physical_pixelsize_x_tvips == physical_pixelsize_y_tvips, 'Physical pixelsize is different in X / Y direction'
+    assert (
+        physical_pixelsize_x_tvips == physical_pixelsize_y_tvips
+    ), 'Physical pixelsize is different in X / Y direction'
 
     buffer = []
 
@@ -161,30 +176,37 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
             if img.min() >= 0 and img.max() < 2**16:
                 img = img.astype(np.uint16)
 
-        assert img.dtype.type is np.uint16, f'Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)'
+        assert (
+            img.dtype.type is np.uint16
+        ), f'Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)'
 
         h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
 
         buffer.append((j, img, h))
 
     print('Setting up image conversion')
-    img_conv = ImgConversion(buffer=buffer,
-                             osc_angle=osc_angle,
-                             start_angle=start_angle,
-                             end_angle=end_angle,
-                             rotation_axis=rotation_axis,
-                             acquisition_time=acquisition_time,
-                             flatfield=None,
-                             pixelsize=pixelsize,
-                             physical_pixelsize=physical_pixelsize,
-                             wavelength=wavelength)
+    img_conv = ImgConversion(
+        buffer=buffer,
+        osc_angle=osc_angle,
+        start_angle=start_angle,
+        end_angle=end_angle,
+        rotation_axis=rotation_axis,
+        acquisition_time=acquisition_time,
+        flatfield=None,
+        pixelsize=pixelsize,
+        physical_pixelsize=physical_pixelsize,
+        wavelength=wavelength,
+    )
 
     if beamstop:
         from instamatic.utils.beamstop import find_beamstop_rect
+
         print('Finding beam stop')
         stack_mean = np.mean(tuple(img_conv.data.values()), axis=0)
         img_conv.mean_beam_center
-        beamstop_rect = find_beamstop_rect(stack_mean, img_conv.mean_beam_center, pad=1, savefig=True, drc=drc)
+        beamstop_rect = find_beamstop_rect(
+            stack_mean, img_conv.mean_beam_center, pad=1, savefig=True, drc=drc
+        )
         img_conv.add_beamstop(beamstop_rect)
 
     if mrc_path:
@@ -198,10 +220,9 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
         pets_path = drc / pets_path
 
     print('Writing data')
-    img_conv.threadpoolwriter(tiff_path=tiff_path,
-                              mrc_path=mrc_path,
-                              smv_path=smv_path,
-                              workers=8)
+    img_conv.threadpoolwriter(
+        tiff_path=tiff_path, mrc_path=mrc_path, smv_path=smv_path, workers=8
+    )
 
     print('Writing input files')
     if mrc_path:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from instamatic import config
 from instamatic.TEMController.microscope_client import MicroscopeClient
 
@@ -12,4 +14,5 @@ if __name__ == '__main__':
     tem = MicroscopeClient(interface=microscope_id)
 
     from IPython import embed
+
     embed()

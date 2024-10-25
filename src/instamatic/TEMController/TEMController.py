@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
@@ -28,7 +30,9 @@ use_tem_server = config.settings.use_tem_server
 use_cam_server = config.settings.use_cam_server
 
 
-def initialize(tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True) -> 'TEMController':
+def initialize(
+    tem_name: str = default_tem, cam_name: str = default_cam, stream: bool = True
+) -> 'TEMController':
     """Initialize TEMController object giving access to the TEM and Camera
     interfaces.
 
@@ -123,22 +127,24 @@ class TEMController:
         self.store()
 
     def __repr__(self):
-        return (f'Mode: {self.tem.getFunctionMode()}\n'
-                f'High tension: {self.high_tension / 1000:.0f} kV\n'
-                f'Current density: {self.current_density:.2f} pA/cm2\n'
-                f'{self.gunshift}\n'
-                f'{self.guntilt}\n'
-                f'{self.beamshift}\n'
-                f'{self.beamtilt}\n'
-                f'{self.imageshift1}\n'
-                f'{self.imageshift2}\n'
-                f'{self.diffshift}\n'
-                f'{self.stage}\n'
-                f'{self.magnification}\n'
-                f'{self.difffocus}\n'
-                f'{self.brightness}\n'
-                f'SpotSize({self.spotsize})\n'
-                f'Saved alignments: {tuple(self._saved_alignments.keys())}')
+        return (
+            f'Mode: {self.tem.getFunctionMode()}\n'
+            f'High tension: {self.high_tension / 1000:.0f} kV\n'
+            f'Current density: {self.current_density:.2f} pA/cm2\n'
+            f'{self.gunshift}\n'
+            f'{self.guntilt}\n'
+            f'{self.beamshift}\n'
+            f'{self.beamtilt}\n'
+            f'{self.imageshift1}\n'
+            f'{self.imageshift2}\n'
+            f'{self.diffshift}\n'
+            f'{self.stage}\n'
+            f'{self.magnification}\n'
+            f'{self.difffocus}\n'
+            f'{self.brightness}\n'
+            f'SpotSize({self.spotsize})\n'
+            f'Saved alignments: {tuple(self._saved_alignments.keys())}'
+        )
 
     @property
     def high_tension(self) -> float:
@@ -188,7 +194,7 @@ class TEMController:
         aai.start()
 
     def run_script_at_items(self, nav_items: list, script: str, backlash: bool = True) -> None:
-        """"Run the given script at all coordinates defined by the nav_items.
+        """Run the given script at all coordinates defined by the nav_items.
 
         Parameters
         ----------
@@ -206,9 +212,11 @@ class TEMController:
             Toggle to move to each position with backlash correction
         """
         from instamatic.io import find_script
+
         script = find_script(script)
 
         import importlib.util
+
         spec = importlib.util.spec_from_file_location('acquire', script)
         acquire = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(acquire)
@@ -221,11 +229,13 @@ class TEMController:
         post_acquire = getattr(acquire, 'post_acquire', None)
         acquire = getattr(acquire, 'acquire', None)
 
-        self.acquire_at_items(nav_items,
-                              acquire=acquire,
-                              pre_acquire=pre_acquire,
-                              post_acquire=post_acquire,
-                              backlash=backlash)
+        self.acquire_at_items(
+            nav_items,
+            acquire=acquire,
+            pre_acquire=pre_acquire,
+            post_acquire=post_acquire,
+            backlash=backlash,
+        )
 
     def run_script(self, script: str, verbose: bool = True) -> None:
         """Run a custom python script with access to the `ctrl` object.
@@ -234,6 +244,7 @@ class TEMController:
         it cannot find it directly.
         """
         from instamatic.io import find_script
+
         script = find_script(script)
 
         if verbose:
@@ -280,11 +291,12 @@ class TEMController:
 
         return stagematrix
 
-    def align_to(self,
-                 ref_img: 'np.array',
-                 apply: bool = True,
-                 verbose: bool = False,
-                 ) -> list:
+    def align_to(
+        self,
+        ref_img: 'np.array',
+        apply: bool = True,
+        verbose: bool = False,
+    ) -> list:
         """Align current view by comparing it against the given image using
         cross correlation. The stage is translated so that the object of
         interest (in the reference image) is at the center of the view.
@@ -314,7 +326,9 @@ class TEMController:
 
         img = self.get_rotated_image()
 
-        pixel_shift, error, phasediff = phase_cross_correlation(ref_img, img, upsample_factor=10)
+        pixel_shift, error, phasediff = phase_cross_correlation(
+            ref_img, img, upsample_factor=10
+        )
 
         stage_shift = np.dot(pixel_shift, stagematrix)
         stage_shift[0] = -stage_shift[0]  # match TEM Coordinate system
@@ -332,11 +346,14 @@ class TEMController:
 
         return stage_shift
 
-    def find_eucentric_height(self, tilt: float = 5,
-                              steps: int = 5,
-                              dz: int = 50_000,
-                              apply: bool = True,
-                              verbose: bool = True) -> float:
+    def find_eucentric_height(
+        self,
+        tilt: float = 5,
+        steps: int = 5,
+        dz: int = 50_000,
+        apply: bool = True,
+        verbose: bool = True,
+    ) -> float:
         """Automated routine to find the eucentric height, accurate up to ~1 um
         Measures the shift (cross correlation) between 2 angles (-+tilt) over a
         range of z values (defined by `dz` and `steps`). The height is
@@ -432,6 +449,7 @@ class TEMController:
             coords = m.get_montage_coords(optimize=True)
         """
         from instamatic.gridmontage import GridMontage
+
         gm = GridMontage(self)
         return gm
 
@@ -578,15 +596,16 @@ class TEMController:
 
         return arr
 
-    def get_image(self,
-                  exposure: float = None,
-                  binsize: int = None,
-                  comment: str = '',
-                  out: str = None,
-                  plot: bool = False,
-                  verbose: bool = False,
-                  header_keys: Tuple[str] = 'all',
-                  ) -> Tuple[np.ndarray, dict]:
+    def get_image(
+        self,
+        exposure: float = None,
+        binsize: int = None,
+        comment: str = '',
+        out: str = None,
+        plot: bool = False,
+        verbose: bool = False,
+        header_keys: Tuple[str] = 'all',
+    ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
         file.
@@ -615,7 +634,9 @@ class TEMController:
             img, h = self.get_image()
         """
         if not self.cam:
-            raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
+            )
 
         if not binsize:
             binsize = self.cam.default_binsize
@@ -657,17 +678,15 @@ class TEMController:
 
         if plot:
             import matplotlib.pyplot as plt
+
             plt.imshow(arr)
             plt.show()
 
         return arr, h
 
-    def get_movie(self,
-                  n_frames: int,
-                  *,
-                  exposure: float = None,
-                  binsize: int = None,
-                  out: str = None) -> Tuple[np.ndarray]:
+    def get_movie(
+        self, n_frames: int, *, exposure: float = None, binsize: int = None, out: str = None
+    ) -> Tuple[np.ndarray]:
         """Collect a stack of images using the camera's movie mode, if
         available.
 
@@ -690,7 +709,9 @@ class TEMController:
             List of numpy arrays with image data.
         """
         if not self.cam:
-            raise AttributeError(f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)")
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
+            )
 
         if not binsize:
             binsize = self.cam.default_binsize
@@ -733,6 +754,7 @@ class TEMController:
 
         if save_to_file:
             import yaml
+
             fn = config.alignments_drc / (name + '.yaml')
             yaml.dump(d, stream=open(fn, 'w'))
             print(f'Saved alignment to file `{fn}`')
@@ -755,28 +777,45 @@ class TEMController:
         try:
             self.cam.show_stream()
         except AttributeError:
-            print('Cannot open live view. The camera interface must be initialized as a stream object.')
+            print(
+                'Cannot open live view. The camera interface must be initialized as a stream object.'
+            )
 
 
 def main_entry():
     import argparse
+
     description = """Connect to the microscope and camera, and open an IPython terminal to interactively control the microscope. Useful for testing! It initializes the TEMController (accessible through the `ctrl` variable) using the parameters given in the `config`."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('-u', '--simulate',
-                        action='store_true', dest='simulate',
-                        help='Simulate microscope connection (default: False)')
+    parser.add_argument(
+        '-u',
+        '--simulate',
+        action='store_true',
+        dest='simulate',
+        help='Simulate microscope connection (default: False)',
+    )
 
-    parser.add_argument('-c', '--camera',
-                        action='store', type=str, dest='cam_name',
-                        help='Camera configuration to load.')
+    parser.add_argument(
+        '-c',
+        '--camera',
+        action='store',
+        type=str,
+        dest='cam_name',
+        help='Camera configuration to load.',
+    )
 
-    parser.add_argument('-t', '--tem',
-                        action='store', type=str, dest='tem_name',
-                        help='TEM configuration to load.')
+    parser.add_argument(
+        '-t',
+        '--tem',
+        action='store',
+        type=str,
+        dest='tem_name',
+        help='TEM configuration to load.',
+    )
 
     parser.set_defaults(
         simulate=False,
@@ -792,12 +831,14 @@ def main_entry():
     ctrl = initialize(tem_name=options.tem_name, cam_name=options.cam_name)
 
     from IPython import embed
+
     embed(banner1='\nAssuming direct control.\n')
     ctrl.close()
 
 
 if __name__ == '__main__':
     from IPython import embed
+
     ctrl = initialize()
 
     embed(banner1='\nAssuming direct control.\n')

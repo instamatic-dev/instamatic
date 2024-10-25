@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import threading
 
@@ -47,7 +49,6 @@ class ImageGrabber:
 
     def run(self):
         while not self.stopEvent.is_set():
-
             if self.acquireInitiateEvent.is_set():
                 self.acquireInitiateEvent.clear()
 
@@ -196,12 +197,14 @@ class VideoStream(threading.Thread):
 
     def show_stream(self):
         from instamatic.gui import videostream_frame
-        t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=True)
+
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self,), daemon=True)
         t.start()
 
 
 if __name__ == '__main__':
     stream = VideoStream(cam='timepix')
     from IPython import embed
+
     embed()
     stream.stop()

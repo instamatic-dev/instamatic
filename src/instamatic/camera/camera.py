@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 
@@ -52,13 +54,16 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 
     if use_server:
         from instamatic.camera.camera_client import CamClient
+
         cam = CamClient(name=name, interface=interface)
         as_stream = False  # precaution
     else:
         cam_cls = get_cam(interface)
 
         if interface in ('timepix', 'pytimepix'):
-            tpx_config = Path(__file__).parent / 'tpx' / 'config.txt'  # TODO: put this somewhere central
+            tpx_config = (
+                Path(__file__).parent / 'tpx' / 'config.txt'
+            )  # TODO: put this somewhere central
             cam = cam_cls.initialize(tpx_config, name=name)
         elif interface in ('emmenu', 'tvips'):
             cam = cam_cls(name=name)
@@ -84,28 +89,54 @@ def main_entry():
     description = """Simple program to acquire image data from the camera."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('-b', '--binsize',
-                        action='store', type=int, metavar='N', dest='binsize',
-                        help="""Binsize to use. Must be one of 1, 2, or 4 (default 1)""")
+    parser.add_argument(
+        '-b',
+        '--binsize',
+        action='store',
+        type=int,
+        metavar='N',
+        dest='binsize',
+        help="""Binsize to use. Must be one of 1, 2, or 4 (default 1)""",
+    )
 
-    parser.add_argument('-e', '--exposure',
-                        action='store', type=float, metavar='N', dest='exposure',
-                        help="""Exposure time (default 0.5)""")
+    parser.add_argument(
+        '-e',
+        '--exposure',
+        action='store',
+        type=float,
+        metavar='N',
+        dest='exposure',
+        help="""Exposure time (default 0.5)""",
+    )
 
-    parser.add_argument('-o', '--out',
-                        action='store', type=str, metavar='image.png', dest='outfile',
-                        help="""Where to store image""")
+    parser.add_argument(
+        '-o',
+        '--out',
+        action='store',
+        type=str,
+        metavar='image.png',
+        dest='outfile',
+        help="""Where to store image""",
+    )
 
-    parser.add_argument('-d', '--display',
-                        action='store_true', dest='show_fig',
-                        help="""Show the image (default True)""")
+    parser.add_argument(
+        '-d',
+        '--display',
+        action='store_true',
+        dest='show_fig',
+        help="""Show the image (default True)""",
+    )
 
-    parser.add_argument('-s', '--series',
-                        action='store_true', dest='take_series',
-                        help="""Enable mode to take a series of images (default False)""")
+    parser.add_argument(
+        '-s',
+        '--series',
+        action='store_true',
+        dest='take_series',
+        help="""Enable mode to take a series of images (default False)""",
+    )
 
     parser.set_defaults(
         binsize=1,
@@ -127,6 +158,7 @@ def main_entry():
     take_series = options.take_series
 
     from instamatic import TEMController
+
     ctrl = TEMController.initialize()
 
     if take_series:
@@ -197,4 +229,5 @@ if __name__ == '__main__':
     print(arr.shape)
 
     from IPython import embed
+
     embed(banner1='')

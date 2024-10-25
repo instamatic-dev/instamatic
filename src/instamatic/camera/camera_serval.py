@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import logging
 from pathlib import Path
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class CameraServal(CameraBase):
     """Interfaces with Serval from ASI."""
+
     streamable = True
 
     def __init__(self, name='serval'):
@@ -46,8 +49,9 @@ class CameraServal(CameraBase):
             binsize = self.default_binsize
 
         # Upload exposure settings (Note: will do nothing if no change in settings)
-        self.conn.set_detector_config(ExposureTime=exposure,
-                                      TriggerPeriod=exposure + 0.00050001)
+        self.conn.set_detector_config(
+            ExposureTime=exposure, TriggerPeriod=exposure + 0.00050001
+        )
 
         # Check if measurement is running. If not: start
         db = self.conn.dashboard
@@ -103,8 +107,8 @@ class CameraServal(CameraBase):
         self.conn = ServalCamera()
         self.conn.connect(self.url)
         self.conn.set_chip_config_files(
-            bpc_file_path=self.bpc_file_path,
-            dacs_file_path=self.dacs_file_path)
+            bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path
+        )
         self.conn.set_detector_config(**self.detector_config)
         # Check pixel depth. If 24 bit mode is used, the pgm format does not work
         # (has support up to 16 bits) so use tiff in that case. In other cases (1, 6, 12 bits)
@@ -115,15 +119,16 @@ class CameraServal(CameraBase):
         else:
             file_format = 'pgm'
         self.conn.destination = {
-            'Image':
-            [{
-                # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
-                'Base': 'http://localhost',
-                        # What (image) format to provide the files in.
-                        'Format': file_format,
-                        # What data to build a frame from
-                        'Mode': 'count',
-            }],
+            'Image': [
+                {
+                    # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
+                    'Base': 'http://localhost',
+                    # What (image) format to provide the files in.
+                    'Format': file_format,
+                    # What data to build a frame from
+                    'Mode': 'count',
+                }
+            ],
         }
 
     def release_connection(self) -> None:
@@ -137,4 +142,5 @@ class CameraServal(CameraBase):
 if __name__ == '__main__':
     cam = CameraServal()
     from IPython import embed
+
     embed()

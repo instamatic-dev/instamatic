@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import os
 import subprocess as sp
@@ -15,6 +17,7 @@ plt.rcParams['image.cmap'] = 'gray'
 def get_files(file_pat: str) -> list:
     """Grab files from globbing pattern or stream file."""
     from instamatic.formats import read_ycsv
+
     if os.path.exists(file_pat):
         root, ext = os.path.splitext(file_pat)
         if ext.lower() == '.ycsv':

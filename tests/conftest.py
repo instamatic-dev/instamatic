@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -20,6 +22,7 @@ def pytest_configure():
 @pytest.fixture(scope='module')
 def ctrl() -> 'TEMController':
     from instamatic.TEMController import initialize
+
     ctrl = initialize()
 
     # set instant stage movement for testing

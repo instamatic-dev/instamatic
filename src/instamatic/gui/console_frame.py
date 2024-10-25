@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import sys
 import time
@@ -71,10 +73,17 @@ class Console(LabelFrame):
         self.ExportButton = Button(frame, text='Export', command=self.export_text)
         self.ExportButton.grid(row=1, column=2, sticky='EW')
 
-        self.CaptureButton = Checkbutton(frame, text='Capture', variable=self.var_toggle_capture, command=self.toggle_capture)
+        self.CaptureButton = Checkbutton(
+            frame, text='Capture', variable=self.var_toggle_capture, command=self.toggle_capture
+        )
         self.CaptureButton.grid(row=1, column=3, sticky='EW')
 
-        self.TimestampButton = Checkbutton(frame, text='Timestamp', variable=self.var_toggle_timestamp, command=self.toggle_timestamp)
+        self.TimestampButton = Checkbutton(
+            frame,
+            text='Timestamp',
+            variable=self.var_toggle_timestamp,
+            command=self.toggle_timestamp,
+        )
         self.TimestampButton.grid(row=1, column=4, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
@@ -100,6 +109,7 @@ class Console(LabelFrame):
 
     def test_write(self, text=None):
         from instamatic import banner
+
         banner.thank_you_message(self.write)
 
     def toggle_capture(self):
@@ -130,11 +140,13 @@ class Console(LabelFrame):
         """Export text from the text widget to a file."""
         drc = config.settings.work_directory
 
-        f = filedialog.asksaveasfile(mode='w',
-                                     defaultextension='.txt',
-                                     filetypes=(('Text', '*.txt'),),
-                                     initialdir=drc,
-                                     initialfile='console.txt')
+        f = filedialog.asksaveasfile(
+            mode='w',
+            defaultextension='.txt',
+            filetypes=(('Text', '*.txt'),),
+            initialdir=drc,
+            initialfile='console.txt',
+        )
 
         if not f:
             return

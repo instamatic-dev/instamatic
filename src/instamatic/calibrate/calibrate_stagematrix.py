@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -114,11 +116,12 @@ def calibrate_stage_from_file(drc: str, plot: bool = False):
     return stagematrix
 
 
-def calibrate_stage_from_stageshifts(ctrl,
-                                     *args,
-                                     plot: bool = False,
-                                     drc=None,
-                                     ) -> np.array:
+def calibrate_stage_from_stageshifts(
+    ctrl,
+    *args,
+    plot: bool = False,
+    drc=None,
+) -> np.array:
     """Run the calibration algorithm on the given X/Y ranges. An image will be
     taken at each position for cross correlation with the previous. An affine
     transformation matrix defines the relation between the pixel shift and the
@@ -237,16 +240,17 @@ def calibrate_stage_from_stageshifts(ctrl,
     return stagematrix
 
 
-def calibrate_stage(ctrl,
-                    mode: str = None,
-                    mag: int = None,
-                    overlap: float = 0.5,
-                    stage_length: int = 40_000,
-                    min_n_step: int = 3,
-                    max_n_step: int = 15,
-                    plot: bool = False,
-                    drc: str = None,
-                    ) -> np.array:
+def calibrate_stage(
+    ctrl,
+    mode: str = None,
+    mag: int = None,
+    overlap: float = 0.5,
+    stage_length: int = 40_000,
+    min_n_step: int = 3,
+    max_n_step: int = 15,
+    plot: bool = False,
+    drc: str = None,
+) -> np.array:
     """Calibrate the stage movement (nm) and the position of the camera
     (pixels) at a specific magnification.
 
@@ -327,15 +331,16 @@ def calibrate_stage(ctrl,
     return stagematrix
 
 
-def calibrate_stage_all(ctrl,
-                        modes=('mag1', 'lowmag'),
-                        mag_ranges: dict = None,
-                        overlap: float = 0.8,
-                        stage_length: int = 40_000,
-                        min_n_step: int = 5,
-                        max_n_step: int = 9,
-                        save: bool = False,
-                        ) -> dict:
+def calibrate_stage_all(
+    ctrl,
+    modes=('mag1', 'lowmag'),
+    mag_ranges: dict = None,
+    overlap: float = 0.8,
+    stage_length: int = 40_000,
+    min_n_step: int = 5,
+    max_n_step: int = 9,
+    save: bool = False,
+) -> dict:
     """Run the stagematrix calibration routine for all magnifications
     specified. Return the updates values for the configuration file.
 
@@ -387,14 +392,15 @@ def calibrate_stage_all(ctrl,
                 drc = None
 
             try:
-                stagematrix = calibrate_stage(ctrl,
-                                              mode=mode,
-                                              mag=mag,
-                                              overlap=overlap,
-                                              min_n_step=min_n_step,
-                                              max_n_step=max_n_step,
-                                              drc=drc,
-                                              )
+                stagematrix = calibrate_stage(
+                    ctrl,
+                    mode=mode,
+                    mag=mag,
+                    overlap=overlap,
+                    min_n_step=min_n_step,
+                    max_n_step=max_n_step,
+                    drc=drc,
+                )
             except ValueError as e:  # raises if pixelsize is 0 or 1.0
                 print(e)
                 continue
@@ -420,50 +426,102 @@ Calibrate the stage movement (nm) and the position of the camera
 
 The stagematrix takes the image binning into account."""
 
-    parser = argparse.ArgumentParser(description=description,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('-m', '--mode', dest='mode', type=str,
-                        help=('Select the imaging mode (mag1/mag2/lowmag/samag). '
-                              'If `all` is specified, all imaging modes+mags are calibrated.'
-                              'If the imaging mode and magnification are not given, the current'
-                              'values are used.'))
+    parser.add_argument(
+        '-m',
+        '--mode',
+        dest='mode',
+        type=str,
+        help=(
+            'Select the imaging mode (mag1/mag2/lowmag/samag). '
+            'If `all` is specified, all imaging modes+mags are calibrated.'
+            'If the imaging mode and magnification are not given, the current'
+            'values are used.'
+        ),
+    )
 
-    parser.add_argument('-k', '--mag', dest='mags', type=int, nargs='+', metavar='K',
-                        help='Select the imaging magnification(s).')
+    parser.add_argument(
+        '-k',
+        '--mag',
+        dest='mags',
+        type=int,
+        nargs='+',
+        metavar='K',
+        help='Select the imaging magnification(s).',
+    )
 
-    parser.add_argument('-A', '--all_mags', action='store_true', dest='all_mags',
-                        help='Run calibration routine for all mags over selected mode.')
+    parser.add_argument(
+        '-A',
+        '--all_mags',
+        action='store_true',
+        dest='all_mags',
+        help='Run calibration routine for all mags over selected mode.',
+    )
 
-    parser.add_argument('-v', '--overlap', dest='overlap', type=float, metavar='X',
-                        help=('Specify the approximate overlap between images for cross '
-                              'correlation.'))
+    parser.add_argument(
+        '-v',
+        '--overlap',
+        dest='overlap',
+        type=float,
+        metavar='X',
+        help=('Specify the approximate overlap between images for cross ' 'correlation.'),
+    )
 
-    parser.add_argument('-l', '--stage_length', dest='stage_length', type=int,
-                        help=('Specify the minimum length (in stage coordinates) the calibration '
-                              'should cover.'))
+    parser.add_argument(
+        '-l',
+        '--stage_length',
+        dest='stage_length',
+        type=int,
+        help=(
+            'Specify the minimum length (in stage coordinates) the calibration ' 'should cover.'
+        ),
+    )
 
-    parser.add_argument('-a', '--min_n_steps', dest='min_n_step', type=int, metavar='N',
-                        help=('Specify the minimum number of steps to take along X and Y for the '
-                              'calibration.'))
+    parser.add_argument(
+        '-a',
+        '--min_n_steps',
+        dest='min_n_step',
+        type=int,
+        metavar='N',
+        help=(
+            'Specify the minimum number of steps to take along X and Y for the ' 'calibration.'
+        ),
+    )
 
-    parser.add_argument('-b', '--max_n_steps', dest='max_n_step', type=int, metavar='N',
-                        help=('Specify the maximum number of steps to take along X and Y for the '
-                              'calibration. This is used for higher magnifications.'))
+    parser.add_argument(
+        '-b',
+        '--max_n_steps',
+        dest='max_n_step',
+        type=int,
+        metavar='N',
+        help=(
+            'Specify the maximum number of steps to take along X and Y for the '
+            'calibration. This is used for higher magnifications.'
+        ),
+    )
 
-    parser.add_argument('-s', '--save', action='store_true', dest='save',
-                        help=f'Save the data to the data directory [{data_drc}].')
+    parser.add_argument(
+        '-s',
+        '--save',
+        action='store_true',
+        dest='save',
+        help=f'Save the data to the data directory [{data_drc}].',
+    )
 
-    parser.set_defaults(mode=(),
-                        mags=(),
-                        overlap=0.8,
-                        stage_length=40_000,
-                        min_n_step=5,
-                        max_n_step=9,
-                        plot=False,
-                        drc=None,
-                        save=False,
-                        )
+    parser.set_defaults(
+        mode=(),
+        mags=(),
+        overlap=0.8,
+        stage_length=40_000,
+        min_n_step=5,
+        max_n_step=9,
+        plot=False,
+        drc=None,
+        save=False,
+    )
 
     options = parser.parse_args()
 
@@ -471,12 +529,13 @@ The stagematrix takes the image binning into account."""
     mags = options.mags
 
     from instamatic import TEMController
+
     ctrl = TEMController.initialize()
 
     if not mode:
         mode = ctrl.mode.get()
     if not mags:
-        mags = (ctrl.magnification.get(), )
+        mags = (ctrl.magnification.get(),)
 
     kwargs = {
         'overlap': options.overlap,

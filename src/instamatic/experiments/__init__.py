@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .autocred import experiment as autocRED
 from .cred import experiment as cRED
 from .cred_tvips import experiment as cRED_tvips

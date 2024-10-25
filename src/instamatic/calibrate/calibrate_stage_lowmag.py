@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import pickle
 import sys
@@ -19,7 +21,13 @@ class CalibStage:
     """Simple class to hold the methods to perform transformations from one
     setting to another based on calibration results."""
 
-    def __init__(self, rotation, camera_dimensions, translation=np.array([0, 0]), reference_position=np.array([0, 0])):
+    def __init__(
+        self,
+        rotation,
+        camera_dimensions,
+        translation=np.array([0, 0]),
+        reference_position=np.array([0, 0]),
+    ):
         super().__init__()
         self.has_data = False
         self.rotation = rotation
@@ -134,22 +142,30 @@ class CalibStage:
     def reference_setting_to_pixelcoord(self, px_ref, image_pos):
         """Function to transform pixel coordinates in reference setting to
         current frame."""
-        return self._reference_setting_to_pixelcoord(px_ref, image_pos, self.rotation, self.translation, self.reference_position)
+        return self._reference_setting_to_pixelcoord(
+            px_ref, image_pos, self.rotation, self.translation, self.reference_position
+        )
 
     def pixelcoord_to_reference_setting(self, px, image_pos):
         """Function to transform pixel coordinates in current frame to
         reference setting."""
-        return self._pixelcoord_to_reference_setting(px, image_pos, self.rotation, self.translation, self.reference_position)
+        return self._pixelcoord_to_reference_setting(
+            px, image_pos, self.rotation, self.translation, self.reference_position
+        )
 
     def pixelcoord_to_stagepos(self, px, image_pos):
         """Function to transform pixel coordinates to stage position
         coordinates."""
-        return self._pixelcoord_to_stagepos(px, image_pos, self.rotation, self.translation, self.reference_position)
+        return self._pixelcoord_to_stagepos(
+            px, image_pos, self.rotation, self.translation, self.reference_position
+        )
 
     def stagepos_to_pixelcoord(self, stagepos, image_pos):
         """Function to stage position coordinates to pixel coordinates on
         current frame."""
-        return self._stagepos_to_pixelcoord(stagepos, image_pos, self.rotation, self.translation, self.reference_position)
+        return self._stagepos_to_pixelcoord(
+            stagepos, image_pos, self.rotation, self.translation, self.reference_position
+        )
 
     def pixelshift_to_stageshift(self, pixelshift, binsize=1):
         """Convert from a pixel distance to a stage shift."""
@@ -159,7 +175,9 @@ class CalibStage:
         return self.pixelcoord_to_stagepos((dx, dy), image_pos=(0, 0))
 
     @classmethod
-    def from_data(cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None):
+    def from_data(
+        cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None
+    ):
         fit_result = fit_affine_transformation(shifts, stagepos, verbose=True, translation=True)
         r = fit_result.r
         t = fit_result.t
@@ -170,7 +188,12 @@ class CalibStage:
             else:
                 raise NameError("name 'camera_dimensions' is not defined.")
 
-        c = cls(rotation=r, camera_dimensions=camera_dimensions, translation=t, reference_position=reference_position)
+        c = cls(
+            rotation=r,
+            camera_dimensions=camera_dimensions,
+            translation=t,
+            reference_position=reference_position,
+        )
         c.data_shifts = shifts
         c.data_stagepos = stagepos
         c.has_data = True
@@ -233,7 +256,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     # Accurate reading fo the center positions is needed so that we can come back to it,
     #  because this will be our anchor point
-    img_cent, h_cent = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)')
+    img_cent, h_cent = ctrl.get_image(
+        exposure=exposure, binsize=binsize, out=outfile, comment='Center image (start)'
+    )
 
     x_cent, y_cent, _, _, _ = h_cent['StagePosition']
     xy_cent = np.array([x_cent, y_cent])
@@ -244,7 +269,9 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     shifts = []
 
     n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize)
+    x_grid, y_grid = np.meshgrid(
+        np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize
+    )
     tot = gridsize * gridsize
 
     i = 0
@@ -258,7 +285,13 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
         outfile = f'calib_{i:04d}' if save_images else None
 
         comment = comment
-        img, h = ctrl.get_image(exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys='StagePosition')
+        img, h = ctrl.get_image(
+            exposure=exposure,
+            binsize=binsize,
+            out=outfile,
+            comment=comment,
+            header_keys='StagePosition',
+        )
 
         img = imgscale(img, scale)
 
@@ -280,12 +313,16 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
 
     m = gridsize**2 // 2
     if gridsize % 2 and stagepos[m].max() > 50:
-        print(f' >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.')
+        print(
+            f' >> Warning: Large difference between image {m}, and center image. These should be close for a good calibration.'
+        )
         print('    Difference:', stagepos[m])
         print()
 
     if save_images:
-        ctrl.get_image(exposure=exposure, binsize=binsize, out='calib_end', comment='Center image (end)')
+        ctrl.get_image(
+            exposure=exposure, binsize=binsize, out='calib_end', comment='Center image (end)'
+        )
 
     c = CalibStage.from_data(shifts, stagepos, reference_position=xy_cent, header=h_cent)
 
@@ -347,9 +384,18 @@ def calibrate_stage_lowmag_from_image_fn(center_fn, other_fn):
     return c
 
 
-def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False):
+def calibrate_stage_lowmag(
+    center_fn=None, other_fn=None, ctrl=None, confirm=True, save_images=False
+):
     if not (center_fn or other_fn):
-        if confirm and not input("\n >> Go to 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): "'') == 'go':
+        if (
+            confirm
+            and not input(
+                "\n >> Go to 100x mag, and move the sample stage\nso that the grid center (clover) is in the\nmiddle of the image (type 'go'): "
+                ''
+            )
+            == 'go'
+        ):
             return
         else:
             calib = calibrate_stage_lowmag_live(ctrl, save_images=True)
@@ -363,21 +409,29 @@ def calibrate_stage_lowmag(center_fn=None, other_fn=None, ctrl=None, confirm=Tru
 
 def main_entry():
     import argparse
-    description = """Program to calibrate the lowmag mode (100x) of the microscope (Deprecated)."""
+
+    description = (
+        """Program to calibrate the lowmag mode (100x) of the microscope (Deprecated)."""
+    )
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs='*', metavar='IMG',
-                        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs='*',
+        metavar='IMG',
+        help='Perform calibration using pre-collected images. The first image must be the center image used as the reference position. The other images are cross-correlated to this image to calibrate the translations. If no arguments are given, run the live calibration routine.',
+    )
 
     options = parser.parse_args()
     args = options.args
 
     if not args:
         from instamatic import TEMController
+
         ctrl = TEMController.initialize()
         calibrate_stage_lowmag(ctrl=ctrl, save_images=True)
     else:

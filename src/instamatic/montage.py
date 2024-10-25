@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -46,7 +48,9 @@ class InstamaticMontage(Montage):
 
         images = [read_tiff(fn)[0] for fn in fns]
 
-        gridspec = {k: v for k, v in d.items() if k in ('gridshape', 'direction', 'zigzag', 'flip')}
+        gridspec = {
+            k: v for k, v in d.items() if k in ('gridshape', 'direction', 'zigzag', 'flip')
+        }
 
         m = cls(images=images, gridspec=gridspec, **d)
         m.update_gridspec(flip=not d['flip'])  # BUG: Work-around for gridspec madness
@@ -63,9 +67,11 @@ class InstamaticMontage(Montage):
             Name of the image file.
         """
         from instamatic.formats import write_tiff
+
         write_tiff(outfile, self.stitched)
 
     def to_browser(self):
         from instamatic.browser import Browser
+
         browser = Browser(self)
         return browser

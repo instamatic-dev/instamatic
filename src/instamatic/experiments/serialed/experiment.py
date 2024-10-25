@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import time
@@ -77,21 +79,21 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
     nx = 1 + int(2.0 * radius / (box_x + padding))
     if box_y:
         ny = 1 + int(2.0 * radius / (box_y + padding))
-        diff = 0.5 * (2 * max(box_x, box_y)**2)**0.5
+        diff = 0.5 * (2 * max(box_x, box_y) ** 2) ** 0.5
     else:
-        diff = 0.5 * (2 * (box_x)**2)**0.5
+        diff = 0.5 * (2 * (box_x) ** 2) ** 0.5
         ny = 0
 
     borderwidth = k * (1.0 - (radius - diff) / radius)
 
-    x_offsets, y_offsets = get_gridpoints_in_circle(nx=nx, ny=ny, radius=radius, borderwidth=borderwidth)
+    x_offsets, y_offsets = get_gridpoints_in_circle(
+        nx=nx, ny=ny, radius=radius, borderwidth=borderwidth
+    )
 
     if angle:
         sin = np.sin(angle)
         cos = np.cos(angle)
-        r = np.array([
-            [cos, -sin],
-            [sin, cos]])
+        r = np.array([[cos, -sin], [sin, cos]])
         x_offsets, y_offsets = np.dot(np.vstack([x_offsets, y_offsets]).T, r).T
 
     if plot:
@@ -118,11 +120,20 @@ def get_offsets_in_scan_area(box_x, box_y=0, radius=75, padding=2, k=1.0, angle=
             ax.add_artist(circle)
 
             for dx, dy in zip(x_offsets, y_offsets):
-                rect = patches.Rectangle((dx - cx, dy - cy), box_x, box_y, fill=False, angle=np.degrees(-angle))
+                rect = patches.Rectangle(
+                    (dx - cx, dy - cy), box_x, box_y, fill=False, angle=np.degrees(-angle)
+                )
                 ax.add_artist(rect)
 
-            ax.text(1.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-                    verticalalignment='top', bbox={'boxstyle': 'round', 'facecolor': 'wheat', 'alpha': 0.5})
+            ax.text(
+                1.05,
+                0.95,
+                textstr,
+                transform=ax.transAxes,
+                fontsize=14,
+                verticalalignment='top',
+                bbox={'boxstyle': 'round', 'facecolor': 'wheat', 'alpha': 0.5},
+            )
 
             ax.set_xlim(-100, 100)
             ax.set_ylim(-100, 100)
@@ -189,7 +200,9 @@ class Experiment(ExperimentBase):
         x, y, _, _, _ = self.ctrl.stage.get()
         self.scan_centers = np.array([[x, y]])
         if not self.scan_radius:
-            self.scan_radius = float(input(' >> Enter the radius (micrometer) of the area to scan: [100] ') or 100)
+            self.scan_radius = float(
+                input(' >> Enter the radius (micrometer) of the area to scan: [100] ') or 100
+            )
         border_k = 0
 
         self.image_binsize = kwargs.get('image_binsize', self.ctrl.cam.default_binsize)
@@ -213,12 +226,16 @@ class Experiment(ExperimentBase):
             self.magnification = self.ctrl.magnification.value
             self.log.info('Brightness=%s', self.ctrl.brightness)
 
-        self.pixelsize_mag1 = config.calibration['mag1']['pixelsize'][self.magnification] / 1000  # nm -> um
+        self.pixelsize_mag1 = (
+            config.calibration['mag1']['pixelsize'][self.magnification] / 1000
+        )  # nm -> um
         xdim, ydim = self.ctrl.cam.get_camera_dimensions()
         self.image_dimensions = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
         self.log.info('Image dimensions %s', self.image_dimensions)
 
-        self.diff_binsize = kwargs.get('diff_binsize', self.ctrl.cam.default_binsize)  # this also messes with calibrate_beamshift class
+        self.diff_binsize = kwargs.get(
+            'diff_binsize', self.ctrl.cam.default_binsize
+        )  # this also messes with calibrate_beamshift class
         self.diff_exposure = kwargs.get('diff_exposure', self.ctrl.cam.default_exposure)
         self.diff_spotsize = kwargs.get('diff_spotsize', 4)
         # self.diff_cameralength = kwargs.get("diff_cameralength",       800)
@@ -262,7 +279,15 @@ class Experiment(ExperimentBase):
 
         box_x, box_y = self.image_dimensions
 
-        offsets = get_offsets_in_scan_area(box_x, box_y, self.scan_radius, k=border_k, padding=2, angle=self.camera_rotation_angle, plot=False)
+        offsets = get_offsets_in_scan_area(
+            box_x,
+            box_y,
+            self.scan_radius,
+            k=border_k,
+            padding=2,
+            angle=self.camera_rotation_angle,
+            plot=False,
+        )
         self.offsets = offsets * 1000
 
         # store kwargs to experiment drc
@@ -282,6 +307,7 @@ class Experiment(ExperimentBase):
         """Intialize microscope."""
 
         import atexit
+
         atexit.register(self.ctrl.restore)
 
         self.ctrl.mode.set('diff')
@@ -322,7 +348,9 @@ class Experiment(ExperimentBase):
 
         self.ctrl.brightness.set(self.diff_brightness)
         self.ctrl.mode.set('diff')
-        self.ctrl.difffocus.value = self.diff_difffocus  # difffocus must be set AFTER switching to diffraction mode
+        self.ctrl.difffocus.value = (
+            self.diff_difffocus
+        )  # difffocus must be set AFTER switching to diffraction mode
 
     def report_status(self):
         """Report experiment status."""
@@ -357,7 +385,9 @@ class Experiment(ExperimentBase):
                 print()
                 continue
             else:
-                self.log.info('Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)', i, ncenters, x, y)
+                self.log.info(
+                    'Stage position: center %d/%d -> (x=%0.1f, y=%0.1f)', i, ncenters, x, y
+                )
                 yield i, (x, y)
 
     def loop_positions(self, delay=0.05):
@@ -385,8 +415,16 @@ class Experiment(ExperimentBase):
                     time.sleep(delay)
                     t.set_description(f'Stage(x={x:7.0f}, y={y:7.0f})')
 
-                    dct = {'exp_scan_number': i, 'exp_image_number': j, 'exp_scan_offset': (x_offset, y_offset), 'exp_scan_center': (center_x, center_y), 'exp_stage_position': (x, y)}
-                    dct['ImageComment'] = 'scan {exp_scan_number} image {exp_image_number}'.format(**dct)
+                    dct = {
+                        'exp_scan_number': i,
+                        'exp_image_number': j,
+                        'exp_scan_offset': (x_offset, y_offset),
+                        'exp_scan_center': (center_x, center_y),
+                        'exp_stage_position': (x, y),
+                    }
+                    dct['ImageComment'] = (
+                        'scan {exp_scan_number} image {exp_image_number}'.format(**dct)
+                    )
                     yield dct
 
     def loop_crystals(self, crystal_coords, delay=0):
@@ -421,11 +459,13 @@ class Experiment(ExperimentBase):
             t.set_description('BeamShift(x={:5.0f}, y={:5.0f})'.format(*beamshift))
             time.sleep(delay)
 
-            dct = {'exp_pattern_number': k,
-                   'exp_diffshift_offset': diffshift_offset,
-                   'exp_beamshift_offset': beamshift_offset,
-                   'exp_beamshift': beamshift,
-                   'exp_diffshift': diffshift}
+            dct = {
+                'exp_pattern_number': k,
+                'exp_diffshift_offset': diffshift_offset,
+                'exp_beamshift_offset': beamshift_offset,
+                'exp_beamshift': beamshift,
+                'exp_diffshift': diffshift,
+            }
 
             yield dct
 
@@ -467,13 +507,16 @@ class Experiment(ExperimentBase):
         input("\nPress <ENTER> to start experiment ('Ctrl-C' to interrupt)\n")
 
         for i, d_pos in enumerate(self.loop_positions()):
-
             outfile = self.imagedir / f'image_{i:04d}'
 
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
 
-            img, h = self.ctrl.get_image(exposure=self.image_exposure, binsize=self.image_binsize, header_keys=header_keys)
+            img, h = self.ctrl.get_image(
+                exposure=self.image_exposure,
+                binsize=self.image_binsize,
+                header_keys=header_keys,
+            )
 
             if self.change_spotsize:
                 self.ctrl.tem.setSpotSize(self.image_spotsize)
@@ -487,7 +530,10 @@ class Experiment(ExperimentBase):
 
             img, h = self.apply_corrections(img, h)
 
-            crystal_positions = self.find_crystals(img, self.magnification, spread=self.crystal_spread) * self.image_binsize
+            crystal_positions = (
+                self.find_crystals(img, self.magnification, spread=self.crystal_spread)
+                * self.image_binsize
+            )
             crystal_coords = [(crystal.x, crystal.y) for crystal in crystal_positions]
 
             for d in (d_image, d_pos):
@@ -505,7 +551,12 @@ class Experiment(ExperimentBase):
             for k, d_cryst in enumerate(self.loop_crystals(crystal_coords)):
                 outfile = self.datadir / f'image_{i:04d}_{k:04d}'
                 comment = f'Image {i} Crystal {k}'
-                img, h = self.ctrl.get_image(binsize=self.diff_binsize, exposure=self.diff_exposure, comment=comment, header_keys=header_keys)
+                img, h = self.ctrl.get_image(
+                    binsize=self.diff_binsize,
+                    exposure=self.diff_exposure,
+                    comment=comment,
+                    header_keys=header_keys,
+                )
                 img, h = self.apply_corrections(img, h)
 
                 for d in (d_diff, d_pos, d_cryst):
@@ -528,7 +579,12 @@ class Experiment(ExperimentBase):
                         self.ctrl.stage.a = rotation_angle
 
                         outfile = self.datadir / f'image_{i:04d}_{k:04d}_{rotation_angle}'
-                        img, h = self.ctrl.get_image(exposure=self.diff_exposure, binsize=self.diff_binsize, comment=comment, header_keys=header_keys)
+                        img, h = self.ctrl.get_image(
+                            exposure=self.diff_exposure,
+                            binsize=self.diff_binsize,
+                            comment=comment,
+                            header_keys=header_keys,
+                        )
                         img, h = self.apply_corrections(img, h)
 
                         for d in (d_diff, d_pos, d_cryst):
@@ -548,11 +604,12 @@ class Experiment(ExperimentBase):
 
 def main():
     import argparse
+
     description = """Command line program to run the serial ED data collection routine."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     options = parser.parse_args()
 
@@ -563,9 +620,11 @@ def main():
     except OSError:
         params = {}
 
-    logging.basicConfig(format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-                        filename='instamatic.log',
-                        level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
+        filename='instamatic.log',
+        level=logging.DEBUG,
+    )
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 

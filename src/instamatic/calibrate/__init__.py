@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .calibrate_beamshift import CalibBeamShift
 from .calibrate_brightness import CalibBrightness
 from .calibrate_directbeam import CalibDirectBeam

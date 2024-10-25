@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from instamatic import config
 from instamatic.TEMController.microscope_base import MicroscopeBase
 
@@ -12,6 +14,7 @@ def get_tem(interface: str) -> 'type[MicroscopeBase]':
 
     if config.settings.tem_require_admin:
         from instamatic import admin
+
         if not admin.is_admin():
             raise PermissionError('Access to the TEM interface requires admin rights.')
 
@@ -50,6 +53,7 @@ def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
 
     if use_server:
         from .microscope_client import MicroscopeClient
+
         tem = MicroscopeClient(interface=interface)
     else:
         cls = get_tem(interface=interface)

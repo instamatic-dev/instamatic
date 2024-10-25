@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import threading
 
 import numpy as np
@@ -102,12 +104,14 @@ class VideoStream(threading.Thread):
 
     def show_stream(self):
         from instamatic.gui import videostream_frame
-        t = threading.Thread(target=videostream_frame.start_gui, args=(self, ), daemon=False)
+
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self,), daemon=False)
         t.start()
 
 
 if __name__ == '__main__':
     stream = VideoStream(cam='timepix')
     from IPython import embed
+
     embed()
     stream.stop()

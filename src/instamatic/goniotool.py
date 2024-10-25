@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import socket
 import subprocess as sp
@@ -81,13 +83,13 @@ class GonioToolClient:
         try:
             wrapped = self._dct[func_name]
         except KeyError as e:
-            raise AttributeError(f'`{self.__class__.__name__}` object has no attribute `{func_name}`') from e
+            raise AttributeError(
+                f'`{self.__class__.__name__}` object has no attribute `{func_name}`'
+            ) from e
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
-            dct = {'func_name': func_name,
-                   'args': args,
-                   'kwargs': kwargs}
+            dct = {'func_name': func_name, 'args': args, 'kwargs': kwargs}
             return self._eval_dct(dct)
 
         return wrapper
@@ -112,7 +114,9 @@ class GonioToolClient:
     def _init_dict(self):
         gtw = GonioToolWrapper
 
-        self._dct = {key: value for key, value in gtw.__dict__.items() if not key.startswith('_')}
+        self._dct = {
+            key: value for key, value in gtw.__dict__.items() if not key.startswith('_')
+        }
 
     def __dir__(self):
         return self._dct.keys()
@@ -133,7 +137,9 @@ class GonioToolWrapper:
         super().__init__()
 
         self.app = Application().start(GONIOTOOL_EXE)
-        input('Enter password and press <ENTER> to continue...')  # delay for password, TODO: automate
+        input(
+            'Enter password and press <ENTER> to continue...'
+        )  # delay for password, TODO: automate
         self.startup()
 
         if barrier:
@@ -187,7 +193,9 @@ class GonioToolWrapper:
 
     def set_rate(self, speed: int):
         """Set rate value for TX."""
-        assert isinstance(speed, int), f'Variable `speed` must be of type `int`, is `{type(speed)}`'
+        assert isinstance(
+            speed, int
+        ), f'Variable `speed` must be of type `int`, is `{type(speed)}`'
         assert 0 < speed <= 12, 'Variable `speed` must have a value of 1 to 12.'
 
         s = self.edit.select()
@@ -205,4 +213,5 @@ if __name__ == '__main__':
     gt = GonioToolWrapper()
 
     from IPython import embed
+
     embed()

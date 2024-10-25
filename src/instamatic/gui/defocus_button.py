@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tkinter import *
 from tkinter.ttk import *
 
@@ -14,13 +16,27 @@ class DefocusButton(LabelFrame):
 
         # defocus button
         Label(frame, text='Diff defocus:', width=20).grid(row=13, column=0, sticky='W')
-        self.e_diff_defocus = Spinbox(frame, textvariable=self.var_diff_defocus, width=10, from_=-10000, to=10000, increment=100)
+        self.e_diff_defocus = Spinbox(
+            frame,
+            textvariable=self.var_diff_defocus,
+            width=10,
+            from_=-10000,
+            to=10000,
+            increment=100,
+        )
         self.e_diff_defocus.grid(row=13, column=1, sticky='EW')
 
-        self.c_toggle_defocus = Checkbutton(frame, text='Toggle defocus', variable=self.var_toggle_diff_defocus, command=self.toggle_diff_defocus)
+        self.c_toggle_defocus = Checkbutton(
+            frame,
+            text='Toggle defocus',
+            variable=self.var_toggle_diff_defocus,
+            command=self.toggle_diff_defocus,
+        )
         self.c_toggle_defocus.grid(row=13, column=2, sticky='W', columnspan=2)
 
-        self.b_reset_defocus = Button(frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED)
+        self.b_reset_defocus = Button(
+            frame, text='Reset', command=self.reset_diff_defocus, state=DISABLED
+        )
         self.b_reset_defocus.grid(row=13, column=4, sticky='EW')
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
@@ -59,11 +75,12 @@ class DefocusButton(LabelFrame):
 
 def main():
     import argparse
+
     description = """Tiny button to focus and defocus the diffraction pattern."""
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     options = parser.parse_args()
 

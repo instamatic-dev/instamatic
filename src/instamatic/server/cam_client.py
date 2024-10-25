@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from instamatic import config
 from instamatic.camera.camera_client import CamClient
 
@@ -12,4 +14,5 @@ if __name__ == '__main__':
     cam = CamClient(camera_id)
 
     from IPython import embed
+
     embed()

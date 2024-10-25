@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import sys
 
@@ -25,7 +27,9 @@ def apply_transform_to_image(img, transform, center=None):
     shift = center - displacement
 
     # order=1; linear interpolation, anything higher may introduce artifacts
-    img_tf = interpolation.affine_transform(img, transform, offset=shift, mode='constant', order=1, cval=0.0)
+    img_tf = interpolation.affine_transform(
+        img, transform, offset=shift, mode='constant', order=1, cval=0.0
+    )
     return img_tf
 
 
@@ -81,8 +85,8 @@ def apply_stretch_correction(z, center=None, azimuth: float = 0, amplitude: floa
     returns:
         (N,N) ndarray
     """
-    azimuth_rad = np.radians(azimuth)    # go to radians
-    amplitude_pc = amplitude / (2 * 100)   # as percentage
+    azimuth_rad = np.radians(azimuth)  # go to radians
+    amplitude_pc = amplitude / (2 * 100)  # as percentage
     tr_mat = affine_transform_ellipse_to_circle(azimuth_rad, amplitude_pc)
     z = apply_transform_to_image(z, tr_mat, center=center)
     return z
@@ -119,7 +123,9 @@ def get_sigma_interactive(img, sigma=20):
 
     scaled_min, scaled_max = np.percentile(img, q=(0.2, 99.8))
     slsigma = Slider(axsigma, 'Sigma', 0, 50, valinit=sigma)
-    slvmax = Slider(axvmax, 'Contrast', scaled_min, scaled_max, valinit=(scaled_min + scaled_max) / 2)
+    slvmax = Slider(
+        axvmax, 'Contrast', scaled_min, scaled_max, valinit=(scaled_min + scaled_max) / 2
+    )
 
     def update_vmax(val):
         im1.set_clim(vmax=slvmax.val)
@@ -197,17 +203,22 @@ def get_ring_props(edges):
 
 def main_entry(sigma=None):
     import argparse
+
     description = """
 Program to determine the stretch correction from a series of powder diffraction patterns (collected on a gold or aluminium powder). It will open a GUI to interactively identify the powder rings, and calculate the orientation (azimuth) and extent (amplitude) of the long axis compared to the short axis. These can be used in the `config` under `camera.stretch_azimuth` and `camera.stretch_percentage`.
 """
 
     parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
-    parser.add_argument('args',
-                        type=str, nargs=1, metavar='powder_pattern.tiff',
-                        help='Diffraction pattern (TIFF) from a nanocrystalline powder showing Debye-Scherrer rings.')
+    parser.add_argument(
+        'args',
+        type=str,
+        nargs=1,
+        metavar='powder_pattern.tiff',
+        help='Diffraction pattern (TIFF) from a nanocrystalline powder showing Debye-Scherrer rings.',
+    )
 
     options = parser.parse_args()
     args = options.args

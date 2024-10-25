@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import glob
 import sys
 from pathlib import Path
@@ -31,7 +33,9 @@ def print_subranges(data, n=100, step=50):
         pos = np.nanmean(r, axis=0).tolist()
         std = np.nanstd(r, axis=0).tolist()
 
-        print(f'{i:4d} - {j:4d}    {pos[0]:8.2f}  {pos[1]:8.2f}   {std[0]:6.2f}  {std[1]:6.2f}   {vect[0]:6.2f}  {vect[1]:6.2f}')
+        print(
+            f'{i:4d} - {j:4d}    {pos[0]:8.2f}  {pos[1]:8.2f}   {std[0]:6.2f}  {std[1]:6.2f}   {vect[0]:6.2f}  {vect[1]:6.2f}'
+        )
 
         if i + n >= len(data):
             break
@@ -77,7 +81,6 @@ def get_drifts_per_scan_range(xy):
 
 
 if __name__ == '__main__':
-
     filepat = sys.argv[1]
 
     try:
@@ -133,8 +136,20 @@ if __name__ == '__main__':
 
     ax1.set_title('Frame number vs. Position of direct beam')
 
-    ax1.plot([start, end], [median_x, median_x], c='C0', ls=':', label=f'Median(X)={median_x:.2f}, Std(X)={std_x:.2f}')
-    ax2.plot([start, end], [median_y, median_y], c='C1', ls=':', label=f'Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}')
+    ax1.plot(
+        [start, end],
+        [median_x, median_x],
+        c='C0',
+        ls=':',
+        label=f'Median(X)={median_x:.2f}, Std(X)={std_x:.2f}',
+    )
+    ax2.plot(
+        [start, end],
+        [median_y, median_y],
+        c='C1',
+        ls=':',
+        label=f'Median(Y)={median_y:.2f}, Std(X)={std_y:.2f}',
+    )
 
     # plt.title("Frame number vs. Position of direct beam")
     ax2.set_xlabel('Frame number')
