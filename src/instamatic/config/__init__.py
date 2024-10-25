@@ -7,6 +7,7 @@ import shutil
 import sys
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Optional, Union
 
 import yaml
 
@@ -43,9 +44,9 @@ def nested_update(d: dict, u: dict) -> dict:
 
 
 def initialize_in_appData():
-    """Initialize the configuration directory on first run Default to.
+    """Initialize the configuration directory on first run.
 
-    %appdata%/instamatic.
+    Default to %appdata%/instamatic.
     """
     src = Path(__file__).parent
     dst = Path(os.environ['AppData']) / _instamatic
@@ -69,10 +70,9 @@ def initialize_in_appData():
     print(f'Directory: {dst}')
     print('Please review and restart the program.')
     os.startfile(dst)
-    sys.exit()
 
 
-def get_base_drc():
+def get_base_drc() -> Path:
     """Figure out where configuration files for instamatic are stored."""
     try:
         search = Path(os.environ[_instamatic])  # if installed in portable way
@@ -85,6 +85,7 @@ def get_base_drc():
         return search
     else:
         initialize_in_appData()
+        sys.exit()
 
 
 def get_alignments() -> dict:
@@ -101,7 +102,7 @@ def get_alignments() -> dict:
 class ConfigObject:
     """Namespace for configuration (maps dict items to attributes)."""
 
-    def __init__(self, mapping: dict, name: str = 'config', location: str = None):
+    def __init__(self, mapping: dict, name: str = 'config', location: Optional[str] = None):
         super().__init__()
         self.name = name
         self.location = location
@@ -115,12 +116,12 @@ class ConfigObject:
         return self.mapping[item]
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: Union[Path, str]):
         """Read configuration from yaml file, returns namespace."""
         name = Path(path).stem
-        return cls(yaml.load(open(path), Loader=yaml.Loader), name=name, location=path)
+        return cls(yaml.load(open(path), Loader=yaml.Loader), name=name, location=str(path))
 
-    def update_from_file(self, path: str) -> None:
+    def update_from_file(self, path: Union[str, Path]) -> None:
         """Update configuration from yaml file."""
         self.update(yaml.load(open(path), Loader=yaml.Loader))
         self.location = path
@@ -137,7 +138,7 @@ class ConfigObject:
         nested_update(self.mapping, mapping)
 
 
-def load_calibration(calibration_name: str = None):
+def load_calibration(calibration_name: Optional[str] = None):
     global calibration
 
     if not calibration_name:
@@ -160,8 +161,10 @@ def load_calibration(calibration_name: str = None):
     settings.calibration = calibration.name
 
 
-def load_microscope_config(microscope_name: str = None):
+def load_microscope_config(microscope_name: Optional[str] = None):
     global microscope
+
+    assert settings
 
     if not microscope_name:
         microscope_name = settings.microscope
@@ -180,8 +183,10 @@ def load_microscope_config(microscope_name: str = None):
     settings.microscope = microscope.name
 
 
-def load_camera_config(camera_name: str = None):
+def load_camera_config(camera_name: Optional[str] = None):
     global camera
+
+    assert camera
 
     if not camera_name:
         camera_name = settings.camera
@@ -229,9 +234,9 @@ def load_settings():
 
 
 def load_all(
-    microscope_name: str = None,
-    calibration_name: str = None,
-    camera_name: str = None,
+    microscope_name: Optional[str] = None,
+    calibration_name: Optional[str] = None,
+    camera_name: Optional[str] = None,
 ):
     """Load the settings.yaml file and microscope/calib/camera configs The
     config files to load can be overridden by specifying
@@ -261,11 +266,11 @@ logs_drc.mkdir(exist_ok=True)
 
 print(f'Config directory: {config_drc}')
 
-settings = None
-defaults = None
-microscope = None
-calibration = None
-camera = None
+settings: Optional[ConfigObject] = None
+defaults: Optional[ConfigObject] = None
+microscope: Optional[ConfigObject] = None
+calibration: Optional[ConfigObject] = None
+camera: Optional[ConfigObject] = None
 
 load_all()
 

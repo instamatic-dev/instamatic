@@ -86,7 +86,7 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
+    def getStagePosition(self) -> Tuple[float, float, float, float, float]:
         pass
 
     @abstractmethod
@@ -170,7 +170,9 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def setStagePosition(self, x: int, y: int, z: int, a: int, b: int, wait: bool) -> None:
+    def setStagePosition(
+        self, x: float, y: float, z: float, a: float, b: float, wait: bool
+    ) -> None:
         pass
 
     @abstractmethod

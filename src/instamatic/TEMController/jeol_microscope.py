@@ -3,7 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 import time
-from typing import Tuple
+from typing import Optional, Tuple
 
 import comtypes.client
 
@@ -279,7 +279,7 @@ class JeolMicroscope(MicroscopeBase):
     def setImageShift2(self, x: int, y: int):
         self.def3.SetIS2(x, y)
 
-    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
+    def getStagePosition(self) -> Tuple[float, float, float, float, float]:
         """X, y, z in nanometer a and b in degrees."""
         x, y, z, a, b, result = self.stage3.GetPos()
         return x, y, z, a, b
@@ -334,11 +334,11 @@ class JeolMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        a: Optional[float] = None,
+        b: Optional[float] = None,
         wait: bool = True,
     ):
         if z is not None:

@@ -67,6 +67,7 @@ changelog = "https://github.com/instamatic-dev/instamatic/releases"
 develop = [
     "bump2version",
     "check-manifest",
+    "mypy",
     "pre-commit",
     "pytest >= 5.4.1",
     "coverage",
@@ -150,6 +151,11 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
+
+[tool.mypy]
+files = ["src", "tests"]
+allow_redefinition = true
+ignore_missing_imports = true
 
 [tool.bumpversion]
 current_version = "2.0.5"

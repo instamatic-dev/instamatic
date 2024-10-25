@@ -121,13 +121,13 @@ class Magnification(Lens):
     def index(self) -> int:
         return self._indexgetter()
 
-    @property
-    def absolute_index(self) -> int:
-        return self._tem.getMagnificationAbsoluteIndex()
-
     @index.setter
     def index(self, index: int):
         self._indexsetter(index)
+
+    @property
+    def absolute_index(self) -> int:
+        return self._tem.getMagnificationAbsoluteIndex()
 
     def increase(self) -> None:
         try:

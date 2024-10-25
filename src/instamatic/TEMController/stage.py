@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from collections import namedtuple
 from contextlib import contextmanager
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -32,11 +32,11 @@ class Stage:
 
     def set(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        a: Optional[float] = None,
+        b: Optional[float] = None,
         wait: bool = True,
     ) -> None:
         """Wait: bool, block until stage movement is complete (JEOL only)"""
@@ -44,11 +44,11 @@ class Stage:
 
     def set_with_speed(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        a: Optional[float] = None,
+        b: Optional[float] = None,
         wait: bool = True,
         speed: float = 1.0,
     ) -> None:
@@ -95,43 +95,43 @@ class Stage:
             else:
                 yield  # if requested speed is the same as current
 
-    def get(self) -> Tuple[int, int, int, int, int]:
+    def get(self) -> Tuple[float, float, float, float, float]:
         """Get stage positions; x, y, z, and status of the rotation axes; a,
         b."""
         return StagePositionTuple(*self._getter())
 
     @property
-    def x(self) -> int:
+    def x(self) -> float:
         """X position."""
         x, y, z, a, b = self.get()
         return x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: float):
         self.set(x=value, wait=self._wait)
 
     @property
-    def y(self) -> int:
+    def y(self) -> float:
         """Y position."""
         x, y, z, a, b = self.get()
         return y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: float):
         self.set(y=value, wait=self._wait)
 
     @property
-    def xy(self) -> Tuple[int, int]:
+    def xy(self) -> Tuple[float, float]:
         """XY position as a tuple."""
         x, y, z, a, b = self.get()
         return x, y
 
     @xy.setter
-    def xy(self, values: Tuple[int, int]):
+    def xy(self, values: Tuple[float, float]):
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
-    def move_in_projection(self, delta_x: int, delta_y: int) -> None:
+    def move_in_projection(self, delta_x: float, delta_y: float) -> None:
         r"""Y and z are always perpendicular to the sample stage. To achieve the
         movement in the projection, x and yshould be broken down into the
         components z' and y'.
@@ -153,7 +153,7 @@ class Stage:
         z = z - delta_y * np.sin(a)
         self.set(x=x, y=y, z=z)
 
-    def move_along_optical_axis(self, delta_z: int):
+    def move_along_optical_axis(self, delta_z: float):
         """See `Stage.move_in_projection`"""
         x, y, z, a, b = self.get()
         a = np.radians(a)
@@ -162,33 +162,33 @@ class Stage:
         self.set(y=y, z=z)
 
     @property
-    def z(self) -> int:
+    def z(self) -> float:
         """Stage height Z."""
         x, y, z, a, b = self.get()
         return z
 
     @z.setter
-    def z(self, value: int):
+    def z(self, value: float):
         self.set(z=value, wait=self._wait)
 
     @property
-    def a(self) -> int:
+    def a(self) -> float:
         """Rotation angle."""
         x, y, z, a, b = self.get()
         return a
 
     @a.setter
-    def a(self, value: int):
+    def a(self, value: float):
         self.set(a=value, wait=self._wait)
 
     @property
-    def b(self) -> int:
+    def b(self) -> float:
         """Secondary rotation angle."""
         x, y, z, a, b = self.get()
         return b
 
     @b.setter
-    def b(self, value: int):
+    def b(self, value: float):
         self.set(b=value, wait=self._wait)
 
     def neutral(self) -> None:
@@ -252,7 +252,11 @@ class Stage:
         pass
 
     def set_xy_with_backlash_correction(
-        self, x: int = None, y: int = None, step: float = 10000, settle_delay: float = 0.200
+        self,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        step: float = 10000,
+        settle_delay: float = 0.200,
     ) -> None:
         """Move to new x/y position with backlash correction. This is done by
         approaching the target x/y position always from the same direction.
@@ -265,7 +269,7 @@ class Stage:
             delay between movements in seconds to allow the stage to settle
         """
         wait = True
-        self.set(x=x - step, y=y - step)
+        self.set(x=self.x - step, y=self.y - step)
         if settle_delay:
             time.sleep(settle_delay)
 
@@ -275,8 +279,8 @@ class Stage:
 
     def move_xy_with_backlash_correction(
         self,
-        shift_x: int = None,
-        shift_y: int = None,
+        shift_x: Optional[float] = None,
+        shift_y: Optional[float] = None,
         step: float = 5000,
         settle_delay: float = 0.200,
         wait=True,
@@ -297,27 +301,24 @@ class Stage:
         wait: bool,
             block until stage movement is complete (JEOL only)
         """
-        stage = self.get()
+        pre_x = None
+        target_x = None
+        pre_y = None
+        target_y = None
 
         if shift_x:
-            target_x = stage.x + shift_x
-            if target_x > stage.x:
-                pre_x = stage.x - step
-            elif target_x < stage.x:
-                pre_x = stage.x + step
-        else:
-            pre_x = None
-            target_x = None
+            target_x = self.x + shift_x
+            if target_x > self.x:
+                pre_x = self.x - step
+            elif target_x < self.x:
+                pre_x = self.x + step
 
         if shift_y:
-            target_y = stage.y + shift_y
-            if target_y > stage.y:
-                pre_y = stage.y - step
-            elif target_y < stage.y:
-                pre_y = stage.y + step
-        else:
-            pre_y = None
-            target_y = None
+            target_y = self.y + shift_y
+            if target_y > self.y:
+                pre_y = self.y - step
+            elif target_y < self.y:
+                pre_y = self.y + step
 
         self.set(x=pre_x, y=pre_y)
         if settle_delay:
@@ -337,9 +338,8 @@ class Stage:
         settle_delay: float,
             delay between movements in seconds to allow the stage to settle
         """
-        stage = self.get()
         self.set_xy_with_backlash_correction(
-            x=stage.x, y=stage.y, step=step, settle_delay=settle_delay
+            x=self.x, y=self.y, step=step, settle_delay=settle_delay
         )
 
     def eliminate_backlash_a(

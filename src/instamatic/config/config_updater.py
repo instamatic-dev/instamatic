@@ -3,11 +3,15 @@ from __future__ import annotations
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Union
 
 from instamatic.config.utils import yaml
 
+if TYPE_CHECKING:
+    from . import ConfigObject
 
-def is_oldstyle(dct: dict, kind: str):
+
+def is_oldstyle(dct: ConfigObject, kind: str):
     """Check if the config format has been deprecated."""
     oldstyle = False
     if kind in ('microscope', 'calibration'):
@@ -17,7 +21,7 @@ def is_oldstyle(dct: dict, kind: str):
     return oldstyle
 
 
-def check_settings_yaml(src: str, dst: str):
+def check_settings_yaml(src: Path, dst: Path):
     """Check if `dst` exists, else rename `src` to `dst`."""
     if dst.exists():
         return True
@@ -27,7 +31,7 @@ def check_settings_yaml(src: str, dst: str):
         print(f'Moved {src}->{dst}')
 
 
-def check_defaults_yaml(drc: str, fn: str, src_fn: str = None):
+def check_defaults_yaml(drc: Path, fn: str, src_fn: Optional[str] = None):
     """Check if `drc/fn` exists, else copy `fn` from local drc (copy `src_fn`
     if specified)."""
     dst = drc / fn
@@ -40,7 +44,7 @@ def check_defaults_yaml(drc: str, fn: str, src_fn: str = None):
         print(f'Copying {src}->{dst}')
 
 
-def convert_config(fn: str, kind: str) -> dict:
+def convert_config(fn: Union[str, Path], kind: str) -> dict:
     """`kind` must be one of `microscope`/`camera`/`calibration`"""
     fn = Path(fn)
 

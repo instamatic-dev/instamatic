@@ -524,7 +524,9 @@ class TEMController:
             except TypeError:
                 func(v)
 
-    def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+    def get_raw_image(
+        self, exposure: Optional[float] = None, binsize: Optional[int] = None
+    ) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
         raw data array.
 
@@ -542,7 +544,9 @@ class TEMController:
         """
         return self.cam.get_image(exposure=exposure, binsize=binsize)
 
-    def get_future_image(self, exposure: float = None, binsize: int = None) -> 'future':
+    def get_future_image(
+        self, exposure: Optional[float] = None, binsize: Optional[int] = None
+    ) -> 'future':
         """Simplified function equivalent to `get_image` that returns the raw
         image as a future. This makes the data acquisition call non-blocking.
 
@@ -566,7 +570,9 @@ class TEMController:
         future = self._executor.submit(self.get_raw_image, exposure=exposure, binsize=binsize)
         return future
 
-    def get_rotated_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+    def get_rotated_image(
+        self, exposure: Optional[float] = None, binsize: Optional[int] = None
+    ) -> np.ndarray:
         """Simplified function equivalent to `get_image` that returns the
         rotated image array.
 
@@ -598,13 +604,13 @@ class TEMController:
 
     def get_image(
         self,
-        exposure: float = None,
-        binsize: int = None,
+        exposure: Optional[float] = None,
+        binsize: Optional[int] = None,
         comment: str = '',
-        out: str = None,
+        out: Optional[str] = None,
         plot: bool = False,
         verbose: bool = False,
-        header_keys: Tuple[str] = 'all',
+        header_keys: Optional[Tuple[str]] = None,
     ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
@@ -685,7 +691,12 @@ class TEMController:
         return arr, h
 
     def get_movie(
-        self, n_frames: int, *, exposure: float = None, binsize: int = None, out: str = None
+        self,
+        n_frames: int,
+        *,
+        exposure: Optional[float] = None,
+        binsize: Optional[int] = None,
+        out: Optional[str] = None,
     ) -> Tuple[np.ndarray]:
         """Collect a stack of images using the camera's movie mode, if
         available.
@@ -740,7 +751,9 @@ class TEMController:
         keys = 'FunctionMode', 'Brightness', 'GunTilt', 'DiffFocus', 'SpotSize'
         self.store(name=name, keys=keys, save_to_file=save_to_file)
 
-    def store(self, name: str = 'stash', keys: tuple = None, save_to_file: bool = False):
+    def store(
+        self, name: str = 'stash', keys: Optional[tuple] = None, save_to_file: bool = False
+    ):
         """Stores current settings to dictionary.
 
         Multiple settings can be stored under different names. Specify

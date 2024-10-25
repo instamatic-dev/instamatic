@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Tuple
+from typing import Optional, Tuple
 
 from instamatic import config
 from instamatic.exceptions import TEMValueError
@@ -87,8 +87,8 @@ class SimuMicroscope(MicroscopeBase):
         self._HT = 200_000  # V
 
         # self.Magnification_value = random.choice(self.MAGNIFICATIONS)
-        self.Magnification_value = config.microscope.ranges['mag1'][10]
-        self.Magnification_value_diff = config.microscope.ranges['diff'][3]
+        self.Magnification_value: int = config.microscope.ranges['mag1'][10]  # type: ignore
+        self.Magnification_value_diff: int = config.microscope.ranges['diff'][3]  # type: ignore
 
         self.beamblank = False
 
@@ -372,7 +372,7 @@ class SimuMicroscope(MicroscopeBase):
         self.ImageShift2_x = x
         self.ImageShift2_y = y
 
-    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
+    def getStagePosition(self) -> Tuple[float, float, float, float, float]:
         return (
             self.StagePosition_x,
             self.StagePosition_y,
@@ -390,32 +390,32 @@ class SimuMicroscope(MicroscopeBase):
         while self.isStageMoving():
             time.sleep(delay)
 
-    def setStageX(self, value: int, wait: bool = True):
+    def setStageX(self, value: float, wait: bool = True):
         self.StagePosition_x = value
         if wait:
             self.waitForStage()
 
-    def setStageY(self, value: int, wait: bool = True):
+    def setStageY(self, value: float, wait: bool = True):
         self.StagePosition_y = value
         if wait:
             self.waitForStage()
 
-    def setStageZ(self, value: int, wait: bool = True):
+    def setStageZ(self, value: float, wait: bool = True):
         self.StagePosition_z = value
         if wait:
             self.waitForStage()
 
-    def setStageA(self, value: int, wait: bool = True):
+    def setStageA(self, value: float, wait: bool = True):
         self.StagePosition_a = value
         if wait:
             self.waitForStage()
 
-    def setStageB(self, value: int, wait: bool = True):
+    def setStageB(self, value: float, wait: bool = True):
         self.StagePosition_b = value
         if wait:
             self.waitForStage()
 
-    def setStageXY(self, x: int, y: int, wait: bool = True):
+    def setStageXY(self, x: float, y: float, wait: bool = True):
         self.StagePosition_x = x
         self.StagePosition_y = y
         if wait:
@@ -426,11 +426,11 @@ class SimuMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None,
+        a: Optional[float] = None,
+        b: Optional[float] = None,
         speed: float = -1,
         wait: bool = True,
     ):
