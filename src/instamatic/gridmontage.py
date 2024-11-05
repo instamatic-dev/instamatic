@@ -207,9 +207,9 @@ class GridMontage:
 
 
 if __name__ == '__main__':
-    from instamatic import TEMController
+    from instamatic import TEMtroller
 
-    ctrl = TEMController.initialize()
+    ctrl = TEMtroller.initialize()
     ctrl.mode.set('lowmag')
     ctrl.magnification.value = 100
 

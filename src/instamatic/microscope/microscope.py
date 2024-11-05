@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from instamatic import config
-from instamatic.TEMController.microscope_base import MicroscopeBase
+from instamatic.microscope.base import MicroscopeBase
 
 default_tem_interface = config.microscope.interface
 
@@ -19,13 +19,13 @@ def get_tem(interface: str) -> 'type[MicroscopeBase]':
             raise PermissionError('Access to the TEM interface requires admin rights.')
 
     if simulate or interface == 'simulate':
-        from .simu_microscope import SimuMicroscope as cls
+        from .interface.simu_microscope import SimuMicroscope as cls
     elif interface == 'jeol':
-        from .jeol_microscope import JeolMicroscope as cls
+        from .interface.jeol_microscope import JeolMicroscope as cls
     elif interface == 'fei':
-        from .fei_microscope import FEIMicroscope as cls
+        from .interface.fei_microscope import FEIMicroscope as cls
     elif interface == 'fei_simu':
-        from .fei_simu_microscope import FEISimuMicroscope as cls
+        from .interface.fei_simu_microscope import FEISimuMicroscope as cls
     else:
         raise ValueError(f'No such microscope interface: `{interface}`')
 
@@ -52,7 +52,7 @@ def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
         interface = config.microscope.interface
 
     if use_server:
-        from .microscope_client import MicroscopeClient
+        from .client import MicroscopeClient
 
         tem = MicroscopeClient(interface=interface)
     else:

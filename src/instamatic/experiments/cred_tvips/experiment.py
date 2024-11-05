@@ -620,10 +620,10 @@ class Experiment(ExperimentBase):
 
 
 if __name__ == '__main__':
-    from instamatic import TEMController
+    from instamatic import controller
     from instamatic.io import get_new_work_subdirectory
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     expdir = get_new_work_subdirectory()
     expdir.mkdir(exist_ok=True, parents=True)

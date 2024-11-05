@@ -10,7 +10,7 @@ import threading
 import traceback
 
 from instamatic import config
-from instamatic.TEMController import Microscope
+from instamatic.microscope import Microscope
 
 from .serializer import dumper, loader
 

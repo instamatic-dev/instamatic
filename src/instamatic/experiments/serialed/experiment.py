@@ -613,7 +613,7 @@ def main():
 
     options = parser.parse_args()
 
-    from instamatic import TEMController
+    from instamatic import microscope
 
     try:
         params = json.load(open('params.json'))

@@ -202,9 +202,9 @@ class Experiment(ExperimentBase):
 
 
 def main():
-    from instamatic import TEMController
+    from instamatic import controller
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     import logging
 
