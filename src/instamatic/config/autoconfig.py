@@ -126,15 +126,15 @@ It establishes a connection to the microscope and reads out the camera lengths a
         cam_name = None
 
     from instamatic.camera.camera import get_cam
-    from instamatic.microscope.microscope import get_tem
     from instamatic.controller import TEMController
+    from instamatic.microscope.microscope import get_microscope_class
 
     if cam_connect:
         cam = get_cam(cam_name)() if cam_name else None
     else:
         cam = None
 
-    tem = get_tem(tem_name)()
+    tem = get_microscope_class(tem_name)()
 
     ctrl = TEMController(tem=tem, cam=cam)
 

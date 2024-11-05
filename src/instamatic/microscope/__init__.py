@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from .microscope import Microscope
+from .microscope import Microscope, get_microscope

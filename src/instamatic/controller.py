@@ -15,7 +15,7 @@ from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.components import *
-from instamatic.microscope.microscope import Microscope
+from instamatic.microscope.microscope import get_microscope
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 
@@ -47,7 +47,7 @@ def initialize(
         Return TEM control object
     """
     print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
-    tem = Microscope(tem_name, use_server=use_tem_server)
+    tem = get_microscope(tem_name, use_server=use_tem_server)
 
     if cam_name:
         if use_cam_server:

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from instamatic import config
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.utils.deprecated import deprecated
 
 default_tem_interface = config.microscope.interface
 
-__all__ = ['Microscope', 'get_tem']
+__all__ = ['get_microscope', 'get_microscope_class']
 
 
-def get_tem(interface: str) -> 'type[MicroscopeBase]':
+def get_microscope_class(interface: str) -> 'type[MicroscopeBase]':
     """Grab tem class with the specific 'interface'."""
     simulate = config.settings.simulate
 
@@ -32,7 +33,7 @@ def get_tem(interface: str) -> 'type[MicroscopeBase]':
     return cls
 
 
-def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
+def get_microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
     """Generic class to load microscope interface class.
 
     name: str
@@ -56,7 +57,23 @@ def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
 
         tem = MicroscopeClient(interface=interface)
     else:
-        cls = get_tem(interface=interface)
+        cls = get_microscope_class(interface=interface)
         tem = cls(name=name)
 
     return tem
+
+
+@deprecated(since='2.0.6', alternative='get_microscope')
+def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
+    return get_microscope(name=name, use_server=use_server)
+
+
+Microscope.__doc__ = get_microscope.__doc__
+
+
+@deprecated(since='2.0.6', alternative='get_microscope_class')
+def get_tem(interface: str) -> 'type[MicroscopeBase]':
+    return get_microscope_class(interface=interface)
+
+
+get_tem.__doc__ == get_microscope_class.__doc__
