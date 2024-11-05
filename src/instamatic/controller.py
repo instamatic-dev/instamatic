@@ -14,12 +14,8 @@ from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 from instamatic.microscope.base import MicroscopeBase
-
-from instamatic.microscope.components.deflectors import *
-from instamatic.microscope.components.lenses import *
+from instamatic.microscope.components import *
 from instamatic.microscope.microscope import Microscope
-from instamatic.microscope.components.stage import *
-from instamatic.microscope.components.states import *
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
 
