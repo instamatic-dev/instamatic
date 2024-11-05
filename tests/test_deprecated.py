@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from instamatic.utils.deprecated import deprecated
+from instamatic.utils.deprecated import deprecated, VisibleDeprecationWarning
 
 
 def test_basic():
@@ -11,7 +11,7 @@ def test_basic():
         return 1
 
     with pytest.warns(
-        DeprecationWarning, match='Function foo is deprecated since 2.0, use bar instead.'
+        VisibleDeprecationWarning, match='Function foo is deprecated since 2.0, use bar instead.'
     ):
         assert foo() == 1
 
@@ -22,7 +22,7 @@ def test_with_removed():
         return 1
 
     with pytest.warns(
-        DeprecationWarning,
+        VisibleDeprecationWarning,
         match='Function foo is deprecated since 2.0, use bar instead. Will be removed in version 3.0.',
     ):
         assert foo() == 1
@@ -35,7 +35,7 @@ def test_on_member_method():
             return 1
 
     with pytest.warns(
-        DeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
     ):
         foo = Foo()
         assert foo.bar() == 1
@@ -49,7 +49,7 @@ def test_on_class_method():
             return 1
 
     with pytest.warns(
-        DeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
     ):
         foo = Foo()
         assert foo.bar() == 1
@@ -66,7 +66,7 @@ def test_on_static_method():
     foo = Foo()
 
     with pytest.warns(
-        DeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
     ):
         assert foo.bar() == 1
         assert Foo.bar() == 1
