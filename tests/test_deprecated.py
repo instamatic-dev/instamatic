@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from instamatic.utils.deprecated import deprecated, VisibleDeprecationWarning
+from instamatic.utils.deprecated import VisibleDeprecationWarning, deprecated
 
 
 def test_basic():
@@ -11,7 +11,8 @@ def test_basic():
         return 1
 
     with pytest.warns(
-        VisibleDeprecationWarning, match='Function foo is deprecated since 2.0, use bar instead.'
+        VisibleDeprecationWarning,
+        match='Function foo is deprecated since 2.0, use bar instead.',
     ):
         assert foo() == 1
 
@@ -35,7 +36,8 @@ def test_on_member_method():
             return 1
 
     with pytest.warns(
-        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning,
+        match='Function bar is deprecated since 2.0, use baz instead.',
     ):
         foo = Foo()
         assert foo.bar() == 1
@@ -49,7 +51,8 @@ def test_on_class_method():
             return 1
 
     with pytest.warns(
-        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning,
+        match='Function bar is deprecated since 2.0, use baz instead.',
     ):
         foo = Foo()
         assert foo.bar() == 1
@@ -66,7 +69,8 @@ def test_on_static_method():
     foo = Foo()
 
     with pytest.warns(
-        VisibleDeprecationWarning, match='Function bar is deprecated since 2.0, use baz instead.'
+        VisibleDeprecationWarning,
+        match='Function bar is deprecated since 2.0, use baz instead.',
     ):
         assert foo.bar() == 1
         assert Foo.bar() == 1
