@@ -13,8 +13,8 @@ from instamatic.camera.camera_base import CameraBase
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
+from instamatic.microscope import components
 from instamatic.microscope.base import MicroscopeBase
-from instamatic.microscope.components import *
 from instamatic.microscope.microscope import get_microscope
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
@@ -99,21 +99,21 @@ class TEMController:
         self.tem = tem
         self.cam = cam
 
-        self.gunshift = GunShift(tem)
-        self.guntilt = GunTilt(tem)
-        self.beamshift = BeamShift(tem)
-        self.beamtilt = BeamTilt(tem)
-        self.imageshift1 = ImageShift1(tem)
-        self.imageshift2 = ImageShift2(tem)
-        self.diffshift = DiffShift(tem)
-        self.stage = Stage(tem)
+        self.gunshift = components.GunShift(tem)
+        self.guntilt = components.GunTilt(tem)
+        self.beamshift = components.BeamShift(tem)
+        self.beamtilt = components.BeamTilt(tem)
+        self.imageshift1 = components.ImageShift1(tem)
+        self.imageshift2 = components.ImageShift2(tem)
+        self.diffshift = components.DiffShift(tem)
+        self.stage = components.Stage(tem)
         self.stageposition = self.stage  # for backwards compatibility
-        self.magnification = Magnification(tem)
-        self.brightness = Brightness(tem)
-        self.difffocus = DiffFocus(tem)
-        self.beam = Beam(tem)
-        self.screen = Screen(tem)
-        self.mode = Mode(tem)
+        self.magnification = components.Magnification(tem)
+        self.brightness = components.Brightness(tem)
+        self.difffocus = components.DiffFocus(tem)
+        self.beam = components.Beam(tem)
+        self.screen = components.Screen(tem)
+        self.mode = components.Mode(tem)
 
         self.autoblank = False
         self._saved_alignments = config.get_alignments()
