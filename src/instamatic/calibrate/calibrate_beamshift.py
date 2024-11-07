@@ -342,9 +342,9 @@ def main_entry():
     args = options.args
 
     if not args:
-        from instamatic import controller
+        from instamatic import TEMController
 
-        ctrl = controller.initialize()
+        ctrl = TEMController.initialize()
         calibrate_beamshift(ctrl=ctrl, save_images=True)
     else:
         center_fn = args[0]

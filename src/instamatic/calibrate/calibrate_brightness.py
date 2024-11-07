@@ -206,9 +206,9 @@ def main_entry():
     args = options.args
 
     if not args:
-        from instamatic import controller
+        from instamatic import TEMController
 
-        ctrl = controller.initialize()
+        ctrl = TEMController.initialize()
         calibrate_brightness(ctrl, save_images=True)
     else:
         calibrate_brightness(args)

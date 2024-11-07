@@ -10,7 +10,7 @@ import threading
 import traceback
 
 from instamatic import config
-from instamatic.microscope import get_microscope
+from instamatic.TEMController import Microscope
 
 from .serializer import dumper, loader
 
@@ -45,7 +45,7 @@ class TemServer(threading.Thread):
 
     def run(self):
         """Start the server thread."""
-        self.tem = get_microscope(name=self._name, use_server=False)
+        self.tem = Microscope(name=self._name, use_server=False)
         print(f'Initialized connection to microscope: {self.tem.name}')
 
         while True:

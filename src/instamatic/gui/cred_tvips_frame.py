@@ -193,9 +193,9 @@ class ExperimentalTVIPS(LabelFrame):
 
         frame.pack(side='bottom', fill='x', padx=10, pady=10)
 
-        from instamatic import controller
+        from instamatic import TEMController
 
-        self.ctrl = controller.get_instance()
+        self.ctrl = TEMController.get_instance()
 
     def init_vars(self):
         self.var_target_angle = DoubleVar(value=40.0)

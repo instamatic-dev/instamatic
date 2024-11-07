@@ -114,7 +114,7 @@ class MicroscopeClient:
             raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self):
-        from instamatic.microscope.microscope import get_microscope_class
+        from instamatic.microscope import get_microscope_class
 
         tem = get_microscope_class(interface=self.interface)
 

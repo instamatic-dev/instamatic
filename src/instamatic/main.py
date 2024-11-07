@@ -165,9 +165,9 @@ def main():
     log = logging.getLogger(__name__)
     log.info(f'Instamatic started: {repr(options.__dict__)}')
 
-    from instamatic import controller
+    from instamatic import TEMController
 
-    ctrl = controller.initialize(stream=True)
+    ctrl = TEMController.initialize(stream=True)
 
     if options.nav_file:
         from pyserialem import read_nav_file

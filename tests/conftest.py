@@ -21,9 +21,9 @@ def pytest_configure():
 
 @pytest.fixture(scope='module')
 def ctrl() -> 'TEMController':
-    from instamatic.controller import initialize
+    from instamatic import controller
 
-    ctrl = initialize()
+    ctrl = controller.initialize()
 
     # set instant stage movement for testing
     ctrl.tem._set_instant_stage_movement()

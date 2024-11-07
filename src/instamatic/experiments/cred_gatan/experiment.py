@@ -462,14 +462,14 @@ class Experiment(ExperimentBase):
 
 
 if __name__ == '__main__':
-    from instamatic import controller
+    from instamatic import TEMController
     from instamatic.io import get_new_work_subdirectory
 
     print('Usage:')
     print(' 1. Start `insteadmatic_module.s` in DM')
     print(' 2. Run this script.')
 
-    ctrl = controller.initialize()
+    ctrl = TEMController.initialize()
 
     time.sleep(1)
 

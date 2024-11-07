@@ -157,9 +157,9 @@ def main_entry():
 
     take_series = options.take_series
 
-    from instamatic import controller
+    from instamatic import TEMController
 
-    ctrl = controller.initialize()
+    ctrl = TEMController.initialize()
 
     if take_series:
         i = 1

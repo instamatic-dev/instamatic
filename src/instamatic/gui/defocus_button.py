@@ -3,7 +3,7 @@ from __future__ import annotations
 from tkinter import *
 from tkinter.ttk import *
 
-from instamatic import controller
+from instamatic import TEMController
 
 
 class DefocusButton(LabelFrame):
@@ -84,7 +84,7 @@ def main():
 
     options = parser.parse_args()
 
-    ctrl = controller.initialize()
+    ctrl = TEMController.initialize()
 
     root = Tk()
     DefocusButton(root).pack(side='top', fill='both', expand=True, padx=10, pady=10)

@@ -187,9 +187,9 @@ class ExperimentalCtrl(LabelFrame):
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
-        from instamatic import controller
+        from instamatic import TEMController
 
-        self.ctrl = controller.get_instance()
+        self.ctrl = TEMController.get_instance()
 
     def init_vars(self):
         self.var_negative_angle = DoubleVar(value=-40)

@@ -10,7 +10,7 @@ import subprocess as sp
 import threading
 from socket import *
 
-from instamatic import TEMtroller, config
+from instamatic import TEMController, config
 
 HOST = config.settings.fei_server_host
 PORT = config.settings.fei_server_port
@@ -68,7 +68,7 @@ Utility script to enable rotation control from a dmscript. See [https://github.c
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    ctrl = TEMtroller.initialize()
+    ctrl = TEMController.initialize()
 
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((HOST, PORT))

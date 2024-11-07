@@ -393,9 +393,9 @@ def main_entry():
     if args:
         calibrate_directbeam(patterns=args)
     else:
-        from instamatic import controller
+        from instamatic import TEMController
 
-        ctrl = controller.initialize()
+        ctrl = TEMController.initialize()
         calibrate_directbeam(ctrl=ctrl)
 
 
