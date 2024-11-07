@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import time
 
+from instamatic.microscope.base import MicroscopeBase
+
 
 class State:
     """Generic class for describing microscope state objects."""
 
-    def __init__(self, tem):
+    def __init__(self, tem: MicroscopeBase):
         super().__init__()
         self._tem = tem
         self._getter = None

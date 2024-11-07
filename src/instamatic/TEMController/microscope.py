@@ -1,62 +1,20 @@
 from __future__ import annotations
 
-from instamatic import config
-from instamatic.TEMController.microscope_base import MicroscopeBase
-
-default_tem_interface = config.microscope.interface
+from instamatic.microscope.base import MicroscopeBase
+from instamatic.utils.deprecated import deprecated
 
 __all__ = ['Microscope', 'get_tem']
 
 
+@deprecated(since='2.0.6', alternative='instamatic.microscope.get_microscope_class')
 def get_tem(interface: str) -> 'type[MicroscopeBase]':
-    """Grab tem class with the specific 'interface'."""
-    simulate = config.settings.simulate
+    from instamatic.microscope import get_microscope_class
 
-    if config.settings.tem_require_admin:
-        from instamatic import admin
-
-        if not admin.is_admin():
-            raise PermissionError('Access to the TEM interface requires admin rights.')
-
-    if simulate or interface == 'simulate':
-        from .simu_microscope import SimuMicroscope as cls
-    elif interface == 'jeol':
-        from .jeol_microscope import JeolMicroscope as cls
-    elif interface == 'fei':
-        from .fei_microscope import FEIMicroscope as cls
-    elif interface == 'fei_simu':
-        from .fei_simu_microscope import FEISimuMicroscope as cls
-    else:
-        raise ValueError(f'No such microscope interface: `{interface}`')
-
-    return cls
+    return get_microscope_class(interface=interface)
 
 
+@deprecated(since='2.0.6', alternative='instamatic.microscope.get_microscope')
 def Microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
-    """Generic class to load microscope interface class.
+    from instamatic.microscope import get_microscope
 
-    name: str
-        Specify which microscope to use, must be one of `jeol`, `fei_simu`, `simulate`
-    use_server: bool
-        Connect to microscope server running on the host/port defined in the config file
-
-    returns: TEM interface class
-    """
-    if name is None:
-        interface = default_tem_interface
-        name = interface
-    elif name != config.settings.microscope:
-        config.load_microscope_config(microscope_name=name)
-        interface = config.microscope.interface
-    else:
-        interface = config.microscope.interface
-
-    if use_server:
-        from .microscope_client import MicroscopeClient
-
-        tem = MicroscopeClient(interface=interface)
-    else:
-        cls = get_tem(interface=interface)
-        tem = cls(name=name)
-
-    return tem
+    return get_microscope(name=name, use_server=use_server)

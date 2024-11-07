@@ -6,7 +6,7 @@ from typing import Tuple
 
 from instamatic import config
 from instamatic.exceptions import TEMValueError
-from instamatic.TEMController.microscope_base import MicroscopeBase
+from instamatic.microscope.base import MicroscopeBase
 
 NTRLMAPPING = {
     'GUN1': 0,

@@ -9,7 +9,7 @@ import comtypes.client
 
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
-from instamatic.TEMController.microscope_base import MicroscopeBase
+from instamatic.microscope.base import MicroscopeBase
 
 logger = logging.getLogger(__name__)
 

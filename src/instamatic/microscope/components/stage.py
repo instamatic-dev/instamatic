@@ -7,6 +7,8 @@ from typing import Tuple
 
 import numpy as np
 
+from instamatic.microscope.base import MicroscopeBase
+
 # namedtuples to store results from .get()
 StagePositionTuple = namedtuple('StagePositionTuple', ['x', 'y', 'z', 'a', 'b'])
 
@@ -14,7 +16,7 @@ StagePositionTuple = namedtuple('StagePositionTuple', ['x', 'y', 'z', 'a', 'b'])
 class Stage:
     """Stage control."""
 
-    def __init__(self, tem):
+    def __init__(self, tem: MicroscopeBase):
         super().__init__()
         self._tem = tem
         self._setter = self._tem.setStagePosition
