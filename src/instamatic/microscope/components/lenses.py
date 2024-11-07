@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from instamatic.microscope.base import MicroscopeBase
+
 
 class Lens:
     """Generic microscope lens object defined by one value Must be subclassed
     to set the self._getter, self._setter functions."""
 
-    def __init__(self, tem):
+    def __init__(self, tem: MicroscopeBase):
         super().__init__()
         self._tem = tem
         self._getter = None
