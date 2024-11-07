@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+
 class VisibleDeprecationWarning(UserWarning):
-    """
-    Numpy-inspired deprecation warning which will be shown by default.
+    """Numpy-inspired deprecation warning which will be shown by default.
+
     The default `DeprecationWarning` does not show by default.
     """
+
 
 def deprecated(since: str, alternative: str, removed: str = None):
     """Mark a function as deprecated, printing a warning whenever it is used.
@@ -34,7 +36,7 @@ def deprecated(since: str, alternative: str, removed: str = None):
             msg = f'Function {func.__name__} is deprecated since {since}, use {alternative} instead.'
             if removed is not None:
                 msg += f' Will be removed in version {removed}.'
-            warnings.warn(msg, VisibleDeprecationWarning)
+            warnings.warn(msg, VisibleDeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
 
         return wrapped

@@ -8,6 +8,7 @@ from instamatic.utils.deprecated import VisibleDeprecationWarning, deprecated
 warnings.warn(
     'The `TEMController` module is deprecated since version 2.0.6. Use the `controller`-module instead',
     VisibleDeprecationWarning,
+    stacklevel=2,
 )
 
 
