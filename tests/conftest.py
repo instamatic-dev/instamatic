@@ -8,7 +8,7 @@ import pytest
 
 # Actually importing the controller class breaks the tests
 if TYPE_CHECKING:
-    from instamatic.controller import TEMController
+    from instamatic.TEMController.TEMController import TEMController
 
 
 base_drc = Path(__file__).parent
@@ -21,9 +21,9 @@ def pytest_configure():
 
 @pytest.fixture(scope='module')
 def ctrl() -> 'TEMController':
-    from instamatic import controller
+    from instamatic import TEMController
 
-    ctrl = controller.initialize()
+    ctrl = TEMController.initialize()
 
     # set instant stage movement for testing
     ctrl.tem._set_instant_stage_movement()
