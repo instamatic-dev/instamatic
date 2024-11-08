@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 from tqdm.auto import tqdm
 
-from instamatic import TEMController, config
+from instamatic import config, controller
 from instamatic.formats import *
 
 
@@ -234,7 +234,7 @@ This will apply the flatfield correction (`-f`) and optionally the darkfield cor
     args = options.args
 
     if options.collect:
-        ctrl = TEMController.initialize()
+        ctrl = controller.initialize()
         collect_flatfield(ctrl=ctrl, save_images=False)
         ctrl.close()
         exit()

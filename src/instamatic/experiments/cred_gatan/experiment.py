@@ -20,7 +20,7 @@ class Experiment(ExperimentBase):
     rotation electron diffraction data.
 
     ctrl: `TEMController`
-        Instance of instamatic.TEMController.TEMController
+        Instance of instamatic.controller.TEMController
     path: str
         `str` or `pathlib.Path` object giving the path to save data at
     log: `logging.Logger`
@@ -462,14 +462,14 @@ class Experiment(ExperimentBase):
 
 
 if __name__ == '__main__':
-    from instamatic import TEMController
+    from instamatic import controller
     from instamatic.io import get_new_work_subdirectory
 
     print('Usage:')
     print(' 1. Start `insteadmatic_module.s` in DM')
     print(' 2. Run this script.')
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     time.sleep(1)
 

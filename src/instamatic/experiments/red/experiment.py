@@ -18,7 +18,7 @@ class Experiment(ExperimentBase):
     """Initialize stepwise rotation electron diffraction experiment.
 
     ctrl:
-        Instance of instamatic.TEMController.TEMController
+        Instance of instamatic.controller.TEMController
     path:
         `str` or `pathlib.Path` object giving the path to save data at
     log:
@@ -202,9 +202,9 @@ class Experiment(ExperimentBase):
 
 
 def main():
-    from instamatic import TEMController
+    from instamatic import controller
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     import logging
 

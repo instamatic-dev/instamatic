@@ -5,9 +5,9 @@ import pytest
 
 
 def test_setup(ctrl):
-    from instamatic import TEMController
+    from instamatic import controller
 
-    ctrl2 = TEMController.get_instance()
+    ctrl2 = controller.get_instance()
     assert ctrl2 is ctrl
 
 

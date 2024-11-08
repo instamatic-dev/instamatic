@@ -613,7 +613,7 @@ def main():
 
     options = parser.parse_args()
 
-    from instamatic import TEMController
+    from instamatic import controller
 
     try:
         params = json.load(open('params.json'))
@@ -628,7 +628,7 @@ def main():
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     exp = Experiment(ctrl, params, log=log)
     exp.report_status()
