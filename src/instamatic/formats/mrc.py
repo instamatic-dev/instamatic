@@ -599,11 +599,11 @@ def read_image(filename, index=None, cache=None, no_strict_mrc=False, force_volu
         else:
             d_len = h['nx'][0] * h['ny'][0]
         dtype = numpy.dtype(mrc2numpy[h['mode'][0]])
-        offset = 1024 + int(h['nsymbt']) + idx * d_len * dtype.itemsize
+        offset = 1024 + int(h['nsymbt'][0]) + idx * d_len * dtype.itemsize
         total = file_size(f)
         if total != (
             1024
-            + int(h['nsymbt'])
+            + int(h['nsymbt'][0])
             + int(h['nx'][0]) * int(h['ny'][0]) * int(h['nz'][0]) * dtype.itemsize
         ):
             raise util.InvalidHeaderException(
@@ -650,7 +650,6 @@ def reshape_data(out, h, index, count, force_volume=False):
     out : array
           Array with image information from the file
     """
-
     if index is None and int(h['nz'][0]) > 1 and (count == h['nx'][0] or force_volume):
         if h['mapc'][0] == 2 and h['mapr'][0] == 1:
             out = out.reshape((int(h['nx'][0]), int(h['ny'][0]), int(h['nz'][0])))
@@ -658,7 +657,7 @@ def reshape_data(out, h, index, count, force_volume=False):
                 out[:, :, i] = out[:, :, i].squeeze().T
         else:
             out = out.reshape((int(h['nx'][0]), int(h['ny'][0]), int(h['nz'][0])))
-    elif int(h['ny']) > 1:
+    elif int(h['ny'][0]) > 1:
         if h['mapc'][0] == 2 and h['mapr'][0] == 1:
             out = out.reshape((int(h['ny'][0]), int(h['nx'][0])))  # .transpose() # Test this!
         else:
