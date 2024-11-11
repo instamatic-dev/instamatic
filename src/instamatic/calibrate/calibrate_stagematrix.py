@@ -528,9 +528,9 @@ The stagematrix takes the image binning into account."""
     mode = options.mode
     mags = options.mags
 
-    from instamatic import TEMController
+    from instamatic import controller
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
 
     if not mode:
         mode = ctrl.mode.get()

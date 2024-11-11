@@ -94,7 +94,7 @@ def find_peak_max(
     interpolate the pattern to get the peak maximum position with
     subpixel precision.
     """
-    y1 = ndimage.filters.gaussian_filter1d(arr, sigma)
+    y1 = ndimage.gaussian_filter1d(arr, sigma)
     c1 = np.argmax(y1)  # initial guess for beam center
 
     win_len = 2 * w + 1

@@ -180,7 +180,7 @@ def start_gui(ctrl, log=None):
 
 
 if __name__ == '__main__':
-    from instamatic import TEMController
+    from instamatic import controller
 
-    ctrl = TEMController.initialize()
+    ctrl = controller.initialize()
     start_gui(ctrl)

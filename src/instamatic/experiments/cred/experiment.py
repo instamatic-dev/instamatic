@@ -30,7 +30,7 @@ class Experiment(ExperimentBase):
     """Initialize continuous rotation electron diffraction experiment.
 
     ctrl:
-        Instance of instamatic.TEMController.TEMController
+        Instance of instamatic.controller.TEMController
     path:
         `str` or `pathlib.Path` object giving the path to save data at
     log:

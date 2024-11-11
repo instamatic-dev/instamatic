@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from instamatic import config
-from instamatic.TEMController.microscope_client import MicroscopeClient
+from instamatic.microscope.client import MicroscopeClient
 
 microscope_id = config.microscope.name
 
