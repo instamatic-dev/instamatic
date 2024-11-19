@@ -90,7 +90,7 @@ publishing = [
 
 [project.scripts]
 "instamatic" = "instamatic.main:main"
-"instamatic.controller" = "instamatic.TEMController.TEMController:main_entry"
+"instamatic.controller" = "instamatic.controller:main_entry"
 # experiments
 "instamatic.serialed" = "instamatic.experiments.serialed.experiment:main"
 "instamatic.camera" = "instamatic.camera.camera:main_entry"

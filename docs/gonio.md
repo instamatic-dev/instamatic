@@ -25,7 +25,7 @@ goniotool_server_host: 'localhost'
 goniotool_server_port: 8090
 ```
 
-The controls are then available in the [`python API`][instamatic.TEMController.TEMController] via [`ctrl.stage`][instamatic.TEMController.stage.Stage] in your own script/notebook:
+The controls are then available in the [`python API`][instamatic.controller] via [`ctrl.stage`][instamatic.microscope.components.Stage] in your own script/notebook:
 
 
 ```python

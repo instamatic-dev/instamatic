@@ -20,6 +20,11 @@ repos:
     rev: v0.2.0
     hooks:
       - id: nbcheckorder
+        # This notebook is not executed at all, which fails the check
+        exclude: |
+          (?x)^(
+            docs/examples/montage_processing.ipynb
+          )$
   - repo: https://github.com/myint/docformatter
     rev: master  # https://github.com/PyCQA/docformatter/issues/293
     hooks:

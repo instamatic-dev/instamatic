@@ -1,0 +1,1 @@
+::: instamatic.microscope.components.stage

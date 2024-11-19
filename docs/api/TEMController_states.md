@@ -1,1 +1,0 @@
-::: instamatic.TEMController.states

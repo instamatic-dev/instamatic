@@ -7,8 +7,8 @@ The TEMController is at the heart of `instamatic`. Every routine depends on acce
 In IPython/Jupyter:
 
 ```python
-from instamatic import TEMController
-ctrl = TEMController.initialize()
+from instamatic import controller
+ctrl = controller.initialize()
 ```
 
 If no names for the camera/microscope are given, it reads the defaults from the config directory listed when TEMController is imported (`config/settings.yaml`). The config directory is generated on the first run of `instamatic`. By default these are set to load simulation of the camera/microscope. The simulation is is a good test to see if it works at all (a shortcut to this is to type `instamatic.controller.exe` in the terminal).
@@ -18,7 +18,7 @@ The config files work as follows: The global configurations are defined in `conf
 You can override the defaults here, so on the microscope computer you could try:
 
 ```python
-ctrl = TEMController.initialize(tem_name='jeol', cam_name='timepix', stream=True)
+ctrl = controller.initialize(tem_name='jeol', cam_name='timepix', stream=True)
 ```
 
 `stream` indicates that the camera can be streamed (like the timepix camera). Other cameras, like the gatan (orius/ultrascan) cameras communicate through DigitalMicrograph, and can therefore not be streamed. Instead the live stream can be shown in DM, and therefore needs DM to be open.
@@ -26,12 +26,12 @@ ctrl = TEMController.initialize(tem_name='jeol', cam_name='timepix', stream=True
 Otherwise, to skip camera initialization:
 
 ```python
-ctrl = TEMController.initialize(tem_name='jeol', cam_name=None)
+ctrl = controller.initialize(tem_name='jeol', cam_name=None)
 ```
 
-Once a `ctrl` (control) object has been initialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `TEMController.initialize?`).
+Once a `ctrl` (control) object has been initialized, it becomes possible to play around with the lenses and stage interactively. Type `ctrl.` and hit `tab` to see the autocomplete options. Or write use `?` to request the doc string for a function (e.g. `controller.initialize?`).
 
-Based on this you can write your own python scripts to control the microscope and/or camera. See in `src/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `src/instamatic/TEMController/`
+Based on this you can write your own python scripts to control the microscope and/or camera. See in `src/instamatic/experiments/cred/experiment.py` for an idea how this is used. All the microscope control interface can be found in `src/instamatic/microscope/interface`
 
 The `ctrl` object allows full control over the electron microscope. For example, to read out the position of the sample stage:
 ```python
@@ -250,9 +250,9 @@ An example rotation experiment could look something like this:
 
 ```python
 from instamatic.formats import write_tiff
-from instamatic import TEMController
+from instamatic import controller
 
-ctrl = TEMController.initialize()
+ctrl = controller.initialize()
 
 exposure_time = 1.0
 angles = range(-40, 40, 1)
