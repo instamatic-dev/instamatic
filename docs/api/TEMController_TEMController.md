@@ -1,1 +1,1 @@
-::: instamatic.TEMController.TEMController
+::: instamatic.controller

@@ -1,1 +1,1 @@
-::: instamatic.TEMController.stage
+::: instamatic.microscope.components.stage

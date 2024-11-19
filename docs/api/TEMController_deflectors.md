@@ -1,1 +1,1 @@
-::: instamatic.TEMController.deflectors
+::: instamatic.microscope.components.deflectors

@@ -1,1 +1,1 @@
-::: instamatic.TEMController.lenses
+::: instamatic.microscope.components.lenses

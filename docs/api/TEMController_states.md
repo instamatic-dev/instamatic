@@ -1,1 +1,1 @@
-::: instamatic.TEMController.states
+::: instamatic.microscope.components.states

@@ -7,7 +7,7 @@ There are several programs coming with `instamatic`. These docs are autogenerate
 These are the main tools to work with instamatic.
 
 - [instamatic](#instamatic) (`instamatic.main:main`)
-- [instamatic.controller](#instamaticcontroller) (`instamatic.TEMController.TEMController:main_entry`)
+- [instamatic.controller](#instamaticcontroller) (`instamatic.controller:main_entry`)
 
 **Experiments**
 
