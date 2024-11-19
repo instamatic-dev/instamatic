@@ -79,13 +79,13 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
 * **`docs/`** - Documentation
 * **`src/`** - Source code for instamatic
 * **`src/instamatic/`**
-  * **`TEMController/`** - Microscope interaction code
   * **`calibrate/`** - Tools for calibration
   * **`camera/`** - Camera interaction code
   * **`config/`** - Configuration management
   * **`experiments/`** - Specific data collection routines
   * **`formats/`** - Image formats and other IO
   * **`gui/`** - GUI code
+  * **`microscope/`** - Microscope interaction code
   * **`neural_network/`** - Crystal quality prediction
   * **`processing/`** - Data processing tools
   * **`server/`** - Manages interprocess/network communication
@@ -94,6 +94,7 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
   * **`admin.py`** - Check for administrator
   * **`banner.py`** - Appropriately annoying thank you message
   * **`browser.py`** - Montage browsing class
+  * **`controller.py`** - Main instrument interaction code
   * **`exceptions.py`** - Internal exceptions
   * **`goniotool.py`** - Goniotool (JEOL) interaction code
   * **`gridmontage.py`** - Grid montage data collection code
