@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
+
+from instamatic.simulation.warnings import NotImplementedWarning
 
 # TODO carbon lace
 
@@ -62,6 +66,7 @@ class Grid:
 
     def get_center_mark(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         # TODO
+        warnings.warn('Center mark is not implemented yet', NotImplementedWarning)
         return np.zeros(x.shape, dtype=bool)
 
     def array_from_coords(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
