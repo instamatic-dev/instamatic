@@ -10,6 +10,7 @@ class Sample:
     x: float
     y: float
     r: float
+    thickness: float  # between 0 and 1
     euler_angle_phi_1: float
     euler_angle_psi: float
     euler_angle_phi_2: float
@@ -29,3 +30,15 @@ class Sample:
 
     def pixel_contains_crystal(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         return (x - self.x) ** 2 + (y - self.y) ** 2 < self.r**2
+
+    def range_might_contain_crystal(
+        self,
+        x_min: float,
+        x_max: float,
+        y_min: float,
+        y_max: float,
+    ) -> bool:
+        # TODO improve estimate?
+        in_x = x_min <= self.x + self.r and self.x - self.r <= x_max
+        in_y = y_min <= self.y + self.r and self.y - self.r <= y_max
+        return in_x and in_y

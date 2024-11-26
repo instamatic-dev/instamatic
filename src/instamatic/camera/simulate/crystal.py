@@ -188,6 +188,9 @@ class Crystal:
             out[min_y:max_y, min_x:max_x] = 1
         return out
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}(a = {self.a}, b = {self.b}, c = {self.c}, alpha = {self.alpha}, beta = {self.beta}, gamma = {self.gamma})'
+
 
 class CubicCrystal(Crystal):
     def __init__(self, a: float) -> None:

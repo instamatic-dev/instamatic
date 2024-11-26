@@ -14,7 +14,7 @@ from instamatic.camera.simulate.warnings import NotImplementedWarning
 class Stage:
     def __init__(
         self,
-        num_crystals: int = 10_000,
+        num_crystals: int = 100_000,
         min_crystal_size: float = 100,
         max_crystal_size: float = 1000,
         random_seed: int = 100,
@@ -41,6 +41,7 @@ class Stage:
                 x=self.rng.uniform(-self.grid.radius_nm, self.grid.radius_nm),
                 y=self.rng.uniform(-self.grid.radius_nm, self.grid.radius_nm),
                 r=self.rng.uniform(min_crystal_size, max_crystal_size),
+                thickness=self.rng.uniform(0, 1),
                 euler_angle_phi_1=self.rng.uniform(0, 2 * np.pi),
                 euler_angle_psi=self.rng.uniform(0, np.pi),
                 euler_angle_phi_2=self.rng.uniform(0, 2 * np.pi),
@@ -152,16 +153,16 @@ class Stage:
 
         grid_mask = self.grid.array_from_coords(x, y)
 
-        sample_data = np.zeros(shape)
+        sample_data = np.ones(shape, dtype=int) * 1000
         for ind, sample in enumerate(self.samples):
-            # TODO improve estimate here to account for stage rotation
-            if (sample.x - self.x) ** 2 + (sample.y - self.y) ** 2 > 1.5 * (x_max - x_min) ** 2:
+            if not sample.range_might_contain_crystal(
+                x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
+            ):
                 continue
-            # TODO get actual crystal here, not just index
-            sample_data[sample.pixel_contains_crystal(x, y)] = ind
+            # TODO better logic here
+            sample_data[sample.pixel_contains_crystal(x, y)] = 1000 * (1 - sample.thickness)
 
-        # TODO
-        sample_data[grid_mask] += 1000
+        sample_data[grid_mask] = 0
 
         return sample_data
 
@@ -172,6 +173,7 @@ class Stage:
         x_max: float,
         y_min: float,
         y_max: float,
+        camera_length: float = 150,
     ) -> np.ndarray:
         """Get diffraction pattern array for given ranges. (x, y) = (0, 0) is
         in the center of the grid.
@@ -188,6 +190,8 @@ class Stage:
             [nm] Lower bound for y (bottom)
         y_max : float
             [nm] Upper bound for y (top)
+        camera_length : float
+            [cm] Camera length, for calibration
 
         Returns
         -------
@@ -197,17 +201,28 @@ class Stage:
         x, y = self.image_extent_to_sample_coordinates(
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
-        d_min = 1.0  # Determines scale of diffraction pattern, length from center to edge
-        # TODO make this depend on magnification
+        d_min = 1.0
 
         grid_mask = self.grid.array_from_coords(x, y)
 
         reflections = np.zeros(shape, dtype=bool)
-        for crystal in self.samples:
-            if not crystal.is_in_rectangle(x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max):
-                continue
 
-            pos = crystal.pixel_contains_crystal(x, y)
+        if np.all(grid_mask):
+            # no transmission
+            return reflections.astype(int)
+
+        # TODO diffraction shift, also for pattern
+        # Direct beam
+        reflections[
+            shape[0] // 2 - 4 : shape[0] // 2 + 4, shape[1] // 2 - 4 : shape[1] // 2 + 4
+        ] = 1
+
+        for sample in self.samples:
+            if not sample.range_might_contain_crystal(
+                x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
+            ):
+                continue
+            pos = sample.pixel_contains_crystal(x, y)
             if np.all(grid_mask[pos]):
                 # Crystal is completely on the grid
                 continue
@@ -215,13 +230,14 @@ class Stage:
             reflections |= self.crystal.diffraction_pattern_mask(
                 shape,
                 d_min=d_min,
-                rotation_matrix=self.rotation_matrix @ crystal.rotation_matrix,
+                rotation_matrix=self.rotation_matrix @ sample.rotation_matrix,
                 wavelength=0.02,
                 excitation_error=0.01,
             )
 
         # Simple scaling
         # TODO improve, proper form factors maybe
+        # TODO camera length
         kx, ky = np.meshgrid(
             np.linspace(-1 / d_min, 1 / d_min, shape[1]),
             np.linspace(-1 / d_min, 1 / d_min, shape[0]),
@@ -230,5 +246,8 @@ class Stage:
         scale = 1 / (3 * k_squared + 1)
 
         scale[~reflections] = 0
+
+        # Convert to int array
+        scale = (scale * 1000).astype(int)
 
         return scale
