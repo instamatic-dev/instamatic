@@ -157,7 +157,10 @@ class Crystal:
         np.ndarray
             Diffraction pattern
         """
+        # TODO calibration
         out = np.zeros(shape, dtype=bool)
+
+        # TODO this depends on convergence angle
         spot_radius = 3  # pixels
 
         vecs = self.reciprocal_space_lattice(d_min)

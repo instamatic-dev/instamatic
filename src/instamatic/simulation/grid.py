@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
+# TODO carbon lace
+
 
 class Grid:
     def __init__(

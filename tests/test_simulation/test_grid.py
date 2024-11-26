@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from instamatic.camera.simulate.grid import Grid
+from instamatic.simulation.grid import Grid
 
 
 def test_init():

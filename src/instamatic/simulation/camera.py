@@ -5,7 +5,7 @@ from typing import Tuple
 from numpy import ndarray
 
 from instamatic.camera.camera_base import CameraBase
-from instamatic.camera.simulate.stage import Stage
+from instamatic.simulation.stage import Stage
 
 
 class CameraSimulation(CameraBase):

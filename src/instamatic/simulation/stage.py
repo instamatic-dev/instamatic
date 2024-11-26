@@ -5,10 +5,10 @@ import warnings
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from instamatic.camera.simulate.crystal import Crystal
-from instamatic.camera.simulate.grid import Grid
-from instamatic.camera.simulate.sample import Sample
-from instamatic.camera.simulate.warnings import NotImplementedWarning
+from instamatic.simulation.crystal import Crystal
+from instamatic.simulation.grid import Grid
+from instamatic.simulation.sample import Sample
+from instamatic.simulation.warnings import NotImplementedWarning
 
 
 class Stage:
@@ -19,6 +19,20 @@ class Stage:
         max_crystal_size: float = 1000,
         random_seed: int = 100,
     ) -> None:
+        """Handle many samples on a grid.
+
+        Parameters
+        ----------
+        num_crystals : int, optional
+            Number of crystals to disperse on the grid, by default 100_000
+        min_crystal_size : float, optional
+            Minimum radius of the crystals, in nm, by default 100
+        max_crystal_size : float, optional
+            Maximum radius of the crystals, in nm, by default 1000
+        random_seed : int, optional
+            Seed for random number generation, by default 100
+        """
+        # TODO make this settable
         self.x = 0
         self.y = 0
         self.z = 0
@@ -34,6 +48,8 @@ class Stage:
         self.rng = np.random.Generator(np.random.PCG64(random_seed))
 
         # TODO parameters
+        # TODO multiple phases
+        # TODO amorphous phase
         self.crystal = Crystal(*self.rng.uniform(5, 25, 3), *self.rng.uniform(80, 110, 3))
 
         self.samples = [
@@ -93,9 +109,31 @@ class Stage:
         y_min: float,
         y_max: float,
     ) -> tuple[np.ndarray, np.ndarray]:
-        warnings.warn(
-            'Tilting is not fully implemented yet', NotImplementedWarning, stacklevel=2
-        )
+        """Get arrays of grid positions with a given shape and extent in lab
+        coordinates.
+
+        Parameters
+        ----------
+        shape : tuple[int, int]
+            Output shape
+        x_min : float
+            Lower bound of x
+        x_max : float
+            Upper bound of x
+        y_min : float
+            Lower bound of y
+        y_max : float
+            Upper bound of y
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            x, y. 2D arrays of floats
+        """
+        if self.alpha_tilt != 0 or self.beta_tilt != 0:
+            warnings.warn(
+                'Tilting is not fully implemented yet', NotImplementedWarning, stacklevel=2
+            )
         # https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
         n = self.rotation_matrix @ np.array([0, 0, 1])
         p0 = self.origin
@@ -205,13 +243,12 @@ class Stage:
 
         grid_mask = self.grid.array_from_coords(x, y)
 
-        reflections = np.zeros(shape, dtype=bool)
-
         if np.all(grid_mask):
             # no transmission
-            return reflections.astype(int)
+            return np.zeros(shape, dtype=int)
 
-        # TODO diffraction shift, also for pattern
+        reflections = np.zeros(shape, dtype=bool)
+
         # Direct beam
         reflections[
             shape[0] // 2 - 4 : shape[0] // 2 + 4, shape[1] // 2 - 4 : shape[1] // 2 + 4
@@ -234,6 +271,9 @@ class Stage:
                 wavelength=0.02,
                 excitation_error=0.01,
             )
+        # TODO diffraction shift
+
+        # TODO noise
 
         # Simple scaling
         # TODO improve, proper form factors maybe
@@ -248,6 +288,6 @@ class Stage:
         scale[~reflections] = 0
 
         # Convert to int array
-        scale = (scale * 1000).astype(int)
+        scale = (scale * 0x8000).astype(int)
 
         return scale
