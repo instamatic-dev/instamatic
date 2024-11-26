@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from scipy.spatial.transform import Rotation
 
 from instamatic.camera.simulate.crystal import Crystal
 from instamatic.camera.simulate.grid import Grid
 from instamatic.camera.simulate.sample import Sample
+from instamatic.camera.simulate.warnings import NotImplementedWarning
 
 
 class Stage:
@@ -60,10 +63,21 @@ class Stage:
         if z is not None:
             self.z = z
         if alpha_tilt is not None:
+            warnings.warn(
+                'Tilting is not fully implemented yet',
+                NotImplementedWarning,
+                stacklevel=2,
+            )
             self.alpha_tilt = alpha_tilt
         if beta_tilt is not None:
+            warnings.warn(
+                'Tilting is not fully implemented yet',
+                NotImplementedWarning,
+                stacklevel=2,
+            )
             self.beta_tilt = beta_tilt
 
+        # TODO define orientation. Is this matrix multiplied with lab coordinates to get sample coordinates?
         self.rotation_matrix = Rotation.from_euler(
             'ZXY',
             [self.in_plane_rotation, self.alpha_tilt, self.beta_tilt],
@@ -78,6 +92,9 @@ class Stage:
         y_min: float,
         y_max: float,
     ) -> tuple[np.ndarray, np.ndarray]:
+        warnings.warn(
+            'Tilting is not fully implemented yet', NotImplementedWarning, stacklevel=2
+        )
         # https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
         n = self.rotation_matrix @ np.array([0, 0, 1])
         p0 = self.origin
@@ -181,6 +198,7 @@ class Stage:
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
         d_min = 1.0  # Determines scale of diffraction pattern, length from center to edge
+        # TODO make this depend on magnification
 
         grid_mask = self.grid.array_from_coords(x, y)
 
