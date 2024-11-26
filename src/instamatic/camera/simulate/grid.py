@@ -32,6 +32,7 @@ class Grid:
         """
         # TODO make mesh set the pitch, bar width and pitch set the hole width ect.
         self.diameter_mm = diameter
+        self.radius_nm = 1e6 * diameter / 2
         self.mesh = mesh
         self.pitch_um = pitch
         self.hole_width_um = hole_width
@@ -61,8 +62,38 @@ class Grid:
         # TODO
         return np.zeros(x.shape, dtype=bool)
 
+    def array_from_coords(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Get mask array for given coordinate arrays (output from
+        np.meshgrid). (x, y) = (0, 0) is in the center of the grid.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            x-coordinates
+        y : np.ndarray
+            y-coordinates
+
+        Returns
+        -------
+        np.ndarray
+            Mask array, False where the grid is blocking
+        """
+        rim_filter = self.get_rim_filter(x, y)
+        grid_filter = self.get_hole_filter(x, y)
+
+        # TODO proper logic for this,
+        # as the mark includes a hole in the center which will be overridden by the grid filter
+        center_mark = self.get_center_mark(x, y)
+
+        return rim_filter | grid_filter | center_mark
+
     def array(
-        self, shape: tuple[int, int], x_min: float, x_max: float, y_min: float, y_max: float
+        self,
+        shape: tuple[int, int],
+        x_min: float,
+        x_max: float,
+        y_min: float,
+        y_max: float,
     ) -> np.ndarray:
         """Get mask array for given ranges. (x, y) = (0, 0) is in the center of
         the grid.
@@ -89,11 +120,4 @@ class Grid:
             np.linspace(x_min, x_max, shape[1]),
             np.linspace(y_min, y_max, shape[0]),
         )
-        rim_filter = self.get_rim_filter(x, y)
-        grid_filter = self.get_hole_filter(x, y)
-
-        # TODO proper logic for this,
-        # as the mark includes a hole in the center which will be overridden by the grid filter
-        center_mark = self.get_center_mark(x, y)
-
-        return rim_filter | grid_filter | center_mark
+        return self.array_from_coords(x, y)

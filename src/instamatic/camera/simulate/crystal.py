@@ -128,6 +128,66 @@ class Crystal:
         vecs = self.lattice.reciprocal().cartesian(hkls)
         return vecs
 
+    def diffraction_pattern_mask(
+        self,
+        shape: tuple[int, int],
+        d_min: float,
+        rotation_matrix: np.ndarray,
+        wavelength: float,
+        excitation_error: float,
+    ) -> np.ndarray:
+        """Get a diffraction pattern with a given shape, up to a given
+        resolution, in a given orientation and wavelength.
+
+        Parameters
+        ----------
+        shape : tuple[int, int]
+            Output shape
+        d_min : float
+            Minimum d-spacing, in Å
+        rotation_matrix : np.ndarray
+            Orientation
+        wavelength : float
+            Wavelength of incident beam, in Å
+        excitation_error : float
+            Excitation error used for intensity calculation, in reciprocal Å
+
+        Returns
+        -------
+        np.ndarray
+            Diffraction pattern
+        """
+        out = np.zeros(shape, dtype=bool)
+        spot_radius = 3  # pixels
+
+        vecs = self.reciprocal_space_lattice(d_min)
+        d = np.sum(vecs**2, axis=1)
+        vecs = vecs[d < d_min**2]
+
+        k = 2 * np.pi / wavelength
+        k_vec = rotation_matrix @ np.array([0, 0, -k])
+
+        # Find intersect with Ewald's sphere
+        q_squared = np.sum((vecs - k_vec) ** 2, axis=1)
+        vecs = vecs[
+            (q_squared > (k - excitation_error) ** 2)
+            & (q_squared < (k + excitation_error) ** 2)
+        ]
+
+        # Project onto screen
+        vecs_xy = (rotation_matrix.T @ vecs.T).T[:, :-1]  # ignoring curvature
+
+        # Make image
+        for vec in vecs_xy:
+            x = int(vec[0] * d_min * shape[1] / 2) + shape[1] // 2
+            y = int(vec[1] * d_min * shape[0] / 2) + shape[0] // 2
+            min_x = max(0, x - spot_radius)
+            max_x = min(shape[1], x + spot_radius)
+            min_y = max(0, y - spot_radius)
+            max_y = min(shape[0], y + spot_radius)
+            out[min_y:max_y, min_x:max_x] = 1
+        return out
+
 
 class CubicCrystal(Crystal):
     def __init__(self, a: float) -> None:
