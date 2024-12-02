@@ -5,16 +5,17 @@ from typing import Tuple
 from numpy import ndarray
 
 from instamatic.camera.camera_base import CameraBase
+from instamatic.microscope.base import MicroscopeBase
 from instamatic.simulation.stage import Stage
 
 
 class CameraSimulation(CameraBase):
     streamable = True
 
-    def __init__(self, name: str = 'simulate'):
+    def __init__(self, tem: MicroscopeBase, name: str = 'simulate'):
         super().__init__(name)
 
-        self.ready = False
+        self.tem = tem
 
         # TODO put parameters into config
         self.stage = Stage()
@@ -23,30 +24,10 @@ class CameraSimulation(CameraBase):
     def establish_connection(self):
         pass
 
-    def actually_establish_connection(self):
-        if self.ready:
-            return
-        import time
-
-        time.sleep(2)
-        from instamatic.controller import get_instance
-
-        ctrl = get_instance()
-        self.tem = ctrl.tem
-
-        ctrl.stage.set(z=0, a=0, b=0)
-        print(self.tem.getStagePosition())
-        print(self.stage.samples[0].x, self.stage.samples[0].y)
-
-        self.ready = True
-
     def release_connection(self):
-        self.tem = None
-        self.ready = False
+        pass
 
     def get_image(self, exposure: float = None, binsize: int = None, **kwargs) -> ndarray:
-        self.actually_establish_connection()
-
         if exposure is None:
             exposure = self.default_exposure
         if binsize is None:

@@ -19,7 +19,7 @@ def get_microscope_class(interface: str) -> 'type[MicroscopeBase]':
             raise PermissionError('Access to the TEM interface requires admin rights.')
 
     if simulate or interface == 'simulate':
-        from .interface.simu_microscope import SimuMicroscope as cls
+        from ..simulation.microscope import MicroscopeSimulation as cls
     elif interface == 'jeol':
         from .interface.jeol_microscope import JeolMicroscope as cls
     elif interface == 'fei':

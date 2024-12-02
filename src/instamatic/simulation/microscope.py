@@ -33,7 +33,7 @@ MAX = 65535
 MIN = 0
 
 
-class SimuMicroscope(MicroscopeBase):
+class MicroscopeSimulation(MicroscopeBase):
     """Simulates a microscope connection.
 
     Has the same variables as the real JEOL/FEI equivalents, but does
