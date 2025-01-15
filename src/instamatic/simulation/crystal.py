@@ -4,13 +4,28 @@ from typing import Type, TypeVar
 
 import numpy as np
 from diffpy import structure as diffpy
+from diffsims.crystallography._diffracting_vector import DiffractingVector
+from diffsims.generators.simulation_generator import (
+    Simulation2D,
+    SimulationGenerator,
+    get_kinematical_intensities,
+)
+from orix.crystal_map import Phase
+from orix.quaternion import Rotation
 
 Crystal_T = TypeVar('Crystal_T', bound='Crystal')
 
 
 class Crystal:
     def __init__(
-        self, a: float, b: float, c: float, alpha: float, beta: float, gamma: float
+        self,
+        a: float,
+        b: float,
+        c: float,
+        alpha: float,
+        beta: float,
+        gamma: float,
+        space_group: int = 1,
     ) -> None:
         """Simulate a primitive crystal given the unit cell. No additional
         symmetry is imposed.
@@ -31,6 +46,8 @@ class Crystal:
             Angle between a and c, in degrees
         gamma : float
             Angle between a and b, in degrees
+        space_group: int
+            Space group number. Defaults to 1 (P1)
         """
         self.a = a
         self.b = b
@@ -41,9 +58,10 @@ class Crystal:
 
         self.lattice = diffpy.Lattice(self.a, self.b, self.c, self.alpha, self.beta, self.gamma)
         self.structure = diffpy.Structure(
-            atoms=[diffpy.Atom(xyz=[0, 0, 0])],
+            atoms=[diffpy.Atom('Au', xyz=[0, 0, 0])],
             lattice=self.lattice,
         )
+        self.phase = Phase(space_group=space_group, structure=self.structure)
 
     @property
     def a_vec(self) -> np.ndarray:
@@ -133,11 +151,11 @@ class Crystal:
         shape: tuple[int, int],
         d_min: float,
         rotation_matrix: np.ndarray,
-        wavelength: float,
+        acceleration_voltage: float,
         excitation_error: float,
     ) -> np.ndarray:
         """Get a diffraction pattern with a given shape, up to a given
-        resolution, in a given orientation and wavelength.
+        resolution, in a given orientation and acceleration voltage.
 
         Parameters
         ----------
@@ -147,8 +165,8 @@ class Crystal:
             Minimum d-spacing, in Å
         rotation_matrix : np.ndarray
             Orientation
-        wavelength : float
-            Wavelength of incident beam, in Å
+        acceleration_voltage : float
+            acceleration_voltage of incident beam, in kV
         excitation_error : float
             Excitation error used for intensity calculation, in reciprocal Å
 
@@ -157,39 +175,57 @@ class Crystal:
         np.ndarray
             Diffraction pattern
         """
-        # TODO calibration
-        out = np.zeros(shape, dtype=bool)
+        gen = SimulationGenerator(accelerating_voltage=acceleration_voltage)
+        wavelength = gen.wavelength
 
-        # TODO this depends on convergence angle
-        spot_radius = 3  # pixels
+        # Rotate using all the rotations in the list
+        recip = DiffractingVector.from_min_dspacing(
+            self.phase,
+            min_dspacing=d_min,
+            include_zero_vector=False,
+        )
+        rotation = Rotation.from_matrix(rotation_matrix)
+        # Calculate the reciprocal lattice vectors that intersect the Ewald sphere.
+        (
+            intersected_vectors,
+            hkl,
+            shape_factor,
+        ) = gen.get_intersecting_reflections(
+            recip,
+            rotation,
+            wavelength,
+            max_excitation_error=excitation_error,
+            with_direct_beam=False,
+        )
 
-        vecs = self.reciprocal_space_lattice(d_min)
-        d = np.sum(vecs**2, axis=1)
-        vecs = vecs[d < d_min**2]
+        # Calculate diffracted intensities based on a kinematic model.
+        intensities = get_kinematical_intensities(
+            self.structure,
+            hkl,
+            intersected_vectors.gspacing,
+            prefactor=shape_factor,
+            scattering_params=gen.scattering_params,
+        )
 
-        k = 2 * np.pi / wavelength
-        k_vec = rotation_matrix @ np.array([0, 0, -k])
+        # Threshold peaks included in simulation as factor of zero beam intensity.
+        peak_mask = intensities > np.max(intensities) * gen.minimum_intensity
+        intensities = intensities[peak_mask]
+        intersected_vectors = intersected_vectors[peak_mask]
+        intersected_vectors.intensity = intensities
 
-        # Find intersect with Ewald's sphere
-        q_squared = np.sum((vecs - k_vec) ** 2, axis=1)
-        vecs = vecs[
-            (q_squared > (k - excitation_error) ** 2)
-            & (q_squared < (k + excitation_error) ** 2)
-        ]
+        # Create a simulation object
+        sim = Simulation2D(
+            phases=self.phase,
+            coordinates=intersected_vectors,
+            rotations=rotation,
+            simulation_generator=gen,
+            reciprocal_radius=1 / d_min,
+        )
 
-        # Project onto screen
-        vecs_xy = (rotation_matrix.T @ vecs.T).T[:, :-1]  # ignoring curvature
-
-        # Make image
-        for vec in vecs_xy:
-            x = int(vec[0] * d_min * shape[1] / 2) + shape[1] // 2
-            y = int(vec[1] * d_min * shape[0] / 2) + shape[0] // 2
-            min_x = max(0, x - spot_radius)
-            max_x = min(shape[1], x + spot_radius)
-            min_y = max(0, y - spot_radius)
-            max_y = min(shape[0], y + spot_radius)
-            out[min_y:max_y, min_x:max_x] = 1
-        return out
+        # Simulate diffraction pattern
+        return sim.get_diffraction_pattern(
+            shape, sigma=1, calibration=1 / d_min / (shape[0] / 2)
+        )
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__}(a = {self.a}, b = {self.b}, c = {self.c}, alpha = {self.alpha}, beta = {self.beta}, gamma = {self.gamma})'

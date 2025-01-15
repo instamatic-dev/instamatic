@@ -258,12 +258,7 @@ class Stage:
             # no transmission
             return np.zeros(shape, dtype=int)
 
-        reflections = np.zeros(shape, dtype=bool)
-
-        # Direct beam
-        reflections[
-            shape[0] // 2 - 4 : shape[0] // 2 + 4, shape[1] // 2 - 4 : shape[1] // 2 + 4
-        ] = 1
+        reflections = np.zeros(shape, dtype=float)
 
         for sample in self.samples:
             if not sample.range_might_contain_crystal(
@@ -275,30 +270,18 @@ class Stage:
                 # Crystal is completely on the grid
                 continue
 
-            reflections |= self.crystal.diffraction_pattern_mask(
+            reflections += self.crystal.diffraction_pattern_mask(
                 shape,
                 d_min=d_min,
                 rotation_matrix=self.rotation_matrix @ sample.rotation_matrix,
-                wavelength=0.02,
+                acceleration_voltage=200,
                 excitation_error=0.01,
             )
         # TODO diffraction shift
 
         # TODO noise
 
-        # Simple scaling
-        # TODO improve, proper form factors maybe
-        # TODO camera length
-        kx, ky = np.meshgrid(
-            np.linspace(-1 / d_min, 1 / d_min, shape[1]),
-            np.linspace(-1 / d_min, 1 / d_min, shape[0]),
-        )
-        k_squared = kx**2 + ky**2
-        scale = 1 / (3 * k_squared + 1)
-
-        scale[~reflections] = 0
-
         # Convert to int array
-        scale = (scale * 0x8000).astype(int)
+        reflections = (reflections * 0x8000).astype(int)
 
-        return scale
+        return reflections
