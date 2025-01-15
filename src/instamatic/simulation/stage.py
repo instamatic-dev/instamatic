@@ -38,9 +38,8 @@ class Stage:
         self.z = 0
         self.alpha_tilt = 0
         self.beta_tilt = 0
-        self.in_plane_rotation = 0  # TODO change this with focus/magnification
+        self.in_plane_rotation = 10  # TODO change this with focus/magnification
         self.rotation_matrix = np.eye(3)
-        self.origin = np.array([0, 0, 0])
 
         # TODO parameters
         self.grid = Grid()
@@ -64,6 +63,10 @@ class Stage:
             )
             for _ in range(num_crystals)
         ]
+
+    @property
+    def origin(self) -> np.ndarray:
+        return np.array([self.x, self.y, self.z])
 
     def set_position(
         self,
@@ -135,21 +138,21 @@ class Stage:
                 'Tilting is not fully implemented yet', NotImplementedWarning, stacklevel=2
             )
         # https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
-        n = self.rotation_matrix @ np.array([0, 0, 1])
-        p0 = self.origin
         l = np.array([0, 0, 1])  # noqa: E741
+        n = self.rotation_matrix @ l
+        p0 = self.origin
         l0 = np.array(
             [
                 p.flatten()
                 for p in np.meshgrid(
                     np.linspace(x_min, x_max, shape[1]),
                     np.linspace(y_min, y_max, shape[0]),
-                    [0],
+                    [self.z],
                 )
             ]
         )
 
-        p = l0 + np.array([0, 0, 1])[:, np.newaxis] * np.dot(-l0.T + p0, n) / np.dot(l, n)
+        p = l0 + l[:, np.newaxis] * np.dot(-l0.T + p0, n) / np.dot(l, n)
 
         x, y, z = self.rotation_matrix.T @ p
         x = x.reshape(shape)
@@ -188,6 +191,10 @@ class Stage:
         x, y = self.image_extent_to_sample_coordinates(
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
+        x_min = x.min()
+        x_max = x.max()
+        y_min = y.min()
+        y_max = y.max()
 
         grid_mask = self.grid.array_from_coords(x, y)
 
@@ -239,6 +246,10 @@ class Stage:
         x, y = self.image_extent_to_sample_coordinates(
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
+        x_min = x.min()
+        x_max = x.max()
+        y_min = y.min()
+        y_max = y.max()
         d_min = 1.0
 
         grid_mask = self.grid.array_from_coords(x, y)
