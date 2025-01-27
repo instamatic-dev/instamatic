@@ -300,8 +300,8 @@ class ExperimentalCtrl(LabelFrame):
 
     def get_stage(self, event=None):
         x, y, _, _, _ = self.ctrl.stage.get()
-        self.var_stage_x.set(int(x))
-        self.var_stage_y.set(int(y))
+        self.var_stage_x.set(round(x))
+        self.var_stage_y.set(round(y))
 
     def start_alpha_wobbler(self):
         self.wobble_stop_event = threading.Event()
