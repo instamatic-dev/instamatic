@@ -102,6 +102,8 @@ class MicroscopeClient:
 
         if response:
             status, data = loader(response)
+        else:
+            raise RuntimeError(f'Received empty response when evaluating {dct=}')
 
         if status == 200:
             return data
