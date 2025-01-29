@@ -83,12 +83,7 @@ class MicroscopeClient:
         print(f'Connected to TEM server ({HOST}:{PORT})')
 
     def __getattr__(self, func_name: str) -> Callable:
-        try:
-            wrapped = self._dct[func_name]
-        except KeyError as e:
-            raise AttributeError(
-                f'`{self.__class__.__name__}` object has no attribute `{func_name}`'
-            ) from e
+        wrapped = self._dct.get(func_name, None)
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
@@ -119,6 +114,8 @@ class MicroscopeClient:
             raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self) -> None:
+        """Get list of functions and their doc strings from the uninitialized
+        class."""
         from instamatic.microscope import get_microscope_class
 
         tem = get_microscope_class(interface=self.interface)
@@ -126,6 +123,11 @@ class MicroscopeClient:
         self._dct = {
             key: value for key, value in tem.__dict__.items() if not key.startswith('_')
         }
+        self._dct['get_attrs'] = None
+
+    def _init_attr_dict(self):
+        """Get list of attrs and their types."""
+        self._attr_dct = self.get_attrs()
 
     def __dir__(self) -> list:
         return list(self._dct.keys())
