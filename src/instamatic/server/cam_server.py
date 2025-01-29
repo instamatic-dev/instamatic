@@ -125,11 +125,7 @@ class CamServer(threading.Thread):
         `attr_name` refers to a function, call it with *args and **kwargs."""
         # print(attr_name, args, kwargs)
         f = getattr(self.cam, attr_name)
-        if callable(f):
-            ret = f(*args, **kwargs)
-        else:
-            ret = f
-        return ret
+        return f(*args, **kwargs) if callable(f) else f
 
     def get_attrs(self):
         """Get attributes from cam object to update __dict__ on client side."""
