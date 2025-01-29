@@ -505,3 +505,10 @@ class FEIMicroscope(MicroscopeBase):
 
     def setBrightness(self, value):
         self.tom.Illumination.IlluminatedAreaDiameter = value * 1e-6
+
+    def getScreenPosition(self) -> str:
+        raise NotImplementedError
+
+    def setScreenPosition(self, value: str) -> None:
+        raise NotImplementedError
+

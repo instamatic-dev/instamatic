@@ -82,6 +82,10 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
+    def getScreenPosition(self) -> str:
+        pass
+
+    @abstractmethod
     def getSpotSize(self) -> int:
         pass
 
@@ -163,6 +167,10 @@ class MicroscopeBase(ABC):
 
     @abstractmethod
     def setObjectiveLensStigmator(self, x: int, y: int) -> None:
+        pass
+
+    @abstractmethod
+    def setScreenPosition(self, value: str) -> None:
         pass
 
     @abstractmethod
