@@ -167,19 +167,19 @@ class FEIMicroscope(MicroscopeBase):
         goniospeed = self.tom.Stage.Speed
 
         if x is not None:
-            pos.X = float(x * 1e-6)
+            pos.X = x * 1e-6
             axis += 1
         if y is not None:
-            pos.Y = float(y * 1e-6)
+            pos.Y = y * 1e-6
             axis += 2
         if z is not None:
-            pos.Z = float(z * 1e-6)
+            pos.Z = z * 1e-6
             axis += 4
         if a is not None:
-            pos.A = float(a / 180 * pi)
+            pos.A = a / 180 * pi
             axis += 8
         if b is not None:
-            pos.B = float(b / 180 * pi)
+            pos.B = b / 180 * pi
             axis += 16
 
         if speed == 1:
