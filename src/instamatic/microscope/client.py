@@ -35,14 +35,15 @@ def start_server_in_subprocess() -> None:
 
 
 class MicroscopeClient:
-    """A proxy class for individual `Microscope` interface classes.
-    Simulates a `Microscope` object and synchronizes calls over a socket server.
-    On `__init__`, stores attributes of interfaced `Microscope` in `_dct`;
-    On `__getattr__`, wraps and returns an attribute of interfaced `Microscope`.
-    Thus, it is a surrogate for any `Microscope` class with a fitting interface.
+    """A proxy class for individual `Microscope` interface classes. Simulates a
+    `Microscope` object and synchronizes calls over a socket server. On
+    `__init__`, stores attributes of interfaced `Microscope` in `_dct`; On
+    `__getattr__`, wraps and returns an attribute of interfaced `Microscope`.
+    Thus, it is a surrogate for any `Microscope` class with a fitting
+    interface.
 
-    For documentation of individual methods,
-    see the actual python interface to the used microscope API.
+    For documentation of individual methods, see the actual python
+    interface to the used microscope API.
     """
 
     def __init__(self, *, interface: str) -> None:
