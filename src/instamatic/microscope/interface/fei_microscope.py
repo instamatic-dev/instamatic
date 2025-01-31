@@ -511,4 +511,3 @@ class FEIMicroscope(MicroscopeBase):
 
     def setScreenPosition(self, value: str) -> None:
         raise NotImplementedError
-
