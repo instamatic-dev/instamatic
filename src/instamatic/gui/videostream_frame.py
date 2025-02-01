@@ -191,7 +191,7 @@ class VideoStreamFrame(LabelFrame):
     def update_frametime(self, name, index, mode):
         # print name, index, mode
         try:
-            self.frametime = self.var_frametime.get()
+            self.frametime = self.var_frametime.get() or self.frametime
         except BaseException:
             pass
         else:

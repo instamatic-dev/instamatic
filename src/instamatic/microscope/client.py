@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import atexit
 import datetime
-import json
-import pickle
 import socket
 import subprocess as sp
 import threading
 import time
 from functools import wraps
+from typing import Any, Callable
 
 from instamatic import config
 from instamatic.exceptions import TEMCommunicationError, exception_list
@@ -23,12 +22,12 @@ class ServerError(Exception):
     pass
 
 
-def kill_server(p):
+def kill_server(p: sp.Popen) -> None:
     # p.kill is not adequate
     sp.call(['taskkill', '/F', '/T', '/PID', str(p.pid)])
 
 
-def start_server_in_subprocess():
+def start_server_in_subprocess() -> None:
     cmd = 'instamatic.temserver.exe'
     p = sp.Popen(cmd, stdout=sp.DEVNULL)
     print(f'Starting TEM server ({HOST}:{PORT} on pid={p.pid})')
@@ -36,14 +35,18 @@ def start_server_in_subprocess():
 
 
 class MicroscopeClient:
-    """Simulates a Microscope object and synchronizes calls over a socket
-    server.
+    """A proxy class for individual `Microscope` interface classes. Simulates a
+    `Microscope` object and synchronizes calls over a socket server. On
+    `__init__`, stores attributes of interfaced `Microscope` in `_dct`; On
+    `__getattr__`, wraps and returns an attribute of interfaced `Microscope`.
+    Thus, it is a surrogate for any `Microscope` class with a fitting
+    interface.
 
-    For documentation, see the actual python interface to the microscope
-    API.
+    For documentation of individual methods, see the actual python
+    interface to the used microscope API.
     """
 
-    def __init__(self, *, interface: str):
+    def __init__(self, *, interface: str) -> None:
         super().__init__()
 
         self.interface = interface
@@ -74,18 +77,13 @@ class MicroscopeClient:
 
         atexit.register(self.s.close)
 
-    def connect(self):
+    def connect(self) -> None:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
         print(f'Connected to TEM server ({HOST}:{PORT})')
 
-    def __getattr__(self, func_name):
-        try:
-            wrapped = self._dct[func_name]
-        except KeyError as e:
-            raise AttributeError(
-                f'`{self.__class__.__name__}` object has no attribute `{func_name}`'
-            ) from e
+    def __getattr__(self, func_name: str) -> Callable:
+        wrapped = self._dct.get(func_name, None)
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
@@ -94,7 +92,7 @@ class MicroscopeClient:
 
         return wrapper
 
-    def _eval_dct(self, dct):
+    def _eval_dct(self, dct: dict[str, Any]) -> Any:
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         self.s.send(dumper(dct))
 
@@ -102,6 +100,8 @@ class MicroscopeClient:
 
         if response:
             status, data = loader(response)
+        else:
+            raise RuntimeError(f'Received empty response when evaluating {dct=}')
 
         if status == 200:
             return data
@@ -113,7 +113,9 @@ class MicroscopeClient:
         else:
             raise ConnectionError(f'Unknown status code: {status}')
 
-    def _init_dict(self):
+    def _init_dict(self) -> None:
+        """Get list of functions and their doc strings from the uninitialized
+        class."""
         from instamatic.microscope import get_microscope_class
 
         tem = get_microscope_class(interface=self.interface)
@@ -121,11 +123,16 @@ class MicroscopeClient:
         self._dct = {
             key: value for key, value in tem.__dict__.items() if not key.startswith('_')
         }
+        self._dct['get_attrs'] = None
 
-    def __dir__(self):
-        return self._dct.keys()
+    def _init_attr_dict(self):
+        """Get list of attrs and their types."""
+        self._attr_dct = self.get_attrs()
 
-    def check_goniotool(self):
+    def __dir__(self) -> list:
+        return list(self._dct.keys())
+
+    def check_goniotool(self) -> None:
         """Check whether goniotool is available and update the config as
         necessary."""
         if config.settings.use_goniotool:

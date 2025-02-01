@@ -73,13 +73,12 @@ class TemServer(threading.Thread):
                 if self.verbose:
                     print(f'{now} | {status} {func_name}: {ret}')
 
-    def evaluate(self, func_name: str, args: list, kwargs: dict):
-        """Evaluate the function `func_name` on `self.tem` and call it with
-        `args` and `kwargs`."""
+    def evaluate(self, attr_name: str, args: list, kwargs: dict):
+        """Evaluate the function or attribute `attr_name` on `self.tem`, if
+        `attr_name` refers to a function, call it with *args and **kwargs."""
         # print(func_name, args, kwargs)
-        f = getattr(self.tem, func_name)
-        ret = f(*args, **kwargs)
-        return ret
+        f = getattr(self.tem, attr_name)
+        return f(*args, **kwargs) if callable(f) else f
 
 
 def handle(conn, q):
