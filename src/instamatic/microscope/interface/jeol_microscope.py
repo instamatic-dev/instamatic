@@ -10,6 +10,7 @@ import comtypes.client
 from instamatic import config
 from instamatic.exceptions import JEOLValueError, TEMCommunicationError, TEMValueError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
 
@@ -279,10 +280,10 @@ class JeolMicroscope(MicroscopeBase):
     def setImageShift2(self, x: int, y: int):
         self.def3.SetIS2(x, y)
 
-    def getStagePosition(self) -> Tuple[int, int, int, int, int]:
+    def getStagePosition(self) -> Tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
         """X, y, z in nanometer a and b in degrees."""
         x, y, z, a, b, result = self.stage3.GetPos()
-        return x, y, z, a, b
+        return round(x), round(y), round(z), float(a), float(b)
 
     def isStageMoving(self):
         x, y, z, a, b, result = self.stage3.GetStatus()
@@ -294,34 +295,34 @@ class JeolMicroscope(MicroscopeBase):
             if delay > 0:
                 time.sleep(delay)
 
-    def setStageX(self, value: int, wait: bool = True):
+    def setStageX(self, value: int_nm, wait: bool = True) -> None:
         self.stage3.SetX(value)
         if wait:
             self.waitForStage()
 
-    def setStageY(self, value: int, wait: bool = True):
+    def setStageY(self, value: int_nm, wait: bool = True) -> None:
         # self.gonio2.SetRotationAngle(value)  ## not tested, is this an alternative call?
         self.stage3.SetY(value)
         if wait:
             self.waitForStage()
 
-    def setStageZ(self, value: int, wait: bool = True):
+    def setStageZ(self, value: int_nm, wait: bool = True) -> None:
         self.stage3.SetZ(value)
         if wait:
             self.waitForStage()
 
-    def setStageA(self, value: int, wait: bool = True):
+    def setStageA(self, value: float_deg, wait: bool = True) -> None:
         # self.gonio2.SetTiltXAngle(value)  ## alternative call
         self.stage3.SetTiltXAngle(value)
         if wait:
             self.waitForStage()
 
-    def setStageB(self, value: int, wait: bool = True):
+    def setStageB(self, value: float_deg, wait: bool = True) -> None:
         self.stage3.SetTiltYAngle(value)
         if wait:
             self.waitForStage()
 
-    def setStageXY(self, x: int, y: int, wait: bool = True):
+    def setStageXY(self, x: int_nm, y: int_nm, wait: bool = True) -> None:
         # BUG: stage3.SetPosition is applied as a shift from current coordinates
         # self.stage3.SetPosition(x, y)  ## combined call is faster than to separate calls
         self.stage3.SetX(x)
@@ -334,13 +335,13 @@ class JeolMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: int_nm = None,
+        y: int_nm = None,
+        z: int_nm = None,
+        a: float_deg = None,
+        b: float_deg = None,
         wait: bool = True,
-    ):
+    ) -> None:
         if z is not None:
             self.setStageZ(z, wait=wait)
         if a is not None:
