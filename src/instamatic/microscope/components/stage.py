@@ -40,7 +40,14 @@ class Stage:
         wait: bool = True,
     ) -> None:
         """Wait: bool, block until stage movement is complete (JEOL only)"""
-        self._setter(round(x), round(y), round(z), float(a), float(b), wait=wait)
+        self._setter(
+            round(x) if x is not None else None,
+            round(y) if y is not None else None,
+            round(z) if z is not None else None,
+            float(a) if a is not None else None,
+            float(b) if b is not None else None,
+            wait=wait,
+        )
 
     def set_with_speed(
         self,
@@ -57,7 +64,15 @@ class Stage:
         wait: ignored, but necessary for compatibility with JEOL API
         speed: float, set stage rotation with specified speed (FEI only)
         """
-        self._setter(round(x), round(y), round(z), float(a), float(b), wait=wait, speed=speed)
+        self._setter(
+            round(x) if x is not None else None,
+            round(y) if y is not None else None,
+            round(z) if z is not None else None,
+            float(a) if a is not None else None,
+            float(b) if b is not None else None,
+            wait=wait,
+            speed=speed,
+        )
 
     def set_rotation_speed(self, speed=1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
