@@ -402,7 +402,7 @@ class TEMController:
         # self.stage.z = 0 # for testing
 
         zc = self.stage.z
-        print(f'Current z = {zc:.1f} nm')
+        print(f'Current z = {zc} nm')
 
         zs = zc + np.linspace(-dz, dz, steps)
         shifts = []
