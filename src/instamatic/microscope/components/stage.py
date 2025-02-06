@@ -252,8 +252,8 @@ class Stage:
 
     def set_xy_with_backlash_correction(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
         step: int_nm = 10000,
         settle_delay: float = 0.200,
     ) -> None:
@@ -278,9 +278,9 @@ class Stage:
 
     def move_xy_with_backlash_correction(
         self,
-        shift_x: int = None,
-        shift_y: int = None,
-        step: float = 5000,
+        shift_x: Optional[int_nm] = None,
+        shift_y: Optional[int_nm] = None,
+        step: int_nm = 5000,
         settle_delay: float = 0.200,
         wait=True,
     ) -> None:
@@ -306,7 +306,7 @@ class Stage:
             target_x = stage.x + shift_x
             if target_x > stage.x:
                 pre_x = stage.x - step
-            elif target_x < stage.x:
+            else:  # if target_x < stage.x:
                 pre_x = stage.x + step
         else:
             pre_x = None
@@ -316,7 +316,7 @@ class Stage:
             target_y = stage.y + shift_y
             if target_y > stage.y:
                 pre_y = stage.y - step
-            elif target_y < stage.y:
+            else:  # if target_y < stage.y:
                 pre_y = stage.y + step
         else:
             pre_y = None
@@ -330,12 +330,16 @@ class Stage:
         if settle_delay:
             time.sleep(settle_delay)
 
-    def eliminate_backlash_xy(self, step: float = 10000, settle_delay: float = 0.200) -> None:
+    def eliminate_backlash_xy(
+        self,
+        step: int_nm = 10000,
+        settle_delay: float = 0.200,
+    ) -> None:
         """Eliminate backlash by in XY by moving the stage away from the
         current position, and approaching it from the common direction. Uses
         `set_xy_with_backlash_correction` internally.
 
-        step: float,
+        step: int,
             stepsize in nm
         settle_delay: float,
             delay between movements in seconds to allow the stage to settle
@@ -347,8 +351,8 @@ class Stage:
 
     def eliminate_backlash_a(
         self,
-        target_angle: float = 0.0,
-        step: float = 1.0,
+        target_angle: float_deg = 0.0,
+        step: float_deg = 1.0,
         n_steps: int = 3,
         settle_delay: float = 0.200,
     ) -> None:
