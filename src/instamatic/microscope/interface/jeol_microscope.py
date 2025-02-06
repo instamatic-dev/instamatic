@@ -361,9 +361,9 @@ class JeolMicroscope(MicroscopeBase):
         if self.VERIFY_STAGE_POSITION:
             nx, ny, nz, na, nb = self.getStagePosition()
             if x is not None and abs(nx - x) > 150:
-                logger.warning(f'stage.x -> requested: {x:.1f}, got: {nx:.1f}')
+                logger.warning(f'stage.x -> requested: {x}, got: {nx}')
             if y is not None and abs(ny - y) > 150:
-                logger.warning(f'stage.y -> requested: {y:.1f}, got: {ny:.1f}')
+                logger.warning(f'stage.y -> requested: {y}, got: {ny}')
             if z is not None and abs(nz - z) > 500:
                 logger.warning(f'stage.z -> requested: {z}, got: {nz}')
             if a is not None and abs(na - a) > 0.057:

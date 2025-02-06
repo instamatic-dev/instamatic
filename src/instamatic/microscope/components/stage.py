@@ -23,7 +23,7 @@ class Stage:
 
     def __repr__(self):
         x, y, z, a, b = self.get()
-        return f'{self.name}(x={x:.1f}, y={y:.1f}, z={z:.1f}, a={a:.1f}, b={b:.1f})'
+        return f'{self.name}(x={x}, y={y}, z={z}, a={a:.1f}, b={b:.1f})'
 
     @property
     def name(self) -> str:
@@ -258,7 +258,7 @@ class Stage:
 
         print(f"Restoring 'alpha': {a_center:.2f}")
         self.a = a_center
-        print(f'Print z={self.z:.2f}')
+        print(f'Print z={self.z}')
 
     def relax_xy(self, step: int = 100) -> None:
         """Relax the stage by moving it in the opposite direction from the last
