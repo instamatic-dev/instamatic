@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Tuple
+from typing import Optional, Tuple
 
 from instamatic import config
 from instamatic.exceptions import TEMValueError
@@ -416,7 +416,7 @@ class SimuMicroscope(MicroscopeBase):
         if wait:
             self.waitForStage()
 
-    def setStageXY(self, x: int, y: int, wait: bool = True):
+    def setStageXY(self, x: int_nm, y: int_nm, wait: bool = True):
         self.StagePosition_x = x
         self.StagePosition_y = y
         if wait:
@@ -427,11 +427,11 @@ class SimuMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
-        z: int_nm = None,
-        a: float_deg = None,
-        b: float_deg = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         speed: float = -1,
         wait: bool = True,
     ) -> None:

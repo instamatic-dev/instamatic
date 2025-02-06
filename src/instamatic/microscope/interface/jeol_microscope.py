@@ -3,7 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 import time
-from typing import Tuple
+from typing import Optional, Tuple
 
 import comtypes.client
 
@@ -335,11 +335,11 @@ class JeolMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
-        z: int_nm = None,
-        a: float_deg = None,
-        b: float_deg = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         wait: bool = True,
     ) -> None:
         if z is not None:

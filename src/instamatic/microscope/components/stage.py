@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
+from typing import Optional
 
 import numpy as np
 
@@ -31,11 +32,11 @@ class Stage:
 
     def set(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
-        z: int_nm = None,
-        a: float_deg = None,
-        b: float_deg = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         wait: bool = True,
     ) -> None:
         """Wait: bool, block until stage movement is complete (JEOL only)"""
@@ -43,11 +44,11 @@ class Stage:
 
     def set_with_speed(
         self,
-        x: int = None,
-        y: int = None,
-        z: int = None,
-        a: int = None,
-        b: int = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         wait: bool = True,
         speed: float = 1.0,
     ) -> None:

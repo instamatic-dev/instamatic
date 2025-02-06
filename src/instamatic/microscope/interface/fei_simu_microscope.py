@@ -4,6 +4,7 @@ import atexit
 import logging
 import random
 import time
+from typing import Optional
 
 import comtypes.client
 
@@ -245,11 +246,11 @@ class FEISimuMicroscope(MicroscopeBase):
 
     def setStagePosition(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
-        z: int_nm = None,
-        a: float_deg = None,
-        b: float_deg = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         wait: bool = True,
         speed: float = 1.0,
     ) -> None:
@@ -266,11 +267,11 @@ class FEISimuMicroscope(MicroscopeBase):
 
     def setStagePosition_nw(
         self,
-        x: int_nm = None,
-        y: int_nm = None,
-        z: int_nm = None,
-        a: float_deg = None,
-        b: float_deg = None,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
         wait: bool = False,
     ) -> None:
         if z is not None:
