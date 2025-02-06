@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Optional, Tuple
 
 from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
@@ -182,7 +182,13 @@ class MicroscopeBase(ABC):
 
     @abstractmethod
     def setStagePosition(
-        self, x: int_nm, y: int_nm, z: int_nm, a: float_deg, b: float_deg, wait: bool
+        self,
+        x: Optional[int_nm],
+        y: Optional[int_nm],
+        z: Optional[int_nm],
+        a: Optional[float_deg],
+        b: Optional[float_deg],
+        wait: bool,
     ) -> None:
         pass
 

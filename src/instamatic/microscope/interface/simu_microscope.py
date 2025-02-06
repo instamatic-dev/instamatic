@@ -313,12 +313,12 @@ class SimuMicroscope(MicroscopeBase):
         self.setMagnification(value)
 
     def increaseMagnificationIndex(self) -> int:
-        idx = self.getMagnificationIndex
+        idx = self.getMagnificationIndex()
         self.setMagnificationIndex(idx + 1)
         return 1
 
     def decreaseMagnificationIndex(self) -> int:
-        idx = self.getMagnificationIndex
+        idx = self.getMagnificationIndex()
         self.setMagnificationIndex(idx - 1)
         return 1
 
@@ -536,7 +536,7 @@ class SimuMicroscope(MicroscopeBase):
     def getScreenPosition(self) -> str:
         return self.screenposition_value
 
-    def setScreenPosition(self, value: int):
+    def setScreenPosition(self, value: str):
         """Value = 'up' or 'down'."""
         if value not in ('up', 'down'):
             raise TEMValueError(f'No such screen position: `{value}`.')
