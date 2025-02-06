@@ -10,6 +10,7 @@ import comtypes.client
 from instamatic import config
 from instamatic.exceptions import JEOLValueError, TEMCommunicationError, TEMValueError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
@@ -280,10 +281,10 @@ class JeolMicroscope(MicroscopeBase):
     def setImageShift2(self, x: int, y: int):
         self.def3.SetIS2(x, y)
 
-    def getStagePosition(self) -> Tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
+    def getStagePosition(self) -> StagePositionTuple:
         """X, y, z in nanometer a and b in degrees."""
         x, y, z, a, b, result = self.stage3.GetPos()
-        return round(x), round(y), round(z), float(a), float(b)
+        return StagePositionTuple(round(x), round(y), round(z), float(a), float(b))
 
     def isStageMoving(self):
         x, y, z, a, b, result = self.stage3.GetStatus()

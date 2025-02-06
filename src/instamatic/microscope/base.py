@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Tuple
 
+from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 
@@ -92,7 +93,7 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def getStagePosition(self) -> tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
+    def getStagePosition(self) -> StagePositionTuple:
         pass
 
     @abstractmethod

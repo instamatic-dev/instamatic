@@ -11,6 +11,7 @@ import comtypes.client
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
@@ -135,8 +136,8 @@ class FEISimuMicroscope(MicroscopeBase):
     def getMagnificationRanges(self) -> dict:
         raise NotImplementedError
 
-    def getStagePosition(self) -> tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
-        return (
+    def getStagePosition(self) -> StagePositionTuple:
+        return StagePositionTuple(
             round(self.stage.Position.X),
             round(self.stage.Position.Y),
             round(self.stage.Position.Z),

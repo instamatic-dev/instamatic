@@ -11,6 +11,7 @@ from numpy import pi
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
@@ -147,10 +148,9 @@ class FEIMicroscope(MicroscopeBase):
     def getStageSpeed(self):
         return self.tom.Stage.Speed
 
-    def getStagePosition(self) -> tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
-        """Return numbers in nanometers (used to be microns), angles in
-        degs."""
-        return (
+    def getStagePosition(self) -> StagePositionTuple:
+        """Return numbers in nanometers (used to be microns), angles in deg."""
+        return StagePositionTuple(
             round(self.stage.Position.X * 1e9),
             round(self.stage.Position.Y * 1e9),
             round(self.stage.Position.Z * 1e9),

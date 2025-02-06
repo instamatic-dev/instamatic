@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 from instamatic import config
 from instamatic.exceptions import TEMValueError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.typing import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 NTRLMAPPING = {
@@ -373,8 +374,8 @@ class SimuMicroscope(MicroscopeBase):
         self.ImageShift2_x = x
         self.ImageShift2_y = y
 
-    def getStagePosition(self) -> Tuple[int_nm, int_nm, int_nm, float_deg, float_deg]:
-        return (
+    def getStagePosition(self) -> StagePositionTuple:
+        return StagePositionTuple(
             round(self.StagePosition_x),
             round(self.StagePosition_y),
             round(self.StagePosition_z),
