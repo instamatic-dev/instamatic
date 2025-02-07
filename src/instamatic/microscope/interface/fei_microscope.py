@@ -149,7 +149,7 @@ class FEIMicroscope(MicroscopeBase):
         return self.tom.Stage.Speed
 
     def getStagePosition(self) -> StagePositionTuple:
-        """Return numbers in nanometers (used to be microns), angles in deg."""
+        """Return x, y, z in nanometers (used to be microns), angles in deg."""
         return StagePositionTuple(
             round(self.stage.Position.X * 1e9),
             round(self.stage.Position.Y * 1e9),
