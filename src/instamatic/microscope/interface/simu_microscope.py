@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 from instamatic import config
 from instamatic.exceptions import TEMValueError
 from instamatic.microscope.base import MicroscopeBase
-from instamatic.microscope.typing import StagePositionTuple
+from instamatic.microscope.utils import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 NTRLMAPPING = {

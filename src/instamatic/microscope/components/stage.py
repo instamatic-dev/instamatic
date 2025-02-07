@@ -7,7 +7,7 @@ from typing import Optional
 import numpy as np
 
 from instamatic.microscope.base import MicroscopeBase
-from instamatic.microscope.typing import StagePositionTuple
+from instamatic.microscope.utils import StagePositionTuple
 from instamatic.typing import float_deg, int_nm
 
 
