@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -135,13 +135,13 @@ class Stage:
         self.set(y=value, wait=self._wait)
 
     @property
-    def xy(self) -> tuple[int_nm, int_nm]:
+    def xy(self) -> Tuple[int_nm, int_nm]:
         """Stage position XY expressed as a tuple in nm."""
         x, y, z, a, b = self.get()
         return x, y
 
     @xy.setter
-    def xy(self, values: tuple[int_nm, int_nm]) -> None:
+    def xy(self, values: Tuple[int_nm, int_nm]) -> None:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
