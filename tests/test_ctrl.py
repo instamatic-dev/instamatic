@@ -59,14 +59,14 @@ def test_stage(ctrl):
     assert stage.a == 45
 
     stage.set(x=0, y=0, z=0)
-    stage.move_in_projection(delta_x=1, delta_y=1)
+    stage.move_in_projection(delta_x=1000, delta_y=1000)
 
-    assert abs(stage.y) + abs(stage.z) == pytest.approx(np.sqrt(2))
-    assert stage.x == 1
+    assert abs(stage.y) + abs(stage.z) == 1414  # round(np.sqrt(2) * 1000)
+    assert stage.x == 1000
 
     stage.set(x=0, y=0, z=0)
-    stage.move_along_optical_axis(1)
-    assert abs(stage.y) + abs(stage.z) == pytest.approx(np.sqrt(2))
+    stage.move_along_optical_axis(delta_z=1000)
+    assert abs(stage.y) + abs(stage.z) == 1414  # round(np.sqrt(2) * 1000)
 
     stage.xy = (0, 0)
     stage.move_xy_with_backlash_correction(shift_x=100, shift_y=100)
