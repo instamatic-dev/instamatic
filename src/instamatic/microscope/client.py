@@ -7,7 +7,7 @@ import subprocess as sp
 import threading
 import time
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 from instamatic import config
 from instamatic.exceptions import TEMCommunicationError, exception_list
@@ -92,7 +92,7 @@ class MicroscopeClient:
 
         return wrapper
 
-    def _eval_dct(self, dct: dict[str, Any]) -> Any:
+    def _eval_dct(self, dct: Dict[str, Any]) -> Any:
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
         self.s.send(dumper(dct))
 

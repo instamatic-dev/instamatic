@@ -367,9 +367,9 @@ class JeolMicroscope(MicroscopeBase):
             if z is not None and abs(nz - z) > 500:
                 logger.warning(f'stage.z -> requested: {z}, got: {nz}')
             if a is not None and abs(na - a) > 0.057:
-                logger.warning(f'stage.a -> requested: {a}, got: {na}')
+                logger.warning(f'stage.a -> requested: {a:.1f}, got: {na:.1f}')
             if b is not None and abs(nb - b) > 0.057:
-                logger.warning(f'stage.b -> requested: {b}, got: {nb}')
+                logger.warning(f'stage.b -> requested: {b:.1f}, got: {nb:.1f}')
 
     def is_goniotool_available(self):
         """Return goniotool status."""
