@@ -4,12 +4,15 @@ import atexit
 import logging
 import random
 import time
+from typing import Optional
 
 import comtypes.client
 
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.utils import StagePositionTuple
+from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
 
@@ -133,13 +136,13 @@ class FEISimuMicroscope(MicroscopeBase):
     def getMagnificationRanges(self) -> dict:
         raise NotImplementedError
 
-    def getStagePosition(self):
-        return (
-            self.stage.Position.X,
-            self.stage.Position.Y,
-            self.stage.Position.Z,
-            self.stage.Position.A,
-            self.stage.Position.B,
+    def getStagePosition(self) -> StagePositionTuple:
+        return StagePositionTuple(
+            round(self.stage.Position.X),
+            round(self.stage.Position.Y),
+            round(self.stage.Position.Z),
+            float(self.stage.Position.A),
+            float(self.stage.Position.B),
         )
 
     def getGunShift(self):
@@ -202,47 +205,56 @@ class FEISimuMicroscope(MicroscopeBase):
         while self.isStageMoving():
             time.sleep(delay)
 
-    def setStageX(self, value):
+    def setStageX(self, value: int_nm) -> None:
         self.stage.Position.X = value
 
-    def setStageY(self, value):
+    def setStageY(self, value: int_nm) -> None:
         self.stage.Position.Y = value
 
-    def setStageZ(self, value):
+    def setStageZ(self, value: int_nm) -> None:
         self.stage.Position.Z = value
 
-    def setStageA(self, value):
+    def setStageA(self, value: float_deg) -> None:
         self.stage.Position.A = value
 
-    def setStageB(self, value):
+    def setStageB(self, value: float_deg) -> None:
         self.stage.Position.B = value
 
-    def setStageX_nw(self, value, wait=True):
+    def setStageX_nw(self, value: float_deg, wait=True) -> None:
         self.stage.Position.X = value
         if not wait:
             print('Not waiting for stage movement to be done.')
 
-    def setStageY_nw(self, value, wait=True):
+    def setStageY_nw(self, value: float_deg, wait=True) -> None:
         self.stage.Position.Y = value
         if not wait:
             print('Not waiting for stage movement to be done.')
 
-    def setStageZ_nw(self, value, wait=True):
+    def setStageZ_nw(self, value: float_deg, wait=True) -> None:
         self.stage.Position.Z = value
         if not wait:
             print('Not waiting for stage movement to be done.')
 
-    def setStageA_nw(self, value, wait=True):
+    def setStageA_nw(self, value: float_deg, wait=True) -> None:
         self.stage.Position.A = value
         if not wait:
             print('Not waiting for stage movement to be done.')
 
-    def setStageB_nw(self, value, wait=True):
+    def setStageB_nw(self, value: float_deg, wait=True) -> None:
         self.stage.Position.B = value
         if not wait:
             print('Not waiting for stage movement to be done.')
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None):
+    def setStagePosition(
+        self,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
+        wait: bool = True,
+        speed: float = 1.0,
+    ) -> None:
         if z is not None:
             self.setStageZ(z)
         if a is not None:
@@ -254,7 +266,15 @@ class FEISimuMicroscope(MicroscopeBase):
         if y is not None:
             self.setStageY(y)
 
-    def setStagePosition_nw(self, x=None, y=None, z=None, a=None, b=None, wait=False):
+    def setStagePosition_nw(
+        self,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
+        wait: bool = False,
+    ) -> None:
         if z is not None:
             self.setStageZ_nw(z, wait)
         if a is not None:

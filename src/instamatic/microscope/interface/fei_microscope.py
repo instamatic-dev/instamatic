@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 import time
+from typing import Optional
 
 import comtypes.client
 from numpy import pi
@@ -10,6 +11,8 @@ from numpy import pi
 from instamatic import config
 from instamatic.exceptions import FEIValueError, TEMCommunicationError
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.utils import StagePositionTuple
+from instamatic.typing import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
 
@@ -145,17 +148,26 @@ class FEIMicroscope(MicroscopeBase):
     def getStageSpeed(self):
         return self.tom.Stage.Speed
 
-    def getStagePosition(self):
-        """Return numbers in microns, angles in degs."""
-        return (
-            self.stage.Position.X * 1e6,
-            self.stage.Position.Y * 1e6,
-            self.stage.Position.Z * 1e6,
-            self.stage.Position.A / pi * 180,
-            self.stage.Position.B / pi * 180,
+    def getStagePosition(self) -> StagePositionTuple:
+        """Return x, y, z in nanometers (used to be microns), angles in deg."""
+        return StagePositionTuple(
+            round(self.stage.Position.X * 1e9),
+            round(self.stage.Position.Y * 1e9),
+            round(self.stage.Position.Z * 1e9),
+            float(self.stage.Position.A / pi * 180),
+            float(self.stage.Position.B / pi * 180),
         )
 
-    def setStagePosition(self, x=None, y=None, z=None, a=None, b=None, wait=True, speed=1):
+    def setStagePosition(
+        self,
+        x: Optional[int_nm] = None,
+        y: Optional[int_nm] = None,
+        z: Optional[int_nm] = None,
+        a: Optional[float_deg] = None,
+        b: Optional[float_deg] = None,
+        wait: bool = True,
+        speed: float = 1.0,
+    ) -> None:
         """X, y, z in the system are in unit of meters, angles in radians."""
         pos = self.stage.Position
         axis = 0
@@ -167,13 +179,13 @@ class FEIMicroscope(MicroscopeBase):
         goniospeed = self.tom.Stage.Speed
 
         if x is not None:
-            pos.X = x * 1e-6
+            pos.X = x * 1e-9
             axis += 1
         if y is not None:
-            pos.Y = y * 1e-6
+            pos.Y = y * 1e-9
             axis += 2
         if z is not None:
-            pos.Z = z * 1e-6
+            pos.Z = z * 1e-9
             axis += 4
         if a is not None:
             pos.A = a / 180 * pi
