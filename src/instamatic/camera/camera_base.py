@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
-from numpy import ndarray
+import numpy as np
 
 from instamatic import config
 
@@ -37,12 +37,21 @@ class CameraBase(ABC):
         pass
 
     @abstractmethod
-    def get_image(self, exposure: float = None, binsize: int = None, **kwargs) -> ndarray:
+    def get_image(
+        self,
+        exposure: Optional[float] = None,
+        binsize: Optional[int] = None,
+        **kwargs,
+    ) -> np.ndarray:
         pass
 
     def get_movie(
-        self, n_frames: int, exposure: float = None, binsize: int = None, **kwargs
-    ) -> List[ndarray]:
+        self,
+        n_frames: int,
+        exposure: Optional[float] = None,
+        binsize: Optional[int] = None,
+        **kwargs,
+    ) -> List[np.ndarray]:
         """Basic implementation, subclasses should override with appropriate
         optimization."""
         return [
@@ -50,11 +59,11 @@ class CameraBase(ABC):
             for _ in range(n_frames)
         ]
 
-    def __enter__(self):
+    def __enter__(self) -> CameraBase:
         self.establish_connection()
         return self
 
-    def __exit__(self, kind, value, traceback):
+    def __exit__(self, kind, value, traceback) -> None:
         self.release_connection()
 
     def get_binning(self) -> int:
@@ -66,7 +75,7 @@ class CameraBase(ABC):
     def get_name(self) -> str:
         return self.name
 
-    def load_defaults(self):
+    def load_defaults(self) -> None:
         if self.name != config.settings.camera:
             config.load_camera_config(camera_name=self.name)
         for key, val in config.camera.mapping.items():

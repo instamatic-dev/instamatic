@@ -18,6 +18,7 @@ from ctypes import (
     create_unicode_buffer,
 )
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 
@@ -214,7 +215,7 @@ class CameraDLL(CameraBase):
         """Return the status of the camera."""
         return self._isCameraInfoAvailable()
 
-    def get_camera_dimensions(self) -> (int, int):
+    def get_camera_dimensions(self) -> Tuple[int, int]:
         """Return the dimensions reported by the camera."""
         pnWidth = c_int(0)
         pnHeight = c_int(0)

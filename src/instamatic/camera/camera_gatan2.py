@@ -5,6 +5,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 
@@ -44,13 +45,13 @@ class CameraGatan2(CameraBase):
         """Get the version number of DM."""
         return self.g.GetDMVersion()
 
-    def get_image_dimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the dimensions of the image."""
         binning = self.get_binning()
         dim_x, dim_y = self.get_camera_dimensions()
         return int(dim_x / binning), int(dim_y / binning)
 
-    def get_physical_pixelsize(self) -> (int, int):
+    def get_physical_pixelsize(self) -> Tuple[int, int]:
         """Returns the physical pixel size of the camera nanometers."""
         raise NotImplementedError
 
