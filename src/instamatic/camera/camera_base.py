@@ -57,6 +57,9 @@ class CameraBase(ABC):
     def __exit__(self, kind, value, traceback):
         self.release_connection()
 
+    def get_binning(self) -> int:
+        return self.default_binsize
+
     def get_camera_dimensions(self) -> Tuple[int, int]:
         return self.dimensions
 

@@ -170,9 +170,6 @@ class CameraSimu(CameraBase):
     def get_timestamps(self, start_index, end_index):
         return list(range(20))
 
-    def get_binning(self):
-        return self.default_binsize
-
     def write_tiffs(
         self, start_index: int, stop_index: int, path: str, clear_buffer=True
     ) -> None:
