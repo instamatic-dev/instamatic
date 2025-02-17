@@ -55,11 +55,6 @@ class CameraGatan2(CameraBase):
         """Returns the physical pixel size of the camera nanometers."""
         raise NotImplementedError
 
-    def get_binning(self) -> int:
-        """Returns the binning corresponding to the currently selected camera
-        config."""
-        raise NotImplementedError
-
     def get_camera_name(self) -> str:
         """Get the name reported by the camera."""
         return self.name
