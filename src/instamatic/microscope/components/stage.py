@@ -283,10 +283,10 @@ class Stage:
             delay between movements in seconds to allow the stage to settle
         """
         wait = True
-        current_x, current_y = self.xy
-        x = current_x if x is None else x
-        y = current_y if y is None else y
-
+        if (x is None) or (y is None):
+            current_x, current_y = self.xy
+            x = current_x if x is None else x
+            y = current_y if y is None else y
         self.set(x=x - step, y=y - step)
         if settle_delay:
             time.sleep(settle_delay)
