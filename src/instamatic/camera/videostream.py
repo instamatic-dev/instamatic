@@ -129,7 +129,7 @@ class VideoStream(threading.Thread):
         current_frametime = self.grabber.frametime
 
         # set to 0 to prevent it lagging data acquisition
-        self.grabber.frametime = 0
+        self.block()  # Stop the passive collection during single-frame acquisition
         if exposure:
             self.grabber.exposure = exposure
         if binsize:
@@ -144,7 +144,7 @@ class VideoStream(threading.Thread):
         self.grabber.lock.release()
 
         self.grabber.acquireCompleteEvent.clear()
-        self.grabber.frametime = current_frametime
+        self.unblock()  # Resume the passive collection
         return frame
 
     def update_frametime(self, frametime):
