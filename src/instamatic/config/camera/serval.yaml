@@ -14,7 +14,7 @@ possible_binsizes: [1]
 stretch_amplitude: 0.0
 stretch_azimuth: 0.0
 
-# This configuration can be tuned based on your needs. 
+# This configuration can be tuned based on your needs.
 # Please refer to the Serval manual.
 # For Serval 3.3.x, it is in section 4.5.7 - Detector Config JSON structure.
 detector_config:
@@ -24,7 +24,7 @@ detector_config:
   ExposureTime: 1.0
   TriggerPeriod: 1.002
   nTriggers: 1000000000
-  # Remove the following lines if you are using CheeTah T3 variants (timepix3), 
+  # Disregard the following lines if you are using CheeTah T3 variants (timepix3),
   # as they do not support these settings.
   GainMode: HGM # Only for Medipix3
   PixelDepth: 24 # Set to 12 for 12-bit (normal) mode - only Medipix3
