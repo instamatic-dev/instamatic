@@ -34,7 +34,3 @@ detector_config:
 bpc_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.bpc'
 dacs_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.dacs'
 url: 'http://localhost:8080'
-
-# The ASIC ("chip") that the camera uses.
-# Use "medipix3" for CheeTah M3 variants and "timepix3" for CheeTah T3 variants.
-asic: medipix3
