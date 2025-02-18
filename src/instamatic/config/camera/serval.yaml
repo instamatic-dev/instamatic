@@ -22,13 +22,13 @@ detector_config:
   BiasEnabled: True
   TriggerMode: SOFTWARESTART_TIMERSTOP
   ExposureTime: 1.0
-  TriggerPeriod: 1.002
+  TriggerPeriod: 1.002  # Try 1.0005 for Medipix3
   nTriggers: 1000000000
   # Disregard the following lines if you are using CheeTah T3 variants (timepix3),
   # as they do not support these settings.
   GainMode: HGM # Only for Medipix3
   PixelDepth: 24 # Set to 12 for 12-bit (normal) mode - only Medipix3
-  BothCounters: True # Set to False for 12-bit mode - only Medipix3
+  BothCounters: False # Set to True for 12-bit mode - only Medipix3
 
 # Change this to the location of your actual factory settings
 bpc_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.bpc'
