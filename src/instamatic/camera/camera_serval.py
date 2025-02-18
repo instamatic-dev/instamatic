@@ -31,6 +31,15 @@ class CameraServal(CameraBase):
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
 
+    def _validate_exposure(self, exposure: float) -> float:
+        if exposure < 0.001:
+            logger.warning(f'Exposure {exposure} too low. Adjusting to 0.001s')
+            exposure = 0.001
+        elif exposure > 10:
+            logger.warning(f'Exposure {exposure} too high. Adjusting to 10s')
+            exposure = 10
+        return exposure
+
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
@@ -42,6 +51,7 @@ class CameraServal(CameraBase):
         """
         if exposure is None:
             exposure = self.default_exposure
+        exposure = self._validate_exposure(exposure)
 
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(
@@ -77,6 +87,7 @@ class CameraServal(CameraBase):
             exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
+        exposure = self._validate_exposure(exposure)
 
         self.conn.set_detector_config(TriggerMode='CONTINUOUS')
 
