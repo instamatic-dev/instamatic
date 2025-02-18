@@ -4,6 +4,7 @@ import glob
 import os
 import sys
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 from scipy import interpolate, ndimage
@@ -70,7 +71,7 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         raise ValueError('Only quadrilaterals are supported for now')
 
 
-def find_subranges(lst: list) -> (int, int):
+def find_subranges(lst: list) -> Tuple[int, int]:
     """Takes a range of sequential numbers (possibly with gaps) and splits them
     in sequential sub-ranges defined by the minimum and maximum value."""
     from itertools import groupby

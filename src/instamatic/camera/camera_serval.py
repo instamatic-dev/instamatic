@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+from typing import Tuple
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
@@ -99,7 +100,7 @@ class CameraServal(CameraBase):
 
         return arr
 
-    def get_image_dimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
         binning = self.get_binning()
         dim_x, dim_y = self.get_camera_dimensions()
