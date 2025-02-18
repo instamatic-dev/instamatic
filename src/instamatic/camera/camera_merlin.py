@@ -29,7 +29,7 @@ import atexit
 import logging
 import socket
 import time
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import numpy as np
 
@@ -337,7 +337,7 @@ class CameraMerlin(CameraBase):
 
         return data
 
-    def get_image_dimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
         binning = self.get_binning()
         dim_x, dim_y = self.get_camera_dimensions()

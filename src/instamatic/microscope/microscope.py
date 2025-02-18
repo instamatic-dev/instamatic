@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from instamatic import config
 from instamatic.microscope.base import MicroscopeBase
 
@@ -32,7 +34,7 @@ def get_microscope_class(interface: str) -> 'type[MicroscopeBase]':
     return cls
 
 
-def get_microscope(name: str = None, use_server: bool = False) -> MicroscopeBase:
+def get_microscope(name: Optional[str] = None, use_server: bool = False) -> MicroscopeBase:
     """Generic class to load microscope interface class.
 
     name: str

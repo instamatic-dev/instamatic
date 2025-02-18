@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 import time
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -66,7 +67,14 @@ class CameraSimu(CameraBase):
 
         return arr
 
-    def get_movie(self, n_frames, *, exposure: float = None, binsize: int = None, **kwargs):
+    def get_movie(
+        self,
+        n_frames: int,
+        *,
+        exposure: Optional[float] = None,
+        binsize: Optional[int] = None,
+        **kwargs,
+    ) -> List[np.ndarray]:
         """Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
@@ -93,7 +101,7 @@ class CameraSimu(CameraBase):
         """Check if the camera is available."""
         return True
 
-    def get_image_dimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
         binning = self.get_binning()
         dim_x, dim_y = self.get_camera_dimensions()
@@ -169,9 +177,6 @@ class CameraSimu(CameraBase):
 
     def get_timestamps(self, start_index, end_index):
         return list(range(20))
-
-    def get_binning(self):
-        return self.default_binsize
 
     def write_tiffs(
         self, start_index: int, stop_index: int, path: str, clear_buffer=True

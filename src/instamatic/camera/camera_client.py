@@ -5,6 +5,7 @@ import socket
 import subprocess as sp
 import time
 from functools import wraps
+from typing import Dict
 
 import numpy as np
 
@@ -79,7 +80,7 @@ class CamClient:
         )
         print('Use shared memory:', self.use_shared_memory)
 
-        self.buffers = {}
+        self.buffers: Dict[str, np.ndarray] = {}
         self.shms = {}
 
         self._init_dict()

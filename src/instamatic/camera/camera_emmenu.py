@@ -4,6 +4,7 @@ import atexit
 import logging
 import time
 from pathlib import Path
+from typing import Tuple
 
 import comtypes.client
 import numpy as np
@@ -347,19 +348,19 @@ class CameraEMMENU(CameraBase):
 
         return np.array(arr)
 
-    def get_camera_dimensions(self) -> (int, int):
+    def get_camera_dimensions(self) -> Tuple[int, int]:
         """Get the maximum dimensions reported by the camera."""
         # cfg = self.get_current_config()
         # return cfg.DimensionX, cfg.DimensionY
         return self._cam.RealSizeX, self._cam.RealSizeY
         # return self._cam.MaximumSizeX, self._cam.MaximumSizeY
 
-    def get_image_dimensions(self) -> (int, int):
+    def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the dimensions of the image."""
         binning = self.get_binning()
         return int(self._cam.RealSizeX / binning), int(self._cam.RealSizeY / binning)
 
-    def get_physical_pixelsize(self) -> (int, int):
+    def get_physical_pixelsize(self) -> Tuple[int, int]:
         """Returns the physical pixel size of the camera nanometers."""
         return self._cam.PixelSizeX, self._cam.PixelSizeY
 
