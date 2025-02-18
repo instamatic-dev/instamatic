@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import atexit
 import logging
-from enum import Enum
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
@@ -17,11 +16,6 @@ logger = logging.getLogger(__name__)
 # 3. launch `instamatic`
 
 
-class ASICType(Enum):
-    MEDIPIX3 = 'medipix3'  # default
-    TIMEPIX3 = 'timepix3'
-
-
 class CameraServal(CameraBase):
     """Interfaces with Serval from ASI."""
 
@@ -30,29 +24,12 @@ class CameraServal(CameraBase):
     def __init__(self, name='serval'):
         """Initialize camera module."""
         super().__init__(name)
-        self.asic = self._determine_asic()
         self.establish_connection()
         self.exposure_cooldown = (
             self.detector_config['TriggerPeriod'] - self.detector_config['ExposureTime']
         )
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
-
-    def _determine_asic(self) -> ASICType:
-        try:
-            return ASICType(self.asic)
-        except ValueError:
-            lst = [asic.value for asic in ASICType]
-            raise ValueError(
-                f'Unsupported ASIC type: {self.asic}'
-                f'Serval only supports the following ASI: {lst}'
-            )
-        except AttributeError:
-            logger.warning(
-                f'Serval configuration missing "asic" field. '
-                f'Assuming `asic={ASICType.MEDIPIX3.value}`.'
-            )
-            return ASICType.MEDIPIX3
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -130,18 +107,13 @@ class CameraServal(CameraBase):
         )
         self.conn.set_detector_config(**self.detector_config)
 
-        # Check pixel depth. If 24 bit mode is used, the pgm format does not work
-        # (has support up to 16 bits) so use tiff in that case. In other cases (1, 6, 12 bits)
-        # use pgm since it is more efficient.
-        pd = self.conn.detector_config['PixelDepth']
-        file_format = 'tiff' if pd > 16 or self.asic is ASICType.TIMEPIX3 else 'pgm'
         self.conn.destination = {
             'Image': [
                 {
                     # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
                     'Base': 'http://localhost',
                     # What (image) format to provide the files in.
-                    'Format': file_format,
+                    'Format': 'tiff',
                     # What data to build a frame from
                     'Mode': 'count',
                 }
