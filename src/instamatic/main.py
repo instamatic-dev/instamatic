@@ -117,6 +117,14 @@ def main():
         help='Show info about the current instamatic installation.',
     )
 
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='store_true',
+        dest='verbose',
+        help="Show imported packages' DEBUG records in log",
+    )
+
     parser.set_defaults(
         script=None,
         acquire_at_items=False,
@@ -155,11 +163,17 @@ def main():
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.locations['logs'] / f'instamatic_{date}.log'
 
-    logging.basicConfig(
-        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-        filename=logfile,
-        level=logging.DEBUG,
-    )
+    def filter_out_imported_package_debug_records(r: logging.LogRecord) -> bool:
+        return (r.name.startswith("instamatic") or r.name == "__main__"
+                or r.levelno > logging.DEBUG or options.verbose)
+
+    log_main = logging.getLogger()
+    log_main.setLevel(logging.DEBUG)
+    log_format = '%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s'
+    log_handler = logging.FileHandler(logfile)
+    log_handler.setFormatter(logging.Formatter(log_format))
+    log_handler.addFilter(filter_out_imported_package_debug_records)
+    log_main.addHandler(log_handler)
 
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
