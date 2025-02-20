@@ -164,8 +164,12 @@ def main():
     logfile = config.locations['logs'] / f'instamatic_{date}.log'
 
     def filter_out_imported_package_debug_records(r: logging.LogRecord) -> bool:
-        return (r.name.startswith("instamatic") or r.name == "__main__"
-                or r.levelno > logging.DEBUG or options.verbose)
+        return (
+            r.name.startswith('instamatic')
+            or r.name == '__main__'
+            or r.levelno > logging.DEBUG
+            or options.verbose
+        )
 
     log_main = logging.getLogger()
     log_main.setLevel(logging.DEBUG)
