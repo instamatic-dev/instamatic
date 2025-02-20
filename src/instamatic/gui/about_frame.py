@@ -4,7 +4,7 @@ from tkinter import *
 from tkinter import Label as tkLabel
 from tkinter.font import Font, nametofont
 from tkinter.ttk import *
-from typing import Callable
+from typing import Callable, Optional
 
 import instamatic
 
@@ -32,7 +32,9 @@ def get_background_of_widget(widget):
 
 class Copyable(Text):
     def __init__(self, master=None, text: str = '', **kwargs) -> None:
-        kwargs = {**kwargs, 'bg': get_background_of_widget(master), 'relief': 'flat'}
+        kwargs['bg'] = kwargs.get('bg', get_background_of_widget(master))
+        kwargs['relief'] = kwargs.get('relief', 'flat')
+        kwargs['width'] = kwargs.get('width', len(text))
         super().__init__(master, **kwargs)
         self.insert(1.0, text)
         self.configure(state='disabled', font=nametofont('TkDefaultFont'))
