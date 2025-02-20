@@ -95,7 +95,7 @@ class CameraServal(CameraBase):
         arr = self.conn.get_images(
             nTriggers=n_frames,
             ExposureTime=exposure,
-            TriggerPeriod=exposure + self.exposure_cooldown,
+            TriggerPeriod=exposure,
         )
 
         return arr
