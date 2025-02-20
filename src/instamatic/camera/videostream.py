@@ -126,9 +126,6 @@ class VideoStream(threading.Thread):
         return grabber
 
     def get_image(self, exposure=None, binsize=None):
-        current_frametime = self.grabber.frametime
-
-        # set to 0 to prevent it lagging data acquisition
         self.block()  # Stop the passive collection during single-frame acquisition
         if exposure:
             self.grabber.exposure = exposure
