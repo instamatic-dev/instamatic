@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import atexit
 import logging
-from pathlib import Path
 from typing import Tuple
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
 
-from instamatic import config
 from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
@@ -27,13 +25,21 @@ class CameraServal(CameraBase):
     def __init__(self, name='serval'):
         """Initialize camera module."""
         super().__init__(name)
-
         self.establish_connection()
-
-        msg = f'Camera {self.get_name()} initialized'
-        logger.info(msg)
-
+        self.exposure_cooldown = (
+            self.detector_config['TriggerPeriod'] - self.detector_config['ExposureTime']
+        )
+        logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
+
+    def _validate_exposure(self, exposure: float) -> float:
+        if exposure < 0.001:
+            logger.warning(f'Exposure {exposure} too low. Adjusting to 0.001s')
+            exposure = 0.001
+        elif exposure > 10:
+            logger.warning(f'Exposure {exposure} too high. Adjusting to 10s')
+            exposure = 10
+        return exposure
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -46,12 +52,12 @@ class CameraServal(CameraBase):
         """
         if exposure is None:
             exposure = self.default_exposure
-        if not binsize:
-            binsize = self.default_binsize
+        exposure = self._validate_exposure(exposure)
 
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(
-            ExposureTime=exposure, TriggerPeriod=exposure + 0.00050001
+            ExposureTime=exposure,
+            TriggerPeriod=exposure + self.exposure_cooldown,
         )
 
         # Check if measurement is running. If not: start
@@ -82,6 +88,7 @@ class CameraServal(CameraBase):
             exposure = self.default_exposure
         if not binsize:
             binsize = self.default_binsize
+        exposure = self._validate_exposure(exposure)
 
         self.conn.set_detector_config(TriggerMode='CONTINUOUS')
 
@@ -111,21 +118,14 @@ class CameraServal(CameraBase):
             bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path
         )
         self.conn.set_detector_config(**self.detector_config)
-        # Check pixel depth. If 24 bit mode is used, the pgm format does not work
-        # (has support up to 16 bits) so use tiff in that case. In other cases (1, 6, 12 bits)
-        # use pgm since it is more efficient
-        self.pixel_depth = self.conn.detector_config['PixelDepth']
-        if self.pixel_depth == 24:
-            file_format = 'tiff'
-        else:
-            file_format = 'pgm'
+
         self.conn.destination = {
             'Image': [
                 {
                     # Where to place the preview files (HTTP end-point: GET localhost:8080/measurement/image)
                     'Base': 'http://localhost',
                     # What (image) format to provide the files in.
-                    'Format': file_format,
+                    'Format': 'tiff',
                     # What data to build a frame from
                     'Mode': 'count',
                 }

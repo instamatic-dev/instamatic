@@ -1,7 +1,7 @@
 Code contributors
 -----------------
 
-See [Github contributors list](https://github.com/nipy/nipype/graphs/contributors)
+See [Github contributors list](https://github.com/instamatic-dev/instamatic/graphs/contributors)
 
 Special thanks
 --------------

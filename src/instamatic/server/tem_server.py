@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import datetime
-import json
 import logging
-import pickle
 import queue
 import socket
 import threading
@@ -11,8 +9,7 @@ import traceback
 
 from instamatic import config
 from instamatic.microscope import get_microscope
-
-from .serializer import dumper, loader
+from instamatic.server.serializer import dumper, loader
 
 condition = threading.Condition()
 box = []
