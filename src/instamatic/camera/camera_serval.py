@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+import math
 from typing import Tuple
 
 import numpy as np
@@ -21,25 +22,18 @@ class CameraServal(CameraBase):
     """Interfaces with Serval from ASI."""
 
     streamable = True
+    MIN_EXPOSURE = 0.000001
+    MAX_EXPOSURE = 10.0
 
     def __init__(self, name='serval'):
         """Initialize camera module."""
         super().__init__(name)
         self.establish_connection()
-        self.exposure_cooldown = (
+        self.dead_time = (
             self.detector_config['TriggerPeriod'] - self.detector_config['ExposureTime']
         )
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
-
-    def _validate_exposure(self, exposure: float) -> float:
-        if exposure < 0.001:
-            logger.warning(f'Exposure {exposure} too low. Adjusting to 0.001s')
-            exposure = 0.001
-        elif exposure > 10:
-            logger.warning(f'Exposure {exposure} too high. Adjusting to 10s')
-            exposure = 10
-        return exposure
 
     def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         """Image acquisition routine. If the exposure and binsize are not
@@ -52,12 +46,30 @@ class CameraServal(CameraBase):
         """
         if exposure is None:
             exposure = self.default_exposure
-        exposure = self._validate_exposure(exposure)
+        if exposure < self.MIN_EXPOSURE:
+            logger.warning(f'Requested image with too low exposure: {exposure}')
+            return self._get_image_null()
+        elif self.MIN_EXPOSURE <= exposure <= self.MAX_EXPOSURE:
+            return self._get_image_single(exposure, binsize, **kwargs)
+        else:  # if exposure > self.MAX_EXPOSURE
+            logger.warning(f'Requested image with too high exposure: {exposure}')
+            n_triggers = math.ceil(exposure / self.MAX_EXPOSURE)
+            exposure1 = (exposure + self.dead_time) / n_triggers - self.dead_time
+            arrays = self.get_movie(n_triggers, exposure1, binsize, **kwargs)
+            array_sum = sum(arrays, np.zeros_like(arrays[0]))
+            scaling_factor = exposure / exposure1 * n_triggers  # account for dead time
+            return (array_sum * scaling_factor).astype(array_sum.dtype)
 
+    def _get_image_null(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+        logger.debug('Collecting a synthetic image with zero counts')
+        return np.zeros(shape=self.get_image_dimensions(), dtype=np.int32)
+
+    def _get_image_single(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+        logger.debug(f'Collecting a single image with exposure {exposure}')
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(
             ExposureTime=exposure,
-            TriggerPeriod=exposure + self.exposure_cooldown,
+            TriggerPeriod=exposure + self.dead_time,
         )
 
         # Check if measurement is running. If not: start
@@ -86,19 +98,21 @@ class CameraServal(CameraBase):
         """
         if exposure is None:
             exposure = self.default_exposure
-        if not binsize:
-            binsize = self.default_binsize
-        exposure = self._validate_exposure(exposure)
-
-        self.conn.set_detector_config(TriggerMode='CONTINUOUS')
-
-        arr = self.conn.get_images(
-            nTriggers=n_frames,
+        logger.debug(f'Collecting {n_frames} images with exposure {exposure}')
+        mode = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
+        self.conn.measurement_stop()
+        previous_config = self.conn.detector_config
+        self.conn.set_detector_config(
+            TriggerMode=mode,
             ExposureTime=exposure,
-            TriggerPeriod=exposure,
+            TriggerPeriod=exposure + self.dead_time,
+            nTriggers=n_frames,
         )
-
-        return arr
+        self.conn.measurement_start()
+        img = self.conn.get_image_stream(nTriggers=n_frames, disable_tqdm=True)
+        self.conn.measurement_stop()
+        self.conn.set_detector_config(**previous_config)
+        return img
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
