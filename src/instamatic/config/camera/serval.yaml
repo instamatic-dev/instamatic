@@ -22,9 +22,12 @@ detector_config:
   BiasEnabled: True
   TriggerMode: SOFTWARESTART_TIMERSTOP
   ExposureTime: 1.0
-  TriggerPeriod: 1.002  # Try 1.0005 for Medipix3
+  TriggerPeriod: 1.002
   nTriggers: 1000000000
-  # Disregard the following lines if you are using CheeTah T3 variants (timepix3),
+  # TriggerPeriod and ExposureTime are used to derive the dead/cooldown
+  # time of the detector. Consult Serval user manual to determine
+  # the optimal cooldown time for requested TriggerMode on your detector.
+  # Remove the following lines if you are using CheeTah T3 variants (timepix3),
   # as they do not support these settings.
   GainMode: HGM # Only for Medipix3
   PixelDepth: 24 # Set to 12 for 12-bit (normal) mode - only Medipix3
