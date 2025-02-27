@@ -20,7 +20,7 @@ stretch_azimuth: 0.0
 detector_config:
   BiasVoltage: 100
   BiasEnabled: True
-  TriggerMode: SOFTWARESTART_TIMERSTOP
+  TriggerMode: SOFTWARESTART_TIMERSTOP  # Currently only this mode is supported
   ExposureTime: 1.0
   TriggerPeriod: 1.002
   nTriggers: 1000000000

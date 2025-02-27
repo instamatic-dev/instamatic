@@ -3,7 +3,9 @@ from __future__ import annotations
 import atexit
 import logging
 import math
-from typing import Tuple
+import threading
+from functools import wraps
+from typing import Callable, Tuple
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
@@ -18,9 +20,21 @@ logger = logging.getLogger(__name__)
 # 3. launch `instamatic`
 
 
+def synchronized(lock: threading.Lock) -> Callable:
+    """Decorator: only one instance of one decorated function can run at time"""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with lock:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
 class CameraServal(CameraBase):
     """Interfaces with Serval from ASI."""
 
+    lock = threading.Lock()
     streamable = True
     MIN_EXPOSURE = 0.000001
     MAX_EXPOSURE = 10.0
@@ -60,10 +74,12 @@ class CameraServal(CameraBase):
             scaling_factor = exposure / exposure1 * n_triggers  # account for dead time
             return (array_sum * scaling_factor).astype(array_sum.dtype)
 
+    @synchronized(lock)
     def _get_image_null(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         logger.debug('Collecting a synthetic image with zero counts')
         return np.zeros(shape=self.get_image_dimensions(), dtype=np.int32)
 
+    @synchronized(lock)
     def _get_image_single(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
         logger.debug(f'Collecting a single image with exposure {exposure}')
         # Upload exposure settings (Note: will do nothing if no change in settings)
@@ -85,6 +101,7 @@ class CameraServal(CameraBase):
         arr = np.array(img)
         return arr
 
+    @synchronized(lock)
     def get_movie(self, n_frames, exposure=None, binsize=None, **kwargs):
         """Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
