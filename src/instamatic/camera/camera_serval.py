@@ -5,7 +5,7 @@ import logging
 import math
 import threading
 from functools import wraps
-from typing import Callable, Tuple
+from typing import Any, Callable, Tuple, TypeVar
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
@@ -20,14 +20,20 @@ logger = logging.getLogger(__name__)
 # 3. launch `instamatic`
 
 
+Decorated = TypeVar('Decorated', bound=Callable[..., Any])
+
+
 def synchronized(lock: threading.Lock) -> Callable:
-    """Decorator: only one instance of one decorated function can run at time"""
-    def decorator(func: Callable) -> Callable:
+    """Decorator: only one function decorated with given lock can run at time"""
+
+    def decorator(func: Decorated) -> Decorated:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> Any:
             with lock:
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -38,6 +44,7 @@ class CameraServal(CameraBase):
     streamable = True
     MIN_EXPOSURE = 0.000001
     MAX_EXPOSURE = 10.0
+    BAD_EXPOSURE_MSG = 'Requested exposure exceeds native Serval support (>0–10s)'
 
     def __init__(self, name='serval'):
         """Initialize camera module."""
@@ -61,12 +68,12 @@ class CameraServal(CameraBase):
         if exposure is None:
             exposure = self.default_exposure
         if exposure < self.MIN_EXPOSURE:
-            logger.warning(f'Requested image with too low exposure: {exposure}')
+            logger.warning(f'{self.BAD_EXPOSURE_MSG}: {exposure}')
             return self._get_image_null()
         elif self.MIN_EXPOSURE <= exposure <= self.MAX_EXPOSURE:
             return self._get_image_single(exposure, binsize, **kwargs)
         else:  # if exposure > self.MAX_EXPOSURE
-            logger.warning(f'Requested image with too high exposure: {exposure}')
+            logger.warning(f'{self.BAD_EXPOSURE_MSG}: {exposure}')
             n_triggers = math.ceil(exposure / self.MAX_EXPOSURE)
             exposure1 = (exposure + self.dead_time) / n_triggers - self.dead_time
             arrays = self.get_movie(n_triggers, exposure1, binsize, **kwargs)
@@ -76,12 +83,12 @@ class CameraServal(CameraBase):
 
     @synchronized(lock)
     def _get_image_null(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        logger.debug('Collecting a synthetic image with zero counts')
+        logger.debug('Creating a synthetic image with zero counts')
         return np.zeros(shape=self.get_image_dimensions(), dtype=np.int32)
 
     @synchronized(lock)
     def _get_image_single(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        logger.debug(f'Collecting a single image with exposure {exposure}')
+        logger.debug(f'Collecting a single image with exposure {exposure} s')
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(
             ExposureTime=exposure,
@@ -115,7 +122,7 @@ class CameraServal(CameraBase):
         """
         if exposure is None:
             exposure = self.default_exposure
-        logger.debug(f'Collecting {n_frames} images with exposure {exposure}')
+        logger.debug(f'Collecting {n_frames} images with exposure {exposure} s')
         mode = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
         self.conn.measurement_stop()
         previous_config = self.conn.detector_config
@@ -126,10 +133,10 @@ class CameraServal(CameraBase):
             nTriggers=n_frames,
         )
         self.conn.measurement_start()
-        img = self.conn.get_image_stream(nTriggers=n_frames, disable_tqdm=True)
+        images = self.conn.get_image_stream(nTriggers=n_frames, disable_tqdm=True)
         self.conn.measurement_stop()
         self.conn.set_detector_config(**previous_config)
-        return img
+        return images
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
