@@ -122,7 +122,7 @@ def main():
         '-v',
         '--verbose',
         action='count',
-        dest='verbosity',
+        dest='verbose',
         help='Write debug messages of instamatic (-v) and other imported packages (-vv) to the log',
         default=0,
     )
@@ -183,7 +183,7 @@ def main():
     log_format = f'%(asctime)s | %({log_detail})s:%(lineno)s | %(levelname)s | %(message)s'
     log_handler = logging.FileHandler(logfile)
     log_handler.setFormatter(logging.Formatter(log_format))
-    log_handler.addFilter(log_filter_factory(verbosity=options.verbosity))
+    log_handler.addFilter(log_filter_factory(verbosity=options.verbose))
     log_main.addHandler(log_handler)
 
     logging.captureWarnings(True)
