@@ -114,7 +114,7 @@ class CameraServal(CameraBase):
         images = self.conn.get_image_stream(nTriggers=n_frames, disable_tqdm=True)
         self.conn.measurement_stop()
         self.conn.set_detector_config(**previous_config)
-        return images
+        return [np.array(image) for image in images]
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
