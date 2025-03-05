@@ -57,6 +57,7 @@ class MediaGrabber:
 
         self.frametime = frametime
         self.request: Optional[MediaRequest] = None
+        self.requested_media = None
         self.lock = threading.Lock()
 
         self.stopEvent = threading.Event()
@@ -139,10 +140,10 @@ class VideoStream(threading.Thread):
             if request is None:
                 self.frame = media
             elif isinstance(request, ImageRequest):
-                self.acquired_media = self.frame = media
+                self.requested_media = self.frame = media
                 self.grabber.acquireCompleteEvent.set()
             else:  # isinstance(request, MovieRequest):
-                self.acquired_media = media
+                self.requested_media = media
                 self.frame = media[-1]
                 self.grabber.acquireCompleteEvent.set()
 
@@ -152,30 +153,25 @@ class VideoStream(threading.Thread):
         return grabber
 
     def get_image(self, exposure=None, binsize=None):
-        self.block()  # Stop the passive collection during single-frame acquisition
-        self.grabber.request = ImageRequest(exposure=exposure, binsize=binsize)
-        self.grabber.acquireInitiateEvent.set()
-        self.grabber.acquireCompleteEvent.wait()
-        with self.grabber.lock:
-            image = self.acquired_media
-        self.grabber.request = None
-        self.grabber.acquireCompleteEvent.clear()
-        self.unblock()  # Resume the passive collection
-        return image
+        request = ImageRequest(exposure=exposure, binsize=binsize)
+        return self._get_media(request)
 
     def get_movie(self, n_frames: int, exposure=None, binsize=None):
-        self.block()  # Stop the passive collection during single-frame acquisition
-        self.grabber.request = MovieRequest(
-            n_frames=n_frames, exposure=exposure, binsize=binsize
-        )
+        request = MovieRequest(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        return self._get_media(request)
+
+    def _get_media(self, request: MediaRequest) -> Union[np.ndarray, List[np.ndarray]]:
+        self.block()  # Stop the passive collection during request acquisition
+        self.grabber.request = request
         self.grabber.acquireInitiateEvent.set()
         self.grabber.acquireCompleteEvent.wait()
         with self.grabber.lock:
-            movie = self.acquired_media
+            media = self.requested_media
+            self.requested_media = None
         self.grabber.request = None
         self.grabber.acquireCompleteEvent.clear()
         self.unblock()  # Resume the passive collection
-        return movie
+        return media
 
     def update_frametime(self, frametime):
         self.frametime = frametime
