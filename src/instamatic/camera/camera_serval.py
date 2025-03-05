@@ -68,7 +68,7 @@ class CameraServal(CameraBase):
         if exposure is None:
             exposure = self.default_exposure
         if exposure < self.MIN_EXPOSURE:
-            logger.warning(f'{self.BAD_EXPOSURE_MSG}: {exposure}')
+            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, exposure)
             return self._get_image_null()
         elif self.MIN_EXPOSURE <= exposure <= self.MAX_EXPOSURE:
             return self._get_image_single(exposure, binsize, **kwargs)
