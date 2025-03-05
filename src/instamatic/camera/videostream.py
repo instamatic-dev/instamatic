@@ -12,7 +12,7 @@ from instamatic.camera.camera_base import CameraBase
 from .camera import Camera
 
 
-@dataclass
+@dataclass(frozen=True)
 class MediaRequest:
     n_frames: Optional[int] = None
     exposure: Optional[float] = None
@@ -67,21 +67,21 @@ class MediaGrabber:
     def run(self):
         while not self.stopEvent.is_set():
             if self.acquireInitiateEvent.is_set():
+                r = self.request
                 self.acquireInitiateEvent.clear()
-                e = e if (e := self.request.exposure) else self.default_exposure
-                b = b if (b := self.request.binsize) else self.default_binsize
-                if isinstance(self.request, ImageRequest):
+                e = r.exposure if r.exposure else self.default_exposure
+                b = r.binsize if r.binsize else self.default_binsize
+                if isinstance(r, ImageRequest):
                     media = self.cam.get_image(exposure=e, binsize=b)
-                else:  # isinstance(self.request, MovieRequest):
-                    n = n if (n := self.request.n_frames) else 1
+                else:  # isinstance(r, MovieRequest):
+                    n = r.n_frames if r.n_frames else 1
                     media = self.cam.get_movie(n_frames=n, exposure=e, binsize=b)
-                self.callback(media)
+                self.callback(media, request=r)
 
             elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.get_image(
-                    exposure=self.frametime, binsize=self.default_binsize
-                )
-                self.callback(frame)
+                b = self.default_binsize
+                frame = self.cam.get_image(exposure=self.frametime, binsize=b)
+                self.callback(frame, request=None)
 
     def start_loop(self):
         self.thread = threading.Thread(target=self.run, args=(), daemon=True)
@@ -129,15 +129,19 @@ class VideoStream(threading.Thread):
     def start(self):
         self.grabber.start_loop()
 
-    def send_media(self, media: Union[np.ndarray, List[np.ndarray]]) -> None:
+    def send_media(
+        self,
+        media: Union[np.ndarray, List[np.ndarray]],
+        request: Optional[MediaRequest] = None,
+    ) -> None:
         """Callback function of `self.grabber` that handles grabbed media."""
         with self.grabber.lock:
-            if self.grabber.request is None:
+            if request is None:
                 self.frame = media
-            elif isinstance(self.grabber.request, ImageRequest):
+            elif isinstance(request, ImageRequest):
                 self.acquired_media = self.frame = media
                 self.grabber.acquireCompleteEvent.set()
-            else:  # isinstance(self.grabber.request, MovieRequest):
+            else:  # isinstance(request, MovieRequest):
                 self.acquired_media = media
                 self.frame = media[-1]
                 self.grabber.acquireCompleteEvent.set()

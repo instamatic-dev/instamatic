@@ -41,6 +41,31 @@ def test_get_image(ctrl):
     assert y1 == bin4 * y4
 
 
+def test_get_movie(ctrl):
+    bin1 = 1
+    bin2 = 2
+    bin4 = 4
+
+    movie = ctrl.get_movie(n_frames=bin1, binsize=bin1)
+    x1, y1 = movie[0].shape
+    l1 = len(movie)
+
+    movie = ctrl.get_movie(n_frames=bin2, binsize=bin2)
+    x2, y2 = movie[0].shape
+    l2 = len(movie)
+
+    movie = ctrl.get_movie(n_frames=bin4, binsize=bin4)
+    x4, y4 = movie[0].shape
+    l4 = len(movie)
+
+    assert x1 == bin2 * x2
+    assert y1 == bin2 * y2
+    assert l1 * bin2 == l2
+    assert x1 == bin4 * x4
+    assert y1 == bin4 * y4
+    assert l1 * bin4 == l4
+
+
 def test_functions(ctrl):
     dims = ctrl.cam.get_image_dimensions()
     assert isinstance(dims, tuple)
