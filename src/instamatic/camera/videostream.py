@@ -154,6 +154,7 @@ class VideoStream(threading.Thread):
         self.grabber.acquireCompleteEvent.wait()
         with self.grabber.lock:
             image = self.acquired_media
+        self.grabber.request = None
         self.grabber.acquireCompleteEvent.clear()
         self.unblock()  # Resume the passive collection
         return image
@@ -167,6 +168,7 @@ class VideoStream(threading.Thread):
         self.grabber.acquireCompleteEvent.wait()
         with self.grabber.lock:
             movie = self.acquired_media
+        self.grabber.request = None
         self.grabber.acquireCompleteEvent.clear()
         self.unblock()  # Resume the passive collection
         return movie
