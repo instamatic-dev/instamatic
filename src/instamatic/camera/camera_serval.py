@@ -70,9 +70,10 @@ class CameraServal(CameraBase):
         if exposure < self.MIN_EXPOSURE:
             logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, exposure)
             return self._get_image_null()
-        elif self.MIN_EXPOSURE <= exposure <= self.MAX_EXPOSURE:
+        elif exposure > self.MAX_EXPOSURE:
+            ...
+        else:
             return self._get_image_single(exposure, binsize, **kwargs)
-        else:  # if exposure > self.MAX_EXPOSURE
             logger.warning(f'{self.BAD_EXPOSURE_MSG}: {exposure}')
             n_triggers = math.ceil(exposure / self.MAX_EXPOSURE)
             exposure1 = (exposure + self.dead_time) / n_triggers - self.dead_time
