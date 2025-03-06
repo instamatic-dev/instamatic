@@ -3,7 +3,8 @@ from __future__ import annotations
 import atexit
 import logging
 import math
-from typing import Tuple
+from itertools import batched
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from serval_toolkit.camera import Camera as ServalCamera
@@ -16,6 +17,8 @@ logger = logging.getLogger(__name__)
 # 1. `java -jar .\emu\tpx3_emu.jar`
 # 2. `java -jar .\server\serv-2.1.3.jar`
 # 3. launch `instamatic`
+
+Ignore = object()  # sentinel object: informs `_get_images` to get a single image
 
 
 class CameraServal(CameraBase):
@@ -36,37 +39,74 @@ class CameraServal(CameraBase):
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
 
-    def get_image(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
-        """Image acquisition routine. If the exposure and binsize are not
-        given, the default values are read from the config file.
+    def get_image(self, exposure: Optional[float] = None, **kwargs) -> np.ndarray:
+        """Image acquisition interface. If the exposure is not given, the
+        default value is read from the config file. Binning is ignored.
 
-        exposure:
+        exposure: `float` or `None`
             Exposure time in seconds.
-        binsize:
-            Which binning to use.
         """
-        if exposure is None:
-            exposure = self.default_exposure
-        if exposure < self.MIN_EXPOSURE:
-            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, exposure)
-            return self._get_image_null()
-        elif exposure > self.MAX_EXPOSURE:
-            ...
-        else:
-            return self._get_image_single(exposure, binsize, **kwargs)
-            logger.warning(f'{self.BAD_EXPOSURE_MSG}: {exposure}')
-            n_triggers = math.ceil(exposure / self.MAX_EXPOSURE)
-            exposure1 = (exposure + self.dead_time) / n_triggers - self.dead_time
-            arrays = self.get_movie(n_triggers, exposure1, binsize, **kwargs)
-            array_sum = sum(arrays, np.zeros_like(arrays[0]))
-            scaling_factor = exposure / exposure1 * n_triggers  # account for dead time
-            return (array_sum * scaling_factor).astype(array_sum.dtype)
+        return self._get_images(n_triggers=Ignore, exposure=exposure, **kwargs)
 
-    def _get_image_null(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+    def get_movie(
+        self, n_triggers: int, exposure: Optional[float] = None, **kwargs
+    ) -> List[np.ndarray]:
+        """Movie acquisition interface. If the exposure is not given, the
+        default value is read from the config file. Binning is ignored.
+
+        n_frames: `int`
+            Number of frames to collect
+        exposure: `float` or `None`
+            Exposure time in seconds.
+        """
+        return self._get_images(n_triggers=n_triggers, exposure=exposure, **kwargs)
+
+    def _get_images(
+        self,
+        n_triggers: Union[int, Ignore],
+        exposure: Optional[float] = None,
+        **kwargs,
+    ) -> Union[np.ndarray, List[np.ndarray]]:
+        """General media acquisition dispatcher for other protected methods."""
+        n: int = 1 if n_triggers is Ignore else n_triggers
+        e: float = self.default_exposure if exposure is None else exposure
+
+        if n_triggers == 0:  # single image is communicated via n_triggers = None
+            return []
+
+        elif e < self.MIN_EXPOSURE:
+            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
+            if n_triggers is Ignore:
+                return self._get_image_null(exposure=e, **kwargs)
+            return [self._get_image_null(exposure=e, **kwargs) for _ in range(n)]
+
+        elif e > self.MAX_EXPOSURE:
+            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
+            n1 = math.ceil(e / self.MAX_EXPOSURE)
+            e = (e + self.dead_time) / n1 - self.dead_time
+            images = self._get_image_stack(n_triggers=n * n1, exposure=e, **kwargs)
+            if n_triggers is Ignore:
+                return self._spliced_sum(images, exposure=e)
+            return [self._spliced_sum(i, exposure=e) for i in batched(images, n1)]
+
+        else:  # if exposure is within limits
+            if n_triggers is Ignore:
+                return self._get_image_single(exposure=e, **kwargs)
+            return self._get_image_stack(n_triggers=n, exposure=e, **kwargs)
+
+    def _spliced_sum(self, arrays: Sequence[np.ndarray], exposure: float) -> np.ndarray:
+        """Sum a series of arrays while applying a dead time correction."""
+        array_sum = sum(arrays, np.zeros_like(arrays[0]))
+        total_exposure = len(arrays) * exposure + (len(arrays) - 1) * self.dead_time
+        live_fraction = len(arrays) * exposure / total_exposure
+        return (array_sum / live_fraction).astype(arrays[0])
+
+    def _get_image_null(self, **_) -> np.ndarray:
         logger.debug('Creating a synthetic image with zero counts')
         return np.zeros(shape=self.get_image_dimensions(), dtype=np.int32)
 
-    def _get_image_single(self, exposure=None, binsize=None, **kwargs) -> np.ndarray:
+    def _get_image_single(self, exposure: float, **_) -> np.ndarray:
+        """Request a single frame in the mode in a trigger collection mode."""
         logger.debug(f'Collecting a single image with exposure {exposure} s')
         # Upload exposure settings (Note: will do nothing if no change in settings)
         self.conn.set_detector_config(
@@ -87,19 +127,8 @@ class CameraServal(CameraBase):
         arr = np.array(img)
         return arr
 
-    def get_movie(self, n_frames, exposure=None, binsize=None, **kwargs):
-        """Movie acquisition routine. If the exposure and binsize are not
-        given, the default values are read from the config file.
-
-        n_frames:
-            Number of frames to collect
-        exposure:
-            Exposure time in seconds.
-        binsize:
-            Which binning to use.
-        """
-        if exposure is None:
-            exposure = self.default_exposure
+    def _get_image_stack(self, n_frames: int, exposure: float, **_) -> list[np.ndarray]:
+        """Get a series of images in a mode with minimal dead time."""
         logger.debug(f'Collecting {n_frames} images with exposure {exposure} s')
         mode = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
         self.conn.measurement_stop()
