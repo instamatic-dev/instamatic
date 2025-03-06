@@ -71,7 +71,7 @@ class CameraServal(CameraBase):
         n: int = 1 if n_triggers is Ignore else n_triggers
         e: float = self.default_exposure if exposure is None else exposure
 
-        if n_triggers == 0:  # single image is communicated via n_triggers = None
+        if n_triggers == 0:  # single image is communicated via n_triggers = Ignore
             return []
 
         elif e < self.MIN_EXPOSURE:
