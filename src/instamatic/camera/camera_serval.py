@@ -27,7 +27,7 @@ class CameraServal(CameraBase):
     streamable = True
     MIN_EXPOSURE = 0.000001
     MAX_EXPOSURE = 10.0
-    BAD_EXPOSURE_MSG = 'Requested exposure exceeds native Serval support (>0–10s)'
+    BAD_EXPOSURE_MSG = 'Requested exposure exceeds native Serval support (>0-10s)'
 
     def __init__(self, name='serval'):
         """Initialize camera module."""
@@ -46,10 +46,10 @@ class CameraServal(CameraBase):
         exposure: `float` or `None`
             Exposure time in seconds.
         """
-        return self._get_images(n_triggers=Ignore, exposure=exposure, **kwargs)
+        return self._get_images(n_frames=Ignore, exposure=exposure, **kwargs)
 
     def get_movie(
-        self, n_triggers: int, exposure: Optional[float] = None, **kwargs
+        self, n_frames: int, exposure: Optional[float] = None, **kwargs
     ) -> List[np.ndarray]:
         """Movie acquisition interface. If the exposure is not given, the
         default value is read from the config file. Binning is ignored.
@@ -59,24 +59,24 @@ class CameraServal(CameraBase):
         exposure: `float` or `None`
             Exposure time in seconds.
         """
-        return self._get_images(n_triggers=n_triggers, exposure=exposure, **kwargs)
+        return self._get_images(n_frames=n_frames, exposure=exposure, **kwargs)
 
     def _get_images(
         self,
-        n_triggers: Union[int, Ignore],
+        n_frames: Union[int, Ignore],
         exposure: Optional[float] = None,
         **kwargs,
     ) -> Union[np.ndarray, List[np.ndarray]]:
         """General media acquisition dispatcher for other protected methods."""
-        n: int = 1 if n_triggers is Ignore else n_triggers
+        n: int = 1 if n_frames is Ignore else n_frames
         e: float = self.default_exposure if exposure is None else exposure
 
-        if n_triggers == 0:  # single image is communicated via n_triggers = Ignore
+        if n_frames == 0:  # single image is communicated via n_frames = Ignore
             return []
 
         elif e < self.MIN_EXPOSURE:
             logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
-            if n_triggers is Ignore:
+            if n_frames is Ignore:
                 return self._get_image_null(exposure=e, **kwargs)
             return [self._get_image_null(exposure=e, **kwargs) for _ in range(n)]
 
@@ -84,22 +84,22 @@ class CameraServal(CameraBase):
             logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
             n1 = math.ceil(e / self.MAX_EXPOSURE)
             e = (e + self.dead_time) / n1 - self.dead_time
-            images = self._get_image_stack(n_triggers=n * n1, exposure=e, **kwargs)
-            if n_triggers is Ignore:
+            images = self._get_image_stack(n_frames=n * n1, exposure=e, **kwargs)
+            if n_frames is Ignore:
                 return self._spliced_sum(images, exposure=e)
             return [self._spliced_sum(i, exposure=e) for i in batched(images, n1)]
 
         else:  # if exposure is within limits
-            if n_triggers is Ignore:
+            if n_frames is Ignore:
                 return self._get_image_single(exposure=e, **kwargs)
-            return self._get_image_stack(n_triggers=n, exposure=e, **kwargs)
+            return self._get_image_stack(n_frames=n, exposure=e, **kwargs)
 
     def _spliced_sum(self, arrays: Sequence[np.ndarray], exposure: float) -> np.ndarray:
         """Sum a series of arrays while applying a dead time correction."""
         array_sum = sum(arrays, np.zeros_like(arrays[0]))
         total_exposure = len(arrays) * exposure + (len(arrays) - 1) * self.dead_time
         live_fraction = len(arrays) * exposure / total_exposure
-        return (array_sum / live_fraction).astype(arrays[0])
+        return (array_sum / live_fraction).astype(arrays[0].dtype)
 
     def _get_image_null(self, **_) -> np.ndarray:
         logger.debug('Creating a synthetic image with zero counts')
@@ -173,6 +173,7 @@ class CameraServal(CameraBase):
                     'Format': 'tiff',
                     # What data to build a frame from
                     'Mode': 'count',
+                    # 'QueueSize': 2,
                 }
             ],
         }
