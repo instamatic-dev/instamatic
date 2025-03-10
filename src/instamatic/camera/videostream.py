@@ -24,7 +24,7 @@ class ImageRequest(MediaRequest):
 
 
 class MovieRequest(MediaRequest):
-    """To be used when requesting a single image via `get_image`"""
+    """To be used when requesting an image series via `get_movie`"""
 
 
 class MediaGrabber:
@@ -80,7 +80,9 @@ class MediaGrabber:
                 self.callback(media, request=r)
 
             elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.get_image(exposure=self.frametime, binsize=self.default_binsize)
+                frame = self.cam.get_image(
+                    exposure=self.frametime, binsize=self.default_binsize
+                )
                 self.callback(frame, request=None)
 
     def start_loop(self):
