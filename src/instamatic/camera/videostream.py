@@ -80,8 +80,7 @@ class MediaGrabber:
                 self.callback(media, request=r)
 
             elif not self.continuousCollectionEvent.is_set():
-                b = self.default_binsize
-                frame = self.cam.get_image(exposure=self.frametime, binsize=b)
+                frame = self.cam.get_image(exposure=self.frametime, binsize=self.default_binsize)
                 self.callback(frame, request=None)
 
     def start_loop(self):
