@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import Label as tkLabel
 from tkinter.font import Font, nametofont
 from tkinter.ttk import *
+from typing import Callable, Optional
 
 import instamatic
 
@@ -27,6 +28,16 @@ def get_background_of_widget(widget):
         background = Style().lookup(style, 'background')
 
     return background
+
+
+class Copyable(Text):
+    def __init__(self, master=None, text: str = '', **kwargs) -> None:
+        kwargs['bg'] = kwargs.get('bg', get_background_of_widget(master))
+        kwargs['relief'] = kwargs.get('relief', 'flat')
+        kwargs['width'] = kwargs.get('width', len(text))
+        super().__init__(master, **kwargs)
+        self.insert(1.0, text)
+        self.configure(state='disabled', font=nametofont('TkDefaultFont'))
 
 
 class Link_Button(tkLabel):
@@ -110,45 +121,43 @@ class AboutFrame(LabelFrame):
 
         Label(frame, text='').grid(row=0, column=0, sticky='W')
         Label(frame, text='Contact:').grid(row=1, column=0, sticky='W', padx=10)
-        Label(frame, text=f'{instamatic.__author__} ({instamatic.__author_email__}').grid(
-            row=1, column=1, sticky='W'
-        )
+        auth = f'{instamatic.__author__}, {instamatic.__author_email__}'
+        Copyable(frame, text=auth, height=1).grid(row=1, column=1, sticky='W')
         Label(frame, text='').grid(row=5, column=0, sticky='W')
 
         Label(frame, text='Source code:').grid(row=10, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__url__, action=self.link_github)
+        action = self.link_action_factory(url=instamatic.__url__)
+        link = Link_Button(frame, text=instamatic.__url__, action=action)
         link.grid(row=10, column=1, sticky='W')
         Label(frame, text='').grid(row=12, column=0, sticky='W')
 
         Label(frame, text='Docs:').grid(row=20, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__docs__, action=self.link_github)
+        action = self.link_action_factory(url=instamatic.__docs__)
+        link = Link_Button(frame, text=instamatic.__docs__, action=action)
         link.grid(row=20, column=1, sticky='W')
         Label(frame, text='').grid(row=22, column=0, sticky='W')
 
         Label(frame, text='Bugs:').grid(row=30, column=0, sticky='W', padx=10)
-        link = Link_Button(frame, text=instamatic.__issues__, action=self.link_github)
+        action = self.link_action_factory(url=instamatic.__issues__)
+        link = Link_Button(frame, text=instamatic.__issues__, action=action)
         link.grid(row=30, column=1, sticky='W')
         Label(frame, text='').grid(row=32, column=0, sticky='W')
 
         Label(frame, text='If you found this software useful, please cite:').grid(
             row=40, column=0, sticky='W', columnspan=2, padx=10
         )
-        txt = Message(frame, text=instamatic.__citation__, width=320, justify=LEFT)
-        txt.grid(row=41, column=1, sticky='W')
-
-        Label(frame, text='').grid(row=41, column=0, sticky='W', padx=10)
+        txt = Copyable(frame, text=instamatic.__citation__, height=1)
+        txt.grid(row=41, column=0, columnspan=2, sticky='W', padx=10)
 
         frame.pack(side='top', fill='x')
 
-    def link_github(self, event=None):
-        import webbrowser
+    def link_action_factory(self, url: str) -> Callable:
+        def link_action(event=None) -> None:
+            import webbrowser
 
-        webbrowser.open_new(instamatic.__url__)
+            webbrowser.open_new(url)
 
-    def link_manual(self, event=None):
-        import webbrowser
-
-        webbrowser.open_new(instamatic.__url__)
+        return link_action
 
 
 module = BaseModule(name='about', display_name='about', tk_frame=AboutFrame, location='bottom')
@@ -157,5 +166,5 @@ commands = {}
 
 if __name__ == '__main__':
     root = Tk()
-    About(root).pack(side='top', fill='both', expand=True)
+    AboutFrame(root).pack(side='top', fill='both', expand=True)
     root.mainloop()

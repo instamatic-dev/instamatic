@@ -2,21 +2,40 @@ from __future__ import annotations
 
 import atexit
 import threading
+from dataclasses import dataclass
+from typing import List, Optional, Union
+
+import numpy as np
 
 from instamatic.camera.camera_base import CameraBase
 
 from .camera import Camera
 
 
-class ImageGrabber:
+@dataclass(frozen=True)
+class MediaRequest:
+    n_frames: Optional[int] = None
+    exposure: Optional[float] = None
+    binsize: Optional[int] = None
+
+
+class ImageRequest(MediaRequest):
+    """To be used when requesting a single image via `get_image`"""
+
+
+class MovieRequest(MediaRequest):
+    """To be used when requesting an image series via `get_movie`"""
+
+
+class MediaGrabber:
     """Continuously read out the camera for continuous acquisition.
 
     When the continousCollectionEvent is set, the camera will set the
     exposure to `frametime`, otherwise, the default camera exposure is
     used.
 
-    The callback function is used to send the frame back to the parent
-    routine.
+    The callback function is used to send the media, either image or movie,
+    back to the parent routine.
     """
 
     def __init__(self, cam: CameraBase, callback, frametime: float = 0.05):
@@ -37,9 +56,8 @@ class ImageGrabber:
         self.stash = None
 
         self.frametime = frametime
-        self.exposure = self.frametime
-        self.binsize = self.cam.default_binsize
-
+        self.request: Optional[MediaRequest] = None
+        self.requested_media = None
         self.lock = threading.Lock()
 
         self.stopEvent = threading.Event()
@@ -50,14 +68,22 @@ class ImageGrabber:
     def run(self):
         while not self.stopEvent.is_set():
             if self.acquireInitiateEvent.is_set():
+                r = self.request
                 self.acquireInitiateEvent.clear()
-
-                frame = self.cam.get_image(exposure=self.exposure, binsize=self.binsize)
-                self.callback(frame, acquire=True)
+                e = r.exposure if r.exposure else self.default_exposure
+                b = r.binsize if r.binsize else self.default_binsize
+                if isinstance(r, ImageRequest):
+                    media = self.cam.get_image(exposure=e, binsize=b)
+                else:  # isinstance(r, MovieRequest):
+                    n = r.n_frames if r.n_frames else 1
+                    media = self.cam.get_movie(n_frames=n, exposure=e, binsize=b)
+                self.callback(media, request=r)
 
             elif not self.continuousCollectionEvent.is_set():
-                frame = self.cam.get_image(exposure=self.frametime, binsize=self.binsize)
-                self.callback(frame)
+                frame = self.cam.get_image(
+                    exposure=self.frametime, binsize=self.default_binsize
+                )
+                self.callback(frame, request=None)
 
     def start_loop(self):
         self.thread = threading.Thread(target=self.run, args=(), daemon=True)
@@ -71,14 +97,10 @@ class ImageGrabber:
 class VideoStream(threading.Thread):
     """Handle the continuous stream of incoming data from the ImageGrabber."""
 
-    def __init__(self, cam='simulate'):
+    def __init__(self, cam: Union[CameraBase, str] = 'simulate'):
         threading.Thread.__init__(self)
 
-        if isinstance(cam, str):
-            self.cam = Camera(name=cam)
-        else:
-            self.cam = cam
-
+        self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
         self.lock = threading.Lock()
 
         self.default_exposure = self.cam.default_exposure
@@ -109,43 +131,48 @@ class VideoStream(threading.Thread):
     def start(self):
         self.grabber.start_loop()
 
-    def send_frame(self, frame, acquire=False):
-        if acquire:
-            self.grabber.lock.acquire(True)
-            self.acquired_frame = self.frame = frame
-            self.grabber.lock.release()
-            self.grabber.acquireCompleteEvent.set()
-        else:
-            self.grabber.lock.acquire(True)
-            self.frame = frame
-            self.grabber.lock.release()
+    def send_media(
+        self,
+        media: Union[np.ndarray, List[np.ndarray]],
+        request: Optional[MediaRequest] = None,
+    ) -> None:
+        """Callback function of `self.grabber` that handles grabbed media."""
+        with self.grabber.lock:
+            if request is None:
+                self.frame = media
+            elif isinstance(request, ImageRequest):
+                self.requested_media = self.frame = media
+                self.grabber.acquireCompleteEvent.set()
+            else:  # isinstance(request, MovieRequest):
+                self.requested_media = media
+                self.frame = media[-1]
+                self.grabber.acquireCompleteEvent.set()
 
-    def setup_grabber(self) -> ImageGrabber:
-        grabber = ImageGrabber(self.cam, callback=self.send_frame, frametime=self.frametime)
+    def setup_grabber(self) -> MediaGrabber:
+        grabber = MediaGrabber(self.cam, callback=self.send_media, frametime=self.frametime)
         atexit.register(grabber.stop)
         return grabber
 
     def get_image(self, exposure=None, binsize=None):
-        current_frametime = self.grabber.frametime
+        request = ImageRequest(exposure=exposure, binsize=binsize)
+        return self._get_media(request)
 
-        # set to 0 to prevent it lagging data acquisition
-        self.grabber.frametime = 0
-        if exposure:
-            self.grabber.exposure = exposure
-        if binsize:
-            self.grabber.binsize = binsize
+    def get_movie(self, n_frames: int, exposure=None, binsize=None):
+        request = MovieRequest(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        return self._get_media(request)
 
+    def _get_media(self, request: MediaRequest) -> Union[np.ndarray, List[np.ndarray]]:
+        self.block()  # Stop the passive collection during request acquisition
+        self.grabber.request = request
         self.grabber.acquireInitiateEvent.set()
-
         self.grabber.acquireCompleteEvent.wait()
-
-        self.grabber.lock.acquire(True)
-        frame = self.acquired_frame
-        self.grabber.lock.release()
-
+        with self.grabber.lock:
+            media = self.requested_media
+            self.requested_media = None
+        self.grabber.request = None
         self.grabber.acquireCompleteEvent.clear()
-        self.grabber.frametime = current_frametime
-        return frame
+        self.unblock()  # Resume the passive collection
+        return media
 
     def update_frametime(self, frametime):
         self.frametime = frametime

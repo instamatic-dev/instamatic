@@ -157,6 +157,9 @@ class MainFrame:
         self.root.bind('<Escape>', self.close)
 
     def close(self):
+        # Prevent tk from trying to write into a closed `console_frame:Writer`
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
         try:
             self.stream_frame.close()
         except AttributeError:

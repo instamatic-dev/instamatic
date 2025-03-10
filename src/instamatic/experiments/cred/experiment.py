@@ -83,7 +83,8 @@ class Experiment(ExperimentBase):
         self.unblank_beam = unblank_beam
         self.logger = log
         self.mode = mode
-        if ctrl.cam.name == 'simulate':
+        # we need to be able to simulate using the serval camera as well - add "simulate" to part of the name.
+        if 'simulate' in ctrl.cam.name:
             self.mode = 'simulate'
         self.stopEvent = stop_event
         self.flatfield = flatfield

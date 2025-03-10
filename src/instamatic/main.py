@@ -6,6 +6,7 @@ import os
 import pprint
 import sys
 from pathlib import Path
+from typing import Callable
 
 import instamatic
 from instamatic import config
@@ -117,6 +118,15 @@ def main():
         help='Show info about the current instamatic installation.',
     )
 
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='count',
+        dest='verbose',
+        help='Write debug messages of instamatic (-v) and other imported packages (-vv) to the log',
+        default=0,
+    )
+
     parser.set_defaults(
         script=None,
         acquire_at_items=False,
@@ -155,11 +165,26 @@ def main():
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     logfile = config.locations['logs'] / f'instamatic_{date}.log'
 
-    logging.basicConfig(
-        format='%(asctime)s | %(module)s:%(lineno)s | %(levelname)s | %(message)s',
-        filename=logfile,
-        level=logging.DEBUG,
-    )
+    def log_filter_factory(verbosity: int) -> Callable[[logging.LogRecord], bool]:
+        instamatic_logging_level = logging.DEBUG if verbosity >= 1 else logging.INFO
+        imported_logging_level = logging.DEBUG if verbosity >= 2 else logging.INFO
+
+        def log_filter_function(r: logging.LogRecord) -> bool:
+            if r.name.startswith('instamatic') or r.name == '__main__':
+                return r.levelno >= instamatic_logging_level
+            else:
+                return r.levelno >= imported_logging_level
+
+        return log_filter_function
+
+    log_main = logging.getLogger()
+    log_main.setLevel(logging.DEBUG)
+    log_detail = 'module' if options.verbose <= 2 else 'pathname'
+    log_format = f'%(asctime)s | %({log_detail})s:%(lineno)s | %(levelname)s | %(message)s'
+    log_handler = logging.FileHandler(logfile)
+    log_handler.setFormatter(logging.Formatter(log_format))
+    log_handler.addFilter(log_filter_factory(verbosity=options.verbose))
+    log_main.addHandler(log_handler)
 
     logging.captureWarnings(True)
     log = logging.getLogger(__name__)
