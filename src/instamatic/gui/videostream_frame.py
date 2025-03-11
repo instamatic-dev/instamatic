@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import threading
 import time
-from datetime import datetime
 from tkinter import *
 from tkinter.ttk import *
 
 import numpy as np
-from PIL import Image, ImageEnhance, ImageTk
+from PIL import Image, ImageTk
 
+import instamatic.gui.videostream_service as vss_module
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.utils.spinbox import Spinbox
 
@@ -68,6 +68,10 @@ class VideoStreamFrame(LabelFrame):
 
         self.click_dispatcher = ClickDispatcher()
         self.panel.bind('<Button>', self.on_click)
+
+        # Create VideoStreamService with a lambda provider that accesses stream.frame
+        self.stream_service = self.setup_stream_service()
+        self.frame: np.ndarray = self.stream.frame
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -173,8 +177,13 @@ class VideoStreamFrame(LabelFrame):
             self.panel.image = image
             self.panel.pack(side='left', padx=10, pady=10)
 
-    def setup_stream(self):
-        pass
+    def setup_stream_service(self):
+        vss = vss_module.VideoStreamService(provider=lambda: self.stream.frame)
+        vss.add_editor('normalize', vss_module.Normalize2DEditor(self))
+        vss.add_editor('colorize', vss_module.Colorize2DEditor(None))
+        vss.add_enhancer('enhance', vss_module.ImageEnhanceEnhancer(self))
+        vss.add_enhancer('draw', vss_module.DrawnOverlayEnhancer())
+        return vss
 
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
@@ -233,28 +242,11 @@ class VideoStreamFrame(LabelFrame):
         self.after(500, self.on_frame)
 
     def on_frame(self, event=None):
-        self.stream.lock.acquire(True)
-        self.frame = frame = self.stream.frame
-        self.stream.lock.release()
+        """Modified to use VideoStreamService frame property."""
+        self.frame = frame = self.stream_service.frame  # Get processed frame
 
         if frame is not None:
-            # the display range in ImageTk is from 0 to 256
-            if self.auto_contrast:
-                frame = frame * (
-                    256.0 / (1 + np.percentile(frame[::4, ::4], 99.5))
-                )  # use 128x128 array for faster calculation
-
-                image = Image.fromarray(frame)
-            elif self.display_range != self.display_range_default:
-                image = np.clip(frame, 0, self.display_range)
-                image = (256.0 / self.display_range) * image
-                image = Image.fromarray(image)
-            else:
-                image = Image.fromarray(frame)
-
-            if self.brightness != 1:
-                image = ImageEnhance.Brightness(image.convert('L')).enhance(self.brightness)
-                # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+            image = self.stream_service.image
 
             if self.resize_image:
                 image = image.resize((950, 950))
