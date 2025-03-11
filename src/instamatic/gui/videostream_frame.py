@@ -9,8 +9,7 @@ from tkinter.ttk import *
 import numpy as np
 from PIL import Image, ImageEnhance, ImageTk
 
-from instamatic.formats import read_tiff, write_tiff
-from instamatic.processing.flatfield import apply_flatfield_correction
+from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule
@@ -66,6 +65,9 @@ class VideoStreamFrame(LabelFrame):
         self.parent.bind('<Escape>', self.close)
 
         self.start_stream()
+
+        self.click_dispatcher = ClickDispatcher()
+        self.panel.bind('<Button>', self.on_click)
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -289,6 +291,20 @@ class VideoStreamFrame(LabelFrame):
             self.last_interval = interval
         else:
             self.nframes += 1
+
+    def on_click(self, event: Event) -> None:
+        """Handle click events on the image via `self.click_service`"""
+        if not self.click_dispatcher.active:
+            return
+
+        # Convert window coordinates to image coordinates
+        panel_width: int = self.panel.winfo_width()
+        panel_height: int = self.panel.winfo_height()
+        array_shape = self.frame.shape
+        x = round(event.x * array_shape[1] / panel_width)
+        y = round(event.y * array_shape[0] / panel_height)
+
+        self.click_dispatcher.handle_click(x=x, y=y, button=event.num)
 
 
 module = BaseModule(
