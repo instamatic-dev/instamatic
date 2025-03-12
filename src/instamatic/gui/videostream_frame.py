@@ -181,8 +181,8 @@ class VideoStreamFrame(LabelFrame):
         vss = vss_module.VideoStreamService(provider=lambda: self.stream.frame)
         vss.add_editor('normalize', vss_module.Normalize2DEditor(self))
         vss.add_editor('colorize', vss_module.Colorize2DEditor(None))
-        vss.add_enhancer('enhance', vss_module.ImageEnhanceEnhancer(self))
-        vss.add_enhancer('draw', vss_module.DrawnOverlayEnhancer())
+        vss.add_overlay('enhance', vss_module.ImageEnhanceOverlay(self))
+        vss.add_overlay('draw', vss_module.ImageDrawOverlay())
         return vss
 
     def update_resize_image(self, name, index, mode):

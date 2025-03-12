@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections import deque
 from contextlib import contextmanager
-from functools import lru_cache
-from typing import Any, Iterator, Optional, Tuple, Union
+from functools import lru_cache, wraps
+from typing import Any, Dict, Iterator, NamedTuple, Optional, Tuple, Union
 
 try:
     from typing import Protocol
@@ -38,11 +39,11 @@ class VideoStreamEditorProtocol(Protocol):
         ...
 
 
-class VideoStreamEnhancerProtocol(Protocol):
+class VideoStreamOverlayProtocol(Protocol):
     """Interface for sequential VideoStream image editors."""
 
     active: bool  # will edit provided `PIL.Image` if active = True
-    precedence: int  # all enhancers are called in decreasing precedence order
+    precedence: int  # all overlays are called in decreasing precedence order
 
     def __call__(self, image: Image.Image) -> Image.Image:
         """Edit the `PIL.Image.Image` and return its modified version."""
@@ -52,26 +53,26 @@ class VideoStreamEnhancerProtocol(Protocol):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ VIDEO STREAM SERVICE ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def precedence_key(p: Union[VideoStreamEditorProtocol, VideoStreamEnhancerProtocol]) -> float:
+def precedence_key(p: Union[VideoStreamEditorProtocol, VideoStreamOverlayProtocol]) -> float:
     return -getattr(p, 'precedence', float('inf'))
 
 
 class VideoStreamService:
-    """Service managing video providers and editors for VideoStreamFrame."""
+    """Service managing `VideoStreamFrame` providers, editors and overlays."""
 
     def __init__(self, provider: VideoStreamProviderProtocol) -> None:
         self.provider = provider
         self.editors: NoOverwriteDict[str, VideoStreamEditorProtocol] = NoOverwriteDict()
-        self.enhancers: NoOverwriteDict[str, VideoStreamEnhancerProtocol] = NoOverwriteDict()
+        self.overlays: NoOverwriteDict[str, VideoStreamOverlayProtocol] = NoOverwriteDict()
         self.last_frame: Optional[np.ndarray] = None
 
     def add_editor(self, name: str, editor: VideoStreamEditorProtocol) -> None:
         """Convenience method that adds a new `VideoStreamEditorProtocol`"""
         self.editors[name] = editor
 
-    def add_enhancer(self, name: str, enhancer: VideoStreamEnhancerProtocol) -> None:
-        """Convenience method that adds a new `VideoStreamEnhancerProtocol`"""
-        self.enhancers[name] = enhancer
+    def add_overlay(self, name: str, overlay: VideoStreamOverlayProtocol) -> None:
+        """Convenience method that adds a new `VideoStreamOverlayProtocol`"""
+        self.overlays[name] = overlay
 
     @property
     def frame(self) -> Union[np.ndarray, None]:
@@ -81,7 +82,7 @@ class VideoStreamService:
 
     @property
     def image(self) -> Union[Image.Image, None]:
-        """The last `self.frame` edited & enhanced in each precedence order."""
+        """The last `self.frame` edited & overlaid in each precedence order."""
         array = self.last_frame
         if array is None:
             return None
@@ -89,9 +90,9 @@ class VideoStreamService:
             if getattr(editor, 'active', True):
                 array = editor(array)
         image = Image.fromarray((255.0 * array).astype(np.uint8))
-        for enhancer in sorted(self.enhancers.values(), key=precedence_key):
-            if getattr(enhancer, 'active', True):
-                image = enhancer(image)
+        for overlay in sorted(self.overlays.values(), key=precedence_key):
+            if getattr(overlay, 'active', True):
+                image = overlay(image)
         return image
 
     @contextmanager
@@ -157,16 +158,15 @@ class Colorize2DEditor(VideoStreamEditor):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ VIDEO STREAM ENHANCERS ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-class VideoStreamEnhancer(metaclass=SubclassRegistryMeta):
-    """Base class for enhancers; handle `PIL.Image.Image`s."""
+class VideoStreamOverlay(metaclass=SubclassRegistryMeta):
+    """Base class for overlays; handle `PIL.Image.Image`s."""
 
     active = True
     precedence = 0
 
 
-class ImageEnhanceEnhancer(VideoStreamEnhancer):
-    """Use `PIL.ImageEnhance` methods to enhance features on the fresh
-    image."""
+class ImageEnhanceOverlay(VideoStreamOverlay):
+    """Use `PIL.ImageEnhance` methods to enhance features of the image."""
 
     precedence = 2_000_000
 
@@ -181,36 +181,81 @@ class ImageEnhanceEnhancer(VideoStreamEnhancer):
         return image
 
 
-class DrawnOverlayEnhancer(VideoStreamEnhancer):
-    """Use `PIL.ImageDraw` methods to draw overlay over the received image."""
+class ImageDrawOverlay(VideoStreamOverlay):
+    """Use `PIL.ImageDraw` methods to draw on top of the image."""
 
     precedence = 2_000
 
-    def __init__(self) -> None:
-        self._overlay: Optional[Image.Image] = None
-        self._drawing: Optional[ImageDraw.ImageDraw] = None
+    class DrawingOperation(NamedTuple):
+        attr_name: str
+        args: Tuple
+        kwargs: Dict[str, Any]
 
-    def __getattr__(self, attr_name: str) -> Any:
-        """Automatically pass calls to underlying `PIL.ImageDraw.ImageDraw`"""
-        print('getting ' + attr_name)
+    def __init__(self) -> None:
+        self.operations: deque = deque()  # Public deque of `DrawnElement`s
+        self._overlay: Optional[Image.Image] = None  # Overlaid on call input
+        self._drawing: Optional[ImageDraw.ImageDraw] = None  # Proxy for drawing
+        self._last_elements_hash: Optional[int] = None  # For detecting changes
+
+        # Note: `__getattr__` returns op;  to remove it
+
+    def __getattr__(self, attr_name: str) -> Union[Any]:
+        """Get the first of `self.attr_name` and `self._drawing.attr_name`.
+
+        If the attribute is a _drawing callable, wrap it so that at `__call__`
+        it is added to `self.operations` instead of being executed directly.
+        Operations wrapped and called this way return `DrawingOperation` that
+        can be deleted by calling `self.operations.remove(operation)`.
+        """
         try:
-            object.__getattribute__(self, attr_name)
+            attr = object.__getattribute__(self, attr_name)
         except AttributeError as e:
             reraise_on_fail = e
             try:
-                return getattr(self._drawing, attr_name)
+                attr = getattr(self._drawing, attr_name)
             except AttributeError:
                 raise reraise_on_fail
 
+            if callable(attr):
+
+                @wraps(attr)
+                def wrapped(*args, **kwargs):
+                    element = self.DrawingOperation(attr_name, args, kwargs)
+                    self.operations.append(element)
+                    return element
+
+                return wrapped  # do not call attr - delay it until _redraw()
+        return attr  # non-callable attr of self (if exists) or self._drawing
+
     def __call__(self, image: Image.Image) -> Image.Image:
+        """Redraw overlay if `self.operations` changed, paste on the image."""
         if self._overlay is None:
-            self._overlay = Image.new('RGBA', image.size, (255, 255, 255, 0))
-            self._drawing = ImageDraw.Draw(self._overlay)
+            self._initialize_overlay(image.size)
+
+        # Detect modifications to self.elements and _redraw() if needed.
+        current_elements_hash = hash(repr(self.operations))
+        if current_elements_hash != self._last_elements_hash:
+            self._redraw()
+            self._last_elements_hash = current_elements_hash
+
         bbox = self._overlay.getbbox(alpha_only=True)
         if bbox:
             bbox_contents = self._overlay.crop(bbox)
             image.paste(bbox_contents, box=bbox, mask=bbox_contents)
         return image
+
+    def _initialize_overlay(self, size: Tuple[int, int]) -> None:
+        """Initialize `self._overlay` image and `self._drawing` proxy."""
+        self._overlay = Image.new('RGBA', size, (255, 255, 255, 0))
+        self._drawing = ImageDraw.Draw(self._overlay)
+
+    def _redraw(self) -> None:
+        """Clear and reapply all `DrawingOperation`s in `self.operations`."""
+        print(self.operations)
+        self._overlay.paste(im=(255, 255, 255, 0), box=(0, 0, *self._overlay.size))
+        for attr_name, args, kwargs in self.operations:
+            draw_method = getattr(self._drawing, attr_name)
+            draw_method(*args, **kwargs)
 
     def circle(
         self,
@@ -222,4 +267,4 @@ class DrawnOverlayEnhancer(VideoStreamEnhancer):
     ) -> None:
         """Circle was added in v10.4.0 so port it from v11.1.0 to be sure."""
         ellipse_xy = (xy[0] - radius, xy[1] - radius, xy[0] + radius, xy[1] + radius)
-        self._drawing.ellipse(ellipse_xy, fill=fill, outline=outline, width=width)
+        self.ellipse(ellipse_xy, fill=fill, outline=outline, width=width)
