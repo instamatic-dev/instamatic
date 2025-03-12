@@ -4,6 +4,8 @@ import enum
 import queue
 from typing import Callable, Optional, Union
 
+from typing_extensions import Self
+
 from instamatic.collections import NoOverwriteDict
 
 
@@ -30,15 +32,28 @@ class ClickEvent:
 class ClickListener:
     """Request clicks and call `callback` on each received."""
 
-    def __init__(self, name: str, callback: Callable[[ClickEvent], None]) -> None:
+    def __init__(
+        self,
+        name: str,
+        callback: Optional[Callable[[ClickEvent], None]] = None,
+    ) -> None:
         self.name = name
         self.callback = callback
         self.queue = queue.Queue()
         self.active = False
 
+    def __enter__(self) -> Self:
+        self.queue.queue.clear()
+        self.active = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.active = False
+
     def handle_click(self, click_event: ClickEvent) -> None:
         if self.active:
-            self.callback(click_event)
+            if self.callback is not None:
+                self.callback(click_event)
             self.queue.put(click_event)
 
     def get_click(self, timeout: float = None) -> Union[ClickEvent, None]:
@@ -59,7 +74,11 @@ class ClickDispatcher:
     def active(self) -> bool:
         return any(listener.active for listener in self.listeners.values())
 
-    def add_listener(self, name: str, callback: Callable[[ClickEvent], None]) -> ClickListener:
+    def add_listener(
+        self,
+        name: str,
+        callback: Optional[Callable[[ClickEvent], None]] = None,
+    ) -> ClickListener:
         """Convenience method that adds and returns a new `ClickListener`"""
         listener = ClickListener(name, callback)
         self.listeners[name] = listener
