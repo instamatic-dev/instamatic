@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import threading
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import List, Optional, Union
 
@@ -162,16 +163,15 @@ class VideoStream(threading.Thread):
         return self._get_media(request)
 
     def _get_media(self, request: MediaRequest) -> Union[np.ndarray, List[np.ndarray]]:
-        self.block()  # Stop the passive collection during request acquisition
-        self.grabber.request = request
-        self.grabber.acquireInitiateEvent.set()
-        self.grabber.acquireCompleteEvent.wait()
-        with self.grabber.lock:
-            media = self.requested_media
-            self.requested_media = None
-        self.grabber.request = None
-        self.grabber.acquireCompleteEvent.clear()
-        self.unblock()  # Resume the passive collection
+        with self.blocked():  # Stop the passive collection during request acquisition
+            self.grabber.request = request
+            self.grabber.acquireInitiateEvent.set()
+            self.grabber.acquireCompleteEvent.wait()
+            with self.grabber.lock:
+                media = self.requested_media
+                self.requested_media = None
+            self.grabber.request = None
+            self.grabber.acquireCompleteEvent.clear()
         return media
 
     def update_frametime(self, frametime):
@@ -186,6 +186,15 @@ class VideoStream(threading.Thread):
 
     def unblock(self):
         self.grabber.continuousCollectionEvent.clear()
+
+    @contextmanager
+    def blocked(self):
+        """Set `continuousCollectionEvent` within the statement scope only."""
+        was_set_before = self.grabber.continuousCollectionEvent.is_set()
+        self.grabber.continuousCollectionEvent.set()
+        yield
+        if not was_set_before:
+            self.grabber.continuousCollectionEvent.clear()
 
     def continuous_collection(self, exposure=0.1, n=100, callback=None):
         """Function to continuously collect data Blocks the videostream while
