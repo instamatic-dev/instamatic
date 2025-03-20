@@ -139,10 +139,10 @@ class ExperimentalRED(LabelFrame):
 
 
 def acquire_data_RED(controller, **kwargs):
-    controller.log.info('Start RED experiment')
     from instamatic.experiments import RED
 
     task = kwargs['task']
+    controller.log.info(task.title() + ' RED experiment')
 
     exposure_time = kwargs['exposure_time']
     tilt_range = kwargs['tilt_range']
