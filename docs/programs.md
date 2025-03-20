@@ -177,6 +177,29 @@ instamatic.calibrate_stage_lowmag [-h] [IMG [IMG ...]]
 `-h`, `--help`
 : Show this help message and exit  
 
+## instamatic.calibrate_stage_rotation
+
+Program to calibrate and plan the rotation pace (in seconds / angle) against speed settings available on the microscope.
+
+**Usage:**  
+```bash
+instamatic.calibrate_stage_rotation [-h] [-a ALPHAS] [-s SPEEDS] [-o OUTDIR]
+```
+
+**Optional arguments:**  
+
+`-h`, `--help`
+: Show this help message and exit  
+
+`-a ALPHAS`, `--alphas ALPHAS`
+: Comma-delimited list of alpha spans to calibrate (default: "1,2,3,4,5,6,7,8,9,10").
+
+`-s SPEEDS`, `--speeds SPEEDS`
+: Comma-delimited list of speed settings to calibrate (default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or "1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope).
+
+`-o OUTDIR`, `--outdir OUTDIR`
+: Path to the directory where calibration file should be output (default: "%appdata%/calib" on Windows or "$AppData/calib" on Unix).
+
 
 ## instamatic.calibrate_stage_mag1
 
