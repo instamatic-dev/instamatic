@@ -127,6 +127,10 @@ class AppLoader:
         return self.modules[module]
 
 
+def debug_print_click_coords(click_event):
+    print(click_event.x, click_event.y, click_event.button)
+
+
 class MainFrame:
     """This class defines the main GUI panel.
 
@@ -150,6 +154,10 @@ class MainFrame:
 
         self.app = AppLoader()
         self.app.load(modules, self.module_frame)
+
+        stream_frame = self.app.get_module('stream')
+        v = stream_frame.click_dispatcher.add_listener('video', debug_print_click_coords)
+        v.active = True
 
         self.root.wm_title(instamatic.__long_title__)
         self.root.wm_protocol('WM_DELETE_WINDOW', self.close)
