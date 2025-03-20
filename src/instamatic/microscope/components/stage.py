@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -74,7 +74,7 @@ class Stage:
             speed=speed,
         )
 
-    def set_rotation_speed(self, speed=1) -> None:
+    def set_rotation_speed(self, speed: Union[float, int] = 1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
         self._tem.setRotationSpeed(value=speed)
 
@@ -90,9 +90,9 @@ class Stage:
             self.wait()
 
     @contextmanager
-    def rotating_speed(self, speed: int):
+    def rotating_speed(self, speed: Union[float, int]) -> None:
         """Context manager that sets the rotation speed for the duration of the
-        `with` statement (JEOL only).
+        `with` statement (JEOL, Tecnai only).
 
         Usage:
             with ctrl.stage.rotating_speed(1):
@@ -144,6 +144,10 @@ class Stage:
     def xy(self, values: Tuple[int_nm, int_nm]) -> None:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
+
+    def get_rotation_speed(self) -> Union[float, int]:
+        """Gets the stage (rotation) movement speed on the TEM."""
+        return self._tem.getRotationSpeed()
 
     def move_in_projection(self, delta_x: int_nm, delta_y: int_nm) -> None:
         r"""Y and z are always perpendicular to the sample stage. To achieve the
