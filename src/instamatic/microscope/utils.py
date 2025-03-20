@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from instamatic.typing import float_deg, int_nm
+from instamatic.typing_ import float_deg, int_nm
 
 
 class StagePositionTuple(NamedTuple):

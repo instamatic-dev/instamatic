@@ -11,7 +11,7 @@ from instamatic import config
 from instamatic.exceptions import JEOLValueError, TEMCommunicationError, TEMValueError
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
-from instamatic.typing import float_deg, int_nm
+from instamatic.typing_ import float_deg, int_nm
 
 logger = logging.getLogger(__name__)
 
