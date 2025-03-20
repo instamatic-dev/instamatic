@@ -10,12 +10,11 @@ import numpy as np
 from skimage.registration import phase_cross_correlation
 
 from instamatic import config
+from instamatic.calibrate.filenames import *
+from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center, printer
-
-from .filenames import *
-from .fit import fit_affine_transformation
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ class CalibBeamShift:
         """Converts from pixel coordinates to beamshift x,y."""
         r = self.transform
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
-        return beamshift.astype(int)
+        return beamshift
 
     @classmethod
     def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None):
@@ -180,7 +179,7 @@ def calibrate_beamshift_live(
 
         printer(f'Position: {i + 1}/{tot}: {ctrl.beamshift}')
 
-        outfile = os.path.join(outdir, 'calib_beamshift_{i:04d}') if save_images else None
+        outfile = os.path.join(outdir, f'calib_beamshift_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
         img, h = ctrl.get_image(
