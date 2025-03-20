@@ -27,6 +27,8 @@ These tools help calibrate instamatic for some experiments.
 - [instamatic.calibrate_stagematrix](#instamaticcalibrate_stagematrix) (`instamatic.calibrate.calibrate_stagematrix:main_entry`)
 - [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
 - [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
+- [instamatic.calibrate_stage_rotation](#instamaticcalibrate_stage_rotation) (`instamatic.calibrate.calibrate_stage_lowmag:main_entry`)
+
 
 **Tools**
 
