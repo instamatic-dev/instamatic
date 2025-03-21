@@ -137,7 +137,7 @@ class MainFrame:
         super().__init__()
         # the stream window is a special case, because it needs access
         # to the cam module
-        if cam and cam.streamable:
+        if cam:
             from .videostream_frame import module as stream_module
 
             stream_module.set_kwargs(stream=cam)
