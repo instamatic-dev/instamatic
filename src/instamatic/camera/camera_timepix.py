@@ -303,6 +303,10 @@ class CameraTPX(CameraBase):
     def get_name(self):
         return 'timepix'
 
+    @staticmethod
+    def initialize(*args, **kwargs) -> CameraTPX:
+        return initialize(*args, **kwargs)
+
 
 def initialize(tpx_config_file, name='pytimepix') -> CameraTPX:
     base = Path(tpx_config_file).parent

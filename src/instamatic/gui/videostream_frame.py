@@ -10,10 +10,9 @@ import numpy as np
 from PIL import Image, ImageEnhance, ImageTk
 
 from instamatic.formats import read_tiff, write_tiff
+from instamatic.gui.base_module import BaseModule
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
-
-from .base_module import BaseModule
 
 
 class VideoStreamFrame(LabelFrame):
@@ -316,9 +315,9 @@ def ipy_embed(*args, **kwargs):
 
 if __name__ == '__main__':
     from instamatic import config
-    from instamatic.camera import VideoStream
+    from instamatic.camera import LiveVideoStream
 
-    stream = VideoStream(cam=config.camera.name)
+    stream = LiveVideoStream(cam=config.camera.name)
 
     if False:
         threading.Thread(target=ipy_embed).start()

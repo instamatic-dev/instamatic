@@ -4,13 +4,13 @@ import atexit
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
 
+from instamatic.camera import Camera
 from instamatic.camera.camera_base import CameraBase
-
-from .camera import Camera
+from instamatic.image_utils import autoscale
 
 
 @dataclass(frozen=True)
@@ -96,9 +96,16 @@ class MediaGrabber:
 
 
 class VideoStream(threading.Thread):
-    """Handle the continuous stream of incoming data from the ImageGrabber."""
+    """Base interface for collecting preview and media from passed camera."""
 
-    def __init__(self, cam: Union[CameraBase, str] = 'simulate'):
+    def __new__(cls, cam: Union[CameraBase, str] = 'simulate') -> VideoStream:
+        """Create VideoStream subclass based on passed cam stream-ability."""
+        cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        if cls is VideoStream:
+            return (LiveVideoStream if cam.streamable else FakeVideoStream)(cam)
+        return super().__new__(cls)
+
+    def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
 
         self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
@@ -110,24 +117,78 @@ class VideoStream(threading.Thread):
         self.name = self.cam.name
 
         self.frametime = self.default_exposure
-        self.frame = None
 
-        self.grabber = self.setup_grabber()
+        self.frame = NotImplemented
+        self.grabber = NotImplemented
 
-        self.streamable = self.cam.streamable
-
-        self.start()
-
-    def __getattr__(self, attrname):
+    def __getattr__(self, attr_name: str) -> Any:
         """Pass attribute lookups to self.cam to prevent AttributeError."""
         try:
-            return object.__getattribute__(self, attrname)
+            return object.__getattribute__(self, attr_name)
         except AttributeError as e:
             reraise_on_fail = e
             try:
-                return getattr(self.cam, attrname)
+                return getattr(self.cam, attr_name)
             except AttributeError:
                 raise reraise_on_fail
+
+    def close(self):
+        pass
+
+    def block(self):
+        pass
+
+    def unblock(self):
+        pass
+
+    @contextmanager
+    def blocked(self):
+        yield
+
+    def continuous_collection(self, exposure=0.1, n=100, callback=None):
+        """Function to continuously collect data Blocks the videostream while
+        collecting data, and only shows collected images.
+
+        exposure: float
+            exposure time
+        n: int
+            number of frames to collect
+            if defined, returns a list of collected frames
+        callback: function
+            This function is called on every iteration with the image as first argument
+            Should return True or False if data collection is to continue
+        """
+        buffer = []
+
+        go_on = True
+        i = 0
+
+        self.block()
+        while go_on:
+            i += 1
+
+            img = self.get_image(exposure=exposure)
+
+            if callback:
+                go_on = callback(img)
+            else:
+                buffer.append(img)
+                go_on = i < n
+
+        self.unblock()
+
+        if not callback:
+            return buffer
+
+
+class LiveVideoStream(VideoStream):
+    """Handle the continuous stream of incoming data from the ImageGrabber."""
+
+    def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
+        super().__init__(cam)
+        self.frame = None
+        self.grabber = self.setup_grabber()
+        self.start()
 
     def start(self):
         self.grabber.start_loop()
@@ -196,41 +257,6 @@ class VideoStream(threading.Thread):
         if not was_set_before:
             self.grabber.continuousCollectionEvent.clear()
 
-    def continuous_collection(self, exposure=0.1, n=100, callback=None):
-        """Function to continuously collect data Blocks the videostream while
-        collecting data, and only shows collected images.
-
-        exposure: float
-            exposure time
-        n: int
-            number of frames to collect
-            if defined, returns a list of collected frames
-        callback: function
-            This function is called on every iteration with the image as first argument
-            Should return True or False if data collection is to continue
-        """
-        buffer = []
-
-        go_on = True
-        i = 0
-
-        self.block()
-        while go_on:
-            i += 1
-
-            img = self.get_image(exposure=exposure)
-
-            if callback:
-                go_on = callback(img)
-            else:
-                buffer.append(img)
-                go_on = i < n
-
-        self.unblock()
-
-        if not callback:
-            return buffer
-
     def show_stream(self):
         from instamatic.gui import videostream_frame
 
@@ -238,8 +264,36 @@ class VideoStream(threading.Thread):
         t.start()
 
 
+class FakeVideoStream(VideoStream):
+    """Allows displaying the image in GUI by faking a continuous signal."""
+
+    def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
+        super().__init__(cam)
+        self.display_dim = 512
+        self.frame, _ = autoscale(np.ones(self.dimensions), maxdim=self.display_dim)
+
+    def get_image(self, exposure=None, binsize=None):
+        frame = self.cam.get_image(exposure=exposure, binsize=binsize)
+        self.frame, _ = autoscale(frame, maxdim=self.display_dim)
+        return frame
+
+    def get_movie(self, n_frames: int, exposure=None, binsize=None):
+        frames = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        self.frame, _ = autoscale(frames[0], maxdim=self.display_dim)
+        return frames
+
+    def update_frametime(self, frametime):
+        self.frametime = frametime
+
+    def show_stream(self):
+        from instamatic.gui import videostream_frame
+
+        t = threading.Thread(target=videostream_frame.start_gui, args=(self,), daemon=False)
+        t.start()
+
+
 if __name__ == '__main__':
-    stream = VideoStream(cam='timepix')
+    stream = LiveVideoStream(cam='timepix')
     from IPython import embed
 
     embed()
