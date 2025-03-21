@@ -103,11 +103,13 @@ class VideoStream(threading.Thread):
 
     def __new__(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
         """Create VideoStream subclass based on passed cam stream-ability."""
-        cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
-        subclass = LiveVideoStream if cam.streamable else FakeVideoStream
-        video_stream = super(VideoStream, subclass).__new__(subclass)
-        video_stream.cam = cam
-        return video_stream
+        if cls is VideoStream:
+            cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+            subclass = LiveVideoStream if cam.streamable else FakeVideoStream
+            video_stream = super(VideoStream, subclass).__new__(subclass)
+            video_stream.cam = cam
+            return video_stream
+        return super().__new__(cls)
 
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
@@ -132,6 +134,8 @@ class VideoStream(threading.Thread):
             return object.__getattribute__(self, attr_name)
         except AttributeError as e:
             reraise_on_fail = e
+            if attr_name == 'cam':
+                return
             try:
                 return getattr(self.cam, attr_name)
             except AttributeError:
