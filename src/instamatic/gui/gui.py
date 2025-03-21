@@ -141,7 +141,7 @@ class MainFrame:
         super().__init__()
         # the stream window is a special case, because it needs access
         # to the cam module
-        if cam and cam.streamable:
+        if cam:
             from .videostream_frame import module as stream_module
 
             stream_module.set_kwargs(stream=cam)
@@ -155,7 +155,7 @@ class MainFrame:
         self.app = AppLoader()
         self.app.load(modules, self.module_frame)
 
-        if cam and cam.streamable:
+        if cam:
             s = self.app.get_module('stream')
             v = s.click_dispatcher.add_listener('video', debug_print_click_coords)
             v.active = True
