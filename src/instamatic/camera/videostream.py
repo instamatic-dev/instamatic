@@ -4,7 +4,7 @@ import atexit
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Type, TypeVar, Union
 
 import numpy as np
 
@@ -95,20 +95,25 @@ class MediaGrabber:
         self.thread.join()
 
 
+_VS = TypeVar('_VS', bound='VideoStream')
+
+
 class VideoStream(threading.Thread):
     """Base interface for collecting preview and media from passed camera."""
 
-    def __new__(cls, cam: Union[CameraBase, str] = 'simulate') -> VideoStream:
+    def __new__(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
         """Create VideoStream subclass based on passed cam stream-ability."""
         cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
-        if cls is VideoStream:
-            return (LiveVideoStream if cam.streamable else FakeVideoStream)(cam)
-        return super().__new__(cls)
+        subclass = LiveVideoStream if cam.streamable else FakeVideoStream
+        video_stream = super(VideoStream, subclass).__new__(subclass)
+        video_stream.cam = cam
+        return video_stream
 
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
 
-        self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        if not hasattr(self, 'cam') or not isinstance(self.cam, CameraBase):
+            self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
         self.lock = threading.Lock()
 
         self.default_exposure = self.cam.default_exposure
