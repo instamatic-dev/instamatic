@@ -251,7 +251,6 @@ class ImageDrawOverlay(VideoStreamOverlay):
 
     def _redraw(self) -> None:
         """Clear and reapply all `DrawingOperation`s in `self.operations`."""
-        print(self.operations)
         self._overlay.paste(im=(255, 255, 255, 0), box=(0, 0, *self._overlay.size))
         for attr_name, args, kwargs in self.operations:
             draw_method = getattr(self._drawing, attr_name)
