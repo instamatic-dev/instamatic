@@ -5,10 +5,10 @@ import time
 from typing import Optional, Tuple
 
 from instamatic import config
+from instamatic._typing import float_deg, int_nm
 from instamatic.exceptions import TEMValueError
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
-from instamatic.typing_ import float_deg, int_nm
 
 NTRLMAPPING = {
     'GUN1': 0,
