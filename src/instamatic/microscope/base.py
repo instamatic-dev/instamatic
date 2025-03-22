@@ -3,8 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
+from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.utils import StagePositionTuple
-from instamatic.typing_ import float_deg, int_nm
 
 
 class MicroscopeBase(ABC):
