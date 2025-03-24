@@ -154,40 +154,6 @@ class VideoStream(threading.Thread):
     def blocked(self):
         yield
 
-    def continuous_collection(self, exposure=0.1, n=100, callback=None):
-        """Function to continuously collect data Blocks the videostream while
-        collecting data, and only shows collected images.
-
-        exposure: float
-            exposure time
-        n: int
-            number of frames to collect
-            if defined, returns a list of collected frames
-        callback: function
-            This function is called on every iteration with the image as first argument
-            Should return True or False if data collection is to continue
-        """
-        buffer = []
-
-        go_on = True
-        i = 0
-
-        self.block()
-        while go_on:
-            i += 1
-
-            img = self.get_image(exposure=exposure)
-
-            if callback:
-                go_on = callback(img)
-            else:
-                buffer.append(img)
-                go_on = i < n
-
-        self.unblock()
-
-        if not callback:
-            return buffer
 
 
 class LiveVideoStream(VideoStream):
