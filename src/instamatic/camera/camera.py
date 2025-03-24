@@ -74,7 +74,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
     if as_stream:
         from .videostream import VideoStream
 
-        return VideoStream(cam)
+        return VideoStream.from_any(cam)
     else:
         return cam
 

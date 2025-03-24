@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import atexit
 import threading
 from contextlib import contextmanager
@@ -101,21 +102,22 @@ _VS = TypeVar('_VS', bound='VideoStream')
 class VideoStream(threading.Thread):
     """Base interface for collecting preview and media from passed camera."""
 
-    def __new__(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
-        """Create VideoStream subclass based on passed cam stream-ability."""
+    def __new__(cls: Type[_VS], *args, **kwargs) -> _VS:
         if cls is VideoStream:
-            cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
-            subclass = LiveVideoStream if cam.streamable else FakeVideoStream
-            video_stream = super(VideoStream, subclass).__new__(subclass)
-            video_stream.cam = cam
-            return video_stream
-        return super().__new__(cls)
+            raise NotImplementedError
+        return super(VideoStream, cls).__new__(cls)
+
+    @classmethod
+    def from_any(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
+        """Create a subclass based on passed cam or cam-str stream-ability."""
+        cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        subclass = LiveVideoStream if cam.streamable else FakeVideoStream
+        return subclass(cam)
 
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
 
-        if not hasattr(self, 'cam') or not isinstance(self.cam, CameraBase):
-            self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
         self.lock = threading.Lock()
 
         self.default_exposure = self.cam.default_exposure
@@ -134,8 +136,6 @@ class VideoStream(threading.Thread):
             return object.__getattribute__(self, attr_name)
         except AttributeError as e:
             reraise_on_fail = e
-            if attr_name == 'cam':
-                return
             try:
                 return getattr(self.cam, attr_name)
             except AttributeError:
@@ -153,7 +153,6 @@ class VideoStream(threading.Thread):
     @contextmanager
     def blocked(self):
         yield
-
 
 
 class LiveVideoStream(VideoStream):
