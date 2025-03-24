@@ -111,8 +111,9 @@ class VideoStream(threading.Thread):
     def from_any(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
         """Create a subclass based on passed cam or cam-str stream-ability."""
         cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
-        subclass = LiveVideoStream if cam.streamable else FakeVideoStream
-        return subclass(cam)
+        if cls is VideoStream:
+            return (LiveVideoStream if cam.streamable else FakeVideoStream)(cam)
+        return cls(cam)
 
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
