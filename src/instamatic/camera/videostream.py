@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import atexit
 import threading
 from contextlib import contextmanager
@@ -100,7 +99,7 @@ _VS = TypeVar('_VS', bound='VideoStream')
 
 
 class VideoStream(threading.Thread):
-    """Base interface for collecting preview and media from passed camera."""
+    """Abstract base interface for collecting preview & media from camera."""
 
     def __new__(cls: Type[_VS], *args, **kwargs) -> _VS:
         if cls is VideoStream:
