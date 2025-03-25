@@ -72,11 +72,9 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
             cam = cam_cls(name=name)
 
     if as_stream:
-        if cam.streamable:
-            from .videostream import VideoStream
-        else:
-            from .fakevideostream import VideoStream
-        return VideoStream(cam)
+        from .videostream import VideoStream
+
+        return VideoStream.from_any(cam)
     else:
         return cam
 
