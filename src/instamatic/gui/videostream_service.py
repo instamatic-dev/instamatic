@@ -15,7 +15,7 @@ import numpy as np
 from matplotlib.colors import Colormap
 from PIL import Image, ImageDraw, ImageEnhance
 
-from instamatic.collections import NoOverwriteDict, SubclassRegistryMeta
+from instamatic._collections import NoOverwriteDict, SubclassRegistryMeta
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PROTOCOLS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 

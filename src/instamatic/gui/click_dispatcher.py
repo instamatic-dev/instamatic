@@ -4,8 +4,8 @@ import enum
 import queue
 from typing import Callable, Optional, Union
 
+from instamatic._collections import NoOverwriteDict
 from instamatic._typing import Self
-from instamatic.collections import NoOverwriteDict
 
 
 class MouseButton(enum.IntEnum):
