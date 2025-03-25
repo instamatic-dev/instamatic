@@ -4,12 +4,18 @@ from collections import UserDict
 from typing import Any, Dict, Tuple
 
 
+class KeyOverwriteError(KeyError):
+    pass
+
+
 class NoOverwriteDict(UserDict):
-    """A dictionary that doesn't allow overwriting existing values."""
+    """A dictionary that doesn't allow overwriting existing items."""
+
+    KEY_OVERWRITE_MSG = 'Item "{key}" is already set and cannot be overwritten.'
 
     def __setitem__(self, key: Any, value: Any) -> None:
         if key in self.data:
-            raise KeyError(f'Key "{key}" already exists and cannot be overwritten.')
+            raise KeyOverwriteError(self.KEY_OVERWRITE_MSG.format(**locals()))
         super().__setitem__(key, value)
 
 
