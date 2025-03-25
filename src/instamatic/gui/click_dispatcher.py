@@ -27,6 +27,9 @@ class ClickEvent:
         self.y = y if y else 0
         self.button = MouseButton(button) if button else MouseButton.LEFT
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}(x={self.x}, y={self.y}, button={self.button})'
+
 
 class ClickListener:
     """Request clicks and call `callback` on each received."""
