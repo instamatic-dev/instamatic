@@ -4,8 +4,7 @@ import enum
 import queue
 from typing import Callable, Optional, Union
 
-from typing_extensions import Self
-
+from instamatic._typing import Self
 from instamatic.collections import NoOverwriteDict
 
 
