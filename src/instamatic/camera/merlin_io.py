@@ -5,6 +5,8 @@ from typing import List
 
 import numpy as np
 
+from instamatic._typing import Self
+
 
 class MIBProperties:
     """Class covering Merlin MIB file properties."""
@@ -89,7 +91,7 @@ class MIBProperties:
         print(f'\tNumber of frames to be read: {self.xy}')
 
     @classmethod
-    def from_buffer(cls, buffer: bytes):
+    def from_buffer(cls, buffer: bytes) -> Self:
         """Return MIB properties from buffer."""
         head = buffer[:384].decode().split(',')
         return cls(head)

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from instamatic._typing import Self
+
 
 class ExperimentBase(ABC):
     """Experiment base class."""
@@ -16,7 +18,7 @@ class ExperimentBase(ABC):
     def teardown(self):
         pass
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.setup()
         return self
 

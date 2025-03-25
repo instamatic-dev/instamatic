@@ -95,7 +95,7 @@ class MediaGrabber:
         self.thread.join()
 
 
-_VS = TypeVar('_VS', bound='VideoStream')
+_VS = TypeVar('_VS', bound='VideoStream')  # VideoStream or subclass
 
 
 class VideoStream(threading.Thread):
