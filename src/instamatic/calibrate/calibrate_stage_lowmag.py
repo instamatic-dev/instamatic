@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
 
+from instamatic._typing import Self
 from instamatic.formats import read_image
 from instamatic.image_utils import autoscale, imgscale
 
@@ -177,7 +178,7 @@ class CalibStage:
     @classmethod
     def from_data(
         cls, shifts, stagepos, reference_position, camera_dimensions=None, header=None
-    ):
+    ) -> Self:
         fit_result = fit_affine_transformation(shifts, stagepos, verbose=True, translation=True)
         r = fit_result.r
         t = fit_result.t
@@ -202,7 +203,7 @@ class CalibStage:
         return c
 
     @classmethod
-    def from_file(cls, fn=CALIB_STAGE_LOWMAG):
+    def from_file(cls, fn=CALIB_STAGE_LOWMAG) -> Self:
         try:
             return pickle.load(open(fn, 'rb'))
         except OSError as e:

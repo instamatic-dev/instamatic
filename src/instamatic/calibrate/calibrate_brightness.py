@@ -7,6 +7,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
+from instamatic._typing import Self
 from instamatic.image_utils import autoscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
@@ -34,7 +35,7 @@ class CalibBrightness:
         return int((val - self.intercept) / self.slope)
 
     @classmethod
-    def from_data(cls, brightness, pixeldiameter, header=None):
+    def from_data(cls, brightness, pixeldiameter, header=None) -> Self:
         slope, intercept, r_value, p_value, std_err = linregress(brightness, pixeldiameter)
         print()
         print(f'r_value: {r_value:.4f}')
@@ -48,7 +49,7 @@ class CalibBrightness:
         return c
 
     @classmethod
-    def from_file(cls, fn=CALIB_BRIGHTNESS):
+    def from_file(cls, fn=CALIB_BRIGHTNESS) -> Self:
         import pickle
 
         try:

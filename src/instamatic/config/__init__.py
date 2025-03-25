@@ -10,6 +10,8 @@ from pathlib import Path
 
 import yaml
 
+from instamatic._typing import Self
+
 from .config_updater import (
     check_defaults_yaml,
     check_settings_yaml,
@@ -115,7 +117,7 @@ class ConfigObject:
         return self.mapping[item]
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> Self:
         """Read configuration from yaml file, returns namespace."""
         name = Path(path).stem
         return cls(yaml.load(open(path), Loader=yaml.Loader), name=name, location=path)

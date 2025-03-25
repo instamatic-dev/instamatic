@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from instamatic import config
+from instamatic._typing import Self
 
 
 class CameraBase(ABC):
@@ -59,7 +60,7 @@ class CameraBase(ABC):
             for _ in range(n_frames)
         ]
 
-    def __enter__(self) -> CameraBase:
+    def __enter__(self) -> Self:
         self.establish_connection()
         return self
 

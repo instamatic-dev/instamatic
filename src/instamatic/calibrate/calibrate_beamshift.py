@@ -10,6 +10,7 @@ import numpy as np
 from skimage.registration import phase_cross_correlation
 
 from instamatic import config
+from instamatic._typing import Self
 from instamatic.calibrate.filenames import *
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
@@ -46,7 +47,7 @@ class CalibBeamShift:
         return beamshift
 
     @classmethod
-    def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None):
+    def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None) -> Self:
         fit_result = fit_affine_transformation(shifts, beampos)
         r = fit_result.r
         t = fit_result.t
@@ -60,7 +61,7 @@ class CalibBeamShift:
         return c
 
     @classmethod
-    def from_file(cls, fn=CALIB_BEAMSHIFT):
+    def from_file(cls, fn=CALIB_BEAMSHIFT) -> Self:
         """Read calibration from file."""
         import pickle
 
@@ -71,7 +72,7 @@ class CalibBeamShift:
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir='.'):
+    def live(cls, ctrl, outdir='.') -> Self:
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
             if input(' >> Accept? [y/n] ') == 'y':
