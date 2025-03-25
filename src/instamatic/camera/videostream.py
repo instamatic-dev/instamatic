@@ -4,7 +4,7 @@ import atexit
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Type, TypeVar, Union
 
 import numpy as np
 
@@ -95,15 +95,25 @@ class MediaGrabber:
         self.thread.join()
 
 
-class VideoStream(threading.Thread):
-    """Base interface for collecting preview and media from passed camera."""
+_VS = TypeVar('_VS', bound='VideoStream')
 
-    def __new__(cls, cam: Union[CameraBase, str] = 'simulate') -> VideoStream:
-        """Create VideoStream subclass based on passed cam stream-ability."""
+
+class VideoStream(threading.Thread):
+    """Abstract base interface for collecting preview & media from camera."""
+
+    def __new__(cls: Type[_VS], *args, **kwargs) -> _VS:
+        if cls is VideoStream:
+            msg = 'Initialize a `VideoStream` via its subclasses or using `.from_any()`.'
+            raise NotImplementedError(msg)
+        return super(VideoStream, cls).__new__(cls)
+
+    @classmethod
+    def from_any(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
+        """Create a subclass based on passed cam or cam-str stream-ability."""
         cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
         if cls is VideoStream:
             return (LiveVideoStream if cam.streamable else FakeVideoStream)(cam)
-        return super().__new__(cls)
+        return cls(cam)
 
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
@@ -144,41 +154,6 @@ class VideoStream(threading.Thread):
     @contextmanager
     def blocked(self):
         yield
-
-    def continuous_collection(self, exposure=0.1, n=100, callback=None):
-        """Function to continuously collect data Blocks the videostream while
-        collecting data, and only shows collected images.
-
-        exposure: float
-            exposure time
-        n: int
-            number of frames to collect
-            if defined, returns a list of collected frames
-        callback: function
-            This function is called on every iteration with the image as first argument
-            Should return True or False if data collection is to continue
-        """
-        buffer = []
-
-        go_on = True
-        i = 0
-
-        self.block()
-        while go_on:
-            i += 1
-
-            img = self.get_image(exposure=exposure)
-
-            if callback:
-                go_on = callback(img)
-            else:
-                buffer.append(img)
-                go_on = i < n
-
-        self.unblock()
-
-        if not callback:
-            return buffer
 
 
 class LiveVideoStream(VideoStream):

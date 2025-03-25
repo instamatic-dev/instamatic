@@ -129,7 +129,7 @@ class Experiment(ExperimentBase):
             )
 
         self.logger.info(
-            'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {camera_length} mm).'
+            f'Data collected from {start_angle:.2f} degree to {end_angle:.2f} degree (camera length: {self.camera_length} mm).'
         )
 
         self.current_angle = angle

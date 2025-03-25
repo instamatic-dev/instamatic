@@ -9,8 +9,10 @@ import numpy as np
 from PIL import Image, ImageTk
 
 import instamatic.gui.videostream_service as vss_module
+from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
+from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 

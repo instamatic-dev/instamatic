@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 # https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
 [project]
 name = "instamatic"
-version = "2.0.5"
+version = "2.1.0"
 description = "Python program for automated electron diffraction data collection"
 readme = "readme.md"
 requires-python = ">=3.7"
@@ -67,7 +67,7 @@ changelog = "https://github.com/instamatic-dev/instamatic/releases"
 
 [project.optional-dependencies]
 develop = [
-    "bump2version",
+    "bump-my-version",
     "check-manifest",
     "pre-commit",
     "pytest >= 5.4.1",
@@ -155,7 +155,7 @@ quote-style = "single"
 indent-style = "space"
 
 [tool.bumpversion]
-current_version = "2.0.5"
+current_version = "2.1.0"
 
 [[tool.bumpversion.files]]
 filename = "src/instamatic/__init__.py"
@@ -169,5 +169,5 @@ replace = "version = \"{new_version}\""
 
 [[tool.bumpversion.files]]
 filename = "CITATION.cff"
-search = "version: {current_version}"
-replace = "version: {new_version}"
+search = "version: \"{current_version}\""
+replace = "version: \"{new_version}\""
