@@ -103,7 +103,8 @@ class VideoStream(threading.Thread):
 
     def __new__(cls: Type[_VS], *args, **kwargs) -> _VS:
         if cls is VideoStream:
-            raise NotImplementedError('Initialize a `VideoStream` via its subclasses or using `.from_any()`.)
+            msg = 'Initialize a `VideoStream` via its subclasses or using `.from_any()`.'
+            raise NotImplementedError(msg)
         return super(VideoStream, cls).__new__(cls)
 
     @classmethod
