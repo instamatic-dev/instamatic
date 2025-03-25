@@ -54,9 +54,9 @@ class ClickListener:
 
     def handle_click(self, click_event: ClickEvent) -> None:
         if self.active:
+            self.queue.put(click_event)
             if self.callback is not None:
                 self.callback(click_event)
-            self.queue.put(click_event)
 
     def get_click(self, timeout: float = None) -> Union[ClickEvent, None]:
         """Get next `ClickEvent` from the queue or await it until `timeout`"""
