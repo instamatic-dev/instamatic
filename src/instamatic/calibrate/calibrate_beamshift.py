@@ -45,7 +45,7 @@ class CalibBeamShift:
         """Converts from pixel coordinates to beamshift x,y."""
         r = self.transform
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
-        return beamshift
+        return beamshift.astype(int)
 
     @classmethod
     def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None) -> Self:
@@ -181,7 +181,7 @@ def calibrate_beamshift_live(
 
         printer(f'Position: {i + 1}/{tot}: {ctrl.beamshift}')
 
-        outfile = os.path.join(outdir, f'calib_beamshift_{i:04d}') if save_images else None
+        outfile = os.path.join(outdir, 'calib_beamshift_{i:04d}') if save_images else None
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
         img, h = ctrl.get_image(
