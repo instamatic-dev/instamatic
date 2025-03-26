@@ -7,8 +7,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
+from typing_extensions import Self
 
-from instamatic._typing import Self
 from instamatic.formats import read_image
 from instamatic.image_utils import autoscale, imgscale
 

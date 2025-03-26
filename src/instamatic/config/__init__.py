@@ -9,8 +9,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import yaml
-
-from instamatic._typing import Self
+from typing_extensions import Self
 
 from .config_updater import (
     check_defaults_yaml,

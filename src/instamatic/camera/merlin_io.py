@@ -4,8 +4,7 @@ import os
 from typing import List
 
 import numpy as np
-
-from instamatic._typing import Self
+from typing_extensions import Self
 
 
 class MIBProperties:

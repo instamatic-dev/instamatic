@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 import numpy as np
+from typing_extensions import Self
 
 from instamatic import config
-from instamatic._typing import Self
 
 
 class CameraBase(ABC):

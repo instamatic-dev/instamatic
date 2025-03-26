@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from instamatic._typing import Self
+from typing_extensions import Self
 
 
 class ExperimentBase(ABC):

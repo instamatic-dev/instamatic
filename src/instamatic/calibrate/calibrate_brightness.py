@@ -6,8 +6,8 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+from typing_extensions import Self
 
-from instamatic._typing import Self
 from instamatic.image_utils import autoscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
