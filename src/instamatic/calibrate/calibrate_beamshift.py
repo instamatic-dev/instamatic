@@ -8,9 +8,9 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
+from typing_extensions import Self
 
 from instamatic import config
-from instamatic._typing import Self
 from instamatic.calibrate.filenames import *
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
