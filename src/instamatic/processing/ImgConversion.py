@@ -269,7 +269,7 @@ class ImgConversion:
             if invert_y:
                 cy = shape_y - cy
 
-            h['beam_center'] = (cx, cy)
+            h['beam_center'] = (float(cx), float(cy))
             centers.append((cx, cy))
 
         self._beam_centers = beam_centers = np.array(centers)
