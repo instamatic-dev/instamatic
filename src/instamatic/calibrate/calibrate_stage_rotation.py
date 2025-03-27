@@ -233,6 +233,7 @@ class CalibStageRotation:
             speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
         else:  # if type(self.speed_options) is FloatOptionsListed:
             speeds = self.speed_options.options  # noqa - has options
+        speeds = [s for s in speeds if s != 0]
 
         fig, ax = plt.subplots()
         ax.axvline(x=0, color='k')
@@ -314,11 +315,11 @@ def calibrate_stage_rotation_live(
 
         with tqdm(total=total) as progress_bar:
             for speed in speed_range:
-                with ctrl.stage.rotating_speed(speed=speed):
+                with ctrl.stage.rotating_speed(speed=float(speed)):
                     ctrl.stage.a = 0.0
                     for at, as_ in zip(alpha_targets, alpha_spans):
                         with timer() as t:
-                            ctrl.stage.a = at
+                            ctrl.stage.a = float(at)
                         calib_points.append(SpanSpeedTime(as_, speed, t()))
                         progress_bar.update(1)
     finally:
@@ -327,6 +328,7 @@ def calibrate_stage_rotation_live(
         if ctrl.cam.streamable:
             ctrl.cam.unblock()  # noqa - streamable cams have unblock()
 
+    for cp in calib_points: print(cp)
     calib_points_array = np.array(calib_points).T
     all_spans_speeds = calib_points_array[:2]
     all_times = calib_points_array[2]
