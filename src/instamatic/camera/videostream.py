@@ -95,20 +95,22 @@ class MediaGrabber:
         self.thread.join()
 
 
-_VS = TypeVar('_VS', bound='VideoStream')
+VideoStream_T = TypeVar('VideoStream_T', bound='VideoStream')  # VideoStream or subclass
 
 
 class VideoStream(threading.Thread):
     """Abstract base interface for collecting preview & media from camera."""
 
-    def __new__(cls: Type[_VS], *args, **kwargs) -> _VS:
+    def __new__(cls: Type[VideoStream_T], *args, **kwargs) -> VideoStream_T:
         if cls is VideoStream:
             msg = 'Initialize a `VideoStream` via its subclasses or using `.from_any()`.'
             raise NotImplementedError(msg)
         return super(VideoStream, cls).__new__(cls)
 
     @classmethod
-    def from_any(cls: Type[_VS], cam: Union[CameraBase, str] = 'simulate') -> _VS:
+    def from_any(
+        cls: Type[VideoStream_T], cam: Union[CameraBase, str] = 'simulate'
+    ) -> VideoStream_T:
         """Create a subclass based on passed cam or cam-str stream-ability."""
         cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
         if cls is VideoStream:

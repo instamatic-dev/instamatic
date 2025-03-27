@@ -4,6 +4,7 @@ import os
 from typing import List
 
 import numpy as np
+from typing_extensions import Self
 
 
 class MIBProperties:
@@ -89,7 +90,7 @@ class MIBProperties:
         print(f'\tNumber of frames to be read: {self.xy}')
 
     @classmethod
-    def from_buffer(cls, buffer: bytes):
+    def from_buffer(cls, buffer: bytes) -> Self:
         """Return MIB properties from buffer."""
         head = buffer[:384].decode().split(',')
         return cls(head)

@@ -8,6 +8,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
+from typing_extensions import Self
 
 from instamatic import config
 from instamatic.image_utils import autoscale, imgscale
@@ -72,7 +73,7 @@ class CalibDirectBeam:
         return ret
 
     @classmethod
-    def combine(cls, lst):
+    def combine(cls, lst) -> Self:
         return cls({k: v for c in lst for k, v in c._dct.items()})
 
     def any2pixelshift(self, shift, key):
@@ -117,7 +118,7 @@ class CalibDirectBeam:
         return self.pixelshift2any(pixelshift=pixelshift, key='ImageTilt')
 
     @classmethod
-    def from_data(cls, shifts, readout, key, header=None, **dct):
+    def from_data(cls, shifts, readout, key, header=None, **dct) -> Self:
         fit_result = fit_affine_transformation(shifts, readout, **dct)
 
         d = {
@@ -131,7 +132,7 @@ class CalibDirectBeam:
         return cls({key: d})
 
     @classmethod
-    def from_file(cls, fn=CALIB_DIRECTBEAM):
+    def from_file(cls, fn=CALIB_DIRECTBEAM) -> Self:
         import pickle
 
         try:
@@ -141,7 +142,7 @@ class CalibDirectBeam:
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir='.'):
+    def live(cls, ctrl, outdir='.') -> Self:
         while True:
             c = calibrate_directbeam(ctrl=ctrl, save_images=True, outdir=outdir)
             if input(' >> Accept? [y/n] ') == 'y':

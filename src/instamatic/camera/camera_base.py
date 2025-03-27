@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 import numpy as np
+from typing_extensions import Self
 
 from instamatic import config
 
@@ -59,7 +60,7 @@ class CameraBase(ABC):
             for _ in range(n_frames)
         ]
 
-    def __enter__(self) -> CameraBase:
+    def __enter__(self) -> Self:
         self.establish_connection()
         return self
 
