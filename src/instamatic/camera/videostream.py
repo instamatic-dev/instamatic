@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import atexit
 import threading
+import time
 from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
-from threading import Event
 from typing import Any, Generator, List, Optional, Type, TypeVar, Union
 
 import numpy as np
@@ -15,14 +15,11 @@ from instamatic.camera.camera_base import CameraBase
 from instamatic.image_utils import autoscale
 
 
-@dataclass
+@dataclass(frozen=True)
 class MediaRequest:
     n_frames: Optional[int] = 1
     exposure: Optional[float] = None
     binsize: Optional[int] = None
-
-    def __post_init__(self):
-        self.remaining: int = self.n_frames
 
 
 class ImageRequest(MediaRequest):
@@ -68,7 +65,6 @@ class MediaGrabber:
 
         self.stopEvent = threading.Event()
         self.acquireInitiateEvent = threading.Event()
-        self.acquireCompleteEvent = threading.Event()
         self.continuousCollectionEvent = threading.Event()
 
     def run(self):
@@ -85,7 +81,7 @@ class MediaGrabber:
                     n = r.n_frames if r.n_frames else 1
                     for media in self.cam.get_movie(n_frames=n, exposure=e, binsize=b):
                         self.callback(media, request=r)
-                        Event().wait(0)  # yields thread priority to VideoStream
+                        time.sleep(0)  # yields thread priority to VideoStream
 
             elif not self.continuousCollectionEvent.is_set():
                 frame = self.cam.get_image(
@@ -186,9 +182,6 @@ class LiveVideoStream(VideoStream):
         """Callback function of `self.grabber` that handles grabbed media."""
         if isinstance(request, MediaRequest):
             self.requested.append(media)
-            request.remaining -= 1
-            if request.remaining == 0:
-                self.grabber.acquireCompleteEvent.set()
         self.frame = media
 
     def setup_grabber(self) -> MediaGrabber:
@@ -202,11 +195,9 @@ class LiveVideoStream(VideoStream):
             self.grabber.request = request
             self.grabber.acquireInitiateEvent.set()
             while not self.requested:
-                pass
+                time.sleep(0)
             image = self.requested.popleft()
             self.grabber.request = None
-            self.grabber.acquireCompleteEvent.wait()
-            self.grabber.acquireCompleteEvent.clear()
         return image
 
     def get_movie(
@@ -221,8 +212,6 @@ class LiveVideoStream(VideoStream):
                     pass
                 yield self.requested.popleft()
             self.grabber.request = None
-            self.grabber.acquireCompleteEvent.wait()
-            self.grabber.acquireCompleteEvent.clear()
 
     def update_frametime(self, frametime):
         self.frametime = frametime
