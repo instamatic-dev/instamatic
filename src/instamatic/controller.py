@@ -601,7 +601,7 @@ class TEMController:
         out: str = None,
         plot: bool = False,
         verbose: bool = False,
-        header_keys: Tuple[str] = 'all',
+        header_keys: Tuple[str] = ('all',),
     ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
