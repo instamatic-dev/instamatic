@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import time
-from collections import namedtuple
+from collections import ChainMap
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Tuple
+from idlelib.configdialog import help_common
+from typing import Generator, Optional, Tuple
 
 import numpy as np
 
@@ -611,7 +612,7 @@ class TEMController:
         exposure: float
             Exposure time in seconds
         binsize: int
-            Binning to use for the image, must be 1, 2, or 4, etc
+            Binning to use for the image, must be 1, 2, or 4, etc.
         comment: str
             Arbitrary comment to add to the header file under 'ImageComment'
         out: str
@@ -639,10 +640,7 @@ class TEMController:
         if not exposure:
             exposure = self.cam.default_exposure
 
-        if not header_keys:
-            h = {}
-        else:
-            h = self.to_dict(header_keys)
+        h = self.to_dict(*header_keys) if header_keys else {}
 
         if self.autoblank:
             self.beam.unblank()
@@ -680,13 +678,36 @@ class TEMController:
 
         return arr, h
 
-    def get_movie(
-        self, n_frames: int, *, exposure: float = None, binsize: int = None, out: str = None
-    ) -> Tuple[np.ndarray]:
-        """Collect a stack of images using the camera's movie mode, if
-        available.
+    MOVIE_HEADER_KEYS_UNIQUE = (  # typically unique for every movie frame
+        'BeamShift',
+        'BeamTilt',
+        'StagePosition',
+    )
+    MOVIE_HEADER_KEYS_COMMON = (  # typically common for all movie frames
+        'FunctionMode',
+        'GunShift',
+        'GunTilt',
+        'ImageShift1',
+        'ImageShift2',
+        'DiffShift',
+        'Magnification',
+        'DiffFocus',
+        'Brightness',
+        'SpotSize',
+    )
 
-        This minimizes the gap between frames.
+    def get_movie(
+        self,
+        n_frames: int,
+        exposure: float = None,
+        binsize: int = None,
+        comment: str = '',
+        header_keys: Tuple[str] = MOVIE_HEADER_KEYS_UNIQUE,
+        header_keys_common: Tuple[str] = MOVIE_HEADER_KEYS_COMMON,
+    ) -> Generator[np.ndarray, None, None]:
+        """Generate a stack of images using the camera's movie mode. If the
+        exposure and binsize are not given, the default values are read from
+        the config file. This minimizes the gap between frames.
 
         Parameters
         ----------
@@ -695,14 +716,23 @@ class TEMController:
         exposure : float, optional
             Exposure time in seconds
         binsize : int, optional
-            Binning to use for the image, must be 1, 2, or 4, etc
-        out : str, optional
-            Path or filename to which the image/header is saved (defaults to tiff)
+            Binning to use for the image, must be 1, 2, or 4, etc.
+        comment: str, optional
+            Arbitrary comment to add to the header file under 'ImageComment'
+        header_keys: Tuple[str]
+            Header keys to collect alongside each image. Use few to minimize lag.
+        header_keys_common: Tuple[str]
+            Common header keys to collect once at the start of get_movie only.
+
 
         Returns
         -------
-        stack : Tuple[np.ndarray]
-            List of numpy arrays with image data.
+        movie_header: Generator[(np.ndarray, collections.ChainMap), None, None]
+            Generator of (numpy arrays with image data, ChainMap with
+            all the tem parameters and image attributes) pairs.
+
+        Usage:
+            for img, h in self.get_movie(10, **kwargs): print(img.shape)
         """
         if not self.cam:
             raise AttributeError(
@@ -714,15 +744,47 @@ class TEMController:
         if not exposure:
             exposure = self.cam.default_exposure
 
+        gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        h_common = {}
+
         if self.autoblank:
             self.beam.unblank()
 
-        stack = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        for _ in range(n_frames):
+            # The generator `gen` starts collecting movie only when first next is called
+            # request the next image, expect it in the future, get metadata in the meantime
+            future_arr = self._executor.submit(lambda: next(gen))
+            time_start = time.perf_counter()
+
+            if not h_common:
+                h_common = self.to_dict(*header_keys_common) if header_keys_common else {}
+                h_common['ImageExposureTime'] = exposure
+                h_common['ImageBinsize'] = binsize
+                h_common['ImageComment'] = comment
+                h_common['ImageCameraName'] = self.cam.name
+                h_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
+
+            h = h_common.copy()
+            h['ImageGetTimeStart'] = time_start
+            h.update(self.to_dict(*header_keys) if header_keys else {})
+
+            if 'Magnification' not in h:
+                h['Magnification'] = self.magnification.value
+            if 'FunctionMode' not in h:
+                h['FunctionMode'] = self.mode.get()
+            mag = h['Magnification']
+            mode = h['FunctionMode']
+
+            arr = future_arr.result()
+            h['ImageGetTimeEnd'] = time.perf_counter()
+            h['ImageGetTime'] = time.time()
+
+            rotate_image(arr, mode=mode, mag=mag)
+            h['ImageResolution'] = arr.shape
+            yield arr, ChainMap(h, h_common)
 
         if self.autoblank:
             self.beam.blank()
-
-        return stack
 
     def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for

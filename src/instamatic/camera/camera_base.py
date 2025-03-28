@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 import numpy as np
 from typing_extensions import Self
@@ -52,7 +52,7 @@ class CameraBase(ABC):
         exposure: Optional[float] = None,
         binsize: Optional[int] = None,
         **kwargs,
-    ) -> List[np.ndarray]:
+    ) -> Generator[np.ndarray, None, None]:
         """Basic implementation, subclasses should override with appropriate
         optimization."""
         return [
