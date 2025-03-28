@@ -195,7 +195,7 @@ class LiveVideoStream(VideoStream):
             self.grabber.request = request
             self.grabber.acquireInitiateEvent.set()
             while not self.requested:
-                time.sleep(0)
+                time.sleep(0)  # yields thread priority to MediaGrabber
             image = self.requested.popleft()
             self.grabber.request = None
         return image
@@ -209,7 +209,7 @@ class LiveVideoStream(VideoStream):
             self.grabber.acquireInitiateEvent.set()
             for _ in range(n_frames):
                 while not self.requested:
-                    pass
+                    time.sleep(0)  # yields thread priority to MediaGrabber
                 yield self.requested.popleft()
             self.grabber.request = None
 
