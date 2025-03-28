@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import atexit
 import threading
+from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, List, Optional, Type, TypeVar, Union
+from threading import Event
+from typing import Any, Generator, List, Optional, Type, TypeVar, Union
 
 import numpy as np
 
@@ -13,11 +15,14 @@ from instamatic.camera.camera_base import CameraBase
 from instamatic.image_utils import autoscale
 
 
-@dataclass(frozen=True)
+@dataclass
 class MediaRequest:
-    n_frames: Optional[int] = None
+    n_frames: Optional[int] = 1
     exposure: Optional[float] = None
     binsize: Optional[int] = None
+
+    def __post_init__(self):
+        self.remaining: int = self.n_frames
 
 
 class ImageRequest(MediaRequest):
@@ -75,10 +80,12 @@ class MediaGrabber:
                 b = r.binsize if r.binsize else self.default_binsize
                 if isinstance(r, ImageRequest):
                     media = self.cam.get_image(exposure=e, binsize=b)
+                    self.callback(media, request=r)
                 else:  # isinstance(r, MovieRequest):
                     n = r.n_frames if r.n_frames else 1
-                    media = self.cam.get_movie(n_frames=n, exposure=e, binsize=b)
-                self.callback(media, request=r)
+                    for media in self.cam.get_movie(n_frames=n, exposure=e, binsize=b):
+                        self.callback(media, request=r)
+                        Event().wait(0)  # yields thread priority to VideoStream
 
             elif not self.continuousCollectionEvent.is_set():
                 frame = self.cam.get_image(
@@ -165,6 +172,7 @@ class LiveVideoStream(VideoStream):
         super().__init__(cam)
         self.frame = None
         self.grabber = self.setup_grabber()
+        self.requested = deque()
         self.start()
 
     def start(self):
@@ -176,41 +184,45 @@ class LiveVideoStream(VideoStream):
         request: Optional[MediaRequest] = None,
     ) -> None:
         """Callback function of `self.grabber` that handles grabbed media."""
-        with self.grabber.lock:
-            if request is None:
-                self.frame = media
-            elif isinstance(request, ImageRequest):
-                self.requested_media = self.frame = media
+        if isinstance(request, MediaRequest):
+            self.requested.append(media)
+            request.remaining -= 1
+            if request.remaining == 0:
                 self.grabber.acquireCompleteEvent.set()
-            else:  # isinstance(request, MovieRequest):
-                self.requested_media = media
-                self.frame = media[-1]
-                self.grabber.acquireCompleteEvent.set()
+        self.frame = media
 
     def setup_grabber(self) -> MediaGrabber:
         grabber = MediaGrabber(self.cam, callback=self.send_media, frametime=self.frametime)
         atexit.register(grabber.stop)
         return grabber
 
-    def get_image(self, exposure=None, binsize=None):
-        request = ImageRequest(exposure=exposure, binsize=binsize)
-        return self._get_media(request)
-
-    def get_movie(self, n_frames: int, exposure=None, binsize=None):
-        request = MovieRequest(n_frames=n_frames, exposure=exposure, binsize=binsize)
-        return self._get_media(request)
-
-    def _get_media(self, request: MediaRequest) -> Union[np.ndarray, List[np.ndarray]]:
+    def get_image(self, exposure=None, binsize=None) -> np.ndarray:
         with self.blocked():  # Stop the passive collection during request acquisition
+            request = ImageRequest(exposure=exposure, binsize=binsize)
             self.grabber.request = request
             self.grabber.acquireInitiateEvent.set()
-            self.grabber.acquireCompleteEvent.wait()
-            with self.grabber.lock:
-                media = self.requested_media
-                self.requested_media = None
+            while not self.requested:
+                pass
+            image = self.requested.popleft()
             self.grabber.request = None
+            self.grabber.acquireCompleteEvent.wait()
             self.grabber.acquireCompleteEvent.clear()
-        return media
+        return image
+
+    def get_movie(
+        self, n_frames: int, exposure=None, binsize=None
+    ) -> Generator[np.ndarray, None, None]:
+        with self.blocked():  # Stop the passive collection during request acquisition
+            request = MovieRequest(n_frames=n_frames, exposure=exposure, binsize=binsize)
+            self.grabber.request = request
+            self.grabber.acquireInitiateEvent.set()
+            for _ in range(n_frames):
+                while not self.requested:
+                    pass
+                yield self.requested.popleft()
+            self.grabber.request = None
+            self.grabber.acquireCompleteEvent.wait()
+            self.grabber.acquireCompleteEvent.clear()
 
     def update_frametime(self, frametime):
         self.frametime = frametime
