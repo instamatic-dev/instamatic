@@ -705,9 +705,10 @@ class TEMController:
         header_keys: Tuple[str] = MOVIE_HEADER_KEYS_UNIQUE,
         header_keys_common: Tuple[str] = MOVIE_HEADER_KEYS_COMMON,
     ) -> Generator[np.ndarray, None, None]:
-        """Generate a stack of images using the camera's movie mode. If the
+        """Generate (image, header) pairs using camera's movie mode. If the
         exposure and binsize are not given, the default values are read from
-        the config file. This minimizes the gap between frames.
+        the config file. Common header info is collected before the generator
+        is started by calling next, minimizing the gap between frames.
 
         Parameters
         ----------
@@ -724,10 +725,9 @@ class TEMController:
         header_keys_common: Tuple[str]
             Common header keys to collect once at the start of get_movie only.
 
-
-        Returns
+        Yields
         -------
-        movie_header: Generator[(np.ndarray, collections.ChainMap), None, None]
+        image_header: Generator[(np.ndarray, collections.ChainMap), None, None]
             Generator of (numpy arrays with image data, ChainMap with
             all the tem parameters and image attributes) pairs.
 
@@ -745,43 +745,41 @@ class TEMController:
             exposure = self.cam.default_exposure
 
         gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
-        h_common = {}
+
+        header_common = self.to_dict(*header_keys_common) if header_keys_common else {}
+        header_common['ImageExposureTime'] = exposure
+        header_common['ImageBinsize'] = binsize
+        header_common['ImageComment'] = comment
+        header_common['ImageCameraName'] = self.cam.name
+        header_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
 
         if self.autoblank:
             self.beam.unblank()
 
         for _ in range(n_frames):
-            # The generator `gen` starts collecting movie only when first next is called
-            # request the next image, expect it in the future, get metadata in the meantime
-            future_arr = self._executor.submit(lambda: next(gen))
+            # The generator `gen` starts collecting only when the first `next` is called.
+            # Request the next image, expect it in the future, get header in the meantime
+            future_img = self._executor.submit(lambda: next(gen))
             time_start = time.perf_counter()
 
-            if not h_common:
-                h_common = self.to_dict(*header_keys_common) if header_keys_common else {}
-                h_common['ImageExposureTime'] = exposure
-                h_common['ImageBinsize'] = binsize
-                h_common['ImageComment'] = comment
-                h_common['ImageCameraName'] = self.cam.name
-                h_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
+            header = header_common.copy()
+            header['ImageGetTimeStart'] = time_start
+            header.update(self.to_dict(*header_keys) if header_keys else {})
 
-            h = h_common.copy()
-            h['ImageGetTimeStart'] = time_start
-            h.update(self.to_dict(*header_keys) if header_keys else {})
+            if 'Magnification' not in header:
+                header['Magnification'] = self.magnification.value
+            if 'FunctionMode' not in header:
+                header['FunctionMode'] = self.mode.get()
+            mag = header['Magnification']
+            mode = header['FunctionMode']
 
-            if 'Magnification' not in h:
-                h['Magnification'] = self.magnification.value
-            if 'FunctionMode' not in h:
-                h['FunctionMode'] = self.mode.get()
-            mag = h['Magnification']
-            mode = h['FunctionMode']
+            img = future_img.result()
+            header['ImageGetTimeEnd'] = time.perf_counter()
+            header['ImageGetTime'] = time.time()
 
-            arr = future_arr.result()
-            h['ImageGetTimeEnd'] = time.perf_counter()
-            h['ImageGetTime'] = time.time()
-
-            rotate_image(arr, mode=mode, mag=mag)
-            h['ImageResolution'] = arr.shape
-            yield arr, ChainMap(h, h_common)
+            rotate_image(img, mode=mode, mag=mag)
+            header['ImageResolution'] = img.shape
+            yield img, header
 
         if self.autoblank:
             self.beam.blank()
