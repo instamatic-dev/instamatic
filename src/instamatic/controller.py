@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import time
-from collections import ChainMap
 from concurrent.futures import ThreadPoolExecutor
-from idlelib.configdialog import help_common
-from typing import Generator, Optional, Tuple
+from functools import wraps
+from typing import Callable, Generator, Optional, Tuple
 
 import numpy as np
 
@@ -82,6 +81,19 @@ def get_instance() -> 'TEMController':
         ctrl = _ctrl = initialize()
 
     return ctrl
+
+
+def requires_cam_attr(method: Callable) -> Callable:
+    """Decorator that raises an error if `self.cam` evaluates to False."""
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not getattr(self, 'cam', None):
+            msg = " object has no attribute 'cam' (Camera has not been initialized)"
+            raise AttributeError(self.__class__.__name__ + msg)
+        return method(self, *args, **kwargs)
+
+    return wrapper
 
 
 class TEMController:
@@ -521,6 +533,7 @@ class TEMController:
             except TypeError:
                 func(v)
 
+    @requires_cam_attr
     def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
         raw data array.
@@ -593,6 +606,7 @@ class TEMController:
 
         return arr
 
+    @requires_cam_attr
     def get_image(
         self,
         exposure: float = None,
@@ -630,11 +644,6 @@ class TEMController:
         Usage:
             img, h = self.get_image()
         """
-        if not self.cam:
-            raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
-            )
-
         if not binsize:
             binsize = self.cam.default_binsize
         if not exposure:
@@ -696,6 +705,7 @@ class TEMController:
         'SpotSize',
     )
 
+    @requires_cam_attr
     def get_movie(
         self,
         n_frames: int,
@@ -734,11 +744,6 @@ class TEMController:
         Usage:
             for img, h in self.get_movie(10, **kwargs): print(img.shape)
         """
-        if not self.cam:
-            raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
-            )
-
         if not binsize:
             binsize = self.cam.default_binsize
         if not exposure:
