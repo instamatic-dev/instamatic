@@ -687,7 +687,7 @@ class TEMController:
 
         return arr, h
 
-    MOVIE_HEADER_KEYS_UNIQUE = (  # typically unique for every movie frame
+    MOVIE_HEADER_KEYS_VARIABLE = (  # typically unique for every movie frame
         'BeamShift',
         'BeamTilt',
         'StagePosition',
@@ -712,7 +712,7 @@ class TEMController:
         exposure: float = None,
         binsize: int = None,
         comment: str = '',
-        header_keys: Tuple[str] = MOVIE_HEADER_KEYS_UNIQUE,
+        header_keys: Tuple[str] = MOVIE_HEADER_KEYS_VARIABLE,
         header_keys_common: Tuple[str] = MOVIE_HEADER_KEYS_COMMON,
     ) -> Generator[np.ndarray, None, None]:
         """Generate (image, header) pairs using camera's movie mode. If the
