@@ -5,14 +5,16 @@ import json
 import logging
 import time
 from collections import UserDict
+from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from tqdm import tqdm
+from typing_extensions import Self
 
 from instamatic.calibrate.filenames import CALIB_MOVIE_DELAYS
 from instamatic.config import calibration_drc
@@ -75,10 +77,71 @@ class CalibMovieDelays:
     @classmethod
     def from_file(
         cls,
+        header_keys: Tuple[str] = (),
+        header_keys_common: Tuple[str] = (),
         path: Optional[str] = None,
-        header_keys: Optional[Tuple[str]] = None,
-        header_keys_common: Optional[Tuple[str]] = None,
     ) -> CalibMovieDelays:
+        calib_map = CalibMovieDelaysMapping.from_file(path)
+        calib = calib_map.get((header_keys, header_keys_common))
+        if calib is None:
+            log('CalibMovieDelays for specified header keys not found. Calibrating...')
+            calib = calibrate_movie_delays_live(header_keys, header_keys_common)
+            calib_map[(header_keys, header_keys_common)] = calib
+            calib_map.to_file(path)
+        return calib
+
+    @classmethod
+    def live(cls, ctrl: 'TEMController', **kwargs) -> CalibMovieDelays:
+        return calibrate_movie_delays_live(ctrl=ctrl, **kwargs)
+
+
+class CalibMovieDelaysMapping(MutableMapping):
+    """Calibrated delays depend on the information requested in movie header:
+    requesting a lot of common information might elongate the initialization,
+    whereas large per-image headers will raise the feasible `min_exposure`.
+    This class loads, stores, and saves instances of `CalibMovieDelays`
+    calibrated for each combination of the header.
+    """
+
+    TwoTuples_T = Tuple[Tuple[str, ...], Tuple[str, ...]]
+
+    def __init__(self, dict_: Dict[str, CalibMovieDelays]) -> None:
+        self.dict = dict_
+
+    def __delitem__(self, k: Union[str, TwoTuples_T]) -> None:
+        del self.dict[k if isinstance(k, str) else self.sequences_to_str(*k)]
+
+    def __getitem__(self, k: Union[str, TwoTuples_T]) -> CalibMovieDelays:
+        return self.dict[k if isinstance(k, str) else self.sequences_to_str(*k)]
+
+    def __len__(self) -> int:
+        return len(self.dict)
+
+    def __iter__(self) -> Iterator:
+        return self.dict.__iter__()
+
+    def __setitem__(self, k, v) -> None:
+        self.dict[k if isinstance(k, str) else self.sequences_to_str(*k)] = v
+
+    @staticmethod
+    def str_to_tuples(key: str) -> TwoTuples_T:
+        """Convert a "t11,t12;t21,t22"-form string into 2 tuples t1 & t2."""
+        header_keys_common, header_keys_variable = key.split(';', 2)
+        header_keys_common = tuple(sorted(header_keys_common.split(',')))
+        header_keys_variable = tuple(sorted(header_keys_variable.split(',')))
+        return header_keys_common, header_keys_variable
+
+    @staticmethod
+    def sequences_to_str(t1: Sequence[str, ...], t2: Sequence[str, ...]) -> str:
+        """Convert 2 sequences t1 & t2 into a "t11,t12;t21,t22"-form str."""
+        return ','.join(sorted(t1)) + ';' + ','.join(sorted(t2))
+
+    @classmethod
+    def from_dict(cls, dict_: Dict[str, Dict[str, float]]) -> Self:
+        return cls({k: CalibMovieDelays.from_dict(v) for k, v in dict_.items()})
+
+    @classmethod
+    def from_file(cls, path: Optional[str] = None) -> Self:
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
@@ -88,15 +151,15 @@ class CalibMovieDelays:
             prog = 'instamatic.calibrate_movie_delays'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
 
-    @classmethod
-    def live(cls, ctrl: 'TEMController', **kwargs) -> CalibMovieDelays:
-        return calibrate_movie_delays_live(ctrl=ctrl, **kwargs)
+    def to_dict(self) -> Dict[str, Dict[str, float]]:
+        return {k: v.to_dict() for k, v in self.dict}
 
-
-class CalibMovieRateDict(UserDict):
-    """A manager class for reading, writing `CalibMovieRate`s to one file."""
-
-    # TODO
+    def to_file(self, path: Optional[str] = None) -> None:
+        if path is None:
+            path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
+        with open(Path(path), 'w') as json_file:
+            json.dump(self.to_dict(), json_file)
+        log(f'{self} saved to {path}.')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ MOVIE RATE CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~ #
@@ -186,9 +249,8 @@ class MovieTimes:
 
 def calibrate_movie_delays_live(
     ctrl: 'TEMController',
-    exposures: Optional[Sequence[float]] = None,
-    header_keys: Tuple[str] = None,
-    header_keys_common: Tuple[str] = None,
+    header_keys: Tuple[str] = (),
+    header_keys_common: Tuple[str] = (),
     outdir: Optional[str] = None,
 ):
     """Calibrate the `get_movie` function. Intuitively, collecting an N-frame
@@ -208,19 +270,22 @@ def calibrate_movie_delays_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    exposures = np.array(exposures or [1 / 2 ** (n**1 / 10) for n in range(1, 101)])
+    exposures = np.array([1 / 2 ** (n**1 / 10) for n in range(1, 101)])
     n_frames = 10
 
-    get_movie_kwargs = dict(header_keys=None, header_keys_common=None)
+    get_movie_kwargs = {}
     if header_keys:
         get_movie_kwargs['header_keys'] = header_keys
     if header_keys_common:
         get_movie_kwargs['header_keys_common'] = header_keys_common
 
+    log('Calibration of `get_movie` for the following keys started')
+    log(f'header_keys: {header_keys}')
+    log(f'header_keys_common: {header_keys_common}')
+
     mt = MovieTimes(n_frames=n_frames)
     ctrl.cam.block()
     try:
-        log(f'Starting movie delay calibration for {len(exposures)} exposures.')
         for exposure in tqdm(exposures):
             # first 1-frame movie dummy updates the settings as needed
             _ = next(ctrl.get_movie(1, exposure, **get_movie_kwargs))
@@ -237,11 +302,8 @@ def calibrate_movie_delays_live(
                 try:
                     mt.add_column(exposure, timestamps)
                 except ValueError as e:
-                    print(
-                        'Exposure {}, attempt {}: Calibration failed: {}'.format(
-                            exposure, attempt, e
-                        )
-                    )
+                    msg = 'Exposure {}, attempt {}: Calibration failed: {}'
+                    log(msg.format(exposure, attempt, e))
                 else:
                     break  # Do not test again if a column was added successfully
             else:
@@ -255,9 +317,9 @@ def calibrate_movie_delays_live(
     return_time = float(mt.return_times.mean())
     min_exposure = float(min(mt.table.keys()))
 
-    print(CalibMovieDelays(init_time, yield_time, wait_time, return_time, min_exposure))
-    return CalibMovieDelays(init_time, yield_time, wait_time, return_time, min_exposure)
-    # TODO: for each header combination, a new calibration should be saved to the same file
+    c = CalibMovieDelays(init_time, yield_time, wait_time, return_time, min_exposure)
+    log(f'Calibration of `get_movie` complete: {c}')
+    return c
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ STANDALONE COMMAND ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -274,7 +336,11 @@ def main_entry() -> None:
 
     h = 'Comma-delimited list of exposure settings to calibrate. '
     h += 'Default: "10,5.,2.,1.,0.5,0.2,0.1,0.05,0.02,0.01".'
-    parser.add_argument('-e', '--exposures', type=str, help=h)
+    parser.add_argument('-h', '--headers', type=str, help=h)
+
+    h = 'Comma-delimited list of exposure settings to calibrate. '
+    h += 'Default: "10,5.,2.,1.,0.5,0.2,0.1,0.05,0.02,0.01".'
+    parser.add_argument('-c', '--common', type=str, help=h)
 
     h = 'Path to the directory where calibration file should be output. '
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
