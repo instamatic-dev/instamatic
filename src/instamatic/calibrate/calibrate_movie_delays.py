@@ -4,18 +4,17 @@ import dataclasses
 import json
 import logging
 import time
-from collections import UserDict
 from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, Iterator, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
 from tqdm import tqdm
 from typing_extensions import Self
 
+from instamatic.calibrate import CalibError
 from instamatic.calibrate.filenames import CALIB_MOVIE_DELAYS
 from instamatic.config import calibration_drc
 
@@ -37,14 +36,14 @@ def log(s: str) -> None:
 class CalibMovieDelays:
     """Calibrate the difference between requested and actual movie exposure
     and frame rate. Given `n = n_frames`, the time needed to run the full image
-    collection always exceeds the simple sum and is modeled here as:
+    collection always exceeds the naive product and instead is modeled here as:
 
     total = init + (exposure + yield + wait) * (n-1) + exposure + yield + return
 
     Individual variables present above represent the following time spans:
 
     - total: total time from calling `get_movie` to receiving a return value;
-    - exposure: declared exposure time passed to `VideoStream.get_movie`;
+    - exposure: exact constant "exposure" passed to `VideoStream.get_movie`;
     - yield: time between controller receiving a frame and yielding it;
     - wait: time between yielding a (non-final) frame and starting a new one;
     - return: time between yielding the final frame and yielding None.
@@ -56,7 +55,7 @@ class CalibMovieDelays:
     also starts delayed by `init_time` and ends `return_time` late.
 
     The last parameter, `min_exposure`, declares the lowest value of exposure
-    for which the calibration has been performed and follows the same trends.
+    for which the calibration has been performed and follows established trend.
     """
 
     init_time: float
@@ -84,7 +83,7 @@ class CalibMovieDelays:
         calib_map = CalibMovieDelaysMapping.from_file(path)
         calib = calib_map.get((header_keys, header_keys_common))
         if calib is None:
-            log('CalibMovieDelays for specified header keys not found. Calibrating...')
+            log(f'{cls.__name__} for specified header keys not found. Calibrating...')
             calib = calibrate_movie_delays_live(header_keys, header_keys_common)
             calib_map[(header_keys, header_keys_common)] = calib
             calib_map.to_file(path)
@@ -94,6 +93,24 @@ class CalibMovieDelays:
     def live(cls, ctrl: 'TEMController', **kwargs) -> CalibMovieDelays:
         return calibrate_movie_delays_live(ctrl=ctrl, **kwargs)
 
+    def to_dict(self) -> Dict[str, float]:
+        return dataclasses.asdict(self)
+
+    def to_file(
+        self,
+        path: Optional[str] = None,
+        header_keys: Tuple[str] = (),
+        header_keys_common: Tuple[str] = (),
+    ) -> None:
+        if path is None:
+            path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
+        if Path(path).is_file():
+            calib_map = CalibMovieDelaysMapping.from_file(path)
+        else:
+            calib_map = CalibMovieDelaysMapping()
+        calib_map[(header_keys, header_keys_common)] = self
+        calib_map.to_file(path)
+
 
 class CalibMovieDelaysMapping(MutableMapping):
     """Calibrated delays depend on the information requested in movie header:
@@ -101,12 +118,16 @@ class CalibMovieDelaysMapping(MutableMapping):
     whereas large per-image headers will raise the feasible `min_exposure`.
     This class loads, stores, and saves instances of `CalibMovieDelays`
     calibrated for each combination of the header.
+
+    Instances of `CalibMovieDelays` are indexed using a composite string key,
+    made by joining header keys with "," (within) and ";" (between tuples).
+    However, this class also allows accessing instances using the tuple-form.
     """
 
     TwoTuples_T = Tuple[Tuple[str, ...], Tuple[str, ...]]
 
-    def __init__(self, dict_: Dict[str, CalibMovieDelays]) -> None:
-        self.dict = dict_
+    def __init__(self, dict_: Dict[str, CalibMovieDelays] = None) -> None:
+        self.dict = dict_ if dict_ else {}
 
     def __delitem__(self, k: Union[str, TwoTuples_T]) -> None:
         del self.dict[k if isinstance(k, str) else self.sequences_to_str(*k)]
@@ -142,6 +163,7 @@ class CalibMovieDelaysMapping(MutableMapping):
 
     @classmethod
     def from_file(cls, path: Optional[str] = None) -> Self:
+        log(f'Reading {cls.__name__} from {path}')
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
@@ -152,14 +174,14 @@ class CalibMovieDelaysMapping(MutableMapping):
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
 
     def to_dict(self) -> Dict[str, Dict[str, float]]:
-        return {k: v.to_dict() for k, v in self.dict}
+        return {k: v.to_dict() for k, v in self.dict.items()}
 
     def to_file(self, path: Optional[str] = None) -> None:
+        log(f'Writing {self.__class__.__name__} to {path}')
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         with open(Path(path), 'w') as json_file:
-            json.dump(self.to_dict(), json_file)
-        log(f'{self} saved to {path}.')
+            json.dump(self.to_dict(), fp=json_file, indent=4, sort_keys=True)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ MOVIE RATE CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~ #
@@ -168,8 +190,8 @@ class CalibMovieDelaysMapping(MutableMapping):
 class MovieTimes:
     """A 2D data class that stores the results of movie delay calibrations.
 
-    Individual columns represent different preset conditions (i.e. exposures).
-    A total of `3 * N + 2` rows, where `N = n_frames`, hold time-ordered:
+    Individual columns store different preset conditions (i.e. exposures).
+    A total of `3 * N + 2` rows, where `N = n_frames`, holds ordered timestamps:
 
     - "i": 1 time stamp right before `get_movie` initialization call;
     - "s#": N individual time stamps for the frame # collection start;
@@ -188,62 +210,65 @@ class MovieTimes:
 
     @lru_cache(maxsize=2)
     def _get_deltas(self, _cache_flag: Tuple[int, int]) -> pd.DataFrame:
+        """Internal cache of the `deltas` using `self.table` shape as flag."""
         return self.table.diff().shift(-1)[:-1]
 
     @property
     def deltas(self) -> pd.DataFrame:
+        """A `3 * N + 1 x len(exposures)` table of rolling timespan deltas."""
         return self._get_deltas(self.table.shape)
 
     @property
     def init_times(self) -> pd.Series:
+        """Timespan between calling `get_movie` & requesting first frame."""
         return self.deltas.iloc[0]
 
     @property
     def frame0_times(self) -> pd.Series:
+        """Timespan between requesting & receiving the first frame only."""
         return self.deltas.iloc[1]
 
     @property
     def frame1_times(self) -> pd.Series:
+        """Mean timespan between requesting & receiving 2nd+ frames."""
         frame1_i_loc = [4 + 3 * n for n in range(self.n_frames - 1)]
         return self.deltas.iloc[frame1_i_loc].mean(axis=0)
 
     @property
     def yield_times(self) -> pd.Series:
+        """Mean timespan between receiving and yielding each movie frame."""
         yield_i_loc = [2 + 3 * n for n in range(self.n_frames)]
         return self.deltas.iloc[yield_i_loc].mean(axis=0)
 
     @property
     def wait_times(self) -> pd.Series:
+        """Mean timespan between yielding frame M and requesting frame M+1."""
         repeat_loc = [3 + 3 * n for n in range(self.n_frames - 1)]
         return self.deltas.iloc[repeat_loc].mean(axis=0)
 
     @property
     def return_times(self) -> pd.Series:
+        """Timespan between yielding the last frame and returning the func."""
         return self.deltas.iloc[-1]
 
     @property
     def total_times(self) -> pd.Series:
-        return (
-            self.init_times
-            + self.return_times
-            + self.frame0_times
-            - self.frame1_times
-            + self.n_frames * (self.frame1_times + self.yield_times + self.wait_times)
-        )
+        """Total timespan of entire `ctrl.get_movie`, from call to return."""
+        return self.table.iloc[-1] - self.table.iloc[0]
 
     def add_column(self, exposure: float, timestamps: Sequence[float]) -> None:
         """Add `timestamps` or raise `ValueError` if they deviate too much."""
         n = self.n_frames
         ts = np.array(timestamps)
-        if self.table.shape[1] < 3:  # too small sample
+        if self.table.shape[1] < 5:  # too small sample
             pass
         else:
             total_delays = self.total_times - n * self.table.keys()
             timestamps_delays = ts[-1] - ts[0] - n * exposure
             if timestamps_delays > total_delays.mean() + 3 * total_delays.std():
-                raise ValueError('Total delays exceed predicted mean + 3 sigma')
+                raise CalibError('Total delays exceed predicted mean + 3 sigma')
             elif (ts[2 : 2 + 3 * n : 3] - ts[2 : 2 + 3 * n : 3]).mean() > 1.5 * exposure:
-                raise ValueError('Logged exposure time exceeds declared by >50%')
+                raise CalibError('Logged exposure time exceeds declared by >50%')
         self.table[exposure] = timestamps
 
 
@@ -301,7 +326,7 @@ def calibrate_movie_delays_live(
                 timestamps.append(time.perf_counter())  # "r"
                 try:
                     mt.add_column(exposure, timestamps)
-                except ValueError as e:
+                except CalibError as e:
                     msg = 'Exposure {}, attempt {}: Calibration failed: {}'
                     log(msg.format(exposure, attempt, e))
                 else:
@@ -319,6 +344,7 @@ def calibrate_movie_delays_live(
 
     c = CalibMovieDelays(init_time, yield_time, wait_time, return_time, min_exposure)
     log(f'Calibration of `get_movie` complete: {c}')
+    c.to_file(outdir, header_keys, header_keys_common)
     return c
 
 
@@ -334,13 +360,13 @@ def main_entry() -> None:
         description=description, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    h = 'Comma-delimited list of exposure settings to calibrate. '
-    h += 'Default: "10,5.,2.,1.,0.5,0.2,0.1,0.05,0.02,0.01".'
-    parser.add_argument('-h', '--headers', type=str, help=h)
+    h = 'Comma-delimited list of variable header keys to calibrate for. '
+    h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`.'
+    parser.add_argument('-a', '--variable_headers', type=str, default=None, help=h)
 
-    h = 'Comma-delimited list of exposure settings to calibrate. '
-    h += 'Default: "10,5.,2.,1.,0.5,0.2,0.1,0.05,0.02,0.01".'
-    parser.add_argument('-c', '--common', type=str, help=h)
+    h = 'Comma-delimited list of common header keys to calibrate for. '
+    h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_COMMON`.'
+    parser.add_argument('-c', '--common_headers', type=str, default=None, help=h)
 
     h = 'Path to the directory where calibration file should be output. '
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
@@ -348,13 +374,28 @@ def main_entry() -> None:
 
     options = parser.parse_args()
 
-    from instamatic import controller
+    from instamatic.controller import TEMController, initialize
 
     kwargs = {}
-    if options.exposures:
-        kwargs['exposures'] = [float(a) for a in options.exposures.split(',')]
 
-    ctrl = controller.initialize()
+    if options.variable_headers is None:
+        kwargs['header_keys'] = TEMController.MOVIE_HEADER_KEYS_VARIABLE
+    elif options.variable_headers == '':
+        kwargs['header_keys'] = ()
+    else:
+        kwargs['header_keys'] = tuple(options.variable_headers.split(','))
+
+    if options.common_headers is None:
+        kwargs['header_keys_common'] = TEMController.MOVIE_HEADER_KEYS_COMMON
+    elif options.common_headers == '':
+        kwargs['header_keys_common'] = ()
+    else:
+        kwargs['header_keys_common'] = tuple(options.common_headers.split(','))
+
+    if options.outdir:
+        kwargs['outdir'] = options.outdir
+
+    ctrl = initialize()
     calibrate_movie_delays_live(ctrl=ctrl, **kwargs)
 
 
