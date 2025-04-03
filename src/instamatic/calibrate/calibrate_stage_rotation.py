@@ -290,7 +290,7 @@ def calibrate_stage_rotation_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    alpha_spans = np.array(alpha_spans or np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    alpha_spans = np.array(alpha_spans or np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]))
     alpha_targets = np.cumsum(alpha_spans * alternating_array(len(alpha_spans)))
 
     calib_points: List[SpanSpeedTime] = []
@@ -303,7 +303,7 @@ def calibrate_stage_rotation_live(
             ctrl.stage.set_rotation_speed(12)
             assert ctrl.stage.get_rotation_speed() == 12
         except AssertionError:  # or any other raised if speed can't be set
-            speed_range_default = np.linspace(0.1, 1.0, num=10)
+            speed_range_default = np.linspace(0.01, 0.2, num=20)
             speed_options = FEI_ROTATION_SPEED_OPTIONS
         else:
             speed_range_default = np.arange(1, 13, step=1)
