@@ -313,7 +313,6 @@ class CameraMerlin(CameraBase):
 
         logger.debug('Header data received (%s).', header_size)
 
-        frames = []
         full_framesize = 0
 
         for x in range(n_frames):
@@ -328,14 +327,10 @@ class CameraMerlin(CameraBase):
             else:
                 framedata = self.receive_data(nbytes=full_framesize)[self.START_SIZE :]
 
-            frames.append(framedata)
+            # Must skip first byte when loading data to avoid off-by-one error
+            yield load_mib(framedata, skip=1).squeeze()
 
         logger.info('%s frames received.', n_frames)
-
-        # Must skip first byte when loading data to avoid off-by-one error
-        data = [load_mib(frame, skip=1).squeeze() for frame in frames]
-
-        return data
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
