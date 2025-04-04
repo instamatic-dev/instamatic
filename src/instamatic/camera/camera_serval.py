@@ -3,10 +3,12 @@ from __future__ import annotations
 import atexit
 import logging
 import math
+from io import BytesIO
 from itertools import batched
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Generator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import tifffile
 from serval_toolkit.camera import Camera as ServalCamera
 
 from instamatic.camera.camera_base import CameraBase
@@ -123,27 +125,38 @@ class CameraServal(CameraBase):
         self.conn.trigger_start()
 
         # Request a frame. Will be streamed *after* the exposure finishes
-        img = self.conn.get_image_stream(nTriggers=1, disable_tqdm=True)[0]
-        arr = np.array(img)
-        return arr
+        response = self.conn.get_request('/measurement/image')
+        return tifffile.imread(BytesIO(response.content))
 
     def _get_image_stack(self, n_frames: int, exposure: float, **_) -> list[np.ndarray]:
         """Get a series of images in a mode with minimal dead time."""
-        logger.debug(f'Collecting {n_frames} images with exposure {exposure} s')
+        return list(self._get_movie_generator(n_frames=n_frames, exposure=exposure))
+
+    def _get_movie_generator(
+        self,
+        n_frames: int,
+        exposure: float,
+        **_,
+    ) -> Generator[np.ndarray, None, None]:
+        """A generator yielding images using a mode with minimal dead time."""
+        logger.debug(f'Collecting {n_frames}-frame movie with exposure {exposure} s')
         mode = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
         self.conn.measurement_stop()
         previous_config = self.conn.detector_config
-        self.conn.set_detector_config(
-            TriggerMode=mode,
-            ExposureTime=exposure,
-            TriggerPeriod=exposure + self.dead_time,
-            nTriggers=n_frames,
-        )
-        self.conn.measurement_start()
-        images = self.conn.get_image_stream(nTriggers=n_frames, disable_tqdm=True)
-        self.conn.measurement_stop()
-        self.conn.set_detector_config(**previous_config)
-        return [np.array(image) for image in images]
+        try:
+            self.conn.set_detector_config(
+                TriggerMode=mode,
+                ExposureTime=exposure,
+                TriggerPeriod=exposure + self.dead_time,
+                nTriggers=n_frames,
+            )
+            self.conn.measurement_start()
+            for i in range(n_frames):
+                response = self.conn.get_request('/measurement/image')
+                yield tifffile.imread(BytesIO(response.content))
+        finally:
+            self.conn.measurement_stop()
+            self.conn.set_detector_config(**previous_config)
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
