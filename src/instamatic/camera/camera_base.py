@@ -55,10 +55,8 @@ class CameraBase(ABC):
     ) -> Generator[np.ndarray, None, None]:
         """Basic implementation, subclasses should override with appropriate
         optimization."""
-        return [
-            self.get_image(exposure=exposure, binsize=binsize, **kwargs)
-            for _ in range(n_frames)
-        ]
+        for _ in range(n_frames):
+            yield self.get_image(exposure=exposure, binsize=binsize, **kwargs)
 
     def __enter__(self) -> Self:
         self.establish_connection()
