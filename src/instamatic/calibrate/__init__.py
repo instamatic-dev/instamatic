@@ -8,5 +8,5 @@ from .calibrate_stage_lowmag import CalibStage
 # from .calibrate_stage_mag1 import CalibStageMag1
 
 
-class CalibError(RuntimeError):
-    """A potentially-expected runtime error that occurs during calibration."""
+class CalibWarning(RuntimeWarning):
+    """A runtime warning that suggests instability/problems of calibration."""
