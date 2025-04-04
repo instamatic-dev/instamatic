@@ -50,19 +50,6 @@ class CameraServal(CameraBase):
         """
         return self._get_images(n_frames=Ignore, exposure=exposure, **kwargs)
 
-    def get_movie(
-        self, n_frames: int, exposure: Optional[float] = None, **kwargs
-    ) -> List[np.ndarray]:
-        """Movie acquisition interface. If the exposure is not given, the
-        default value is read from the config file. Binning is ignored.
-
-        n_frames: `int`
-            Number of frames to collect
-        exposure: `float` or `None`
-            Exposure time in seconds.
-        """
-        return self._get_images(n_frames=n_frames, exposure=exposure, **kwargs)
-
     def _get_images(
         self,
         n_frames: Union[int, Ignore],
@@ -130,15 +117,20 @@ class CameraServal(CameraBase):
 
     def _get_image_stack(self, n_frames: int, exposure: float, **_) -> list[np.ndarray]:
         """Get a series of images in a mode with minimal dead time."""
-        return list(self._get_movie_generator(n_frames=n_frames, exposure=exposure))
+        return list(self.get_movie(n_frames=n_frames, exposure=exposure))
 
-    def _get_movie_generator(
-        self,
-        n_frames: int,
-        exposure: float,
-        **_,
+    def get_movie(
+        self, n_frames: int, exposure: Optional[float] = None, **kwargs
     ) -> Generator[np.ndarray, None, None]:
-        """A generator yielding images using a mode with minimal dead time."""
+        """A generator yielding images using a mode with minimal dead time. If
+        the exposure is not given, the default value is read from the config
+        file. Binning is ignored.
+
+        n_frames: `int`
+            Number of frames to collect
+        exposure: `float` or `None`
+            Exposure time in seconds.
+        """
         logger.debug(f'Collecting {n_frames}-frame movie with exposure {exposure} s')
         mode = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
         self.conn.measurement_stop()
