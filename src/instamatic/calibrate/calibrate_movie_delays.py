@@ -48,8 +48,8 @@ class CalibMovieDelays:
 
     When requesting a movie with n frames, the total call time will exceed
     `n * exposure` due to initialization / dead time / finalization delays.
-    In particular, to get 1 frame every `exposure` seconds, the "declared"
-    exposure must be shorter by a `dead_time` defined here. The measurement
+    In particular, to get 1 frame every `exposure` sec, the "declared" exposure
+    must be shorter by a `dead_time = yield_time + wait_time`. The measurement
     also starts delayed by `init_time` and ends `return_time` late.
     """
 
@@ -110,14 +110,15 @@ class CalibMovieDelays:
 
 
 class CalibMovieDelaysMapping(MutableMapping):
-    """Calibrated delays depend on the information requested in movie header:
-    requesting a lot of common information might elongate the initialization,
-    whereas large per-image headers will raise the feasible `min_exposure`.
+    """Calibrated delays depend on the exposure time as well as information
+    requested in movie header: requesting a lot of common information might
+    elongate the initialization, large per-image headers may take too long to
+    collect during `exposure`, artificially inflating yield times.
     This class loads, stores, and saves instances of `CalibMovieDelays`
-    calibrated for each combination of the header.
+    calibrated for each combination of exposure and common/variable header.
 
     Instances of `CalibMovieDelays` are indexed using a composite string key,
-    made by joining header keys with "," (within) and ";" (between tuples).
+    which takes form "exposure;common,header,elements;variable,header,elements".
     However, this class also allows accessing instances using the tuple-form.
     """
 
@@ -187,7 +188,7 @@ class CalibMovieDelaysMapping(MutableMapping):
 class MovieTimes:
     """A 2D data class that stores the results of movie delay calibrations.
 
-    Individual columns store different preset conditions (i.e. exposures).
+    Individual columns store unique attempts for a given exposure.
     A total of `3 * N + 2` rows, where `N = n_frames`, holds ordered timestamps:
 
     - "i": 1 time stamp right before `get_movie` initialization call;
@@ -297,17 +298,10 @@ def calibrate_movie_delays_live(
     log(f'header_keys: {header_keys}')
     log(f'header_keys_common: {header_keys_common}')
 
-    def _get_movie_times(mt: MovieTimes, iterator: Iterator = None) -> MovieTimes:
+    def _get_movie_times(mt: MovieTimes, movie_gen: Iterator) -> None:
         """Generate a `MovieTimes` instance with timings for iterator."""
-        if iterator is None:
-            iterator = iter(
-                [
-                    None,
-                ]
-                * n_frames
-            )
         timestamps: list[float] = [time.perf_counter()]  # "i"
-        for frame, header in iterator:
+        for frame, header in movie_gen:
             yield_time = time.perf_counter()
             timestamps.append(header.get('ImageGetTimeStart', yield_time))  # "s#"
             timestamps.append(header.get('ImageGetTimeEnd', yield_time))  # "e#"
@@ -322,23 +316,19 @@ def calibrate_movie_delays_live(
         mt = MovieTimes(n_frames=n_frames, exposure=exposure)  # actual movie
         for _ in range(5):
             _get_movie_times(mt, ctrl.get_movie(n_frames, exposure, **m_kwargs))
-        mt_ref = MovieTimes(n_frames=n_frames, exposure=exposure)  # header only
+        _ = next(ctrl.get_movie(1, 1e-6, **m_kwargs))
+        mt_ref = MovieTimes(n_frames=n_frames, exposure=1e-6)  # header only
         for _ in range(5):
-            _get_movie_times(
-                mt_ref,
-                iter(
-                    [
-                        (None, {}),
-                    ]
-                    * n_frames
-                ),
-            )
+            _get_movie_times(mt_ref, ctrl.get_movie(n_frames, 1e-6, **m_kwargs))
     finally:
         ctrl.cam.unblock()
 
-    ratio = mt_ref.wait_times.mean() / mt.wait_times.mean()
-    if ratio > 0.5:
-        raise CalibWarning('>50% of time spent on header. Consider increasing exposure.')
+    ratio = mt.frame1_times.mean() / mt.exposure
+    if ratio > 1.1:
+        raise CalibWarning(
+            f'Exposure times exceed expected by {(ratio-1)/100}%.'
+            f' Consider using longer exposure or smaller header.'
+        )
 
     init_time = float((mt.init_times + mt.frame0_times - mt.frame1_times).mean())
     yield_time = float(mt.yield_times.mean())
@@ -357,14 +347,14 @@ def calibrate_movie_delays_live(
 def main_entry() -> None:
     import argparse
 
-    description = """Calibrate the rotation speed setting of the stage."""
+    description = """Calibrate the delays associated with `get_movie` protocol."""
 
     parser = argparse.ArgumentParser(
         description=description, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     h = 'Exposure to test the delay for in seconds. Default: 1'
-    parser.add_argument('-e', '--exposure', type=float, help=h)
+    parser.add_argument('-e', '--exposure', type=float, default=1.0, help=h)
 
     h = 'Comma-delimited list of variable header keys to calibrate for. '
     h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`.'
@@ -382,9 +372,7 @@ def main_entry() -> None:
 
     from instamatic.controller import TEMController, initialize
 
-    kwargs = {}
-
-    kwargs['exposure'] = options.exposure if options.exposure else 1.0
+    kwargs = {'exposure': options.exposure}
 
     if options.variable_headers is None:
         kwargs['header_keys'] = TEMController.MOVIE_HEADER_KEYS_VARIABLE
