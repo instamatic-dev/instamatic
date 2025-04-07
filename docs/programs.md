@@ -25,6 +25,7 @@ These tools help calibrate instamatic for some experiments.
 - [instamatic.calibrate_beamshift](#instamaticcalibrate_beamshift) (`instamatic.calibrate.calibrate_beamshift:main_entry`)
 - [instamatic.calibrate_directbeam](#instamaticcalibrate_directbeam) (`instamatic.calibrate.calibrate_directbeam:main_entry`)
 - [instamatic.calibrate_stagematrix](#instamaticcalibrate_stagematrix) (`instamatic.calibrate.calibrate_stagematrix:main_entry`)
+- [instamatic.calibrate_movie_delays](#instamaticcalibrate_movie_delays) (`instamatic.calibrate.calibrate_movie_delays:main_entry`)
 - [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
 - [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
 
@@ -212,6 +213,35 @@ instamatic.calibrate_beamshift [-h] [IMG [IMG ...]]
 
 `-h`, `--help`
 : Show this help message and exit  
+
+
+## instamatic.calibrate_movie_delays
+
+Program to calibrate the delays associated with `ctrl.get_movie` command.
+
+Intuitively, collecting an N-frame movie with X-second exposure should take N*X seconds. However, the hardware specification and software implementation for each detector differ, leading to deviations. This calibration aims to take this effect into account and allow scheduling movies whose frame time better reflects the request.
+
+**Usage:**  
+```bash
+instamatic.calibrate_movie_delays [-h] [-e E] [-a A] [-c C] [-o O]
+```
+
+**Optional arguments:**  
+
+`-h`, `--help`
+: Show this help message and exit  
+
+`-e`, `--exposure`
+: Exposure to test the delays for in seconds (default 1.0)
+
+`-a`, `--variable_headers`
+: Comma-delimited list of variable header keys to calibrate for (for default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`)
+
+`-c`, `--common_headers`
+: Comma-delimited list of common header keys to calibrate for (for default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_COMMON`)
+
+`-o`, `--output`
+: Path to the directory where calibration file should be output (default `%appdata%/calib` on Windows or `$AppData/calib` on Unix)
 
 
 ## instamatic.calibrate_directbeam
