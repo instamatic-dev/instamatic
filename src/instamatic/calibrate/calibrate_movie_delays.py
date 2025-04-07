@@ -12,7 +12,6 @@ from typing import Dict, Iterator, Optional, Sequence, Tuple, Union
 import pandas as pd
 from typing_extensions import Self
 
-from instamatic.calibrate import CalibWarning
 from instamatic.calibrate.filenames import CALIB_MOVIE_DELAYS
 from instamatic.config import calibration_drc
 
@@ -25,6 +24,10 @@ logger = logging.getLogger(__name__)
 def log(s: str) -> None:
     logger.info(s)
     print(s)
+
+
+class CalibWarning(RuntimeWarning):
+    """A runtime warning that suggests instability/problems of calibration."""
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~ MOVIE RATE CALIBRATION CLASS ~~~~~~~~~~~~~~~~~~~~~~~ #

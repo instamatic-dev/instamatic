@@ -7,7 +7,3 @@ from .calibrate_movie_delays import CalibMovieDelays
 from .calibrate_stage_lowmag import CalibStage
 
 # from .calibrate_stage_mag1 import CalibStageMag1
-
-
-class CalibWarning(RuntimeWarning):
-    """A runtime warning that suggests instability/problems of calibration."""
