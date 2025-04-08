@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-import contextlib
 import datetime
 import time
-from io import StringIO
 from pathlib import Path
+from sched import scheduler
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from typing_extensions import Self
 
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
 from instamatic.experiments.experiment_base import ExperimentBase
-from instamatic.gui.videostream_service import ImageDrawOverlay
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
@@ -24,46 +23,24 @@ def safe_range(start: float, stop: float, step: float) -> np.ndarray:  # noqa
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
 
-class RatsRun:
-    """Collection of details of a single RATS run."""
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUN CLASSES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-    def __init__(self, **columns: Sequence) -> None:
+
+class Run:
+    """Collection of details of a single RATS run. Includes a `.table`
+
+    describing individual frames (to be) measured. Possible col. names include:
+      - alpha - average value of the rotation axes for given frame
+      - delta_x - x beam shift relative from center needed to track the crystal
+      - delta_y - y beam shift relative from center needed to track the crystal
+
+    Other class attributes include:
+      - exposure - time spent collecting each frame, expressed in seconds
+    """
+
+    def __init__(self, exposure=1.0, **columns: Sequence) -> None:
+        self.exposure: float = exposure
         self.table = pd.DataFrame.from_dict(columns)
-
-    @classmethod
-    def alignment_from_params(cls, params: dict[str, Any]) -> 'RatsRun':
-        return cls(alpha=[0.0], exposure=[params['tracking_time']])
-
-    @classmethod
-    def tracking_from_params(cls, params: dict[str, Any]) -> 'RatsRun':
-        alpha_range = safe_range(
-            start=params['diffraction_start'],
-            stop=params['diffraction_stop'],
-            step=params['tracking_step'],
-        )
-        tracking_run = RatsRun(alpha=alpha_range)
-        tracking_run.table['exposure'] = params['tracking_time']
-        return tracking_run
-
-    @classmethod
-    def diffraction_from_params(
-        cls,
-        params: dict[str, Any],
-        tracking_run: Optional['RatsRun'] = None,
-    ) -> 'RatsRun':
-        alpha_range = safe_range(
-            start=params['diffraction_start'],
-            stop=params['diffraction_stop'],
-            step=params['diffraction_step'],
-        )
-        diffraction_run = RatsRun(alpha=alpha_range)
-        diffraction_run.table['exposure'] = params['diffraction_time']
-        if tracking_run is not None:
-            delta_xs = tracking_run.interpolate(alpha_range, 'delta_x')
-            delta_ys = tracking_run.interpolate(alpha_range, 'delta_y')
-            diffraction_run.table['delta_x'] = delta_xs
-            diffraction_run.table['delta_y'] = delta_ys
-        return diffraction_run
 
     def experiments(self) -> NamedTuple:
         return self.table.itertuples(name='Experiment')  # noqa, rtype is correct
@@ -79,6 +56,57 @@ class RatsRun:
     def osc_angle(self):
         a = list(self.table['alpha'])
         return (a[-1] - a[0]) / (len(a) - 1) if len(a) > 1 else -1
+
+
+class BeamCenterRun(Run):
+    """A 1-image run designed to correct for clicking offset on beam center."""
+
+    @classmethod
+    def from_params(cls, params: Dict[str, Any]) -> Self:
+        return cls(exposure=params['tracking_time'], alpha=[0.0])
+
+
+class TrackingRun(Run):
+    """Designed to estimate delta_x/y a priori based on manual used input."""
+
+    @classmethod
+    def from_params(cls, params: Dict[str, Any]) -> Self:
+        alpha_range = safe_range(
+            start=params['diffraction_start'],
+            stop=params['diffraction_stop'],
+            step=params['tracking_step'],
+        )
+        return cls(exposure=params['tracking_time'], alpha=alpha_range)
+
+
+class DiffractionRun(Run):
+    @classmethod
+    def from_params(
+        cls,
+        params: Dict[str, Any],
+        tracking_run: Optional['TrackingRun'] = None,
+    ) -> Self:
+        alpha_range = safe_range(
+            start=params['diffraction_start'],
+            stop=params['diffraction_stop'],
+            step=params['diffraction_step'],
+        )
+        run = cls(exposure=params['diffraction_time'], alpha=alpha_range)
+        if tracking_run is not None:
+            delta_xs = tracking_run.interpolate(alpha_range, 'delta_x')
+            delta_ys = tracking_run.interpolate(alpha_range, 'delta_y')
+            run.table['delta_x'] = delta_xs
+            run.table['delta_y'] = delta_ys
+        return run
+
+    def middles(self) -> Self:
+        new_alphas = self.table['alpha'].rolling(2).mean()
+        new_cols = self.table.iloc[:-1, :].to_dict(orient='list')
+        del new_cols['alpha']
+        return self.__class__(exposure=self.exposure, alpha=new_alphas, **new_cols)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EXPERIMENT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 class RatsExperiment(ExperimentBase):
@@ -157,15 +185,15 @@ class RatsExperiment(ExperimentBase):
         self.log.info('RATS Data recording started')
 
         if params['tracking_mode'] == 'manual':
-            alignment_run = RatsRun.alignment_from_params(params)
-            self.collect(alignment_run)
-            tracking_run = RatsRun.tracking_from_params(params)
-            self.collect(tracking_run)
+            alignment_run = BeamCenterRun.from_params(params)
+            self.collect_stills(alignment_run)
+            tracking_run = TrackingRun.from_params(params)
+            self.collect_stills(tracking_run)
             self.resolve_tracking_delta_xy(alignment_run, tracking_run)
         else:
             tracking_run = None
 
-        diffraction_run = RatsRun.diffraction_from_params(params, tracking_run)
+        diffraction_run = DiffractionRun.from_params(params, tracking_run)
 
         # TODO: correctly determine "imageshift1" from tracking data
         # x_image_shift0_xy = self.ctrl.imageshift1.get()
@@ -173,16 +201,18 @@ class RatsExperiment(ExperimentBase):
         # y_image_shifts = [0 * click.y for click in tracking_clicks]
         self.ctrl.mode.set('diff')
 
-        self.collect(diffraction_run)
+        if params['diffraction_mode'] == 'stills':
+            self.collect_stills(diffraction_run)
+        elif params['diffraction_mode'] == 'continuous':
+            self.collect_continuous(diffraction_run)
 
         self.camera_length = int(self.ctrl.magnification.get())
 
         self.log.info('Collected the following run:')
         self.log.info(str(diffraction_run))
 
-    def collect(self, run: RatsRun) -> None:
+    def collect_stills(self, run: DiffractionRun) -> None:
         images, metas = [], []
-
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
         self.ctrl.beam.blank()  # TODO: scatter correctly
@@ -199,7 +229,7 @@ class RatsExperiment(ExperimentBase):
                 self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
             self.ctrl.stage.a = expt.alpha
             self.ctrl.beam.unblank()
-            image, meta = self.ctrl.get_image(exposure=expt.exposure)
+            image, meta = self.ctrl.get_image(exposure=run.exposure)
             self.ctrl.beam.blank()
             images.append(image)
             metas.append(meta)
@@ -213,18 +243,59 @@ class RatsExperiment(ExperimentBase):
         self.diffraction_run = run
         self.ctrl.beam.unblank()
 
+    def collect_continuous(self, run: DiffractionRun) -> None:
+        images, metas = [], []
+        has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
+
+        self.ctrl.beam.blank()  # TODO: scatter correctly
+        self.beamshift.center(self.ctrl)
+        if has_beamshifts:
+            px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
+            delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
+            crystal_xys = px_center + delta_xys
+            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_xys)
+            run.table[['beamshift_x', 'beamshift_y']] = beamshifts
+
+        self.ctrl.beam.unblank()
+        self.ctrl.stage.a = float(
+            run.table.loc[0, 'alpha']
+        )  # TODO: collect for movie dead time
+        movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
+        self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
+        for expt, (image, header) in zip(run.experiments(), movie):
+            if has_beamshifts:
+                self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
+            images.append(image)
+            metas.append(header)
+        self.ctrl.beam.blank()
+        run = run.middles()
+        run.table['image'] = images
+        run.table['meta'] = metas
+
+        pd.set_option('display.max_rows', 500)
+        pd.set_option('display.max_columns', 500)
+        pd.set_option('display.width', 150)
+        print(run.table)
+        self.diffraction_run = run
+        self.ctrl.beam.unblank()
+
     def resolve_tracking_delta_xy(
         self,
-        alignment_run: RatsRun,
-        tracking_run: RatsRun,
+        beam_center_run: BeamCenterRun,
+        tracking_run: TrackingRun,
     ) -> None:
+        """Determine the target beam shifts `delta_x` and `delta_y` manually,
+        based on the `BeamCenterRun` (to find clicking offset) and
+        `TrackingRun` to be used later for crystal tracking in actual
+        experiment."""
+
         # collecting beam center information
-        beam_image = alignment_run.table['image'].iloc[0]
+        beam_image = beam_center_run.table['image'].iloc[0]
         with self.vss.temporary_provider(lambda: beam_image):
             self.display_message('Please click on the center of the beam')
             with self.click_listener as cl:
                 click = cl.get_click()
-                x_beam, y_beam = click.x, click.y
+                beam_center_x, beam_center_y = click.x, click.y
 
         # collecting tracking information
         delta_xs, delta_ys = [], []
@@ -235,8 +306,8 @@ class RatsExperiment(ExperimentBase):
                 )
                 with self.click_listener as cl:
                     click = cl.get_click()
-                    delta_xs.append(click.x - x_beam)
-                    delta_ys.append(click.y - y_beam)
+                    delta_xs.append(click.x - beam_center_x)
+                    delta_ys.append(click.y - beam_center_y)
             self.display_message('')
         tracking_run.table['delta_x'] = delta_xs
         tracking_run.table['delta_y'] = delta_ys
@@ -275,7 +346,7 @@ class RatsExperiment(ExperimentBase):
             start_angle=self.diffraction_run.table['alpha'].iloc[0],
             end_angle=self.diffraction_run.table['alpha'].iloc[-1],
             rotation_axis=rotation_axis,
-            acquisition_time=self.diffraction_run.table['exposure'].iloc[0],
+            acquisition_time=self.diffraction_run.exposure,
             flatfield=self.flatfield,
             pixelsize=pixel_size,
             physical_pixelsize=physical_pixelsize,
