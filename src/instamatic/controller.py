@@ -749,8 +749,6 @@ class TEMController:
         if not exposure:
             exposure = self.cam.default_exposure
 
-        gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
-
         header_common = self.to_dict(*header_keys_common) if header_keys_common else {}
         header_common['ImageExposureTime'] = exposure
         header_common['ImageBinsize'] = binsize
@@ -758,36 +756,41 @@ class TEMController:
         header_common['ImageCameraName'] = self.cam.name
         header_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
 
-        if self.autoblank:
-            self.beam.unblank()
+        gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
 
-        for _ in range(n_frames):
-            # The generator `gen` starts collecting only when the first `next` is called.
-            # Request the next image, expect it in the future, get header in the meantime
-            future_img = self._executor.submit(lambda: next(gen))
-            time_start = time.perf_counter()
+        try:
+            if self.autoblank:
+                self.beam.unblank()
 
-            header = header_common.copy()
-            header['ImageGetTimeStart'] = time_start
-            header.update(self.to_dict(*header_keys) if header_keys else {})
+            for _ in range(n_frames):
+                # The generator `gen` starts collecting only when the first `next` is called.
+                # Request the next image, expect it in the future, get header in the meantime
+                future_img = self._executor.submit(lambda: next(gen))
+                time_start = time.perf_counter()
 
-            if 'Magnification' not in header:
-                header['Magnification'] = self.magnification.value
-            if 'FunctionMode' not in header:
-                header['FunctionMode'] = self.mode.get()
-            mag = header['Magnification']
-            mode = header['FunctionMode']
+                header = header_common.copy()
+                header['ImageGetTimeStart'] = time_start
+                header.update(self.to_dict(*header_keys) if header_keys else {})
 
-            img = future_img.result()
-            header['ImageGetTimeEnd'] = time.perf_counter()
-            header['ImageGetTime'] = time.time()
+                if 'Magnification' not in header:
+                    header['Magnification'] = self.magnification.value
+                if 'FunctionMode' not in header:
+                    header['FunctionMode'] = self.mode.get()
+                mag = header['Magnification']
+                mode = header['FunctionMode']
 
-            rotate_image(img, mode=mode, mag=mag)
-            header['ImageResolution'] = img.shape
-            yield img, header
+                img = future_img.result()
+                header['ImageGetTimeEnd'] = time.perf_counter()
+                header['ImageGetTime'] = time.time()
 
-        if self.autoblank:
-            self.beam.blank()
+                rotate_image(img, mode=mode, mag=mag)
+                header['ImageResolution'] = img.shape
+                yield img, header
+
+        finally:
+            gen.close()
+            if self.autoblank:
+                self.beam.blank()
 
     def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for

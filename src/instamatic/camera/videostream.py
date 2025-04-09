@@ -191,8 +191,7 @@ class LiveVideoStream(VideoStream):
 
     def get_image(self, exposure=None, binsize=None) -> np.ndarray:
         with self.blocked():  # Stop the passive collection during request acquisition
-            request = ImageRequest(exposure=exposure, binsize=binsize)
-            self.grabber.request = request
+            self.grabber.request = ImageRequest(exposure=exposure, binsize=binsize)
             self.grabber.acquireInitiateEvent.set()
             while not self.requested:
                 time.sleep(0)  # yields thread priority to MediaGrabber
@@ -203,14 +202,15 @@ class LiveVideoStream(VideoStream):
     def get_movie(
         self, n_frames: int, exposure=None, binsize=None
     ) -> Generator[np.ndarray, None, None]:
-        with self.blocked():  # Stop the passive collection during request acquisition
-            request = MovieRequest(n_frames=n_frames, exposure=exposure, binsize=binsize)
-            self.grabber.request = request
-            self.grabber.acquireInitiateEvent.set()
-            for _ in range(n_frames):
-                while not self.requested:
-                    time.sleep(0)  # yields thread priority to MediaGrabber
-                yield self.requested.popleft()
+        try:
+            with self.blocked():  # Stop the passive collection during request acquisition
+                self.grabber.request = MovieRequest(n_frames, exposure, binsize)
+                self.grabber.acquireInitiateEvent.set()
+                for _ in range(n_frames):
+                    while not self.requested:
+                        time.sleep(0)  # yields thread priority to MediaGrabber
+                    yield self.requested.popleft()
+        finally:
             self.grabber.request = None
 
     def update_frametime(self, frametime):
@@ -230,10 +230,12 @@ class LiveVideoStream(VideoStream):
     def blocked(self):
         """Set `continuousCollectionEvent` within the statement scope only."""
         was_set_before = self.grabber.continuousCollectionEvent.is_set()
-        self.grabber.continuousCollectionEvent.set()
-        yield
-        if not was_set_before:
-            self.grabber.continuousCollectionEvent.clear()
+        try:
+            self.grabber.continuousCollectionEvent.set()
+            yield
+        finally:
+            if not was_set_before:
+                self.grabber.continuousCollectionEvent.clear()
 
     def show_stream(self):
         from instamatic.gui import videostream_frame
