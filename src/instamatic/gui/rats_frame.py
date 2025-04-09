@@ -72,19 +72,18 @@ class ExperimentalRats(LabelFrame):
         self.diffraction_mode.current(0)
 
         Label(f, text='Diffraction start (deg):').grid(row=4, column=0, **pad10)
-        self.diffraction_start = Spinbox(
-            f, textvariable=self.var.diffraction_start, **angle_lim
-        )
+        var = self.var.diffraction_start
+        self.diffraction_start = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_start.grid(row=4, column=1, **pad10)
 
         Label(f, text='Diffraction stop (deg):').grid(row=5, column=0, **pad10)
-        self.diffraction_stop = Spinbox(f, textvariable=self.var.diffraction_stop, **angle_lim)
+        var = self.var.diffraction_stop
+        self.diffraction_stop = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_stop.grid(row=5, column=1, **pad10)
 
         Label(f, text='Diffraction step (deg):').grid(row=6, column=0, **pad10)
-        self.diffraction_step = Spinbox(
-            f, textvariable=self.var.diffraction_step, **angle_delta
-        )
+        var = self.var.diffraction_step
+        self.diffraction_step = Spinbox(f, textvariable=var, **angle_delta)
         self.diffraction_step.grid(row=6, column=1, **pad10)
 
         Label(f, text='Diffraction exposure (s):').grid(row=7, column=0, **pad10)
@@ -113,20 +112,22 @@ class ExperimentalRats(LabelFrame):
 
         # Store / restore settings buttons
         g = Frame(f)
-        self.store_diff = Button(g, width=1, text='Store diff config', command=self.store_diff)
+        text = 'Store diff config'
+        self.store_diff = Button(g, width=1, text=text, command=self.store_diff)
         self.store_diff.grid(row=9, column=0, **pad0)
-        self.restore_diff = Button(
-            g, width=1, text='Restore diff config', command=self.restore_diff
-        )
+
+        text = 'Restore diff config'
+        self.restore_diff = Button(g, width=1, text=text, command=self.restore_diff)
         self.restore_diff.grid(row=9, column=1, **pad0)
-        self.store_image = Button(
-            g, width=1, text='Store image config', command=self.store_image
-        )
+
+        text = 'Store image config'
+        self.store_image = Button(g, width=1, text=text, command=self.store_image)
         self.store_image.grid(row=9, column=2, **pad0)
-        self.restore_image = Button(
-            g, width=1, text='Restore image config', command=self.restore_image
-        )
+
+        text = 'Restore image config'
+        self.restore_image = Button(g, width=1, text=text, command=self.restore_image)
         self.restore_image.grid(row=9, column=3, **pad0)
+
         g.columnconfigure(0, weight=1)
         g.columnconfigure(1, weight=1)
         g.columnconfigure(2, weight=1)
