@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import datetime
-import time
 from pathlib import Path
-from sched import scheduler
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
@@ -12,7 +10,7 @@ from matplotlib import pyplot as plt
 from typing_extensions import Self
 
 from instamatic import config
-from instamatic.calibrate import CalibBeamShift
+from instamatic.calibrate import CalibBeamShift, CalibMovieDelays, CalibStageRotation
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
 from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
@@ -21,6 +19,10 @@ from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConver
 def safe_range(start: float, stop: float, step: float) -> np.ndarray:  # noqa
     step_count = round(abs(stop - start) / step) + 1
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
+
+
+class MissingCalibError(RuntimeError):
+    pass
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RUN CLASSES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -150,7 +152,7 @@ class RatsExperiment(ExperimentBase):
 
         self.rats_frame = rats_frame
 
-        self.beamshift = self.calibrate_beamshift()
+        self.beamshift = self.get_beamshift()
 
         self.videostream_frame = videostream_frame
         self.vss = self.videostream_frame.stream_service
@@ -165,7 +167,7 @@ class RatsExperiment(ExperimentBase):
         self.start_time: Optional[datetime.datetime] = None
         self.diffraction_run = ...  # TODO
 
-    def calibrate_beamshift(self) -> CalibBeamShift:
+    def get_beamshift(self) -> CalibBeamShift:
         calib_dir = self.path.parent / 'calib'
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
@@ -174,6 +176,41 @@ class RatsExperiment(ExperimentBase):
             # self.ctrl.store('image') # super important, check out later!
             cbs = CalibBeamShift.live(self.ctrl, outdir=calib_dir)
             return cbs
+
+    def get_dead_time(
+        self,
+        exposure: float = 0.0,
+        header_keys_variable: tuple = (),
+        header_keys_common: tuple = (),
+    ) -> float:
+        """Get time between get_movie frames from any source available or 0."""
+        cam_dead_time = getattr(self.ctrl.cam, 'dead_time', None)
+        if cam_dead_time is not None:
+            return cam_dead_time
+        self.display_message('cam.dead_time not found. Trying to calibrate...')
+        try:
+            calib_movie_delays = CalibMovieDelays.from_file(
+                self.ctrl, exposure, header_keys_variable, header_keys_common
+            )
+        except RuntimeWarning:
+            return 0.0
+        else:
+            return calib_movie_delays.dead_time
+
+    def get_stage_rotation(self) -> CalibStageRotation:
+        """Get rotation calib.
+
+        if present; otherwise warn user & terminate.
+        """
+        try:
+            return CalibStageRotation.from_file()
+        except OSError:
+            msg = (
+                'Collecting cRED with this script requires calibrated stage rotation.'
+                ' Please run `instamatic.calibrate_stage_rotation` first.'
+            )
+            self.display_message(msg)
+            raise MissingCalibError(msg)
 
     def display_message(self, text: str):
         try:
@@ -257,21 +294,28 @@ class RatsExperiment(ExperimentBase):
             beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_xys)
             run.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
-        self.ctrl.beam.unblank()
-        self.ctrl.stage.a = float(
-            run.table.loc[0, 'alpha']
-        )  # TODO: collect for movie dead time
-        movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
-        self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
-        for expt, (image, header) in zip(run.experiments(), movie):
-            if has_beamshifts:
-                self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
-            images.append(image)
-            metas.append(header)
-        self.ctrl.beam.blank()
-        run = run.middles()
-        run.table['image'] = images
-        run.table['meta'] = metas
+        # this part correctly finds the closest possible speed settings for expt
+        frame_sep = run.exposure + self.get_dead_time()
+        rot_calib = self.get_stage_rotation()
+        rot_plan = rot_calib.plan_rotation(run.osc_angle / frame_sep)
+        run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time()
+
+        with self.ctrl.stage.rotating_speed(speed=rot_plan.speed):
+            self.ctrl.beam.unblank()
+            self.ctrl.stage.a = float(
+                run.table.loc[0, 'alpha']
+            )  # TODO: collect for movie dead time
+            movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
+            self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
+            for expt, (image, header) in zip(run.experiments(), movie):
+                if has_beamshifts:
+                    self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
+                images.append(image)
+                metas.append(header)
+            self.ctrl.beam.blank()
+            run = run.middles()
+            run.table['image'] = images
+            run.table['meta'] = metas
 
         pd.set_option('display.max_rows', 500)
         pd.set_option('display.max_columns', 500)
