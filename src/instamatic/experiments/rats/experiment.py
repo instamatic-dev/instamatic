@@ -100,7 +100,8 @@ class DiffractionRun(Run):
         return run
 
     def middles(self) -> Self:
-        new_alphas = self.table['alpha'].rolling(2).mean()
+        """Construct a new run from N-1 first rows for continuous method."""
+        new_alphas = self.table['alpha'].rolling(2).mean().drop(0)
         new_cols = self.table.iloc[:-1, :].to_dict(orient='list')
         del new_cols['alpha']
         return self.__class__(exposure=self.exposure, alpha=new_alphas, **new_cols)
