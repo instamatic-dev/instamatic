@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 import numpy as np
 import pandas as pd
@@ -40,9 +40,27 @@ class Run:
       - exposure - time spent collecting each frame, expressed in seconds
     """
 
-    def __init__(self, exposure=1.0, **columns: Sequence) -> None:
+    def __init__(self, exposure=1.0, continuous=False, **columns: Sequence) -> None:
         self.exposure: float = exposure
         self.table = pd.DataFrame.from_dict(columns)
+        self.continuous = continuous
+
+    @classmethod
+    def concat(cls, runs: Sequence[Run]) -> Self:
+        exposure = runs[0].exposure
+        continuous = runs[0].continuous
+        table = pd.concat(r.table.set_index('alpha') for r in runs)
+        table = table[~table.index.duplicated(keep='last')]
+        cols = table.reset_index().sort_values(by='alpha').to_dict(orient='list')
+        return cls(exposure=exposure, continuous=continuous, **cols)
+
+    @property
+    def scope(self):
+        print(self.table)
+        a = self.table['alpha']
+        if not self.continuous:
+            return a.iloc[0], a.iloc[-1]
+        return a.iloc[0] - self.osc_angle / 2, a.iloc[-1] + self.osc_angle / 2
 
     @property
     def experiments(self) -> NamedTuple:
@@ -59,6 +77,16 @@ class Run:
     def osc_angle(self):
         a = list(self.table['alpha'])
         return (a[-1] - a[0]) / (len(a) - 1) if len(a) > 1 else -1
+
+    def to_continuous(self) -> Self:
+        """Construct a new run from N-1 first rows for continuous method."""
+        new_alphas = self.table['alpha'].rolling(2).mean().drop(0)
+        new_cols = self.table.iloc[:-1, :].to_dict(orient='list')
+        del new_cols['alpha']
+        c = self.__class__(
+            exposure=self.exposure, continuous=True, alpha=new_alphas, **new_cols
+        )
+        return c
 
 
 class BeamCenterRun(Run):
@@ -101,13 +129,6 @@ class DiffractionRun(Run):
             run.table['delta_x'] = delta_xs
             run.table['delta_y'] = delta_ys
         return run
-
-    def middles(self) -> Self:
-        """Construct a new run from N-1 first rows for continuous method."""
-        new_alphas = self.table['alpha'].rolling(2).mean().drop(0)
-        new_cols = self.table.iloc[:-1, :].to_dict(orient='list')
-        del new_cols['alpha']
-        return self.__class__(exposure=self.exposure, alpha=new_alphas, **new_cols)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EXPERIMENT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -166,7 +187,15 @@ class RatsExperiment(ExperimentBase):
             self.click_listener = self.vcd.listeners['rats']
 
         self.start_time: Optional[datetime.datetime] = None
-        self.diffraction_run = ...  # TODO
+        self.run: Optional[Run] = None
+        self.run_list: List[Run] = []
+
+    @property
+    def alpha_scope(self) -> Tuple[float, float]:
+        return (
+            min(min(r.scope) for r in self.run_list),
+            max(max(r.scope) for r in self.run_list),
+        )
 
     def get_beamshift(self) -> CalibBeamShift:
         calib_dir = self.path.parent / 'calib'
@@ -220,9 +249,23 @@ class RatsExperiment(ExperimentBase):
             pass
         print(text)
 
-    def start_collection(self, **params):
+    def start_collection(self, **params) -> None:
         self.log.info('RATS Data recording started')
+        self.collect(**params)
 
+    def extend_collection(self, **params):
+        new_scope = (params['diffraction_start'], params['diffraction_stop'])
+        old_scope = self.alpha_scope
+        if len(np.unique(np.array(old_scope + new_scope).round(6))) != 3:
+            msg = (
+                f'New alpha scope {new_scope} must extend existing'
+                f'alpha scope {old_scope}. Terminating.'
+            )
+            self.display_message(msg)
+            return
+        self.collect(**params)
+
+    def collect(self, **params) -> None:
         if params['tracking_mode'] == 'manual':
             alignment_run = BeamCenterRun.from_params(params)
             self.collect_stills(alignment_run)
@@ -232,29 +275,25 @@ class RatsExperiment(ExperimentBase):
         else:
             tracking_run = None
 
-        diffraction_run = DiffractionRun.from_params(params, tracking_run)
-
-        # TODO: correctly determine "imageshift1" from tracking data
-        # x_image_shift0_xy = self.ctrl.imageshift1.get()
-        # x_image_shifts = [0 * click.x for click in tracking_clicks]
-        # y_image_shifts = [0 * click.y for click in tracking_clicks]
+        run = DiffractionRun.from_params(params, tracking_run)
         self.ctrl.mode.set('diff')
 
         if params['diffraction_mode'] == 'stills':
-            self.collect_stills(diffraction_run)
+            self.run = self.collect_stills(run)
         elif params['diffraction_mode'] == 'continuous':
-            self.collect_continuous(diffraction_run)
+            self.run = self.collect_continuous(run)
 
         self.camera_length = int(self.ctrl.magnification.get())
 
         self.log.info('Collected the following run:')
-        self.log.info(str(diffraction_run))
+        self.log.info(str(self.run))
+        self.run_list.append(self.run)
 
-    def collect_stills(self, run: DiffractionRun) -> None:
+    def collect_stills(self, run) -> Run:
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
-        self.ctrl.beam.blank()  # TODO: scatter correctly
+        self.ctrl.beam.blank()
         self.beamshift.center(self.ctrl)
         if has_beamshifts:
             px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
@@ -279,10 +318,10 @@ class RatsExperiment(ExperimentBase):
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 150)
         print(run.table)
-        self.diffraction_run = run
         self.ctrl.beam.unblank()
+        return run
 
-    def collect_continuous(self, run: DiffractionRun) -> None:
+    def collect_continuous(self, run) -> Run:
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
@@ -303,9 +342,7 @@ class RatsExperiment(ExperimentBase):
 
         with self.ctrl.stage.rotating_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
-            self.ctrl.stage.a = float(
-                run.table.loc[0, 'alpha']
-            )  # TODO: collect for movie dead time
+            self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
             self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
             for expt, (image, header) in zip(run.experiments, movie):
@@ -314,7 +351,7 @@ class RatsExperiment(ExperimentBase):
                 images.append(image)
                 metas.append(header)
             self.ctrl.beam.blank()
-            run = run.middles()
+            run = run.to_continuous()
             run.table['image'] = images
             run.table['meta'] = metas
 
@@ -322,8 +359,8 @@ class RatsExperiment(ExperimentBase):
         pd.set_option('display.max_columns', 500)
         pd.set_option('display.width', 150)
         print(run.table)
-        self.diffraction_run = run
         self.ctrl.beam.unblank()
+        return run
 
     def resolve_tracking_delta_xy(
         self,
@@ -378,21 +415,21 @@ class RatsExperiment(ExperimentBase):
     def finalize(self):
         self.log.info(f'Saving experiment in: {self.path}')
         rotation_axis = config.camera.camera_rotation_vs_stage_xy
-        pixel_size = config.calibration['diff']['pixelsize'][
-            self.camera_length
-        ]  # px / Angstrom
+        pixel_size = config.calibration['diff']['pixelsize'][self.camera_length]
         physical_pixelsize = config.camera.physical_pixelsize  # mm
         wavelength = config.microscope.wavelength  # angstrom
         stretch_azimuth = config.camera.stretch_azimuth
         stretch_amplitude = config.camera.stretch_amplitude
 
+        run = Run.concat(self.run_list) if len(self.run_list) > 1 else self.run
+
         img_conv = ImgConversion(
-            buffer=self.diffraction_run.buffer,
-            osc_angle=self.diffraction_run.osc_angle,
-            start_angle=self.diffraction_run.table['alpha'].iloc[0],
-            end_angle=self.diffraction_run.table['alpha'].iloc[-1],
+            buffer=run.buffer,
+            osc_angle=run.osc_angle,
+            start_angle=run.table['alpha'].iloc[0],
+            end_angle=run.table['alpha'].iloc[-1],
             rotation_axis=rotation_axis,
-            acquisition_time=self.diffraction_run.exposure,
+            acquisition_time=run.exposure,
             flatfield=self.flatfield,
             pixelsize=pixel_size,
             physical_pixelsize=physical_pixelsize,

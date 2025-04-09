@@ -263,7 +263,7 @@ def rats_interface_command(controller, **params: Any) -> None:
         controller.rats_exp.start_collection(**params)
 
     elif task == 'extend':
-        controller.rats_exp.start_collection(**params)
+        controller.rats_exp.extend_collection(**params)
 
     elif task == 'finalize':
         controller.rats_exp.finalize()
