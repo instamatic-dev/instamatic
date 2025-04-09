@@ -233,6 +233,7 @@ class CalibStageRotation:
             speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
         else:  # if type(self.speed_options) is FloatOptionsListed:
             speeds = self.speed_options.options  # noqa - has options
+        speeds = [s for s in speeds if s != 0]
 
         fig, ax = plt.subplots()
         ax.axvline(x=0, color='k')
@@ -289,7 +290,7 @@ def calibrate_stage_rotation_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    alpha_spans = np.array(alpha_spans or np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    alpha_spans = np.array(alpha_spans or np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]))
     alpha_targets = np.cumsum(alpha_spans * alternating_array(len(alpha_spans)))
 
     calib_points: List[SpanSpeedTime] = []
@@ -302,7 +303,7 @@ def calibrate_stage_rotation_live(
             ctrl.stage.set_rotation_speed(12)
             assert ctrl.stage.get_rotation_speed() == 12
         except AssertionError:  # or any other raised if speed can't be set
-            speed_range_default = np.linspace(0.1, 1.0, num=10)
+            speed_range_default = np.linspace(0.01, 0.2, num=20)
             speed_options = FEI_ROTATION_SPEED_OPTIONS
         else:
             speed_range_default = np.arange(1, 13, step=1)
@@ -314,11 +315,11 @@ def calibrate_stage_rotation_live(
 
         with tqdm(total=total) as progress_bar:
             for speed in speed_range:
-                with ctrl.stage.rotating_speed(speed=speed):
+                with ctrl.stage.rotating_speed(speed=float(speed)):
                     ctrl.stage.a = 0.0
                     for at, as_ in zip(alpha_targets, alpha_spans):
                         with timer() as t:
-                            ctrl.stage.a = at
+                            ctrl.stage.a = float(at)
                         calib_points.append(SpanSpeedTime(as_, speed, t()))
                         progress_bar.update(1)
     finally:
@@ -327,6 +328,7 @@ def calibrate_stage_rotation_live(
         if ctrl.cam.streamable:
             ctrl.cam.unblock()  # noqa - streamable cams have unblock()
 
+    for cp in calib_points: print(cp)
     calib_points_array = np.array(calib_points).T
     all_spans_speeds = calib_points_array[:2]
     all_times = calib_points_array[2]
