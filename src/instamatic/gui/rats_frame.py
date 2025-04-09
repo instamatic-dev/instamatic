@@ -30,6 +30,8 @@ class TrackingMode(Enum):
 
 
 class ExperimentalRatsVariables:
+    """A collection of tkinter Variable instances for the experiment."""
+
     def __init__(self):
         self.diffraction_mode = StringVar()
         self.diffraction_start = DoubleVar(value=-30)
@@ -39,6 +41,13 @@ class ExperimentalRatsVariables:
         self.tracking_mode = StringVar()
         self.tracking_time = DoubleVar(value=0.5)
         self.tracking_step = DoubleVar(value=5.0)
+
+    def as_dict(self):
+        return {
+            v: getattr(self, v).get()
+            for v in dir(self)
+            if isinstance(getattr(self, v), Variable)
+        }
 
 
 class ExperimentalRats(LabelFrame):
@@ -163,8 +172,11 @@ class ExperimentalRats(LabelFrame):
         self.extend_button.config(state='enabled' if eip else 'disabled')
         self.abort_button.config(state='enabled' if eip else 'disabled')
         self.finalize_button.config(state='enabled' if eip else 'disabled')
+
+        self.diffraction_mode.config(state='disabled' if eip else 'enabled')
         self.diffraction_step.config(state='disabled' if eip else 'enabled')
         self.diffraction_time.config(state='disabled' if eip else 'enabled')
+        self.tracking_mode.config(state='disabled' if eip else 'enabled')
 
         no_track = TrackingMode(self.var.tracking_mode.get()) is TrackingMode.none
         self.tracking_step.config(state='disabled' if eip or no_track else 'enabled')
@@ -220,11 +232,7 @@ class ExperimentalRats(LabelFrame):
         self.q: Queue = q
 
     def get_params(self, task: str) -> Dict[str, Any]:
-        params = {
-            v: getattr(self.var, v).get()
-            for v in dir(self.var)
-            if isinstance(getattr(self.var, v), Variable)
-        }
+        params = self.var.as_dict()
         params['frame'] = self
         params['task'] = task
         return params
@@ -278,7 +286,7 @@ def rats_interface_command(controller, **params: Any) -> None:
     else:
         raise ValueError(f'Invalid task: {task}')
 
-    # TODO: frame.update_buttons() allow further actions finnally when everything ends
+    # TODO: frame.update_buttons() allow further actions finally when everything ends
 
 
 module = BaseModule(
