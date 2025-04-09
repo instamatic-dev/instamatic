@@ -44,6 +44,7 @@ class Run:
         self.exposure: float = exposure
         self.table = pd.DataFrame.from_dict(columns)
 
+    @property
     def experiments(self) -> NamedTuple:
         return self.table.itertuples(name='Experiment')  # noqa, rtype is correct
 
@@ -52,7 +53,7 @@ class Run:
 
     @property
     def buffer(self) -> List[Tuple[int, np.ndarray, dict]]:
-        return [(i, e.image, e.meta) for i, e in enumerate(self.experiments())]
+        return [(i, e.image, e.meta) for i, e in enumerate(self.experiments)]
 
     @property
     def osc_angle(self):
@@ -262,7 +263,7 @@ class RatsExperiment(ExperimentBase):
             beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_xys)
             run.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
-        for expt in run.experiments():
+        for expt in run.experiments:
             if has_beamshifts:
                 self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
             self.ctrl.stage.a = expt.alpha
@@ -307,7 +308,7 @@ class RatsExperiment(ExperimentBase):
             )  # TODO: collect for movie dead time
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
             self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
-            for expt, (image, header) in zip(run.experiments(), movie):
+            for expt, (image, header) in zip(run.experiments, movie):
                 if has_beamshifts:
                     self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
                 images.append(image)
@@ -344,7 +345,7 @@ class RatsExperiment(ExperimentBase):
 
         # collecting tracking information
         delta_xs, delta_ys = [], []
-        for expt in tracking_run.experiments():
+        for expt in tracking_run.experiments:
             with self.vss.temporary_provider(lambda: expt.image):
                 self.display_message(
                     f'Please click on the crystal ' f'(image={expt.Index}, alpha={expt.alpha}°)'
