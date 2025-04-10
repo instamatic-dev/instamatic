@@ -674,7 +674,7 @@ class ImgConversion:
             print('', file=f)
             print(f'lambda {self.wavelength}', file=f)
             print(f'Aperpixel {self.pixelsize}', file=f)
-            print('phi 0.0', file=f)
+            print(f'phi {float(self.osc_angle)/2}', file=f)
             print(f'omega {omega}', file=f)
             print('bin 1', file=f)
             print('reflectionsize 20', file=f)
