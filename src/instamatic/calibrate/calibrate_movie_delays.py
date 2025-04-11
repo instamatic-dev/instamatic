@@ -179,9 +179,6 @@ class CalibMovieDelaysMapping(MutableMapping):
             json.dump(self.to_dict(), fp=json_file, indent=4, sort_keys=True)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~ MOVIE RATE CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 class MovieTimes:
     """A 2D data class that stores the results of movie delay calibrations.
 
