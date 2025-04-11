@@ -11,6 +11,7 @@ from typing import Dict, Iterator, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import yaml
+from tqdm import tqdm
 from typing_extensions import Self
 
 from instamatic.calibrate.filenames import CALIB_MOVIE_DELAYS
@@ -200,8 +201,9 @@ class CalibMovieDelaysMapping(MutableMapping):
 class MovieTimes:
     """A 2D data class that stores the results of movie delay calibrations.
 
-    Individual columns store unique attempts for a given exposure.
-    A total of `3 * N + 2` rows, where `N = n_frames`, holds ordered timestamps:
+    Stores exposure, n_frames, as well as a table with timings, whose
+    individual rows store timestamp series for all movies/cycles collected.
+    A total of `3*N+2` cols, where `N = n_frames`, hold in chronological order:
 
     - "i": 1 time stamp right before `get_movie` initialization call;
     - "s#": N individual time stamps for the frame # collection start;
@@ -213,7 +215,7 @@ class MovieTimes:
     def __init__(self, n_frames: int = 20, exposure: float = 1.0) -> None:
         self.n_frames = n_frames
         self.exposure = exposure
-        columns = ['i']
+        columns = ['i']  # make col names: [i, s1, e1, y1, s2, e2, y2, ..., r]
         for i in range(n_frames):
             columns.extend(f's{i} e{i} y{i}'.split())
         columns.append('r')
@@ -221,12 +223,12 @@ class MovieTimes:
 
     @lru_cache(maxsize=2)
     def _get_deltas(self, _cache_flag: Tuple[int, int]) -> pd.DataFrame:
-        """Internal cache of the `deltas` using `self.table` shape as flag."""
+        """Internal cache of the `deltas` using `self.table.shape` as flag."""
         return self.table.diff(axis=1).iloc[:, 1:]
 
     @property
     def deltas(self) -> pd.DataFrame:
-        """A `3 * N + 1 x len(exposures)` table of rolling timespan deltas."""
+        """A `n_cycles x 3 * N + 1` table of rolling timespan differences."""
         return self._get_deltas(self.table.shape)
 
     @property
@@ -267,8 +269,8 @@ class MovieTimes:
         """Total timespan of entire `ctrl.get_movie`, from call to return."""
         return self.table.iloc[:, -1] - self.table.iloc[:, 0]
 
-    def add_timestamps(self, exposure: float, timestamps: Sequence[float]) -> None:
-        """Add `timestamps` or raise `ValueError` if they deviate too much."""
+    def add_timestamps(self, timestamps: Sequence[float]) -> None:
+        """Add `timestamps` sequence as a new row to `self.table`."""
         new = pd.DataFrame([timestamps], columns=self.table.columns)
         self.table = new if self.table.empty else pd.concat([self.table, new], axis=0)
 
@@ -298,55 +300,62 @@ def calibrate_movie_delays_live(
     """
 
     n_frames = 20
+    n_rounds = 5
 
-    m_kwargs = {}
+    movie_kwargs = {}
     if header_keys:
-        m_kwargs['header_keys'] = header_keys
+        movie_kwargs['header_keys'] = header_keys
     if header_keys_common:
-        m_kwargs['header_keys_common'] = header_keys_common
+        movie_kwargs['header_keys_common'] = header_keys_common
 
     log('Calibration of `get_movie` for the following input started')
     log(f'exposure: {exposure} s')
     log(f'header_keys: {header_keys}')
     log(f'header_keys_common: {header_keys_common}')
 
-    def _get_movie_times(mt: MovieTimes, movie_gen: Iterator) -> None:
-        """Generate a `MovieTimes` instance with timings for iterator."""
-        timestamps: list[float] = [time.perf_counter()]  # "i"
-        for frame, header in movie_gen:
-            yield_time = time.perf_counter()
-            timestamps.append(header.get('ImageGetTimeStart', yield_time))  # "s#"
-            timestamps.append(header.get('ImageGetTimeEnd', yield_time))  # "e#"
-            timestamps.append(yield_time)  # "y#"
-        timestamps.append(time.perf_counter())  # "r"
-        mt.add_timestamps(exposure, timestamps)
+    def _get_movie_times(exposure_=1e-6) -> MovieTimes:
+        """Benchmark `get_movie` and put the results into a `MovieTimes`."""
+        # first single-frame movie dummy only updates the settings if needed
+        _ = next(ctrl.get_movie(1, exposure_, **movie_kwargs))
+        mt_ = MovieTimes(n_frames=n_frames, exposure=exposure)
+        for _ in tqdm(range(n_rounds), desc='Collecting movie', unit='round'):
+            movie_gen = ctrl.get_movie(n_frames, exposure_, **movie_kwargs)
+            timestamps: list[float] = [time.perf_counter()]  # "i"
+            for frame, header in movie_gen:
+                timestamps.append(header['ImageGetTimeStart'])  # "s#"
+                timestamps.append(header['ImageGetTimeEnd'])  # "e#"
+                timestamps.append(time.perf_counter())  # "y#"
+            timestamps.append(time.perf_counter())  # "r"
+            mt_.add_timestamps(timestamps)
+        return mt_
 
     ctrl.cam.block()
     try:
-        # first 1-frame movie dummy updates the settings as needed
-        _ = next(ctrl.get_movie(1, exposure, **m_kwargs))
-        mt = MovieTimes(n_frames=n_frames, exposure=exposure)  # actual movie
-        for _ in range(5):
-            _get_movie_times(mt, ctrl.get_movie(n_frames, exposure, **m_kwargs))
-        _ = next(ctrl.get_movie(1, 1e-6, **m_kwargs))
-        mt_ref = MovieTimes(n_frames=n_frames, exposure=1e-6)  # header only
-        for _ in range(5):
-            _get_movie_times(mt_ref, ctrl.get_movie(n_frames, 1e-6, **m_kwargs))
+        mte = _get_movie_times(exposure)  # actual movie timestamps
+        mtr = _get_movie_times(1e-6)  # reference movie with ~0 exposure
     finally:
         ctrl.cam.unblock()
 
-    ratio = mt.frame1_times.mean() / mt.exposure
+    ratio = mte.frame1_times.mean() / mte.exposure
     if ratio > 1.1:
         msg = (
-            f'Exposure times exceed expected by {(ratio-1)/100}%. '
+            f'Exposure times exceed expected by {(ratio-1)*100}%. '
             f'Consider using longer exposure or smaller header.'
         )
         warnings.warn(msg, CalibWarning)
 
-    init_time = float((mt.init_times + mt.frame0_times - mt.frame1_times).mean())
-    yield_time = float(mt.yield_times.mean())
-    wait_time = float((mt.wait_times + mt.frame1_times - mt.exposure).mean())
-    return_time = float(mt.return_times.mean())
+    ratio = mtr.total_times.mean() / mte.total_times.mean()
+    if ratio > 0.5:
+        msg = (
+            f'Total time is dominated ({ratio*100}%) by header collection. '
+            f'Consider using longer exposure or smaller header.'
+        )
+        warnings.warn(msg, CalibWarning)
+
+    init_time = float((mte.init_times + mte.frame0_times - mte.frame1_times).mean())
+    yield_time = float(mte.yield_times.mean())
+    wait_time = float((mte.wait_times + mte.frame1_times - mte.exposure).mean())
+    return_time = float(mte.return_times.mean())
 
     c = CalibMovieDelays(init_time, yield_time, wait_time, return_time)
     log(f'Calibration of `get_movie` complete: {c}')
@@ -367,7 +376,7 @@ def main_entry() -> None:
         '-e',
         '--exposure',
         type=float,
-        default=1.0,
+        default=0.01,
         help='Exposure to test the delay for in seconds. Default: 1',
     )
 
