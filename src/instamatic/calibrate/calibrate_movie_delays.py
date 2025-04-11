@@ -3,14 +3,14 @@ from __future__ import annotations
 import dataclasses
 import logging
 import time
-
-import yaml
+import warnings
 from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Iterator, Optional, Sequence, Tuple, Union
 
 import pandas as pd
+import yaml
 from typing_extensions import Self
 
 from instamatic.calibrate.filenames import CALIB_MOVIE_DELAYS
@@ -337,10 +337,11 @@ def calibrate_movie_delays_live(
 
     ratio = mt.frame1_times.mean() / mt.exposure
     if ratio > 1.1:
-        raise CalibWarning(
-            f'Exposure times exceed expected by {(ratio-1)/100}%.'
-            f' Consider using longer exposure or smaller header.'
+        msg = (
+            f'Exposure times exceed expected by {(ratio-1)/100}%. '
+            f'Consider using longer exposure or smaller header.'
         )
+        warnings.warn(msg, CalibWarning)
 
     init_time = float((mt.init_times + mt.frame0_times - mt.frame1_times).mean())
     yield_time = float(mt.yield_times.mean())
