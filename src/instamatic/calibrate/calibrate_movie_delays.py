@@ -344,26 +344,45 @@ def main_entry() -> None:
         description=description, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    h = 'Exposure to test the delay for in seconds. Default: 1'
-    parser.add_argument('-e', '--exposure', type=float, default=1.0, help=h)
+    parser.add_argument(
+        '-e',
+        '--exposure',
+        type=float,
+        default=1.0,
+        help='Exposure to test the delay for in seconds. Default: 1',
+    )
 
     parser.add_argument(
-        '-a', '--variable_headers', 
-        type=str, 
+        '-a',
+        '--variable_headers',
+        type=str,
         default=None,
         help=(
             'Comma-delimited list of variable header keys to calibrate for. '
             'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`.'
-        )
+        ),
     )
 
-    h = 'Comma-delimited list of common header keys to calibrate for. '
-    h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_COMMON`.'
-    parser.add_argument('-c', '--common_headers', type=str, default=None, help=h)
+    parser.add_argument(
+        '-c',
+        '--common_headers',
+        type=str,
+        default=None,
+        help=(
+            'Comma-delimited list of common header keys to calibrate for. '
+            'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_COMMON`.'
+        ),
+    )
 
-    h = 'Path to the directory where calibration file should be output. '
-    h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
-    parser.add_argument('-o', '--outdir', type=str, help=h)
+    parser.add_argument(
+        '-o',
+        '--outdir',
+        type=str,
+        help=(
+            'Path to the directory where calibration file should be output. '
+            'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
+        ),
+    )
 
     options = parser.parse_args()
 
