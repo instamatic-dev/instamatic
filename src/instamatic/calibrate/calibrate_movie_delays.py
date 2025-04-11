@@ -52,7 +52,8 @@ class CalibMovieDelays:
 
     @property
     def dead_time(self) -> float:
-        """Subtract it from your target exposure to get exposure needed."""
+        """An estimated time "gap" between individual frames of `get_movie`; To
+        get a frame every 1 sec, call `get_movie` with exposure=1-dead_time."""
         return self.yield_time + self.wait_time
 
     @classmethod
@@ -62,19 +63,20 @@ class CalibMovieDelays:
     @classmethod
     def from_file(
         cls,
-        ctrl: 'TEMController',
         exposure: float = 1.0,
         header_keys: Tuple[str] = (),
         header_keys_common: Tuple[str] = (),
         path: Optional[str] = None,
     ) -> CalibMovieDelays:
         calib_map = CalibMovieDelaysMapping.from_file(path)
-        calib = calib_map.get((exposure, header_keys, header_keys_common))
+        calib_conditions = (exposure, header_keys, header_keys_common)
+        calib = calib_map.get(calib_conditions, None)
         if calib is None:
-            log(f'{cls.__name__} for specified header keys not found. Calibrating...')
-            calib = calibrate_movie_delays_live(ctrl, exposure, header_keys, header_keys_common)
-            calib_map[(exposure, header_keys, header_keys_common)] = calib
-            calib_map.to_file(path)
+            raise KeyError(
+                f'Calibration for conditions {calib_conditions} not found. '
+                f"Please run 'instamatic.calibrate_movie_delays -e {exposure:.6f} "
+                f"-a {header_keys} -c {header_keys_common}' first."
+            )
         return calib
 
     @classmethod
