@@ -189,7 +189,7 @@ def calibrate_beamshift_live(
             binsize=binsize,
             out=outfile,
             comment=comment,
-            header_keys='BeamShift',
+            header_keys=('BeamShift',),
         )
         img = imgscale(img, scale)
 

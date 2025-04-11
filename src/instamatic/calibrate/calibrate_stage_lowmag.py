@@ -291,7 +291,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
             binsize=binsize,
             out=outfile,
             comment=comment,
-            header_keys='StagePosition',
+            header_keys=('StagePosition',),
         )
 
         img = imgscale(img, scale)

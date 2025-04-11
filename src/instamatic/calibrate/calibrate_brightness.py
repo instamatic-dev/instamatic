@@ -110,7 +110,7 @@ def calibrate_brightness_live(ctrl, step=1000, save_images=False, **kwargs):
 
         comment = f'Calib image {i}: brightness={target}'
         img, h = ctrl.get_image(
-            exposure=exposure, out=outfile, comment=comment, header_keys='Brightness'
+            exposure=exposure, out=outfile, comment=comment, header_keys=('Brightness',)
         )
 
         img, scale = autoscale(img)

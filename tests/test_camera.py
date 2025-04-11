@@ -46,15 +46,18 @@ def test_get_movie(ctrl):
     bin2 = 2
     bin4 = 4
 
-    movie = ctrl.get_movie(n_frames=bin1, binsize=bin1)
+    movie_gen = ctrl.get_movie(n_frames=bin1, exposure=0.01, binsize=bin1)
+    movie = [image for image, h in movie_gen]
     x1, y1 = movie[0].shape
     l1 = len(movie)
 
-    movie = ctrl.get_movie(n_frames=bin2, binsize=bin2)
+    movie_gen = ctrl.get_movie(n_frames=bin2, exposure=0.01, binsize=bin2)
+    movie = [image for image, h in movie_gen]
     x2, y2 = movie[0].shape
     l2 = len(movie)
 
-    movie = ctrl.get_movie(n_frames=bin4, binsize=bin4)
+    movie_gen = ctrl.get_movie(n_frames=bin4, exposure=0.01, binsize=bin4)
+    movie = [image for image, h in movie_gen]
     x4, y4 = movie[0].shape
     l4 = len(movie)
 

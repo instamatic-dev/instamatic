@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import time
-from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Tuple
+from functools import wraps
+from typing import Callable, Generator, Optional, Tuple
 
 import numpy as np
 
@@ -81,6 +81,19 @@ def get_instance() -> 'TEMController':
         ctrl = _ctrl = initialize()
 
     return ctrl
+
+
+def requires_cam_attr(method: Callable) -> Callable:
+    """Decorator that raises an error if `self.cam` evaluates to False."""
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not getattr(self, 'cam', None):
+            msg = " object has no attribute 'cam' (Camera has not been initialized)"
+            raise AttributeError(self.__class__.__name__ + msg)
+        return method(self, *args, **kwargs)
+
+    return wrapper
 
 
 class TEMController:
@@ -520,6 +533,7 @@ class TEMController:
             except TypeError:
                 func(v)
 
+    @requires_cam_attr
     def get_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
         """Simplified function equivalent to `get_image` that only returns the
         raw data array.
@@ -592,6 +606,7 @@ class TEMController:
 
         return arr
 
+    @requires_cam_attr
     def get_image(
         self,
         exposure: float = None,
@@ -600,7 +615,7 @@ class TEMController:
         out: str = None,
         plot: bool = False,
         verbose: bool = False,
-        header_keys: Tuple[str] = 'all',
+        header_keys: Tuple[str] = ('all',),
     ) -> Tuple[np.ndarray, dict]:
         """Retrieve image as numpy array from camera. If the exposure and
         binsize are not given, the default values are read from the config
@@ -611,7 +626,7 @@ class TEMController:
         exposure: float
             Exposure time in seconds
         binsize: int
-            Binning to use for the image, must be 1, 2, or 4, etc
+            Binning to use for the image, must be 1, 2, or 4, etc.
         comment: str
             Arbitrary comment to add to the header file under 'ImageComment'
         out: str
@@ -629,20 +644,12 @@ class TEMController:
         Usage:
             img, h = self.get_image()
         """
-        if not self.cam:
-            raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
-            )
-
         if not binsize:
             binsize = self.cam.default_binsize
         if not exposure:
             exposure = self.cam.default_exposure
 
-        if not header_keys:
-            h = {}
-        else:
-            h = self.to_dict(header_keys)
+        h = self.to_dict(*header_keys) if header_keys else {}
 
         if self.autoblank:
             self.beam.unblank()
@@ -680,13 +687,38 @@ class TEMController:
 
         return arr, h
 
-    def get_movie(
-        self, n_frames: int, *, exposure: float = None, binsize: int = None, out: str = None
-    ) -> Tuple[np.ndarray]:
-        """Collect a stack of images using the camera's movie mode, if
-        available.
+    MOVIE_HEADER_KEYS_VARIABLE = (  # typically unique for every movie frame
+        'BeamShift',
+        'BeamTilt',
+        'StagePosition',
+    )
+    MOVIE_HEADER_KEYS_COMMON = (  # typically common for all movie frames
+        'FunctionMode',
+        'GunShift',
+        'GunTilt',
+        'ImageShift1',
+        'ImageShift2',
+        'DiffShift',
+        'Magnification',
+        'DiffFocus',
+        'Brightness',
+        'SpotSize',
+    )
 
-        This minimizes the gap between frames.
+    @requires_cam_attr
+    def get_movie(
+        self,
+        n_frames: int,
+        exposure: float = None,
+        binsize: int = None,
+        comment: str = '',
+        header_keys: Tuple[str] = MOVIE_HEADER_KEYS_VARIABLE,
+        header_keys_common: Tuple[str] = MOVIE_HEADER_KEYS_COMMON,
+    ) -> Generator[np.ndarray, None, None]:
+        """Generate (image, header) pairs using camera's movie mode. If the
+        exposure and binsize are not given, the default values are read from
+        the config file. Common header info is collected before the generator
+        is started by calling next, minimizing the gap between frames.
 
         Parameters
         ----------
@@ -695,34 +727,70 @@ class TEMController:
         exposure : float, optional
             Exposure time in seconds
         binsize : int, optional
-            Binning to use for the image, must be 1, 2, or 4, etc
-        out : str, optional
-            Path or filename to which the image/header is saved (defaults to tiff)
+            Binning to use for the image, must be 1, 2, or 4, etc.
+        comment: str, optional
+            Arbitrary comment to add to the header file under 'ImageComment'
+        header_keys: Tuple[str]
+            Header keys to collect alongside each image. Use few to minimize lag.
+        header_keys_common: Tuple[str]
+            Common header keys to collect once at the start of get_movie only.
 
-        Returns
+        Yields
         -------
-        stack : Tuple[np.ndarray]
-            List of numpy arrays with image data.
-        """
-        if not self.cam:
-            raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute 'cam' (Camera has not been initialized)"
-            )
+        image_header: Generator[(np.ndarray, collections.ChainMap), None, None]
+            Generator of (numpy arrays with image data, ChainMap with
+            all the tem parameters and image attributes) pairs.
 
+        Usage:
+            for img, h in self.get_movie(10, **kwargs): print(img.shape)
+        """
         if not binsize:
             binsize = self.cam.default_binsize
         if not exposure:
             exposure = self.cam.default_exposure
 
-        if self.autoblank:
-            self.beam.unblank()
+        header_common = self.to_dict(*header_keys_common) if header_keys_common else {}
+        header_common['ImageExposureTime'] = exposure
+        header_common['ImageBinsize'] = binsize
+        header_common['ImageComment'] = comment
+        header_common['ImageCameraName'] = self.cam.name
+        header_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
 
-        stack = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
+        gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
 
-        if self.autoblank:
-            self.beam.blank()
+        try:
+            if self.autoblank:
+                self.beam.unblank()
 
-        return stack
+            for _ in range(n_frames):
+                # The generator `gen` starts collecting only when the first `next` is called.
+                # Request the next image, expect it in the future, get header in the meantime
+                future_img = self._executor.submit(lambda: next(gen))
+                time_start = time.perf_counter()
+
+                header = header_common.copy()
+                header['ImageGetTimeStart'] = time_start
+                header.update(self.to_dict(*header_keys) if header_keys else {})
+
+                if 'Magnification' not in header:
+                    header['Magnification'] = self.magnification.value
+                if 'FunctionMode' not in header:
+                    header['FunctionMode'] = self.mode.get()
+                mag = header['Magnification']
+                mode = header['FunctionMode']
+
+                img = future_img.result()
+                header['ImageGetTimeEnd'] = time.perf_counter()
+                header['ImageGetTime'] = time.time()
+
+                rotate_image(img, mode=mode, mag=mag)
+                header['ImageResolution'] = img.shape
+                yield img, header
+
+        finally:
+            gen.close()
+            if self.autoblank:
+                self.beam.blank()
 
     def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for

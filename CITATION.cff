@@ -21,6 +21,11 @@ authors:
     family-names: Rainer
     given-names: Daniel
     orcid: "https://orcid.org/0000-0002-3272-3161"
+  -
+    affiliation: "Czech Academy of Sciences"
+    family-names: Tchoń
+    given-names: Daniel Mariusz
+    orcid: "https://orcid.org/0000-0003-4798-867X"
 cff-version: "1.1.0"
 date-released: 2021-08-09
 doi: "10.5281/zenodo.1090388"

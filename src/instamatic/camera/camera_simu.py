@@ -3,7 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 import time
-from typing import List, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 import numpy as np
 
@@ -74,7 +74,7 @@ class CameraSimu(CameraBase):
         exposure: Optional[float] = None,
         binsize: Optional[int] = None,
         **kwargs,
-    ) -> List[np.ndarray]:
+    ) -> Generator[np.ndarray, None, None]:
         """Movie acquisition routine. If the exposure and binsize are not
         given, the default values are read from the config file.
 
@@ -87,11 +87,12 @@ class CameraSimu(CameraBase):
         binsize : int
             Which binning to use.
 
-        Returns
+        Yields
         -------
-        stack : List[np.ndarray]
+        image : np.ndarray
         """
-        return [self.get_image(exposure=exposure, binsize=binsize) for _ in range(n_frames)]
+        for _ in range(n_frames):
+            yield self.get_image(exposure=exposure, binsize=binsize, **kwargs)
 
     def acquire_image(self) -> int:
         """For TVIPS compatibility."""
