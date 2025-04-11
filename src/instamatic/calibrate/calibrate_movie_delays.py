@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
-import json
 import logging
 import time
+
+import yaml
 from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
@@ -180,7 +181,7 @@ class CalibMovieDelaysMapping(MutableMapping):
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
             with open(Path(path), 'r') as json_file:
-                return cls.from_dict(json.load(json_file))
+                return cls.from_dict(yaml.safe_load(json_file))
         except OSError as e:
             prog = 'instamatic.calibrate_movie_delays'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
@@ -193,7 +194,7 @@ class CalibMovieDelaysMapping(MutableMapping):
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         with open(Path(path), 'w') as json_file:
-            json.dump(self.to_dict(), fp=json_file, indent=4, sort_keys=True)
+            yaml.safe_dump(self.to_dict(), json_file)
 
 
 class MovieTimes:
