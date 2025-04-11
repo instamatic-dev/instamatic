@@ -18,9 +18,6 @@ from instamatic.config import calibration_drc
 logger = logging.getLogger(__name__)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HELPER OBJECTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 def log(s: str) -> None:
     logger.info(s)
     print(s)
