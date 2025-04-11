@@ -106,29 +106,37 @@ class CalibMovieDelays:
         calib_map.to_file(path)
 
 
+CalibConditions_T = Tuple[float, Tuple[str, ...], Tuple[str, ...]]
+
+
 class CalibMovieDelaysMapping(MutableMapping):
-    """Calibrated delays depend on the exposure time as well as information
-    requested in movie header: requesting a lot of common information might
-    elongate the initialization, large per-image headers may take too long to
-    collect during `exposure`, artificially inflating yield times.
-    This class loads, stores, and saves instances of `CalibMovieDelays`
-    calibrated for each combination of exposure and common/variable header.
+    """Calibrated delays depend on the exposure time as well information
+    requested for movie header. This information can be split into two kinds:
+    common information is collected once at the beginning of the movie,
+    potentially leading to long initialization times. Variable information is
+    collect for each image individually while it is gathered, potentially
+    artificially inflating the "dead" time. This class manages instances of
+    `CalibMovieDelays` calibrated for each combination of exposure and headers.
 
-    Instances of `CalibMovieDelays` are indexed using a composite string key,
-    which takes form "exposure;common,header,elements;variable,header,elements".
-    However, this class also allows accessing instances using the tuple-form.
+    From the code perspective, the easiest way to express `CalibConditions_T`,
+    i.e. exposure, common headers, and variable headers, is via a tuple.
+    Unfortunately, tuples can not be used as a key for serialization purposes.
+    Therefore, this class also allows converting the conditions to a string
+    representation: "exposure;common,header,elements;variable,header,elements".
+
+    Instances of `CalibMovieDelays` are indexed using this composite header key;
+    However, for convenience, this class allows accessing stored instances of
+    `CalibMovieDelays` using either the composite string or tuple-style key.
     """
-
-    ExposureHeadersHeaders_T = Tuple[float, Tuple[str, ...], Tuple[str, ...]]
 
     def __init__(self, dict_: Dict[str, CalibMovieDelays] = None) -> None:
         self.dict = dict_ if dict_ else {}
 
-    def __delitem__(self, k: Union[str, ExposureHeadersHeaders_T]) -> None:
-        del self.dict[k if isinstance(k, str) else self.ehh_to_str(*k)]
+    def __delitem__(self, k: Union[str, CalibConditions_T]) -> None:
+        del self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)]
 
-    def __getitem__(self, k: Union[str, ExposureHeadersHeaders_T]) -> CalibMovieDelays:
-        return self.dict[k if isinstance(k, str) else self.ehh_to_str(*k)]
+    def __getitem__(self, k: Union[str, CalibConditions_T]) -> CalibMovieDelays:
+        return self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)]
 
     def __len__(self) -> int:
         return len(self.dict)
@@ -137,20 +145,29 @@ class CalibMovieDelaysMapping(MutableMapping):
         return self.dict.__iter__()
 
     def __setitem__(self, k, v) -> None:
-        self.dict[k if isinstance(k, str) else self.ehh_to_str(*k)] = v
+        self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)] = v
 
-    @staticmethod
-    def str_to_ehh(key: str) -> ExposureHeadersHeaders_T:
-        """Convert a "1.0;t11,t12;t21"-form str to float & tuples t1 & t2."""
+    def str2tuple(self, str_: str, delimiter: str = ',') -> Tuple[str, ...]:
+        """Convert a `delimiter`-delimited string into a tuple of strings."""
+        return tuple(sorted(str_.split(delimiter)))
+
+    def tuple2str(self, tuple_: Tuple[str, ...], delimiter: str = ',') -> str:
+        """Convert a tuple of strings into a `delimiter`-delimited string."""
+        return delimiter.join([str(t) for t in sorted(tuple_)])
+
+    def str2calib_conditions(self, key: str) -> CalibConditions_T:
+        """Convert calibration conditions from ,/;-delimited str to tuple."""
         exposure, header_keys_common, header_keys_variable = key.split(';', 3)
-        header_keys_common = tuple(sorted(header_keys_common.split(',')))
-        header_keys_variable = tuple(sorted(header_keys_variable.split(',')))
+        header_keys_common = self.str2tuple(header_keys_common, ',')
+        header_keys_variable = self.str2tuple(header_keys_variable, ',')
         return float(exposure), header_keys_common, header_keys_variable
 
-    @staticmethod
-    def ehh_to_str(e: float, t1: Sequence[str, ...], t2: Sequence[str, ...]) -> str:
-        """Convert float & tuples t1 & t2 to "e;t11,t12;t21,t22"-form str."""
-        return f'{round(e, 3):.3f};' + ','.join(sorted(t1)) + ';' + ','.join(sorted(t2))
+    def calib_conditions2str(self, c: CalibConditions_T) -> str:
+        """Convert calibration conditions from tuple to ,/;-delimited str."""
+        exposure, header_keys_common, header_keys_variable = c
+        hkc = self.tuple2str(header_keys_common, ',')
+        hkv = self.tuple2str(header_keys_variable, ',')
+        return f'{round(exposure, 3):.3f};{hkc};{hkv}'
 
     @classmethod
     def from_dict(cls, dict_: Dict[str, Dict[str, float]]) -> Self:
