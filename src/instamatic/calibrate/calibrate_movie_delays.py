@@ -335,9 +335,6 @@ def calibrate_movie_delays_live(
     return c
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ STANDALONE COMMAND ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 def main_entry() -> None:
     import argparse
 
