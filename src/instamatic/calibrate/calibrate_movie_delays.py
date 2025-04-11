@@ -347,9 +347,15 @@ def main_entry() -> None:
     h = 'Exposure to test the delay for in seconds. Default: 1'
     parser.add_argument('-e', '--exposure', type=float, default=1.0, help=h)
 
-    h = 'Comma-delimited list of variable header keys to calibrate for. '
-    h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`.'
-    parser.add_argument('-a', '--variable_headers', type=str, default=None, help=h)
+    parser.add_argument(
+        '-a', '--variable_headers', 
+        type=str, 
+        default=None,
+        help=(
+            'Comma-delimited list of variable header keys to calibrate for. '
+            'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_VARIABLE`.'
+        )
+    )
 
     h = 'Comma-delimited list of common header keys to calibrate for. '
     h += 'For default, see `src/instamatic/controller.py:MOVIE_HEADER_KEYS_COMMON`.'
