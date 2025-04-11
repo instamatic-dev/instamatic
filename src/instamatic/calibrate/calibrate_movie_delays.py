@@ -31,25 +31,18 @@ class CalibWarning(RuntimeWarning):
 
 @dataclasses.dataclass
 class CalibMovieDelays:
-    """Calibrate the difference between requested and actual movie exposure
-    and frame rate. Given `n = n_frames`, the time needed to run the full image
-    collection always exceeds the naive product and instead is modeled here as:
+    """A simple dataclass that stores the differences between expected and
+    observed performance of `ctrl.get_movie`. It accepts at initialization
+    and stores four averaged time spans between the following events:
 
-    total = init + (exposure + yield + wait) * (n-1) + exposure + yield + return
+    - init_time - between `get_movie` being called and frame 1 being started;
+    - yield_time - between frame being reported to end being yielded;
+    - wait_time - between frame N being yielded and frame N+1 being started;
+    - return_time - between the last frame being yielded and get_movie ending.
 
-    Individual variables present above represent the following time spans:
-
-    - total: total time from calling `get_movie` to receiving a return value;
-    - exposure: exact constant "exposure" passed to `VideoStream.get_movie`;
-    - yield: time between controller receiving a frame and yielding it;
-    - wait: time between yielding a (non-final) frame and starting a new one;
-    - return: time between yielding the final frame and yielding None.
-
-    When requesting a movie with n frames, the total call time will exceed
-    `n * exposure` due to initialization / dead time / finalization delays.
-    In particular, to get 1 frame every `exposure` sec, the "declared" exposure
-    must be shorter by a `dead_time = yield_time + wait_time`. The measurement
-    also starts delayed by `init_time` and ends `return_time` late.
+    In addition, it reveals the property `dead_time`: an estimated time "gap"
+    between individual frames of `get_movie`, crucial if movie is coupled with
+    e.g. rotation. I/O operations are handled by `CalibMovieDelaysMapping`.
     """
 
     init_time: float
@@ -282,21 +275,50 @@ def calibrate_movie_delays_live(
     header_keys_common: Optional[Tuple[str]] = None,
     outdir: Optional[str] = None,
 ):
-    """Calibrate the `get_movie` function. Intuitively, collecting an N-frame
-    movie with X-second exposure should take N*X seconds. However, the hardware
-    specification and software implementation for each detector differ, leading
-    to deviations. This calibration aims to take this effect into account and
-    allow scheduling movies whose frame time better reflects the request.
+    """Calibrate and save the delays of the `TEMController.get_movie` method`.
+
+    Intuitively, collecting an N-frame movie with X-second exposure should take
+    exactly N*X seconds. However, hardware specification and software
+    implementation for each detector may differ, leading to different delays.
+    This calibration aims to quickly estimate the delays for `ctrl.get_movie`
+    call given provided exposure, header_keys, and header_keys_common.
+
+    The delays calculations performed here assumes that the total time
+    taken by the `ctrl.get_movie` call follows the following formula:
+
+    total = init + (exposure + yield + wait) * (N-1) + exposure + yield + return
+
+    where N is the number of frames collected in a movie (20 in calibration).
+    Individual variables present above represent the following time spans:
+
+    - total: total time from iterating `get_movie` to receiving a return value;
+    - exposure: exact value of "exposure" passed to `VideoStream.get_movie`;
+    - yield: time between controller receiving a frame and yielding it;
+    - wait: time between yielding a (non-final) frame and starting a new one;
+    - return: time between yielding the final frame and yielding None.
+
+    The calibration is performed by timing execution of `ctrl.get_movie` with
+    given parameters 5 times, deriving mean init / yield / wait / return times,
+    and saving / returning them as an instance of `CalibMovieDelays`. The
+    calibration might raise warnings in case the times are suspicious. Produced
+    `CalibMovieDelays` instance can be then used to improve accuracy of
+    other methods, e.g. by taking the `CalibMovieDelays.dead_time` into account
+    when coupling `ctrl.get_movie` with timed methods e.g. scanning or rotation.
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
-    exposures: `Optional[Sequence[float]]`
-        Alpha rotations whose speed will be measured. Default: range(1, 11, 1).
+    exposures: `float`
+        Exposure time for which `get_movie` delays will be estimated.
+    header_keys: `Optional[Tuple[str]]`
+        (Variable) header keys i.e. collected individually for/during each frame
+        for which `get_movie` delays will be estimated.
+    common_header_keys: `Optional[Tuple[str]]`
+        Common header keys i.e. collected once before the movie starts only
+        for which `get_movie` delays will be estimated.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
-
     return:
-        instance of `CalibStageRotation` class with conversion methods
+        instance of `CalibStageRotation` class with `get_movie` delay details
     """
 
     n_frames = 20
@@ -376,7 +398,7 @@ def main_entry() -> None:
         '-e',
         '--exposure',
         type=float,
-        default=0.01,
+        default=1.0,
         help='Exposure to test the delay for in seconds. Default: 1',
     )
 
