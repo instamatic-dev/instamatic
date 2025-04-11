@@ -30,9 +30,6 @@ class CalibWarning(RuntimeWarning):
     """A runtime warning that suggests instability/problems of calibration."""
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~ MOVIE RATE CALIBRATION CLASS ~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 @dataclasses.dataclass
 class CalibMovieDelays:
     """Calibrate the difference between requested and actual movie exposure
