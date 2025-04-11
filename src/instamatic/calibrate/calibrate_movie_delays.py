@@ -278,8 +278,8 @@ class MovieTimes:
 def calibrate_movie_delays_live(
     ctrl: 'TEMController',
     exposure: float,
-    header_keys: Tuple[str] = (),
-    header_keys_common: Tuple[str] = (),
+    header_keys: Optional[Tuple[str]] = None,
+    header_keys_common: Optional[Tuple[str]] = None,
     outdir: Optional[str] = None,
 ):
     """Calibrate the `get_movie` function. Intuitively, collecting an N-frame
@@ -303,9 +303,9 @@ def calibrate_movie_delays_live(
     n_rounds = 5
 
     movie_kwargs = {}
-    if header_keys:
+    if header_keys is not None:
         movie_kwargs['header_keys'] = header_keys
-    if header_keys_common:
+    if header_keys_common is not None:
         movie_kwargs['header_keys_common'] = header_keys_common
 
     log('Calibration of `get_movie` for the following input started')
