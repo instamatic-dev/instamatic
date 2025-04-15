@@ -142,9 +142,9 @@ def calibrate_beamshift_live(
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = config.camera.calib_beamshift.get('gridsize', 5)
+        gridsize = 5 # config.camera.calib_beamshift.get('gridsize', 5)
     if not stepsize:
-        stepsize = config.camera.calib_beamshift.get('stepsize', 250)
+        stepsize = 250 # config.camera.calib_beamshift.get('stepsize', 250)
 
     img_cent, h_cent = ctrl.get_image(
         exposure=exposure, binsize=binsize, comment='Beam in center of image'
@@ -176,7 +176,7 @@ def calibrate_beamshift_live(
 
     i = 0
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
-        ctrl.beamshift.set(x=x_cent + dx, y=y_cent + dy)
+        ctrl.beamshift.set(x=float(x_cent + dx), y=float(y_cent + dy))
 
         printer(f'Position: {i + 1}/{tot}: {ctrl.beamshift}')
 
@@ -203,7 +203,7 @@ def calibrate_beamshift_live(
     print('')
     # print "\nReset to center"
 
-    ctrl.beamshift.set(*beamshift_cent)
+    ctrl.beamshift.set(*[float(_) for _ in beamshift_cent])
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale

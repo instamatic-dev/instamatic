@@ -294,7 +294,7 @@ class RatsExperiment(ExperimentBase):
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
         self.ctrl.beam.blank()
-        self.beamshift.center(self.ctrl)
+        self.beamshift.center(self.ctrl)  # passes numpy classes
         if has_beamshifts:
             px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
             delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
