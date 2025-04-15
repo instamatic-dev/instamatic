@@ -112,7 +112,7 @@ class CalibBeamShift:
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
-            ctrl.beamshift.set(*beamshift)
+            ctrl.beamshift.set(*[float(b) for b in beamshift])
         else:
             return beamshift
 
@@ -142,9 +142,9 @@ def calibrate_beamshift_live(
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
 
     if not gridsize:
-        gridsize = 5 # config.camera.calib_beamshift.get('gridsize', 5)
+        gridsize = 5  # config.camera.calib_beamshift.get('gridsize', 5)
     if not stepsize:
-        stepsize = 250 # config.camera.calib_beamshift.get('stepsize', 250)
+        stepsize = 250  # config.camera.calib_beamshift.get('stepsize', 250)
 
     img_cent, h_cent = ctrl.get_image(
         exposure=exposure, binsize=binsize, comment='Beam in center of image'
