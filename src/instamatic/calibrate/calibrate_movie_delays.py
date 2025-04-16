@@ -7,7 +7,7 @@ import warnings
 from collections.abc import MutableMapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterator, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import yaml
@@ -58,7 +58,8 @@ class CalibMovieDelays:
 
     @classmethod
     def from_dict(cls, dict_: dict) -> CalibMovieDelays:
-        return cls(**dict_)
+        field_names = {f.name for f in dataclasses.fields(cls)}  # noqa type OK
+        return cls(**{k: v for k, v in dict_.items() if k in field_names})
 
     @classmethod
     def from_file(
@@ -84,7 +85,7 @@ class CalibMovieDelays:
         return calibrate_movie_delays_live(ctrl=ctrl, **kwargs)
 
     def to_dict(self) -> Dict[str, float]:
-        return dataclasses.asdict(self)
+        return dataclasses.asdict(self)  # noqa
 
     def to_file(
         self,
@@ -103,7 +104,30 @@ class CalibMovieDelays:
         calib_map.to_file(path)
 
 
-CalibConditions_T = Tuple[float, Tuple[str, ...], Tuple[str, ...]]
+@dataclasses.dataclass(frozen=True)
+class CalibConditions:
+    """A key-type with calibration conditions for `CalibMovieDelaysMapping`"""
+
+    exposure: float
+    header_keys_variable: Tuple[str, ...]
+    header_keys_common: Tuple[str, ...]
+
+    def __post_init__(self):
+        object.__setattr__(self, 'exposure', round(self.exposure, 3))
+        object.__setattr__(self, 'header_keys_variable', tuple(self.header_keys_variable))
+        object.__setattr__(self, 'header_keys_common', tuple(self.header_keys_common))
+
+    @classmethod
+    def from_any(cls, a: CalibConditionsAny_T) -> Self:
+        if isinstance(a, dict):
+            a = [a[k.name] for k in dataclasses.fields(cls)]  # noqa
+        return cls(*a)
+
+
+CalibConditionsDict_T = Dict[str, Union[float, Tuple[str, ...]]]
+CalibConditionsTuple_T = Tuple[float, Tuple[str, ...], Tuple[str, ...]]
+CalibConditionsAny_T = Union[CalibConditionsDict_T, CalibConditionsTuple_T]
+ListedCalibMovieDelays_T = List[Dict[str, Dict[str, Union[List[str], float]]]]
 
 
 class CalibMovieDelaysMapping(MutableMapping):
@@ -115,60 +139,48 @@ class CalibMovieDelaysMapping(MutableMapping):
     artificially inflating the "dead" time. This class manages instances of
     `CalibMovieDelays` calibrated for each combination of exposure and headers.
 
-    From the code perspective, the easiest way to express `CalibConditions_T`,
-    i.e. exposure, common headers, and variable headers, is via a tuple.
-    Unfortunately, tuples can not be used as a key for serialization purposes.
-    Therefore, this class also allows converting the conditions to a string
-    representation: "exposure;common,header,elements;variable,header,elements".
-
-    Instances of `CalibMovieDelays` are indexed using this composite header key;
-    However, for convenience, this class allows accessing stored instances of
-    `CalibMovieDelays` using either the composite string or tuple-style key.
+    From the code perspective, the easiest way to express calibration conditions
+    i.e. exposure, variable headers, and common headers, is via a tuple.
+    Unfortunately, tuples can't be used as a key for serialization.
+    This mapping internally uses `CalibConditions` as a key, but allows indexing
+    via `CalibConditionsDict_T` or `CalibConditionsTuple_T` for convenience.
+    It can also serialize/deserialize self to/from a `ListedCalibMovieDelays_T`.
     """
 
-    def __init__(self, dict_: Dict[str, CalibMovieDelays] = None) -> None:
-        self.dict = dict_ if dict_ else {}
+    def __init__(self, dict_: Optional[Dict[CalibConditions, CalibMovieDelays]] = None) -> None:
+        self.dict: Dict[CalibConditions, CalibMovieDelays] = dict_ or {}
 
-    def __delitem__(self, k: Union[str, CalibConditions_T]) -> None:
-        del self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)]
+    def __delitem__(self, key: CalibConditionsAny_T) -> None:
+        del self.dict[CalibConditions.from_any(key)]
 
-    def __getitem__(self, k: Union[str, CalibConditions_T]) -> CalibMovieDelays:
-        return self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)]
+    def __getitem__(self, key: CalibConditionsAny_T) -> CalibMovieDelays:
+        return self.dict[CalibConditions.from_any(key)]
+
+    def __setitem__(self, key: CalibConditionsAny_T, value: CalibMovieDelays) -> None:
+        self.dict[CalibConditions.from_any(key)] = value
+
+    def __iter__(self) -> Iterator:
+        return iter(self.dict)
 
     def __len__(self) -> int:
         return len(self.dict)
 
-    def __iter__(self) -> Iterator:
-        return self.dict.__iter__()
-
-    def __setitem__(self, k, v) -> None:
-        self.dict[k if isinstance(k, str) else self.calib_conditions2str(k)] = v
-
-    def str2tuple(self, str_: str, delimiter: str = ',') -> Tuple[str, ...]:
-        """Convert a `delimiter`-delimited string into a tuple of strings."""
-        return tuple(sorted(str_.split(delimiter)))
-
-    def tuple2str(self, tuple_: Tuple[str, ...], delimiter: str = ',') -> str:
-        """Convert a tuple of strings into a `delimiter`-delimited string."""
-        return delimiter.join([str(t) for t in sorted(tuple_)])
-
-    def str2calib_conditions(self, key: str) -> CalibConditions_T:
-        """Convert calibration conditions from ,/;-delimited str to tuple."""
-        exposure, header_keys_common, header_keys_variable = key.split(';', 3)
-        header_keys_common = self.str2tuple(header_keys_common, ',')
-        header_keys_variable = self.str2tuple(header_keys_variable, ',')
-        return float(exposure), header_keys_common, header_keys_variable
-
-    def calib_conditions2str(self, c: CalibConditions_T) -> str:
-        """Convert calibration conditions from tuple to ,/;-delimited str."""
-        exposure, header_keys_common, header_keys_variable = c
-        hkc = self.tuple2str(header_keys_common, ',')
-        hkv = self.tuple2str(header_keys_variable, ',')
-        return f'{round(exposure, 3):.3f};{hkc};{hkv}'
+    def to_list(self) -> ListedCalibMovieDelays_T:
+        list_ = []
+        for conditions, results in self.dict.items():
+            c = dataclasses.asdict(conditions)  # noqa
+            r = results.to_dict()
+            list_.append({'calibration_conditions': c, 'calibration_results': r})
+        return list_
 
     @classmethod
-    def from_dict(cls, dict_: Dict[str, Dict[str, float]]) -> Self:
-        return cls({k: CalibMovieDelays.from_dict(v) for k, v in dict_.items()})
+    def from_list(cls, listed: list[Dict[str, Any]]) -> Self:
+        mapping = {}
+        for entry in listed:
+            cond = CalibConditions.from_any(entry['calibration_conditions'])
+            results = CalibMovieDelays.from_dict(entry['calibration_results'])
+            mapping[cond] = results
+        return cls(mapping)
 
     @classmethod
     def from_file(cls, path: Optional[str] = None) -> Self:
@@ -177,20 +189,17 @@ class CalibMovieDelaysMapping(MutableMapping):
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
             with open(Path(path), 'r') as json_file:
-                return cls.from_dict(yaml.safe_load(json_file))
+                return cls.from_list(yaml.safe_load(json_file))
         except OSError as e:
             prog = 'instamatic.calibrate_movie_delays'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
-
-    def to_dict(self) -> Dict[str, Dict[str, float]]:
-        return {k: v.to_dict() for k, v in self.dict.items()}
 
     def to_file(self, path: Optional[str] = None) -> None:
         log(f'Writing {self.__class__.__name__} to {path}')
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         with open(Path(path), 'w') as json_file:
-            yaml.safe_dump(self.to_dict(), json_file)
+            yaml.safe_dump(self.to_list(), json_file)
 
 
 class MovieTimes:
