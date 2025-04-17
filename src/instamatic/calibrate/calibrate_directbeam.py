@@ -250,7 +250,7 @@ def calibrate_directbeam_live(
 
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
         img, h = ctrl.get_image(
-            exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=key
+            exposure=exposure, binsize=binsize, out=outfile, comment=comment, header_keys=(key,)
         )
         img = imgscale(img, scale)
 
