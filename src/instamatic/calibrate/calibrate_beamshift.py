@@ -112,7 +112,7 @@ class CalibBeamShift:
 
         beamshift = self.pixelcoord_to_beamshift(pixel_center)
         if ctrl:
-            ctrl.beamshift.set(*[float(b) for b in beamshift])
+            ctrl.beamshift.set(*(float(b) for b in beamshift))
         else:
             return beamshift
 
@@ -203,7 +203,7 @@ def calibrate_beamshift_live(
     print('')
     # print "\nReset to center"
 
-    ctrl.beamshift.set(*[float(_) for _ in beamshift_cent])
+    ctrl.beamshift.set(*(float(_) for _ in beamshift_cent))
 
     # correct for binsize, store in binsize=1
     shifts = np.array(shifts) * binsize / scale
