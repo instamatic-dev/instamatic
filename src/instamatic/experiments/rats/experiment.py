@@ -217,10 +217,10 @@ class RatsExperiment(ExperimentBase):
         cam_dead_time = getattr(self.ctrl.cam, 'dead_time', None)
         if cam_dead_time is not None:
             return cam_dead_time
-        self.display_message('cam.dead_time not found. Trying to calibrate...')
+        self.display_message('`cam.dead_time` not found. Looking in calibrate file...')
         try:
             calib_movie_delays = CalibMovieDelays.from_file(
-                self.ctrl, exposure, header_keys_variable, header_keys_common
+                exposure, header_keys_variable, header_keys_common
             )
         except RuntimeWarning:
             return 0.0
@@ -335,10 +335,10 @@ class RatsExperiment(ExperimentBase):
             run.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
         # this part correctly finds the closest possible speed settings for expt
-        frame_sep = run.exposure + self.get_dead_time()
+        frame_sep = run.exposure + self.get_dead_time(run.exposure)
         rot_calib = self.get_stage_rotation()
         rot_plan = rot_calib.plan_rotation(run.osc_angle / frame_sep)
-        run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time()
+        run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time(run.exposure)
 
         with self.ctrl.stage.rotating_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
