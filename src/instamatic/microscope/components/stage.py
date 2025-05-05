@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Optional, Tuple, Union
+from typing import Generator, Optional, Tuple, Union
 
 import numpy as np
 
@@ -83,19 +83,19 @@ class Stage:
 
         wait: bool, block until stage movement is complete.
         """
-        with self.rotating_speed(speed):
+        with self.rotation_speed(speed):
             self.set(a=a, wait=False)
         # Do not wait on `set` to return to normal rotation speed quickly
         if wait:
             self.wait()
 
     @contextmanager
-    def rotating_speed(self, speed: Union[float, int]) -> None:
+    def rotation_speed(self, speed: Union[float, int]) -> Generator[None, None, None]:
         """Context manager that sets the rotation speed for the duration of the
         `with` statement (JEOL, Tecnai only).
 
         Usage:
-            with ctrl.stage.rotating_speed(1):
+            with ctrl.stage.rotation_speed(1):
                 ctrl.stage.a = 40.0
         """
         try:
@@ -222,7 +222,7 @@ class Stage:
         self._tem.waitForStage()
 
     @contextmanager
-    def no_wait(self):
+    def no_wait(self) -> Generator[None, None, None]:
         """Context manager that prevents blocking stage position calls on
         properties.
 

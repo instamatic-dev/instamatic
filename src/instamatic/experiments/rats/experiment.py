@@ -339,8 +339,7 @@ class RatsExperiment(ExperimentBase):
         rot_calib = self.get_stage_rotation()
         rot_plan = rot_calib.plan_rotation(run.osc_angle / frame_sep)
         run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time(run.exposure)
-
-        with self.ctrl.stage.rotating_speed(speed=rot_plan.speed):
+        with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
             self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)

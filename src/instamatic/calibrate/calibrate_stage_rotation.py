@@ -315,7 +315,7 @@ def calibrate_stage_rotation_live(
 
         with tqdm(total=total) as progress_bar:
             for speed in speed_range:
-                with ctrl.stage.rotating_speed(speed=float(speed)):
+                with ctrl.stage.rotation_speed(speed=float(speed)):
                     ctrl.stage.a = 0.0
                     for at, as_ in zip(alpha_targets, alpha_spans):
                         with timer() as t:
@@ -328,7 +328,8 @@ def calibrate_stage_rotation_live(
         if ctrl.cam.streamable:
             ctrl.cam.unblock()  # noqa - streamable cams have unblock()
 
-    for cp in calib_points: print(cp)
+    for cp in calib_points:
+        print(cp)
     calib_points_array = np.array(calib_points).T
     all_spans_speeds = calib_points_array[:2]
     all_times = calib_points_array[2]
