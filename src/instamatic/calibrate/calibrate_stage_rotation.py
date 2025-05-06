@@ -191,7 +191,7 @@ class CalibStageRotation:
 
     def plan_rotation(self, target_pace: float) -> RotationPlan:
         """Given target pace in sec / deg, find nearest pace, speed, delay."""
-        target_speed = target_pace / self.alpha_pace  # exact speed needed
+        target_speed = self.alpha_pace / target_pace  # exact speed setting needed
         nearest_speed = self.speed_options.nearest(target_speed)  # nearest setting
         nearest_pace = self.alpha_pace / nearest_speed  # nearest in sec/deg
         total_delay = self.alpha_windup / nearest_speed + self.delay

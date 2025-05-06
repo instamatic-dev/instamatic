@@ -337,7 +337,7 @@ class RatsExperiment(ExperimentBase):
         # this part correctly finds the closest possible speed settings for expt
         frame_sep = run.exposure + self.get_dead_time(run.exposure)
         rot_calib = self.get_stage_rotation()
-        rot_plan = rot_calib.plan_rotation(run.osc_angle / frame_sep)
+        rot_plan = rot_calib.plan_rotation(frame_sep / run.osc_angle)
         run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time(run.exposure)
         with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
