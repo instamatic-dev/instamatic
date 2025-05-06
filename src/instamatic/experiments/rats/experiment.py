@@ -299,7 +299,9 @@ class RatsExperiment(ExperimentBase):
             px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
             delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
             crystal_xys = px_center + delta_xys
-            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_xys)
+            crystal_yxs = np.fliplr(crystal_xys)
+            # note CalibBeamShift uses swapped axes: X points down, Y points right
+            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_yxs)
             run.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
         for expt in run.experiments:
@@ -331,7 +333,9 @@ class RatsExperiment(ExperimentBase):
             px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
             delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
             crystal_xys = px_center + delta_xys
-            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_xys)
+            crystal_yxs = np.fliplr(crystal_xys)
+            # note CalibBeamShift uses swapped axes: X points down, Y points right
+            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_yxs)
             run.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
         # this part correctly finds the closest possible speed settings for expt
