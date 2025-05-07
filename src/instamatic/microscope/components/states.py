@@ -65,7 +65,7 @@ class Beam(State):
             time.sleep(delay)
 
     @contextmanager
-    def blanked(self, condition: Any, delay: float = 0.0) -> ContextManager[None]:
+    def blanked(self, condition=True, delay: float = 0.0) -> ContextManager[None]:
         """Temporarily blank the beam using a `with blanked` statement."""
         was_blanked_before = self.is_blanked
         try:
@@ -77,7 +77,7 @@ class Beam(State):
                 self.unblank(delay=delay)
 
     @contextmanager
-    def unblanked(self, condition: Any, delay: float = 0.0) -> ContextManager[None]:
+    def unblanked(self, condition=True, delay: float = 0.0) -> ContextManager[None]:
         """Temporarily unblank the beam using a `with unblanked` statement."""
         was_blanked_before = self.is_blanked
         try:

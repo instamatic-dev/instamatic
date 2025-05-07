@@ -134,26 +134,23 @@ def collect_flatfield(
     np.save(fp, deadpixels)
 
     if collect_darkfield:
-        ctrl.beam.blank()
+        with ctrl.beam.blanked():
+            buffer = []
 
-        buffer = []
+            print('\nCollecting darkfield images')
+            for n in tqdm(range(frames)):
+                outfile = drc / f'darkfield_{n:04d}.tiff' if save_images else None
+                img, h = ctrl.get_image(
+                    exposure=exposure,
+                    binsize=binsize,
+                    out=outfile,
+                    comment=f'Dark field #{n:04d}',
+                    header_keys=None,
+                )
+                buffer.append(img)
 
-        print('\nCollecting darkfield images')
-        for n in tqdm(range(frames)):
-            outfile = drc / f'darkfield_{n:04d}.tiff' if save_images else None
-            img, h = ctrl.get_image(
-                exposure=exposure,
-                binsize=binsize,
-                out=outfile,
-                comment=f'Dark field #{n:04d}',
-                header_keys=None,
-            )
-            buffer.append(img)
-
-        d = np.mean(buffer, axis=0)
-        d = remove_deadpixels(d, deadpixels=deadpixels)
-
-        ctrl.beam.unblank()
+            d = np.mean(buffer, axis=0)
+            d = remove_deadpixels(d, deadpixels=deadpixels)
 
         fd = drc / f'darkfield_{ctrl.cam.name}_{date}.tiff'
         write_tiff(fd, d, header={'deadpixels': deadpixels})
