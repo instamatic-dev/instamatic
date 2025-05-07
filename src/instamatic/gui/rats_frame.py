@@ -30,7 +30,7 @@ class TrackingMode(Enum):
     manual = 'manual'
 
 
-class RatsConfig:
+class RatsConfigProxy:
     keys = (
         'FunctionMode',
         'GunShift',
@@ -144,32 +144,32 @@ class ExperimentalRats(LabelFrame):
         b = Label(g, width=1, text='Config settings:', anchor='nw')
         b.grid(row=9, column=0, **pad0)
 
-        self.image_config = RatsConfig('image')
-        self.track_config = RatsConfig('track')
-        self.diff_config = RatsConfig('diff')
+        image_config = RatsConfigProxy('image')
+        track_config = RatsConfigProxy('track')
+        diff_config = RatsConfigProxy('diff')
 
         text = 'Image store'
-        self.image_store = Button(g, width=1, text=text, command=self.image_config.store)
+        self.image_store = Button(g, width=1, text=text, command=image_config.store)
         self.image_store.grid(row=9, column=1, **pad0)
 
         text = 'Image restore'
-        self.image_restore = Button(g, width=1, text=text, command=self.image_config.restore)
+        self.image_restore = Button(g, width=1, text=text, command=image_config.restore)
         self.image_restore.grid(row=10, column=1, **pad0)
 
         text = 'Tracking store'
-        self.track_store = Button(g, width=1, text=text, command=self.track_config.store)
+        self.track_store = Button(g, width=1, text=text, command=track_config.store)
         self.track_store.grid(row=9, column=2, **pad0)
 
         text = 'Tracking restore'
-        self.track_restore = Button(g, width=1, text=text, command=self.track_config.restore)
+        self.track_restore = Button(g, width=1, text=text, command=track_config.restore)
         self.track_restore.grid(row=10, column=2, **pad0)
 
         text = 'Diffraction store'
-        self.diff_store = Button(g, width=1, text=text, command=self.diff_config.store)
+        self.diff_store = Button(g, width=1, text=text, command=diff_config.store)
         self.diff_store.grid(row=9, column=3, **pad0)
 
         text = 'Diffraction restore'
-        self.diff_restore = Button(g, width=1, text=text, command=self.diff_config.restore)
+        self.diff_restore = Button(g, width=1, text=text, command=diff_config.restore)
         self.diff_restore.grid(row=10, column=3, **pad0)
 
         g.columnconfigure(0, weight=1)

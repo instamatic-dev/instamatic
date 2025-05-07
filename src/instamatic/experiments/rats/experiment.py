@@ -202,10 +202,8 @@ class RatsExperiment(ExperimentBase):
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
         except OSError:
-            self.ctrl.mode.set('mag1')
-            # self.ctrl.store('image') # super important, check out later!
-            cbs = CalibBeamShift.live(self.ctrl, outdir=calib_dir)
-            return cbs
+            self.ctrl.restore('rats_track')
+            return CalibBeamShift.live(self.ctrl, outdir=calib_dir)
 
     def get_dead_time(
         self,
@@ -255,18 +253,21 @@ class RatsExperiment(ExperimentBase):
 
     def extend_collection(self, **params):
         new_scope = (params['diffraction_start'], params['diffraction_stop'])
+        new_scope = (min(new_scope), max(new_scope))
         old_scope = self.alpha_scope
+        msg = ''
+        if new_scope[0] == old_scope[0] or new_scope[1] == old_scope[1]:
+            msg = 'New alpha scope {} cannot intersect existing alpha scope {}'
         if len(np.unique(np.array(old_scope + new_scope).round(6))) != 3:
-            msg = (
-                f'New alpha scope {new_scope} must extend existing'
-                f'alpha scope {old_scope}. Terminating.'
-            )
-            self.display_message(msg)
+            msg = 'New alpha scope {} must adhere to existing alpha scope {}.'
+        if msg:
+            self.display_message(msg.format(new_scope, old_scope))
             return
         self.collect(**params)
 
     def collect(self, **params) -> None:
         if params['tracking_mode'] == 'manual':
+            self.ctrl.restore('rats_track')
             alignment_run = BeamCenterRun.from_params(params)
             self.collect_stills(alignment_run)
             tracking_run = TrackingRun.from_params(params)
@@ -276,12 +277,12 @@ class RatsExperiment(ExperimentBase):
             tracking_run = None
 
         run = DiffractionRun.from_params(params, tracking_run)
-        self.ctrl.mode.set('diff')
-
+        self.ctrl.restore('rats_diff')
         if params['diffraction_mode'] == 'stills':
             self.run = self.collect_stills(run)
         elif params['diffraction_mode'] == 'continuous':
             self.run = self.collect_continuous(run)
+        self.ctrl.restore('rats_image')
 
         self.camera_length = int(self.ctrl.magnification.get())
 
