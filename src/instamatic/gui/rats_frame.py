@@ -7,6 +7,7 @@ from tkinter import *
 from tkinter.ttk import *
 from typing import Any, Dict, Optional
 
+from instamatic import controller
 from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule
@@ -27,6 +28,33 @@ class DiffractionMode(Enum):
 class TrackingMode(Enum):
     none = 'none'
     manual = 'manual'
+
+
+class RatsConfig:
+    keys = (
+        'FunctionMode',
+        'GunShift',
+        'GunTilt',
+        'BeamShift',
+        'BeamTilt',
+        'ImageShift1',
+        'ImageShift2',
+        'DiffShift',
+        'Magnification',
+        'DiffFocus',
+        'Brightness',
+        'SpotSize',
+    )
+
+    def __init__(self, name='') -> None:
+        self.ctrl = controller.get_instance()
+        self.name = name
+
+    def store(self) -> None:
+        self.ctrl.store(f'rats_{self.name}', keys=self.keys)
+
+    def restore(self) -> None:
+        self.ctrl.restore(f'rats_{self.name}')
 
 
 class ExperimentalRatsVariables:
@@ -60,6 +88,7 @@ class ExperimentalRats(LabelFrame):
         self.q: Optional[Queue] = None
         self.triggerEvent: Optional[threading.Event] = None
         self.experiment_in_progress: bool = False
+        self.ctrl = controller.get_instance()
 
         # Top-aligned part of the frame with experiment parameters
         f = Frame(self)
@@ -112,27 +141,46 @@ class ExperimentalRats(LabelFrame):
 
         # Store / restore settings buttons
         g = Frame(f)
-        text = 'Store diff config'
-        self.store_diff = Button(g, width=1, text=text, command=self.store_diff)
-        self.store_diff.grid(row=9, column=0, **pad0)
+        b = Label(g, width=1, text='Config settings:', anchor='nw')
+        b.grid(row=9, column=0, **pad0)
 
-        text = 'Restore diff config'
-        self.restore_diff = Button(g, width=1, text=text, command=self.restore_diff)
-        self.restore_diff.grid(row=9, column=1, **pad0)
+        self.image_config = RatsConfig('image')
+        self.track_config = RatsConfig('track')
+        self.diff_config = RatsConfig('diff')
 
-        text = 'Store image config'
-        self.store_image = Button(g, width=1, text=text, command=self.store_image)
-        self.store_image.grid(row=9, column=2, **pad0)
+        text = 'Image store'
+        self.image_store = Button(g, width=1, text=text, command=self.image_config.store)
+        self.image_store.grid(row=9, column=1, **pad0)
 
-        text = 'Restore image config'
-        self.restore_image = Button(g, width=1, text=text, command=self.restore_image)
-        self.restore_image.grid(row=9, column=3, **pad0)
+        text = 'Image restore'
+        self.image_restore = Button(g, width=1, text=text, command=self.image_config.restore)
+        self.image_restore.grid(row=10, column=1, **pad0)
+
+        text = 'Tracking store'
+        self.track_store = Button(g, width=1, text=text, command=self.track_config.store)
+        self.track_store.grid(row=9, column=2, **pad0)
+
+        text = 'Tracking restore'
+        self.track_restore = Button(g, width=1, text=text, command=self.track_config.restore)
+        self.track_restore.grid(row=10, column=2, **pad0)
+
+        text = 'Diffraction store'
+        self.diff_store = Button(g, width=1, text=text, command=self.diff_config.store)
+        self.diff_store.grid(row=9, column=3, **pad0)
+
+        text = 'Diffraction restore'
+        self.diff_restore = Button(g, width=1, text=text, command=self.diff_config.restore)
+        self.diff_restore.grid(row=10, column=3, **pad0)
 
         g.columnconfigure(0, weight=1)
         g.columnconfigure(1, weight=1)
         g.columnconfigure(2, weight=1)
         g.columnconfigure(3, weight=1)
         g.grid(row=9, column=0, columnspan=4, sticky='ew', padx=10)
+
+        Separator(f, orient=HORIZONTAL).grid(
+            row=11, columnspan=4, sticky='ew', padx=10, pady=10
+        )
 
         # Center-aligned sticky message area
         f = Frame(self)
@@ -182,26 +230,6 @@ class ExperimentalRats(LabelFrame):
         no_track = TrackingMode(self.var.tracking_mode.get()) is TrackingMode.none
         self.tracking_step.config(state='disabled' if eip or no_track else 'enabled')
         self.tracking_time.config(state='disabled' if eip or no_track else 'enabled')
-
-    def store_diff(self) -> None:
-        self.update_widget_state()
-        self.q.put(('rats', self.get_params(task='store_diff')))
-        self.triggerEvent.set()
-
-    def restore_diff(self) -> None:
-        self.update_widget_state()
-        self.q.put(('rats', self.get_params(task='restore_diff')))
-        self.triggerEvent.set()
-
-    def store_image(self) -> None:
-        self.update_widget_state()
-        self.q.put(('rats', self.get_params(task='store_image')))
-        self.triggerEvent.set()
-
-    def restore_image(self) -> None:
-        self.update_widget_state()
-        self.q.put(('rats', self.get_params(task='restore_image')))
-        self.triggerEvent.set()
 
     def start_collection(self) -> None:
         self.experiment_in_progress = True
@@ -271,18 +299,6 @@ def rats_interface_command(controller, **params: Any) -> None:
 
     elif task == 'abort':
         del controller.rats_exp
-
-    elif task == 'store_diff':
-        controller.ctrl.store('rats_diff')
-
-    elif task == 'restore_diff':
-        controller.ctrl.restore('rats_diff')
-
-    elif task == 'store_image':
-        controller.ctrl.store('rats_image')
-
-    elif task == 'restore_image':
-        controller.ctrl.restore('rats_image')
 
     else:
         raise ValueError(f'Invalid task: {task}')
