@@ -183,15 +183,13 @@ class Experiment(ExperimentBase):
             # Center crystal position
             if self.mode == 'diff':
                 self.ctrl.difffocus.defocus(self.defocus_offset)
-            self.ctrl.beam.unblank()
-
-            input('Move SAED aperture to crystal and press <ENTER> to measure! ')
+            with self.ctrl.beam.unblanked():
+                input('Move SAED aperture to crystal and press <ENTER> to measure! ')
 
             # cannot do this while lieview is running
             # img1 = self.ctrl.get_raw_image()
             # write_tiff(self.path / "image_before.tiff", img1)
 
-            self.ctrl.beam.blank()
             if self.mode == 'diff':
                 self.ctrl.difffocus.refocus()
             time.sleep(3)
@@ -305,12 +303,9 @@ class Experiment(ExperimentBase):
             # Center crystal position
             if self.mode == 'diff':
                 self.ctrl.difffocus.defocus(self.defocus_offset)
-            self.ctrl.beam.unblank()
-
-            img2 = self.ctrl.get_rotated_image()
-            write_tiff(self.path / 'image_after.tiff', img2)
-
-            self.ctrl.beam.blank()
+            with self.ctrl.beam.unblanked():
+                img2 = self.ctrl.get_rotated_image()
+                write_tiff(self.path / 'image_after.tiff', img2)
             if self.mode == 'diff':
                 self.ctrl.difffocus.refocus()
 

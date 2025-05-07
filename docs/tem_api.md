@@ -183,6 +183,16 @@ To unblank the beam:
 ```python
 ctrl.beam.unblank()
 ```
+To blank the beam temporarily:
+```python
+with ctrl.beam.blanked():
+    ...
+```
+To unblank the beam temporarily:
+```python
+with ctrl.beam.unblanked():
+    ...
+```
 To get the state of the beam blanker:
 ```python
 status = ctrl.beam.status          # str
