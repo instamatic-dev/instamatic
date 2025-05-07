@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -55,15 +55,15 @@ class Run:
         return cls(exposure=exposure, continuous=continuous, **cols)
 
     @property
-    def scope(self):
-        print(self.table)
+    def scope(self) -> Tuple[float, float]:
         a = self.table['alpha']
         if not self.continuous:
             return a.iloc[0], a.iloc[-1]
         return a.iloc[0] - self.osc_angle / 2, a.iloc[-1] + self.osc_angle / 2
 
     @property
-    def experiments(self) -> NamedTuple:
+    def experiments(self) -> Iterable[NamedTuple]:
+        """Used to iterate over individual experiments - rows of self.table"""
         return self.table.itertuples(name='Experiment')  # noqa, rtype is correct
 
     def interpolate(self, alpha_range: Sequence[float], key: str) -> Sequence[float]:
@@ -71,10 +71,13 @@ class Run:
 
     @property
     def buffer(self) -> List[Tuple[int, np.ndarray, dict]]:
+        """Buffer-style list used of number, image, and meta used when
+        saving."""
         return [(i, e.image, e.meta) for i, e in enumerate(self.experiments)]
 
     @property
-    def osc_angle(self):
+    def osc_angle(self) -> float:
+        """Difference of alpha angle between two consecutive frames."""
         a = list(self.table['alpha'])
         return (a[-1] - a[0]) / (len(a) - 1) if len(a) > 1 else -1
 
@@ -87,6 +90,15 @@ class Run:
             exposure=self.exposure, continuous=True, alpha=new_alphas, **new_cols
         )
         return c
+
+    def calculate_beamshifts(self, ctrl, beamshift) -> None:
+        px_center = [xy / 2.0 for xy in ctrl.cam.get_image_dimensions()]
+        delta_xys = self.table[['delta_x', 'delta_y']].to_numpy()
+        crystal_xys = px_center + delta_xys
+        crystal_yxs = np.fliplr(crystal_xys)
+        # note CalibBeamShift uses swapped axes: X points down, Y points right
+        beamshifts = beamshift.pixelcoord_to_beamshift(crystal_yxs)
+        self.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
 
 class BeamCenterRun(Run):
@@ -111,6 +123,8 @@ class TrackingRun(Run):
 
 
 class DiffractionRun(Run):
+    """The implementation for the actual diffraction experiment itself."""
+
     @classmethod
     def from_params(
         cls,
@@ -124,10 +138,8 @@ class DiffractionRun(Run):
         )
         run = cls(exposure=params['diffraction_time'], alpha=alpha_range)
         if tracking_run is not None:
-            delta_xs = tracking_run.interpolate(alpha_range, 'delta_x')
-            delta_ys = tracking_run.interpolate(alpha_range, 'delta_y')
-            run.table['delta_x'] = delta_xs
-            run.table['delta_y'] = delta_ys
+            run.table['delta_x'] = tracking_run.interpolate(alpha_range, 'delta_x')
+            run.table['delta_y'] = tracking_run.interpolate(alpha_range, 'delta_y')
         return run
 
 
@@ -168,23 +180,20 @@ class RatsExperiment(ExperimentBase):
         self.tiff_image_path.mkdir(exist_ok=True, parents=True)
         self.mrc_path.mkdir(exist_ok=True, parents=True)
 
-        self.offset = 1
         self.log = log
         self.flatfield = flatfield
-
         self.rats_frame = rats_frame
-
         self.beamshift = self.get_beamshift()
 
         self.videostream_frame = videostream_frame
         self.vss = self.videostream_frame.stream_service
         # self.overlay = self.vss.add_overlay('rats', ImageDrawOverlay())
 
-        self.vcd = self.videostream_frame.click_dispatcher
+        vcd = self.videostream_frame.click_dispatcher
         try:
-            self.click_listener = self.vcd.add_listener('rats')  # TODO
+            self.click_listener = vcd.add_listener('rats')
         except KeyError:  # already exists
-            self.click_listener = self.vcd.listeners['rats']
+            self.click_listener = vcd.listeners['rats']
 
         self.start_time: Optional[datetime.datetime] = None
         self.run: Optional[Run] = None
@@ -251,7 +260,7 @@ class RatsExperiment(ExperimentBase):
         self.log.info('RATS Data recording started')
         self.collect(**params)
 
-    def extend_collection(self, **params):
+    def extend_collection(self, **params) -> None:
         new_scope = (params['diffraction_start'], params['diffraction_stop'])
         new_scope = (min(new_scope), max(new_scope))
         old_scope = self.alpha_scope
@@ -266,6 +275,8 @@ class RatsExperiment(ExperimentBase):
         self.collect(**params)
 
     def collect(self, **params) -> None:
+        self.ctrl.beam.blank()
+
         if params['tracking_mode'] == 'manual':
             self.ctrl.restore('rats_track')
             alignment_run = BeamCenterRun.from_params(params)
@@ -289,21 +300,15 @@ class RatsExperiment(ExperimentBase):
         self.log.info('Collected the following run:')
         self.log.info(str(self.run))
         self.run_list.append(self.run)
+        self.ctrl.beam.unblank()
 
     def collect_stills(self, run) -> Run:
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
-        self.ctrl.beam.blank()
         self.beamshift.center(self.ctrl)  # passes numpy classes
         if has_beamshifts:
-            px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
-            delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
-            crystal_xys = px_center + delta_xys
-            crystal_yxs = np.fliplr(crystal_xys)
-            # note CalibBeamShift uses swapped axes: X points down, Y points right
-            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_yxs)
-            run.table[['beamshift_x', 'beamshift_y']] = beamshifts
+            run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         for expt in run.experiments:
             if has_beamshifts:
@@ -316,28 +321,16 @@ class RatsExperiment(ExperimentBase):
             metas.append(meta)
         run.table['image'] = images
         run.table['meta'] = metas
-
-        pd.set_option('display.max_rows', 500)
-        pd.set_option('display.max_columns', 500)
-        pd.set_option('display.width', 150)
-        print(run.table)
-        self.ctrl.beam.unblank()
+        self.display_message('Collected alpha from {} to {}'.format(*run.scope))
         return run
 
     def collect_continuous(self, run) -> Run:
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
-        self.ctrl.beam.blank()  # TODO: scatter correctly
         self.beamshift.center(self.ctrl)
         if has_beamshifts:
-            px_center = [xy / 2.0 for xy in self.ctrl.cam.get_image_dimensions()]
-            delta_xys = run.table[['delta_x', 'delta_y']].to_numpy()
-            crystal_xys = px_center + delta_xys
-            crystal_yxs = np.fliplr(crystal_xys)
-            # note CalibBeamShift uses swapped axes: X points down, Y points right
-            beamshifts = self.beamshift.pixelcoord_to_beamshift(crystal_yxs)
-            run.table[['beamshift_x', 'beamshift_y']] = beamshifts
+            run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         # this part correctly finds the closest possible speed settings for expt
         frame_sep = run.exposure + self.get_dead_time(run.exposure)
@@ -358,12 +351,7 @@ class RatsExperiment(ExperimentBase):
             run = run.to_continuous()
             run.table['image'] = images
             run.table['meta'] = metas
-
-        pd.set_option('display.max_rows', 500)
-        pd.set_option('display.max_columns', 500)
-        pd.set_option('display.width', 150)
-        print(run.table)
-        self.ctrl.beam.unblank()
+        self.display_message('Collected alpha from {} to {}'.format(*run.scope))
         return run
 
     def resolve_tracking_delta_xy(
