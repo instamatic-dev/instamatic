@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import time
+from contextlib import contextmanager
+from typing import Any, ContextManager
 
 from instamatic.microscope.base import MicroscopeBase
 
@@ -61,6 +63,30 @@ class Beam(State):
         self._setter(False)
         if delay:
             time.sleep(delay)
+
+    @contextmanager
+    def blanked(self, condition=True, delay: float = 0.0) -> ContextManager[None]:
+        """Temporarily blank the beam using a `with blanked` statement."""
+        was_blanked_before = self.is_blanked
+        try:
+            if condition and not was_blanked_before:
+                self.blank(delay=delay)
+            yield
+        finally:
+            if condition and not was_blanked_before:
+                self.unblank(delay=delay)
+
+    @contextmanager
+    def unblanked(self, condition=True, delay: float = 0.0) -> ContextManager[None]:
+        """Temporarily unblank the beam using a `with unblanked` statement."""
+        was_blanked_before = self.is_blanked
+        try:
+            if condition and was_blanked_before:
+                self.unblank(delay=delay)
+            yield
+        finally:
+            if condition and was_blanked_before:
+                self.blank(delay=delay)
 
     def set(self, state: str, delay: float = 0.0):
         """Set state of the beam, with optional delay in ms."""

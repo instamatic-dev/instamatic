@@ -651,17 +651,10 @@ class TEMController:
 
         h = self.to_dict(*header_keys) if header_keys else {}
 
-        if self.autoblank:
-            self.beam.unblank()
-
-        h['ImageGetTimeStart'] = time.perf_counter()
-
-        arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
-
-        h['ImageGetTimeEnd'] = time.perf_counter()
-
-        if self.autoblank:
-            self.beam.blank()
+        with self.beam.unblanked(condition=self.autoblank):
+            h['ImageGetTimeStart'] = time.perf_counter()
+            arr = self.get_rotated_image(exposure=exposure, binsize=binsize)
+            h['ImageGetTimeEnd'] = time.perf_counter()
 
         h['ImageGetTime'] = time.time()
         h['ImageExposureTime'] = exposure
@@ -757,11 +750,7 @@ class TEMController:
         header_common['ImageCameraDimensions'] = self.cam.get_camera_dimensions()
 
         gen = self.cam.get_movie(n_frames=n_frames, exposure=exposure, binsize=binsize)
-
-        try:
-            if self.autoblank:
-                self.beam.unblank()
-
+        with self.beam.unblanked(condition=self.autoblank):
             for _ in range(n_frames):
                 # The generator `gen` starts collecting only when the first `next` is called.
                 # Request the next image, expect it in the future, get header in the meantime
@@ -786,11 +775,7 @@ class TEMController:
                 rotate_image(img, mode=mode, mag=mag)
                 header['ImageResolution'] = img.shape
                 yield img, header
-
-        finally:
-            gen.close()
-            if self.autoblank:
-                self.beam.blank()
+        gen.close()
 
     def store_diff_beam(self, name: str = 'beam', save_to_file: bool = False):
         """Record alignment for current diffraction beam. Stores Guntilt (for

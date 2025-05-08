@@ -183,6 +183,12 @@ def test_beam(ctrl):
     beam.blank()
     assert beam.is_blanked
 
+    with beam.blanked():
+        assert beam.is_blanked
+
+    with beam.unblanked():
+        assert not beam.is_blanked
+
     beam.set(unblanked)
     assert beam.state == unblanked
 
