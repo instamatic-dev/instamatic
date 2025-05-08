@@ -90,7 +90,7 @@ class Stage:
             self.wait()
 
     @contextmanager
-    def rotation_speed(self, speed: Union[float, int]) -> Generator[None, None, None]:
+    def rotation_speed(self, speed: Number) -> Generator[None, None, None]:
         """Context manager that sets the rotation speed for the duration of the
         `with` statement (JEOL, Tecnai only).
 
