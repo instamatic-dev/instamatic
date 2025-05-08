@@ -10,6 +10,8 @@ from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
 
+Number = Union[int, float]
+
 
 class Stage:
     """Stage control."""
