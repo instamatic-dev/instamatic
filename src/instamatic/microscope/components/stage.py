@@ -147,7 +147,7 @@ class Stage:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
-    def get_rotation_speed(self) -> Union[float, int]:
+    def get_rotation_speed(self) -> Number:
         """Gets the stage (rotation) movement speed on the TEM."""
         return self._tem.getRotationSpeed()
 
