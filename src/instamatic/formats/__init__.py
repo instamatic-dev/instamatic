@@ -51,6 +51,7 @@ def write_tiff(fname: str, data, header: dict = None):
         header = ''
 
     fname = Path(fname).with_suffix('.tiff')
+    fname.parent.mkdir(parents=True, exist_ok=True)
 
     with tifffile.TiffWriter(fname) as f:
         f.write(data=data, software='instamatic', description=header)

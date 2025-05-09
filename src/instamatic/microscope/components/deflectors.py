@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import Tuple
+from typing import Tuple, Union
 
 from instamatic.microscope.base import MicroscopeBase
 
 DeflectorTuple = namedtuple('DeflectorTuple', ['x', 'y'])
+Number = Union[int, float]
 
 
 class Deflector:
@@ -15,14 +16,14 @@ class Deflector:
     functions.
     """
 
-    def __init__(self, tem: MicroscopeBase):
+    def __init__(self, tem: MicroscopeBase) -> None:
         super().__init__()
         self._tem = tem
         self._getter = None
         self._setter = None
         self.key = 'def'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         x, y = self.get()
         return f'{self.name}(x={x}, y={y})'
 
@@ -31,45 +32,45 @@ class Deflector:
         """Return name of the deflector."""
         return self.__class__.__name__
 
-    def set(self, x: int, y: int):
+    def set(self, x: Number, y: Number) -> None:
         """Set the X and Y values of the deflector."""
         self._setter(x, y)
 
-    def get(self) -> Tuple[int, int]:
+    def get(self) -> Tuple[Number, Number]:
         """Get X and Y values of the deflector."""
         return DeflectorTuple(*self._getter())
 
     @property
-    def x(self) -> int:
+    def x(self) -> Number:
         """Get/set X value."""
         x, y = self.get()
         return x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: Number) -> None:
         self.set(value, self.y)
 
     @property
-    def y(self) -> int:
+    def y(self) -> Number:
         """Get/set Y value."""
         x, y = self.get()
         return y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: Number) -> None:
         self.set(self.x, value)
 
     @property
-    def xy(self) -> Tuple[int, int]:
+    def xy(self) -> Tuple[Number, Number]:
         """Get/set x and y values as a tuple."""
         return self.get()
 
     @xy.setter
-    def xy(self, values: Tuple[int, int]):
+    def xy(self, values: Tuple[Number, Number]) -> None:
         x, y = values
         self.set(x=x, y=y)
 
-    def neutral(self):
+    def neutral(self) -> None:
         """Return deflector to stored neutral values."""
         self._tem.setNeutral(self.key)
 

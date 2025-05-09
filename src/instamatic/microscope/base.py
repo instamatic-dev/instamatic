@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.utils import StagePositionTuple
@@ -9,7 +9,7 @@ from instamatic.microscope.utils import StagePositionTuple
 
 class MicroscopeBase(ABC):
     @abstractmethod
-    def getBeamShift(self) -> Tuple[int, int]:
+    def getBeamShift(self) -> Tuple[Union[float, int], Union[float, int]]:
         pass
 
     @abstractmethod
@@ -113,7 +113,7 @@ class MicroscopeBase(ABC):
         pass
 
     @abstractmethod
-    def setBeamShift(self, x: int, y: int) -> None:
+    def setBeamShift(self, x: Union[float, int], y: Union[float, int]) -> None:
         pass
 
     @abstractmethod

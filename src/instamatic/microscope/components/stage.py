@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Optional, Tuple
+from typing import Generator, Optional, Tuple, Union
 
 import numpy as np
 
 from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
+
+Number = Union[int, float]
 
 
 class Stage:
@@ -74,7 +76,7 @@ class Stage:
             speed=speed,
         )
 
-    def set_rotation_speed(self, speed=1) -> None:
+    def set_rotation_speed(self, speed: Union[float, int] = 1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
         self._tem.setRotationSpeed(value=speed)
 
@@ -83,19 +85,19 @@ class Stage:
 
         wait: bool, block until stage movement is complete.
         """
-        with self.rotating_speed(speed):
+        with self.rotation_speed(speed):
             self.set(a=a, wait=False)
         # Do not wait on `set` to return to normal rotation speed quickly
         if wait:
             self.wait()
 
     @contextmanager
-    def rotating_speed(self, speed: int):
+    def rotation_speed(self, speed: Number) -> Generator[None, None, None]:
         """Context manager that sets the rotation speed for the duration of the
-        `with` statement (JEOL only).
+        `with` statement (JEOL, Tecnai only).
 
         Usage:
-            with ctrl.stage.rotating_speed(1):
+            with ctrl.stage.rotation_speed(1):
                 ctrl.stage.a = 40.0
         """
         try:
@@ -144,6 +146,10 @@ class Stage:
     def xy(self, values: Tuple[int_nm, int_nm]) -> None:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
+
+    def get_rotation_speed(self) -> Number:
+        """Gets the stage (rotation) movement speed on the TEM."""
+        return self._tem.getRotationSpeed()
 
     def move_in_projection(self, delta_x: int_nm, delta_y: int_nm) -> None:
         r"""Y and z are always perpendicular to the sample stage. To achieve the
@@ -218,7 +224,7 @@ class Stage:
         self._tem.waitForStage()
 
     @contextmanager
-    def no_wait(self):
+    def no_wait(self) -> Generator[None, None, None]:
         """Context manager that prevents blocking stage position calls on
         properties.
 
