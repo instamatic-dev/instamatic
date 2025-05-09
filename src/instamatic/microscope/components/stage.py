@@ -10,6 +10,8 @@ from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
 
+Number = Union[int, float]
+
 
 class Stage:
     """Stage control."""
@@ -74,7 +76,7 @@ class Stage:
             speed=speed,
         )
 
-    def set_rotation_speed(self, speed: Union[float, int] = 1) -> None:
+    def set_rotation_speed(self, speed: Number = 1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
         self._tem.setRotationSpeed(value=speed)
 
@@ -90,7 +92,7 @@ class Stage:
             self.wait()
 
     @contextmanager
-    def rotation_speed(self, speed: Union[float, int]) -> Generator[None, None, None]:
+    def rotation_speed(self, speed: Number) -> Generator[None, None, None]:
         """Context manager that sets the rotation speed for the duration of the
         `with` statement (JEOL, Tecnai only).
 
@@ -145,7 +147,7 @@ class Stage:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
-    def get_rotation_speed(self) -> Union[float, int]:
+    def get_rotation_speed(self) -> Number:
         """Gets the stage (rotation) movement speed on the TEM."""
         return self._tem.getRotationSpeed()
 

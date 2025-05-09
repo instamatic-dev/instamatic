@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import sys
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,7 +41,7 @@ class CalibBeamShift:
         pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
         return pixelcoord
 
-    def pixelcoord_to_beamshift(self, pixelcoord):
+    def pixelcoord_to_beamshift(self, pixelcoord) -> np.ndarray:
         """Converts from pixel coordinates to beamshift x,y."""
         r = self.transform
         beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
@@ -106,7 +107,7 @@ class CalibBeamShift:
         else:
             plt.show()
 
-    def center(self, ctrl):
+    def center(self, ctrl) -> Optional[np.ndarray]:
         """Return beamshift values to center the beam in the frame."""
         pixel_center = [val / 2.0 for val in ctrl.cam.get_image_dimensions()]
 
