@@ -92,9 +92,10 @@ class Run:
         return c
 
     def calculate_beamshifts(self, ctrl, beamshift) -> None:
-        px_center = [xy / 2.0 for xy in ctrl.cam.get_image_dimensions()]
+        beamshift_xy = ctrl.beamshift.get()
+        pixelcoord_xy = beamshift.beamshift_to_pixelcoord(beamshift_xy)
         delta_xys = self.table[['delta_x', 'delta_y']].to_numpy()
-        crystal_xys = px_center + delta_xys
+        crystal_xys = pixelcoord_xy + delta_xys
         crystal_yxs = np.fliplr(crystal_xys)
         # note CalibBeamShift uses swapped axes: X points down, Y points right
         beamshifts = beamshift.pixelcoord_to_beamshift(crystal_yxs)
@@ -184,6 +185,8 @@ class RatsExperiment(ExperimentBase):
         self.flatfield = flatfield
         self.rats_frame = rats_frame
         self.beamshift = self.get_beamshift()
+        self.alpha_mid: Optional[float] = None  # middle of tracking run
+        self.camera_length: float = 0.0
 
         self.videostream_frame = videostream_frame
         self.vss = self.videostream_frame.stream_service
@@ -278,10 +281,18 @@ class RatsExperiment(ExperimentBase):
         self.ctrl.beam.blank()
 
         if params['tracking_mode'] == 'manual':
-            self.ctrl.restore('rats_track')
-            alignment_run = BeamCenterRun.from_params(params)
-            self.collect_stills(alignment_run)
             tracking_run = TrackingRun.from_params(params)
+            alignment_run = BeamCenterRun.from_params(params)
+            self.alpha_mid = tracking_run.table.loc[len(tracking_run.table) // 2, 'alpha']
+            alignment_run.table.loc[0, 'alpha'] = self.alpha_mid
+            self.ctrl.restore('rats_track')
+            tracking_mode = self.ctrl.mode.get()
+            tracking_mag = self.ctrl.magnification.value
+            self.ctrl.restore('rats_diff')
+            self.ctrl.mode.set(tracking_mode)
+            self.ctrl.magnification.value = tracking_mag
+            self.collect_stills(alignment_run)
+            self.ctrl.restore('rats_track')
             self.collect_stills(tracking_run)
             self.resolve_tracking_delta_xy(alignment_run, tracking_run)
         else:
@@ -289,13 +300,12 @@ class RatsExperiment(ExperimentBase):
 
         run = DiffractionRun.from_params(params, tracking_run)
         self.ctrl.restore('rats_diff')
+        self.camera_length = int(self.ctrl.magnification.get())
         if params['diffraction_mode'] == 'stills':
             self.run = self.collect_stills(run)
         elif params['diffraction_mode'] == 'continuous':
             self.run = self.collect_continuous(run)
         self.ctrl.restore('rats_image')
-
-        self.camera_length = int(self.ctrl.magnification.get())
 
         self.log.info('Collected the following run:')
         self.log.info(str(self.run))
@@ -306,7 +316,7 @@ class RatsExperiment(ExperimentBase):
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
-        self.beamshift.center(self.ctrl)  # passes numpy classes
+        # self.beamshift.center(self.ctrl)  # passes numpy classes
         if has_beamshifts:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
@@ -328,7 +338,7 @@ class RatsExperiment(ExperimentBase):
         images, metas = [], []
         has_beamshifts = ('delta_x' in run.table) and ('delta_y' in run.table)
 
-        self.beamshift.center(self.ctrl)
+        # self.beamshift.center(self.ctrl)
         if has_beamshifts:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
@@ -337,11 +347,11 @@ class RatsExperiment(ExperimentBase):
         rot_calib = self.get_stage_rotation()
         rot_plan = rot_calib.plan_rotation(frame_sep / run.osc_angle)
         run.exposure = rot_plan.pace * run.osc_angle - self.get_dead_time(run.exposure)
+        self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
         with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
-            self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
-            self.ctrl.stage.set(a=float(run.table.iloc[-1].loc['alpha']), wait=False)
+            self.ctrl.stage.set_with_speed(a=float(run.table.iloc[-1].loc['alpha']), speed=rot_plan.speed, wait=False)
             for expt, (image, header) in zip(run.experiments, movie):
                 if has_beamshifts:
                     self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
@@ -364,7 +374,7 @@ class RatsExperiment(ExperimentBase):
         `TrackingRun` to be used later for crystal tracking in actual
         experiment."""
 
-        # collecting beam center information
+        # collecting diffraction beam center information
         beam_image = beam_center_run.table['image'].iloc[0]
         with self.vss.temporary_provider(lambda: beam_image):
             self.display_message('Please click on the center of the beam')
