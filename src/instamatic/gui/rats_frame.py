@@ -51,7 +51,7 @@ class RatsConfigProxy:
         self.name = name
 
     def store(self) -> None:
-        self.ctrl.store(f'rats_{self.name}', keys=self.keys)
+        self.ctrl.store(f'rats_{self.name}', keys=self.keys, save_to_file=True)
 
     def restore(self) -> None:
         self.ctrl.restore(f'rats_{self.name}')
@@ -147,6 +147,11 @@ class ExperimentalRats(LabelFrame):
         image_config = RatsConfigProxy('image')
         track_config = RatsConfigProxy('track')
         diff_config = RatsConfigProxy('diff')
+
+        text = 'Beam blank/unblank'
+        cmd = self.ctrl.beam.unblank if self.ctrl.beam.is_blanked else self.ctrl.beam.blank
+        beam_blank = Button(g, width=1, text=text, command=cmd)
+        beam_blank.grid(row=10, column=0, **pad0)
 
         text = 'Image store'
         self.image_store = Button(g, width=1, text=text, command=image_config.store)

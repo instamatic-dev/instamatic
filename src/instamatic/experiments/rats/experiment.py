@@ -330,15 +330,14 @@ class RatsExperiment(ExperimentBase):
         if has_beamshifts:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
-        for expt in run.experiments:
-            if has_beamshifts:
-                self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
-            self.ctrl.stage.a = expt.alpha
-            self.ctrl.beam.unblank()
-            image, meta = self.ctrl.get_image(exposure=run.exposure)
-            self.ctrl.beam.blank()
-            images.append(image)
-            metas.append(meta)
+        with self.ctrl.beam.unblanked(), self.ctrl.cam.blocked():
+            for expt in run.experiments:
+                if has_beamshifts:
+                    self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
+                self.ctrl.stage.a = expt.alpha
+                image, meta = self.ctrl.get_image(exposure=run.exposure)
+                images.append(image)
+                metas.append(meta)
         run.table['image'] = images
         run.table['meta'] = metas
         self.display_message('Collected alpha from {} to {}'.format(*run.scope))
