@@ -209,12 +209,21 @@ class RatsExperiment(ExperimentBase):
             max(max(r.scope) for r in self.run_list),
         )
 
+    def restore_rats_diff_for_image(self):
+        """Restore 'rats_diff' config but with 'rats_track' magnification."""
+        self.ctrl.restore('rats_track')
+        tracking_mode = self.ctrl.mode.get()
+        tracking_magnification = self.ctrl.magnification.value
+        self.ctrl.restore('rats_diff')
+        self.ctrl.mode.set(tracking_mode)
+        self.ctrl.magnification.value = tracking_magnification
+
     def get_beamshift(self) -> CalibBeamShift:
         calib_dir = self.path.parent / 'calib'
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
         except OSError:
-            self.ctrl.restore('rats_track')
+            self.restore_rats_diff_for_image()
             return CalibBeamShift.live(self.ctrl, outdir=calib_dir)
 
     def get_dead_time(
@@ -278,39 +287,40 @@ class RatsExperiment(ExperimentBase):
         self.collect(**params)
 
     def collect(self, **params) -> None:
-        self.ctrl.beam.blank()
+        with self.ctrl.beam.blanked():
+            image_path = self.tiff_image_path / 'image.tiff'
+            if not image_path.exists():
+                self.ctrl.stage.a = 0.0
+                self.ctrl.restore('rats_image')
+                with self.ctrl.beam.unblanked():
+                    self.ctrl.get_image(params['tracking_time'], out=image_path)
 
-        if params['tracking_mode'] == 'manual':
-            tracking_run = TrackingRun.from_params(params)
-            alignment_run = BeamCenterRun.from_params(params)
-            self.alpha_mid = tracking_run.table.loc[len(tracking_run.table) // 2, 'alpha']
-            alignment_run.table.loc[0, 'alpha'] = self.alpha_mid
-            self.ctrl.restore('rats_track')
-            tracking_mode = self.ctrl.mode.get()
-            tracking_mag = self.ctrl.magnification.value
+            if params['tracking_mode'] == 'manual':
+                tracking_run = TrackingRun.from_params(params)
+                alignment_run = BeamCenterRun.from_params(params)
+                self.alpha_mid = tracking_run.table.loc[len(tracking_run.table) // 2, 'alpha']
+                alignment_run.table.loc[0, 'alpha'] = self.alpha_mid
+                self.restore_rats_diff_for_image()
+                self.collect_stills(alignment_run)
+                self.ctrl.restore('rats_track')
+                self.collect_stills(tracking_run)
+                self.resolve_tracking_delta_xy(alignment_run, tracking_run)
+            else:
+                tracking_run = None
+
+            run = DiffractionRun.from_params(params, tracking_run)
             self.ctrl.restore('rats_diff')
-            self.ctrl.mode.set(tracking_mode)
-            self.ctrl.magnification.value = tracking_mag
-            self.collect_stills(alignment_run)
-            self.ctrl.restore('rats_track')
-            self.collect_stills(tracking_run)
-            self.resolve_tracking_delta_xy(alignment_run, tracking_run)
-        else:
-            tracking_run = None
+            self.camera_length = int(self.ctrl.magnification.get())
+            if params['diffraction_mode'] == 'stills':
+                self.run = self.collect_stills(run)
+            elif params['diffraction_mode'] == 'continuous':
+                self.run = self.collect_continuous(run)
+            self.ctrl.restore('rats_image')
 
-        run = DiffractionRun.from_params(params, tracking_run)
-        self.ctrl.restore('rats_diff')
-        self.camera_length = int(self.ctrl.magnification.get())
-        if params['diffraction_mode'] == 'stills':
-            self.run = self.collect_stills(run)
-        elif params['diffraction_mode'] == 'continuous':
-            self.run = self.collect_continuous(run)
-        self.ctrl.restore('rats_image')
-
-        self.log.info('Collected the following run:')
-        self.log.info(str(self.run))
-        self.run_list.append(self.run)
-        self.ctrl.beam.unblank()
+            self.log.info('Collected the following run:')
+            self.log.info(str(self.run))
+            self.run_list.append(self.run)
+            self.ctrl.stage.a = 0.0
 
     def collect_stills(self, run) -> Run:
         images, metas = [], []
@@ -351,7 +361,9 @@ class RatsExperiment(ExperimentBase):
         with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
             self.ctrl.beam.unblank()
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
-            self.ctrl.stage.set_with_speed(a=float(run.table.iloc[-1].loc['alpha']), speed=rot_plan.speed, wait=False)
+            self.ctrl.stage.set_with_speed(
+                a=float(run.table.iloc[-1].loc['alpha']), speed=rot_plan.speed, wait=False
+            )
             for expt, (image, header) in zip(run.experiments, movie):
                 if has_beamshifts:
                     self.ctrl.beamshift.set(expt.beamshift_x, expt.beamshift_y)
