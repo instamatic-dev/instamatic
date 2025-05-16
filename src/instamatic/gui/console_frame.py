@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 import sys
 import time
 from pathlib import Path
@@ -25,14 +26,25 @@ class Writer:
         self.terminal = sys.__stdout__
         self.text = text
         self._add_timestamp = add_timestamp
+        self.timestamps = {}
+        import atexit
 
-    def write(self, message):
+        atexit.register(
+            lambda: print('\n'.join(f'{k}: {v}' for k, v in self.timestamps.items()))
+        )
+
+    def write(self, message: str) -> None:
         self.terminal.write(message)
+
+        if '\r\x1b[K' in message:  # tkinter.Text can't handle carriage returns
+            message = message.rsplit('\r\x1b[K', maxsplit=1)[-1]
+        self.text.delete('insert linestart', 'insert lineend')
+
         if self._add_timestamp and message != '\n':
-            now = time.strftime('%H:%M:%S')
-            self.text.insert(END, f'[{now}] {message}')
-        else:
-            self.text.insert(END, message)
+            message = f'[{time.strftime("%H:%M:%S")}] {message}'
+
+        self.text.insert(END, message)
+        self.timestamps[message] = time.perf_counter_ns()
         self.text.see(END)
 
     def flush(self, *args, **kwargs):
