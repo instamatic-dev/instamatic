@@ -28,12 +28,6 @@ class Writer:
         self.terminal = sys.__stdout__
         self.text = text
         self._add_timestamp = add_timestamp
-        self.timestamps = {}
-        import atexit
-
-        atexit.register(
-            lambda: print('\n'.join(f'{k}: {v}' for k, v in self.timestamps.items()))
-        )
 
     def write(self, message: str) -> None:
         self.terminal.write(message)
@@ -42,13 +36,12 @@ class Writer:
             message = message.rsplit('\r', maxsplit=1)[-1]
             self.text.delete('insert linestart', 'insert lineend')
 
-        message = self.ANSI_ESCAPE.sub('', message)
+        message = self.ANSI_ESCAPE.sub('', message)  # remove ANSI escape codes
 
         if self._add_timestamp and message != '\n':
             message = f'[{time.strftime("%H:%M:%S")}] {message}'
 
         self.text.insert(END, message)
-        self.timestamps[message] = time.perf_counter_ns()
         self.text.see(END)
 
     def flush(self, *args, **kwargs):
