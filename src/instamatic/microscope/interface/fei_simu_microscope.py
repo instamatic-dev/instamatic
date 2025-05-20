@@ -252,8 +252,9 @@ class FEISimuMicroscope(MicroscopeBase):
         z: Optional[int_nm] = None,
         a: Optional[float_deg] = None,
         b: Optional[float_deg] = None,
+        *,
+        speed: Optional[float] = None,
         wait: bool = True,
-        speed: float = 1.0,
     ) -> None:
         if z is not None:
             self.setStageZ(z)
@@ -273,6 +274,8 @@ class FEISimuMicroscope(MicroscopeBase):
         z: Optional[int_nm] = None,
         a: Optional[float_deg] = None,
         b: Optional[float_deg] = None,
+        *,
+        speed: Optional[float] = None,
         wait: bool = False,
     ) -> None:
         if z is not None:
