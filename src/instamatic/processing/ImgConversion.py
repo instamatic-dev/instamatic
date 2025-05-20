@@ -449,9 +449,6 @@ class ImgConversion:
         img = self.data[i]
         h = self.headers[i]
 
-        # PETS reads only 16bit unsignt integer TIFF
-        img = np.round(img, 0).astype(np.uint16)
-
         fn = path / f'{i:05d}.tiff'
         write_tiff(fn, img, header=h)
         return fn
