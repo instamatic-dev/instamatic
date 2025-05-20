@@ -165,13 +165,16 @@ class FEIMicroscope(MicroscopeBase):
         z: Optional[int_nm] = None,
         a: Optional[float_deg] = None,
         b: Optional[float_deg] = None,
+        *,
+        speed: Optional[float] = None,
         wait: bool = True,
-        speed: float = 1.0,
     ) -> None:
         """X, y, z in the system are in unit of meters, angles in radians."""
         pos = self.stage.Position
         axis = 0
 
+        if speed is None:
+            speed = 1.0
         if speed > 1 or speed < 0:
             raise FEIValueError(f'setStageSpeed value must be between 0 and 1. Input: {speed}')
 

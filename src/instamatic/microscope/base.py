@@ -188,6 +188,8 @@ class MicroscopeBase(ABC):
         z: Optional[int_nm],
         a: Optional[float_deg],
         b: Optional[float_deg],
+        *,
+        speed: Optional[float],
         wait: bool,
     ) -> None:
         pass
