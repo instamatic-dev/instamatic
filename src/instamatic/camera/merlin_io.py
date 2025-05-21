@@ -115,9 +115,9 @@ def load_mib(buffer: bytes, skip: int = 0):
         ]
     )
 
-    assert (
-        len(buffer) % merlin_frame_dtype.itemsize == 0
-    ), 'buffer size must be a multiple of item size'
+    assert len(buffer) % merlin_frame_dtype.itemsize == 0, (
+        'buffer size must be a multiple of item size'
+    )
 
     data = np.frombuffer(
         buffer,

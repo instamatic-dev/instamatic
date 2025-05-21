@@ -140,7 +140,7 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     print('# TVIPS header')
     print(f'Camera:                   {camera}')
     print(f'Acquisition time:         {acquisition_time:.3f} s')
-    print(f'Exposure time:            {exposure_time/1000:.3f} s')
+    print(f'Exposure time:            {exposure_time / 1000:.3f} s')
     print(f'Overhead time:            {overhead:.3f} s')
     print(f'Binning (X/Y):            {binning_x} {binning_y} px/bin')
     print(f'Image resolution (X/Y):   {image_res_x_tvips} {image_res_y_tvips} pixels')
@@ -150,15 +150,15 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
     print(
         f'Physical pixelsize (X/Y): {physical_pixelsize_x_tvips} {physical_pixelsize_y_tvips} μm'
     )
-    print(f'High tension:             {high_tension/1000} kV')
+    print(f'High tension:             {high_tension / 1000} kV')
     print(f'Wavelength:               {wavelength_tvips} Ångstrom')
     print(f'Camera length:            {camera_length_tvips} mm')
 
     # implement this later if it turns out to be necessary
     assert pixelsize_x_tvips == pixelsize_y_tvips, 'Pixelsize is different in X / Y direction'
-    assert (
-        physical_pixelsize_x_tvips == physical_pixelsize_y_tvips
-    ), 'Physical pixelsize is different in X / Y direction'
+    assert physical_pixelsize_x_tvips == physical_pixelsize_y_tvips, (
+        'Physical pixelsize is different in X / Y direction'
+    )
 
     buffer = []
 
@@ -176,9 +176,9 @@ def img_convert(credlog, tiff_path=None, pets_path='PETS', mrc_path='RED', smv_p
             if img.min() >= 0 and img.max() < 2**16:
                 img = img.astype(np.uint16)
 
-        assert (
-            img.dtype.type is np.uint16
-        ), f'Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)'
+        assert img.dtype.type is np.uint16, (
+            f'Image (#{i}:{fn.stem}) dtype is {img.dtype} (must be np.uint16)'
+        )
 
         h = {'ImageGetTime': timestamp, 'ImageExposureTime': exposure_time}
 

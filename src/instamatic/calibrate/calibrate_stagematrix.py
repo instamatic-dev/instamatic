@@ -467,7 +467,7 @@ The stagematrix takes the image binning into account."""
         dest='overlap',
         type=float,
         metavar='X',
-        help=('Specify the approximate overlap between images for cross ' 'correlation.'),
+        help=('Specify the approximate overlap between images for cross correlation.'),
     )
 
     parser.add_argument(
@@ -476,7 +476,7 @@ The stagematrix takes the image binning into account."""
         dest='stage_length',
         type=int,
         help=(
-            'Specify the minimum length (in stage coordinates) the calibration ' 'should cover.'
+            'Specify the minimum length (in stage coordinates) the calibration should cover.'
         ),
     )
 
@@ -486,9 +486,7 @@ The stagematrix takes the image binning into account."""
         dest='min_n_step',
         type=int,
         metavar='N',
-        help=(
-            'Specify the minimum number of steps to take along X and Y for the ' 'calibration.'
-        ),
+        help=('Specify the minimum number of steps to take along X and Y for the calibration.'),
     )
 
     parser.add_argument(
