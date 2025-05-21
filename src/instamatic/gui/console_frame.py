@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 import sys
 import time
 from pathlib import Path
@@ -21,18 +22,26 @@ class Writer:
         Tkinter text / scrolledtext widget to redirect stdout to
     """
 
+    ANSI_ESCAPE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+
     def __init__(self, text, add_timestamp=False):
         self.terminal = sys.__stdout__
         self.text = text
         self._add_timestamp = add_timestamp
 
-    def write(self, message):
+    def write(self, message: str) -> None:
         self.terminal.write(message)
+
+        if '\r' in message:  # tkinter.Text can't handle carriage returns
+            message = message.rsplit('\r', maxsplit=1)[-1]
+            self.text.delete('insert linestart', 'insert lineend')
+
+        message = self.ANSI_ESCAPE.sub('', message)  # remove ANSI escape codes
+
         if self._add_timestamp and message != '\n':
-            now = time.strftime('%H:%M:%S')
-            self.text.insert(END, f'[{now}] {message}')
-        else:
-            self.text.insert(END, message)
+            message = f'[{time.strftime("%H:%M:%S")}] {message}'
+
+        self.text.insert(END, message)
         self.text.see(END)
 
     def flush(self, *args, **kwargs):
