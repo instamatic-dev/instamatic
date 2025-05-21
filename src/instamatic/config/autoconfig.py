@@ -31,9 +31,9 @@ def get_tvips_calibs(ctrl, rng: list, mode: str, wavelength: float) -> dict:
         PixelSizeX = v['fImgDistX']
         PixelSizeY = v['fImgDistY']
 
-        assert (
-            PixelSizeX == PixelSizeY
-        ), 'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
+        assert PixelSizeX == PixelSizeY, (
+            'Pixelsizes differ in X and Y direction?! (X: {PixelSizeX} | Y: {PixelSizeY})'
+        )
 
         if mode == 'diff':
             pixelsize = sin(PixelSizeX / 1_000_000) / wavelength  # µrad/px -> rad/px -> px/Å
@@ -59,7 +59,7 @@ def choice_prompt(choices: list = [], default=None, question: str = 'Which one?'
         suffix = ''
 
     for i, choice in enumerate(choices):
-        print(f'{i+1: 2d}: {choice}')
+        print(f'{i + 1: 2d}: {choice}')
 
     q = input(f'\n{question}{suffix} >> ')
     if not q:

@@ -128,7 +128,7 @@ def calibrate_mag1_live(
             stage = ctrl.stage.get()
 
             print()
-            print(f'Position {I+1}/{tot}')
+            print(f'Position {I + 1}/{tot}')
             print(stage)
 
             outfile = work_drc / f'calib_{i:04d}' if save_images else None

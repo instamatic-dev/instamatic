@@ -156,7 +156,7 @@ def plot_props(edges, props):
         print('centroid = ({:.2f}, {:.2f})'.format(*prop.centroid))
         print(f'eccentricity = {prop.eccentricity:.2f}')
         print(f'stretch azimuth = {np.degrees(prop.orientation):.2f} degrees')
-        print(f'stretch amplitude = {-1 + prop.major_axis_length/prop.minor_axis_length:.2%}')
+        print(f'stretch amplitude = {-1 + prop.major_axis_length / prop.minor_axis_length:.2%}')
         print(f'min/max lengths = ({prop.minor_axis_length:.2f}, {prop.major_axis_length:.2f})')
         print(f'avg. diameter = {prop.equivalent_diameter:.2f}')
         print()

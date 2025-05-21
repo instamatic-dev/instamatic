@@ -177,7 +177,7 @@ class xds_parser:
         )
 
         if filename:
-            s += f"  # {d['fn']}\n"
+            s += f'  # {d["fn"]}\n'
         else:
             s += '\n'
 

@@ -237,10 +237,7 @@ class CameraMerlin(CameraBase):
             self.setup_soft_trigger(exposure=exposure)
         elif self._frame_number == self.MAX_NUMFRAMESTOACQUIRE:
             logger.debug(
-                (
-                    'Maximum frame number reached for this acquisition, '
-                    'resetting soft trigger.'
-                )
+                ('Maximum frame number reached for this acquisition, resetting soft trigger.')
                 % self.MAX_NUMFRAMESTOACQUIRE
             )
             self.setup_soft_trigger(exposure=exposure)

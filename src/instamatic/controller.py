@@ -46,7 +46,7 @@ def initialize(
     ctrl : `TEMController`
         Return TEM control object
     """
-    print(f"Microscope: {tem_name}{' (server)' if use_tem_server else ''}")
+    print(f'Microscope: {tem_name}{" (server)" if use_tem_server else ""}')
     tem = get_microscope(tem_name, use_server=use_tem_server)
 
     if cam_name:

@@ -449,9 +449,6 @@ class ImgConversion:
         img = self.data[i]
         h = self.headers[i]
 
-        # PETS reads only 16bit unsignt integer TIFF
-        img = np.round(img, 0).astype(np.uint16)
-
         fn = path / f'{i:05d}.tiff'
         write_tiff(fn, img, header=h)
         return fn
@@ -504,8 +501,8 @@ class ImgConversion:
         # reverse XY coordinates for XDS
         header['BEAM_CENTER_X'] = f'{mean_beam_center[1]:.4f}'
         header['BEAM_CENTER_Y'] = f'{mean_beam_center[0]:.4f}'
-        header['DENZO_X_BEAM'] = f'{mean_beam_center[0]*self.physical_pixelsize:.4f}'
-        header['DENZO_Y_BEAM'] = f'{mean_beam_center[1]*self.physical_pixelsize:.4f}'
+        header['DENZO_X_BEAM'] = f'{mean_beam_center[0] * self.physical_pixelsize:.4f}'
+        header['DENZO_Y_BEAM'] = f'{mean_beam_center[1] * self.physical_pixelsize:.4f}'
         fn = path / f'{i:05d}.img'
         write_adsc(fn, img, header=header)
         return fn
@@ -674,7 +671,7 @@ class ImgConversion:
             print('', file=f)
             print(f'lambda {self.wavelength}', file=f)
             print(f'Aperpixel {self.pixelsize}', file=f)
-            print(f'phi {float(self.osc_angle)/2}', file=f)
+            print(f'phi {float(self.osc_angle) / 2}', file=f)
             print(f'omega {omega}', file=f)
             print('bin 1', file=f)
             print('reflectionsize 20', file=f)
@@ -717,7 +714,7 @@ class ImgConversion:
             print('geometry continuous', file=f)
             print(f'lambda {self.wavelength}', file=f)
             print(f'Aperpixel {self.pixelsize}', file=f)
-            print(f'phi {float(self.osc_angle)/2}', file=f)
+            print(f'phi {float(self.osc_angle) / 2}', file=f)
             print(f'omega {omega}', file=f)
             print('bin 1', file=f)
             print('reflectionsize 15', file=f)

@@ -278,7 +278,7 @@ def calibrate_stage_lowmag_live(ctrl, gridsize=5, stepsize=50000, save_images=Fa
     i = 0
     for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
         print()
-        print(f'Position {i+1}/{tot}: x: {x_cent+dx:.0f}, y: {y_cent+dy:.0f}')
+        print(f'Position {i + 1}/{tot}: x: {x_cent + dx:.0f}, y: {y_cent + dy:.0f}')
 
         ctrl.stage.set(x=x_cent + dx, y=y_cent + dy)
         print(ctrl.stage)
