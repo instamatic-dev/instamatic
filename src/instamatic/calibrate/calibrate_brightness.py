@@ -174,7 +174,7 @@ def calibrate_brightness_from_image_fn(fns):
 
 def calibrate_brightness(fns=None, ctrl=None, confirm=True):
     if not fns:
-        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): " '') == 'go':
+        if confirm and not input("\n >> Go too 2500x mag (type 'go' to start): ") == 'go':
             return
         else:
             calib = calibrate_brightness_live(ctrl, save_images=True)

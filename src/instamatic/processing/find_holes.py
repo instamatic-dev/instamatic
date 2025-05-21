@@ -89,9 +89,9 @@ def get_markers_bounds(img, lower=100, upper=180, dark_on_bright=True, verbose=T
         markers[img > upper] = features
 
     if verbose:
-        print(f'\nother      {1.0*np.sum(markers == 0) / markers.size:6.2%}')
-        print(f'background {1.0*np.sum(markers == background) / markers.size:6.2%}')
-        print(f'features   {1.0*np.sum(markers == features) / markers.size:6.2%}')
+        print(f'\nother      {1.0 * np.sum(markers == 0) / markers.size:6.2%}')
+        print(f'background {1.0 * np.sum(markers == background) / markers.size:6.2%}')
+        print(f'features   {1.0 * np.sum(markers == features) / markers.size:6.2%}')
 
     return markers
 
@@ -202,7 +202,7 @@ def find_holes_entry():
             px = py = calibration['lowmag']['pixelsize'][magnification] / 1000  # nm -> um
             area = hole.area * px * py / scale**2
             d = 2 * (area / np.pi) ** 0.5
-            print(f'x: {x*scale:.2f}, y: {y*scale:.2f}, d: {d:.2f} um')
+            print(f'x: {x * scale:.2f}, y: {y * scale:.2f}, d: {d:.2f} um')
 
 
 if __name__ == '__main__':

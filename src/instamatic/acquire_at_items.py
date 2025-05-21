@@ -184,5 +184,5 @@ class AcquireAtItems:
 
         dt = t1 - t0
         n_items = i + 1
-        print(f'Total time taken: {dt:.0f} s for {n_items} items ({dt/n_items:.2f} s/item)')
+        print(f'Total time taken: {dt:.0f} s for {n_items} items ({dt / n_items:.2f} s/item)')
         print('\nAll done!')

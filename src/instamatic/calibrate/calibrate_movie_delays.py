@@ -372,7 +372,7 @@ def calibrate_movie_delays_live(
     ratio = mte.frame1_times.mean() / mte.exposure
     if ratio > 1.1:
         msg = (
-            f'Exposure times exceed expected by {(ratio-1)*100}%. '
+            f'Exposure times exceed expected by {(ratio - 1) * 100}%. '
             f'Consider using longer exposure or smaller header.'
         )
         warnings.warn(msg, CalibWarning)
@@ -380,7 +380,7 @@ def calibrate_movie_delays_live(
     ratio = mtr.total_times.mean() / mte.total_times.mean()
     if ratio > 0.5:
         msg = (
-            f'Total time is dominated ({ratio*100}%) by header collection. '
+            f'Total time is dominated ({ratio * 100}%) by header collection. '
             f'Consider using longer exposure or smaller header.'
         )
         warnings.warn(msg, CalibWarning)

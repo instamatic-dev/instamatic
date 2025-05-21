@@ -195,9 +195,9 @@ class GonioToolWrapper:
 
     def set_rate(self, speed: int):
         """Set rate value for TX."""
-        assert isinstance(
-            speed, int
-        ), f'Variable `speed` must be of type `int`, is `{type(speed)}`'
+        assert isinstance(speed, int), (
+            f'Variable `speed` must be of type `int`, is `{type(speed)}`'
+        )
         assert 0 < speed <= 12, 'Variable `speed` must have a value of 1 to 12.'
 
         s = self.edit.select()
