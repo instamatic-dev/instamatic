@@ -341,6 +341,7 @@ class JeolMicroscope(MicroscopeBase):
         z: Optional[int_nm] = None,
         a: Optional[float_deg] = None,
         b: Optional[float_deg] = None,
+        *,
         wait: bool = True,
     ) -> None:
         if z is not None:

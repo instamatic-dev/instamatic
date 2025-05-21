@@ -433,8 +433,9 @@ class SimuMicroscope(MicroscopeBase):
         z: Optional[int_nm] = None,
         a: Optional[float_deg] = None,
         b: Optional[float_deg] = None,
-        speed: float = -1,
+        *,
         wait: bool = True,
+        speed: Optional[float] = None,
     ) -> None:
         if z is not None:
             self.setStageZ(z, wait=wait)
