@@ -239,23 +239,15 @@ class VideoStreamFrame(LabelFrame):
         self.stream.lock.release()
 
         if frame is not None:
-            # the display range in ImageTk is from 0 to 256
-            if self.auto_contrast:
-                frame = frame * (
-                    256.0 / (1 + np.percentile(frame[::4, ::4], 99.5))
-                )  # use 128x128 array for faster calculation
-
-                image = Image.fromarray(frame)
-            elif self.display_range != self.display_range_default:
-                image = np.clip(frame, 0, self.display_range)
-                image = (256.0 / self.display_range) * image
-                image = Image.fromarray(image)
-            else:
-                image = Image.fromarray(frame)
-
-            if self.brightness != 1:
-                image = ImageEnhance.Brightness(image.convert('L')).enhance(self.brightness)
-                # Can also use ImageEnhance.Sharpness or ImageEnhance.Contrast if needed
+            # the display range in ImageTk is from 0 to 255
+            if self.display_range != 255.0 or self.brightness != 1.0:
+                if self.auto_contrast:
+                    display_range = 1 + np.percentile(frame[::4, ::4], 99.5)
+                else:
+                    display_range = self.display_range
+                frame = (self.brightness * 255 / display_range) * frame
+            frame = np.clip(frame.astype(np.int16), 0, 255).astype(np.uint8)
+            image = Image.fromarray(frame)
 
             if self.resize_image:
                 image = image.resize((950, 950))
