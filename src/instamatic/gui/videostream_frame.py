@@ -14,6 +14,7 @@ from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
+from performance_tracker import PerformanceTracker
 
 
 class VideoStreamFrame(LabelFrame):
@@ -233,6 +234,7 @@ class VideoStreamFrame(LabelFrame):
         self.stream.update_frametime(self.frametime)
         self.after(500, self.on_frame)
 
+    @PerformanceTracker('performance-test-name')
     def on_frame(self, event=None):
         self.stream.lock.acquire(True)
         self.frame = frame = self.stream.frame
