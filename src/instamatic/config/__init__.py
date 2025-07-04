@@ -90,13 +90,9 @@ def get_base_drc():
 
 def get_alignments() -> dict:
     """Get alignments from the alignment directory and return them as a dict of
-    dicts.
-
-    Use `ctrl.from_dict` to load the alignments
-    """
-    fns = alignments_drc.glob('*.yaml')
-    alignments = {fn.name: yaml.full_load(open(fn)) for fn in fns}
-    return alignments
+    dicts; Use `ctrl.from_dict` to load previously-stored alignments."""
+    yaml_filenames = alignments_drc.glob('*.yaml')
+    return {fn.stem: yaml.safe_load(open(fn)) for fn in yaml_filenames}
 
 
 class ConfigObject:
