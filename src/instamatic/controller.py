@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Callable, Generator, Optional, Tuple
 
 import numpy as np
+import yaml
 
 from instamatic import config
 from instamatic.camera import Camera
@@ -15,6 +16,7 @@ from instamatic.formats import write_tiff
 from instamatic.image_utils import rotate_image
 from instamatic.microscope import components
 from instamatic.microscope.base import MicroscopeBase
+from instamatic.microscope.components.deflectors import DeflectorTuple
 from instamatic.microscope.microscope import get_microscope
 
 _ctrl = None  # store reference of ctrl so it can be accessed without re-initializing
@@ -795,17 +797,14 @@ class TEMController:
         Multiple settings can be stored under different names. Specify
         which settings should be stored using `keys`
         """
-        if not keys:
-            keys = ()
-        d = self.to_dict(*keys)
+        d = self.to_dict(*keys if keys else ())
         d.pop('StagePosition', None)
         self._saved_alignments[name] = d
 
         if save_to_file:
-            import yaml
-
             fn = config.alignments_drc / (name + '.yaml')
-            yaml.dump(d, stream=open(fn, 'w'))
+            d2 = {k: list(v) if isinstance(v, DeflectorTuple) else v for k, v in d.items()}
+            yaml.safe_dump(d2, stream=open(fn, 'w'))
             print(f'Saved alignment to file `{fn}`')
 
     def restore(self, name: str = 'stash'):
