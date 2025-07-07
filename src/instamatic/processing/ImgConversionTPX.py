@@ -26,6 +26,7 @@ class ImgConversionTPX(ImgConversion):
         wavelength: float = None,  # Angstrom, relativistic wavelength of the electron beam
         stretch_amplitude=0.0,  # Stretch correction amplitude, %
         stretch_azimuth=0.0,  # Stretch correction azimuth, degrees
+        method: str = 'continuous-rotation 3D ED',  # or 'stills' or 'precession', used for CIF/documentation
     ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -81,6 +82,7 @@ class ImgConversionTPX(ImgConversion):
         logger.debug(f'Primary beam at: {self.mean_beam_center}')
 
         self.name = 'TimePix_SU'
+        self.method = method
 
         from .XDS_templateTPX import XDS_template
 
