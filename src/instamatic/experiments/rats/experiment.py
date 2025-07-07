@@ -187,6 +187,7 @@ class RatsExperiment(ExperimentBase):
         self.beamshift = self.get_beamshift()
         self.alpha_mid: Optional[float] = None  # middle of tracking run
         self.camera_length: float = 0.0
+        self.diffraction_mode: str = ''
 
         self.videostream_frame = videostream_frame
         self.vss = self.videostream_frame.stream_service
@@ -311,9 +312,10 @@ class RatsExperiment(ExperimentBase):
             run = DiffractionRun.from_params(params, tracking_run)
             self.ctrl.restore('rats_diff')
             self.camera_length = int(self.ctrl.magnification.get())
-            if params['diffraction_mode'] == 'stills':
+            self.diffraction_mode = params['diffraction_mode']
+            if self.diffraction_mode == 'stills':
                 self.run = self.collect_stills(run)
-            elif params['diffraction_mode'] == 'continuous':
+            elif self.diffraction_mode == 'continuous':
                 self.run = self.collect_continuous(run)
             self.ctrl.restore('rats_image')
 
@@ -398,7 +400,7 @@ class RatsExperiment(ExperimentBase):
         for expt in tracking_run.experiments:
             with self.vss.temporary_provider(lambda: expt.image):
                 self.display_message(
-                    f'Please click on the crystal ' f'(image={expt.Index}, alpha={expt.alpha}°)'
+                    f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
                 )
                 with self.click_listener as cl:
                     click = cl.get_click()
@@ -435,6 +437,10 @@ class RatsExperiment(ExperimentBase):
         stretch_amplitude = config.camera.stretch_amplitude
 
         run = Run.concat(self.run_list) if len(self.run_list) > 1 else self.run
+        if self.diffraction_mode == 'continuous':
+            method = 'Continuous-Rotation 3D ED'
+        else:
+            method = 'Rotation Electron Diffraction'
 
         img_conv = ImgConversion(
             buffer=run.buffer,
@@ -449,6 +455,7 @@ class RatsExperiment(ExperimentBase):
             wavelength=wavelength,
             stretch_amplitude=stretch_amplitude,
             stretch_azimuth=stretch_azimuth,
+            method=method,
         )
         print('Writing data files...')
         img_conv.threadpoolwriter(tiff_path=self.tiff_path, mrc_path=self.mrc_path, workers=8)
