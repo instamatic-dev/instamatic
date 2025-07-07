@@ -676,7 +676,7 @@ class ImgConversion:
             s.append(f'{tiff_path}/{i:05d}.tiff {angle:10.4f} 0.00')
         p.add('imagelist', *s)
 
-        with open(Path(path) / 'pets.pts2new', 'w') as f:
+        with open(Path(path) / 'pets.pts', 'w') as f:
             f.write(str(p.compile(self.__dict__)))
 
     def write_REDp_shiftcorrection(self, path: str) -> None:
