@@ -210,18 +210,23 @@ class PetsInputFactory:
         # {str(time.ctime())}
         # For definitions of input parameters, see: https://pets.fzu.cz/
         """).strip()
+        pets_element_list = [title]
 
         prefix = getattr(config.camera, 'pets_prefix', None)
-        if prefix is not None and image_converter_attributes is not None:
-            prefix = partial_formatter.format(prefix, **image_converter_attributes)
-        prefix = PetsInputElement.from_any(prefix)
+        if prefix is not None:
+            if image_converter_attributes is not None:
+                prefix = partial_formatter.format(prefix, **image_converter_attributes)
+            pets_element_list.append(PetsInputElement.from_any(prefix))
+
+        pets_element_list.extend(self.current_elements)
 
         suffix = getattr(config.camera, 'pets_suffix', None)
-        if suffix is not None and image_converter_attributes is not None:
-            suffix = partial_formatter.format(suffix, **image_converter_attributes)
-        suffix = PetsInputElement.from_any(suffix)
+        if suffix is not None:
+            if image_converter_attributes is not None:
+                suffix = partial_formatter.format(suffix, **image_converter_attributes)
+            pets_element_list.append(PetsInputElement.from_any(suffix))
 
-        return self.__class__([title, prefix] + self.current_elements + [suffix])
+        return self.__class__(pets_element_list)
 
     def _no_duplicates_in(self, keywords: Iterable[str]) -> bool:
         """Return True & add keywords if there are no duplicates; else warn."""
