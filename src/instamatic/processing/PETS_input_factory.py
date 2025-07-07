@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import time
 from copy import deepcopy
+from io import StringIO
 from pathlib import Path
 from string import punctuation
 from textwrap import dedent
@@ -17,6 +18,83 @@ from instamatic import config
 from instamatic._collections import partial_formatter
 from instamatic._typing import AnyPath
 
+pets_input_keywords_csv = """
+field,end
+autotask,true
+keepautotasks,false
+lambda,false
+aperpixel,false
+geometry,false
+detector,false
+noiseparameters,false
+phi,false
+omega,false
+delta,false
+pixelsize,false
+bin,false
+reflectionsize,false
+dstarmax,false
+dstarmaxps,false
+dstarmin,false
+centerradius,false
+beamstop,optional
+badpixels,true
+avoidicerings,false
+icerings,true
+peaksearchmode,false
+center,false
+centermode,false
+i/sigma,false
+mask,true
+moreaveprofiles,false
+peakprofileparams,false
+peakprofilesectors,false
+background,false
+backgroundmethod,false
+peakanalysis,false
+minclusterpoints,false
+indexingmode,false
+indexingparameters,false
+maxindex,false
+cellrefinemode,false
+cellrefineparameters,false
+referencecell,false
+intensitymethod,false
+adjustreflbox,false
+resshellfraction,false
+saturationlimit,false
+skipsaturated,false
+minrotaxisdist,false
+minreflpartiality,false
+rcshape,false
+integrationmode,false
+integrationparams,false
+intkinematical,false
+intdynamical,false
+dynamicalscales,false
+dynamicalerrormodel,false
+errormodel,false
+outliers,false
+refinecamelparams,false
+orientationparams,false
+simulationpower,false
+interpolationparams,false
+distcenterasoffset,false
+distortunits,false
+distortions,true
+distortionskeys,true
+mapformat,false
+reconstruction,true
+reconstructionparams,false
+removebackground,false
+serialed,false
+virtualframes,false
+cifentries,true
+imagelist,true
+celllist,true
+cellitem,true
+"""
+
 
 class PetsKeywords:
     """Read PETS2 field metadata as read from the PETS2 manual."""
@@ -26,7 +104,11 @@ class PetsKeywords:
         self.table = table
 
     @classmethod
-    def from_file(cls, path: AnyPath):
+    def from_string(cls, string: str) -> Self:
+        return cls(pd.read_csv(StringIO(string), index_col='field'))
+
+    @classmethod
+    def from_file(cls, path: AnyPath) -> Self:
         return cls(pd.read_csv(Path(path), index_col='field'))
 
     @property
@@ -42,9 +124,7 @@ class PetsKeywords:
         return first_words.intersection(self.list)
 
 
-pets_keywords = PetsKeywords.from_file(
-    r'C:\Users\tchon\PycharmProjects\instamatic\src\instamatic\processing\PETS_input_keywords.csv'
-)
+pets_keywords = PetsKeywords.from_string(pets_input_keywords_csv)
 
 
 @dataclasses.dataclass
