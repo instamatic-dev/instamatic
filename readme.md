@@ -39,7 +39,7 @@ conda create -n instamatic python=3.11
 conda activate instamatic
 ```
 
-Install using pip, works with python versions 3.7 or newer:
+Install using pip, works with python versions 3.9 or newer:
 
 ```bash
 pip install instamatic
