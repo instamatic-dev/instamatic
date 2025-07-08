@@ -24,6 +24,7 @@ class ImgConversionTVIPS(ImgConversion):
         pixelsize: float = None,  # p/Angstrom, size of the pixels (overrides camera_length)
         physical_pixelsize: float = None,  # mm, physical size of the pixels (overrides camera length)
         wavelength: float = None,  # Angstrom, relativistic wavelength of the electron beam
+        method: str = 'continuous-rotation 3D ED',  # or 'stills' or 'precession', used for CIF/documentation
     ):
         if flatfield is not None:
             flatfield, h = read_tiff(flatfield)
@@ -71,6 +72,7 @@ class ImgConversionTVIPS(ImgConversion):
         logger.debug(f'Primary beam at: {self.mean_beam_center}')
 
         self.name = 'TVIPS F416'
+        self.method = method
 
         from .XDS_templateTVIPS import XDS_template
 

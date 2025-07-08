@@ -249,6 +249,42 @@ This file holds the specifications of the camera. This file is must be located t
   DiffShift: {gridsize: 5, stepsize: 300}
 ```
 
+**pets_prefix**
+: Arbitrary information to be added at the beginning of the `.pts` file created after an experiment. The prefix can include any [valid PETS2 input lines](http://pets.fzu.cz/download/pets2_manual.pdf). In the case of duplicate commands, prefix lines take precedence over hard-coded and suffix commands, and prevent the latter ones from being added. Additionally, this field can contain new python-style [replacement fields](https://pyformat.info/) which, if present among the `ImgConversion` instance attributes, will be filled automatically after each experiment (see the `pets_suffix` example). A typical `pets_prefix`, capable of overwriting the default detector specification output can look like this:
+```yaml
+pets_prefix: "noiseparameters 4.2 0\nreflectionsize 8\ndetector asi"
+```
+
+**pets_suffix**
+: Arbitrary information to be added at the end of the `.pts` file created after an experiment. Similarly to the `pets_prefix`, the suffix can include any [valid PETS2 input lines](http://pets.fzu.cz/download/pets2_manual.pdf) as well as new python-style [replacement fields](https://pyformat.info/). In contrast to prefix, any duplicate commands added to suffix will be ignored. This field can be useful to add backup or meta information about the experiment:
+```yaml
+pets_suffix: |
+  cifentries
+  _exptl_special_details
+  ;
+  {method} data collected using Instamatic.
+  Tilt step:   	{osc_angle:.3f} deg
+  Exposure:    	{headers[0][ImageExposureTime]:.6f} s per frame
+  ;
+  _diffrn_ambient_temperature          	?
+  _diffrn_source                       	'Lanthanum hexaboride cathode'
+  _diffrn_source_voltage               	200
+  _diffrn_radiation_type               	electron
+  _diffrn_radiation_wavelength         	0.0251
+  _diffrn_measurement_device           	'Transmission electron microscope'
+  _diffrn_measurement_device_type      	'FEI Tecnai G2 20'
+  _diffrn_detector                     	'ASI Cheetah'
+  _diffrn_measurement_method           	'{method}'
+  _diffrn_measurement_specimen_support 	'Cu grid with amorphous carbon foil'
+  _diffrn_standards_number             	0
+  endcifentries
+
+  badpixels
+  359 32
+  279 513
+  endbadpixels
+```
+
 ## microscope.yaml
 
 This file holds all the specifications of the microscope as necessary. It is important to set up the camera lengths, magnifications, and magnification modes. This file is must be located the `microscope/camera` directory, and can have any name as defined in `settings.yaml`.
