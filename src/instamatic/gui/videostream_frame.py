@@ -4,14 +4,15 @@ import threading
 import time
 from tkinter import *
 from tkinter.ttk import *
+from typing import Union
 
 import numpy as np
 from PIL import Image, ImageTk
 
-import instamatic.gui.videostream_service as vss_module
 from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
+from instamatic.gui.videostream_processor import VideoStreamProcessor
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
@@ -69,10 +70,7 @@ class VideoStreamFrame(LabelFrame):
 
         self.click_dispatcher = ClickDispatcher()
         self.panel.bind('<Button>', self.on_click)
-
-        # Create VideoStreamService with a lambda provider that accesses stream.frame
-        self.stream_service = self.setup_stream_service()
-        self.frame: np.ndarray = self.stream.frame
+        self.processor = VideoStreamProcessor(self)
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -98,6 +96,11 @@ class VideoStreamFrame(LabelFrame):
     def buttonbox(self, master):
         btn = Button(master, text='Save image', command=self.saveImage)
         btn.pack(side='bottom', fill='both', padx=10, pady=10)
+
+    @property
+    def frame(self) -> Union[np.ndarray, None]:
+        """Raw image frame from the camera."""
+        return self.processor.frame
 
     def header(self, master):
         ewidth = 8
@@ -178,14 +181,6 @@ class VideoStreamFrame(LabelFrame):
             self.panel.image = image
             self.panel.pack(side='left', padx=10, pady=10)
 
-    def setup_stream_service(self):
-        vss = vss_module.VideoStreamService(provider=lambda: self.stream.frame)
-        vss.add_editor('normalize', vss_module.Normalize2DEditor(self))
-        vss.add_editor('colorize', vss_module.Colorize2DEditor(None))
-        vss.add_overlay('enhance', vss_module.ImageEnhanceOverlay(self))
-        vss.add_overlay('draw', vss_module.ImageDrawOverlay())
-        return vss
-
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
         try:
@@ -244,10 +239,8 @@ class VideoStreamFrame(LabelFrame):
 
     def on_frame(self, event=None):
         """Modified to use VideoStreamService frame property."""
-        self.frame = frame = self.stream_service.frame  # Get processed frame
-
-        if frame is not None:
-            image = self.stream_service.image
+        if self.frame is not None:
+            image = self.processor.image
 
             if self.resize_image:
                 image = image.resize((950, 950))

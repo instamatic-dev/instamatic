@@ -190,8 +190,7 @@ class RatsExperiment(ExperimentBase):
         self.diffraction_mode: str = ''
 
         self.videostream_frame = videostream_frame
-        self.vss = self.videostream_frame.stream_service
-        # self.overlay = self.vss.add_overlay('rats', ImageDrawOverlay())
+        self.vsp = self.videostream_frame.processor
 
         vcd = self.videostream_frame.click_dispatcher
         try:
@@ -389,7 +388,8 @@ class RatsExperiment(ExperimentBase):
 
         # collecting diffraction beam center information
         beam_image = beam_center_run.table['image'].iloc[0]
-        with self.vss.temporary_provider(lambda: beam_image):
+
+        with self.vsp.temporary_frame(beam_image):
             self.display_message('Please click on the center of the beam')
             with self.click_listener as cl:
                 click = cl.get_click()
@@ -398,7 +398,7 @@ class RatsExperiment(ExperimentBase):
         # collecting tracking information
         delta_xs, delta_ys = [], []
         for expt in tracking_run.experiments:
-            with self.vss.temporary_provider(lambda: expt.image):
+            with self.vsp.temporary_frame(expt.image):
                 self.display_message(
                     f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
                 )
