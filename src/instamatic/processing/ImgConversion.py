@@ -655,7 +655,7 @@ class ImgConversion:
         if 'continuous' in self.method:
             geometry = 'continuous'
         elif 'precess' in self.method:
-            geometry = 'precesssion'
+            geometry = 'precession'
         else:
             geometry = 'static'
 
