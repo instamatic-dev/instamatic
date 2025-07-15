@@ -127,11 +127,6 @@ packages = ["instamatic"]
 package-dir = {"" = "src"}
 include-package-data = true
 
-[tool.setuptools.package-data]
-instamatic = [
-    "processing/PETS_input_keywords.csv"
-]
-
 [tool.ruff]
 target-version = 'py39'
 line-length = 96
