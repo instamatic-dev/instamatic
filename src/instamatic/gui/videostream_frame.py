@@ -13,6 +13,7 @@ from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.gui.videostream_processor import VideoStreamProcessor
+from instamatic.performance_tracker import PerformanceTracker
 from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
@@ -237,6 +238,7 @@ class VideoStreamFrame(LabelFrame):
         self.stream.update_frametime(self.frametime)
         self.after(500, self.on_frame)
 
+    # @PerformanceTracker('150725_new_1000reds')
     def on_frame(self, event=None):
         """Modified to use VideoStreamService frame property."""
         if self.frame is not None:

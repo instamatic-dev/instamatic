@@ -399,9 +399,8 @@ class RatsExperiment(ExperimentBase):
         delta_xs, delta_ys = [], []
         for expt in tracking_run.experiments:
             with self.vsp.temporary_frame(expt.image):
-                self.display_message(
-                    f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
-                )
+                m = f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
+                self.display_message(m)
                 with self.click_listener as cl:
                     click = cl.get_click()
                     delta_xs.append(click.x - beam_center_x)
@@ -411,21 +410,23 @@ class RatsExperiment(ExperimentBase):
         tracking_run.table['delta_y'] = delta_ys
 
         # plot tracking results
-        # fig, ax1 = plt.subplots()
-        # ax2 = ax1.twinx()
-        # ax1.set_xlabel('alpha [degrees]')
-        # ax1.set_ylabel('ΔX [pixels]')
-        # ax2.set_ylabel('ΔY [pixels]')
-        # ax1.yaxis.label.set_color('red')
-        # ax2.yaxis.label.set_color('blue')
-        # ax2.spines['left'].set_color('red')
-        # ax2.spines['right'].set_color('blue')
-        # ax1.tick_params(axis='y', colors='red')
-        # ax2.tick_params(axis='y', colors='blue')
-        # ax1.plot('alpha', 'delta_x', data=tracking_run.table, color='red', label='X')
-        # ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
-        # fig.tight_layout()
-        # plt.show()
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.set_xlabel('alpha [degrees]')
+        ax1.set_ylabel('ΔX [pixels]')
+        ax2.set_ylabel('ΔY [pixels]')
+        ax1.yaxis.label.set_color('red')
+        ax2.yaxis.label.set_color('blue')
+        ax2.spines['left'].set_color('red')
+        ax2.spines['right'].set_color('blue')
+        ax1.tick_params(axis='y', colors='red')
+        ax2.tick_params(axis='y', colors='blue')
+        ax1.plot('alpha', 'delta_x', data=tracking_run.table, color='red', label='X')
+        ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
+        fig.tight_layout()
+        with self.vsp.temporary_figure(fig):
+            with self.click_listener as cl:
+                _ = cl.get_click()
 
     def finalize(self):
         self.log.info(f'Saving experiment in: {self.path}')

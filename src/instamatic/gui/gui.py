@@ -127,7 +127,18 @@ class AppLoader:
         return self.modules[module]
 
 
-def debug_print_click_coords(click_event):
+op = None
+
+
+def debug_print_click_coords(stream, click_event):
+    if not stream.processor.draw.instructions:
+        global op
+        for _ in range(1000):
+            op = stream.processor.draw.circle(
+                xy=(click_event.x, click_event.y), radius=10, outline='red', width=5
+            )
+    else:
+        stream.processor.draw.instructions.clear()
     print(click_event.x, click_event.y, click_event.button)
 
 
@@ -157,7 +168,9 @@ class MainFrame:
 
         if cam:
             s = self.app.get_module('stream')
-            v = s.click_dispatcher.add_listener('video', debug_print_click_coords)
+            v = s.click_dispatcher.add_listener(
+                'video', lambda c: debug_print_click_coords(s, c)
+            )
             v.active = True
 
         self.root.wm_title(instamatic.__long_title__)
