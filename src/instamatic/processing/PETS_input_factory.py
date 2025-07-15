@@ -16,6 +16,10 @@ from instamatic._collections import partial_formatter
 from instamatic._typing import AnyPath
 
 
+class PetsInputWarning(UserWarning):
+    pass
+
+
 class PetsKeywords:
     """Read PETS2 field metadata as read from the PETS2 manual."""
 
@@ -98,10 +102,6 @@ class PetsInputElement:
 
 
 AnyPetsInputElement = Union[PetsInputElement, str]
-
-
-class PetsInputWarning(UserWarning):
-    pass
 
 
 class PetsInputFactory:
