@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from importlib import resources
 from textwrap import dedent
 from time import ctime
-from typing import Any, Iterable, Optional, Union
+from typing import IO, Any, Iterable, Optional, Union
 from warnings import warn
 
 import pandas as pd
@@ -28,8 +28,8 @@ class PetsKeywords:
         self.table = table
 
     @classmethod
-    def from_file(cls, path: AnyPath) -> Self:
-        return cls(pd.read_csv(path, index_col='field'))
+    def from_file(cls, path_or_buffer: Union[AnyPath, IO[str]]) -> Self:
+        return cls(pd.read_csv(path_or_buffer, index_col='field'))
 
     @property
     def list(self) -> list[str]:
@@ -41,7 +41,7 @@ class PetsKeywords:
 
 
 with resources.files('instamatic.processing').joinpath('PETS_input_keywords.csv').open() as f:
-    pets_keywords = PetsKeywords.from_file(f)  # noqa: default keywords read at import
+    PETS_KEYWORDS = PetsKeywords.from_file(f)
 
 
 @dataclass
@@ -57,7 +57,7 @@ class PetsInputElement:
 
     @classmethod
     def from_any(cls, keyword_or_text: str, values: Optional[list[Any]] = None) -> Self:
-        keywords = pets_keywords.find(keyword_or_text)
+        keywords = PETS_KEYWORDS.find(keyword_or_text)
         if len(keywords) == 1 and values is not None:
             return cls([keywords.pop()], values)
         return cls(keywords=list(keywords), values=[], string=keyword_or_text)
@@ -71,14 +71,14 @@ class PetsInputElement:
         def split2blocks(start: int) -> list[str]:
             if start >= len(lines):
                 return []
-            if firsts[start] not in pets_keywords.list:
+            if firsts[start] not in PETS_KEYWORDS.list:
                 return [lines[start]] + split2blocks(start + 1)
-            if pets_keywords.table.at[firsts[start], 'end'] == 'false':
+            if PETS_KEYWORDS.table.at[firsts[start], 'end'] == 'false':
                 return [lines[start]] + split2blocks(start + 1)
             try:
                 end = firsts.index('end' + firsts[start], start)
             except ValueError:
-                if pets_keywords.table.at[firsts[start], 'end'] == 'optional':
+                if PETS_KEYWORDS.table.at[firsts[start], 'end'] == 'optional':
                     return [lines[start]] + split2blocks(start + 1)
                 end = len(lines)
             return ['\n'.join(lines[start : end + 1])] + split2blocks(end + 1)
@@ -88,8 +88,8 @@ class PetsInputElement:
     def has_end(self):
         return (
             len(self.keywords) == 1
-            and self.keywords[0] in pets_keywords.list
-            and pets_keywords.table.at[self.keywords[0], 'end'] != 'false'
+            and self.keywords[0] in PETS_KEYWORDS.list
+            and PETS_KEYWORDS.table.at[self.keywords[0], 'end'] != 'false'
         )
 
     def build_string(self):
