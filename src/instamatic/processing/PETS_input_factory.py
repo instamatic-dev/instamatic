@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from io import StringIO
+from importlib import resources
 from textwrap import dedent
 from time import ctime
-from typing import Any, Iterable, Optional, Union
+from typing import IO, Any, Iterable, Optional, Union
 from warnings import warn
 
 import pandas as pd
@@ -13,83 +13,11 @@ from typing_extensions import Self
 
 from instamatic import config
 from instamatic._collections import partial_formatter
+from instamatic._typing import AnyPath
 
-pets_input_keywords_csv = """
-field,end
-autotask,true
-keepautotasks,false
-lambda,false
-aperpixel,false
-geometry,false
-detector,false
-noiseparameters,false
-phi,false
-omega,false
-delta,false
-pixelsize,false
-bin,false
-reflectionsize,false
-dstarmax,false
-dstarmaxps,false
-dstarmin,false
-centerradius,false
-beamstop,optional
-badpixels,true
-avoidicerings,false
-icerings,true
-peaksearchmode,false
-center,false
-centermode,false
-i/sigma,false
-mask,true
-moreaveprofiles,false
-peakprofileparams,false
-peakprofilesectors,false
-background,false
-backgroundmethod,false
-peakanalysis,false
-minclusterpoints,false
-indexingmode,false
-indexingparameters,false
-maxindex,false
-cellrefinemode,false
-cellrefineparameters,false
-referencecell,false
-intensitymethod,false
-adjustreflbox,false
-resshellfraction,false
-saturationlimit,false
-skipsaturated,false
-minrotaxisdist,false
-minreflpartiality,false
-rcshape,false
-integrationmode,false
-integrationparams,false
-intkinematical,false
-intdynamical,false
-dynamicalscales,false
-dynamicalerrormodel,false
-errormodel,false
-outliers,false
-refinecamelparams,false
-orientationparams,false
-simulationpower,false
-interpolationparams,false
-distcenterasoffset,false
-distortunits,false
-distortions,true
-distortionskeys,true
-mapformat,false
-reconstruction,true
-reconstructionparams,false
-removebackground,false
-serialed,false
-virtualframes,false
-cifentries,true
-imagelist,true
-celllist,true
-cellitem,true
-"""
+
+class PetsInputWarning(UserWarning):
+    pass
 
 
 class PetsKeywords:
@@ -100,8 +28,8 @@ class PetsKeywords:
         self.table = table
 
     @classmethod
-    def from_string(cls, string: str) -> Self:
-        return cls(pd.read_csv(StringIO(string), index_col='field'))
+    def from_file(cls, path_or_buffer: Union[AnyPath, IO[str]]) -> Self:
+        return cls(pd.read_csv(path_or_buffer, index_col='field'))
 
     @property
     def list(self) -> list[str]:
@@ -112,7 +40,8 @@ class PetsKeywords:
         return firsts.intersection(self.list)
 
 
-pets_keywords = PetsKeywords.from_string(pets_input_keywords_csv)
+with resources.files('instamatic.processing').joinpath('PETS_input_keywords.csv').open() as f:
+    PETS_KEYWORDS = PetsKeywords.from_file(f)
 
 
 @dataclass
@@ -120,7 +49,7 @@ class PetsInputElement:
     """Store metadata for a single PETS input element."""
 
     keywords: list[str]
-    values: list[any]
+    values: list[Any]
     string: Optional[str] = None
 
     def __str__(self):
@@ -128,29 +57,28 @@ class PetsInputElement:
 
     @classmethod
     def from_any(cls, keyword_or_text: str, values: Optional[list[Any]] = None) -> Self:
-        keywords = pets_keywords.find(keyword_or_text)
-        if len(keywords) == 1 and values is not None:  # a single keyword with some values
+        keywords = PETS_KEYWORDS.find(keyword_or_text)
+        if len(keywords) == 1 and values is not None:
             return cls([keywords.pop()], values)
-        else:  # any other text block
-            return cls(keywords=list(keywords), values=[], string=keyword_or_text)
+        return cls(keywords=list(keywords), values=[], string=keyword_or_text)
 
     @classmethod
     def list_from_text(cls, text: str) -> list[Self]:
         """Split a text with many commands it into `list[PetsInputElement]`"""
         lines = text.splitlines()
-        firsts = [t.strip().split()[0].lower() if t.strip() else '' for t in lines]
+        firsts = [ts.split()[0].lower() if (ts := t.strip()) else '' for t in lines]
 
         def split2blocks(start: int) -> list[str]:
             if start >= len(lines):
                 return []
-            if firsts[start] not in pets_keywords.list:
+            if firsts[start] not in PETS_KEYWORDS.list:
                 return [lines[start]] + split2blocks(start + 1)
-            if pets_keywords.table.at[firsts[start], 'end'] == 'false':
+            if PETS_KEYWORDS.table.at[firsts[start], 'end'] == 'false':
                 return [lines[start]] + split2blocks(start + 1)
             try:
                 end = firsts.index('end' + firsts[start], start)
             except ValueError:
-                if pets_keywords.table.at[firsts[start], 'end'] == 'optional':
+                if PETS_KEYWORDS.table.at[firsts[start], 'end'] == 'optional':
                     return [lines[start]] + split2blocks(start + 1)
                 end = len(lines)
             return ['\n'.join(lines[start : end + 1])] + split2blocks(end + 1)
@@ -160,24 +88,20 @@ class PetsInputElement:
     def has_end(self):
         return (
             len(self.keywords) == 1
-            and self.keywords[0] in pets_keywords.list
-            and pets_keywords.table.at[self.keywords[0], 'end'] != 'false'
+            and self.keywords[0] in PETS_KEYWORDS.list
+            and PETS_KEYWORDS.table.at[self.keywords[0], 'end'] != 'false'
         )
 
     def build_string(self):
         if len(self.keywords) > 1:
             warn(f'Building `str(PetsInputElement)` with >1 keywords! {self.keywords}')
         prefix = [self.keywords[0]]
-        delimiter = '\n' if self.has_end() else ' '
-        suffix = [f'end{self.keywords[0]}'] if self.has_end() else []
+        delimiter = '\n' if (has_end := self.has_end()) else ' '
+        suffix = [f'end{self.keywords[0]}'] if has_end else []
         return delimiter.join(str(s) for s in prefix + self.values + suffix)
 
 
 AnyPetsInputElement = Union[PetsInputElement, str]
-
-
-class PetsInputWarning(UserWarning):
-    pass
 
 
 class PetsInputFactory:
@@ -190,6 +114,22 @@ class PetsInputFactory:
     and `config.camera.pets_suffix` (at the end of the file). When a duplicate
     `PetsInputElement` is to be added, it is ignored and a warning is raised.
     """
+
+    @classmethod
+    def get_prefix(cls) -> Union[str, None]:
+        return getattr(config.camera, 'pets_prefix', None)
+
+    @classmethod
+    def get_suffix(cls) -> Union[str, None]:
+        return getattr(config.camera, 'pets_suffix', None)
+
+    @classmethod
+    def get_title(cls) -> str:
+        return dedent(f"""
+        # PETS input file for Electron Diffraction generated by `instamatic`
+        # {str(ctime())}
+        # For definitions of input parameters, see: https://pets.fzu.cz/
+        """).strip()
 
     def __init__(self, elements: Optional[Iterable[AnyPetsInputElement]] = None) -> None:
         """As the input is built as we add, store current string & keywords."""
@@ -217,23 +157,16 @@ class PetsInputFactory:
 
     def compile(self, image_converter_attributes: dict) -> Self:
         """Build a full version of PETS input with title, prefix, suffix."""
-        title = dedent(f"""
-        # PETS input file for Electron Diffraction generated by `instamatic`
-        # {str(ctime())}
-        # For definitions of input parameters, see: https://pets.fzu.cz/
-        """).strip()
-        pets_element_list = [title]
+        pets_element_list = [self.get_title()]
 
-        prefix = getattr(config.camera, 'pets_prefix', None)
-        if prefix is not None:
+        if (prefix := self.get_prefix()) is not None:
             if image_converter_attributes is not None:
                 prefix = partial_formatter.format(prefix, **image_converter_attributes)
             pets_element_list.extend(PetsInputElement.list_from_text(prefix))
 
         pets_element_list.extend(self.current_elements)
 
-        suffix = getattr(config.camera, 'pets_suffix', None)
-        if suffix is not None:
+        if (suffix := self.get_suffix()) is not None:
             if image_converter_attributes is not None:
                 suffix = partial_formatter.format(suffix, **image_converter_attributes)
             pets_element_list.extend(PetsInputElement.list_from_text(suffix))
@@ -253,7 +186,7 @@ class PetsInputFactory:
 
 
 if __name__ == '__main__':
-    # test: find which keywords are added from prefix and suffix only
+    # check pets input added from config.camera.pets_prefix and _suffix only
     pif = PetsInputFactory().compile({})
     print('PETS DEFAULT INPUT (`config.camera.pets_prefix` + `suffix`:')
     print('---')
