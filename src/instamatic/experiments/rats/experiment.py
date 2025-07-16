@@ -71,8 +71,7 @@ class Run:
 
     @property
     def buffer(self) -> List[Tuple[int, np.ndarray, dict]]:
-        """Buffer-style list used of number, image, and meta used when
-        saving."""
+        """Buffer-style list used of (number, image, meta) used when saving."""
         return [(i, e.image, e.meta) for i, e in enumerate(self.experiments)]
 
     @property
@@ -100,14 +99,6 @@ class Run:
         # note CalibBeamShift uses swapped axes: X points down, Y points right
         beamshifts = beamshift.pixelcoord_to_beamshift(crystal_yxs)
         self.table[['beamshift_x', 'beamshift_y']] = beamshifts
-
-
-class BeamCenterRun(Run):
-    """A 1-image run designed to correct for clicking offset on beam center."""
-
-    @classmethod
-    def from_params(cls, params: Dict[str, Any]) -> Self:
-        return cls(exposure=params['tracking_time'], alpha=[0.0])
 
 
 class TrackingRun(Run):
@@ -185,7 +176,6 @@ class RatsExperiment(ExperimentBase):
         self.flatfield = flatfield
         self.rats_frame = rats_frame
         self.beamshift = self.get_beamshift()
-        self.alpha_mid: Optional[float] = None  # middle of tracking run
         self.camera_length: float = 0.0
         self.diffraction_mode: str = ''
 
@@ -297,14 +287,11 @@ class RatsExperiment(ExperimentBase):
 
             if params['tracking_mode'] == 'manual':
                 tracking_run = TrackingRun.from_params(params)
-                alignment_run = BeamCenterRun.from_params(params)
-                self.alpha_mid = tracking_run.table.loc[len(tracking_run.table) // 2, 'alpha']
-                alignment_run.table.loc[0, 'alpha'] = self.alpha_mid
                 self.restore_rats_diff_for_image()
-                self.collect_stills(alignment_run)
-                self.ctrl.restore('rats_track')
-                self.collect_stills(tracking_run)
-                self.resolve_tracking_delta_xy(alignment_run, tracking_run)
+                try:
+                    self.collect_tracking(tracking_run)
+                except RuntimeError:
+                    return False
             else:
                 tracking_run = None
 
@@ -322,6 +309,58 @@ class RatsExperiment(ExperimentBase):
             self.log.info(str(self.run))
             self.run_list.append(self.run)
             self.ctrl.stage.a = 0.0
+            return True
+
+    def collect_tracking(self, tracking_run: TrackingRun) -> None:
+        """Determine the target beam shifts `delta_x` and `delta_y` manually,
+        based on the beam center found life (to find clicking offset) and
+        `TrackingRun` to be used for crystal tracking in later experiment."""
+
+        self.ctrl.stage.a = tracking_run.table.loc[len(tracking_run.table) // 2, 'alpha']
+        with self.ctrl.beam.unblanked():
+            self.display_message('Please click on the center of the beam')
+            with self.click_listener as cl:
+                click = cl.get_click()
+                beam_center_x, beam_center_y = click.x, click.y
+
+        self.ctrl.restore('rats_track')
+        self.collect_stills(tracking_run)
+
+        # collecting tracking information
+        delta_xs, delta_ys = [], []
+        for expt in tracking_run.experiments:
+            with self.vsp.temporary_frame(expt.image):
+                m = f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
+                self.display_message(m)
+                with self.click_listener as cl:
+                    click = cl.get_click()
+                    delta_xs.append(click.x - beam_center_x)
+                    delta_ys.append(click.y - beam_center_y)
+            self.display_message('')
+        tracking_run.table['delta_x'] = delta_xs
+        tracking_run.table['delta_y'] = delta_ys
+
+        # plot tracking results
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.set_xlabel('alpha [degrees]')
+        ax1.set_ylabel('ΔX [pixels]')
+        ax2.set_ylabel('ΔY [pixels]')
+        ax1.yaxis.label.set_color('red')
+        ax2.yaxis.label.set_color('blue')
+        ax2.spines['left'].set_color('red')
+        ax2.spines['right'].set_color('blue')
+        ax1.tick_params(axis='y', colors='red')
+        ax2.tick_params(axis='y', colors='blue')
+        ax1.plot('alpha', 'delta_x', data=tracking_run.table, color='red', label='X')
+        ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
+        fig.tight_layout()
+        self.display_message('Tracking results: left-click to accept, right-click to reject.')
+        with self.vsp.temporary_figure(fig):
+            with self.click_listener as cl:
+                if cl.get_click().button != 1:
+                    self.display_message('Experiment abandoned after tracking')
+                    raise RuntimeError()
 
     def collect_stills(self, run) -> Run:
         images, metas = [], []
@@ -375,58 +414,6 @@ class RatsExperiment(ExperimentBase):
             run.table['meta'] = metas
         self.display_message('Collected alpha from {} to {}'.format(*run.scope))
         return run
-
-    def resolve_tracking_delta_xy(
-        self,
-        beam_center_run: BeamCenterRun,
-        tracking_run: TrackingRun,
-    ) -> None:
-        """Determine the target beam shifts `delta_x` and `delta_y` manually,
-        based on the `BeamCenterRun` (to find clicking offset) and
-        `TrackingRun` to be used later for crystal tracking in actual
-        experiment."""
-
-        # collecting diffraction beam center information
-        beam_image = beam_center_run.table['image'].iloc[0]
-
-        with self.vsp.temporary_frame(beam_image):
-            self.display_message('Please click on the center of the beam')
-            with self.click_listener as cl:
-                click = cl.get_click()
-                beam_center_x, beam_center_y = click.x, click.y
-
-        # collecting tracking information
-        delta_xs, delta_ys = [], []
-        for expt in tracking_run.experiments:
-            with self.vsp.temporary_frame(expt.image):
-                m = f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
-                self.display_message(m)
-                with self.click_listener as cl:
-                    click = cl.get_click()
-                    delta_xs.append(click.x - beam_center_x)
-                    delta_ys.append(click.y - beam_center_y)
-            self.display_message('')
-        tracking_run.table['delta_x'] = delta_xs
-        tracking_run.table['delta_y'] = delta_ys
-
-        # plot tracking results
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
-        ax1.set_xlabel('alpha [degrees]')
-        ax1.set_ylabel('ΔX [pixels]')
-        ax2.set_ylabel('ΔY [pixels]')
-        ax1.yaxis.label.set_color('red')
-        ax2.yaxis.label.set_color('blue')
-        ax2.spines['left'].set_color('red')
-        ax2.spines['right'].set_color('blue')
-        ax1.tick_params(axis='y', colors='red')
-        ax2.tick_params(axis='y', colors='blue')
-        ax1.plot('alpha', 'delta_x', data=tracking_run.table, color='red', label='X')
-        ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
-        fig.tight_layout()
-        with self.vsp.temporary_figure(fig):
-            with self.click_listener as cl:
-                _ = cl.get_click()
 
     def finalize(self):
         self.log.info(f'Saving experiment in: {self.path}')
