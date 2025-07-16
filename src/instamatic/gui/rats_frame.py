@@ -149,8 +149,7 @@ class ExperimentalRats(LabelFrame):
         diff_config = RatsConfigProxy('diff')
 
         text = 'Beam blank/unblank'
-        cmd = self.ctrl.beam.unblank if self.ctrl.beam.is_blanked else self.ctrl.beam.blank
-        beam_blank = Button(g, width=1, text=text, command=cmd)
+        beam_blank = Button(g, width=1, text=text, command=self.toggle_beam_blank)
         beam_blank.grid(row=10, column=0, **pad0)
 
         text = 'Image store'
@@ -219,6 +218,10 @@ class ExperimentalRats(LabelFrame):
         f.pack(side='bottom', fill='x', padx=10, pady=10)
 
         self.update_widget_state()
+
+    def toggle_beam_blank(self) -> None:
+        beam = self.ctrl.beam
+        (beam.unblank if beam.is_blanked else beam.blank)()
 
     def update_widget_state(self, *_, **__) -> None:
         eip = self.experiment_in_progress
