@@ -24,9 +24,11 @@ class VideoStreamFrameProtocol(Protocol):
 
 
 class DeferredImageDraw:
-    """Defer PIL.ImageDraw.ImageDraw method calls by putting them in deque."""
+    """Defer `ImageDraw` method calls: put them in deque, draw using `on`."""
 
     class Instruction(NamedTuple):
+        """Stores info about `ImageDraw` calls deferred by `__getattr__`."""
+
         attr_name: str
         args: tuple
         kwargs: dict[str, Any]
@@ -64,7 +66,7 @@ class DeferredImageDraw:
         return attr  # non-callable attr of self (if exists) or self._drawing
 
     def on(self, image: Image.Image) -> Image.Image:
-        """Core method: when called, draw all stored instructions on image."""
+        """Core method: draws all deferred `self.instructions` on image."""
         self._drawing = ImageDraw.Draw(image)
         for attr_name, args, kwargs in self.instructions:
             getattr(self._drawing, attr_name)(*args, **kwargs)
@@ -84,25 +86,25 @@ class DeferredImageDraw:
 
 
 class VideoStreamProcessor:
-    """Encapsulates processing and modifications to stream frame/image."""
+    """Encapsulate complex `VideoStreamFrame` frame/image processing."""
 
     def __init__(self, vsf: VideoStreamFrameProtocol) -> None:
-        self.vsf = vsf
-        self.draw = DeferredImageDraw()
+        self.vsf: VideoStreamFrameProtocol = vsf
+        self.draw: DeferredImageDraw = DeferredImageDraw()
         self.color_mode: Literal['L', 'RGB'] = 'RGB'
         self._temporary_frame: Optional[np.ndarray] = None
         self._temporary_image: Optional[PIL.Image.Image] = None
 
     @property
     def frame(self) -> Union[np.ndarray, None]:
-        """Request the raw numpy array frame from the current provider."""
+        """The raw `np.ndarray` frame from the stream or `_temporary_frame`"""
         if (temporary_frame := self._temporary_frame) is not None:
             return temporary_frame
         return self.vsf.stream.frame
 
     @property
     def image(self) -> Union[Image.Image, None]:
-        """Redraw overlay if `self.operations` changed, paste on the image."""
+        """Processed image with `draw.instructions`, or `_temporary_image`."""
         if (temporary_image := self._temporary_image) is not None:
             return temporary_image
         if (frame := self.frame) is not None:
@@ -122,7 +124,7 @@ class VideoStreamProcessor:
 
     @contextmanager
     def temporary_frame(self, frame: np.ndarray) -> Iterator[None]:
-        """Temporarily switch self.frame to a different static `np.array`."""
+        """Temporarily set `self.frame` to show a static `np.ndarray`."""
         try:
             self._temporary_frame = frame
             yield
@@ -131,7 +133,7 @@ class VideoStreamProcessor:
 
     @contextmanager
     def temporary_image(self, image: PIL.Image.Image) -> Iterator[None]:
-        """Temporarily switch self.image to a different `PIL.Image.Image`."""
+        """Temporarily set `self.image` to show a static `PIL.Image.Image`."""
         try:
             self._temporary_image = image
             yield
@@ -140,7 +142,7 @@ class VideoStreamProcessor:
 
     @contextmanager
     def temporary_figure(self, figure: Figure) -> Iterator[None]:
-        """Temporarily switch self.image to display a `mpl.figure.Figure`."""
+        """Temporarily set `self.image`: show a static `mpl.figure.Figure`."""
         buffer = io.BytesIO()
         dpi = min(self.vsf.stream.frame.shape / figure.get_size_inches())
         figure.savefig(buffer, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0)
