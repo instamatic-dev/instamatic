@@ -8,6 +8,7 @@ from typing import Union
 
 import numpy as np
 from PIL import Image, ImageTk
+from PIL.Image import Resampling
 
 from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
@@ -240,22 +241,17 @@ class VideoStreamFrame(LabelFrame):
 
     # @PerformanceTracker('150725_new_1000reds')
     def on_frame(self, event=None):
-        """Modified to use VideoStreamService frame property."""
+        """Get the newest image from `processor`, adapt to GUI and display."""
         if self.frame is not None:
             image = self.processor.image
-
             if self.resize_image:
-                image = image.resize((950, 950))
-
+                size = [2 * dim for dim in image.size]
+                image = image.resize(size=size, resample=Resampling.NEAREST)
             image = ImageTk.PhotoImage(image=image)
-
             self.panel.configure(image=image)
             # keep a reference to avoid premature garbage collection
             self.panel.image = image
-
         self.update_frametimes()
-        # self.parent.update_idletasks()
-
         self.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
