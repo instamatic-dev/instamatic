@@ -11,11 +11,9 @@ import numpy as np
 from PIL import Image, ImageTk
 from PIL.Image import Resampling
 
-from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.gui.videostream_processor import VideoStreamProcessor
-from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 
@@ -96,8 +94,12 @@ class VideoStreamFrame(LabelFrame):
         self.var_auto_contrast.trace_add('write', self.update_auto_contrast)
 
     def buttonbox(self, master):
-        btn = Button(master, text='Save image', command=self.saveImage)
-        btn.pack(side='bottom', fill='both', padx=10, pady=10)
+        btn_frame = Frame(master)
+        btn_frame.pack(side='bottom', fill=BOTH, padx=10, pady=10)
+        btn1 = Button(btn_frame, text='Save frame', command=self.save_frame)
+        btn1.pack(side=LEFT, expand=True, fill='both')
+        btn2 = Button(btn_frame, text='Save image', command=self.save_image)
+        btn2.pack(side=LEFT, expand=True, fill='both')
 
     @property
     def frame(self) -> Union[np.ndarray, None]:
@@ -219,9 +221,14 @@ class VideoStreamFrame(LabelFrame):
         except BaseException:
             pass
 
-    def saveImage(self):
-        """Dump the current frame to a file."""
-        self.q.put(('save_image', {'frame': self.frame}))
+    def save_frame(self):
+        """Save currently shown raw frame from the stream to a file in cwd."""
+        self.q.put(('save_frame', {'frame': self.frame}))
+        self.triggerEvent.set()
+
+    def save_image(self):
+        """Save currently shown, modified, & scaled image to a file in cwd."""
+        self.q.put(('save_image', {'image': self.processor.image}))
         self.triggerEvent.set()
 
     def set_trigger(self, trigger=None, q=None):
