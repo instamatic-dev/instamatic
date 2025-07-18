@@ -73,12 +73,10 @@ class CalibMovieDelays:
         calib_conditions = (exposure, header_keys, header_keys_common)
         calib = calib_map.get(calib_conditions, None)
         if calib is None:
-            header_keys_str = ','.join(header_keys)
-            header_keys_common_str = ','.join(header_keys_common)
             raise KeyError(
                 f'Calibration for conditions {calib_conditions} not found. '
                 f"Please run 'instamatic.calibrate_movie_delays -e {exposure:.6f} "
-                f'-a "{header_keys_str}" -c "{header_keys_common_str}" first.'
+                f"-a {header_keys} -c {header_keys_common}' first."
             )
         return calib
 
