@@ -163,9 +163,9 @@ class VideoStreamProcessor:
                 self.temporary_image = image
             elif figure is not None:
                 self.temporary_image = self.render_figure(figure)
+            yield
         finally:
             self.temporary_frame, self.temporary_image = pre_context_values
-            yield
 
     @property
     def temporary_figure(self) -> Figure:
