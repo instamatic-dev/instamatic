@@ -279,10 +279,15 @@ class VideoStreamFrame(LabelFrame):
         if not self.click_dispatcher.active:
             return
 
+        # Correct for window offset due to scrolling or not fitting on screen
+        p = self.panel
+        offset_x = (p.winfo_width() - p.image.width()) // 2
+        offset_y = (p.winfo_height() - p.image.height()) // 2
+
         # Convert window coordinates to image coordinates
         array_shape = self.frame.shape
-        x = round(event.x * array_shape[1] / self.panel.image.width())
-        y = round(event.y * array_shape[0] / self.panel.image.height())
+        x = round((event.x - offset_x) * array_shape[1] / p.image.width())
+        y = round((event.y - offset_y) * array_shape[0] / p.image.height())
         self.click_dispatcher.handle_click(x=x, y=y, button=event.num)
 
 
