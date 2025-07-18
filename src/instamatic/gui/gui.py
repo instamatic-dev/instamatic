@@ -127,19 +127,48 @@ class AppLoader:
         return self.modules[module]
 
 
-op = None
+# TODO: ONLY FOR DEVELOPMENT SHOWCASE PURPOSES, REMOVE AT PRODUCTION
+
+vertex_list: list[tuple[int, int]] = []
 
 
-def debug_print_click_coords(stream, click_event):
-    if not stream.processor.draw.instructions:
-        global op
-        for _ in range(1000):
-            op = stream.processor.draw.circle(
-                xy=(click_event.x, click_event.y), radius=10, outline='red', width=5
-            )
+def draw_clicks(stream, click_event):
+    print(f'Clicking: {click_event}')
+    global vertex_list
+    if stream.processor.temporary_image is not None:
+        stream.processor.temporary_image = None
+        return
+    if click_event.button == 1:
+        xy = (click_event.x, click_event.y)
+        circle = stream.processor.draw.circle(xy, radius=2, fill='red')
+        print(f'Drawing: {circle}')
+        if vertex_list:
+            last_xy = vertex_list[-1]
+            line = stream.processor.draw.line([xy, last_xy], width=2, fill='red')
+            print(f'Drawing: {line}')
+        vertex_list.append(xy)
     else:
+        import matplotlib.pyplot as plt
+
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.set_xlabel('click')
+        ax1.set_ylabel('X [pixels]')
+        ax2.set_ylabel('Y [pixels]')
+        ax1.yaxis.label.set_color('red')
+        ax2.yaxis.label.set_color('blue')
+        ax2.spines['left'].set_color('red')
+        ax2.spines['right'].set_color('blue')
+        ax1.tick_params(axis='y', colors='red')
+        ax2.tick_params(axis='y', colors='blue')
+        ax1.plot([v[0] for v in vertex_list], color='red', label='X')
+        ax2.plot([v[1] for v in vertex_list], color='blue', label='Y')
         stream.processor.draw.instructions.clear()
-    print(click_event.x, click_event.y, click_event.button)
+        stream.processor.temporary_image = stream.processor.render_figure(fig)
+        vertex_list = []
+
+
+# TODO: ONLY FOR DEVELOPMENT SHOWCASE PURPOSES, REMOVE AT PRODUCTION END
 
 
 class MainFrame:
@@ -166,12 +195,12 @@ class MainFrame:
         self.app = AppLoader()
         self.app.load(modules, self.module_frame)
 
+        # TODO: ONLY FOR DEVELOPMENT SHOWCASE PURPOSES, REMOVE AT PRODUCTION
         if cam:
             s = self.app.get_module('stream')
-            v = s.click_dispatcher.add_listener(
-                'video', lambda c: debug_print_click_coords(s, c)
-            )
+            v = s.click_dispatcher.add_listener('video', lambda c: draw_clicks(s, c))
             v.active = True
+        # TODO: ONLY FOR DEVELOPMENT SHOWCASE PURPOSES, REMOVE AT PRODUCTION END
 
         self.root.wm_title(instamatic.__long_title__)
         self.root.wm_protocol('WM_DELETE_WINDOW', self.close)

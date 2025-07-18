@@ -86,26 +86,41 @@ class DeferredImageDraw:
 
 
 class VideoStreamProcessor:
-    """Encapsulate complex `VideoStreamFrame` frame/image processing."""
+    """Encapsulate complex `VideoStreamFrame` frame/image processing.
+
+    This class handles converting mathematical operations behind efficiently
+    converting raw frames into images, rendering matplotlib figures as static
+    images in the video stream window, as well as drawing on top of images.
+
+    Streamed view can be altered by setting a temporary frame/image/figure.
+    Each of these can be set/reset via corresponding attribute, or set
+    temporarily via `with processor.temporary(frame/image/figure=...)` syntax.
+
+    Drawing is handled via the `draw` attribute of the `DeferredImageDraw`
+    class which acts as a deferred proxy for PIL.ImageDraw. Instructions,
+    instead of being applied directly on one frame only, are saved into the
+    `draw.instructions` deque and efficiently re-applied continuously.
+    """
 
     def __init__(self, vsf: VideoStreamFrameProtocol) -> None:
         self.vsf: VideoStreamFrameProtocol = vsf
         self.draw: DeferredImageDraw = DeferredImageDraw()
         self.color_mode: Literal['L', 'RGB'] = 'RGB'
-        self._temporary_frame: Optional[np.ndarray] = None
-        self._temporary_image: Optional[PIL.Image.Image] = None
+        self.temporary_frame: Optional[np.ndarray] = None
+        self.temporary_image: Optional[PIL.Image.Image] = None
+        self._temporary_figure: Optional[Figure] = None
 
     @property
     def frame(self) -> Union[np.ndarray, None]:
         """The raw `np.ndarray` frame from the stream or `_temporary_frame`"""
-        if (temporary_frame := self._temporary_frame) is not None:
+        if (temporary_frame := self.temporary_frame) is not None:
             return temporary_frame
         return self.vsf.stream.frame
 
     @property
     def image(self) -> Union[Image.Image, None]:
         """Processed image with `draw.instructions`, or `_temporary_image`."""
-        if (temporary_image := self._temporary_image) is not None:
+        if (temporary_image := self.temporary_image) is not None:
             return temporary_image
         if (frame := self.frame) is not None:
             if self.vsf.display_range != 255.0 or self.vsf.brightness != 1.0:
@@ -122,30 +137,41 @@ class VideoStreamProcessor:
             image = Image.fromarray(frame)
         return image
 
-    @contextmanager
-    def temporary_frame(self, frame: np.ndarray) -> Iterator[None]:
-        """Temporarily set `self.frame` to show a static `np.ndarray`."""
-        try:
-            self._temporary_frame = frame
-            yield
-        finally:
-            self._temporary_frame = None
-
-    @contextmanager
-    def temporary_image(self, image: PIL.Image.Image) -> Iterator[None]:
-        """Temporarily set `self.image` to show a static `PIL.Image.Image`."""
-        try:
-            self._temporary_image = image
-            yield
-        finally:
-            self._temporary_image = None
-
-    @contextmanager
-    def temporary_figure(self, figure: Figure) -> Iterator[None]:
-        """Temporarily set `self.image`: show a static `mpl.figure.Figure`."""
+    def render_figure(self, figure: Figure) -> PIL.Image.Image:
+        """Convert a `Figure` into a `Image` to allow a temporary render in
+        GUI."""
         buffer = io.BytesIO()
         dpi = min(self.vsf.stream.frame.shape / figure.get_size_inches())
         figure.savefig(buffer, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0)
         buffer.seek(0)
-        with self.temporary_image(Image.open(buffer).convert('RGBA')):
+        return Image.open(buffer).convert('RGBA')
+
+    @contextmanager
+    def temporary(
+        self,
+        *,
+        frame: Optional[np.ndarray] = None,
+        image: Optional[PIL.Image.Image] = None,
+        figure: Optional[Figure] = None,
+    ) -> Iterator[None]:
+        """Temporarily set alt temporary_frame/image via `with` statement."""
+        pre_context_values = self.temporary_frame, self.temporary_image
+        try:
+            if frame is not None:
+                self.temporary_frame = frame
+            if image is not None:
+                self.temporary_image = image
+            elif figure is not None:
+                self.temporary_image = self.render_figure(figure)
+        finally:
+            self.temporary_frame, self.temporary_image = pre_context_values
             yield
+
+    @property
+    def temporary_figure(self) -> Figure:
+        return self._temporary_figure
+
+    @temporary_figure.setter
+    def temporary_figure(self, figure: Union[Figure, None]) -> None:
+        self._temporary_figure = figure
+        self.temporary_image = self.render_figure(figure) if figure else None
