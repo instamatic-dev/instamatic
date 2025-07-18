@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from tkinter import *
+from tkinter import Label as TkLabel
 from tkinter.ttk import *
 from typing import Union
 
@@ -178,8 +179,7 @@ class VideoStreamFrame(LabelFrame):
         if self.panel is None:
             image = Image.fromarray(np.zeros(resolution))
             image = ImageTk.PhotoImage(image)
-
-            self.panel = Label(master, image=image)
+            self.panel = TkLabel(master, image=image, borderwidth=0)
             self.panel.image = image
             self.panel.pack(side='left', padx=10, pady=10)
 
@@ -282,12 +282,9 @@ class VideoStreamFrame(LabelFrame):
             return
 
         # Convert window coordinates to image coordinates
-        panel_width: int = self.panel.winfo_width()
-        panel_height: int = self.panel.winfo_height()
         array_shape = self.frame.shape
-        x = round(event.x * array_shape[1] / panel_width)
-        y = round(event.y * array_shape[0] / panel_height)
-
+        x = round(event.x * array_shape[1] / self.panel.image.width())
+        y = round(event.y * array_shape[0] / self.panel.image.height())
         self.click_dispatcher.handle_click(x=x, y=y, button=event.num)
 
 
