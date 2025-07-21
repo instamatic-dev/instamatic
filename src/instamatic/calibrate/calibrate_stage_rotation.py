@@ -4,13 +4,14 @@ import abc
 import dataclasses
 import logging
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional, Self, Sequence, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from scipy.optimize import curve_fit
 from tqdm import tqdm
+from typing_extensions import Self
 
 from instamatic._collections import timer
 from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION
