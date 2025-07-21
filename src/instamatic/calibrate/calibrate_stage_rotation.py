@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HELPER OBJECTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-def alternating_array(len_: int) -> np.ndarray:
+def alternating_ones(len_: int) -> np.ndarray:
     """Returning a `len_`-long numpy array of alternating 1 and -1."""
     alt = np.ones(len_)
     alt[1::2] = -1
@@ -277,6 +277,15 @@ def calibrate_stage_rotation_live(
     -  60 calib. points: pace 1202+/-04, windup -22+/-031, delay 51+/-06
     - 120 calib. points: pace 1198+/-03, windup   2+/-020, delay 53+/-04
 
+    By default, this function will try testing for rotation speeds of
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] i.e. JEOL settings first, and
+    [0,1. 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] i.e. FEI settings after.
+    However, it is worth noting that a microscope might technically support
+    every speed setting above while in practice introduce linear changed
+    only in its limited range, e.g. up to 0.25, as noted on a FEI Tecnai.
+    It is advised to look for irregularities during calibration and limit
+    the calibration only to the range of speeds that will be used in practice.
+
     ctrl: instance of `TEMController`
         contains tem + cam interface
     alpha_spans: `Optional[Sequence[float]]`
@@ -290,14 +299,13 @@ def calibrate_stage_rotation_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    alpha_spans = np.array(alpha_spans or np.array([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]))
-    alpha_targets = np.cumsum(alpha_spans * alternating_array(len(alpha_spans)))
+    alpha_spans = np.array(alpha_spans or np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+    alpha_targets = np.cumsum(alpha_spans * alternating_ones(len(alpha_spans)))
 
     calib_points: List[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
     starting_stage_speed = ctrl.stage.get_rotation_speed()
-    if ctrl.cam.streamable:
-        ctrl.cam.block()  # noqa - limits any disturbants
+    ctrl.cam.block()
     try:
         try:
             ctrl.stage.set_rotation_speed(12)
@@ -325,8 +333,7 @@ def calibrate_stage_rotation_live(
     finally:
         ctrl.stage.set(a=starting_stage_alpha)
         ctrl.stage.set_rotation_speed(starting_stage_speed)
-        if ctrl.cam.streamable:
-            ctrl.cam.unblock()  # noqa - streamable cams have unblock()
+        ctrl.cam.unblock()
 
     for cp in calib_points:
         print(cp)
