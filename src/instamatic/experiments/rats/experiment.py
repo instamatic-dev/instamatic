@@ -329,7 +329,7 @@ class RatsExperiment(ExperimentBase):
         # collecting tracking information
         delta_xs, delta_ys = [], []
         for expt in tracking_run.experiments:
-            with self.vsp.temporary_frame(expt.image):
+            with self.vsp.temporary(frame=expt.image):
                 m = f'Please click on the crystal (image={expt.Index}, alpha={expt.alpha}°)'
                 self.display_message(m)
                 with self.click_listener as cl:
@@ -356,7 +356,7 @@ class RatsExperiment(ExperimentBase):
         ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
         fig.tight_layout()
         self.display_message('Tracking results: left-click to accept, right-click to reject.')
-        with self.vsp.temporary_figure(fig):
+        with self.vsp.temporary(figure=fig):
             with self.click_listener as cl:
                 if cl.get_click().button != 1:
                     self.display_message('Experiment abandoned after tracking')
