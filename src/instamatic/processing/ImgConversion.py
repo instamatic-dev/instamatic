@@ -652,9 +652,9 @@ class ImgConversion:
         sign = 1 if self.start_angle < self.end_angle else -1
         omega = np.degrees(self.rotation_axis) % 360
 
-        if 'continuous' in self.method:
+        if 'continuous' in self.method.lower():
             geometry = 'continuous'
-        elif 'precess' in self.method:
+        elif 'precess' in self.method.lower():
             geometry = 'precession'
         else:
             geometry = 'static'
