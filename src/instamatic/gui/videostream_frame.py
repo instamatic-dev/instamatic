@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import threading
 import time
+from datetime import datetime
 from tkinter import *
-from tkinter import Label as TkLabel
 from tkinter.ttk import *
-from typing import Union
 
 import numpy as np
-from PIL import Image, ImageTk
-from PIL.Image import Resampling
+from PIL import Image, ImageEnhance, ImageTk
 
+from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule
 from instamatic.gui.click_dispatcher import ClickDispatcher
-from instamatic.gui.videostream_processor import VideoStreamProcessor
+from instamatic.processing.flatfield import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 
@@ -70,7 +69,6 @@ class VideoStreamFrame(LabelFrame):
 
         self.click_dispatcher = ClickDispatcher()
         self.panel.bind('<Button>', self.on_click)
-        self.processor = VideoStreamProcessor(self)
 
     def init_vars(self):
         self.var_fps = DoubleVar()
@@ -94,17 +92,8 @@ class VideoStreamFrame(LabelFrame):
         self.var_auto_contrast.trace_add('write', self.update_auto_contrast)
 
     def buttonbox(self, master):
-        btn_frame = Frame(master)
-        btn_frame.pack(side='bottom', fill=BOTH, padx=10, pady=10)
-        btn1 = Button(btn_frame, text='Save frame', command=self.save_frame)
-        btn1.pack(side=LEFT, expand=True, fill='both')
-        btn2 = Button(btn_frame, text='Save image', command=self.save_image)
-        btn2.pack(side=LEFT, expand=True, fill='both')
-
-    @property
-    def frame(self) -> Union[np.ndarray, None]:
-        """Raw image frame from the camera."""
-        return self.processor.frame
+        btn = Button(master, text='Save image', command=self.saveImage)
+        btn.pack(side='bottom', fill='both', padx=10, pady=10)
 
     def header(self, master):
         ewidth = 8
@@ -180,9 +169,13 @@ class VideoStreamFrame(LabelFrame):
         if self.panel is None:
             image = Image.fromarray(np.zeros(resolution))
             image = ImageTk.PhotoImage(image)
-            self.panel = TkLabel(master, image=image, borderwidth=0)
+
+            self.panel = Label(master, image=image)
             self.panel.image = image
             self.panel.pack(side='left', padx=10, pady=10)
+
+    def setup_stream(self):
+        pass
 
     def update_resize_image(self, name, index, mode):
         # print name, index, mode
@@ -221,14 +214,9 @@ class VideoStreamFrame(LabelFrame):
         except BaseException:
             pass
 
-    def save_frame(self):
-        """Save currently shown raw frame from the stream to a file in cwd."""
-        self.q.put(('save_frame', {'frame': self.frame}))
-        self.triggerEvent.set()
-
-    def save_image(self):
-        """Save currently shown, modified, & scaled image to a file in cwd."""
-        self.q.put(('save_image', {'image': self.processor.image}))
+    def saveImage(self):
+        """Dump the current frame to a file."""
+        self.q.put(('save_image', {'frame': self.frame}))
         self.triggerEvent.set()
 
     def set_trigger(self, trigger=None, q=None):
@@ -246,17 +234,33 @@ class VideoStreamFrame(LabelFrame):
         self.after(500, self.on_frame)
 
     def on_frame(self, event=None):
-        """Get the newest image from `processor`, adapt to GUI and display."""
-        if self.frame is not None:
-            image = self.processor.image
+        self.stream.lock.acquire(True)
+        self.frame = frame = self.stream.frame
+        self.stream.lock.release()
+
+        if frame is not None:
+            # the display range in ImageTk is from 0 to 255
+            if self.display_range != 255.0 or self.brightness != 1.0:
+                if self.auto_contrast:
+                    display_range = 1 + np.percentile(frame[::4, ::4], 99.5)
+                else:
+                    display_range = self.display_range
+                frame = (self.brightness * 255 / display_range) * frame
+            frame = np.clip(frame.astype(np.int16), 0, 255).astype(np.uint8)
+            image = Image.fromarray(frame)
+
             if self.resize_image:
-                size = [2 * dim for dim in image.size]
-                image = image.resize(size=size, resample=Resampling.NEAREST)
+                image = image.resize((950, 950))
+
             image = ImageTk.PhotoImage(image=image)
+
             self.panel.configure(image=image)
             # keep a reference to avoid premature garbage collection
             self.panel.image = image
+
         self.update_frametimes()
+        # self.parent.update_idletasks()
+
         self.after(self.frame_delay, self.on_frame)
 
     def update_frametimes(self):
@@ -286,15 +290,13 @@ class VideoStreamFrame(LabelFrame):
         if not self.click_dispatcher.active:
             return
 
-        # Correct for window offset due to scrolling or not fitting on screen
-        p = self.panel
-        offset_x = (p.winfo_width() - p.image.width()) // 2
-        offset_y = (p.winfo_height() - p.image.height()) // 2
-
         # Convert window coordinates to image coordinates
+        panel_width: int = self.panel.winfo_width()
+        panel_height: int = self.panel.winfo_height()
         array_shape = self.frame.shape
-        x = round((event.x - offset_x) * array_shape[1] / p.image.width())
-        y = round((event.y - offset_y) * array_shape[0] / p.image.height())
+        x = round(event.x * array_shape[1] / panel_width)
+        y = round(event.y * array_shape[0] / panel_height)
+
         self.click_dispatcher.handle_click(x=x, y=y, button=event.num)
 
 

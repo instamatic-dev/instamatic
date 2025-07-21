@@ -9,10 +9,7 @@ from __future__ import annotations
 import time
 from datetime import datetime
 
-import PIL.Image
-
 from instamatic.formats import read_tiff, write_tiff
-from instamatic.processing.flatfield import apply_flatfield_correction
 
 
 def microscope_control(controller, **kwargs):
@@ -34,7 +31,7 @@ def collect_flatfield(controller, **kwargs):
     flatfield.collect_flatfield(controller.ctrl, confirm=False, drc=drc, **kwargs)
 
 
-def save_frame(controller, **kwargs):
+def save_image(controller, **kwargs):
     frame = kwargs.get('frame')
 
     module_io = controller.app.get_module('io')
@@ -42,7 +39,9 @@ def save_frame(controller, **kwargs):
     drc = module_io.get_experiment_directory()
     drc.mkdir(exist_ok=True, parents=True)
 
-    timestamp = datetime.now().strftime('%H-%M-%S.%f')[:-3]  # cut last 3 digits for ms res.
+    timestamp = datetime.now().strftime('%H-%M-%S.%f')[
+        :-3
+    ]  # cut last 3 digits for ms resolution
     outfile = drc / f'frame_{timestamp}.tiff'
 
     try:
@@ -54,15 +53,6 @@ def save_frame(controller, **kwargs):
 
     write_tiff(outfile, frame, header=h)
     print('Wrote file:', outfile)
-
-
-def save_image(controller, image: PIL.Image.Image, **_):
-    drc = controller.app.get_module('io').get_experiment_directory()
-    drc.mkdir(exist_ok=True, parents=True)
-    timestamp = datetime.now().strftime('%H-%M-%S.%f')[:-3]  # cut last 3 digits for ms res.
-    out_path = drc / f'image_{timestamp}.png'
-    image.save(out_path, format='PNG')
-    print('Wrote file:', out_path)
 
 
 def toggle_difffocus(controller, **kwargs):
@@ -95,7 +85,6 @@ def relax_beam(controller, **kwargs):
 JOBS = {
     'ctrl': microscope_control,
     'flatfield': collect_flatfield,
-    'save_frame': save_frame,
     'save_image': save_image,
     'toggle_difffocus': toggle_difffocus,
     'relax_beam': relax_beam,
