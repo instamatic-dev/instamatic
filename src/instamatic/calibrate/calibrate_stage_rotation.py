@@ -19,26 +19,13 @@ from instamatic.config import calibration_drc
 logger = logging.getLogger(__name__)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HELPER OBJECTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
-def alternating_ones(len_: int) -> np.ndarray:
-    """Returning a `len_`-long numpy array of alternating 1 and -1."""
-    alt = np.ones(len_)
-    alt[1::2] = -1
-    return alt
-
-
 def log(s: str) -> None:
     logger.info(s)
     print(s)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ NEAREST FLOAT OPTION ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 class FloatOptions:
-    """Store valid float options, help finding the nearest available one."""
+    """Store valid float options & help finding the nearest available one."""
 
     def __new__(cls, *args, **kwargs):
         """Initialize one of subclasses based on the contents of kwargs."""
@@ -91,9 +78,6 @@ FEI_ROTATION_SPEED_OPTIONS = FloatOptionsLimited(lower_lim=0.0, upper_lim=1.0)
 JEOL_ROTATION_SPEED_OPTIONS = FloatOptionsListed(options=list(range(1, 13)))
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ROTATION PLAN ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
-
 @dataclasses.dataclass
 class RotationPlan:
     """A set of rotation parameters that are the nearest to ones requested."""
@@ -101,9 +85,6 @@ class RotationPlan:
     pace: float  # time it takes to cover 1 degree for a moving goniometer
     speed: float  # speed setting that needs to be set to get desired pace
     total_delay: float  # total goniometer delay: delay + alpha_windup / speed
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~ ROTATION CALIBRATION CLASS ~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 class CalibStageRotation:
@@ -224,6 +205,8 @@ class CalibStageRotation:
 
 
 class SpanSpeedTime(NamedTuple):
+    """Holds a single measurement point used to calibrate rotation speed."""
+
     span: float  # alpha span traveled by the goniometer expressed in degrees
     speed: float  # nearest available speed setting expressed in arbitrary units
     time: float  # time taken to travel span with speed expressed in seconds
@@ -233,7 +216,7 @@ def plot_stage_rotation(
     calib: CalibStageRotation,
     sst: Optional[List[SpanSpeedTime]] = None,
 ) -> None:
-    """Plot calib w/measurement results (either simulated or experimental)."""
+    """Plot calib & measurement results (either simulated or experimental)."""
     if sst is None:
         spans = np.linspace(0.1, 1.0, 10, endpoint=True)
         if isinstance(calib.speed_options, FloatOptionsLimited):
@@ -266,9 +249,6 @@ def plot_stage_rotation(
     ax.set_title('Stage rotation time vs. alpha span at different speeds')
     ax.legend()
     plt.show()
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~ ROTATION CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 def calibrate_stage_rotation_live(
@@ -310,7 +290,8 @@ def calibrate_stage_rotation_live(
     """
 
     alpha_spans = np.array(alpha_spans or np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
-    alpha_targets = np.cumsum(alpha_spans * alternating_ones(len(alpha_spans)))
+    alternating_ones = np.ones(len(alpha_spans)) * (-1) ** np.arange(len(alpha_spans))
+    alpha_targets = np.cumsum(alpha_spans * alternating_ones)
 
     calib_points: List[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
@@ -366,9 +347,6 @@ def calibrate_stage_rotation_live(
         plot_stage_rotation(c, calib_points)
 
     return c
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ STANDALONE COMMAND ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 def main_entry() -> None:
