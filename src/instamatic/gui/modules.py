@@ -10,6 +10,7 @@ from .jobs import JOBS  # Import central list of jobs
 logger = logging.getLogger(__name__)
 
 all_modules = (
+    'rats',
     'cred',
     'cred_tvips',
     'cred_fei',
