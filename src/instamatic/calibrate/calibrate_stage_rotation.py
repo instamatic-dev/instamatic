@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import abc
-import contextlib
 import dataclasses
-import json
 import logging
-import time as time_module
 from pathlib import Path
-from typing import Callable, Dict, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Self, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 from scipy.optimize import curve_fit
 from tqdm import tqdm
 
+from instamatic._collections import timer
 from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION
 from instamatic.config import calibration_drc
 
@@ -33,14 +32,6 @@ def alternating_ones(len_: int) -> np.ndarray:
 def log(s: str) -> None:
     logger.info(s)
     print(s)
-
-
-@contextlib.contextmanager
-def timer() -> Callable[[], float]:
-    """Returns a callable with time it took to run wrapped code in seconds."""
-    t1 = t2 = time_module.perf_counter()
-    yield lambda: t2 - t1
-    t2 = time_module.perf_counter()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~ NEAREST FLOAT OPTION ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -69,7 +60,7 @@ class FloatOptions:
         """Find and return the nearest available float option (L^1 norm)."""
 
     @classmethod
-    def from_dict(cls, dict_: dict) -> FloatOptions:
+    def from_dict(cls, dict_: dict) -> Self:
         """Initialize self from a dict to allow easy serialization."""
         return cls(**dict_)
 
@@ -206,8 +197,8 @@ class CalibStageRotation:
         if path is None:
             path = Path(calibration_drc) / CALIB_STAGE_ROTATION
         try:
-            with open(Path(path), 'r') as json_file:
-                return cls.from_dict(json.load(json_file))
+            with open(Path(path), 'r') as yaml_file:
+                return cls.from_dict(yaml.safe_load(yaml_file))
         except OSError as e:
             prog = 'instamatic.calibrate_stage_rotation'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
@@ -217,43 +208,19 @@ class CalibStageRotation:
         return calibrate_stage_rotation_live(ctrl=ctrl, **kwargs)
 
     def to_dict(self) -> dict:
-        return {k: v if isinstance(v, float) else v.to_dict() for k, v in vars(self).items()}
+        return {
+            k: float(v) if isinstance(v, float) else v.to_dict() for k, v in vars(self).items()
+        }
 
     def to_file(self, path: Optional[str] = None) -> None:
         if path is None:
             path = Path(calibration_drc) / CALIB_STAGE_ROTATION
-        with open(Path(path), 'w') as json_file:
-            json.dump(self.to_dict(), json_file)
+        with open(Path(path), 'w') as yaml_file:
+            d = self.to_dict()
+            for k, v in d.items():
+                print(f'{k} {type(k)} {v} {type(v)}')
+            yaml.safe_dump(self.to_dict(), yaml_file)
         log(f'{self} saved to {path}.')
-
-    def plot(self) -> None:
-        spans = np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-        if type(self.speed_options) is FloatOptionsLimited:
-            so: FloatOptionsLimited = self.speed_options  # noqa
-            speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
-        else:  # if type(self.speed_options) is FloatOptionsListed:
-            speeds = self.speed_options.options  # noqa - has options
-        speeds = [s for s in speeds if s != 0]
-
-        fig, ax = plt.subplots()
-        ax.axvline(x=0, color='k')
-        ax.axhline(y=0, color='k')
-        ax.axhline(y=self.delay, color='r')
-
-        colors = plt.colormaps['viridis'](np.linspace(0, 1, num=len(speeds)))
-        for color, speed in zip(colors, speeds):
-            print(f'{speed}: {color}')
-            times = [self.span_speed_to_time(s, speed) for s in spans]
-            ax.plot(spans, times, color=color, label=f'Speed setting {speed:.2f}')
-
-        ax.set_xlabel('Alpha span [degrees]')
-        ax.set_ylabel('Time required [s]')
-        ax.set_title('Stage rotation time vs. alpha span at different speeds')
-        ax.legend()
-        plt.show()
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~ ROTATION CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 class SpanSpeedTime(NamedTuple):
@@ -262,11 +229,54 @@ class SpanSpeedTime(NamedTuple):
     time: float  # time taken to travel span with speed expressed in seconds
 
 
+def plot_stage_rotation(
+    calib: CalibStageRotation,
+    sst: Optional[List[SpanSpeedTime]] = None,
+) -> None:
+    """Plot calib w/measurement results (either simulated or experimental)."""
+    if sst is None:
+        spans = np.linspace(0.1, 1.0, 10, endpoint=True)
+        if isinstance(calib.speed_options, FloatOptionsLimited):
+            so: FloatOptionsLimited = calib.speed_options
+            speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
+        else:  # isinstance(calib.speed_options, FloatOptionsListed):
+            speeds = self.speed_options.options  # noqa - has options
+        speeds = [s for s in speeds if s != 0]
+        sst = []
+        for s1 in spans:
+            for s2 in speeds:
+                sst.append(SpanSpeedTime(s1, s2, calib.span_speed_to_time(s1, s2)))
+    else:
+        sst = sorted(sst)
+
+    fig, ax = plt.subplots()
+    ax.axvline(x=0, color='k')
+    ax.axhline(y=0, color='k')
+    ax.axhline(y=calib.delay, color='r')
+
+    speeds = list(dict.fromkeys(s.speed for s in sst).keys())
+    colors = plt.colormaps['viridis'](np.linspace(0, 1, num=len(speeds)))
+    for color, speed in zip(colors, speeds):
+        spans = [s.span for s in sst if s.speed == speed]
+        times = [s.time for s in sst if s.speed == speed]
+        ax.plot(spans, times, color=color, label=f'Speed setting {speed:.2f}')
+
+    ax.set_xlabel('Alpha span [degrees]')
+    ax.set_ylabel('Time required [s]')
+    ax.set_title('Stage rotation time vs. alpha span at different speeds')
+    ax.legend()
+    plt.show()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~ ROTATION CALIBRATION SCRIPT ~~~~~~~~~~~~~~~~~~~~~~~ #
+
+
 def calibrate_stage_rotation_live(
     ctrl: 'TEMController',
     alpha_spans: Optional[Sequence[float]] = None,
     speed_range: Optional[Sequence[float]] = None,
     outdir: Optional[str] = None,
+    plot: Optional[bool] = None,
 ) -> CalibStageRotation:
     """Calibrate stage rotation speed live on the microscope. By default, this
     is run with a large precision and should take between 5 and 15 min. Can be
@@ -335,18 +345,15 @@ def calibrate_stage_rotation_live(
         ctrl.stage.set_rotation_speed(starting_stage_speed)
         ctrl.cam.unblock()
 
-    for cp in calib_points:
-        print(cp)
     calib_points_array = np.array(calib_points).T
     all_spans_speeds = calib_points_array[:2]
     all_times = calib_points_array[2]
     f = CalibStageRotation.curve_fit_model
-    with timer() as t:
-        p = curve_fit(f, all_spans_speeds, ydata=all_times, p0=[1, 0, 0])
+    p = curve_fit(f, all_spans_speeds, ydata=all_times, p0=[1, 0, 0])
     (alpha_pace, alpha_windup, delay), p_cov = p  # noqa - this unpacking is OK
     alpha_pace_u, alpha_windup_u, delay_u = np.sqrt(np.diag(p_cov))
 
-    log(f'Stage rotation speed calibration fit complete in {t()} seconds.')
+    log('Stage rotation speed calibration fit complete:')
     log(f'alpha_pace   = {alpha_pace:12.6f} +/- {alpha_pace_u:12.6f} s / deg')
     log(f'alpha_windup = {alpha_windup:12.6f} +/- {alpha_windup_u:12.6f} s')
     log(f'delay        = {delay:12.6f} +/- {delay_u:12.6f} s')
@@ -354,6 +361,10 @@ def calibrate_stage_rotation_live(
 
     c = CalibStageRotation(*p[0], speed_options=speed_options)
     c.to_file(None if outdir is None else Path(outdir) / CALIB_STAGE_ROTATION)
+    if plot:
+        log('Attempting to plot calibration results.')
+        plot_stage_rotation(c, calib_points)
+
     return c
 
 
@@ -382,11 +393,14 @@ def main_entry() -> None:
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
     parser.add_argument('-o', '--outdir', type=str, help=h)
 
+    h = 'After calibration, attempt to `--plot` / `--no-plot` its results'
+    parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
+
     options = parser.parse_args()
 
     from instamatic import controller
 
-    kwargs = {}
+    kwargs = {'plot': options.plot}
     if options.alphas:
         kwargs['alpha_spans'] = [float(a) for a in options.alphas.split(',')]
     if options.speeds:

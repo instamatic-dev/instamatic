@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import contextlib
 import string
+import time
 from collections import UserDict
-from typing import Any, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 
 class NoOverwriteDict(UserDict):
@@ -54,3 +56,11 @@ class SubclassRegistryMeta(type):
             cls.REGISTRY = NoOverwriteDict()
         if bases:  # Avoid registering the base class itself
             cls.REGISTRY[name] = cls
+
+
+@contextlib.contextmanager
+def timer() -> Callable[[], float]:
+    """Returns a callable with time it took to run wrapped code in seconds."""
+    t1 = t2 = time.perf_counter()
+    yield lambda: t2 - t1
+    t2 = time.perf_counter()
