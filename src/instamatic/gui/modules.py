@@ -10,7 +10,7 @@ from .jobs import JOBS  # Import central list of jobs
 logger = logging.getLogger(__name__)
 
 all_modules = (
-    'rats',
+    'fast_adt',
     'cred',
     'cred_tvips',
     'cred_fei',
@@ -48,7 +48,7 @@ for module in modules:
     try:
         for job, function in lib.commands.items():
             if job in JOBS:
-                logger.info(f'New job `{job}` already exists in `JOBS` listsing!')
+                logger.info(f'New job `{job}` already exists in `JOBS` listing!')
             else:
                 JOBS[job] = function
     except AttributeError:

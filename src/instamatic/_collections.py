@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import string
 from collections import UserDict
 from typing import Any, Dict, Tuple
@@ -12,6 +13,13 @@ class NoOverwriteDict(UserDict):
         if key in self.data:
             raise KeyError(f'Key "{key}" already exists and cannot be overwritten.')
         super().__setitem__(key, value)
+
+
+class NullLogger(logging.Logger):
+    def __init__(self, name='null'):
+        super().__init__(name)
+        self.addHandler(logging.NullHandler())
+        self.propagate = False
 
 
 class PartialFormatter(string.Formatter):
