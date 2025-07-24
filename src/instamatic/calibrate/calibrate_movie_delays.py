@@ -190,8 +190,8 @@ class CalibMovieDelaysMapping(MutableMapping):
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
-            with open(Path(path), 'r') as json_file:
-                return cls.from_list(yaml.safe_load(json_file))
+            with open(Path(path), 'r') as yaml_file:
+                return cls.from_list(yaml.safe_load(yaml_file))
         except OSError as e:
             prog = 'instamatic.calibrate_movie_delays'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
@@ -202,6 +202,7 @@ class CalibMovieDelaysMapping(MutableMapping):
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         with open(Path(path), 'w') as json_file:
             yaml.safe_dump(self.to_list(), json_file)
+        log(f'{self} saved to {path}.')
 
 
 class MovieTimes:
