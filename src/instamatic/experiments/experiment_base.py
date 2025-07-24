@@ -9,7 +9,11 @@ class ExperimentBase(ABC):
     """Experiment base class."""
 
     @abstractmethod
-    def start_collection(self):
+    def __init__(self, *args, **kwargs) -> None:
+        pass
+
+    @abstractmethod
+    def start_collection(self, **kwargs):
         pass
 
     def setup(self):

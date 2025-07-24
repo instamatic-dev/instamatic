@@ -76,7 +76,7 @@ class Stage:
             speed=speed,
         )
 
-    def set_rotation_speed(self, speed: Union[float, int] = 1) -> None:
+    def set_rotation_speed(self, speed: Number = 1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
         self._tem.setRotationSpeed(value=speed)
 
