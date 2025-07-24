@@ -152,7 +152,7 @@ class DiffractionRun(Run):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EXPERIMENT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
-class FastADTExperiment(ExperimentBase):
+class Experiment(ExperimentBase):
     """Initialize a FastADT-style rotation electron diffraction experiment.
 
     ctrl:
@@ -194,14 +194,18 @@ class FastADTExperiment(ExperimentBase):
         self.log = log or NullLogger()
         self.flatfield = flatfield
         self.fast_adt_frame = experiment_frame
-        self.beamshift = self.get_beamshift()
+        self.beamshift: Optional[CalibBeamShift] = None
         self.camera_length: int = 0
         self.diffraction_mode: str = ''
 
-        d = videostream_frame.click_dispatcher
-        n = self.name
-        self.click_listener = c if (c := d.listeners.get(n)) else d.add_listener(n)
-        self.videostream_processor = videostream_frame.processor
+        if videostream_frame is not None:
+            d = videostream_frame.click_dispatcher
+            n = self.name
+            self.click_listener = c if (c := d.listeners.get(n)) else d.add_listener(n)
+            self.videostream_processor = videostream_frame.processor
+        else:  # needed only for manual tracking
+            self.click_listener = None
+            self.videostream_processor = None
 
         self.steps_queue: Queue[Union[Step, None]] = Queue()
         self.run: Optional[Run] = None
@@ -216,11 +220,11 @@ class FastADTExperiment(ExperimentBase):
         self.ctrl.magnification.value = tracking_magnification
 
     def get_beamshift(self) -> CalibBeamShift:
+        """Must follow `self.restore_fast_adt_diff_for_image()` to see beam."""
         calib_dir = self.path.parent / 'calib'
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
         except OSError:
-            self.restore_fast_adt_diff_for_image()
             return CalibBeamShift.live(self.ctrl, outdir=calib_dir)
 
     def get_dead_time(
@@ -298,6 +302,7 @@ class FastADTExperiment(ExperimentBase):
         `TrackingRun` to be used for crystal tracking in later experiment."""
 
         self.restore_fast_adt_diff_for_image()
+        self.beamshift = self.get_beamshift()
         self.ctrl.stage.a = run.table.loc[len(run.table) // 2, 'alpha']
         with self.ctrl.beam.unblanked():
             self.msg('Collecting tracking. Click on the center of the beam.')

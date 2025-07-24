@@ -222,7 +222,7 @@ def fast_adt_interface_command(controller, **params: Any) -> None:
     videostream_frame = controller.app.get_module('stream')
     exp_dir.mkdir(exist_ok=True, parents=True)
 
-    controller.fast_adt = fast_adt_module.FastADTExperiment(
+    controller.fast_adt = fast_adt_module.Experiment(
         ctrl=controller.ctrl,
         path=exp_dir,
         log=controller.log,
