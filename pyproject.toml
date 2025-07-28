@@ -104,6 +104,7 @@ publishing = [
 "instamatic.calibrate_movie_delays" = "instamatic.calibrate.calibrate_movie_delays:main_entry"
 "instamatic.flatfield" = "instamatic.processing.flatfield:main_entry"
 "instamatic.stretch_correction" = "instamatic.processing.stretch_correction:main_entry"
+"instamatic.calibrate_stage_rotation" = "instamatic.calibrate.calibrate_stage_lowmag:main_entry"
 # tools
 "instamatic.browser" = "scripts.browser:main"
 "instamatic.viewer" = "scripts.viewer:main"
