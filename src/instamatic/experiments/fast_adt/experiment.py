@@ -329,7 +329,8 @@ class Experiment(ExperimentBase):
     def collect_stills(self, run: Run) -> None:
         self.msg('Collecting stills from {} to {} degree'.format(*run.scope))
         images, metas = [], []
-        if has_beamshifts := {'delta_x', 'delta_y'}.issubset(run.table.columns):
+        has_beamshifts = {'delta_x', 'delta_y'}.issubset(run.table.columns)
+        if has_beamshifts:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         with self.ctrl.beam.unblanked(delay=0.2), self.ctrl.cam.blocked():
