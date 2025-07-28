@@ -121,17 +121,13 @@ class CalibStageRotation:
         alpha_span, speed = span_speed
         return (alpha_pace * alpha_span + alpha_windup) / speed + delay
 
-    def _alpha_poly(self, span: float) -> float:
-        """Value of `alpha_pace * alpha_span + alpha_windup` polynomial."""
-        return self.alpha_pace * span + self.alpha_windup
-
     def span_speed_to_time(self, span: float, speed: float) -> float:
         """`time` needed to rotate alpha by `span` with `speed`."""
-        return self._alpha_poly(span) / speed + self.delay
+        return (self.alpha_pace * span + self.alpha_windup) / speed + self.delay
 
     def span_time_to_speed(self, span: float, time: float) -> float:
         """`speed` that allows to rotate alpha by `span` with `speed`."""
-        return self._alpha_poly(span) / (time - self.delay)
+        return (self.alpha_pace * span + self.alpha_windup) / (time - self.delay)
 
     def speed_time_to_span(self, speed: float, time: float) -> float:
         """Maximum `span` covered with `speed` in `time` (including delay)."""
