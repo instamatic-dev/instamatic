@@ -73,10 +73,12 @@ class CalibMovieDelays:
         calib_conditions = (exposure, header_keys, header_keys_common)
         calib = calib_map.get(calib_conditions, None)
         if calib is None:
+            header_keys_str = ','.join(header_keys)
+            header_keys_common_str = ','.join(header_keys_common)
             raise KeyError(
                 f'Calibration for conditions {calib_conditions} not found. '
                 f"Please run 'instamatic.calibrate_movie_delays -e {exposure:.6f} "
-                f"-a {header_keys} -c {header_keys_common}' first."
+                f'-a "{header_keys_str}" -c "{header_keys_common_str}" first.'
             )
         return calib
 
@@ -188,8 +190,8 @@ class CalibMovieDelaysMapping(MutableMapping):
         if path is None:
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         try:
-            with open(Path(path), 'r') as json_file:
-                return cls.from_list(yaml.safe_load(json_file))
+            with open(Path(path), 'r') as yaml_file:
+                return cls.from_list(yaml.safe_load(yaml_file))
         except OSError as e:
             prog = 'instamatic.calibrate_movie_delays'
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
@@ -200,6 +202,7 @@ class CalibMovieDelaysMapping(MutableMapping):
             path = Path(calibration_drc) / CALIB_MOVIE_DELAYS
         with open(Path(path), 'w') as json_file:
             yaml.safe_dump(self.to_list(), json_file)
+        log(f'{self} saved to {path}.')
 
 
 class MovieTimes:

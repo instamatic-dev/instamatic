@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import contextlib
+import logging
 import string
+import time
 from collections import UserDict
-from typing import Any, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 
 class NoOverwriteDict(UserDict):
@@ -12,6 +15,13 @@ class NoOverwriteDict(UserDict):
         if key in self.data:
             raise KeyError(f'Key "{key}" already exists and cannot be overwritten.')
         super().__setitem__(key, value)
+
+
+class NullLogger(logging.Logger):
+    def __init__(self, name='null'):
+        super().__init__(name)
+        self.addHandler(logging.NullHandler())
+        self.propagate = False
 
 
 class PartialFormatter(string.Formatter):
@@ -38,3 +48,27 @@ class PartialFormatter(string.Formatter):
 
 
 partial_formatter = PartialFormatter()
+
+
+class SubclassRegistryMeta(type):
+    """Metaclass which automatically registers all subclasses of its class."""
+
+    def __init__(
+        cls,
+        name: str,
+        bases: Tuple[type, ...],
+        class_dict: Dict[str, Any],
+    ) -> None:
+        super().__init__(name, bases, class_dict)
+        if not hasattr(cls, 'REGISTRY'):
+            cls.REGISTRY = NoOverwriteDict()
+        if bases:  # Avoid registering the base class itself
+            cls.REGISTRY[name] = cls
+
+
+@contextlib.contextmanager
+def timer() -> Callable[[], float]:
+    """Returns a callable with time it took to run wrapped code in seconds."""
+    t1 = t2 = time.perf_counter()
+    yield lambda: t2 - t1
+    t2 = time.perf_counter()
