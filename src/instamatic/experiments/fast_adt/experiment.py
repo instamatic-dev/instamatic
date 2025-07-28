@@ -234,9 +234,10 @@ class Experiment(ExperimentBase):
         header_keys_common: tuple = (),
     ) -> float:
         """Get time between get_movie frames from any source available or 0."""
-
-        if (dead_time := getattr(self.ctrl.cam, 'dead_time', None)) is not None:
-            return dead_time
+		try:
+			return self.ctrl.cam.dead_time
+		except AttributeError:
+			pass
         self.msg('`cam.dead_time` not found. Looking for calibrated estimate...')
         try:
             c = CalibMovieDelays.from_file(exposure, header_keys_variable, header_keys_common)
