@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import argparse
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from textwrap import dedent
 from time import perf_counter
-from typing import NamedTuple, Optional, Sequence, Tuple
+from typing import Literal, NamedTuple, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -213,6 +215,7 @@ def calibrate_stage_rotation_live(
     ctrl: 'TEMController',
     alpha_spans: Optional[Sequence[float]] = None,
     speed_range: Optional[Sequence[float]] = None,
+    calib_mode: Literal['auto', 'limited', 'listed'] = 'auto',
     outdir: Optional[str] = None,
     plot: Optional[bool] = None,
 ) -> CalibStageRotation:
@@ -240,6 +243,8 @@ def calibrate_stage_rotation_live(
         Alpha rotations whose speed will be measured. Default: range(1, 11, 1).
     speed_range: `Optional[Sequence[Union[float, int]]]`
         Spead range to measure. Default: range(1, 13, 1) or range(.1, 1.1, .1).
+    calib_mode: `Literal['auto', 'limited', 'listed']`
+        Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
 
@@ -251,25 +256,28 @@ def calibrate_stage_rotation_live(
     alternating_ones = np.ones(len(alpha_spans)) * (-1) ** np.arange(len(alpha_spans))
     alpha_targets = np.cumsum(alpha_spans * alternating_ones)
 
+    try:
+        ctrl.stage.set_rotation_speed(12)
+        assert ctrl.stage.get_rotation_speed() == 12
+    except AssertionError:  # or any other raised if speed can't be set
+        speed_range_default = np.linspace(0.01, 0.2, num=20)
+        speed_options = FEI_ROTATION_SPEED_OPTIONS
+    else:
+        speed_range_default = np.arange(1, 13, step=1)
+        speed_options = JEOL_ROTATION_SPEED_OPTIONS
+    speed_range = speed_range or speed_range_default
+    if calib_mode == 'limited':
+        speed_options = FloatOptionsLimited(min(speed_range), max(speed_range))
+    elif calib_mode == 'listed':
+        speed_options = FloatOptionsListed(sorted(speed_range))
+
     calib_points: list[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
     starting_stage_speed = ctrl.stage.get_rotation_speed()
     ctrl.cam.block()
     try:
-        try:
-            ctrl.stage.set_rotation_speed(12)
-            assert ctrl.stage.get_rotation_speed() == 12
-        except AssertionError:  # or any other raised if speed can't be set
-            speed_range_default = np.linspace(0.01, 0.2, num=20)
-            speed_options = FEI_ROTATION_SPEED_OPTIONS
-        else:
-            speed_range_default = np.arange(1, 13, step=1)
-            speed_options = JEOL_ROTATION_SPEED_OPTIONS
-        speed_range = speed_range or speed_range_default
-
         n_calib_points = len(speed_range) * len(alpha_spans)
         log(f'Starting rotation speed calibration based on {n_calib_points} points.')
-
         with tqdm(total=n_calib_points) as progress_bar:
             for speed in speed_range:
                 with ctrl.stage.rotation_speed(speed=float(speed)):
@@ -309,12 +317,14 @@ def calibrate_stage_rotation_live(
 
 
 def main_entry() -> None:
-    import argparse
+    """Calibrate the goniometer stage rotation speed setting of the stage.
 
-    description = """Calibrate the rotation speed setting of the stage."""
+    For a quick test or a debug run for the simulated TEM, run
+    `instamatic.calibrate_stage_rotation -a "1,2,3" -s "8,10,12"`.
+    """
 
     parser = argparse.ArgumentParser(
-        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=main_entry.__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     h = 'Comma-delimited list of alpha spans to calibrate. '
@@ -325,6 +335,12 @@ def main_entry() -> None:
     h += 'Default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or '
     h += '"1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope.'
     parser.add_argument('-s', '--speeds', type=str, help=h)
+
+    h = """Calibration mode to be used:'
+    - auto - auto-determine upper and lower speed limits based on TEM response
+    - limited - restrict TEM goniometer speed limits between min and max of --speeds
+    - listed - restrict TEM goniometer speed settings exactly to --speeds provided"""
+    parser.add_argument('-m', '--mode', type=str, default='auto', help=dedent(h.strip()))
 
     h = 'Path to the directory where calibration file should be output. '
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
@@ -337,13 +353,11 @@ def main_entry() -> None:
 
     from instamatic import controller
 
-    kwargs = {'plot': options.plot}
+    kwargs = {'calib_mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
     if options.alphas:
         kwargs['alpha_spans'] = [float(a) for a in options.alphas.split(',')]
     if options.speeds:
         kwargs['speed_range'] = [float(s) for s in options.speeds.split(',')]
-    if options.outdir:
-        kwargs['outdir'] = options.outdir
 
     ctrl = controller.initialize()
     calibrate_stage_rotation_live(ctrl=ctrl, **kwargs)
