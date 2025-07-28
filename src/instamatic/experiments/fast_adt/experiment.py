@@ -149,7 +149,6 @@ class DiffractionRun(Run):
         return run
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EXPERIMENT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 
 class Experiment(ExperimentBase):
