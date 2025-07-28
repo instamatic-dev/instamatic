@@ -91,6 +91,10 @@ class Run:
         return [(i, s.image, s.meta) for i, s in enumerate(self.steps)]
 
     @property
+    def has_beam_delta_information(self) -> bool:
+        return {'delta_x', 'delta_y'}.issubset(self.table.columns)
+
+    @property
     def osc_angle(self) -> float:
         """Difference of alpha angle between two consecutive frames."""
         a = list(self.table['alpha'])
@@ -147,8 +151,6 @@ class DiffractionRun(Run):
             run.table['delta_x'] = tracking_run.interpolate(alpha_range, 'delta_x')
             run.table['delta_y'] = tracking_run.interpolate(alpha_range, 'delta_y')
         return run
-
-
 
 
 class Experiment(ExperimentBase):
@@ -233,10 +235,10 @@ class Experiment(ExperimentBase):
         header_keys_common: tuple = (),
     ) -> float:
         """Get time between get_movie frames from any source available or 0."""
-		try:
-			return self.ctrl.cam.dead_time
-		except AttributeError:
-			pass
+        try:
+            return self.ctrl.cam.dead_time
+        except AttributeError:
+            pass
         self.msg('`cam.dead_time` not found. Looking for calibrated estimate...')
         try:
             c = CalibMovieDelays.from_file(exposure, header_keys_variable, header_keys_common)
@@ -270,7 +272,8 @@ class Experiment(ExperimentBase):
     def start_collection(self, **params) -> None:
         self.msg('FastADT experiment started')
         with self.ctrl.beam.blanked():
-            if not (image_path := self.tiff_image_path / 'image.tiff').exists():
+            image_path = self.tiff_image_path / 'image.tiff'
+            if not image_path.exists():
                 self.ctrl.restore('FastADT_image')
                 with self.ctrl.beam.unblanked(delay=0.2):
                     self.ctrl.get_image(params['tracking_time'], out=image_path)
@@ -329,13 +332,12 @@ class Experiment(ExperimentBase):
     def collect_stills(self, run: Run) -> None:
         self.msg('Collecting stills from {} to {} degree'.format(*run.scope))
         images, metas = [], []
-        has_beamshifts = {'delta_x', 'delta_y'}.issubset(run.table.columns)
-        if has_beamshifts:
+        if run.has_beam_delta_information:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         with self.ctrl.beam.unblanked(delay=0.2), self.ctrl.cam.blocked():
             for step in run.steps:
-                if has_beamshifts:
+                if run.has_beam_delta_information:
                     self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                 self.ctrl.stage.a = step.alpha
                 image, meta = self.ctrl.get_image(exposure=run.exposure)
@@ -357,7 +359,7 @@ class Experiment(ExperimentBase):
     def collect_continuous(self, run) -> None:
         self.msg('Collecting scans from {} to {} degree'.format(*run.scope))
         images, metas = [], []
-        if has_beamshifts := {'delta_x', 'delta_y'}.issubset(run.table.columns):
+        if run.has_beam_delta_information:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         # this part correctly finds the closest possible speed settings for expt
@@ -365,6 +367,7 @@ class Experiment(ExperimentBase):
         rot_calib = self.get_stage_rotation()
         rot_plan = rot_calib.plan_rotation(frame_sep / run.osc_angle)
         run.exposure = abs(rot_plan.pace * run.osc_angle) - self.get_dead_time(run.exposure)
+
         self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
         with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
             with self.ctrl.beam.unblanked(delay=0.2):
@@ -372,7 +375,7 @@ class Experiment(ExperimentBase):
                 a = float(run.table.iloc[-1].loc['alpha'])
                 self.ctrl.stage.set_with_speed(a=a, speed=rot_plan.speed, wait=False)
                 for step, (image, header) in zip(run.steps, movie):
-                    if has_beamshifts:
+                    if run.has_beam_delta_information:
                         self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                     images.append(image)
                     metas.append(header)
