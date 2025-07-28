@@ -331,22 +331,22 @@ def main_entry() -> None:
     h += 'Default: "1,2,3,4,5,6,7,8,9,10".'
     parser.add_argument('-a', '--alphas', type=str, help=h)
 
-    h = 'Comma-delimited list of speed settings to calibrate. '
-    h += 'Default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or '
-    h += '"1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope.'
-    parser.add_argument('-s', '--speeds', type=str, help=h)
+    h = """Comma-delimited list of speed settings to calibrate.
+    Default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or
+    "1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope."""
+    parser.add_argument('-s', '--speeds', type=str, help=dedent(h.strip()))
 
-    h = """Calibration mode to be used:'
-    - auto - auto-determine upper and lower speed limits based on TEM response
-    - limited - restrict TEM goniometer speed limits between min and max of --speeds
-    - listed - restrict TEM goniometer speed settings exactly to --speeds provided"""
+    h = """Calibration mode to be used:
+    "auto" - auto-determine upper and lower speed limits based on TEM response;
+    "limited" - restrict TEM goniometer speed limits between min and max of --speeds;
+    "listed" - restrict TEM goniometer speed settings exactly to --speeds provided."""
     parser.add_argument('-m', '--mode', type=str, default='auto', help=dedent(h.strip()))
 
     h = 'Path to the directory where calibration file should be output. '
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
     parser.add_argument('-o', '--outdir', type=str, help=h)
 
-    h = 'After calibration, attempt to `--plot` / `--no-plot` its results'
+    h = 'After calibration, attempt to `--plot` / `--no-plot` its results.'
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
     options = parser.parse_args()
