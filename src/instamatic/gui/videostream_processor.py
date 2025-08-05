@@ -78,7 +78,6 @@ class DeferredImageDraw:
 
     def circle(
         self,
-        *,
         xy: tuple[int, int],
         radius: float,
         fill: Optional[Union[str, tuple[int, int, int]]] = None,
