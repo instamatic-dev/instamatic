@@ -11,12 +11,12 @@ from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule
 
-pad0 = dict(sticky='EW', padx=0, pady=1)
-pad10 = dict(sticky='EW', padx=10, pady=1)
-width = dict(width=19)
-angle_lim = dict(from_=-90, to=90, increment=1, width=20)
-angle_delta = dict(from_=0, to=180, increment=0.1, width=20)
-duration = dict(from_=0, to=60, increment=0.1)
+pad0 = {'sticky':'EW', 'padx':0, 'pady':1)
+pad10 = {'sticky':'EW', 'padx':10, 'pady':1}
+width = {'width':19}
+angle_lim = {'from_':-90, 'to':90, 'increment':1, 'width':20}
+angle_delta = {'from_':0, 'to':180, 'increment':0.1, 'width':20}
+duration = {'from_':0, 'to':60, 'increment':0.1}
 
 
 class FastADTConfigProxy:
