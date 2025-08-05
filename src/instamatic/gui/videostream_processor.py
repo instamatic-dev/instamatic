@@ -115,9 +115,7 @@ class VideoStreamProcessor:
     @property
     def frame(self) -> Union[np.ndarray, None]:
         """The raw `np.ndarray` frame from the stream or `_temporary_frame`"""
-        if (temporary_frame := self.temporary_frame) is not None:
-            return temporary_frame
-        return self.vsf.stream.frame
+        return self.vsf.stream.frame if (t := self.temporary_frame) is None else t
 
     @property
     def image(self) -> Union[Image.Image, None]:
