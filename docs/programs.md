@@ -28,6 +28,8 @@ These tools help calibrate instamatic for some experiments.
 - [instamatic.calibrate_movie_delays](#instamaticcalibrate_movie_delays) (`instamatic.calibrate.calibrate_movie_delays:main_entry`)
 - [instamatic.flatfield](#instamaticflatfield) (`instamatic.processing.flatfield:main_entry`)
 - [instamatic.stretch_correction](#instamaticstretch_correction) (`instamatic.processing.stretch_correction:main_entry`)
+- [instamatic.calibrate_stage_rotation](#instamaticcalibrate_stage_rotation) (`instamatic.calibrate.calibrate_stage_lowmag:main_entry`)
+
 
 **Tools**
 
@@ -175,6 +177,32 @@ instamatic.calibrate_stage_lowmag [-h] [IMG [IMG ...]]
 
 `-h`, `--help`
 : Show this help message and exit  
+
+## instamatic.calibrate_stage_rotation
+
+Program to calibrate and plan the rotation pace (in seconds / angle) against speed settings available on the microscope.
+
+**Usage:**  
+```bash
+instamatic.calibrate_stage_rotation [-h] [-a ALPHAS] [-s SPEEDS] [-m MODE] [-o OUTDIR]
+```
+
+**Optional arguments:**  
+
+`-h`, `--help`
+: Show this help message and exit  
+
+`-a ALPHAS`, `--alphas ALPHAS`
+: Comma-delimited list of alpha spans to calibrate (default: "1,2,3,4,5,6,7,8,9,10").
+
+`-s SPEEDS`, `--speeds SPEEDS`
+: Comma-delimited list of speed settings to calibrate (default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or "1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope).
+
+`-m MODE`, `--mode MODE`
+: Calibration mode to be used: "auto" - auto-determine upper and lower speed limits based on TEM response (default); "limited" - restrict TEM goniometer speed limits between min and max of --speeds; or "listed" - restrict TEM goniometer speed settings exactly to --speeds provided.
+
+`-o OUTDIR`, `--outdir OUTDIR`
+: Path to the directory where calibration file should be output (default: "%appdata%/calib" on Windows or "$AppData/calib" on Unix).
 
 
 ## instamatic.calibrate_stage_mag1
