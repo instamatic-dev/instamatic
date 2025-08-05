@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Iterator, Literal, NamedTuple, Optional, Protocol, Union
+from typing import Any, Iterator, Literal, Optional, Protocol, Union
 
 import numpy as np
 import PIL.Image
@@ -138,8 +138,7 @@ class VideoStreamProcessor:
         return image
 
     def render_figure(self, figure: Figure) -> PIL.Image.Image:
-        """Convert a `Figure` into a `Image` to allow a temporary render in
-        GUI."""
+        """Convert a `Figure` into an `Image` to allow rendering it in GUI."""
         buffer = io.BytesIO()
         dpi = min(self.vsf.stream.frame.shape / figure.get_size_inches())
         figure.savefig(buffer, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0)
