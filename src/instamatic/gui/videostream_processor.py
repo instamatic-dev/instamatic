@@ -32,20 +32,22 @@ class DeferredImageDraw:
         """Stores info about `ImageDraw` calls deferred by `__getattr__`."""
 
         attr_name: str
-        args: tuple
+        args: tuple[Any, ...]
         kwargs: dict[str, Any]
 
-    def __init__(self, draw: Optional[ImageDraw] = None) -> None:
+    def __init__(self, draw: Optional[ImageDraw.ImageDraw] = None) -> None:
         self._drawing = draw if draw else ImageDraw.Draw(Image.new('RGB', (1, 1)))
         self.instructions: deque[DeferredImageDraw.Instruction] = deque()
 
-    def __getattr__(self, attr_name: str) -> Union[Any]:
+    def __getattr__(self, attr_name: str) -> Any:
         """Get the first of `self.attr_name` and `self._drawing.attr_name`.
 
-        If the attribute is a _drawing callable, wrap it so that at call
-        it is added to `self.instructions` instead of being executed directly.
-        `DeferredImageDraw.Instruction` instance created this way is returned
+        If the attribute is a method of the internal `ImageDraw` object,
+        return its wrapped version that defers it by appending a corresponding
+        `Instruction` to `self.instructions` to be run at render time instead.
+        `DeferredImageDraw.Instruction` instance returned this way is mutable
         and can be deleted by calling `self.instructions.remove(instruction)`.
+        Otherwise, return the attribute of `DeferredImageDraw` instance as-is.
         """
         try:
             attr = object.__getattribute__(self, attr_name)
@@ -79,11 +81,15 @@ class DeferredImageDraw:
         *,
         xy: tuple[int, int],
         radius: float,
-        fill: Union[str, tuple] = None,
-        outline: Union[str, tuple] = None,
+        fill: Optional[Union[str, tuple[int, int, int]]] = None,
+        outline: Optional[Union[str, tuple[int, int, int]]] = None,
         width: int = 1,
     ) -> DeferredImageDraw.Instruction:
-        """Circle was only added to PIL in v10.4.0, so port it to be safe."""
+        """Draw a circle by wrapping a call to `ImageDraw.ellipse`.
+
+        Since `ImageDraw.circle` was added only in Pillow 10.4.0, this
+        provides a backward-compatible way to draw circles using ellipses.
+        """
         ellipse_xy = (xy[0] - radius, xy[1] - radius, xy[0] + radius, xy[1] + radius)
         return self.ellipse(ellipse_xy, fill=fill, outline=outline, width=width)
 
@@ -110,7 +116,7 @@ class VideoStreamProcessor:
         self.draw: DeferredImageDraw = DeferredImageDraw()
         self.color_mode: Literal['L', 'RGB'] = 'RGB'
         self.temporary_frame: Optional[np.ndarray] = None
-        self.temporary_image: Optional[PIL.Image.Image] = None
+        self.temporary_image: Optional[Image.Image] = None
         self._temporary_figure: Optional[Figure] = None
 
     @property
@@ -138,7 +144,7 @@ class VideoStreamProcessor:
             image = Image.fromarray(frame)
         return image
 
-    def render_figure(self, figure: Figure) -> PIL.Image.Image:
+    def render_figure(self, figure: Figure) -> Image.Image:
         """Convert a `Figure` into an `Image` to allow rendering it in GUI."""
         buffer = io.BytesIO()
         dpi = min(self.vsf.stream.frame.shape / figure.get_size_inches())
@@ -151,10 +157,15 @@ class VideoStreamProcessor:
         self,
         *,
         frame: Optional[np.ndarray] = None,
-        image: Optional[PIL.Image.Image] = None,
+        image: Optional[Image.Image] = None,
         figure: Optional[Figure] = None,
     ) -> Iterator[None]:
-        """Temporarily set alt temporary_frame/image via `with` statement."""
+        """Temporarily override the current frame/image/figure for rendering.
+
+        Use via context manager using a `with` statement with one of the args:
+            with processor.temporary(frame=..., image=..., figure=...):
+                ...
+        """
         pre_context_values = self.temporary_frame, self.temporary_image
         try:
             if frame is not None:
