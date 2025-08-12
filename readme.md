@@ -73,37 +73,7 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
-## Source Code Structure
+## Maintanance
 
-* **`demos/`** - Jupyter demo notebooks
-* **`docs/`** - Documentation
-* **`src/`** - Source code for instamatic
-* **`src/instamatic/`**
-  * **`calibrate/`** - Tools for calibration
-  * **`camera/`** - Camera interaction code
-  * **`config/`** - Configuration management
-  * **`experiments/`** - Specific data collection routines
-  * **`formats/`** - Image formats and other IO
-  * **`gui/`** - GUI code
-  * **`microscope/`** - Microscope interaction code
-  * **`neural_network/`** - Crystal quality prediction
-  * **`processing/`** - Data processing tools
-  * **`server/`** - Manages interprocess/network communication
-  * **`utils/`** - Helpful utilities
-  * **`acquire_at_items.py`** - Stage movement/data acquisition engine
-  * **`admin.py`** - Check for administrator
-  * **`banner.py`** - Appropriately annoying thank you message
-  * **`browser.py`** - Montage browsing class
-  * **`controller.py`** - Main instrument interaction code
-  * **`exceptions.py`** - Internal exceptions
-  * **`goniotool.py`** - Goniotool (JEOL) interaction code
-  * **`gridmontage.py`** - Grid montage data collection code
-  * **`image_utils.py`** - Image transformation routines
-  * **`imreg.py`** - Image registration (cross correlation)
-  * **`io.py`** - Some io-related scripts
-  * **`main.py`** - Main entry point
-  * **`montage.py`** - Image stitching
-  * **`navigation.py`** - Optimize navigation paths
-  * **`tools.py`** - Collection of functions used throughout the code
-* **`scripts/`** - Helpful scripts
-* **`pyproject.toml`** - Dependency/build system declaration
+- 2025-now: [@Baharis](https://github.com/Baharis)
+- 2015-2025: [@stefsmeets](https://github.com/stefsmeets)
