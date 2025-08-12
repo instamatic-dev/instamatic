@@ -73,7 +73,7 @@ Alternatively, some of the methods implemented in `Instamatic` are described in:
 
 - S. Smeets, X. Zou, and W. Wan, [Serial electron crystallography for structure determination and phase analysis of nanocrystalline materials](http://dx.doi.org/10.1107/S1600576718009500), J. Appl. Cryst. (2018). 51, 1262–1273
 
-## Maintanance
+## Maintenance
 
 - 2025-now: [@Baharis](https://github.com/Baharis)
 - 2015-2025: [@stefsmeets](https://github.com/stefsmeets)
