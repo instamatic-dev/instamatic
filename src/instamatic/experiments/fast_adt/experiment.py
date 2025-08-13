@@ -21,7 +21,8 @@ from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
-def safe_range(start: float, stop: float, step: float) -> np.ndarray:  # noqa
+def safe_range(start: float, stop: float, step: float) -> np.ndarray:
+    """Find >2 floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs(stop - start) / step) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
@@ -49,7 +50,7 @@ class Step:
 
 
 class Run:
-    """Collection of details of a single FastADT run.
+    """Collection of details of a generalized single FastADT run.
 
     Includes a `.table` describing details of individual steps (to be) measured:
       - alpha - average value of the rotation axes for given frame
@@ -80,7 +81,7 @@ class Run:
         return (Step(**t._asdict()) for t in self.table.itertuples())  # noqa
 
     def interpolate(self, at: Sequence[float], key: str) -> Sequence[float]:
-        """Interpolate values of `table[key]` at a denser grid of points."""
+        """Interpolate values of `table[key]` at some denser grid of points."""
         if at[0] > at[-1]:  # decreasing order: not handled by numpy.interp
             return np.interp(at[::-1], self.table['alpha'][::-1], self.table[key][::-1])[::-1]
         return np.interp(at, self.table['alpha'], self.table[key])
@@ -270,6 +271,7 @@ class Experiment(ExperimentBase):
             self.log.info(text)
 
     def start_collection(self, **params) -> None:
+        """Get image, resolve tracking, collect diffraction and finalize."""
         self.msg('FastADT experiment started')
         with self.ctrl.beam.blanked():
             image_path = self.tiff_image_path / 'image.tiff'
@@ -330,6 +332,7 @@ class Experiment(ExperimentBase):
         self.plot_tracking(tracking_run=run)
 
     def collect_stills(self, run: Run) -> None:
+        """Collect a series of stills at angles/exposure specified in `run`"""
         self.msg('Collecting stills from {} to {} degree'.format(*run.scope))
         images, metas = [], []
         if run.has_beam_delta_information:
@@ -357,16 +360,18 @@ class Experiment(ExperimentBase):
         self.steps_queue.put(None)
 
     def collect_continuous(self, run) -> None:
+        """Collect a series of scans at angles/exposure specified in `run`"""
         self.msg('Collecting scans from {} to {} degree'.format(*run.scope))
         images, metas = [], []
         if run.has_beam_delta_information:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
 
         # this part correctly finds the closest possible speed settings for expt
-        frame_sep = run.exposure + self.get_dead_time(run.exposure)
+        detector_dead_time = self.get_dead_time(run.exposure)
+        time_for_one_frame = run.exposure + detector_dead_time
         rot_calib = self.get_stage_rotation()
-        rot_plan = rot_calib.plan_rotation(frame_sep / run.osc_angle)
-        run.exposure = abs(rot_plan.pace * run.osc_angle) - self.get_dead_time(run.exposure)
+        rot_plan = rot_calib.plan_rotation(time_for_one_frame / run.osc_angle)
+        run.exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
 
         self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
         with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):

@@ -11,12 +11,12 @@ from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule
 
-pad0 = {'sticky':'EW', 'padx':0, 'pady':1)
-pad10 = {'sticky':'EW', 'padx':10, 'pady':1}
-width = {'width':19}
-angle_lim = {'from_':-90, 'to':90, 'increment':1, 'width':20}
-angle_delta = {'from_':0, 'to':180, 'increment':0.1, 'width':20}
-duration = {'from_':0, 'to':60, 'increment':0.1}
+pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
+pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
+width = {'width': 19}
+angle_lim = {'from_': -90, 'to': 90, 'increment': 1, 'width': 20}
+angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1, 'width': 20}
+duration = {'from_': 0, 'to': 60, 'increment': 0.1}
 
 
 class FastADTConfigProxy:
@@ -47,7 +47,7 @@ class FastADTConfigProxy:
 
 
 class ExperimentalFastADTVariables:
-    """A collection of tkinter Variable instances for the experiment."""
+    """A collection of tkinter Variable instances passed to the experiment."""
 
     def __init__(self):
         self.diffraction_mode = StringVar()
@@ -105,11 +105,13 @@ class ExperimentalFastADT(LabelFrame):
         self.diffraction_step.grid(row=6, column=1, **pad10)
 
         Label(f, text='Diffraction exposure (s):').grid(row=7, column=0, **pad10)
-        self.diffraction_time = Spinbox(f, textvariable=self.var.diffraction_time, **duration)
+        var = self.var.diffraction_time
+        self.diffraction_time = Spinbox(f, textvariable=var, **duration)
         self.diffraction_time.grid(row=7, column=1, **pad10)
 
         Label(f, text='Tracking mode:').grid(row=3, column=2, **pad10)
-        self.tracking_mode = Combobox(f, textvariable=self.var.tracking_mode, **width)
+        var = self.var.tracking_mode
+        self.tracking_mode = Combobox(f, textvariable=var, **width)
         self.tracking_mode['values'] = ['none', 'manual']
         self.tracking_mode['state'] = 'readonly'
         self.tracking_mode.grid(row=3, column=3, **pad10)
@@ -117,11 +119,13 @@ class ExperimentalFastADT(LabelFrame):
         self.tracking_mode.current(0)
 
         Label(f, text='Tracking step (s):').grid(row=6, column=2, **pad10)
-        self.tracking_step = Spinbox(f, textvariable=self.var.tracking_step, **angle_delta)
+        var = self.var.tracking_step
+        self.tracking_step = Spinbox(f, textvariable=var, **angle_delta)
         self.tracking_step.grid(row=6, column=3, **pad10)
 
         Label(f, text='Tracking exposure (s):').grid(row=7, column=2, **pad10)
-        self.tracking_time = Spinbox(f, textvariable=self.var.tracking_time, **duration)
+        var = self.var.tracking_time
+        self.tracking_time = Spinbox(f, textvariable=var, **duration)
         self.tracking_time.grid(row=7, column=3, **pad10)
 
         Separator(f, orient=HORIZONTAL).grid(row=8, columnspan=4, sticky=EW, padx=10, pady=10)
@@ -190,18 +194,21 @@ class ExperimentalFastADT(LabelFrame):
         (self.ctrl.beam.unblank if self.ctrl.beam.is_blanked else self.ctrl.beam.blank)()
 
     def update_widget_state(self, *_, busy: Optional[bool] = None, **__) -> None:
-        b = self.busy = busy if busy is not None else self.busy
-        self.start_button.config(state='disabled' if b else 'enabled')
-        self.diffraction_mode.config(state='disabled' if b else 'enabled')
-        self.diffraction_start.config(state='disabled' if b else 'enabled')
-        self.diffraction_stop.config(state='disabled' if b else 'enabled')
-        self.diffraction_step.config(state='disabled' if b else 'enabled')
-        self.diffraction_time.config(state='disabled' if b else 'enabled')
-        self.tracking_mode.config(state='disabled' if b else 'enabled')
-
+        self.busy = busy if busy is not None else self.busy
         no_tracking = self.var.tracking_mode.get() == 'none'
-        self.tracking_step.config(state='disabled' if b or no_tracking else 'enabled')
-        self.tracking_time.config(state='disabled' if b or no_tracking else 'enabled')
+        widget_state = 'disabled' if self.busy else 'enabled'
+        tracking_state = 'disabled' if self.busy or no_tracking else 'enabled'
+
+        self.start_button.config(state=widget_state)
+        self.diffraction_mode.config(state=widget_state)
+        self.diffraction_start.config(state=widget_state)
+        self.diffraction_stop.config(state=widget_state)
+        self.diffraction_step.config(state=widget_state)
+        self.diffraction_time.config(state=widget_state)
+        self.tracking_mode.config(state=widget_state)
+
+        self.tracking_step.config(state=tracking_state)
+        self.tracking_time.config(state=tracking_state)
 
     def start_collection(self) -> None:
         self.q.put(('fast_adt', {'frame': self, **self.var.as_dict()}))
