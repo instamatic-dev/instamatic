@@ -48,11 +48,3 @@ class PartialFormatter(string.Formatter):
 
 
 partial_formatter = PartialFormatter()
-
-
-@contextlib.contextmanager
-def timer() -> Callable[[], float]:
-    """Returns a callable with time it took to run wrapped code in seconds."""
-    t1 = t2 = time.perf_counter()
-    yield lambda: t2 - t1
-    t2 = time.perf_counter()
