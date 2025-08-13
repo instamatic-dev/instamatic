@@ -10,10 +10,10 @@ from .jobs import JOBS  # Import central list of jobs
 logger = logging.getLogger(__name__)
 
 all_modules = (
-    'fast_adt',
     'cred',
     'cred_tvips',
     'cred_fei',
+    'fast_adt',
     'sed',
     'autocred',
     'red',
