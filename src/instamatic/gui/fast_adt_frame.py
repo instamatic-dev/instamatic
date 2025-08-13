@@ -118,7 +118,7 @@ class ExperimentalFastADT(LabelFrame):
         self.tracking_mode.bind('<<ComboboxSelected>>', self.update_widget_state)
         self.tracking_mode.current(0)
 
-        Label(f, text='Tracking step (s):').grid(row=6, column=2, **pad10)
+        Label(f, text='Tracking step (deg):').grid(row=6, column=2, **pad10)
         var = self.var.tracking_step
         self.tracking_step = Spinbox(f, textvariable=var, **angle_delta)
         self.tracking_step.grid(row=6, column=3, **pad10)
