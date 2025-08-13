@@ -3,8 +3,9 @@ from __future__ import annotations
 import io
 from collections import deque
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Iterator, Literal, NamedTuple, Optional, Protocol, Union
+from typing import Any, Iterator, Literal, Optional, Protocol, Union
 
 import numpy as np
 import PIL.Image
@@ -26,24 +27,27 @@ class VideoStreamFrameProtocol(Protocol):
 class DeferredImageDraw:
     """Defer `ImageDraw` method calls: put them in deque, draw using `on`."""
 
-    class Instruction(NamedTuple):
+    @dataclass
+    class Instruction:
         """Stores info about `ImageDraw` calls deferred by `__getattr__`."""
 
         attr_name: str
-        args: tuple
+        args: tuple[Any, ...]
         kwargs: dict[str, Any]
 
-    def __init__(self, draw: Optional[ImageDraw] = None) -> None:
+    def __init__(self, draw: Optional[ImageDraw.ImageDraw] = None) -> None:
         self._drawing = draw if draw else ImageDraw.Draw(Image.new('RGB', (1, 1)))
         self.instructions: deque[DeferredImageDraw.Instruction] = deque()
 
-    def __getattr__(self, attr_name: str) -> Union[Any]:
+    def __getattr__(self, attr_name: str) -> Any:
         """Get the first of `self.attr_name` and `self._drawing.attr_name`.
 
-        If the attribute is a _drawing callable, wrap it so that at call
-        it is added to `self.instructions` instead of being executed directly.
-        `DeferredImageDraw.Instruction` instance created this way is returned
+        If the attribute is a method of the internal `ImageDraw` object,
+        return its wrapped version that defers it by appending a corresponding
+        `Instruction` to `self.instructions` to be run at render time instead.
+        `DeferredImageDraw.Instruction` instance returned this way is mutable
         and can be deleted by calling `self.instructions.remove(instruction)`.
+        Otherwise, return the attribute of `DeferredImageDraw` instance as-is.
         """
         try:
             attr = object.__getattribute__(self, attr_name)
@@ -58,9 +62,9 @@ class DeferredImageDraw:
 
                 @wraps(attr)
                 def wrapped(*args, **kwargs) -> DeferredImageDraw.Instruction:
-                    element = self.Instruction(attr_name, args, kwargs)
-                    self.instructions.append(element)
-                    return element
+                    instruction = self.Instruction(attr_name, args, kwargs)
+                    self.instructions.append(instruction)
+                    return instruction
 
                 return wrapped  # do not call attr - delay it until _redraw()
         return attr  # non-callable attr of self (if exists) or self._drawing
@@ -68,19 +72,23 @@ class DeferredImageDraw:
     def on(self, image: Image.Image) -> Image.Image:
         """Core method: draws all deferred `self.instructions` on image."""
         self._drawing = ImageDraw.Draw(image)
-        for attr_name, args, kwargs in self.instructions:
-            getattr(self._drawing, attr_name)(*args, **kwargs)
+        for ins in self.instructions:
+            getattr(self._drawing, ins.attr_name)(*ins.args, **ins.kwargs)
         return image
 
     def circle(
         self,
         xy: tuple[int, int],
         radius: float,
-        fill: Union[str, tuple] = None,
-        outline: Union[str, tuple] = None,
+        fill: Optional[Union[str, tuple[int, int, int]]] = None,
+        outline: Optional[Union[str, tuple[int, int, int]]] = None,
         width: int = 1,
     ) -> DeferredImageDraw.Instruction:
-        """Circle was only added to PIL in v10.4.0, so port it to be safe."""
+        """Draw a circle by wrapping a call to `ImageDraw.ellipse`.
+
+        Since `ImageDraw.circle` was added only in Pillow 10.4.0, this
+        provides a backward-compatible way to draw circles using ellipses.
+        """
         ellipse_xy = (xy[0] - radius, xy[1] - radius, xy[0] + radius, xy[1] + radius)
         return self.ellipse(ellipse_xy, fill=fill, outline=outline, width=width)
 
@@ -107,15 +115,13 @@ class VideoStreamProcessor:
         self.draw: DeferredImageDraw = DeferredImageDraw()
         self.color_mode: Literal['L', 'RGB'] = 'RGB'
         self.temporary_frame: Optional[np.ndarray] = None
-        self.temporary_image: Optional[PIL.Image.Image] = None
+        self.temporary_image: Optional[Image.Image] = None
         self._temporary_figure: Optional[Figure] = None
 
     @property
     def frame(self) -> Union[np.ndarray, None]:
         """The raw `np.ndarray` frame from the stream or `_temporary_frame`"""
-        if (temporary_frame := self.temporary_frame) is not None:
-            return temporary_frame
-        return self.vsf.stream.frame
+        return self.vsf.stream.frame if (t := self.temporary_frame) is None else t
 
     @property
     def image(self) -> Union[Image.Image, None]:
@@ -137,9 +143,8 @@ class VideoStreamProcessor:
             image = Image.fromarray(frame)
         return image
 
-    def render_figure(self, figure: Figure) -> PIL.Image.Image:
-        """Convert a `Figure` into a `Image` to allow a temporary render in
-        GUI."""
+    def render_figure(self, figure: Figure) -> Image.Image:
+        """Convert a `Figure` into an `Image` to allow rendering it in GUI."""
         buffer = io.BytesIO()
         dpi = min(self.vsf.stream.frame.shape / figure.get_size_inches())
         figure.savefig(buffer, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0)
@@ -151,10 +156,15 @@ class VideoStreamProcessor:
         self,
         *,
         frame: Optional[np.ndarray] = None,
-        image: Optional[PIL.Image.Image] = None,
+        image: Optional[Image.Image] = None,
         figure: Optional[Figure] = None,
     ) -> Iterator[None]:
-        """Temporarily set alt temporary_frame/image via `with` statement."""
+        """Temporarily override the current frame/image/figure for rendering.
+
+        Use via context manager using a `with` statement with one of the args:
+            with processor.temporary(frame=..., image=..., figure=...):
+                ...
+        """
         pre_context_values = self.temporary_frame, self.temporary_image
         try:
             if frame is not None:
