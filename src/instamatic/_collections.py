@@ -5,7 +5,7 @@ import logging
 import string
 import time
 from collections import UserDict
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable
 
 
 class NoOverwriteDict(UserDict):
@@ -31,7 +31,7 @@ class PartialFormatter(string.Formatter):
         super().__init__()
         self.missing: str = missing  # used instead of missing values
 
-    def get_field(self, field_name: str, args, kwargs) -> Tuple[Any, str]:
+    def get_field(self, field_name: str, args, kwargs) -> tuple[Any, str]:
         """When field can't be found, return placeholder text instead."""
         try:
             obj, used_key = super().get_field(field_name, args, kwargs)
@@ -48,22 +48,6 @@ class PartialFormatter(string.Formatter):
 
 
 partial_formatter = PartialFormatter()
-
-
-class SubclassRegistryMeta(type):
-    """Metaclass which automatically registers all subclasses of its class."""
-
-    def __init__(
-        cls,
-        name: str,
-        bases: Tuple[type, ...],
-        class_dict: Dict[str, Any],
-    ) -> None:
-        super().__init__(name, bases, class_dict)
-        if not hasattr(cls, 'REGISTRY'):
-            cls.REGISTRY = NoOverwriteDict()
-        if bases:  # Avoid registering the base class itself
-            cls.REGISTRY[name] = cls
 
 
 @contextlib.contextmanager
