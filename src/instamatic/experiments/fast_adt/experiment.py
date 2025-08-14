@@ -28,11 +28,11 @@ def safe_range(start: float, stop: float, step: float) -> np.ndarray:
 
 
 class FastADTEarlyTermination(RuntimeError):
-    pass
+    """Raised if FastADT experiment terminates early due to known reasons."""
 
 
 class FastADTMissingCalibError(RuntimeError):
-    pass
+    """Raised if some calibration is strictly required but missing."""
 
 
 @dataclass
