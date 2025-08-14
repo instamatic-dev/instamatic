@@ -8,7 +8,6 @@ from threading import Thread
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from matplotlib import pyplot as plt
 from typing_extensions import Self
@@ -81,7 +80,7 @@ class Run:
         """Iterate over individual run `Step`s holding rows of `self.table`."""
         return (Step(**t._asdict()) for t in self.table.itertuples())  # noqa
 
-    def interpolate(self, at: npt.NDArray[np.floating], key: str) -> npt.NDArray[np.floating]:
+    def interpolate(self, at: np.array, key: str) -> np.array:
         """Interpolate values of `table[key]` at some denser grid of points."""
         alpha, values = self.table['alpha'], self.table[key]
         if at[0] > at[-1]:  # decreasing order is not handled by numpy.interp
