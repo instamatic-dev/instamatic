@@ -5,9 +5,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib import pyplot as plt
 from typing_extensions import Self
@@ -22,7 +23,7 @@ from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConver
 
 
 def safe_range(start: float, stop: float, step: float) -> np.ndarray:
-    """Find >2 floats between `start` and `stop` (inclusive) ~`step` apart."""
+    """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs(stop - start) / step) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
@@ -65,7 +66,7 @@ class Run:
     def __init__(self, exposure=1.0, continuous=False, **columns: Sequence) -> None:
         self.exposure: float = exposure
         self.continuous: bool = continuous
-        self.table = pd.DataFrame.from_dict(columns)
+        self.table: pd.DataFrame = pd.DataFrame.from_dict(columns)
 
     @property
     def scope(self) -> Tuple[float, float]:
@@ -76,15 +77,16 @@ class Run:
         return a.iloc[0] - self.osc_angle / 2, a.iloc[-1] + self.osc_angle / 2
 
     @property
-    def steps(self) -> Generator[Step]:
-        """Used to iterate over individual run steps – rows of `self.table`"""
+    def steps(self) -> Iterator[Step]:
+        """Iterate over individual run `Step`s holding rows of `self.table`."""
         return (Step(**t._asdict()) for t in self.table.itertuples())  # noqa
 
-    def interpolate(self, at: Sequence[float], key: str) -> Sequence[float]:
+    def interpolate(self, at: npt.NDArray[np.floating], key: str) -> npt.NDArray[np.floating]:
         """Interpolate values of `table[key]` at some denser grid of points."""
-        if at[0] > at[-1]:  # decreasing order: not handled by numpy.interp
-            return np.interp(at[::-1], self.table['alpha'][::-1], self.table[key][::-1])[::-1]
-        return np.interp(at, self.table['alpha'], self.table[key])
+        alpha, values = self.table['alpha'], self.table[key]
+        if at[0] > at[-1]:  # decreasing order is not handled by numpy.interp
+            return np.interp(at[::-1], alpha[::-1], values[::-1])[::-1]
+        return np.interp(at, alpha, values)
 
     @property
     def buffer(self) -> List[Tuple[int, np.ndarray, dict]]:
