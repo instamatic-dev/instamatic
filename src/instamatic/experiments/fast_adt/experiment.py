@@ -52,14 +52,17 @@ class Step:
 class Run:
     """Collection of details of a generalized single FastADT run.
 
-    Includes a `.table` describing details of individual steps (to be) measured:
-      - alpha - average value of the rotation axes for given frame
-      - delta_x - x beam shift relative from center needed to track the crystal
-      - delta_y - y beam shift relative from center needed to track the crystal
-
-    Other class attributes include:
-      - continuous - whether the run involves continuous scan or single frames
-      - exposure - time spent collecting each frame, expressed in seconds
+	Attributes
+	----------
+	exposure : float
+        Time spent collecting each frame, expressed in seconds
+    continuous : bool
+        Whether the run involves continuous scan (True) or single frames (False)
+    table: pd.DataFrame
+	    Describes details of individual steps (to be) measured:
+	      - alpha - average value of the rotation axes for given frame
+	      - delta_x - x beam shift relative from center needed to track the crystal
+	      - delta_y - y beam shift relative from center needed to track the crystal
     """
 
     def __init__(self, exposure=1.0, continuous=False, **columns: Sequence) -> None:
