@@ -52,17 +52,17 @@ class Step:
 class Run:
     """Collection of details of a generalized single FastADT run.
 
-        Attributes
-        ----------
-        exposure: float
+    Attributes
+    ----------
+    exposure: float
         Time spent collecting each frame, expressed in seconds
     continuous: bool
         Whether the run involves continuous scan (True) or single frames (False)
     table: pd.DataFrame
-            Describes details of individual steps (to be) measured:
-              - alpha - average value of the rotation axes for given frame
-              - delta_x - x beam shift relative from center needed to track the crystal
-              - delta_y - y beam shift relative from center needed to track the crystal
+        Describes details of individual steps (to be) measured:
+            - alpha - average value of the rotation axes for given frame
+            - delta_x - x beam shift relative from center needed to track the crystal
+            - delta_y - y beam shift relative from center needed to track the crystal
     """
 
     def __init__(self, exposure=1.0, continuous=False, **columns: Sequence) -> None:
@@ -171,7 +171,7 @@ class Experiment(ExperimentBase):
         Optional instance of `logging.Logger`
     flatfield:
         Optional path to flatfield correction image
-    fast_adt_frame:
+    experiment_frame:
         Optional instance of `ExperimentalFastADT` used to display messages
     videostream_frame:
         Optional instance of `VideoStreamFrame` used to display messages
@@ -277,7 +277,27 @@ class Experiment(ExperimentBase):
             self.log.info(text)
 
     def start_collection(self, **params) -> None:
-        """Get image, resolve tracking, collect diffraction and finalize."""
+        """Collect FastADT experiment according to provided **params.
+
+        The FastADT experiment can behave quite differently depending on the
+        input parameters provided. For a full list of parameters, see
+        `instamatic/gui/fast_adt_frame.py:ExperimentalFastADTVariables`.
+        The following code is divided into four sections, each responsible
+        for a different part of the experiment.
+
+        At the beginning, FastADT will blank the beam to minimize sample damage.
+        The beam will be un-blanked only when strictly needed, e.g. at the start
+        when collecting a direct-space preview image of the measured crystal.
+
+        In the second part, if any kind of tracking was requested, a tracking
+        `Run`-object will be created and collected.
+
+        After the image and tracking are collected, FastADT will prepare for
+        and collect the actual diffraction run. Depending on the experiment mode
+        requested, it might consist of several stills or a continuous movie.
+
+        Finally, the collected run will be logged and the stage - reset.
+        """
         self.msg('FastADT experiment started')
         with self.ctrl.beam.blanked():
             image_path = self.tiff_image_path / 'image.tiff'
@@ -300,9 +320,9 @@ class Experiment(ExperimentBase):
                 self.collect_stills(self.run)
             elif self.diffraction_mode == 'continuous':
                 self.collect_continuous(self.run)
+
             print(self.run.table)
             self.ctrl.restore('FastADT_image')
-
             self.log.info('Collected the following run:')
             self.log.info(str(self.run))
             self.ctrl.stage.a = 0.0
