@@ -13,7 +13,7 @@ authors = [
 	{name = "Stef Smeets", email = "s.smeets@esciencecenter.nl"},
 ]
 maintainers = [
-    {name = "Daniel Tchoń", email = "tchon@fzu.cz"}
+    {name = "Daniel Mariusz Tchoń", email = "tchon@fzu.cz"}
 ]
 keywords = [
     "electron-crystallography",
