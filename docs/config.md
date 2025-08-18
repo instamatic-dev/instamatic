@@ -207,7 +207,7 @@ This file holds the specifications of the camera. This file is must be located t
 : Give the interface of the camera interface to connect to, for example: `timepix`/`emmenu`/`simulate`/`gatan`/`merlin`. Leave blank or set to `None` to load the camera specs, but do not load the camera module (this also turns off the videostream gui).
 
 **dead_time**
-: Set the dead time (i.e. the gap between acquisitions) of the detector; if absent and needed to collect a movie, an attempt to use a `CalibMovieDelays.dead_time` value calibrated via `instamatic.calibrate_movie_delays` will be made.
+: Set the dead time (i.e. the gap between acquisitions) of the detector; if this value (`camera.dead_time`) is not set but required, Instamatic might attempt to use `CalibMovieDelays.dead_time` value calibrated via `instamatic.calibrate_movie_delays` instead. Typically, Instamatic will not run this calibration automatically: the user needs to either set `camera.dead_time` or call `instamatic.calibrate_movie_delays` themselves.
 
 **default_binsize**
 : Set the default binsize, default: `1`.
