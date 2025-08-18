@@ -21,7 +21,7 @@ from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 
-def safe_range(start: float, stop: float, step: float) -> np.ndarray:
+def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs(stop - start) / step) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
