@@ -80,7 +80,7 @@ class Run:
         """Iterate over individual run `Step`s holding rows of `self.table`."""
         return (Step(**t._asdict()) for t in self.table.itertuples())  # noqa
 
-    def interpolate(self, at: np.array, key: str) -> np.array:
+    def interpolate(self, at: np.array, key: str) -> np.ndarray:
         """Interpolate values of `table[key]` at some denser grid of points."""
         alpha, values = self.table['alpha'], self.table[key]
         if at[0] > at[-1]:  # decreasing order is not handled by numpy.interp
