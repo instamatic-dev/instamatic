@@ -158,6 +158,9 @@ class DiffractionRun(Run):
 class Experiment(ExperimentBase):
     """Initialize a FastADT-style rotation electron diffraction experiment.
 
+
+    Parameters
+    ----------
     ctrl:
         Instance of instamatic.controller.TEMController
     path:
