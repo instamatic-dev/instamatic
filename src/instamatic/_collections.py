@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import contextlib
 import logging
 import string
-import time
 from collections import UserDict
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Any
 
 
 class NoOverwriteDict(UserDict):
@@ -18,6 +17,8 @@ class NoOverwriteDict(UserDict):
 
 
 class NullLogger(logging.Logger):
+    """A logger mock that ignores all logging, to be used in headless mode."""
+
     def __init__(self, name='null'):
         super().__init__(name)
         self.addHandler(logging.NullHandler())
@@ -27,6 +28,10 @@ class NullLogger(logging.Logger):
 class PartialFormatter(string.Formatter):
     """`str.format` alternative, allows for partial replacement of {fields}"""
 
+    @dataclass(frozen=True)
+    class Missing:
+        name: str
+
     def __init__(self, missing: str = '{{{}}}') -> None:
         super().__init__()
         self.missing: str = missing  # used instead of missing values
@@ -34,17 +39,17 @@ class PartialFormatter(string.Formatter):
     def get_field(self, field_name: str, args, kwargs) -> tuple[Any, str]:
         """When field can't be found, return placeholder text instead."""
         try:
-            obj, used_key = super().get_field(field_name, args, kwargs)
-            return obj, used_key
+            return super().get_field(field_name, args, kwargs)
         except (KeyError, AttributeError, IndexError, TypeError):
-            return self.missing.format(field_name), field_name
+            return PartialFormatter.Missing(field_name), field_name
 
     def format_field(self, value: Any, format_spec: str) -> str:
         """If the field was not found, format placeholder as string instead."""
-        try:
-            return super().format_field(value, format_spec)
-        except (ValueError, TypeError):
-            return str(value)
+        if isinstance(value, PartialFormatter.Missing):
+            if format_spec:
+                return self.missing.format(f'{value.name}:{format_spec}')
+            return self.missing.format(f'{value.name}')
+        return super().format_field(value, format_spec)
 
 
 partial_formatter = PartialFormatter()
