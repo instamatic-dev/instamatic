@@ -86,12 +86,12 @@ MAX_BOOL_ARGS = 8
 sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 
-def string_to_longarray(string: str, *, dtype: type = np.int_) -> np.ndarray:
+def string_to_longarray(string: str, *, dtype: np.dtype = np.int_) -> np.ndarray:
     """Convert the string to a 1D np array of dtype (default np.int_ - C long)
     with numpy2-save padding to ensure length is a multiple of dtype.itemsize.
     """
     s_bytes = string.encode('utf-8')
-    dtype_size = np.dtype(type).itemsize
+    dtype_size = np.dtype(dtype).itemsize
     if extra := len(s_bytes) % dtype_size:
         s_bytes += b'\0' * (dtype_size - extra)
     return np.frombuffer(s_bytes, dtype=dtype)
