@@ -18,3 +18,4 @@ physical_pixelsize: 0.055
 possible_binsizes: [1]
 stretch_amplitude: 2.43
 stretch_azimuth: 83.37
+dead_time: 0.0

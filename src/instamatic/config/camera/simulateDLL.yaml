@@ -16,3 +16,4 @@ interface: simulateDLL
 possible_binsizes: [1, 2, 4]
 stretch_amplitude: 0
 stretch_azimuth: 0
+dead_time: 0.0

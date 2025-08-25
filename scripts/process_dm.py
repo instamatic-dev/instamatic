@@ -8,6 +8,7 @@ from PIL import Image
 from skimage.exposure import rescale_intensity
 
 from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversion
+from instamatic.tools import relativistic_wavelength
 
 # Script to process cRED data collecting using the DigitalMicrograph script `insteaDMatic`
 # https://github.com/instamatic-dev/InsteaDMatic
@@ -22,21 +23,6 @@ from instamatic.processing.ImgConversionDM import ImgConversionDM as ImgConversi
 #
 # If the first argument is given as `all`, the script will look for
 # all `cred_log.txt` files in the subdirectories, and iterate over those.
-
-
-def relativistic_wavelength(voltage: float = 200):
-    """Calculate the relativistic wavelength of electrons Voltage in kV Return
-    wavelength in Angstrom."""
-    voltage *= 1000  # -> V
-
-    h = 6.626070150e-34  # planck constant J.s
-    m = 9.10938356e-31  # electron rest mass kg
-    e = 1.6021766208e-19  # elementary charge C
-    c = 299792458  # speed of light m/s
-
-    wl = h / (2 * m * voltage * e * (1 + (e * voltage) / (2 * m * c**2))) ** 0.5
-
-    return round(wl * 1e10, 6)  # m -> Angstrom
 
 
 def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
@@ -90,7 +76,7 @@ def img_convert(credlog, tiff_path='tiff2', mrc_path='RED', smv_path='SMV'):
             if line.startswith('Resolution:'):
                 resolution = line.split()[-1]
 
-    wavelength = relativistic_wavelength(high_tension)
+    wavelength = relativistic_wavelength(high_tension * 1000)
 
     # convert from um to mm
     physical_pixelsize = physical_pixelsize[0] / 1000
