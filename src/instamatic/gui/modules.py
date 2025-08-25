@@ -13,6 +13,7 @@ all_modules = (
     'cred',
     'cred_tvips',
     'cred_fei',
+    'fast_adt',
     'sed',
     'autocred',
     'red',
@@ -47,7 +48,7 @@ for module in modules:
     try:
         for job, function in lib.commands.items():
             if job in JOBS:
-                logger.info(f'New job `{job}` already exists in `JOBS` listsing!')
+                logger.info(f'New job `{job}` already exists in `JOBS` listing!')
             else:
                 JOBS[job] = function
     except AttributeError:

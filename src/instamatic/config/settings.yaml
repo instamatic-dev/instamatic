@@ -59,6 +59,7 @@ modules:
   - 'cred'
   - 'cred_tvips'
   - 'cred_fei'
+  - 'fast_adt'
   - 'sed'
   - 'autocred'
   - 'red'

@@ -8,3 +8,4 @@ interface: simulate
 physical_pixelsize: 0.055
 stretch_amplitude: 2.43
 stretch_azimuth: 83.37
+dead_time: 0.0

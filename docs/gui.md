@@ -154,6 +154,45 @@ Pressing `Start Collection` will collect a series of frames with the given tilt 
 Data are output to `.tiff` and `.mrc`, including input files to read the data in PETS and REDp.
 
 
+## FastADT data collection
+
+Module: `fast_adt`
+
+A generic module used to run cRED experiments where the tracking is done a priori i.e. in a swoop directly preceding the diffraction experiment.
+
+Before the experiment, decide on diffraction and tracking modes to be used. The diffraction can be collected as a series of static `stills` or a `continuous` movie. In the latter case, the rotation speed (upon calibration via `instamatic.calib_stage_rotation`) will be established automatically. If desired, a `manual` crystal tracking path can be also requested. Tracking is done just before the experiment. A series of images with crystal positions at different angles will be collected and user will be requested to point on points to measure and then confirm by clicking on the image stream.
+
+![FastADT pane](images/gui_fast_adt.png)
+
+For optimum performance, the FastADT frame uses three separate TEM setting which need to be preemptively set up by the user. The "Image", "Tracking" and "Diffraction" settings are used when collecting the respective kinds of images. They are saved between microscope sessions.
+
+**Diffraction mode**  
+: `stills` or `continuous`, used to switch between rotation and stills/precession-assisted experiment.
+
+**Diffraction start (deg)**  
+: The tilt series/swipe starting angle in degrees.
+
+**Diffraction stop (deg)**  
+: The tilt series/swipe ending angle in degrees.
+
+**Diffraction step (deg)**  
+: The target spacing between angles at which subsequent diffraction images are collected within the tilt series/swipe in degrees.
+
+**Diffraction exposure (s)**  
+: The time taken to collect each diffraction image in seconds. In the `continuous` mode it will additionally dictate the rotation speed.
+
+**Tracking mode**
+: Dictates whether `none` or `manual` tracking is to be performed at the start of the experiment.
+
+**Tracking step (deg)**
+: The target spacing between angles at which subsequent tracking images are collected within the tracking series in degrees.
+
+**Tracking exposure (s)**
+: The time taken to collect each tracking image in seconds.
+
+The function of config settings' `store` / `restore` buttons has been described above. The `start` button starts the (tracking and then) experiment. Further information and instructions concerning the `fast_adt` experiment may appear in the window and in the console. Collected data is automatically output in all available formats to the target directory at the end of experiment.
+
+
 ## Machine learning
 
 Module: `machine_learning`

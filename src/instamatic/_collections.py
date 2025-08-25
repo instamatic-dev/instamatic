@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import contextlib
+import logging
 import string
+import time
 from collections import UserDict
-from typing import Any, Tuple
+from typing import Any, Callable
 
 
 class NoOverwriteDict(UserDict):
@@ -14,6 +17,13 @@ class NoOverwriteDict(UserDict):
         super().__setitem__(key, value)
 
 
+class NullLogger(logging.Logger):
+    def __init__(self, name='null'):
+        super().__init__(name)
+        self.addHandler(logging.NullHandler())
+        self.propagate = False
+
+
 class PartialFormatter(string.Formatter):
     """`str.format` alternative, allows for partial replacement of {fields}"""
 
@@ -21,7 +31,7 @@ class PartialFormatter(string.Formatter):
         super().__init__()
         self.missing: str = missing  # used instead of missing values
 
-    def get_field(self, field_name: str, args, kwargs) -> Tuple[Any, str]:
+    def get_field(self, field_name: str, args, kwargs) -> tuple[Any, str]:
         """When field can't be found, return placeholder text instead."""
         try:
             obj, used_key = super().get_field(field_name, args, kwargs)
