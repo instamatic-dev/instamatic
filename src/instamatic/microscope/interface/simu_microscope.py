@@ -58,6 +58,8 @@ class SimuMicroscope(MicroscopeBase):
 
         self.BeamShift_x = random.randint(MIN, MAX)
         self.BeamShift_y = random.randint(MIN, MAX)
+        self.BeamShift_x = 0
+        self.BeamShift_y = 0
 
         self.BeamTilt_x = random.randint(MIN, MAX)
         self.BeamTilt_y = random.randint(MIN, MAX)
