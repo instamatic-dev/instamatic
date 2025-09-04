@@ -388,11 +388,11 @@ class TEMController:
 
         def one_cycle(tilt: float = 5, sign=1) -> list:
             angle1 = -tilt * sign
-            self.stage.a = angle1
+            self.stage.set(a=angle1)
             img1 = self.get_rotated_image()
 
             angle2 = +tilt * sign
-            self.stage.a = angle2
+            self.stage.set(a=angle2)
             img2 = self.get_rotated_image()
 
             if sign < 1:
@@ -402,7 +402,7 @@ class TEMController:
 
             return shift
 
-        self.stage.a = 0
+        self.stage.set(a=0)
         # self.stage.z = 0 # for testing
 
         zc = self.stage.z
@@ -414,7 +414,7 @@ class TEMController:
         sign = 1
 
         for i, z in enumerate(zs):
-            self.stage.z = z
+            self.stage.set(z=z)
             if verbose:
                 print(f'z = {z:.1f} nm')
 
@@ -423,9 +423,7 @@ class TEMController:
 
             sign *= -1
 
-        mean_shift = shifts[-1] + shifts[0]
-        mean_shift = mean_shift / np.linalg.norm(mean_shift)
-        ds = np.dot(shifts, mean_shift)
+        ds = np.sum(shifts, axis=1)
 
         p = np.polyfit(zs, ds, 1)  # linear fit
         alpha, beta = p
@@ -592,6 +590,35 @@ class TEMController:
         mode = self.mode.get()
 
         arr = future.result()
+        arr = rotate_image(arr, mode=mode, mag=mag)
+
+        return arr
+
+    def get_rotated_raw_image(self, exposure: float = None, binsize: int = None) -> np.ndarray:
+        """Simplified function equivalent to `get_image` that returns the
+        rotated image array.
+
+        Parameters
+        ----------
+        exposure: float
+            Exposure time in seconds
+        binsize: int
+            Binning to use for the image, must be 1, 2, or 4, etc
+        mode : str
+            Magnification mode
+        mag : int
+            Magnification value
+
+        Returns
+        -------
+        arr : np.array
+            Image as 2D numpy array.
+        """
+
+        mag = self.magnification.value
+        mode = self.mode.get()
+
+        arr = self.get_raw_image(exposure=exposure, binsize=binsize)
         arr = rotate_image(arr, mode=mode, mag=mag)
 
         return arr

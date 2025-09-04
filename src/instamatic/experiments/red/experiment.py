@@ -98,12 +98,12 @@ class Experiment(ExperimentBase):
             ctrl.cam.block()
 
         # for i, a in enumerate(tilt_positions):
-        for i, angle in enumerate(tqdm(tilt_positions)):
-            ctrl.stage.a = angle
+        for i, angle in enumerate((tilt_positions)):
+            ctrl.stage.set(a=angle)
 
             j = i + self.offset
 
-            img, h = self.ctrl.get_image(exposure_time)
+            img, h = ctrl.get_image(exposure_time, header_keys='')
 
             self.buffer.append((j, img, h))
 

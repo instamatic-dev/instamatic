@@ -16,7 +16,7 @@ class Stage:
         self,
         num_crystals: int = 100_000,
         min_crystal_size: float = 100,
-        max_crystal_size: float = 1000,
+        max_crystal_size: float = 3_000,
         random_seed: int = 100,
     ) -> None:
         """Handle many samples on a grid.
@@ -32,14 +32,9 @@ class Stage:
         random_seed : int, optional
             Seed for random number generation, by default 100
         """
-        # TODO make this settable
-        self.x = 0
-        self.y = 0
-        self.z = 0
-        self.alpha_tilt = 0
-        self.beta_tilt = 0
+
         self.in_plane_rotation = 10  # TODO change this with focus/magnification
-        self.rotation_matrix = np.eye(3)
+        self.set_position(0, 0, 0, 0, 0)
 
         # TODO parameters
         self.grid = Grid()
@@ -47,9 +42,11 @@ class Stage:
         self.rng = np.random.Generator(np.random.PCG64(random_seed))
 
         # TODO parameters
-        # TODO multiple phases
         # TODO amorphous phase
-        self.crystal = Crystal(*self.rng.uniform(5, 25, 3), *self.rng.uniform(80, 110, 3))
+        self.crystals = [
+            Crystal(20, 20, 20, 90, 90, 90, 221),
+            Crystal(*self.rng.uniform(5, 25, 3), *self.rng.uniform(80, 110, 3)),
+        ]
 
         self.samples = [
             Sample(
@@ -104,7 +101,7 @@ class Stage:
             degrees=True,
         ).as_matrix()
 
-    def image_extent_to_sample_coordinates(
+    def image_extent_to_stage_coordinates(
         self,
         shape: tuple[int, int],
         x_min: float,
@@ -151,10 +148,11 @@ class Stage:
                 )
             ]
         )
-
         p = l0 + l[:, np.newaxis] * np.dot(-l0.T + p0, n) / np.dot(l, n)
 
-        x, y, z = self.rotation_matrix.T @ p
+        # Rotate around sample-holder-constant axes, not stage
+        p0[2] = 0
+        x, y, z = p0[:, np.newaxis] + self.rotation_matrix.T @ (p - p0[:, np.newaxis])
         x = x.reshape(shape)
         y = y.reshape(shape)
         return x, y
@@ -188,7 +186,7 @@ class Stage:
         np.ndarray
             Image
         """
-        x, y = self.image_extent_to_sample_coordinates(
+        x, y = self.image_extent_to_stage_coordinates(
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
         x_min = x.min()
@@ -198,14 +196,16 @@ class Stage:
 
         grid_mask = self.grid.array_from_coords(x, y)
 
-        sample_data = np.ones(shape, dtype=int) * 1000
+        sample_data = np.full(shape, fill_value=0xF000, dtype=np.uint32)
         for ind, sample in enumerate(self.samples):
             if not sample.range_might_contain_crystal(
                 x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
             ):
                 continue
             # TODO better logic here
-            sample_data[sample.pixel_contains_crystal(x, y)] = 1000 * (1 - sample.thickness)
+            sample_data[sample.pixel_contains_crystal(x, y)] = np.round(
+                0xF000 * (1 - sample.thickness)
+            )
 
         sample_data[grid_mask] = 0
 
@@ -243,7 +243,7 @@ class Stage:
         np.ndarray
             diffraction pattern
         """
-        x, y = self.image_extent_to_sample_coordinates(
+        x, y = self.image_extent_to_stage_coordinates(
             shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
         )
         x_min = x.min()
@@ -270,18 +270,19 @@ class Stage:
                 # Crystal is completely on the grid
                 continue
 
-            reflections += self.crystal.diffraction_pattern_mask(
+            reflections += self.crystals[sample.crystal_index].diffraction_pattern_mask(
                 shape,
                 d_min=d_min,
                 rotation_matrix=self.rotation_matrix @ sample.rotation_matrix,
                 acceleration_voltage=200,
                 excitation_error=0.01,
+                intensity_scale=0xFFFF,
             )
         # TODO diffraction shift
 
         # TODO noise
 
         # Convert to int array
-        reflections = (reflections * 0x8000).astype(int)
+        reflections = (reflections).astype(np.uint32)
 
         return reflections

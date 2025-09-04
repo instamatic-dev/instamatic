@@ -51,7 +51,7 @@ class VideoStream(threading.Thread):
     def get_image(self, exposure=None, binsize=None):
         frame = self.cam.get_image(exposure=exposure, binsize=binsize)
 
-        self.frame, scale = autoscale(frame, maxdim=self.display_dim)
+        # self.frame, scale = autoscale(frame, maxdim=self.display_dim)
 
         return frame
 

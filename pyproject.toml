@@ -88,6 +88,9 @@ publishing = [
     "wheel",
     "build",
 ]
+simulation = [
+    "diffsims",
+]
 
 [project.scripts]
 "instamatic" = "instamatic.main:main"

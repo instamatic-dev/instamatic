@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
-from numpy import ndarray
+from numpy import ndarray, random
 
 from instamatic.camera.camera_base import CameraBase
 from instamatic.microscope.base import MicroscopeBase
@@ -26,6 +26,12 @@ class CameraSimulation(CameraBase):
 
     def release_connection(self):
         pass
+
+    def block(self):
+        print('Blocking')
+
+    def unblock(self):
+        print('Unblocking')
 
     def get_image(self, exposure: float = None, binsize: int = None, **kwargs) -> ndarray:
         if exposure is None:
@@ -76,9 +82,12 @@ class CameraSimulation(CameraBase):
                 shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
             )
         else:
-            return self.stage.get_image(
+            img = self.stage.get_image(
                 shape=shape, x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max
             )
+            # Add some noise
+            img += random.random_integers(1, 10, shape).astype(img.dtype)
+            return img
 
     def _mag_to_ranges(self, mag: float) -> Tuple[float, float, float, float]:
         # assume 50x = 2mm full size

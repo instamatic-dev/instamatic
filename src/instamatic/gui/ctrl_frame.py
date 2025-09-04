@@ -50,6 +50,8 @@ class ExperimentalCtrl(LabelFrame):
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
+        stage_reset_btn = Button(frame, text='Reset stage', command=self.reset_stage)
+        stage_reset_btn.grid(row=0, column=0, sticky='W')
 
         Label(frame, text='Angle (-)', width=20).grid(row=1, column=0, sticky='W')
         Label(frame, text='Angle (0)', width=20).grid(row=2, column=0, sticky='W')
@@ -161,6 +163,13 @@ class ExperimentalCtrl(LabelFrame):
         )
         slider.grid(row=12, column=0, columnspan=3, sticky='EW')
 
+        # Magnification
+        Label(frame, text='Magnification', width=20).grid(row=14, column=0, sticky='W')
+        mag_inc_btn = Button(frame, text='+', command=self.increase_mag)
+        mag_inc_btn.grid(row=14, column=1)
+        mag_dec_btn = Button(frame, text='-', command=self.decrease_mag)
+        mag_dec_btn.grid(row=14, column=2)
+
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
@@ -227,6 +236,15 @@ class ExperimentalCtrl(LabelFrame):
 
     def get_brightness(self, event=None):
         self.var_brightness.set(self.ctrl.brightness.get())
+
+    def increase_mag(self):
+        self.ctrl.magnification.increase()
+
+    def decrease_mag(self):
+        self.ctrl.magnification.decrease()
+
+    def reset_stage(self):
+        self.ctrl.stage.set(0, 0, 0, 0, 0)
 
     def set_difffocus(self, event=None):
         self.var_difffocus.set(self.var_difffocus.get())

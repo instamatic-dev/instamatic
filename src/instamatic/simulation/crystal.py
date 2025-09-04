@@ -58,10 +58,17 @@ class Crystal:
 
         self.lattice = diffpy.Lattice(self.a, self.b, self.c, self.alpha, self.beta, self.gamma)
         self.structure = diffpy.Structure(
-            atoms=[diffpy.Atom('Au', xyz=[0, 0, 0])],
+            atoms=[diffpy.Atom('C', xyz=[0, 0, 0])],
             lattice=self.lattice,
         )
         self.phase = Phase(space_group=space_group, structure=self.structure)
+        self.recip = DiffractingVector.from_min_dspacing(
+            self.phase,
+            min_dspacing=1,
+            include_zero_vector=False,
+        )
+        self.recip.sanitise_phase()
+        self.recip.calculate_structure_factor()
 
     @property
     def a_vec(self) -> np.ndarray:
@@ -153,6 +160,7 @@ class Crystal:
         rotation_matrix: np.ndarray,
         acceleration_voltage: float,
         excitation_error: float,
+        intensity_scale: float = 1,
     ) -> np.ndarray:
         """Get a diffraction pattern with a given shape, up to a given
         resolution, in a given orientation and acceleration voltage.
@@ -169,62 +177,68 @@ class Crystal:
             acceleration_voltage of incident beam, in kV
         excitation_error : float
             Excitation error used for intensity calculation, in reciprocal Å
+        intensity_scale : float
+            Multiply final pattern by this value, defaults to 1.0
 
         Returns
         -------
         np.ndarray
             Diffraction pattern
         """
-        gen = SimulationGenerator(accelerating_voltage=acceleration_voltage)
+        gen = SimulationGenerator(
+            accelerating_voltage=acceleration_voltage, shape_factor_model='sin2c'
+        )
         wavelength = gen.wavelength
 
-        # Rotate using all the rotations in the list
-        recip = DiffractingVector.from_min_dspacing(
-            self.phase,
-            min_dspacing=d_min,
-            include_zero_vector=False,
-        )
+        max_excitation_error = excitation_error
+
         rotation = Rotation.from_matrix(rotation_matrix)
-        # Calculate the reciprocal lattice vectors that intersect the Ewald sphere.
-        (
-            intersected_vectors,
-            hkl,
-            shape_factor,
-        ) = gen.get_intersecting_reflections(
-            recip,
-            rotation,
-            wavelength,
-            max_excitation_error=excitation_error,
-            with_direct_beam=False,
+        from diffsims.generators.simulation_generator import (
+            Vector3d,
+            get_intersection_with_ewalds_sphere,
         )
 
-        # Calculate diffracted intensities based on a kinematic model.
-        intensities = get_kinematical_intensities(
-            self.structure,
-            hkl,
-            intersected_vectors.gspacing,
-            prefactor=shape_factor,
-            scattering_params=gen.scattering_params,
+        optical_axis = rotation * Vector3d.zvector()
+
+        # Calculate the reciprocal lattice vectors that intersect the Ewald sphere.
+        intersection, excitation_error = get_intersection_with_ewalds_sphere(
+            self.recip,
+            optical_axis,
+            wavelength,
+            max_excitation_error,
+            gen.precession_angle,
         )
+        # Select intersected reflections
+        intersected_vectors = self.recip[intersection].rotate_with_basis(rotation)
+        excitation_error = excitation_error[intersection]
+        r_spot = intersected_vectors.norm
+
+        # Calculate shape factor
+        shape_factor = gen.get_shape_factor(excitation_error, max_excitation_error, r_spot)
+        # Calculate intensity
+        f_hkls = self.recip.structure_factor[intersection]
+        intensities = (f_hkls * f_hkls.conjugate()).real * shape_factor
 
         # Threshold peaks included in simulation as factor of zero beam intensity.
         peak_mask = intensities > np.max(intensities) * gen.minimum_intensity
         intensities = intensities[peak_mask]
         intersected_vectors = intersected_vectors[peak_mask]
-        intersected_vectors.intensity = intensities
+        intersected_vectors.intensity = intensities * intensity_scale
 
-        # Create a simulation object
         sim = Simulation2D(
             phases=self.phase,
             coordinates=intersected_vectors,
             rotations=rotation,
-            simulation_generator=gen,
+            simulation_generator=self,
             reciprocal_radius=1 / d_min,
         )
-
         # Simulate diffraction pattern
         return sim.get_diffraction_pattern(
-            shape, sigma=1, calibration=1 / d_min / (shape[0] / 2)
+            shape,
+            sigma=1,
+            calibration=1 / d_min / (shape[0] / 2),
+            fast=False,
+            normalize=False,
         )
 
     def __str__(self) -> str:

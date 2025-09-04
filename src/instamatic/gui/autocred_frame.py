@@ -385,8 +385,6 @@ def acquire_data_autocRED(controller, **kwargs):
     )
     cexp.start_collection()
 
-    stop_event.clear()
-    stop_event_experiment.clear()
     controller.log.info('Finish autocRED experiment')
 
 

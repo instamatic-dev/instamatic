@@ -252,6 +252,8 @@ class Experiment(ExperimentBase):
             except BaseException:
                 print('Is DIALS server running? Connection failed.')
                 self.s_c = 0
+        else:
+            self.s_c = 0
 
         if use_vm:
             self.s2 = socket.socket()
@@ -264,6 +266,12 @@ class Experiment(ExperimentBase):
             except BaseException:
                 print('Is VM server running? Connection failed.')
                 self.s2_c = 0
+        else:
+            self.s2_c = 0
+
+    @property
+    def magnification(self) -> float:
+        return self.ctrl.magnification.value
 
     def image_cropper(self, img, window_size=0):
         crystal_pos, r = find_defocused_image_center(
@@ -1152,7 +1160,7 @@ class Experiment(ExperimentBase):
             config.calibration['mag1']['pixelsize'][self.magnification] / 1000
         )  # nm -> um
         xdim, ydim = self.ctrl.cam.get_camera_dimensions()
-        box_x, box_y = self.pixelsize_mag1 * xdim, self.pixelsize_mag1 * ydim
+        box_x, box_y = pixelsize_mag1 * xdim, pixelsize_mag1 * ydim
 
         # Make negative to reflect config change 2019-07-03 to make omega more in line with other software
         rot_axis = -config.camera.camera_rotation_vs_stage_xy
@@ -1185,7 +1193,6 @@ class Experiment(ExperimentBase):
                 try:
                     img, h = self.ctrl.get_image(exposure=self.expt, header_keys=None)
                     if img.mean() > 10:
-                        self.magnification = self.ctrl.magnification.value
                         crystal_positions = find_crystals_timepix(
                             img, self.magnification, spread=self.spread, offset=self.offset
                         )
@@ -1379,8 +1386,6 @@ class Experiment(ExperimentBase):
                 x=self.calib_beamshift.reference_shift[0],
                 y=self.calib_beamshift.reference_shift[1],
             )
-
-            self.magnification = self.ctrl.magnification.value
 
             self.rotation_direction = self.eliminate_backlash_in_tiltx()
             img, h = self.ctrl.get_image(exposure=self.expt, header_keys=header_keys)
@@ -1690,9 +1695,9 @@ class Experiment(ExperimentBase):
                 input(
                     'No z-height adjustment found. Please find an area with particles! Press Enter to continue auto adjustment of z height>>>'
                 )
-                x_zheight, y_zheight = center_z_height_HYMethod(
-                    self.ctrl, spread=self.spread, offset=self.offset
-                )
+                # x_zheight, y_zheight = center_z_height_HYMethod(
+                #     self.ctrl, spread=self.spread, offset=self.offset
+                # )
                 xpoint, ypoint, zpoint, aaa, bbb = self.ctrl.stage.get()
                 self.logger.info(
                     f'Stage position: x = {xpoint}, y = {ypoint}. Z height adjusted to {zpoint}. Tilt angle x {aaa} deg, Tilt angle y {bbb} deg'

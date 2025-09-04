@@ -82,7 +82,7 @@ def segment_crystals(img, r=101, offset=5, footprint=5, remove_carbon_lacing=Tru
     # remove carbon lines
     if remove_carbon_lacing:
         arr = morphology.remove_small_objects(arr, min_size=8 * 8, connectivity=0)
-        arr = morphology.remove_small_holes(arr, min_size=32 * 32, connectivity=0)
+        arr = morphology.remove_small_holes(arr, area_threshold=32 * 32, connectivity=0)
     arr = morphology.binary_dilation(arr, morphology.disk(footprint))  # dilation
 
     # get background pixels
@@ -227,7 +227,7 @@ def main_entry():
 
     for fn in args:
         img, h = read_image(fn)
-
+        print(h)
         crystals = find_crystals_timepix(img, h['exp_magnification'], plot=True)
 
         for crystal in crystals:
