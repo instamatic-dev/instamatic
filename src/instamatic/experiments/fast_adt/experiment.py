@@ -385,26 +385,20 @@ class Experiment(ExperimentBase):
                 self.steps_queue.put(step)
         self.steps_queue.put(None)
 
-    def collect_continuous(self, run) -> None:
+    def collect_continuous(self, run: Run) -> None:
         """Collect a series of scans at angles/exposure specified in `run`"""
         self.msg('Collecting scans from {} to {} degree'.format(*run.scope))
         images, metas = [], []
         if run.has_beam_delta_information:
             run.calculate_beamshifts(self.ctrl, self.beamshift)
-
-        # this part correctly finds the closest possible speed settings for expt
-        detector_dead_time = self.get_dead_time(run.exposure)
-        time_for_one_frame = run.exposure + detector_dead_time
-        rot_calib = self.get_stage_rotation()
-        rot_plan = rot_calib.plan_rotation(time_for_one_frame / run.osc_angle)
-        run.exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
+        rot_speed, run.exposure = self.determine_rotation_speed_and_exposure(run)
 
         self.ctrl.stage.a = float(run.table.loc[0, 'alpha'])
-        with self.ctrl.stage.rotation_speed(speed=rot_plan.speed):
+        with self.ctrl.stage.rotation_speed(speed=rot_speed):
             with self.ctrl.beam.unblanked(delay=0.2):
                 movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
                 a = float(run.table.iloc[-1].loc['alpha'])
-                self.ctrl.stage.set_with_speed(a=a, speed=rot_plan.speed, wait=False)
+                self.ctrl.stage.set_with_speed(a=a, speed=rot_speed, wait=False)
                 for step, (image, header) in zip(run.steps, movie):
                     if run.has_beam_delta_information:
                         self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
@@ -414,6 +408,15 @@ class Experiment(ExperimentBase):
             self.run.table['image'] = images
             self.run.table['meta'] = metas
         self.msg('Collected scans from {} to {} degree'.format(*run.scope))
+
+    def determine_rotation_speed_and_exposure(self, run: Run) -> tuple[float, float]:
+        """Closest possible speed setting & exposure considering dead time."""
+        detector_dead_time = self.get_dead_time(run.exposure)
+        time_for_one_frame = run.exposure + detector_dead_time
+        rot_calib = self.get_stage_rotation()
+        rot_plan = rot_calib.plan_rotation(time_for_one_frame / run.osc_angle)
+        exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
+        return rot_plan.speed, exposure
 
     def finalize(self) -> None:
         self.msg(f'Saving experiment in: {self.path}')
