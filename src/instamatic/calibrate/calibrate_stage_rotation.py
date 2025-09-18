@@ -163,7 +163,7 @@ class CalibStageRotation:
             outdir = calibration_drc
         yaml_path = Path(outdir) / CALIB_STAGE_ROTATION
         with open(yaml_path, 'w') as yaml_file:
-            yaml.safe_dump(asdict(self), yaml_file)  # noqa: correct type
+            yaml.safe_dump(asdict(self), yaml_file)  # type: ignore[arg-type]
         log(f'{self} saved to {yaml_path}.')
 
     def plot(self, sst: Optional[list[SpanSpeedTime]] = None) -> None:
