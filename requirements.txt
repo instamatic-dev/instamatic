@@ -17,4 +17,3 @@ tqdm >= 4.41.1
 typing_extensions >= 4.0.0
 virtualbox >= 2.0.0
 pyserialem >= 0.3.2
-diffpy.structure
