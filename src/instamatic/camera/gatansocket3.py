@@ -86,6 +86,17 @@ MAX_BOOL_ARGS = 8
 sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 
+def string_to_longarray(string: str, *, dtype: np.dtype = np.int_) -> np.ndarray:
+    """Convert the string to a 1D np array of dtype (default np.int_ - C long)
+    with numpy2-save padding to ensure length is a multiple of dtype.itemsize.
+    """
+    s_bytes = string.encode('utf-8')
+    dtype_size = np.dtype(dtype).itemsize
+    if extra := len(s_bytes) % dtype_size:
+        s_bytes += b'\0' * (dtype_size - extra)
+    return np.frombuffer(s_bytes, dtype=dtype)
+
+
 class Message:
     """Information packet to send and receive on the socket.
 
@@ -335,14 +346,7 @@ class GatanSocket:
         funcCode = enum_gs['GS_SetK2Parameters']
 
         self.save_frames = saveFrames
-
-        # filter name
-        filt_str = filt + '\0'
-        extra = len(filt_str) % 4
-        if extra:
-            npad = 4 - extra
-            filt_str = filt_str + npad * '\0'
-        longarray = np.frombuffer(filt_str.encode(), dtype=np.int_)
+        longarray = string_to_longarray(filt + '\0', dtype=np.int_)  # filter name
 
         longs = [
             funcCode,
@@ -397,12 +401,7 @@ class GatanSocket:
             longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
             dbls = [pixelSize]
         bools = [filePerImage]
-        names_str = dirname + '\0' + rootname + '\0'
-        extra = len(names_str) % 4
-        if extra:
-            npad = 4 - extra
-            names_str = names_str + npad * '\0'
-        longarray = np.frombuffer(names_str.encode(), dtype=np.int_)
+        longarray = string_to_longarray(dirname + '\0' + rootname + '\0', dtype=np.int_)
         message_send = Message(
             longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray
         )
@@ -664,24 +663,18 @@ class GatanSocket:
         select_camera=0,
         recv_longargs_init=(0,),
         recv_dblargs_init=(0.0,),
-        recv_longarray_init=[],
+        recv_longarray_init=None,
     ):
+        """Send the command string as a 1D longarray of np.int_ dtype."""
         funcCode = enum_gs['GS_ExecuteScript']
-        cmd_str = command_line + '\0'
-        extra = len(cmd_str) % 4
-        if extra:
-            npad = 4 - extra
-            cmd_str = cmd_str + (npad) * '\0'
-        # send the command string as 1D longarray
-        longarray = np.frombuffer(cmd_str.encode(), dtype=np.int_)
-        # print(longaray)
+        longarray = string_to_longarray(command_line + '\0', dtype=np.int_)
         message_send = Message(
             longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray
         )
         message_recv = Message(
             longargs=recv_longargs_init,
             dblargs=recv_dblargs_init,
-            longarray=recv_longarray_init,
+            longarray=[] if recv_longarray_init is None else recv_longarray_init,
         )
         self.ExchangeMessages(message_send, message_recv)
         return message_recv

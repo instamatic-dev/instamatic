@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import glob
-import os
 import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Iterator
 
 import numpy as np
 from scipy import interpolate, ndimage
-from skimage import exposure
 from skimage.measure import regionprops
 
 
@@ -71,9 +68,13 @@ def to_xds_untrusted_area(kind: str, coords: list) -> str:
         raise ValueError('Only quadrilaterals are supported for now')
 
 
-def find_subranges(lst: list) -> Tuple[int, int]:
+def find_subranges(lst: list[int]) -> Iterator[tuple[int, int]]:
     """Takes a range of sequential numbers (possibly with gaps) and splits them
-    in sequential sub-ranges defined by the minimum and maximum value."""
+    in sequential sub-ranges defined by the minimum and maximum value.
+
+    Example:
+        [1,2,3,7,8,10] --> (1,3), (7,8), (10,10)
+    """
     from itertools import groupby
     from operator import itemgetter
 
@@ -274,7 +275,7 @@ def get_acquisition_time(
 
 
 def relativistic_wavelength(voltage: float = 200_000) -> float:
-    """Calculate the relativistic wavelength of electrons from the accelarating
+    """Calculate the relativistic wavelength of electrons from the accelerating
     voltage.
 
     Input: Voltage in V

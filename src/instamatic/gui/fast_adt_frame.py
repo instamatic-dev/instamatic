@@ -70,8 +70,8 @@ class ExperimentalFastADTVariables:
 class ExperimentalFastADT(LabelFrame):
     """GUI panel to perform selected FastADT-style (c)RED & PED experiments."""
 
-    def __init__(self, parent):  # noqa: parent.__init__ is called
-        LabelFrame.__init__(self, parent, text='Experiment with a priori tracking options')
+    def __init__(self, parent):
+        super().__init__(parent, text='Experiment with a priori tracking options')
         self.parent = parent
         self.var = ExperimentalFastADTVariables()
         self.q: Optional[Queue] = None
