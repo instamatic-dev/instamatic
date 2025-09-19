@@ -18,7 +18,7 @@ def get_cam(interface: str = None):
     simulate = config.settings.simulate
 
     if simulate or interface == 'simulate':
-        from instamatic.simulation.camera import CameraSimulation as cam
+        from instamatic.camera.camera_simu import CameraSimu as cam
     elif interface == 'simulateDLL':
         from instamatic.camera.camera_gatan import CameraDLL as cam
     elif interface in ('orius', 'gatan'):
