@@ -238,44 +238,19 @@ class ExperimentalCtrl(LabelFrame):
     def get_difffocus(self, event=None):
         self.var_difffocus.set(self.ctrl.difffocus.get())
 
-    def set_negative_angle(self):
-        self.q.put(
-            (
-                'ctrl',
-                {
-                    'task': 'stage.set',
-                    'a': self.var_negative_angle.get(),
-                    'wait': self.var_stage_wait.get(),
-                },
-            )
-        )
+    def _set_angle(self, var: Variable) -> None:
+        kwargs = {'task': 'stage.set', 'a': var.get(), 'wait': self.var_stage_wait.get()}
+        self.q.put(('ctrl', kwargs))
         self.triggerEvent.set()
+
+    def set_negative_angle(self):
+        return self._set_angle(self.var_negative_angle)
 
     def set_neutral_angle(self):
-        self.q.put(
-            (
-                'ctrl',
-                {
-                    'task': 'stage.set',
-                    'a': self.var_neutral_angle.get(),
-                    'wait': self.var_stage_wait.get(),
-                },
-            )
-        )
-        self.triggerEvent.set()
+        return self._set_angle(self.var_neutral_angle)
 
     def set_positive_angle(self):
-        self.q.put(
-            (
-                'ctrl',
-                {
-                    'task': 'stage.set',
-                    'a': self.var_positive_angle.get(),
-                    'wait': self.var_stage_wait.get(),
-                },
-            )
-        )
-        self.triggerEvent.set()
+        return self._set_angle(self.var_positive_angle)
 
     def set_goniotool_tx(self, event=None, value=None):
         if not value:
