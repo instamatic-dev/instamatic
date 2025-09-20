@@ -135,13 +135,13 @@ class Magnification(Lens):
         try:
             self.index += 1
         except ValueError:
-            print(f'Error: Cannot change magnficication index (current={self.value}).')
+            print(f'Error: Cannot change magnification index (current={self.value}).')
 
     def decrease(self) -> None:
         try:
             self.index -= 1
         except ValueError:
-            print(f'Error: Cannot change magnficication index (current={self.value}).')
+            print(f'Error: Cannot change magnification index (current={self.value}).')
 
     def get_ranges(self) -> dict:
         """Runs through all modes and fetches all the magnification settings
