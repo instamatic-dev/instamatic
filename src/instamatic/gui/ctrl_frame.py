@@ -64,12 +64,13 @@ class ExperimentalCtrl(LabelFrame):
         e_alpha_wobbler = Spinbox(frame, textvariable=self.var_alpha_wobbler, **angle_i1)
         e_alpha_wobbler.grid(row=4, column=1, sticky='EW')
 
-        self.b_start_wobble = Button(frame, text='Start', command=self.start_alpha_wobbler)
-        self.b_start_wobble.grid(row=4, column=2, sticky='W')
-        self.b_stop_wobble = Button(
-            frame, text='Stop', command=self.stop_alpha_wobbler, state=DISABLED
+        b_wobble = Checkbutton(
+            frame,
+            text='Toggle wobble',
+            variable=self.var_alpha_wobbler_on,
+            command=self.toggle_alpha_wobbler,
         )
-        self.b_stop_wobble.grid(row=4, column=3, sticky='W')
+        b_wobble.grid(row=4, column=2, sticky='W')
 
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
@@ -116,7 +117,7 @@ class ExperimentalCtrl(LabelFrame):
         self.c_toggle_defocus = Checkbutton(
             frame,
             text='Toggle defocus',
-            variable=self.var_toggle_diff_defocus,
+            variable=self.var_diff_defocus_on,
             command=self.toggle_diff_defocus,
         )
         self.c_toggle_defocus.grid(row=13, column=2, sticky='W', columnspan=2)
@@ -192,6 +193,7 @@ class ExperimentalCtrl(LabelFrame):
         self.var_mode = StringVar(value='diff')
 
         self.var_alpha_wobbler = DoubleVar(value=5)
+        self.var_alpha_wobbler_on = BooleanVar(value=False)
 
         self.var_stage_x = IntVar(value=0)
         self.var_stage_y = IntVar(value=0)
@@ -202,7 +204,7 @@ class ExperimentalCtrl(LabelFrame):
         self.var_difffocus = IntVar(value=65535)
 
         self.var_diff_defocus = IntVar(value=1500)
-        self.var_toggle_diff_defocus = BooleanVar(value=False)
+        self.var_diff_defocus_on = BooleanVar(value=False)
 
         self.var_stage_wait = BooleanVar(value=True)
 
@@ -280,29 +282,22 @@ class ExperimentalCtrl(LabelFrame):
         self.var_stage_x.set(round(x))
         self.var_stage_y.set(round(y))
 
-    def start_alpha_wobbler(self):
-        self.wobble_stop_event = threading.Event()
-
-        self.b_stop_wobble.config(state=NORMAL)
-        self.b_start_wobble.config(state=DISABLED)
-
-        self.q.put(
-            (
-                'ctrl',
-                {
-                    'task': 'stage.alpha_wobbler',
-                    'delta': self.var_alpha_wobbler.get(),
-                    'event': self.wobble_stop_event,
-                },
+    def toggle_alpha_wobbler(self):
+        if self.var_alpha_wobbler_on.get():
+            self.wobble_stop_event = threading.Event()
+            self.q.put(
+                (
+                    'ctrl',
+                    {
+                        'task': 'stage.alpha_wobbler',
+                        'delta': self.var_alpha_wobbler.get(),
+                        'event': self.wobble_stop_event,
+                    },
+                )
             )
-        )
-        self.triggerEvent.set()
-
-    def stop_alpha_wobbler(self):
-        self.wobble_stop_event.set()
-
-        self.b_stop_wobble.config(state=DISABLED)
-        self.b_start_wobble.config(state=NORMAL)
+            self.triggerEvent.set()
+        else:  # wobbler off
+            self.wobble_stop_event.set()
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
@@ -313,21 +308,19 @@ class ExperimentalCtrl(LabelFrame):
         self.triggerEvent.set()
 
     def toggle_diff_defocus(self):
-        toggle = self.var_toggle_diff_defocus.get()
-
-        if toggle:
+        if self.var_diff_defocus_on.get():
             offset = self.var_diff_defocus.get()
             self.ctrl.difffocus.defocus(offset=offset)
             self.b_reset_defocus.config(state=NORMAL)
         else:
             self.ctrl.difffocus.refocus()
-            self.var_toggle_diff_defocus.set(False)
+            self.var_diff_defocus_on.set(False)
 
         self.get_difffocus()
 
     def reset_diff_defocus(self):
         self.ctrl.difffocus.refocus()
-        self.var_toggle_diff_defocus.set(False)
+        self.var_diff_defocus_on.set(False)
         self.get_difffocus()
 
 
