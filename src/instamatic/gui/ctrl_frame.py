@@ -22,6 +22,9 @@ class ExperimentalCtrl(LabelFrame):
 
         frame = Frame(self)
 
+        stage_reset_btn = Button(frame, text='Reset stage', command=self.reset_stage)
+        stage_reset_btn.grid(row=0, column=1, sticky='W')
+
         b_stage_stop = Button(frame, text='Stop stage', command=self.stage_stop)
         b_stage_stop.grid(row=0, column=2, sticky='W')
 
@@ -31,51 +34,36 @@ class ExperimentalCtrl(LabelFrame):
         b_find_eucentric_height = Button(
             frame, text='Find eucentric height', command=self.find_eucentric_height
         )
-        b_find_eucentric_height.grid(row=0, column=0, sticky='EW', columnspan=2)
+        b_find_eucentric_height.grid(row=0, column=0, sticky='EW')
 
         Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
-        self.o_mode = OptionMenu(
-            frame,
-            self.var_mode,
-            'diff',
-            'diff',
-            'mag1',
-            'mag2',
-            'lowmag',
-            'samag',
-            command=self.set_mode,
-        )
-        self.o_mode.grid(row=8, column=1, sticky='W', padx=10)
+        ranges = config.microscope.ranges
+        modes = list(ranges.keys())
+        self.o_mode = OptionMenu(frame, self.var_mode, modes[0], *modes, command=self.set_mode)
+        self.o_mode.grid(row=8, column=1, sticky='EW')
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
-        stage_reset_btn = Button(frame, text='Reset stage', command=self.reset_stage)
-        stage_reset_btn.grid(row=0, column=0, sticky='W')
-
         Label(frame, text='Angle (-)', width=20).grid(row=1, column=0, sticky='W')
         Label(frame, text='Angle (0)', width=20).grid(row=2, column=0, sticky='W')
         Label(frame, text='Angle (+)', width=20).grid(row=3, column=0, sticky='W')
         Label(frame, text='Alpha wobbler (±)', width=20).grid(row=4, column=0, sticky='W')
         Label(frame, text='Stage(XY)', width=20).grid(row=6, column=0, sticky='W')
 
-        e_negative_angle = Spinbox(
-            frame, width=10, textvariable=self.var_negative_angle, from_=-90, to=90, increment=5
-        )
-        e_negative_angle.grid(row=1, column=1, sticky='EW')
-        e_neutral_angle = Spinbox(
-            frame, width=10, textvariable=self.var_neutral_angle, from_=-90, to=90, increment=5
-        )
-        e_neutral_angle.grid(row=2, column=1, sticky='EW')
-        e_positive_angle = Spinbox(
-            frame, width=10, textvariable=self.var_positive_angle, from_=-90, to=90, increment=5
-        )
-        e_positive_angle.grid(row=3, column=1, sticky='EW')
+        angle = {'width': 10, 'from_': -90, 'to': 90, 'increment': 5}
+        angle_i1 = {**angle, 'increment': 1}
+        stage = {'width': 10, 'from_': -1e6, 'to': 1e6, 'increment': 1000}
 
-        e_alpha_wobbler = Spinbox(
-            frame, width=10, textvariable=self.var_alpha_wobbler, from_=-90, to=90, increment=1
-        )
+        e_negative_angle = Spinbox(frame, textvariable=self.var_negative_angle, **angle)
+        e_negative_angle.grid(row=1, column=1, sticky='EW')
+        e_neutral_angle = Spinbox(frame, textvariable=self.var_neutral_angle, **angle)
+        e_neutral_angle.grid(row=2, column=1, sticky='EW')
+        e_positive_angle = Spinbox(frame, textvariable=self.var_positive_angle, **angle)
+        e_positive_angle.grid(row=3, column=1, sticky='EW')
+        e_alpha_wobbler = Spinbox(frame, textvariable=self.var_alpha_wobbler, **angle_i1)
         e_alpha_wobbler.grid(row=4, column=1, sticky='EW')
+
         self.b_start_wobble = Button(frame, text='Start', command=self.start_alpha_wobbler)
         self.b_start_wobble.grid(row=4, column=2, sticky='W')
         self.b_stop_wobble = Button(
@@ -83,9 +71,9 @@ class ExperimentalCtrl(LabelFrame):
         )
         self.b_stop_wobble.grid(row=4, column=3, sticky='W')
 
-        e_stage_x = Entry(frame, width=10, textvariable=self.var_stage_x)
+        e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
-        e_stage_y = Entry(frame, width=10, textvariable=self.var_stage_y)
+        e_stage_y = Spinbox(frame, textvariable=self.var_stage_y, **stage)
         e_stage_y.grid(row=6, column=2, sticky='EW')
 
         if config.settings.use_goniotool:
@@ -170,19 +158,15 @@ class ExperimentalCtrl(LabelFrame):
         mag_dec_btn = Button(frame, text='-', command=self.decrease_mag)
         mag_dec_btn.grid(row=14, column=2)
 
-        frame.pack(side='top', fill='x', padx=10, pady=10)
-
-        frame = Frame(self)
-
-        Label(frame, text='DiffFocus', width=20).grid(row=11, column=0, sticky='W')
+        Label(frame, text='DiffFocus', width=20).grid(row=21, column=0, sticky='W')
         e_difffocus = Entry(frame, width=10, textvariable=self.var_difffocus)
-        e_difffocus.grid(row=11, column=1, sticky='W')
+        e_difffocus.grid(row=21, column=1, sticky='W')
 
         b_difffocus = Button(frame, text='Set', command=self.set_difffocus)
-        b_difffocus.grid(row=11, column=2, sticky='W')
+        b_difffocus.grid(row=21, column=2, sticky='WE')
 
         b_difffocus_get = Button(frame, text='Get', command=self.get_difffocus)
-        b_difffocus_get.grid(row=11, column=3, sticky='W')
+        b_difffocus_get.grid(row=21, column=3, sticky='W')
 
         slider = Scale(
             frame,
@@ -192,7 +176,7 @@ class ExperimentalCtrl(LabelFrame):
             orient=HORIZONTAL,
             command=self.set_difffocus,
         )
-        slider.grid(row=12, column=0, columnspan=3, sticky='EW')
+        slider.grid(row=22, column=0, columnspan=3, sticky='EW')
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
