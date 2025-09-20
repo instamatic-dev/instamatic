@@ -70,7 +70,7 @@ class ExperimentalCtrl(LabelFrame):
             variable=self.var_alpha_wobbler_on,
             command=self.toggle_alpha_wobbler,
         )
-        b_wobble.grid(row=4, column=2, sticky='W')
+        b_wobble.grid(row=4, column=2, sticky='W', columnspan=2)
 
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
