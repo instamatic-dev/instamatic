@@ -49,11 +49,11 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text='Angle (0)', width=20).grid(row=2, column=0, sticky='W')
         Label(frame, text='Angle (+)', width=20).grid(row=3, column=0, sticky='W')
         Label(frame, text='Alpha wobbler (±)', width=20).grid(row=4, column=0, sticky='W')
-        Label(frame, text='Stage(XY)', width=20).grid(row=6, column=0, sticky='W')
+        Label(frame, text='Stage (XY)', width=20).grid(row=6, column=0, sticky='W')
 
         angle = {'width': 10, 'from_': -90, 'to': 90, 'increment': 5}
         angle_i1 = {**angle, 'increment': 1}
-        stage = {'width': 10, 'from_': -1e6, 'to': 1e6, 'increment': 1000}
+        stage = {'width': 10, 'from_': -1e6, 'to': 1e6, 'increment': 100}
 
         e_negative_angle = Spinbox(frame, textvariable=self.var_negative_angle, **angle)
         e_negative_angle.grid(row=1, column=1, sticky='EW')
@@ -102,7 +102,7 @@ class ExperimentalCtrl(LabelFrame):
         b_stage_get.grid(row=6, column=4, sticky='W')
 
         # defocus button
-        Label(frame, text='Diff defocus:', width=20).grid(row=13, column=0, sticky='W')
+        Label(frame, text='Diff defocus', width=20).grid(row=13, column=0, sticky='W')
         self.e_diff_defocus = Spinbox(
             frame,
             textvariable=self.var_diff_defocus,
