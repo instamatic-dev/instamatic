@@ -80,6 +80,7 @@ class CameraSimu(CameraBase):
         """Simple simulation of the TEM. MUST START IN IMAGE MODE!
 
         Consisting of randomly dispersed crystals.
+        One crystal is guaranteeed to be at (0, 0) on the stage
         Each crystal is perfectly flat, and perfectly round.
         All crystals have the same unit cell.
 
@@ -90,6 +91,7 @@ class CameraSimu(CameraBase):
         Image mode:
         Crystals have different "thickness", yielding different gray-values proportional to thickness.
         This gray-value never changes, regardless of tilt, orientation ect.
+        A cross centered at (0, 0) is added for convenience
 
         Diffraction mode:
         All crystals visible in image mode contribute to the diffraction pattern.
@@ -108,7 +110,7 @@ class CameraSimu(CameraBase):
         self.unit_cell_alpha = 90  # Degrees
         self.unit_cell_beta = 90  # Degrees
         self.unit_cell_gamma = 120  # Degrees
-        self.max_excitation_error = 0.01
+        self.max_excitation_error = 0.005
         self.spot_radius = 3  # pixels
         super().__init__(name)
 
@@ -125,6 +127,11 @@ class CameraSimu(CameraBase):
         self.crystal_euler_angle_phi_1 = np.random.uniform(0, 360, self.n_crystals)
         self.crystal_euler_angle_psi = np.random.uniform(0, 180, self.n_crystals)
         self.crystal_euler_angle_phi_2 = np.random.uniform(0, 360, self.n_crystals)
+
+        # Ensure one crystal is always at (0, 0) and 1µm radius
+        self.crystal_x[0] = 0
+        self.crystal_y[0] = 0
+        self.crystal_r[0] = 1000
 
         # Reciprocal-space setup
         reciprocal_unit_cell = _get_reciprocal_unit_cell(
@@ -193,6 +200,11 @@ class CameraSimu(CameraBase):
         else:
             self.mag = self.tem.getMagnification()
 
+        # If the TEM is a simulated one (i.e. random beam shift), reset beam shift
+        # Otherwise, reseting the stage will not get you to (0, 0)
+        if self.tem.name == 'simulate':
+            self.tem.setBeamShift(0, 0)
+
         self.ready = True
 
     def release_connection(self):
@@ -237,7 +249,14 @@ class CameraSimu(CameraBase):
             # thickness multiplied by mask of where the crystal is
             mask = ((xx - x) ** 2 + (yy - y) ** 2) < r**2
             out += t * mask.astype(float)
-        return out
+        # Invert and scale
+        out = 0xF000 * (1 - out)
+        # Add some noise
+        out *= np.random.uniform(0.9, 1.1, out.shape)
+        # Add cross at (0, 0)
+        width = 50  # nm
+        out[(np.abs(xx) < width) | (np.abs(yy) < width)] = 0
+        return out.astype(int)
 
     def get_diffraction_image(
         self, shape: Tuple[int, int], crystal_indices: np.ndarray
@@ -303,7 +322,9 @@ class CameraSimu(CameraBase):
                 min_y = round(max(0, y - self.spot_radius))
                 max_y = round(min(shape[0], y + self.spot_radius))
                 out[min_y:max_y, min_x:max_x] = intensity
-        return out
+        # Scale. Direct beam intensity is 25
+        out = out * 0x8000 / 25
+        return out.astype(int)
 
     def get_image(self, exposure: float = None, binsize: int = None, **kwargs) -> np.ndarray:
         self.actually_establish_connection()
@@ -371,8 +392,7 @@ class CameraSimu(CameraBase):
                 c_ind,
             )
         else:
-            img = (self.get_realspace_image(xx, yy, c_ind) * 0xFFFF).astype(int)
-            return img
+            return self.get_realspace_image(xx, yy, c_ind)
 
     def acquire_image(self) -> int:
         """For TVIPS compatibility."""
