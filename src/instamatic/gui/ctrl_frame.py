@@ -48,7 +48,7 @@ class ExperimentalCtrl(LabelFrame):
         Label(frame, text='Angle (0)', width=20).grid(row=2, column=0, sticky='W')
         Label(frame, text='Angle (+)', width=20).grid(row=3, column=0, sticky='W')
         Label(frame, text='Alpha wobbler (±)', width=20).grid(row=4, column=0, sticky='W')
-        Label(frame, text='Stage (XY)', width=20).grid(row=6, column=0, sticky='W')
+        Label(frame, text='Stage (XYZ)', width=20).grid(row=6, column=0, sticky='W')
 
         angle = {'width': 10, 'from_': -90, 'to': 90, 'increment': 5}
         angle_i1 = {**angle, 'increment': 1}
@@ -75,6 +75,8 @@ class ExperimentalCtrl(LabelFrame):
         e_stage_x.grid(row=6, column=1, sticky='EW')
         e_stage_y = Spinbox(frame, textvariable=self.var_stage_y, **stage)
         e_stage_y.grid(row=6, column=2, sticky='EW')
+        e_stage_z = Spinbox(frame, textvariable=self.var_stage_z, **stage)
+        e_stage_z.grid(row=6, column=3, sticky='EW')
 
         if config.settings.use_goniotool:
             Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
@@ -97,9 +99,9 @@ class ExperimentalCtrl(LabelFrame):
         b_positive_angle.grid(row=3, column=2, sticky='W')
 
         b_stage = Button(frame, text='Set', command=self.set_stage)
-        b_stage.grid(row=6, column=3, sticky='W')
+        b_stage.grid(row=6, column=4, sticky='W')
         b_stage_get = Button(frame, text='Get', command=self.get_stage)
-        b_stage_get.grid(row=6, column=4, sticky='W')
+        b_stage_get.grid(row=6, column=5, sticky='W')
 
         # defocus button
         Label(frame, text='Diff defocus', width=20).grid(row=13, column=0, sticky='W')
@@ -196,6 +198,7 @@ class ExperimentalCtrl(LabelFrame):
 
         self.var_stage_x = IntVar(value=0)
         self.var_stage_y = IntVar(value=0)
+        self.var_stage_z = IntVar(value=0)
 
         self.var_goniotool_tx = IntVar(value=1)
 
@@ -272,6 +275,7 @@ class ExperimentalCtrl(LabelFrame):
                     'task': 'stage.set',
                     'x': self.var_stage_x.get(),
                     'y': self.var_stage_y.get(),
+                    'z': self.var_stage_z.get(),
                     'wait': self.var_stage_wait.get(),
                 },
             )
@@ -279,9 +283,10 @@ class ExperimentalCtrl(LabelFrame):
         self.triggerEvent.set()
 
     def get_stage(self, event=None):
-        x, y, _, _, _ = self.ctrl.stage.get()
+        x, y, z, _, _ = self.ctrl.stage.get()
         self.var_stage_x.set(round(x))
         self.var_stage_y.set(round(y))
+        self.var_stage_z.set(round(z))
 
     def toggle_alpha_wobbler(self):
         if self.var_alpha_wobbler_on.get():
