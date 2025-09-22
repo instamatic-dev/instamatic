@@ -37,8 +37,7 @@ class ExperimentalCtrl(LabelFrame):
         b_find_eucentric_height.grid(row=0, column=0, sticky='EW')
 
         Label(frame, text='Mode:').grid(row=8, column=0, sticky='W')
-        ranges = config.microscope.ranges
-        modes = list(ranges.keys())
+        modes = list(config.microscope.ranges.keys())
         self.o_mode = OptionMenu(frame, self.var_mode, modes[0], *modes, command=self.set_mode)
         self.o_mode.grid(row=8, column=1, sticky='EW')
 
@@ -225,12 +224,14 @@ class ExperimentalCtrl(LabelFrame):
 
     def increase_mag(self):
         self.ctrl.magnification.increase()
+        print(f'Set magnification: {self.ctrl.magnification.get()}')
 
     def decrease_mag(self):
         self.ctrl.magnification.decrease()
+        print(f'Set magnification: {self.ctrl.magnification.get()}')
 
     def reset_stage(self):
-        self.ctrl.stage.set(0, 0, 0, 0, 0)
+        self.ctrl.stage.neutral()
 
     def set_difffocus(self, event=None):
         self.var_difffocus.set(self.var_difffocus.get())
