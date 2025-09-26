@@ -111,9 +111,7 @@ class CamClient:
             dct = {'attr_name': attr_name}
             return self._eval_dct(dct)
         else:
-            raise AttributeError(
-                f'`{self.__class__.__name__}` object has no attribute `{attr_name}`'
-            )
+            wrapped = None  # AFAIK can't wrap with None, can cause odd errors
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
