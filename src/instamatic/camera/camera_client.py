@@ -82,6 +82,7 @@ class CamClient:
         self.buffers: Dict[str, np.ndarray] = {}
         self.shms = {}
 
+        self._attr_dct: dict = {}
         self._init_dict()
         self._init_attr_dict()
 
@@ -103,6 +104,8 @@ class CamClient:
 
     def __getattr__(self, attr_name):
         if attr_name in self._dct:
+            if attr_name in object.__getattribute__(self, '_attr_dct'):
+                return self._eval_dct({'attr_name': attr_name})
             wrapped = self._dct[attr_name]
         elif attr_name in self._attr_dct:
             dct = {'attr_name': attr_name}
