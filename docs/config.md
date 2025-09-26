@@ -230,6 +230,9 @@ This file holds the specifications of the camera. This file is must be located t
 **camera_rotation_vs_stage_xy**
 : In radians, give here the rotation of the position of the rotation axis with respect to the horizontal. Used for diffraction only. Corresponds to the rotation axis in RED and PETS, for example: `-2.24`. You can find the rotation axis for your setup using the script `edtools.find_rotation_axis` available from [here](https://github.com/instamatic-dev/edtools#find_rotation_axispy).
 
+**streamable**
+: Boolean value. If present, overwrites the default behavior as implemented in each camera interface class to force the camera to stream (if `True`) or prevent it from streaming (if `False`) all collected data live directly to the GUI.
+
 **stretch_amplitude**
 : Use `instamatic.stretch_correction` to characterize the lens distortion. The numbers here are used to calculate the XCORR/YCORR maps. The amplitude is the percentage difference between the maximum and minimum eigenvectors of the ellipsoid, i.e. if the amplitude is `2.43`, eig(max)/eig(min) = 1.0243. You can use the program `instamatic.stretch_correction` available [here](https://github.com/instamatic-dev/instamatic/blob/main/docs/programs.md#instamaticstretch_correction) on some powder patterns to define these numbers.
 
