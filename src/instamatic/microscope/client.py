@@ -125,10 +125,6 @@ class MicroscopeClient:
         }
         self._dct['get_attrs'] = None
 
-    def _init_attr_dict(self):
-        """Get list of attrs and their types."""
-        self._attr_dct = self.get_attrs()
-
     def __dir__(self) -> list:
         return list(self._dct.keys())
 
