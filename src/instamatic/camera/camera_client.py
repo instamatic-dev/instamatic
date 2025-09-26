@@ -155,9 +155,9 @@ class CamClient:
     def _init_dict(self):
         """Get list of functions and their doc strings from the uninitialized
         class."""
-        from instamatic.camera.camera import get_cam
+        from instamatic.camera.camera import get_camera_class
 
-        cam = get_cam(self.interface)
+        cam = get_camera_class(self.interface)
 
         self._dct = {
             key: value for key, value in cam.__dict__.items() if not key.startswith('_')

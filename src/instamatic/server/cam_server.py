@@ -11,7 +11,7 @@ import traceback
 import numpy as np
 
 from instamatic import config
-from instamatic.camera import Camera
+from instamatic.camera import get_camera
 from instamatic.utils import high_precision_timers
 
 from .serializer import dumper, loader
@@ -81,7 +81,7 @@ class CamServer(threading.Thread):
 
     def run(self):
         """Start server thread."""
-        self.cam = Camera(name=self._name, use_server=False)
+        self.cam = get_camera(name=self._name, use_server=False)
         self.cam.get_attrs = self.get_attrs
 
         print(f'Initialized camera: {self.cam.interface}')

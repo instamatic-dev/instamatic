@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 from instamatic import config
+from instamatic.camera.camera_base import CameraBase
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['Camera']
+__all__ = ['get_camera', 'get_camera_class']
 
 default_cam_interface = config.camera.interface
 
 
-def get_cam(interface: str = None):
-    """Grabs the camera object defined by `interface`"""
+def get_camera_class(interface: str) -> type[CameraBase]:
+    """Grabs the camera class with the specific `interface`"""
 
     simulate = config.settings.simulate
 
@@ -39,10 +41,24 @@ def get_cam(interface: str = None):
     return cam
 
 
-def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
+def get_camera(
+    name: Optional[str] = None,
+    as_stream: bool = False,
+    use_server: bool = False,
+) -> CameraBase:
     """Initialize the camera identified by the 'name' parameter if `as_stream`
     is True, it will return a VideoStream object if `as_stream` is False, it
-    will return the raw Camera object."""
+    will return the raw Camera object.
+
+    name: Optional[str]
+        Specify which camera to use, must be implemented in `instamatic.camera`
+    as_stream: bool
+        If True (default False), allow streaming this camera image live.
+    use_server: bool
+        Connect to camera server running on the host/port defined in the config
+
+    returns: Camera interface class instance
+    """
 
     if name is None:
         name = config.camera.name
@@ -57,7 +73,7 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
 
         cam = CamClient(name=name, interface=interface)
     else:
-        cam_cls = get_cam(interface)
+        cam_cls = get_camera_class(interface)
 
         if interface in ('timepix', 'pytimepix'):
             tpx_config = (
@@ -220,7 +236,7 @@ def main_entry():
 
 if __name__ == '__main__':
     # main_entry()
-    cam = Camera(use_server=True)
+    cam = get_camera(use_server=True)
     arr = cam.get_image(exposure=0.1)
     print(arr)
     print(arr.shape)
