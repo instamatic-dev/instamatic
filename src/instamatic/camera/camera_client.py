@@ -103,6 +103,7 @@ class CamClient:
         print(f'Connected to CAM server ({HOST}:{PORT})')
 
     def __getattr__(self, attr_name):
+        print(self._dct)
         if attr_name in self._dct:
             if attr_name in object.__getattribute__(self, '_attr_dct'):
                 return self._eval_dct({'attr_name': attr_name})
