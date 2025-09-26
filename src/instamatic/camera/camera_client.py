@@ -55,7 +55,6 @@ class CamClient:
         self.name = name
         self.interface = interface
         self._bufsize = BUFSIZE
-        self.streamable = False  # overrides cam settings
         self.verbose = False
 
         try:

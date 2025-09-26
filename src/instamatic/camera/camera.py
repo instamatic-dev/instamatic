@@ -56,7 +56,6 @@ def Camera(name: str = None, as_stream: bool = False, use_server: bool = False):
         from instamatic.camera.camera_client import CamClient
 
         cam = CamClient(name=name, interface=interface)
-        as_stream = False  # precaution
     else:
         cam_cls = get_cam(interface)
 
