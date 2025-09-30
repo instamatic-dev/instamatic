@@ -191,14 +191,7 @@ class Experiment(ExperimentBase):
         super().__init__()
         self.ctrl = ctrl
         self.path = Path(path)
-
-        self.mrc_path = self.path / 'mrc'
-        self.tiff_path = self.path / 'tiff'
-        self.tiff_image_path = self.path / 'tiff_image'
-        self.mrc_path.mkdir(exist_ok=True, parents=True)
-        self.tiff_path.mkdir(exist_ok=True, parents=True)
-        self.tiff_image_path.mkdir(exist_ok=True, parents=True)
-
+        self.make_subdirectories()
         self.log = log or NullLogger()
         self.flatfield = flatfield
         self.fast_adt_frame = experiment_frame
@@ -217,6 +210,23 @@ class Experiment(ExperimentBase):
 
         self.steps_queue: Queue[Union[Step, None]] = Queue()
         self.run: Optional[Run] = None
+
+    @property
+    def mrc_path(self) -> Path:
+        return self.path / 'mrc'
+
+    @property
+    def tiff_path(self) -> Path:
+        return self.path / 'tiff'
+
+    @property
+    def tiff_image_path(self) -> Path:
+        return self.path / 'tiff_image'
+
+    def make_subdirectories(self) -> None:
+        self.mrc_path.mkdir(exist_ok=True, parents=True)
+        self.tiff_path.mkdir(exist_ok=True, parents=True)
+        self.tiff_image_path.mkdir(exist_ok=True, parents=True)
 
     def restore_fast_adt_diff_for_image(self):
         """Restore 'FastADT_diff' config with 'FastADT_track' magnification."""
