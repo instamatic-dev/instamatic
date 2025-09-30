@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 from typing_extensions import Self
 
 from instamatic import config
@@ -156,6 +157,42 @@ class DiffractionRun(Run):
             run.table['delta_x'] = tracking_run.interpolate(alpha_range, 'delta_x')
             run.table['delta_y'] = tracking_run.interpolate(alpha_range, 'delta_y')
         return run
+
+
+RGB = tuple[float, float, float]
+
+
+class TrackingArtist:
+    """Responsible for plotting tracking summary for multiple FastADT runs."""
+
+    def __init__(self, beam_center_x: int, beam_center_y: int) -> None:
+        self.fig, self.ax = plt.subplots()
+        self.beam_center_x: int = beam_center_x
+        self.beam_center_y: int = beam_center_y
+        self.colors: list[RGB] = []
+
+        self.ax.set_axis_off()
+        self.fig.tight_layout(pad=0)
+
+    def add_background(self, tracking_run: TrackingRun):
+        self.ax.imshow(np.mean(np.array(list(tracking_run.table['image'])), axis=0))
+
+    def add_tracking_run(self, tracking_run: TrackingRun) -> None:
+        i = len(self.colors) % 10
+        color: RGB = tuple(plt.get_cmap('tab10')(i)[:3])
+        self.colors.append(color)
+        x = self.beam_center_x + tracking_run.table['delta_x']
+        y = self.beam_center_y + tracking_run.table['delta_y']
+        u = np.diff(x)
+        v = np.diff(y)
+        a = (a := (u**2 + v**2 + 1) ** (-1 / 2)) / max(a)
+        self.ax.quiver(x[:-1], y[:-1], u, v, alpha=a, color=color)
+        self.regenerate_legend()
+
+    def regenerate_legend(self):
+        ic = enumerate(self.colors)
+        handles = [Line2D([], [], color=c, marker='>', label=str(i)) for i, c in ic]
+        self.ax.legend(handles=handles)
 
 
 class Experiment(ExperimentBase):
