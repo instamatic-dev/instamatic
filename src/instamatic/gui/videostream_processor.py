@@ -167,6 +167,7 @@ class VideoStreamProcessor:
         """
         pre_context_values = self.temporary_frame, self.temporary_image
         try:
+            self.vsf.stream.block()
             if frame is not None:
                 self.temporary_frame = frame
             if image is not None:
@@ -175,6 +176,7 @@ class VideoStreamProcessor:
                 self.temporary_image = self.render_figure(figure)
             yield
         finally:
+            self.vsf.stream.unblock()
             self.temporary_frame, self.temporary_image = pre_context_values
 
     @property

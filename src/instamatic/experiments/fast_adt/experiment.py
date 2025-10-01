@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+import contextlib
+import itertools
 import logging
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, Iterator, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
 from typing_extensions import Self
 
 from instamatic import config
@@ -21,11 +23,23 @@ from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
 from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
+T = TypeVar('T')
+
+
+def get_color(i: int) -> tuple[int, int, int]:
+    """Return i-th color from matplotlib colormap tab10 as accepted by PIL."""
+    return tuple([int(rgb * 255) for rgb in plt.get_cmap('tab10')(i)][:3])  # type: ignore
+
 
 def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs(stop - start) / step) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
+
+
+def sawtooth(iterator: Iterable[T]) -> Iterator[T]:
+    """Iterate elements of input sequence back and forth, repeating edges."""
+    yield from itertools.cycle((seq := list(iterator)) + list(reversed(seq)))
 
 
 class FastADTEarlyTermination(RuntimeError):
@@ -72,7 +86,7 @@ class Run:
         self.table: pd.DataFrame = pd.DataFrame.from_dict(columns)
 
     @property
-    def scope(self) -> Tuple[float, float]:
+    def scope(self) -> tuple[float, float]:
         """The range of alpha values scanned during the entire run."""
         a = self.table['alpha']
         if not self.continuous:
@@ -92,7 +106,7 @@ class Run:
         return np.interp(at, alpha, values)
 
     @property
-    def buffer(self) -> List[Tuple[int, np.ndarray, dict]]:
+    def buffer(self) -> list[tuple[int, np.ndarray, dict]]:
         """Standardized list of (number, image, meta) used when saving."""
         return [(i, s.image, s.meta) for i, s in enumerate(self.steps)]
 
@@ -106,13 +120,13 @@ class Run:
         a = list(self.table['alpha'])
         return (a[-1] - a[0]) / (len(a) - 1) if len(a) > 1 else -1
 
-    def to_continuous(self) -> Self:
-        """Construct a new run from N-1 first rows for continuous method."""
-        new_alphas = self.table['alpha'].rolling(2).mean().drop(0)
-        new_cols = self.table.iloc[:-1, :].to_dict(orient='list')
-        del new_cols['alpha']
-        c = self.__class__
-        return c(exposure=self.exposure, continuous=True, alpha=new_alphas, **new_cols)
+    def make_continuous(self) -> None:
+        """Make self a new run from N-1 first rows for the continuous
+        method."""
+        new_al = self.table['alpha'].rolling(2).mean().drop(0)
+        new_kw = self.table.iloc[:-1, :].to_dict(orient='list')
+        del new_kw['alpha']
+        self.__init__(exposure=self.exposure, continuous=True, alpha=new_al, **new_kw)
 
     def calculate_beamshifts(self, ctrl, beamshift) -> None:
         """Note CalibBeamShift uses swapped axes: X points down, Y right."""
@@ -129,7 +143,7 @@ class TrackingRun(Run):
     """Designed to estimate delta_x/y a priori based on manual used input."""
 
     @classmethod
-    def from_params(cls, params: Dict[str, Any]) -> Self:
+    def from_params(cls, params: dict[str, Any]) -> Self:
         alpha_range = safe_range(
             start=params['diffraction_start'],
             stop=params['diffraction_stop'],
@@ -144,8 +158,8 @@ class DiffractionRun(Run):
     @classmethod
     def from_params(
         cls,
-        params: Dict[str, Any],
-        tracking_run: Optional['TrackingRun'] = None,
+        params: dict[str, Any],
+        pathing_run: Optional['TrackingRun'] = None,
     ) -> Self:
         alpha_range = safe_range(
             start=params['diffraction_start'],
@@ -153,46 +167,20 @@ class DiffractionRun(Run):
             step=params['diffraction_step'],
         )
         run = cls(exposure=params['diffraction_time'], alpha=alpha_range)
-        if tracking_run is not None:
-            run.table['delta_x'] = tracking_run.interpolate(alpha_range, 'delta_x')
-            run.table['delta_y'] = tracking_run.interpolate(alpha_range, 'delta_y')
+        if pathing_run is not None:
+            run.table['delta_x'] = pathing_run.interpolate(alpha_range, 'delta_x')
+            run.table['delta_y'] = pathing_run.interpolate(alpha_range, 'delta_y')
         return run
 
 
-RGB = tuple[float, float, float]
+@dataclass
+class Runs:
+    """Collection of runs: beam alignment, xtal tracking, beam pathing, diff"""
 
-
-class TrackingArtist:
-    """Responsible for plotting tracking summary for multiple FastADT runs."""
-
-    def __init__(self, beam_center_x: int, beam_center_y: int) -> None:
-        self.fig, self.ax = plt.subplots()
-        self.beam_center_x: int = beam_center_x
-        self.beam_center_y: int = beam_center_y
-        self.colors: list[RGB] = []
-
-        self.ax.set_axis_off()
-        self.fig.tight_layout(pad=0)
-
-    def add_background(self, tracking_run: TrackingRun):
-        self.ax.imshow(np.mean(np.array(list(tracking_run.table['image'])), axis=0))
-
-    def add_tracking_run(self, tracking_run: TrackingRun) -> None:
-        i = len(self.colors) % 10
-        color: RGB = tuple(plt.get_cmap('tab10')(i)[:3])
-        self.colors.append(color)
-        x = self.beam_center_x + tracking_run.table['delta_x']
-        y = self.beam_center_y + tracking_run.table['delta_y']
-        u = np.diff(x)
-        v = np.diff(y)
-        a = (a := (u**2 + v**2 + 1) ** (-1 / 2)) / max(a)
-        self.ax.quiver(x[:-1], y[:-1], u, v, alpha=a, color=color)
-        self.regenerate_legend()
-
-    def regenerate_legend(self):
-        ic = enumerate(self.colors)
-        handles = [Line2D([], [], color=c, marker='>', label=str(i)) for i, c in ic]
-        self.ax.legend(handles=handles)
+    alignment: Optional[Run] = None
+    tracking: Optional[Run] = None
+    pathing: list[TrackingRun] = field(default_factory=list)
+    diffraction: list[DiffractionRun] = field(default_factory=list)
 
 
 class Experiment(ExperimentBase):
@@ -228,7 +216,6 @@ class Experiment(ExperimentBase):
         super().__init__()
         self.ctrl = ctrl
         self.path = Path(path)
-        self.make_subdirectories()
         self.log = log or NullLogger()
         self.flatfield = flatfield
         self.fast_adt_frame = experiment_frame
@@ -245,25 +232,9 @@ class Experiment(ExperimentBase):
             self.click_listener = None
             self.videostream_processor = None
 
+        self.beam_center: tuple[float, float] = (-1, -1)
         self.steps_queue: Queue[Union[Step, None]] = Queue()
-        self.run: Optional[Run] = None
-
-    @property
-    def mrc_path(self) -> Path:
-        return self.path / 'mrc'
-
-    @property
-    def tiff_path(self) -> Path:
-        return self.path / 'tiff'
-
-    @property
-    def tiff_image_path(self) -> Path:
-        return self.path / 'tiff_image'
-
-    def make_subdirectories(self) -> None:
-        self.mrc_path.mkdir(exist_ok=True, parents=True)
-        self.tiff_path.mkdir(exist_ok=True, parents=True)
-        self.tiff_image_path.mkdir(exist_ok=True, parents=True)
+        self.runs: Runs = Runs()
 
     def restore_fast_adt_diff_for_image(self):
         """Restore 'FastADT_diff' config with 'FastADT_track' magnification."""
@@ -346,63 +317,107 @@ class Experiment(ExperimentBase):
         Finally, the collected run will be logged and the stage - reset.
         """
         self.msg('FastADT experiment started')
-        with self.ctrl.beam.blanked():
-            image_path = self.tiff_image_path / 'image.tiff'
-            if not image_path.exists():
-                self.ctrl.restore('FastADT_image')
-                with self.ctrl.beam.unblanked(delay=0.2):
-                    self.ctrl.get_image(params['tracking_time'], out=image_path)
 
+        image_path = self.path / 'image.tiff'
+        if not image_path.exists():
+            self.ctrl.restore('FastADT_image')
+            with self.ctrl.beam.unblanked(delay=0.2):
+                self.ctrl.get_image(params['tracking_time'], out=image_path)
+
+        with self.ctrl.beam.blanked(), self.ctrl.cam.blocked():
             if params['tracking_mode'] == 'manual':
-                tracking_run = TrackingRun.from_params(params)
-                self.collect_manual_tracking(tracking_run)
-            else:
-                tracking_run = None
+                self.runs.tracking = TrackingRun.from_params(params)
+                self.determine_pathing_manually()
 
-            self.run = DiffractionRun.from_params(params, tracking_run)
+            for pathing_run in self.runs.pathing:
+                new_run = DiffractionRun.from_params(params, pathing_run)
+                self.runs.diffraction.append(new_run)
+            if not self.runs.pathing:
+                self.runs.diffraction = [DiffractionRun.from_params(params)]
+
             self.ctrl.restore('FastADT_diff')
             self.camera_length = int(self.ctrl.magnification.get())
             self.diffraction_mode = params['diffraction_mode']
-            if self.diffraction_mode == 'stills':
-                self.collect_stills(self.run)
-            elif self.diffraction_mode == 'continuous':
-                self.collect_continuous(self.run)
 
-            print(self.run.table)
+            for run in self.runs.diffraction:
+                if self.diffraction_mode == 'stills':
+                    self.collect_stills(run)
+                elif self.diffraction_mode == 'continuous':
+                    self.collect_continuous(run)
+                self.finalize(run)
+
             self.ctrl.restore('FastADT_image')
-            self.log.info('Collected the following run:')
-            self.log.info(str(self.run))
             self.ctrl.stage.a = 0.0
 
-    def collect_manual_tracking(self, run: TrackingRun) -> None:
+    @contextlib.contextmanager
+    def displayed_step(self, step: Step) -> None:
+        """Display step image with dots representing existing pathing."""
+        draw = self.videostream_processor.draw
+        instructions: list[draw.Instruction] = []
+        for run_i, p in enumerate(self.runs.pathing):
+            x = self.beam_center[0] + p.table.at[step.Index, 'delta_x']
+            y = self.beam_center[1] + p.table.at[step.Index, 'delta_y']
+            instructions.append(draw.circle((x, y), fill='white', radius=3))
+            instructions.append(draw.circle((x, y), fill=get_color(run_i), radius=2))
+        with self.videostream_processor.temporary(frame=step.image):
+            yield
+        for instruction in instructions:
+            draw.instructions.remove(instruction)
+
+    def determine_pathing_manually(self) -> None:
         """Determine the target beam shifts `delta_x` and `delta_y` manually,
         based on the beam center found life (to find clicking offset) and
         `TrackingRun` to be used for crystal tracking in later experiment."""
 
+        run: TrackingRun = self.runs.tracking
         self.restore_fast_adt_diff_for_image()
         self.beamshift = self.get_beamshift()
         self.ctrl.stage.a = run.table.loc[len(run.table) // 2, 'alpha']
-        with self.ctrl.beam.unblanked():
+        with self.ctrl.beam.unblanked(), self.ctrl.cam.unblocked():
             self.msg('Collecting tracking. Click on the center of the beam.')
             with self.click_listener as cl:
                 click = cl.get_click()
-                beam_center_x, beam_center_y = click.x, click.y
+                self.beam_center = (click.x, click.y)
 
         self.ctrl.restore('FastADT_track')
-        delta_xs, delta_ys = [], []
-        Thread(target=self.enqueue_still_steps, args=(run,), daemon=True).start()
-        while (step := self.steps_queue.get()) is not None:
-            with self.videostream_processor.temporary(frame=step.image):
+        Thread(target=self.collect_tracking_stills, args=(run,), daemon=True).start()
+
+        tracking_images = []
+        tracking_in_progress = True
+        while tracking_in_progress:
+            print('Starting tracking again?')
+            while (step := self.steps_queue.get()) is not None:
                 m = f'Click on the crystal (image={step.Index}, alpha={step.alpha} deg).'
                 self.msg(m)
-                with self.click_listener as cl:
+                with self.displayed_step(step=step), self.click_listener as _, cl:
                     click = cl.get_click()
-                    delta_xs.append(click.x - beam_center_x)
-                    delta_ys.append(click.y - beam_center_y)
-            self.msg('')
-        run.table['delta_x'] = delta_xs
-        run.table['delta_y'] = delta_ys
-        self.plot_tracking(tracking_run=run)
+                run.table.loc[step.Index, 'delta_x'] = click.x - self.beam_center[0]
+                run.table.loc[step.Index, 'delta_y'] = click.y - self.beam_center[1]
+                tracking_images.append(step.image)
+                self.msg('')
+            if 'image' not in run.table:
+                run.table['image'] = tracking_images
+            self.runs.pathing.append(deepcopy(run))
+
+            self.click_listener.queue.queue.clear()
+            self.msg('Tracking results: click LMB to accept, MMB to add new, RMB to reject.')
+            for step in sawtooth(self.runs.tracking.steps):
+                with self.displayed_step(step=step), self.click_listener as _, cl:
+                    click = cl.get_click(timeout=0.5)
+                    if click is None:
+                        continue
+                    if click.button == 1:
+                        tracking_in_progress = False
+                        break
+                    elif click.button == 2:
+                        for new_step in [*self.runs.tracking.steps, None]:
+                            self.steps_queue.put(new_step)
+                        print('Registered middle-click')
+                        break
+                    if click.button == 3:
+                        msg = 'Experiment abandoned after tracking.'
+                        self.msg(msg)
+                        raise FastADTEarlyTermination(msg)
 
     def collect_stills(self, run: Run) -> None:
         """Collect a series of stills at angles/exposure specified in `run`"""
@@ -423,7 +438,7 @@ class Experiment(ExperimentBase):
         run.table['meta'] = metas
         self.msg('Collected stills from {} to {} degree'.format(*run.scope))
 
-    def enqueue_still_steps(self, run: Run) -> None:
+    def collect_tracking_stills(self, run: Run) -> None:
         """Get & put stills to `self.tracking_queue` to eval asynchronously."""
         with self.ctrl.beam.unblanked(delay=0.2), self.ctrl.cam.blocked():
             for step in run.steps:
@@ -446,15 +461,15 @@ class Experiment(ExperimentBase):
                 movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
                 a = float(run.table.iloc[-1].loc['alpha'])
                 self.ctrl.stage.set_with_speed(a=a, speed=rot_speed, wait=False)
-                for step, (image, header) in zip(run.steps, movie):
+                for step, (image, meta) in zip(run.steps, movie):
                     if run.has_beam_delta_information:
                         self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                     images.append(image)
-                    metas.append(header)
-            self.run = run.to_continuous()
-            self.run.table['image'] = images
-            self.run.table['meta'] = metas
-        self.msg('Collected scans from {} to {} degree'.format(*run.scope))
+                    metas.append(meta)
+        run.make_continuous()
+        run.table['image'] = images
+        run.table['meta'] = metas
+        self.msg(str(run))
 
     def determine_rotation_speed_and_exposure(self, run: Run) -> tuple[float, float]:
         """Closest possible speed setting & exposure considering dead time."""
@@ -465,8 +480,22 @@ class Experiment(ExperimentBase):
         exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
         return rot_plan.speed, exposure
 
-    def finalize(self) -> None:
-        self.msg(f'Saving experiment in: {self.path}')
+    def get_run_output_path(self, run: DiffractionRun) -> Path:
+        """Returns self.path if only 1 run done, self.path/sub## if
+        multiple."""
+        if len(self.runs.pathing) <= 1:
+            return self.path
+        return self.path / f'sub{self.runs.diffraction.index(run):02d}'
+
+    def finalize(self, run: DiffractionRun) -> None:
+        """Create output directories and save provided run there."""
+        out_path = self.get_run_output_path(run)
+        mrc_path = out_path / 'mrc'
+        tiff_path = out_path / 'tiff'
+        mrc_path.mkdir(exist_ok=True, parents=True)
+        tiff_path.mkdir(exist_ok=True, parents=True)
+
+        self.msg(f'Saving experiment in: {out_path}')
         rotation_axis = config.camera.camera_rotation_vs_stage_xy
         pixel_size = config.calibration['diff']['pixelsize'].get(self.camera_length, -1)
         physical_pixel_size = config.camera.physical_pixelsize  # mm
@@ -480,12 +509,12 @@ class Experiment(ExperimentBase):
             method = 'Rotation Electron Diffraction'
 
         img_conv = ImgConversion(
-            buffer=self.run.buffer,
-            osc_angle=self.run.osc_angle,
-            start_angle=self.run.table['alpha'].iloc[0],
-            end_angle=self.run.table['alpha'].iloc[-1],
+            buffer=run.buffer,
+            osc_angle=run.osc_angle,
+            start_angle=run.table['alpha'].iloc[0],
+            end_angle=run.table['alpha'].iloc[-1],
             rotation_axis=rotation_axis,
-            acquisition_time=self.run.exposure,
+            acquisition_time=run.exposure,
             flatfield=self.flatfield,
             pixelsize=pixel_size,
             physical_pixelsize=physical_pixel_size,
@@ -494,34 +523,9 @@ class Experiment(ExperimentBase):
             stretch_azimuth=stretch_azimuth,
             method=method,
         )
-        img_conv.threadpoolwriter(tiff_path=self.tiff_path, mrc_path=self.mrc_path, workers=8)
-        img_conv.write_ed3d(self.mrc_path)
-        img_conv.write_pets_inp(self.path)
-        img_conv.write_beam_centers(self.path)
+
+        img_conv.threadpoolwriter(tiff_path=tiff_path, mrc_path=mrc_path, workers=8)
+        img_conv.write_ed3d(mrc_path)
+        img_conv.write_pets_inp(out_path)
+        img_conv.write_beam_centers(out_path)
         self.msg('Data collection and conversion done. FastADT experiment finalized.')
-
-    def plot_tracking(self, tracking_run: Run) -> None:
-        """Plot tracking results in `VideoStreamFrame` and let user reject."""
-        fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
-        ax1.set_xlabel('alpha [degrees]')
-        ax1.set_ylabel('ΔX [pixels]')
-        ax2.set_ylabel('ΔY [pixels]')
-        ax1.yaxis.label.set_color('red')
-        ax2.yaxis.label.set_color('blue')
-        ax2.spines['left'].set_color('red')
-        ax2.spines['right'].set_color('blue')
-        ax1.tick_params(axis='y', colors='red')
-        ax2.tick_params(axis='y', colors='blue')
-        ax1.plot('alpha', 'delta_x', data=tracking_run.table, color='red', label='X')
-        ax2.plot('alpha', 'delta_y', data=tracking_run.table, color='blue', label='Y')
-        fig.tight_layout()
-        self.msg('Tracking results: left-click to accept, right-click to reject.')
-        with self.videostream_processor.temporary(figure=fig):
-            with self.click_listener as cl:
-                if cl.get_click().button != 1:
-                    self.msg('Experiment abandoned after tracking.')
-                    raise FastADTEarlyTermination('Experiment abandoned after tracking.')
-
-    def teardown(self) -> None:
-        self.finalize()

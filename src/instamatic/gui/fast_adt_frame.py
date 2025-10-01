@@ -240,7 +240,6 @@ def fast_adt_interface_command(controller, **params: Any) -> None:
     try:
         fast_adt_frame.update_widget_state(busy=True)
         controller.fast_adt.start_collection(**params)
-        controller.fast_adt.finalize()
     except RuntimeError:
         pass  # RuntimeError is raised if experiment is terminated early
     finally:
