@@ -10,7 +10,7 @@ default_tem_interface = config.microscope.interface
 __all__ = ['get_microscope', 'get_microscope_class']
 
 
-def get_microscope_class(interface: str) -> 'type[MicroscopeBase]':
+def get_microscope_class(interface: str) -> type[MicroscopeBase]:
     """Grab tem class with the specific 'interface'."""
     simulate = config.settings.simulate
 
@@ -42,7 +42,7 @@ def get_microscope(name: Optional[str] = None, use_server: bool = False) -> Micr
     use_server: bool
         Connect to microscope server running on the host/port defined in the config file
 
-    returns: TEM interface class
+    returns: TEM interface class instance
     """
     if name is None:
         interface = default_tem_interface

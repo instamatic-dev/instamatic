@@ -10,7 +10,7 @@ from typing import Any, Generator, List, Optional, Type, TypeVar, Union
 
 import numpy as np
 
-from instamatic.camera import Camera
+from instamatic.camera import get_camera
 from instamatic.camera.camera_base import CameraBase
 from instamatic.image_utils import autoscale
 
@@ -115,7 +115,7 @@ class VideoStream(threading.Thread):
         cls: Type[VideoStream_T], cam: Union[CameraBase, str] = 'simulate'
     ) -> VideoStream_T:
         """Create a subclass based on passed cam or cam-str stream-ability."""
-        cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        cam: CameraBase = get_camera(name=cam) if isinstance(cam, str) else cam
         if cls is VideoStream:
             return (LiveVideoStream if cam.streamable else FakeVideoStream)(cam)
         return cls(cam)
@@ -123,7 +123,7 @@ class VideoStream(threading.Thread):
     def __init__(self, cam: Union[CameraBase, str] = 'simulate') -> None:
         threading.Thread.__init__(self)
 
-        self.cam: CameraBase = Camera(name=cam) if isinstance(cam, str) else cam
+        self.cam: CameraBase = get_camera(name=cam) if isinstance(cam, str) else cam
         self.lock = threading.Lock()
 
         self.default_exposure = self.cam.default_exposure

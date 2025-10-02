@@ -55,7 +55,6 @@ class CamClient:
         self.name = name
         self.interface = interface
         self._bufsize = BUFSIZE
-        self.streamable = False  # overrides cam settings
         self.verbose = False
 
         try:
@@ -83,6 +82,7 @@ class CamClient:
         self.buffers: Dict[str, np.ndarray] = {}
         self.shms = {}
 
+        self._attr_dct: dict = {}
         self._init_dict()
         self._init_attr_dict()
 
@@ -104,14 +104,14 @@ class CamClient:
 
     def __getattr__(self, attr_name):
         if attr_name in self._dct:
+            if attr_name in object.__getattribute__(self, '_attr_dct'):
+                return self._eval_dct({'attr_name': attr_name})
             wrapped = self._dct[attr_name]
         elif attr_name in self._attr_dct:
             dct = {'attr_name': attr_name}
             return self._eval_dct(dct)
         else:
-            raise AttributeError(
-                f'`{self.__class__.__name__}` object has no attribute `{attr_name}`'
-            )
+            wrapped = None  # AFAIK can't wrap with None, can cause odd errors
 
         @wraps(wrapped)
         def wrapper(*args, **kwargs):
@@ -156,9 +156,9 @@ class CamClient:
     def _init_dict(self):
         """Get list of functions and their doc strings from the uninitialized
         class."""
-        from instamatic.camera.camera import get_cam
+        from instamatic.camera.camera import get_camera_class
 
-        cam = get_cam(self.interface)
+        cam = get_camera_class(self.interface)
 
         self._dct = {
             key: value for key, value in cam.__dict__.items() if not key.startswith('_')

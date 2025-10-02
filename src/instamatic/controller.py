@@ -9,7 +9,7 @@ import numpy as np
 import yaml
 
 from instamatic import config
-from instamatic.camera import Camera
+from instamatic.camera import get_camera
 from instamatic.camera.camera_base import CameraBase
 from instamatic.exceptions import TEMControllerError
 from instamatic.formats import write_tiff
@@ -61,7 +61,7 @@ def initialize(
 
         print(f'Camera    : {cam_name}{cam_tag}')
 
-        cam = Camera(cam_name, as_stream=stream, use_server=use_cam_server)
+        cam = get_camera(cam_name, as_stream=stream, use_server=use_cam_server)
     else:
         cam = None
 
