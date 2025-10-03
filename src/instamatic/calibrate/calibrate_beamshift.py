@@ -4,9 +4,11 @@ import logging
 import os
 import pickle
 import sys
+from copy import deepcopy
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, Sequence
 
+import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
@@ -19,55 +21,62 @@ from instamatic.calibrate.filenames import *
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
 from instamatic.processing.find_holes import find_holes
-from instamatic.tools import find_beam_center, printer
+from instamatic.tools import find_beam_center
 
 logger = logging.getLogger(__name__)
 
 
+Vector2 = np.ndarray  # numpy array with two float (or int) elements
+VectorNx2 = np.ndarray  # numpy array with N Vector2-s
+Matrix2x2 = np.ndarray  # numpy array of shape (2, 2) with float elements
+
+
 class CalibBeamShift:
     """Simple class to hold the methods to perform transformations from one
-    setting to another based on calibration results."""
+    setting to another based on calibration results.
 
-    def __init__(self, transform, reference_shift, reference_pixel):
+    Throughout this class, the following two terms are used consistently:
+    - pixel: the (x, y) beam position in pixels determined from camera image
+    - shift: the unitless (x, y) value pair reported by the BeamShift deflector
+    """
+
+    def __init__(self, transform, reference_pixel, reference_shift) -> None:
         super().__init__()
-        self.transform = transform
-        self.reference_shift = reference_shift
-        self.reference_pixel = reference_pixel
-        self.has_data = False
+        self.transform: Matrix2x2 = transform
+        self.reference_pixel: Vector2 = reference_pixel
+        self.reference_shift: Vector2 = reference_shift
+        self.pixels: Optional[VectorNx2] = None
+        self.shifts: Optional[VectorNx2] = None
+        self.images: Optional[list[np.ndarray]] = None
 
     def __repr__(self):
         return f'CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})'
 
-    def beamshift_to_pixelcoord(self, beamshift):
+    def beamshift_to_pixelcoord(self, beamshift: Sequence[float, float]) -> Vector2:
         """Converts from beamshift x,y to pixel coordinates."""
+        bs = np.array(beamshift)
         r_i = np.linalg.inv(self.transform)
-        pixelcoord = np.dot(self.reference_shift - beamshift, r_i) + self.reference_pixel
-        return pixelcoord
+        return np.dot(self.reference_shift - bs, r_i) + self.reference_pixel
 
-    def pixelcoord_to_beamshift(self, pixelcoord) -> np.ndarray:
+    def pixelcoord_to_beamshift(self, pixelcoord: Sequence[float, float]) -> Vector2:
         """Converts from pixel coordinates to beamshift x,y."""
         r = self.transform
-        beamshift = self.reference_shift - np.dot(pixelcoord - self.reference_pixel, r)
-        return beamshift
+        pc = np.array(pixelcoord)
+        return self.reference_shift - np.dot(pc - self.reference_pixel, r)
 
     @classmethod
-    def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None) -> Self:
-        fit_result = fit_affine_transformation(shifts, beampos)
+    def from_data(cls, pixels, shifts, reference_pixel, reference_shift, images=None) -> Self:
+        fit_result = fit_affine_transformation(pixels, shifts)
         r = fit_result.r
-
-        c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
-        c.data_shifts = shifts
-        c.data_beampos = beampos
-        c.has_data = True
-        c.header = header
-
+        c = cls(transform=r, reference_pixel=reference_pixel, reference_shift=reference_shift)
+        c.pixels = pixels
+        c.shifts = shifts
+        c.images = images
         return c
 
     @classmethod
     def from_file(cls, fn=CALIB_BEAMSHIFT) -> Self:
         """Read calibration from file."""
-        import pickle
-
         try:
             return pickle.load(open(fn, 'rb'))
         except OSError as e:
@@ -83,19 +92,16 @@ class CalibBeamShift:
 
     def to_file(self, fn=CALIB_BEAMSHIFT, outdir='.'):
         """Save calibration to file."""
+        self_without_images = deepcopy(self)
+        self_without_images.images = None
         fout = os.path.join(outdir, fn)
-        pickle.dump(self, open(fout, 'wb'))
+        pickle.dump(self_without_images, open(fout, 'wb'))
 
     def plot(self, to_file: Optional[AnyPath] = None):
-        if not self.has_data:
-            return
-
-        shifts = self.data_shifts
-        r_i = np.linalg.inv(self.transform)
-        beampos_ = np.dot(self.data_beampos, r_i)
-
-        plt.scatter(*shifts.T, marker='>', label='Observed pixel shifts')
-        plt.scatter(*beampos_.T, marker='<', label='Positions in pixel coords')
+        """Assuming the data is present, plot the data."""
+        shifts = np.dot(self.shifts, np.linalg.inv(self.transform))
+        plt.scatter(*self.pixels.T, marker='>', label='Observed pixel shifts')
+        plt.scatter(*shifts.T, marker='<', label='Reconstructed pixel shifts')
         plt.legend()
         plt.title('BeamShift vs. Direct beam position (Imaging)')
         if to_file:
@@ -162,8 +168,7 @@ def calibrate_beamshift_live(
     print('Beamshift: x={} | y={}'.format(*beamshift_cent))
     print('Pixel: x={} | y={}'.format(*pixel_cent))
 
-    shifts = []
-    beampos = []
+    images, pixels, shifts = [], [], []
     dx_dy = ((np.indices((gridsize, gridsize)) - gridsize // 2) * stepsize).reshape(2, -1).T
 
     progress_bar = tqdm(dx_dy, total=len(dx_dy), desc='Beamshift calibration')
@@ -176,8 +181,9 @@ def calibrate_beamshift_live(
         img, h = ctrl.get_image(comment=comment, header_keys=('BeamShift',), **kwargs)
         img = imgscale(img, scale)
 
-        shifts.append(phase_cross_correlation(img_cent, img, upsample_factor=10)[0])
-        beampos.append(np.array(h['BeamShift']))
+        images.append(img)
+        pixels.append(phase_cross_correlation(img_cent, img, upsample_factor=10)[0])
+        shifts.append(np.array(h['BeamShift']))
 
     print('')
     # print "\nReset to center"
@@ -186,11 +192,11 @@ def calibrate_beamshift_live(
 
     # normalize to binsize = 1 and 512-pixel image scale before initializing
     c = CalibBeamShift.from_data(
-        np.array(shifts) * binsize / scale,
-        np.array(beampos) - beamshift_cent,
-        reference_shift=beamshift_cent,
+        np.array(pixels) * binsize / scale,
+        np.array(shifts) - beamshift_cent,
         reference_pixel=pixel_cent,
-        header=h_cent,
+        reference_shift=beamshift_cent,
+        headers=h_cent,
     )
     return c
 
@@ -222,6 +228,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     print('Beamshift: x={} | y={}'.format(*beamshift_cent))
     print('Pixel: x={:.2f} | y={:.2f}'.format(*pixel_cent))
 
+    images = []
     shifts = []
     beampos = []
 
@@ -236,6 +243,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
 
         shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
 
+        images.append(img)
         beampos.append(beamshift)
         shifts.append(shift)
 
@@ -246,9 +254,9 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     c = CalibBeamShift.from_data(
         shifts,
         beampos,
-        reference_shift=beamshift_cent,
         reference_pixel=pixel_cent,
-        header=h_cent,
+        reference_shift=beamshift_cent,
+        images=h_cent,
     )
     c.plot()
 
