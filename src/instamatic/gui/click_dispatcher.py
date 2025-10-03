@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import queue
+from dataclasses import dataclass
 from typing import Callable, Optional, Union
 
 from typing_extensions import Self
@@ -10,26 +11,25 @@ from instamatic._collections import NoOverwriteDict
 
 
 class MouseButton(enum.IntEnum):
+    """Mirrors tkinter.Event <Button-#> event values."""
+
     LEFT = 1
     MIDDLE = 2
     RIGHT = 3
+    SCROLL_UP = 4
+    SCROLL_DOWN = 5
 
 
+@dataclass
 class ClickEvent:
     """Individual click event expected and handled by `ClickListener`s."""
 
-    def __init__(
-        self,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        button: Optional[int] = None,
-    ) -> None:
-        self.x = x if x else 0
-        self.y = y if y else 0
-        self.button = MouseButton(button) if button else MouseButton.LEFT
+    x: Optional[int] = None
+    y: Optional[int] = None
+    button: MouseButton = MouseButton.LEFT
 
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(x={self.x}, y={self.y}, button={self.button})'
+    def xy(self) -> tuple[int, int]:
+        return self.x, self.y
 
 
 class ClickListener:
