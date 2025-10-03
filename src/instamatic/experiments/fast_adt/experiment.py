@@ -21,6 +21,7 @@ from instamatic._typing import AnyPath
 from instamatic.calibrate import CalibBeamShift, CalibMovieDelays, CalibStageRotation
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
 from instamatic.experiments.experiment_base import ExperimentBase
+from instamatic.gui.click_dispatcher import MouseButton
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
 
 T = TypeVar('T')
@@ -232,7 +233,7 @@ class Experiment(ExperimentBase):
             self.click_listener = None
             self.videostream_processor = None
 
-        self.beam_center: tuple[float, float] = (-1, -1)
+        self.beam_center: tuple[float, float] = (float('nan'), float('nan'))
         self.steps_queue: Queue[Union[Step, None]] = Queue()
         self.runs: Runs = Runs()
 
@@ -376,8 +377,7 @@ class Experiment(ExperimentBase):
         with self.ctrl.beam.unblanked(), self.ctrl.cam.unblocked():
             self.msg('Collecting tracking. Click on the center of the beam.')
             with self.click_listener as cl:
-                click = cl.get_click()
-                self.beam_center = (click.x, click.y)
+                self.beam_center = cl.get_click().xy
 
         self.ctrl.restore('FastADT_track')
         Thread(target=self.collect_tracking_stills, args=(run,), daemon=True).start()
@@ -389,8 +389,8 @@ class Experiment(ExperimentBase):
             while (step := self.steps_queue.get()) is not None:
                 m = f'Click on the crystal (image={step.Index}, alpha={step.alpha} deg).'
                 self.msg(m)
-                with self.displayed_step(step=step), self.click_listener as _, cl:
-                    click = cl.get_click()
+                with self.displayed_step(step=step), self.click_listener:
+                    click = self.click_listener.get_click()
                 run.table.loc[step.Index, 'delta_x'] = click.x - self.beam_center[0]
                 run.table.loc[step.Index, 'delta_y'] = click.y - self.beam_center[1]
                 tracking_images.append(step.image)
@@ -399,25 +399,22 @@ class Experiment(ExperimentBase):
                 run.table['image'] = tracking_images
             self.runs.pathing.append(deepcopy(run))
 
-            self.click_listener.queue.queue.clear()
             self.msg('Tracking results: click LMB to accept, MMB to add new, RMB to reject.')
             for step in sawtooth(self.runs.tracking.steps):
-                with self.displayed_step(step=step), self.click_listener as _, cl:
-                    click = cl.get_click(timeout=0.5)
+                with self.displayed_step(step=step), self.click_listener:
+                    click = self.click_listener.get_click(timeout=0.5)
                     if click is None:
                         continue
-                    if click.button == 1:
-                        tracking_in_progress = False
-                        break
-                    elif click.button == 2:
-                        for new_step in [*self.runs.tracking.steps, None]:
-                            self.steps_queue.put(new_step)
-                        print('Registered middle-click')
-                        break
-                    if click.button == 3:
+                    if click.button == MouseButton.RIGHT:
                         msg = 'Experiment abandoned after tracking.'
                         self.msg(msg)
                         raise FastADTEarlyTermination(msg)
+                    if click.button == MouseButton.LEFT:
+                        tracking_in_progress = False
+                    else:  # any other mouse button was clicked
+                        for new_step in [*self.runs.tracking.steps, None]:
+                            self.steps_queue.put(new_step)
+                    break
 
     def collect_stills(self, run: Run) -> None:
         """Collect a series of stills at angles/exposure specified in `run`"""
