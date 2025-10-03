@@ -4,14 +4,17 @@ import logging
 import os
 import pickle
 import sys
+from pathlib import Path
 from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
+from tqdm import tqdm
 from typing_extensions import Self
 
 from instamatic import config
+from instamatic._typing import AnyPath
 from instamatic.calibrate.filenames import *
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
@@ -119,7 +122,12 @@ class CalibBeamShift:
 
 
 def calibrate_beamshift_live(
-    ctrl, gridsize=None, stepsize=None, save_images=False, outdir='.', **kwargs
+    ctrl,
+    gridsize: Optional[int] = None,
+    stepsize: Optional[float] = None,
+    save_images: bool = False,
+    outdir: AnyPath = '.',
+    **kwargs,
 ):
     """Calibrate pixel->beamshift coordinates live on the microscope.
 
@@ -141,26 +149,20 @@ def calibrate_beamshift_live(
     """
     exposure = kwargs.get('exposure', ctrl.cam.default_exposure)
     binsize = kwargs.get('binsize', ctrl.cam.default_binsize)
+    gridsize = gridsize or config.camera.calib_beamshift.get('gridsize', 5)
+    stepsize = stepsize or config.camera.calib_beamshift.get('stepsize', 250)
+    outfile = Path(outdir) / 'calib_beamshift_center' if save_images else None
+    kwargs = {'exposure': exposure, 'binsize': binsize, 'out': outfile}
 
-    if not gridsize:
-        gridsize = config.camera.calib_beamshift.get('gridsize', 5)
-    if not stepsize:
-        stepsize = config.camera.calib_beamshift.get('stepsize', 250)
-
-    img_cent, h_cent = ctrl.get_image(
-        exposure=exposure, binsize=binsize, comment='Beam in center of image'
-    )
+    comment = 'Beam in the center of the image'
+    img_cent, h_cent = ctrl.get_image(comment=comment, **kwargs)
     x_cent, y_cent = beamshift_cent = np.array(h_cent['BeamShift'])
 
-    magnification = h_cent['Magnification']
-    stepsize = 2500.0 / magnification * stepsize
+    stepsize = 2500.0 / h_cent['Magnification'] * stepsize
 
     print(f'Gridsize: {gridsize} | Stepsize: {stepsize:.2f}')
 
     img_cent, scale = autoscale(img_cent)
-
-    outfile = os.path.join(outdir, 'calib_beamcenter') if save_images else None
-
     pixel_cent = find_beam_center(img_cent) * binsize / scale
 
     print('Beamshift: x={} | y={}'.format(*beamshift_cent))
@@ -168,61 +170,34 @@ def calibrate_beamshift_live(
 
     shifts = []
     beampos = []
+    dx_dy = ((np.indices((gridsize, gridsize)) - gridsize // 2) * stepsize).reshape(2, -1).T
 
-    n = int((gridsize - 1) / 2)  # number of points = n*(n+1)
-    x_grid, y_grid = np.meshgrid(
-        np.arange(-n, n + 1) * stepsize, np.arange(-n, n + 1) * stepsize
-    )
-    tot = gridsize * gridsize
-
-    i = 0
-    for dx, dy in np.stack([x_grid, y_grid]).reshape(2, -1).T:
+    progress_bar = tqdm(dx_dy, total=len(dx_dy), desc='Beamshift calibration')
+    for i, (dx, dy) in enumerate(progress_bar):
         ctrl.beamshift.set(x=float(x_cent + dx), y=float(y_cent + dy))
+        progress_bar.set_postfix_str(ctrl.beamshift)
 
-        printer(f'Position: {i + 1}/{tot}: {ctrl.beamshift}')
-
-        outfile = os.path.join(outdir, f'calib_beamshift_{i:04d}') if save_images else None
-
+        kwargs['out'] = Path(outdir) / f'calib_beamshift_{i:04d}' if save_images else None
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
-        img, h = ctrl.get_image(
-            exposure=exposure,
-            binsize=binsize,
-            out=outfile,
-            comment=comment,
-            header_keys=('BeamShift',),
-        )
+        img, h = ctrl.get_image(comment=comment, header_keys=('BeamShift',), **kwargs)
         img = imgscale(img, scale)
 
-        shift, error, phasediff = phase_cross_correlation(img_cent, img, upsample_factor=10)
-
-        beamshift = np.array(h['BeamShift'])
-        beampos.append(beamshift)
-        shifts.append(shift)
-
-        i += 1
+        shifts.append(phase_cross_correlation(img_cent, img, upsample_factor=10)[0])
+        beampos.append(np.array(h['BeamShift']))
 
     print('')
     # print "\nReset to center"
 
     ctrl.beamshift.set(*(float(_) for _ in beamshift_cent))
 
-    # correct for binsize, store in binsize=1
-    shifts = np.array(shifts) * binsize / scale
-    beampos = np.array(beampos) - np.array(beamshift_cent)
-
-    c = CalibBeamShift.from_data(
-        shifts,
-        beampos,
+    # normalize to binsize = 1 and 512-pixel image scale before initializing
+    return CalibBeamShift.from_data(
+        np.array(shifts) * binsize / scale,
+        np.array(beampos) - beamshift_cent,
         reference_shift=beamshift_cent,
         reference_pixel=pixel_cent,
         header=h_cent,
     )
-
-    # Calling c.plot with videostream crashes program
-    # if not hasattr(ctrl.cam, "VideoLoop"):
-    #     c.plot()
-
-    return c
 
 
 def calibrate_beamshift_from_image_fn(center_fn, other_fn):
