@@ -54,7 +54,6 @@ class CalibBeamShift:
     def from_data(cls, shifts, beampos, reference_shift, reference_pixel, header=None) -> Self:
         fit_result = fit_affine_transformation(shifts, beampos)
         r = fit_result.r
-        t = fit_result.t
 
         c = cls(transform=r, reference_shift=reference_shift, reference_pixel=reference_pixel)
         c.data_shifts = shifts
@@ -87,25 +86,20 @@ class CalibBeamShift:
         fout = os.path.join(outdir, fn)
         pickle.dump(self, open(fout, 'wb'))
 
-    def plot(self, to_file=None, outdir=''):
+    def plot(self, to_file: Optional[AnyPath] = None):
         if not self.has_data:
             return
 
-        if to_file:
-            to_file = f'calib_{beamshift}.png'
-
-        beampos = self.data_beampos
         shifts = self.data_shifts
-
         r_i = np.linalg.inv(self.transform)
-        beampos_ = np.dot(beampos, r_i)
+        beampos_ = np.dot(self.data_beampos, r_i)
 
         plt.scatter(*shifts.T, marker='>', label='Observed pixel shifts')
         plt.scatter(*beampos_.T, marker='<', label='Positions in pixel coords')
         plt.legend()
         plt.title('BeamShift vs. Direct beam position (Imaging)')
         if to_file:
-            plt.savefig(os.path.join(outdir, to_file))
+            plt.savefig(Path(to_file) / 'calib_beamshift.png')
             plt.close()
         else:
             plt.show()
@@ -191,13 +185,14 @@ def calibrate_beamshift_live(
     ctrl.beamshift.set(*(float(_) for _ in beamshift_cent))
 
     # normalize to binsize = 1 and 512-pixel image scale before initializing
-    return CalibBeamShift.from_data(
+    c = CalibBeamShift.from_data(
         np.array(shifts) * binsize / scale,
         np.array(beampos) - beamshift_cent,
         reference_shift=beamshift_cent,
         reference_pixel=pixel_cent,
         header=h_cent,
     )
+    return c
 
 
 def calibrate_beamshift_from_image_fn(center_fn, other_fn):
