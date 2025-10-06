@@ -7,9 +7,8 @@ import sys
 from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Optional, Sequence
 
-import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.registration import phase_cross_correlation
@@ -20,6 +19,7 @@ from instamatic import config
 from instamatic._typing import AnyPath
 from instamatic.calibrate.filenames import *
 from instamatic.calibrate.fit import fit_affine_transformation
+from instamatic.formats import read_tiff
 from instamatic.image_utils import autoscale, imgscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
@@ -124,9 +124,9 @@ class CalibBeamShift:
         print('Determined (blue) vs calibrated (orange) beam positions:')
         print(self.reference_pixel)
         for p, s in zip(self.pixels + self.reference_pixel, shifts + self.reference_pixel):
-            print(f'{p!s:30} {s!s:30}')
             ins.append(vsp.draw.circle(p, radius=3, fill='blue'))
             ins.append(vsp.draw.circle(s, radius=3, fill='orange'))
+        ins.append(vsp.draw.circle(self.reference_pixel, radius=3, fill='black'))
         yield
         vsp.temporary_frame = None
         for i in ins:
@@ -237,7 +237,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     print()
     print('Center:', center_fn)
 
-    img_cent, h_cent = load_img(center_fn)
+    img_cent, h_cent = read_tiff(center_fn)
     beamshift_cent = np.array(h_cent['BeamShift'])
 
     img_cent, scale = autoscale(img_cent, maxdim=512)
@@ -255,7 +255,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
     beampos = []
 
     for fn in other_fn:
-        img, h = load_img(fn)
+        img, h = read_tiff(fn)
         img = imgscale(img, scale)
 
         beamshift = np.array(h['BeamShift'])
@@ -278,7 +278,7 @@ def calibrate_beamshift_from_image_fn(center_fn, other_fn):
         beampos,
         reference_pixel=pixel_cent,
         reference_shift=beamshift_cent,
-        images=h_cent,
+        images=images,
     )
     c.plot()
 
