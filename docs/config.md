@@ -243,9 +243,9 @@ This file holds the specifications of the camera. This file is must be located t
 : Set the correction ratio for the cross pixels in the Timepix detector, default: 3.
 
 **calib_beamshift**
-: Set up the grid and stepsize for the calibration of the beam shift in SerialED. The calibration will run a grid of `stepsize` by `stepsize` points, with steps of `stepsize`. The stepsize must be given corresponding to 2500x, and instamatic will then adjust the stepsize depending on the actual magnification, if needed. For example:
+: Set up the grid and stepsize for the calibration of the beam shift in SerialED. The calibration will run a grid of `stepsize` by `stepsize` points, with steps of `stepsize`. The stepsize must be given corresponding to 2500x, and instamatic will then adjust the stepsize depending on the actual magnification, if needed. If the beam moves too slow, a `delay` between setting beam shift and getting image can be introduced. For example:
 ```yaml
-{gridsize: 5, stepsize: 500}
+{gridsize: 5, stepsize: 500, delay: 0.5}
 ```
 
 **calib_directbeam**

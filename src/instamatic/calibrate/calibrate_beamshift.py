@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 from contextlib import contextmanager, nullcontext
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -197,6 +198,7 @@ def calibrate_beamshift_live(
     for i, (dx, dy) in enumerate(progress_bar):
         ctrl.beamshift.set(x=float(x_cent + dx), y=float(y_cent + dy))
         progress_bar.set_postfix_str(ctrl.beamshift)
+        time.sleep(config.camera.calib_beamshift.get('delay', 0.0))
 
         kwargs['out'] = Path(outdir) / f'calib_beamshift_{i:04d}' if save_images else None
         comment = f'Calib image {i}: dx={dx} - dy={dy}'
