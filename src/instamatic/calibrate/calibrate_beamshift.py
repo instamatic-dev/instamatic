@@ -58,15 +58,13 @@ class CalibBeamShift:
 
     def beamshift_to_pixelcoord(self, beamshift: Sequence[float, float]) -> Vector2:
         """Converts from beamshift x,y to pixel coordinates."""
-        bs = np.array(beamshift)
         r_i = np.linalg.inv(self.transform)
-        return np.dot(self.reference_shift - bs, r_i) + self.reference_pixel
+        return np.dot(self.reference_shift - np.array(beamshift), r_i) + self.reference_pixel
 
     def pixelcoord_to_beamshift(self, pixelcoord: Sequence[float, float]) -> Vector2:
         """Converts from pixel coordinates to beamshift x,y."""
-        r = self.transform
         pc = np.array(pixelcoord)
-        return self.reference_shift - np.dot(pc - self.reference_pixel, r)
+        return self.reference_shift - np.dot(pc - self.reference_pixel, self.transform)
 
     @classmethod
     def from_data(cls, pixels, shifts, reference_pixel, reference_shift, images=None) -> Self:
@@ -152,7 +150,7 @@ def calibrate_beamshift_live(
     save_images: bool = False,
     outdir: AnyPath = '.',
     **kwargs,
-):
+) -> CalibBeamShift:
     """Calibrate pixel->beamshift coordinates live on the microscope.
 
     ctrl: instance of `TEMController`
@@ -211,8 +209,6 @@ def calibrate_beamshift_live(
         shifts.append(np.array(h['BeamShift']))
 
     print('')
-    # print "\nReset to center"
-
     ctrl.beamshift.set(*(float(_) for _ in beamshift_cent))
 
     # normalize to binsize = 1 and 512-pixel image scale before initializing
