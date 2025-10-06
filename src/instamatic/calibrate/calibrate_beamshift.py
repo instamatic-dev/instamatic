@@ -4,9 +4,10 @@ import logging
 import os
 import pickle
 import sys
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 import matplotlib.figure
 import matplotlib.pyplot as plt
@@ -22,6 +23,10 @@ from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.image_utils import autoscale, imgscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
+
+if TYPE_CHECKING:
+    from instamatic.gui.videostream_processor import DeferredImageDraw, VideoStreamProcessor
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +71,7 @@ class CalibBeamShift:
 
     @classmethod
     def from_data(cls, pixels, shifts, reference_pixel, reference_shift, images=None) -> Self:
-        fit_result = fit_affine_transformation(pixels, shifts)
-        r = fit_result.r
+        r = fit_affine_transformation(pixels, shifts).r
         c = cls(transform=r, reference_pixel=reference_pixel, reference_shift=reference_shift)
         c.pixels = pixels
         c.shifts = shifts
@@ -84,11 +88,12 @@ class CalibBeamShift:
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir='.') -> Self:
+    def live(cls, ctrl, outdir='.', vsp: Optional[VideoStreamProcessor] = None) -> Self:
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
-            if input(' >> Accept? [y/n] ') == 'y':
-                return c
+            with c.annotate_videostream(vsp) if vsp else nullcontext():
+                if input(' >> Accept? [y/n] ') == 'y':
+                    return c
 
     def to_file(self, fn=CALIB_BEAMSHIFT, outdir='.'):
         """Save calibration to file."""
@@ -109,6 +114,23 @@ class CalibBeamShift:
             plt.close()
         else:
             plt.show()
+
+    @contextmanager
+    def annotate_videostream(self, vsp: Optional[VideoStreamProcessor] = None) -> None:
+        shifts = np.dot(self.shifts, np.linalg.inv(self.transform))
+        ins: list[DeferredImageDraw.Instruction] = []
+
+        vsp.temporary_frame = np.max(self.images, axis=0)
+        print('Determined (blue) vs calibrated (orange) beam positions:')
+        print(self.reference_pixel)
+        for p, s in zip(self.pixels + self.reference_pixel, shifts + self.reference_pixel):
+            print(f'{p!s:30} {s!s:30}')
+            ins.append(vsp.draw.circle(p, radius=3, fill='blue'))
+            ins.append(vsp.draw.circle(s, radius=3, fill='orange'))
+        yield
+        vsp.temporary_frame = None
+        for i in ins:
+            vsp.draw.instructions.remove(i)
 
     def center(self, ctrl) -> Optional[np.ndarray]:
         """Return beamshift values to center the beam in the frame."""
@@ -196,7 +218,7 @@ def calibrate_beamshift_live(
         np.array(shifts) - beamshift_cent,
         reference_pixel=pixel_cent,
         reference_shift=beamshift_cent,
-        headers=h_cent,
+        images=images,
     )
     return c
 
