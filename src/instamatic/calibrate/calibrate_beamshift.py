@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import logging
-import os
-import pickle
 import sys
 from contextlib import contextmanager, nullcontext
-from copy import deepcopy
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 from skimage.registration import phase_cross_correlation
 from tqdm import tqdm
 from typing_extensions import Self
@@ -36,6 +35,7 @@ VectorNx2 = np.ndarray  # numpy array with N Vector2-s
 Matrix2x2 = np.ndarray  # numpy array of shape (2, 2) with float elements
 
 
+@dataclass
 class CalibBeamShift:
     """Simple class to hold the methods to perform transformations from one
     setting to another based on calibration results.
@@ -45,14 +45,12 @@ class CalibBeamShift:
     - shift: the unitless (x, y) value pair reported by the BeamShift deflector
     """
 
-    def __init__(self, transform, reference_pixel, reference_shift) -> None:
-        super().__init__()
-        self.transform: Matrix2x2 = transform
-        self.reference_pixel: Vector2 = reference_pixel
-        self.reference_shift: Vector2 = reference_shift
-        self.pixels: Optional[VectorNx2] = None
-        self.shifts: Optional[VectorNx2] = None
-        self.images: Optional[list[np.ndarray]] = None
+    transform: Matrix2x2
+    reference_pixel: Vector2
+    reference_shift: Vector2
+    pixels: Optional[VectorNx2] = field(default=None, repr=False)
+    shifts: Optional[VectorNx2] = field(default=None, repr=False)
+    images: Optional[list[np.ndarray]] = field(default=None, repr=False)
 
     def __repr__(self):
         return f'CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})'
@@ -82,7 +80,8 @@ class CalibBeamShift:
     def from_file(cls, fn=CALIB_BEAMSHIFT) -> Self:
         """Read calibration from file."""
         try:
-            return pickle.load(open(fn, 'rb'))
+            with open(Path(fn), 'r') as yaml_file:
+                return cls(**yaml.safe_load(yaml_file))
         except OSError as e:
             prog = 'instamatic.calibrate_beamshift'
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
@@ -95,12 +94,13 @@ class CalibBeamShift:
                 if input(' >> Accept? [y/n] ') == 'y':
                     return c
 
-    def to_file(self, fn=CALIB_BEAMSHIFT, outdir='.'):
+    def to_file(self, fn=CALIB_BEAMSHIFT, outdir: AnyPath = '.') -> None:
         """Save calibration to file."""
-        self_without_images = deepcopy(self)
-        self_without_images.images = None
-        fout = os.path.join(outdir, fn)
-        pickle.dump(self_without_images, open(fout, 'wb'))
+        yaml_path = Path(outdir) / fn
+        yaml_dict = asdict(self)  # type: ignore[arg-type]
+        yaml_dict = {k: v.tolist() for k, v in yaml_dict.items() if k != 'images'}
+        with open(yaml_path, 'w') as yaml_file:
+            yaml.safe_dump(yaml_dict, yaml_file)
 
     def plot(self, to_file: Optional[AnyPath] = None):
         """Assuming the data is present, plot the data."""
