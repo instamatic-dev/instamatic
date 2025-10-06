@@ -23,6 +23,7 @@ from instamatic.formats import read_tiff
 from instamatic.image_utils import autoscale, imgscale
 from instamatic.processing.find_holes import find_holes
 from instamatic.tools import find_beam_center
+from instamatic.utils.yaml import Numpy2DDumper
 
 if TYPE_CHECKING:
     from instamatic.gui.videostream_processor import DeferredImageDraw, VideoStreamProcessor
@@ -80,7 +81,7 @@ class CalibBeamShift:
         """Read calibration from file."""
         try:
             with open(Path(fn), 'r') as yaml_file:
-                return cls(**yaml.safe_load(yaml_file))
+                return cls(**{k: np.array(v) for k, v in yaml.safe_load(yaml_file).items()})
         except OSError as e:
             prog = 'instamatic.calibrate_beamshift'
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
@@ -99,7 +100,7 @@ class CalibBeamShift:
         yaml_dict = asdict(self)  # type: ignore[arg-type]
         yaml_dict = {k: v.tolist() for k, v in yaml_dict.items() if k != 'images'}
         with open(yaml_path, 'w') as yaml_file:
-            yaml.safe_dump(yaml_dict, yaml_file)
+            yaml.dump(yaml_dict, yaml_file, Dumper=Numpy2DDumper, default_flow_style=None)
 
     def plot(self, to_file: Optional[AnyPath] = None):
         """Assuming the data is present, plot the data."""
