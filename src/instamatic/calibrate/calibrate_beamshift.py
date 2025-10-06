@@ -123,11 +123,12 @@ class CalibBeamShift:
 
         vsp.temporary_frame = np.max(self.images, axis=0)
         print('Determined (blue) vs calibrated (orange) beam positions:')
-        print(self.reference_pixel)
-        for p, s in zip(self.pixels + self.reference_pixel, shifts + self.reference_pixel):
+        for p, s in zip(self.pixels, shifts):
+            p = (p + self.reference_pixel)[::-1]  # xy coords inverted for plot
+            s = (s + self.reference_pixel)[::-1]  # xy coords inverted for plot
             ins.append(vsp.draw.circle(p, radius=3, fill='blue'))
             ins.append(vsp.draw.circle(s, radius=3, fill='orange'))
-        ins.append(vsp.draw.circle(self.reference_pixel, radius=3, fill='black'))
+        ins.append(vsp.draw.circle(self.reference_pixel[::-1], radius=3, fill='black'))
         yield
         vsp.temporary_frame = None
         for i in ins:
