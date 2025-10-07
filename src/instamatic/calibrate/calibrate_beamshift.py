@@ -43,7 +43,7 @@ class CalibBeamShift:
     setting to another based on calibration results.
 
     Throughout this class, the following two terms are used consistently:
-    - pixel: the (x, y) beam position in pixels determined from camera image
+    - pixel: the (x, y) beam position in pixels as determined from camera image
     - shift: the unitless (x, y) value pair reported by the BeamShift deflector
     """
 
@@ -68,16 +68,25 @@ class CalibBeamShift:
         return self.reference_shift - np.dot(pc - self.reference_pixel, self.transform)
 
     @classmethod
-    def from_data(cls, pixels: VectorNx2, shifts: VectorNx2, reference_pixel: Vector2, reference_shift: Vector2, images: Optional[list[np.ndarray]] = None) -> Self:
-        r = fit_affine_transformation(pixels, shifts).r
-        c = cls(transform=r, reference_pixel=reference_pixel, reference_shift=reference_shift)
-        c.pixels = pixels
-        c.shifts = shifts
-        c.images = images
-        return c
+    def from_data(
+        cls,
+        pixels: VectorNx2,
+        shifts: VectorNx2,
+        reference_pixel: Vector2,
+        reference_shift: Vector2,
+        images: Optional[list[np.ndarray]] = None,
+    ) -> Self:
+        return cls(
+            transform=fit_affine_transformation(pixels, shifts).r,
+            reference_pixel=reference_pixel,
+            reference_shift=reference_shift,
+            pixels=pixels,
+            shifts=shifts,
+            images=images,
+        )
 
     @classmethod
-    def from_file(cls, fn=CALIB_BEAMSHIFT) -> Self:
+    def from_file(cls, fn: AnyPath = CALIB_BEAMSHIFT) -> Self:
         """Read calibration from file."""
         try:
             with open(Path(fn), 'r') as yaml_file:
@@ -87,14 +96,16 @@ class CalibBeamShift:
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir: AnyPath='.', vsp: Optional[VideoStreamProcessor] = None) -> Self:
+    def live(
+        cls, ctrl, outdir: AnyPath = '.', vsp: Optional[VideoStreamProcessor] = None
+    ) -> Self:
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
             with c.annotate_videostream(vsp) if vsp else nullcontext():
                 if input(' >> Accept? [y/n] ') == 'y':
                     return c
 
-    def to_file(self, fn=CALIB_BEAMSHIFT, outdir: AnyPath = '.') -> None:
+    def to_file(self, fn: AnyPath = CALIB_BEAMSHIFT, outdir: AnyPath = '.') -> None:
         """Save calibration to file."""
         yaml_path = Path(outdir) / fn
         yaml_dict = asdict(self)  # type: ignore[arg-type]
@@ -194,7 +205,7 @@ def calibrate_beamshift_live(
     images, pixels, shifts = [], [], []
     dx_dy = ((np.indices((gridsize, gridsize)) - gridsize // 2) * stepsize).reshape(2, -1).T
 
-    progress_bar = tqdm(dx_dy, total=len(dx_dy), desc='Beamshift calibration')
+    progress_bar = tqdm(dx_dy, desc='Beamshift calibration')
     for i, (dx, dy) in enumerate(progress_bar):
         ctrl.beamshift.set(x=float(x_cent + dx), y=float(y_cent + dy))
         progress_bar.set_postfix_str(ctrl.beamshift)
