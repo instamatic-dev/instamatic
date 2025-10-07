@@ -68,7 +68,7 @@ class CalibBeamShift:
         return self.reference_shift - np.dot(pc - self.reference_pixel, self.transform)
 
     @classmethod
-    def from_data(cls, pixels, shifts, reference_pixel, reference_shift, images=None) -> Self:
+    def from_data(cls, pixels: VectorNx2, shifts: VectorNx2, reference_pixel: Vector2, reference_shift: Vector2, images: Optional[list[np.ndarray]] = None) -> Self:
         r = fit_affine_transformation(pixels, shifts).r
         c = cls(transform=r, reference_pixel=reference_pixel, reference_shift=reference_shift)
         c.pixels = pixels
