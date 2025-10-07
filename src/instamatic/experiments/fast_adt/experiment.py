@@ -252,7 +252,9 @@ class Experiment(ExperimentBase):
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
         except OSError:
-            return CalibBeamShift.live(self.ctrl, outdir=calib_dir)
+            return CalibBeamShift.live(
+                self.ctrl, outdir=calib_dir, vsp=self.videostream_processor
+            )
 
     def get_dead_time(
         self,
