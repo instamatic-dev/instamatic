@@ -87,7 +87,7 @@ class CalibBeamShift:
             raise OSError(f'{e.strerror}: {fn}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl, outdir='.', vsp: Optional[VideoStreamProcessor] = None) -> Self:
+    def live(cls, ctrl, outdir: AnyPath='.', vsp: Optional[VideoStreamProcessor] = None) -> Self:
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
             with c.annotate_videostream(vsp) if vsp else nullcontext():
