@@ -27,7 +27,7 @@ from instamatic.utils.iterating import sawtooth
 
 def get_color(i: int) -> tuple[int, int, int]:
     """Return i-th color from matplotlib colormap tab10 as accepted by PIL."""
-    return tuple([int(rgb * 255) for rgb in plt.get_cmap('tab10')(i)][:3])  # type: ignore
+    return tuple([int(rgb * 255) for rgb in plt.get_cmap('tab10')(i % 10)][:3])  # type: ignore
 
 
 def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
@@ -353,8 +353,8 @@ class Experiment(ExperimentBase):
         for run_i, p in enumerate(self.runs.pathing):
             x = self.beam_center[0] + p.table.at[step.Index, 'delta_x']
             y = self.beam_center[1] + p.table.at[step.Index, 'delta_y']
-            instructions.append(draw.circle((x, y), fill='white', radius=3))
-            instructions.append(draw.circle((x, y), fill=get_color(run_i), radius=2))
+            instructions.append(draw.circle((x, y), fill='white', radius=5))
+            instructions.append(draw.circle((x, y), fill=get_color(run_i), radius=3))
         try:
             with self.videostream_processor.temporary(frame=step.image):
                 yield
