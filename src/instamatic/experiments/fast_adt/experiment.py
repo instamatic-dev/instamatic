@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import contextlib
-import itertools
 import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import Any, Iterable, Iterator, Optional, Sequence, TypeVar, Union
+from typing import Any, Iterator, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -23,8 +22,7 @@ from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
 from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.gui.click_dispatcher import MouseButton
 from instamatic.processing.ImgConversionTPX import ImgConversionTPX as ImgConversion
-
-T = TypeVar('T')
+from instamatic.utils.iterating import sawtooth
 
 
 def get_color(i: int) -> tuple[int, int, int]:
@@ -36,11 +34,6 @@ def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs(stop - start) / step) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
-
-
-def sawtooth(iterator: Iterable[T]) -> Iterator[T]:
-    """Iterate elements of input sequence back and forth, repeating edges."""
-    yield from itertools.cycle((seq := list(iterator)) + list(reversed(seq)))
 
 
 class FastADTEarlyTermination(RuntimeError):
@@ -362,10 +355,12 @@ class Experiment(ExperimentBase):
             y = self.beam_center[1] + p.table.at[step.Index, 'delta_y']
             instructions.append(draw.circle((x, y), fill='white', radius=3))
             instructions.append(draw.circle((x, y), fill=get_color(run_i), radius=2))
-        with self.videostream_processor.temporary(frame=step.image):
-            yield
-        for instruction in instructions:
-            draw.instructions.remove(instruction)
+        try:
+            with self.videostream_processor.temporary(frame=step.image):
+                yield
+        finally:
+            for instruction in instructions:
+                draw.instructions.remove(instruction)
 
     def determine_pathing_manually(self) -> None:
         """Determine the target beam shifts `delta_x` and `delta_y` manually,
@@ -374,9 +369,9 @@ class Experiment(ExperimentBase):
 
         run: TrackingRun = self.runs.tracking
         self.restore_fast_adt_diff_for_image()
-        self.beamshift = self.get_beamshift()
         self.ctrl.stage.a = run.table.loc[len(run.table) // 2, 'alpha']
         with self.ctrl.beam.unblanked(), self.ctrl.cam.unblocked():
+            self.beamshift = self.get_beamshift()
             self.msg('Collecting tracking. Click on the center of the beam.')
             with self.click_listener as cl:
                 self.beam_center = cl.get_click().xy
@@ -403,8 +398,9 @@ class Experiment(ExperimentBase):
 
             self.msg('Tracking results: click LMB to accept, MMB to add new, RMB to reject.')
             for step in sawtooth(self.runs.tracking.steps):
-                with self.displayed_step(step=step), self.click_listener:
-                    click = self.click_listener.get_click(timeout=0.5)
+                with self.displayed_step(step=step):
+                    with self.click_listener:
+                        click = self.click_listener.get_click(timeout=0.5)
                     if click is None:
                         continue
                     if click.button == MouseButton.RIGHT:
