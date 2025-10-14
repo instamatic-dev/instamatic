@@ -28,6 +28,7 @@ class ClickEvent:
     y: Optional[int] = None
     button: MouseButton = MouseButton.LEFT
 
+    @property
     def xy(self) -> tuple[int, int]:
         return self.x, self.y
 
