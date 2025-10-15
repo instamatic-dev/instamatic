@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import contextlib
 import logging
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -345,8 +345,8 @@ class Experiment(ExperimentBase):
             self.ctrl.restore('FastADT_image')
             self.ctrl.stage.a = 0.0
 
-    @contextlib.contextmanager
-    def displayed_step(self, step: Step) -> None:
+    @contextmanager
+    def displayed_pathing(self, step: Step) -> None:
         """Display step image with dots representing existing pathing."""
         draw = self.videostream_processor.draw
         instructions: list[draw.Instruction] = []
@@ -382,11 +382,10 @@ class Experiment(ExperimentBase):
         tracking_images = []
         tracking_in_progress = True
         while tracking_in_progress:
-            print('Starting tracking again?')
             while (step := self.steps_queue.get()) is not None:
                 m = f'Click on the crystal (image={step.Index}, alpha={step.alpha} deg).'
                 self.msg(m)
-                with self.displayed_step(step=step), self.click_listener:
+                with self.displayed_pathing(step=step), self.click_listener:
                     click = self.click_listener.get_click()
                 run.table.loc[step.Index, 'delta_x'] = click.x - self.beam_center[0]
                 run.table.loc[step.Index, 'delta_y'] = click.y - self.beam_center[1]
@@ -398,7 +397,7 @@ class Experiment(ExperimentBase):
 
             self.msg('Tracking results: click LMB to accept, MMB to add new, RMB to reject.')
             for step in sawtooth(self.runs.tracking.steps):
-                with self.displayed_step(step=step):
+                with self.displayed_pathing(step=step):
                     with self.click_listener:
                         click = self.click_listener.get_click(timeout=0.5)
                     if click is None:
@@ -476,8 +475,7 @@ class Experiment(ExperimentBase):
         return rot_plan.speed, exposure
 
     def get_run_output_path(self, run: DiffractionRun) -> Path:
-        """Returns self.path if only 1 run done, self.path/sub## if
-        multiple."""
+        """Return self.path if only 1 run done, self.path/sub## if multiple."""
         if len(self.runs.pathing) <= 1:
             return self.path
         return self.path / f'sub{self.runs.diffraction.index(run):02d}'
