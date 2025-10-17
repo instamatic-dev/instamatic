@@ -284,7 +284,7 @@ class Experiment(ExperimentBase):
         exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
         return rot_plan.speed, exposure
 
-    def _message(self, text: str, var: StringVar) -> None:
+    def _message(self, text: str, var: Optional[StringVar]) -> None:
         """Display text in log.info, consoles, FastADT frame msg area 1/2."""
         try:
             var.set(text)
@@ -294,13 +294,15 @@ class Experiment(ExperimentBase):
             print(text)
             self.log.info(text)
 
-    def msg1(self, text) -> None:
+    def msg1(self, text: str) -> None:
         """Display in message area 1 with persistent status & instructions."""
-        return self._message(text, var=self.fast_adt_frame.message1)
+        var = self.fast_adt_frame.message1 if self.fast_adt_frame else None
+        return self._message(text, var=var)
 
-    def msg2(self, text) -> None:
+    def msg2(self, text: str) -> None:
         """Display in message area 2 with the most recent tem/cam updates."""
-        return self._message(text, var=self.fast_adt_frame.message2)
+        var = self.fast_adt_frame.message2 if self.fast_adt_frame else None
+        return self._message(text, var=var)
 
     def start_collection(self, **params) -> None:
         """Collect FastADT experiment according to provided **params.
