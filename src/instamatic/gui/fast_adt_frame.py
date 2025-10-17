@@ -55,7 +55,7 @@ class ExperimentalFastADTVariables:
         self.diffraction_stop = DoubleVar(value=30)
         self.diffraction_step = DoubleVar(value=0.5)
         self.diffraction_time = DoubleVar(value=0.5)
-        self.tracking_mode = StringVar()
+        self.tracking_algo = StringVar()
         self.tracking_time = DoubleVar(value=0.5)
         self.tracking_step = DoubleVar(value=5.0)
 
@@ -83,11 +83,9 @@ class ExperimentalFastADT(LabelFrame):
         f = Frame(self)
 
         Label(f, text='Diffraction mode:').grid(row=3, column=0, **pad10)
-        self.diffraction_mode = Combobox(f, textvariable=self.var.diffraction_mode, **width)
-        self.diffraction_mode['values'] = ['stills', 'continuous']
-        self.diffraction_mode['state'] = 'readonly'
+        m = ['stills', 'continuous']
+        self.diffraction_mode = OptionMenu(f, self.var.diffraction_mode, m[0], *m)
         self.diffraction_mode.grid(row=3, column=1, **pad10)
-        self.diffraction_mode.current(0)
 
         Label(f, text='Diffraction start (deg):').grid(row=4, column=0, **pad10)
         var = self.var.diffraction_start
@@ -109,14 +107,11 @@ class ExperimentalFastADT(LabelFrame):
         self.diffraction_time = Spinbox(f, textvariable=var, **duration)
         self.diffraction_time.grid(row=7, column=1, **pad10)
 
-        Label(f, text='Tracking mode:').grid(row=3, column=2, **pad10)
-        var = self.var.tracking_mode
-        self.tracking_mode = Combobox(f, textvariable=var, **width)
-        self.tracking_mode['values'] = ['none', 'manual']
-        self.tracking_mode['state'] = 'readonly'
-        self.tracking_mode.grid(row=3, column=3, **pad10)
-        self.tracking_mode.bind('<<ComboboxSelected>>', self.update_widget_state)
-        self.tracking_mode.current(0)
+        Label(f, text='Tracking algorithm:').grid(row=3, column=2, **pad10)
+        var = self.var.tracking_algo
+        m = ['none', 'manual']
+        self.tracking_algo = OptionMenu(f, var, m[0], *m, command=self.update_widget_state)
+        self.tracking_algo.grid(row=3, column=3, **pad10)
 
         Label(f, text='Tracking step (deg):').grid(row=6, column=2, **pad10)
         var = self.var.tracking_step
@@ -195,7 +190,7 @@ class ExperimentalFastADT(LabelFrame):
 
     def update_widget_state(self, *_, busy: Optional[bool] = None, **__) -> None:
         self.busy = busy if busy is not None else self.busy
-        no_tracking = self.var.tracking_mode.get() == 'none'
+        no_tracking = self.var.tracking_algo.get() == 'none'
         widget_state = 'disabled' if self.busy else 'enabled'
         tracking_state = 'disabled' if self.busy or no_tracking else 'enabled'
 
@@ -205,7 +200,7 @@ class ExperimentalFastADT(LabelFrame):
         self.diffraction_stop.config(state=widget_state)
         self.diffraction_step.config(state=widget_state)
         self.diffraction_time.config(state=widget_state)
-        self.tracking_mode.config(state=widget_state)
+        self.tracking_algo.config(state=widget_state)
 
         self.tracking_step.config(state=tracking_state)
         self.tracking_time.config(state=tracking_state)
