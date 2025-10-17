@@ -32,7 +32,7 @@ def get_color(i: int) -> tuple[int, int, int]:
 
 def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
-    step_count = max(round(abs(stop - start / step)) + 1, 2)
+    step_count = max(round(abs((stop - start) / step)) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
 
@@ -113,7 +113,7 @@ class Run:
     @property
     def osc_angle(self) -> float:
         """Difference of alpha angle between two consecutive frames."""
-        a = list(self.table['alpha'])
+        a = self.table['alpha'].values
         return (a[-1] - a[0]) / (len(a) - 1) if len(a) > 1 else -1
 
     def collapse_to_alpha_midpoints(self) -> None:
@@ -152,10 +152,7 @@ class TrackingRun(Run):
         a0 = params['diffraction_start']
         a1 = params['diffraction_stop']
         alpha_range = safe_range(start=a0, stop=a1, step=params['tracking_step'])
-        if c := (params['diffraction_mode'] == 'continuous'):
-            step = float(np.mean(np.diff(alpha_range)))
-            alpha_range = safe_range(start=a0 - step / 2, stop=a1 + step / 2, step=step)
-        return cls(exposure=params['tracking_time'], continuous=c, alpha=alpha_range)
+        return cls(exposure=params['tracking_time'], alpha=alpha_range)
 
 
 class DiffractionRun(Run):
@@ -167,12 +164,11 @@ class DiffractionRun(Run):
         params: dict[str, Any],
         pathing_run: Optional['TrackingRun'] = None,
     ) -> Self:
-        alpha_range = safe_range(
-            start=params['diffraction_start'],
-            stop=params['diffraction_stop'],
-            step=params['diffraction_step'],
-        )
-        run = cls(exposure=params['diffraction_time'], alpha=alpha_range)
+        a0 = params['diffraction_start']
+        a1 = params['diffraction_stop']
+        alpha_range = safe_range(start=a0, stop=a1, step=params['diffraction_step'])
+        c = params['diffraction_mode'] == 'continuous'
+        run = cls(exposure=params['diffraction_time'], continuous=c, alpha=alpha_range)
         if pathing_run is not None:
             run.table['delta_x'] = pathing_run.interpolate(alpha_range, 'delta_x')
             run.table['delta_y'] = pathing_run.interpolate(alpha_range, 'delta_y')
@@ -181,9 +177,8 @@ class DiffractionRun(Run):
 
 @dataclass
 class Runs:
-    """Collection of runs: beam alignment, xtal tracking, beam pathing, diff"""
+    """Collection of runs for xtal tracking, beam pathing, diff collection."""
 
-    alignment: Optional[Run] = None
     tracking: Optional[Run] = None
     pathing: list[TrackingRun] = field(default_factory=list)
     diffraction: list[DiffractionRun] = field(default_factory=list)
@@ -325,7 +320,6 @@ class Experiment(ExperimentBase):
         Finally, the collected run will be logged and the stage - reset.
         """
         self.msg('FastADT experiment started')
-
         image_path = self.path / 'image.tiff'
         if not image_path.exists():
             self.ctrl.restore('FastADT_image')
@@ -337,7 +331,6 @@ class Experiment(ExperimentBase):
             if params['tracking_algo'] == 'manual':
                 self.runs.tracking = TrackingRun.from_params(params)
                 self.determine_pathing_manually()
-
             for pathing_run in self.runs.pathing:
                 new_run = DiffractionRun.from_params(params, pathing_run)
                 self.runs.diffraction.append(new_run)
@@ -346,7 +339,6 @@ class Experiment(ExperimentBase):
 
             self.ctrl.restore('FastADT_diff')
             self.camera_length = int(self.ctrl.magnification.get())
-
             for run in self.runs.diffraction:
                 if run.has_beam_delta_information:
                     run.calculate_beamshifts(self.ctrl, self.beamshift)
@@ -435,24 +427,23 @@ class Experiment(ExperimentBase):
     def _collect_stills(self, run: Run) -> None:
         """Collect `run.steps` stills and place them in `self.steps_queue`."""
         self.msg(f'Collecting {run!s}')
-        with self.ctrl.cam.blocked():
-            for step in run.steps:
-                if run.has_beam_delta_information:
-                    self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
-                self.ctrl.stage.a = step.alpha
-                step.image, step.meta = self.ctrl.get_image(exposure=run.exposure)
-                self.steps_queue.put(step)
+        for step in run.steps:
+            if run.has_beam_delta_information:
+                self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
+            self.ctrl.stage.a = step.alpha
+            step.image, step.meta = self.ctrl.get_image(exposure=run.exposure)
+            self.steps_queue.put(step)
         self.steps_queue.put(None)
 
     def _collect_scans(self, run: Run) -> None:
         """Collect `run.steps` scans and place them in `self.steps_queue`."""
         rot_speed, run.exposure = self.determine_rotation_speed_and_exposure(run)
-        with self.ctrl.stage.rotation_speed(speed=rot_speed), self.ctrl.cam.blocked():
+        with self.ctrl.stage.rotation_speed(speed=rot_speed):
             self.ctrl.stage.a = float(run.table.at[0, 'alpha'])
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
             a = float(run.table.iloc[-1].loc['alpha'])
-            run.collapse_to_alpha_midpoints()
             self.msg(f'Collecting {run!s}')
+            run.collapse_to_alpha_midpoints()
             self.ctrl.stage.set_with_speed(a=a, speed=rot_speed, wait=False)
             for step, (image, meta) in zip(run.steps, movie):
                 if run.has_beam_delta_information:
