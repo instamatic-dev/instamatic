@@ -9,6 +9,7 @@ from math import ceil
 from pathlib import Path
 from queue import Queue
 from threading import Thread
+from tkinter import StringVar
 from typing import Any, Iterator, Optional, Sequence, Union, cast
 
 import numpy as np
@@ -240,6 +241,7 @@ class Experiment(ExperimentBase):
         try:
             return CalibBeamShift.from_file(calib_dir / CALIB_BEAMSHIFT)
         except OSError:
+            self.msg1('Focus and center the beam, and check terminal for instructions.')
             vsp = self.videostream_processor
             return CalibBeamShift.live(self.ctrl, outdir=calib_dir, vsp=vsp)
 
@@ -254,25 +256,24 @@ class Experiment(ExperimentBase):
             return self.ctrl.cam.dead_time
         except AttributeError:
             pass
-        self.msg('`cam.dead_time` not found. Looking for calibrated estimate...')
+        self.msg2('`cam.dead_time` not found. Looking for calibrated estimate...')
         try:
             c = CalibMovieDelays.from_file(exposure, header_keys_variable, header_keys_common)
         except RuntimeWarning:
             return 0.0
         else:
             return c.dead_time
+        finally:
+            self.msg2('')
 
     def get_stage_rotation(self) -> CalibStageRotation:
         """Get rotation calibration if present; otherwise warn & terminate."""
         try:
             return CalibStageRotation.from_file()
         except OSError:
-            msg = (
-                'Collecting cRED with this script requires calibrated stage rotation. '
-                'Please run `instamatic.calibrate_stage_rotation` first.'
-            )
-            self.msg(msg)
-            raise FastADTMissingCalibError(msg)
+            self.msg1(m1 := 'This script requires stage rotation to be calibrated.')
+            self.msg2(m2 := 'Please run `instamatic.calibrate_stage_rotation` first.')
+            raise FastADTMissingCalibError(m1 + ' ' + m2)
 
     def determine_rotation_speed_and_exposure(self, run: Run) -> tuple[float, float]:
         """Closest possible speed setting & exposure considering dead time."""
@@ -283,15 +284,23 @@ class Experiment(ExperimentBase):
         exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
         return rot_plan.speed, exposure
 
-    def msg(self, text: str) -> None:
-        """Display a message in log.info, consoles & FastADT frame at once."""
+    def _message(self, text: str, var: StringVar) -> None:
+        """Display text in log.info, consoles, FastADT frame msg area 1/2."""
         try:
-            self.fast_adt_frame.message.set(text)
+            var.set(text)
         except AttributeError:
             pass
         if text:
             print(text)
             self.log.info(text)
+
+    def msg1(self, text) -> None:
+        """Display in message area 1 with persistent status & instructions."""
+        return self._message(text, var=self.fast_adt_frame.message1)
+
+    def msg2(self, text) -> None:
+        """Display in message area 2 with the most recent tem/cam updates."""
+        return self._message(text, var=self.fast_adt_frame.message2)
 
     def start_collection(self, **params) -> None:
         """Collect FastADT experiment according to provided **params.
@@ -315,7 +324,8 @@ class Experiment(ExperimentBase):
 
         Finally, the collected run will be logged and the stage - reset.
         """
-        self.msg('FastADT experiment started')
+        self.msg1('Collecting crystal image.')
+        self.msg2('')
         image_path = self.path / 'image.tiff'
         if not image_path.exists():
             self.ctrl.restore('FastADT_image')
@@ -336,7 +346,9 @@ class Experiment(ExperimentBase):
             self.ctrl.restore('FastADT_diff')
             self.camera_length = int(self.ctrl.magnification.get())
             for run in self.runs.diffraction:
+                self.msg1(f'Collecting {run!s}.')
                 self.collect_run(run)
+                self.msg1(f'Finalizing {run!s}.')
                 run.update_images_metas(self.steps)
                 self.finalize(run)
 
@@ -369,7 +381,7 @@ class Experiment(ExperimentBase):
         self.ctrl.stage.a = run.table.loc[len(run) // 2, 'alpha']
         with self.ctrl.beam.unblanked(), self.ctrl.cam.unblocked():
             self.beamshift = self.get_beamshift()
-            self.msg('Collecting tracking. Click on the center of the beam.')
+            self.msg1('Locate the beam (move it if needed) and click on its center.')
             with self.click_listener as cl:
                 obs_beampixel_xy = np.array(cl.get_click().xy)
         cal_beampixel_yx = self.beamshift.beamshift_to_pixelcoord(self.ctrl.beamshift.get())
@@ -380,8 +392,7 @@ class Experiment(ExperimentBase):
         tracking_in_progress = True
         while tracking_in_progress:
             while (step := self.steps.get()) is not None:
-                m = f'Click on tracked point: {step.summary}.'
-                self.msg(m)
+                self.msg1(f'Click on tracked point: {step.summary}.')
                 with self.displayed_pathing(step=step), self.click_listener:
                     click = self.click_listener.get_click()
                 delta_yx = (np.array(click.xy) - obs_beampixel_xy)[::-1]
@@ -390,20 +401,21 @@ class Experiment(ExperimentBase):
                 cols = ['beampixel_x', 'beampixel_y', 'beamshift_x', 'beamshift_y']
                 run.table.loc[step.Index, cols] = *click.xy, *click_beamshift_xy
                 tracking_images.append(step.image)
-                self.msg('')
             if 'image' not in run.table:
                 run.table['image'] = tracking_images
             self.runs.pathing.append(deepcopy(run))
 
-            self.msg('Tracking results: click LMB to accept, MMB to add new, RMB to reject.')
+            self.msg1('Displaying tracking. Click LEFT mouse button to start the experiment,')
+            self.msg2('MIDDLE to track another point, or RIGHT to cancel the experiment.')
             for step in sawtooth(self.runs.tracking.steps):
                 with self.displayed_pathing(step=step):
                     with self.click_listener:
                         click = self.click_listener.get_click(timeout=0.5)
                     if click is None:
                         continue
+                    self.msg2('')
                     if click.button == MouseButton.RIGHT:
-                        self.msg(msg := 'Experiment abandoned after tracking.')
+                        self.msg1(msg := 'Experiment abandoned after tracking.')
                         raise FastADTEarlyTermination(msg)
                     if click.button == MouseButton.LEFT:
                         tracking_in_progress = False
@@ -423,7 +435,6 @@ class Experiment(ExperimentBase):
     def _collect_scans(self, run: Run) -> None:
         """Collect `run.steps` scans and place them in `self.steps` Queue."""
         rot_speed, run.exposure = self.determine_rotation_speed_and_exposure(run)
-        self.msg(f'Collecting {run!s}')
         self.ctrl.stage.a = float(run.table.at[0, 'alpha'])
         movie = self.ctrl.get_movie(n_frames=len(run) - 1, exposure=run.exposure)
         target_alpha = float(run.table.iloc[-1].loc['alpha'])
@@ -431,21 +442,24 @@ class Experiment(ExperimentBase):
         with self.ctrl.stage.rotation_speed(speed=rot_speed):
             self.ctrl.stage.set(a=target_alpha, wait=False)
             for step, (image, meta) in zip(run.steps, movie):
+                self.msg2(f'Collecting {step.summary}.')
                 if run.has_beamshifts:
                     self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                 self.steps.put(replace(step, image=image, meta=meta))
         self.steps.put(None)
+        self.msg2('')
 
     def _collect_stills(self, run: Run) -> None:
         """Collect `run.steps` stills and place them in `self.steps` Queue."""
-        self.msg(f'Collecting {run!s}')
         for step in run.steps:
+            self.msg2(f'Collecting {step.summary}.')
             if run.has_beamshifts:
                 self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
             self.ctrl.stage.a = step.alpha
             image, meta = self.ctrl.get_image(exposure=run.exposure)
             self.steps.put(replace(step, image=image, meta=meta))
         self.steps.put(None)
+        self.msg2('')
 
     def get_run_output_path(self, run: DiffractionRun) -> Path:
         """Return self.path if only 1 run done, self.path/sub## if multiple."""
@@ -461,7 +475,7 @@ class Experiment(ExperimentBase):
         mrc_path.mkdir(exist_ok=True, parents=True)
         tiff_path.mkdir(exist_ok=True, parents=True)
 
-        self.msg(f'Saving experiment in: {out_path}')
+        self.msg1(f'Saving experiment in "{out_path}"...')
         rotation_axis = config.camera.camera_rotation_vs_stage_xy
         pixel_size = config.calibration['diff']['pixelsize'].get(self.camera_length, -1)
         physical_pixel_size = config.camera.physical_pixelsize  # mm
@@ -490,4 +504,4 @@ class Experiment(ExperimentBase):
         img_conv.write_ed3d(mrc_path)
         img_conv.write_pets_inp(out_path)
         img_conv.write_beam_centers(out_path)
-        self.msg('Data collection and conversion done. FastADT experiment finalized.')
+        self.msg1(f'Experiment saved in "{out_path}".')

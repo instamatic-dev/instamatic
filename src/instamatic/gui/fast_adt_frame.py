@@ -172,12 +172,16 @@ class ExperimentalFastADT(LabelFrame):
 
         Separator(f, orient=HORIZONTAL).grid(row=11, columnspan=4, sticky=EW, padx=10, pady=10)
 
-        # Center-aligned sticky message area and bottom start button
+        # Center-aligned sticky message areas 1, 2, and the bottom start button
         f = Frame(self)
 
-        self.message = StringVar(value='Further information will appear here.')
-        self.message_area = Label(f, textvariable=self.message, anchor=NW)
-        self.message_area.pack(fill='both', expand=True)
+        self.message1 = StringVar(value='Further information will appear here.')
+        self.message1_area = Label(f, textvariable=self.message1, anchor=NW)
+        self.message1_area.pack(fill='x')
+
+        self.message2 = StringVar(value='')
+        self.message2_area = Label(f, textvariable=self.message2, anchor=NW)
+        self.message2_area.pack(fill='both', expand=True)
         f.pack(side='top', fill='both', expand=True, padx=10)
 
         self.start_button = Button(self, text='Start', width=1, command=self.start_collection)
