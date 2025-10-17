@@ -216,7 +216,6 @@ class Experiment(ExperimentBase):
         self.fast_adt_frame = experiment_frame
         self.beamshift: Optional[CalibBeamShift] = None
         self.camera_length: int = 0
-        self.diffraction_mode: str = ''
 
         if videostream_frame is not None:
             d = videostream_frame.click_dispatcher
@@ -320,7 +319,6 @@ class Experiment(ExperimentBase):
             with self.ctrl.beam.unblanked(delay=0.2):
                 self.ctrl.get_image(params['tracking_time'], out=image_path)
 
-        self.diffraction_mode = params['diffraction_mode']
         with self.ctrl.beam.blanked(), self.ctrl.cam.blocked():
             if params['tracking_algo'] == 'manual':
                 self.runs.tracking = TrackingRun.from_params(params)
@@ -401,8 +399,7 @@ class Experiment(ExperimentBase):
                     if click is None:
                         continue
                     if click.button == MouseButton.RIGHT:
-                        msg = 'Experiment abandoned after tracking.'
-                        self.msg(msg)
+                        self.msg(msg := 'Experiment abandoned after tracking.')
                         raise FastADTEarlyTermination(msg)
                     if click.button == MouseButton.LEFT:
                         tracking_in_progress = False
@@ -476,11 +473,7 @@ class Experiment(ExperimentBase):
         wavelength = config.microscope.wavelength  # angstrom
         stretch_azimuth = config.camera.stretch_azimuth
         stretch_amplitude = config.camera.stretch_amplitude
-
-        if self.diffraction_mode == 'continuous':
-            method = 'Continuous-Rotation 3D ED'
-        else:
-            method = 'Rotation Electron Diffraction'
+        m = 'Continuous-Rotation 3D ED' if run.continuous else 'Rotation Electron Diffraction'
 
         img_conv = ImgConversion(
             buffer=run.buffer,
@@ -495,7 +488,7 @@ class Experiment(ExperimentBase):
             wavelength=wavelength,
             stretch_amplitude=stretch_amplitude,
             stretch_azimuth=stretch_azimuth,
-            method=method,
+            method=m,
         )
 
         img_conv.threadpoolwriter(tiff_path=tiff_path, mrc_path=mrc_path, workers=8)
