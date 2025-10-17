@@ -7,7 +7,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import Any, Iterator, Optional, Sequence, Union
+from typing import Any, Iterator, Optional, Sequence, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -30,7 +30,7 @@ def get_color(i: int) -> tuple[int, int, int]:
     return tuple([int(rgb * 255) for rgb in plt.get_cmap('tab10')(i % 10)][:3])  # type: ignore
 
 
-def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
+def safe_range(start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
     step_count = max(round(abs((stop - start) / step)) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
@@ -148,31 +148,25 @@ class TrackingRun(Run):
     """Designed to estimate delta_x/y a priori based on manual used input."""
 
     @classmethod
-    def from_params(cls, params: dict[str, Any]) -> Self:
-        a0 = params['diffraction_start']
-        a1 = params['diffraction_stop']
-        alpha_range = safe_range(start=a0, stop=a1, step=params['tracking_step'])
-        return cls(exposure=params['tracking_time'], alpha=alpha_range)
+    def from_params(cls, p: dict[str, Any]) -> Self:
+        a = safe_range(p['diffraction_start'], p['diffraction_stop'], p['tracking_step'])
+        return cls(exposure=p['tracking_time'], alpha=a)
 
 
 class DiffractionRun(Run):
     """The implementation for the actual diffraction experiment itself."""
 
     @classmethod
-    def from_params(
-        cls,
-        params: dict[str, Any],
-        pathing_run: Optional['TrackingRun'] = None,
-    ) -> Self:
-        a0 = params['diffraction_start']
-        a1 = params['diffraction_stop']
-        alpha_range = safe_range(start=a0, stop=a1, step=params['diffraction_step'])
-        c = params['diffraction_mode'] == 'continuous'
-        run = cls(exposure=params['diffraction_time'], continuous=c, alpha=alpha_range)
-        if pathing_run is not None:
-            run.table['delta_x'] = pathing_run.interpolate(alpha_range, 'delta_x')
-            run.table['delta_y'] = pathing_run.interpolate(alpha_range, 'delta_y')
-        return run
+    def from_params(cls, p: dict[str, Any]) -> Self:
+        c = p['diffraction_mode'] == 'continuous'
+        a = safe_range(p['diffraction_start'], p['diffraction_stop'], p['diffraction_step'])
+        return cls(exposure=p['diffraction_time'], continuous=c, alpha=a)
+
+    def add_pathing(self, pathing_run: TrackingRun) -> None:
+        """Add and interpolate delta x/y info from another run instance."""
+        a = self.table['alpha'].values
+        self.table['delta_x'] = pathing_run.interpolate(a, 'delta_x')
+        self.table['delta_y'] = pathing_run.interpolate(a, 'delta_y')
 
 
 @dataclass
@@ -293,8 +287,8 @@ class Experiment(ExperimentBase):
             self.fast_adt_frame.message.set(text)
         except AttributeError:
             pass
-        print(text)
         if text:
+            print(text)
             self.log.info(text)
 
     def start_collection(self, **params) -> None:
@@ -332,7 +326,8 @@ class Experiment(ExperimentBase):
                 self.runs.tracking = TrackingRun.from_params(params)
                 self.determine_pathing_manually()
             for pathing_run in self.runs.pathing:
-                new_run = DiffractionRun.from_params(params, pathing_run)
+                new_run = DiffractionRun.from_params(params)
+                new_run.add_pathing(pathing_run)
                 self.runs.diffraction.append(new_run)
             if not self.runs.pathing:
                 self.runs.diffraction = [DiffractionRun.from_params(params)]
@@ -371,7 +366,7 @@ class Experiment(ExperimentBase):
         based on the beam center found life (to find clicking offset) and
         `TrackingRun` to be used for crystal tracking in later experiment."""
 
-        run: TrackingRun = self.runs.tracking
+        run: TrackingRun = cast(TrackingRun, self.runs.tracking)
         self.restore_fast_adt_diff_for_image()
         self.ctrl.stage.a = run.table.loc[len(run.table) // 2, 'alpha']
         with self.ctrl.beam.unblanked(), self.ctrl.cam.unblocked():
