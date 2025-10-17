@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from queue import Queue
 from threading import Thread
@@ -32,7 +32,7 @@ def get_color(i: int) -> tuple[int, int, int]:
 
 def safe_range(*, start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
-    step_count = max(round(abs(stop - start) / step) + 1, 2)
+    step_count = max(round(abs(stop - start / step)) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
 
@@ -57,6 +57,10 @@ class Step:
     image: Optional[np.ndarray] = None
     meta: dict = field(default_factory=dict)
 
+    @property
+    def summary(self) -> str:
+        return f'Step(Index={self.Index}, alpha={self.alpha})'
+
 
 class Run:
     """Collection of details of a generalized single FastADT run.
@@ -79,13 +83,11 @@ class Run:
         self.continuous: bool = continuous
         self.table: pd.DataFrame = pd.DataFrame.from_dict(columns)
 
-    @property
-    def scope(self) -> tuple[float, float]:
-        """The range of alpha values scanned during the entire run."""
-        a = self.table['alpha']
-        if not self.continuous:
-            return a.iloc[0], a.iloc[-1]
-        return a.iloc[0] - self.osc_angle / 2, a.iloc[-1] + self.osc_angle / 2
+    def __str__(self) -> str:
+        c = self.__class__.__name__
+        a = self.table['alpha'].values
+        ar = f'range({a[0]}, {a[-1]}, {float(np.mean(np.diff(a)))}))'
+        return f'{c}(exposure={self.exposure}, continuous={self.continuous}, alpha={ar}))'
 
     @property
     def steps(self) -> Iterator[Step]:
@@ -152,8 +154,7 @@ class TrackingRun(Run):
         alpha_range = safe_range(start=a0, stop=a1, step=params['tracking_step'])
         if c := (params['diffraction_mode'] == 'continuous'):
             step = float(np.mean(np.diff(alpha_range)))
-            offset = (a1 - a0) / abs(a1 - a0) * step / 2
-            alpha_range = safe_range(start=a0 - offset, stop=a1 + offset, step=step)
+            alpha_range = safe_range(start=a0 - step / 2, stop=a1 + step / 2, step=step)
         return cls(exposure=params['tracking_time'], continuous=c, alpha=alpha_range)
 
 
@@ -349,10 +350,8 @@ class Experiment(ExperimentBase):
             for run in self.runs.diffraction:
                 if run.has_beam_delta_information:
                     run.calculate_beamshifts(self.ctrl, self.beamshift)
-                if self.diffraction_mode == 'stills':
-                    self.collect_stills(run)
-                elif self.diffraction_mode == 'continuous':
-                    self.collect_scans(run)
+                self.collect_run(run)
+                run.update_images_metas(self.steps_queue)
                 self.finalize(run)
 
             self.ctrl.restore('FastADT_image')
@@ -390,13 +389,12 @@ class Experiment(ExperimentBase):
                 self.beam_center = cl.get_click().xy
 
         self.ctrl.restore('FastADT_track')
-        Thread(target=self.collect_tracking, args=(run,), daemon=True).start()
-
+        Thread(target=self.collect_run, args=(run,), daemon=True).start()
         tracking_images = []
         tracking_in_progress = True
         while tracking_in_progress:
             while (step := self.steps_queue.get()) is not None:
-                m = f'Click on the crystal (image={step.Index}, alpha={step.alpha} deg).'
+                m = f'Click on tracked point: {step.summary}.'
                 self.msg(m)
                 with self.displayed_pathing(step=step), self.click_listener:
                     click = self.click_listener.get_click()
@@ -426,58 +424,41 @@ class Experiment(ExperimentBase):
                             self.steps_queue.put(new_step)
                     break
 
-    def _collect_stills(self, run: Run, enqueue: bool = True) -> None:
+    def collect_run(self, run: Run) -> None:
+        """Collect `run.steps` and place them in `self.steps_queue`."""
+        with self.ctrl.beam.unblanked(delay=0.2):
+            if run.continuous:
+                self._collect_scans(run=run)
+            else:
+                self._collect_stills(run=run)
+
+    def _collect_stills(self, run: Run) -> None:
         """Collect `run.steps` stills and place them in `self.steps_queue`."""
+        self.msg(f'Collecting {run!s}')
         with self.ctrl.cam.blocked():
             for step in run.steps:
                 if run.has_beam_delta_information:
                     self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                 self.ctrl.stage.a = step.alpha
                 step.image, step.meta = self.ctrl.get_image(exposure=run.exposure)
-                if enqueue:
-                    self.steps_queue.put(step)
-        if enqueue:
-            self.steps_queue.put(None)
+                self.steps_queue.put(step)
+        self.steps_queue.put(None)
 
-    def collect_stills(self, run: Run) -> None:
-        """Collect a series of stills at angles/exposure specified in `run`"""
-        self.msg('Collecting stills from {} to {} degree'.format(*run.scope))
-        with self.ctrl.beam.unblanked(delay=0.2):
-            self._collect_stills(run=run, enqueue=True)
-        run.update_images_metas(self.steps_queue)
-        self.msg('Collected stills from {} to {} degree'.format(*run.scope))
-
-    def collect_tracking(self, run: Run) -> None:
-        """Get & put stills to `self.tracking_queue` to eval asynchronously."""
-        collector = self._collect_scans if run.continuous else self._collect_stills
-        with self.ctrl.beam.unblanked(delay=0.2):
-            collector(run=run, enqueue=True)
-
-    def _collect_scans(self, run: Run, enqueue: bool = True) -> None:
+    def _collect_scans(self, run: Run) -> None:
+        """Collect `run.steps` scans and place them in `self.steps_queue`."""
         rot_speed, run.exposure = self.determine_rotation_speed_and_exposure(run)
         with self.ctrl.stage.rotation_speed(speed=rot_speed), self.ctrl.cam.blocked():
             self.ctrl.stage.a = float(run.table.at[0, 'alpha'])
             movie = self.ctrl.get_movie(n_frames=len(run.table) - 1, exposure=run.exposure)
             a = float(run.table.iloc[-1].loc['alpha'])
             run.collapse_to_alpha_midpoints()
+            self.msg(f'Collecting {run!s}')
             self.ctrl.stage.set_with_speed(a=a, speed=rot_speed, wait=False)
             for step, (image, meta) in zip(run.steps, movie):
                 if run.has_beam_delta_information:
                     self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
-                if enqueue:
-                    step.image = image
-                    step.meta = meta
-                    self.steps_queue.put(step)
-        if enqueue:
-            self.steps_queue.put(None)
-
-    def collect_scans(self, run: Run) -> None:
-        """Collect a series of scans at angles/exposure specified in `run`"""
-        self.msg('Collecting scans from {} to {} degree'.format(*run.scope))
-        with self.ctrl.beam.unblanked(delay=0.2):
-            self._collect_scans(run=run, enqueue=True)
-        run.update_images_metas(self.steps_queue)
-        self.msg('Collected scans from {} to {} degree'.format(*run.scope))
+                self.steps_queue.put(replace(step, image=image, meta=meta))
+        self.steps_queue.put(None)
 
     def determine_rotation_speed_and_exposure(self, run: Run) -> tuple[float, float]:
         """Closest possible speed setting & exposure considering dead time."""
