@@ -4,6 +4,7 @@ import logging
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
+from math import ceil
 from pathlib import Path
 from queue import Queue
 from threading import Thread
@@ -32,7 +33,7 @@ def get_color(i: int) -> tuple[int, int, int]:
 
 def safe_range(start: float, stop: float, step: float) -> np.ndarray:
     """Find 2+ floats between `start` and `stop` (inclusive) ~`step` apart."""
-    step_count = max(round(abs((stop - start) / step)) + 1, 2)
+    step_count = max(ceil(abs((stop - start) / step)) + 1, 2)
     return np.linspace(start, stop, step_count, endpoint=True, dtype=float)
 
 
@@ -50,10 +51,10 @@ class Step:
 
     Index: int
     alpha: float
+    beampixel_x: Optional[float] = None
+    beampixel_y: Optional[float] = None
     beamshift_x: Optional[float] = None
     beamshift_y: Optional[float] = None
-    delta_x: Optional[float] = None
-    delta_y: Optional[float] = None
     image: Optional[np.ndarray] = None
     meta: dict = field(default_factory=dict)
 
@@ -74,8 +75,8 @@ class Run:
     table: pd.DataFrame
         Describes details of individual steps (to be) measured:
             - alpha - average value of the rotation axes for given frame
-            - delta_x - x beam shift relative from center needed to track the crystal
-            - delta_y - y beam shift relative from center needed to track the crystal
+            - beampixel_x/y - beam x/y position in pixel used for tracking
+            - beamshift_x/y - beam deflector x/y value used for tracking
     """
 
     def __init__(self, exposure=1.0, continuous=False, **columns: Sequence) -> None:
@@ -86,8 +87,8 @@ class Run:
     def __str__(self) -> str:
         c = self.__class__.__name__
         a = self.table['alpha'].values
-        ar = f'range({a[0]}, {a[-1]}, {float(np.mean(np.diff(a)))}))'
-        return f'{c}(exposure={self.exposure}, continuous={self.continuous}, alpha={ar}))'
+        ar = f'range({a[0]}, {a[-1]}, {float(np.mean(np.diff(a)))})'
+        return f'{c}(exposure={self.exposure}, continuous={self.continuous}, alpha={ar})'
 
     @property
     def steps(self) -> Iterator[Step]:
@@ -107,8 +108,8 @@ class Run:
         return [(i, s.image, s.meta) for i, s in enumerate(self.steps)]
 
     @property
-    def has_beam_delta_information(self) -> bool:
-        return {'delta_x', 'delta_y'}.issubset(self.table.columns)
+    def has_beamshifts(self) -> bool:
+        return {'beamshift_x', 'beamshift_y'}.issubset(self.table.columns)
 
     @property
     def osc_angle(self) -> float:
@@ -121,16 +122,6 @@ class Run:
         alpha_midpoints = self.table['alpha'].rolling(2).mean().drop(0)
         self.table = self.table.iloc[1:]
         self.table['alpha'] = alpha_midpoints
-
-    def calculate_beamshifts(self, ctrl, beamshift) -> None:
-        """Note CalibBeamShift uses swapped axes: X points down, Y right."""
-        beamshift_xy = ctrl.beamshift.get()
-        pixelcoord_xy = beamshift.beamshift_to_pixelcoord(beamshift_xy)
-        delta_xys = self.table[['delta_x', 'delta_y']].to_numpy()
-        crystal_xys = pixelcoord_xy + delta_xys
-        crystal_yxs = np.fliplr(crystal_xys)
-        beamshifts = beamshift.pixelcoord_to_beamshift(crystal_yxs)
-        self.table[['beamshift_x', 'beamshift_y']] = beamshifts
 
     def update_images_metas(self, steps_queue: Queue[Union[Step, None]]) -> None:
         """Consume Steps from queue until None, update self.images & .meta."""
@@ -162,11 +153,11 @@ class DiffractionRun(Run):
         a = safe_range(p['diffraction_start'], p['diffraction_stop'], p['diffraction_step'])
         return cls(exposure=p['diffraction_time'], continuous=c, alpha=a)
 
-    def add_pathing(self, pathing_run: TrackingRun) -> None:
+    def add_beamshifts(self, pathing_run: TrackingRun) -> None:
         """Add and interpolate delta x/y info from another run instance."""
         a = self.table['alpha'].values
-        self.table['delta_x'] = pathing_run.interpolate(a, 'delta_x')
-        self.table['delta_y'] = pathing_run.interpolate(a, 'delta_y')
+        self.table['beamshift_x'] = pathing_run.interpolate(a, 'beamshift_x')
+        self.table['beamshift_y'] = pathing_run.interpolate(a, 'beamshift_y')
 
 
 @dataclass
@@ -226,7 +217,6 @@ class Experiment(ExperimentBase):
             self.click_listener = None
             self.videostream_processor = None
 
-        self.beam_center: tuple[float, float] = (float('nan'), float('nan'))
         self.steps_queue: Queue[Union[Step, None]] = Queue()
         self.runs: Runs = Runs()
 
@@ -325,7 +315,7 @@ class Experiment(ExperimentBase):
                 self.determine_pathing_manually()
             for pathing_run in self.runs.pathing:
                 new_run = DiffractionRun.from_params(params)
-                new_run.add_pathing(pathing_run)
+                new_run.add_beamshifts(pathing_run)
                 self.runs.diffraction.append(new_run)
             if not self.runs.pathing:
                 self.runs.diffraction = [DiffractionRun.from_params(params)]
@@ -333,8 +323,8 @@ class Experiment(ExperimentBase):
             self.ctrl.restore('FastADT_diff')
             self.camera_length = int(self.ctrl.magnification.get())
             for run in self.runs.diffraction:
-                if run.has_beam_delta_information:
-                    run.calculate_beamshifts(self.ctrl, self.beamshift)
+                #if run.has_beam_delta_information:
+                #    run.calculate_beamshifts(self.ctrl, self.beamshift)
                 self.collect_run(run)
                 run.update_images_metas(self.steps_queue)
                 self.finalize(run)
@@ -348,8 +338,8 @@ class Experiment(ExperimentBase):
         draw = self.videostream_processor.draw
         instructions: list[draw.Instruction] = []
         for run_i, p in enumerate(self.runs.pathing):
-            x = self.beam_center[0] + p.table.at[step.Index, 'delta_x']
-            y = self.beam_center[1] + p.table.at[step.Index, 'delta_y']
+            x = p.table.at[step.Index, 'beampixel_x']
+            y = p.table.at[step.Index, 'beampixel_y']
             instructions.append(draw.circle((x, y), fill='white', radius=5))
             instructions.append(draw.circle((x, y), fill=get_color(run_i), radius=3))
         try:
@@ -371,7 +361,8 @@ class Experiment(ExperimentBase):
             self.beamshift = self.get_beamshift()
             self.msg('Collecting tracking. Click on the center of the beam.')
             with self.click_listener as cl:
-                self.beam_center = cl.get_click().xy
+                obs_beam_pixel_xy = np.array(cl.get_click().xy)
+        cal_beam_pixel_yx = self.beamshift.beamshift_to_pixelcoord(self.ctrl.beamshift.get())
 
         self.ctrl.restore('FastADT_track')
         Thread(target=self.collect_run, args=(run,), daemon=True).start()
@@ -383,8 +374,13 @@ class Experiment(ExperimentBase):
                 self.msg(m)
                 with self.displayed_pathing(step=step), self.click_listener:
                     click = self.click_listener.get_click()
-                run.table.loc[step.Index, 'delta_x'] = click.x - self.beam_center[0]
-                run.table.loc[step.Index, 'delta_y'] = click.y - self.beam_center[1]
+                run.table.loc[step.Index, 'beampixel_x'] = click.x
+                run.table.loc[step.Index, 'beampixel_y'] = click.y
+                delta_yx = (np.array(click.xy) - obs_beam_pixel_xy)[::-1]
+                target_beam_pos_yx = cal_beam_pixel_yx + delta_yx
+                target_beam_shift = self.beamshift.pixelcoord_to_beamshift(target_beam_pos_yx)
+                run.table.loc[step.Index, 'beamshift_x'] = target_beam_shift[0]
+                run.table.loc[step.Index, 'beamshift_y'] = target_beam_shift[1]
                 tracking_images.append(step.image)
                 self.msg('')
             if 'image' not in run.table:
@@ -410,6 +406,7 @@ class Experiment(ExperimentBase):
 
     def collect_run(self, run: Run) -> None:
         """Collect `run.steps` and place them in `self.steps_queue`."""
+        print(run.table)
         with self.ctrl.beam.unblanked(delay=0.2):
             if run.continuous:
                 self._collect_scans(run=run)
@@ -420,7 +417,7 @@ class Experiment(ExperimentBase):
         """Collect `run.steps` stills and place them in `self.steps_queue`."""
         self.msg(f'Collecting {run!s}')
         for step in run.steps:
-            if run.has_beam_delta_information:
+            if run.has_beamshifts:
                 self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
             self.ctrl.stage.a = step.alpha
             step.image, step.meta = self.ctrl.get_image(exposure=run.exposure)
@@ -438,7 +435,7 @@ class Experiment(ExperimentBase):
             run.collapse_to_alpha_midpoints()
             self.ctrl.stage.set_with_speed(a=a, speed=rot_speed, wait=False)
             for step, (image, meta) in zip(run.steps, movie):
-                if run.has_beam_delta_information:
+                if run.has_beamshifts:
                     self.ctrl.beamshift.set(step.beamshift_x, step.beamshift_y)
                 self.steps_queue.put(replace(step, image=image, meta=meta))
         self.steps_queue.put(None)
