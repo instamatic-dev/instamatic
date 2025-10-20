@@ -128,7 +128,7 @@ class ImgConversion:
         self,
         buffer: list,  # image buffer, list of (index [int], image data [2D numpy array], header [dict])
         camera_length: float,  # virtual camera length read from the microscope
-        osc_angle: float,  # degrees, oscillation angle of the rotation
+        osc_angle: float,  # degrees, oscillation angle of the rotation; can be negative if start > finish
         start_angle: float,  # degrees, start angle of the rotation
         end_angle: float,  # degrees, end angle of the rotation
         rotation_axis: float,  # radians, specifies the position of the rotation axis
@@ -543,24 +543,15 @@ class ImgConversion:
         """Write .ed3d input file for REDp in directory `path`"""
         path.mkdir(exist_ok=True)
 
-        omega = np.degrees(self.rotation_axis)
-
-        # for red, -180 <= omega <= 180
-        if omega < -180:
-            omega += 360
-        elif omega > 180:
-            omega -= 360
-
-        if self.start_angle > self.end_angle:
-            sign = -1
-        else:
-            sign = 1
+        sign = -1 if self.start_angle > self.end_angle else +1
+        omega = sign * np.degrees(self.rotation_axis)
+        omega = ((omega + 180) % 360) - 180  # for red, -180 <= omega <= 180
 
         with open(path / '1.ed3d', 'w') as f:
             print(f'WAVELENGTH    {self.wavelength}', file=f)
             print(f'ROTATIONAXIS    {omega:5f}', file=f)
             print(f'CCDPIXELSIZE    {self.pixelsize:5f}', file=f)
-            print(f'GONIOTILTSTEP    {self.osc_angle:5f}', file=f)
+            print(f'GONIOTILTSTEP    {abs(self.osc_angle):5f}', file=f)
             print('BEAMTILTSTEP    0', file=f)
             print('BEAMTILTRANGE    0.000', file=f)
             print('STRETCHINGMP    0.0', file=f)
@@ -570,7 +561,7 @@ class ImgConversion:
 
             for i in self.observed_range:
                 fn = f'{i:05d}.mrc'
-                angle = self.start_angle + sign * self.osc_angle * i
+                angle = sign * (self.start_angle + self.osc_angle * i)
                 print(f'FILE {fn}    {angle: 12.4f}    0    {angle: 12.4f}', file=f)
 
             print('ENDFILELIST', file=f)
@@ -584,10 +575,8 @@ class ImgConversion:
 
         nframes = max(self.complete_range)
 
-        invert_rotation_axis = self.start_angle > self.end_angle
-        rot_x, rot_y, rot_z = rotation_axis_to_xyz(
-            self.rotation_axis, invert=invert_rotation_axis
-        )
+        invert_rot_axis = self.start_angle > self.end_angle
+        rot_x, rot_y, rot_z = rotation_axis_to_xyz(self.rotation_axis, invert=invert_rot_axis)
 
         shape_x, shape_y = self.data_shape
 
@@ -616,7 +605,7 @@ class ImgConversion:
             data_end=nframes,
             exclude=exclude,
             stretch_correction=stretch_correction,
-            starting_angle=self.start_angle,
+            starting_angle=self.start_angle * (-1 if invert_rot_axis else +1),
             wavelength=self.wavelength,
             # reverse XY coordinates for XDS
             origin_x=self.mean_beam_center[1],
@@ -628,7 +617,7 @@ class ImgConversion:
             detector_distance=self.distance,
             QX=self.physical_pixelsize,
             QY=self.physical_pixelsize,
-            osc_angle=self.osc_angle,
+            osc_angle=abs(self.osc_angle),
             rot_x=rot_x,
             rot_y=rot_y,
             rot_z=rot_z,
@@ -650,7 +639,6 @@ class ImgConversion:
         np.savetxt(path / 'beam_centers.txt', centers, fmt='%10.4f')
 
     def write_pets_inp(self, path: AnyPath, tiff_path: str = 'tiff') -> None:
-        sign = 1 if self.start_angle < self.end_angle else -1
         omega = np.degrees(self.rotation_axis) % 360
 
         if 'continuous' in self.method.lower():
@@ -664,7 +652,7 @@ class ImgConversion:
         p.add('geometry', geometry)
         p.add('lambda', self.wavelength)
         p.add('Aperpixel', self.pixelsize)
-        p.add('phi', float(self.osc_angle) / 2)
+        p.add('phi', abs(float(self.osc_angle)) / 2)
         p.add('omega', omega)
         p.add('bin', 1)
         p.add('reflectionsize', 20)
@@ -673,7 +661,7 @@ class ImgConversion:
 
         s = []
         for i in self.observed_range:
-            angle = self.start_angle + sign * self.osc_angle * i
+            angle = self.start_angle + self.osc_angle * i
             s.append(f'{tiff_path}/{i:05d}.tiff {angle:10.4f} 0.00')
         p.add('imagelist', *s)
 
