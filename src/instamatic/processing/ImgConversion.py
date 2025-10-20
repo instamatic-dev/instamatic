@@ -325,11 +325,10 @@ class ImgConversion:
         write_cbf(path / 'XCORR.cbf', np.int32(xcorr * 100))
         write_cbf(path / 'YCORR.cbf', np.int32(ycorr * 100))
 
-    def tiff_writer(self, path: AnyPath) -> None:
+    def tiff_writer(self, path: Path) -> None:
         """Write all data as tiff files to given `path`"""
         print('\033[k', 'Writing TIFF files......', end='\r')
 
-        path = Path(path)
         path.mkdir(exist_ok=True)
 
         for i in self.observed_range:
@@ -337,11 +336,11 @@ class ImgConversion:
 
         logger.debug(f'Tiff files saved in folder: {path}')
 
-    def smv_writer(self, path: AnyPath) -> None:
+    def smv_writer(self, path: Path) -> None:
         """Write all data as SMV files compatible with XDS/DIALS to `path`"""
         print('\033[k', 'Writing SMV files......', end='\r')
 
-        path = Path(path) / self.smv_subdrc
+        path = path / self.smv_subdrc
         path.mkdir(exist_ok=True)
 
         for i in self.observed_range:
@@ -349,11 +348,10 @@ class ImgConversion:
 
         logger.debug(f'SMV files saved in folder: {path}')
 
-    def mrc_writer(self, path: str) -> None:
+    def mrc_writer(self, path: Path) -> None:
         """Write all data as mrc files to `path`"""
         print('\033[k', 'Writing MRC files......', end='\r')
 
-        path = Path(path)
         path.mkdir(exist_ok=True)
 
         for i in self.observed_range:
@@ -363,9 +361,9 @@ class ImgConversion:
 
     def threadpoolwriter(
         self,
-        tiff_path: Optional[AnyPath] = None,
-        smv_path: Optional[AnyPath] = None,
-        mrc_path: Optional[AnyPath] = None,
+        tiff_path: Optional[Path] = None,
+        smv_path: Optional[Path] = None,
+        mrc_path: Optional[Path] = None,
         workers: int = 8,
     ) -> None:
         """Efficiently write all data to the specified formats using a
@@ -379,17 +377,15 @@ class ImgConversion:
         write_mrc = mrc_path is not None
 
         if write_smv:
-            smv_path = Path(smv_path) / self.smv_subdrc
+            smv_path = smv_path / self.smv_subdrc
             smv_path.mkdir(exist_ok=True, parents=True)
             logger.debug(f'SMV files saved in folder: {smv_path}')
 
         if write_tiff:
-            tiff_path = Path(tiff_path)
             tiff_path.mkdir(exist_ok=True, parents=True)
             logger.debug(f'Tiff files saved in folder: {tiff_path}')
 
         if write_mrc:
-            mrc_path = Path(mrc_path)
             mrc_path.mkdir(exist_ok=True, parents=True)
             logger.debug(f'MRC files saved in folder: {mrc_path}')
 
@@ -408,7 +404,7 @@ class ImgConversion:
             for future in futures:
                 ret = future.result()
 
-    def to_dials(self, smv_path: AnyPath) -> None:
+    def to_dials(self, smv_path: Path) -> None:
         """Convert the buffer to output compatible with DIALS.
 
         Files are written to the path given by `smv_path`.
@@ -422,13 +418,13 @@ class ImgConversion:
         )
 
         export_dials_variables(
-            Path(smv_path),
+            smv_path,
             sequence=observed_range,
             missing=self.missing_range,
             rotation_xyz=rotation_xyz,
         )
 
-        path = Path(smv_path) / self.smv_subdrc
+        path = smv_path / self.smv_subdrc
 
         i = min(observed_range)
         empty = np.zeros_like(self.data[i])
@@ -449,7 +445,7 @@ class ImgConversion:
             del self.data[n]
             del self.headers[n]
 
-    def write_tiff(self, path: AnyPath, i: int) -> Path:
+    def write_tiff(self, path: Path, i: int) -> Path:
         """Write the image+header with sequence number `i` to the directory
         `path` in TIFF format.
 
@@ -458,11 +454,11 @@ class ImgConversion:
         img = self.data[i]
         h = self.headers[i]
 
-        fn = Path(path) / f'{i:05d}.tiff'
+        fn = path / f'{i:05d}.tiff'
         write_tiff(str(fn), img, header=h)
         return fn
 
-    def write_smv(self, path: AnyPath, i: int) -> Path:
+    def write_smv(self, path: Path, i: int) -> Path:
         """Write the image+header with sequence number `i` to the directory
         `path` in SMV format.
 
@@ -512,11 +508,11 @@ class ImgConversion:
         header['BEAM_CENTER_Y'] = f'{mean_beam_center[0]:.4f}'
         header['DENZO_X_BEAM'] = f'{mean_beam_center[0] * self.physical_pixelsize:.4f}'
         header['DENZO_Y_BEAM'] = f'{mean_beam_center[1] * self.physical_pixelsize:.4f}'
-        fn = Path(path) / f'{i:05d}.img'
+        fn = path / f'{i:05d}.img'
         write_adsc(str(fn), img, header=header)
         return fn
 
-    def write_mrc(self, path: AnyPath, i: int) -> Path:
+    def write_mrc(self, path: Path, i: int) -> Path:
         """Write the image+header with sequence number `i` to the directory
         `path` in TIFF format.
 
@@ -524,7 +520,7 @@ class ImgConversion:
         """
         img = self.data[i]
 
-        fn = Path(path) / f'{i:05d}.mrc'
+        fn = path / f'{i:05d}.mrc'
 
         # for RED these need to be as integers
         dtype = np.uint16
@@ -543,9 +539,8 @@ class ImgConversion:
 
         return fn
 
-    def write_ed3d(self, path: AnyPath) -> None:
+    def write_ed3d(self, path: Path) -> None:
         """Write .ed3d input file for REDp in directory `path`"""
-        path = Path(path)
         path.mkdir(exist_ok=True)
 
         omega = np.degrees(self.rotation_axis)
@@ -582,9 +577,9 @@ class ImgConversion:
 
         logger.debug(f'ED3D file created in path: {path}')
 
-    def write_xds_inp(self, path: AnyPath) -> None:
+    def write_xds_inp(self, path: Path) -> None:
         """Write XDS.INP input file for XDS in directory `path`"""
-        path = Path(path)
+
         path.mkdir(exist_ok=True)
 
         nframes = max(self.complete_range)
@@ -644,7 +639,7 @@ class ImgConversion:
 
         logger.info('XDS INP file created.')
 
-    def write_beam_centers(self, path: AnyPath) -> None:
+    def write_beam_centers(self, path: Path) -> None:
         """Write list of beam centers to file `beam_centers.txt` in `path`"""
         centers = np.zeros((max(self.observed_range), 2), dtype=float)
         for i, h in self.headers.items():
@@ -652,7 +647,7 @@ class ImgConversion:
         for i in self.missing_range:
             centers[i - 1] = [np.nan, np.nan]
 
-        np.savetxt(Path(path) / 'beam_centers.txt', centers, fmt='%10.4f')
+        np.savetxt(path / 'beam_centers.txt', centers, fmt='%10.4f')
 
     def write_pets_inp(self, path: AnyPath, tiff_path: str = 'tiff') -> None:
         sign = 1 if self.start_angle < self.end_angle else -1
@@ -685,9 +680,8 @@ class ImgConversion:
         with open(Path(path) / 'pets.pts', 'w') as f:
             f.write(str(p.compile(self.__dict__)))
 
-    def write_REDp_shiftcorrection(self, path: AnyPath) -> None:
+    def write_REDp_shiftcorrection(self, path: Path) -> None:
         """Write .sc (shift correction) file for REDp in directory `path`"""
-        path = Path(path)
         path.mkdir(exist_ok=True)
 
         cx, cy = self.mean_beam_center
