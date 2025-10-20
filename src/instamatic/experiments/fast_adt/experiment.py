@@ -347,10 +347,11 @@ class Experiment(ExperimentBase):
 
             self.ctrl.restore('FastADT_diff')
             self.camera_length = int(self.ctrl.magnification.get())
-            for run in self.runs.diffraction:
-                self.msg1(f'Collecting {run!s}.')
+            for ir, run in enumerate(self.runs.diffraction):
+                c = f'{ir}/{t} ' if (t := len(self.runs.diffraction)) > 1 else ''
+                self.msg1(f'Collecting {c}{run!s}.')
                 self.collect_run(run)
-                self.msg1(f'Finalizing {run!s}.')
+                self.msg1(f'Finalizing {c}{run!s}.')
                 run.update_images_metas(self.steps)
                 self.finalize(run)
 
