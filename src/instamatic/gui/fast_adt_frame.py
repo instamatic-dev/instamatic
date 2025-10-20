@@ -89,37 +89,44 @@ class ExperimentalFastADT(LabelFrame):
 
         Label(f, text='Diffraction start (deg):').grid(row=4, column=0, **pad10)
         var = self.var.diffraction_start
+        var.trace('w', self.update_widget)
         self.diffraction_start = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_start.grid(row=4, column=1, **pad10)
 
         Label(f, text='Diffraction stop (deg):').grid(row=5, column=0, **pad10)
         var = self.var.diffraction_stop
+        var.trace('w', self.update_widget)
         self.diffraction_stop = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_stop.grid(row=5, column=1, **pad10)
 
         Label(f, text='Diffraction step (deg):').grid(row=6, column=0, **pad10)
         var = self.var.diffraction_step
+        var.trace('w', self.update_widget)
         self.diffraction_step = Spinbox(f, textvariable=var, **angle_delta)
         self.diffraction_step.grid(row=6, column=1, **pad10)
 
         Label(f, text='Diffraction exposure (s):').grid(row=7, column=0, **pad10)
         var = self.var.diffraction_time
+        var.trace('w', self.update_widget)
         self.diffraction_time = Spinbox(f, textvariable=var, **duration)
         self.diffraction_time.grid(row=7, column=1, **pad10)
 
         Label(f, text='Tracking algorithm:').grid(row=3, column=2, **pad10)
         var = self.var.tracking_algo
+        var.trace('w', self.update_widget)
         m = ['none', 'manual']
-        self.tracking_algo = OptionMenu(f, var, m[0], *m, command=self.update_widget_state)
+        self.tracking_algo = OptionMenu(f, var, m[0], *m)
         self.tracking_algo.grid(row=3, column=3, **pad10)
 
         Label(f, text='Tracking step (deg):').grid(row=6, column=2, **pad10)
         var = self.var.tracking_step
+        var.trace('w', self.update_widget)
         self.tracking_step = Spinbox(f, textvariable=var, **angle_delta)
         self.tracking_step.grid(row=6, column=3, **pad10)
 
         Label(f, text='Tracking exposure (s):').grid(row=7, column=2, **pad10)
         var = self.var.tracking_time
+        var.trace('w', self.update_widget)
         self.tracking_time = Spinbox(f, textvariable=var, **duration)
         self.tracking_time.grid(row=7, column=3, **pad10)
 
@@ -187,12 +194,29 @@ class ExperimentalFastADT(LabelFrame):
         self.start_button = Button(self, text='Start', width=1, command=self.start_collection)
         self.start_button.pack(side='bottom', fill='x', padx=10, pady=10)
 
-        self.update_widget_state()
+        self.update_widget()
+
+    def estimate_times(self) -> tuple[float, float]:
+        """Estimate time needed for tracking + each diffraction in seconds."""
+        a_span = abs(self.var.diffraction_start.get() - self.var.diffraction_stop.get())
+        try:
+            track_step = self.var.tracking_step.get()
+        except TclError:
+            track_step = 0.001
+        try:
+            diff_step = self.var.diffraction_step.get()
+        except TclError:
+            diff_step = 0.001
+        track_time = 0
+        if self.var.tracking_algo.get() != 'none':
+            track_time = self.var.tracking_time.get() * a_span / track_step
+        diff_time = self.var.diffraction_time.get() * a_span / diff_step
+        return track_time, diff_time
 
     def toggle_beam_blank(self) -> None:
         (self.ctrl.beam.unblank if self.ctrl.beam.is_blanked else self.ctrl.beam.blank)()
 
-    def update_widget_state(self, *_, busy: Optional[bool] = None, **__) -> None:
+    def update_widget(self, *_, busy: Optional[bool] = None, **__) -> None:
         self.busy = busy if busy is not None else self.busy
         no_tracking = self.var.tracking_algo.get() == 'none'
         widget_state = 'disabled' if self.busy else 'enabled'
@@ -205,9 +229,17 @@ class ExperimentalFastADT(LabelFrame):
         self.diffraction_step.config(state=widget_state)
         self.diffraction_time.config(state=widget_state)
         self.tracking_algo.config(state=widget_state)
-
         self.tracking_step.config(state=tracking_state)
         self.tracking_time.config(state=tracking_state)
+
+        tracking_time, diffraction_time = self.estimate_times()
+        tt = '{:.0f}:{:02.0f}'.format(*divmod(tracking_time, 60))
+        dt = '{:.0f}:{:02.0f}'.format(*divmod(diffraction_time, 60))
+        if tracking_time:  # don't display tracking time or per-attempts if zero
+            msg = f'Estimated time required: {tt} + {dt} / tracking.'
+        else:
+            msg = f'Estimated time required: {dt}.'
+        self.message2.set(msg)
 
     def start_collection(self) -> None:
         self.q.put(('fast_adt', {'frame': self, **self.var.as_dict()}))
@@ -237,13 +269,13 @@ def fast_adt_interface_command(controller, **params: Any) -> None:
         videostream_frame=videostream_frame,
     )
     try:
-        fast_adt_frame.update_widget_state(busy=True)
+        fast_adt_frame.update_widget(busy=True)
         controller.fast_adt.start_collection(**params)
     except RuntimeError:
         pass  # RuntimeError is raised if experiment is terminated early
     finally:
         del controller.fast_adt
-        fast_adt_frame.update_widget_state(busy=False)
+        fast_adt_frame.update_widget(busy=False)
 
 
 module = BaseModule(
