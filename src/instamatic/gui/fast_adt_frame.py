@@ -89,44 +89,37 @@ class ExperimentalFastADT(LabelFrame):
 
         Label(f, text='Diffraction start (deg):').grid(row=4, column=0, **pad10)
         var = self.var.diffraction_start
-        var.trace('w', self.update_widget)
         self.diffraction_start = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_start.grid(row=4, column=1, **pad10)
 
         Label(f, text='Diffraction stop (deg):').grid(row=5, column=0, **pad10)
         var = self.var.diffraction_stop
-        var.trace('w', self.update_widget)
         self.diffraction_stop = Spinbox(f, textvariable=var, **angle_lim)
         self.diffraction_stop.grid(row=5, column=1, **pad10)
 
         Label(f, text='Diffraction step (deg):').grid(row=6, column=0, **pad10)
         var = self.var.diffraction_step
-        var.trace('w', self.update_widget)
         self.diffraction_step = Spinbox(f, textvariable=var, **angle_delta)
         self.diffraction_step.grid(row=6, column=1, **pad10)
 
         Label(f, text='Diffraction exposure (s):').grid(row=7, column=0, **pad10)
         var = self.var.diffraction_time
-        var.trace('w', self.update_widget)
         self.diffraction_time = Spinbox(f, textvariable=var, **duration)
         self.diffraction_time.grid(row=7, column=1, **pad10)
 
         Label(f, text='Tracking algorithm:').grid(row=3, column=2, **pad10)
         var = self.var.tracking_algo
-        var.trace('w', self.update_widget)
         m = ['none', 'manual']
         self.tracking_algo = OptionMenu(f, var, m[0], *m)
         self.tracking_algo.grid(row=3, column=3, **pad10)
 
         Label(f, text='Tracking step (deg):').grid(row=6, column=2, **pad10)
         var = self.var.tracking_step
-        var.trace('w', self.update_widget)
         self.tracking_step = Spinbox(f, textvariable=var, **angle_delta)
         self.tracking_step.grid(row=6, column=3, **pad10)
 
         Label(f, text='Tracking exposure (s):').grid(row=7, column=2, **pad10)
         var = self.var.tracking_time
-        var.trace('w', self.update_widget)
         self.tracking_time = Spinbox(f, textvariable=var, **duration)
         self.tracking_time.grid(row=7, column=3, **pad10)
 
@@ -194,6 +187,14 @@ class ExperimentalFastADT(LabelFrame):
         self.start_button = Button(self, text='Start', width=1, command=self.start_collection)
         self.start_button.pack(side='bottom', fill='x', padx=10, pady=10)
 
+        # update the state of the widget if any of these variavles changes
+        self.var.diffraction_start.trace('w', self.update_widget)
+        self.var.diffraction_stop.trace('w', self.update_widget)
+        self.var.diffraction_step.trace('w', self.update_widget)
+        self.var.diffraction_time.trace('w', self.update_widget)
+        self.var.tracking_algo.trace('w', self.update_widget)
+        self.var.tracking_step.trace('w', self.update_widget)
+        self.var.tracking_time.trace('w', self.update_widget)
         self.update_widget()
 
     def estimate_times(self) -> tuple[float, float]:
