@@ -436,7 +436,7 @@ class Experiment(ExperimentBase):
 
         img_conv = ImgConversion(
             buffer=self.run.buffer,
-            osc_angle=self.run.osc_angle,
+            osc_angle=abs(self.run.osc_angle),
             start_angle=self.run.table['alpha'].iloc[0],
             end_angle=self.run.table['alpha'].iloc[-1],
             rotation_axis=rotation_axis,
