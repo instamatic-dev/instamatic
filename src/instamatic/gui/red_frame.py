@@ -5,10 +5,10 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 
-class ExperimentalRED(LabelFrame):
+class ExperimentalRED(LabelFrame, HasQMixin):
     """GUI panel to perform a simple RED experiment using discrete rotation
     steps."""
 
@@ -99,10 +99,6 @@ class ExperimentalRED(LabelFrame):
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def start_collection(self):
         self.StartButton.config(state=DISABLED)
         self.ContinueButton.config(state=NORMAL)
@@ -111,12 +107,10 @@ class ExperimentalRED(LabelFrame):
         self.e_stepsize.config(state=DISABLED)
         params = self.get_params(task='start')
         self.q.put(('red', params))
-        self.triggerEvent.set()
 
     def continue_collection(self):
         params = self.get_params(task='continue')
         self.q.put(('red', params))
-        self.triggerEvent.set()
 
     def stop_collection(self):
         self.StartButton.config(state=NORMAL)
@@ -126,7 +120,6 @@ class ExperimentalRED(LabelFrame):
         self.e_stepsize.config(state=NORMAL)
         params = self.get_params(task='stop')
         self.q.put(('red', params))
-        self.triggerEvent.set()
 
     def get_params(self, task=None):
         params = {

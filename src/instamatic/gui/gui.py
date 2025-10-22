@@ -7,6 +7,7 @@ import threading
 import traceback
 from tkinter import *
 from tkinter.ttk import *
+from typing import get_type_hints
 
 import instamatic
 from instamatic.formats import *
@@ -36,31 +37,23 @@ class DataCollectionController(threading.Thread):
         self.log = log
 
         self.q = queue.LifoQueue(maxsize=1)
-        self.triggerEvent = threading.Event()
 
         self.module_io = self.app.get_module('io')
 
-        for name, module in self.app.modules.items():
-            try:
-                module.set_trigger(trigger=self.triggerEvent, q=self.q)
-            except AttributeError:
-                pass  # module does not need/accept a trigger
+        for module in self.app.modules.values():
+            if 'q' in get_type_hints(module.__class__):
+                module.q = getattr(module, 'q', self.q)
 
         self.exitEvent = threading.Event()
-        atexit.register(self.triggerEvent.set)
         atexit.register(self.exitEvent.set)
         atexit.register(self.close)
 
     def run(self):
-        while True:
-            self.triggerEvent.wait()
-            self.triggerEvent.clear()
-
-            if self.exitEvent.is_set():
-                self.close()
-                sys.exit()
-
-            job, kwargs = self.q.get()
+        while not self.exitEvent.is_set():
+            try:
+                job, kwargs = self.q.get(timeout=0.5)
+            except queue.Empty:
+                continue  # nothing to do, loop again
 
             try:
                 func = JOBS[job]
@@ -75,6 +68,9 @@ class DataCollectionController(threading.Thread):
                 traceback.print_exc()
                 self.log.debug(f"Error caught -> {repr(e)} while running '{job}' with {kwargs}")
                 self.log.exception(e)
+
+        self.close()
+        sys.exit(0)
 
     def close(self):
         for item in (self.ctrl, self.stream, self.beam_ctrl, self.app):

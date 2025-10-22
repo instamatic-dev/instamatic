@@ -9,7 +9,7 @@ from typing import Any, Optional
 from instamatic import controller
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
@@ -67,7 +67,7 @@ class ExperimentalFastADTVariables:
         }
 
 
-class ExperimentalFastADT(LabelFrame):
+class ExperimentalFastADT(LabelFrame, HasQMixin):
     """GUI panel to perform selected FastADT-style (c)RED & PED experiments."""
 
     def __init__(self, parent):
@@ -75,7 +75,6 @@ class ExperimentalFastADT(LabelFrame):
         self.parent = parent
         self.var = ExperimentalFastADTVariables()
         self.q: Optional[Queue] = None
-        self.triggerEvent: Optional[threading.Event] = None
         self.busy: bool = False
         self.ctrl = controller.get_instance()
 
@@ -212,12 +211,6 @@ class ExperimentalFastADT(LabelFrame):
 
     def start_collection(self) -> None:
         self.q.put(('fast_adt', {'frame': self, **self.var.as_dict()}))
-        self.triggerEvent.set()
-
-    def set_trigger(self, trigger: threading.Event, q: Queue) -> None:
-        """A boilerplate method, connects to a GUI thread and command queue."""
-        self.triggerEvent: threading.Event = trigger
-        self.q: Queue = q
 
 
 def fast_adt_interface_command(controller, **params: Any) -> None:

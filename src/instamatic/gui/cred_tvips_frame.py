@@ -9,12 +9,12 @@ from tkinter.ttk import *
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 barrier = threading.Barrier(2, timeout=60)
 
 
-class ExperimentalTVIPS(LabelFrame):
+class ExperimentalTVIPS(LabelFrame, HasQMixin):
     """GUI panel for doing cRED / SerialRED experiments on a TVIPS camera."""
 
     def __init__(self, parent):
@@ -217,10 +217,6 @@ class ExperimentalTVIPS(LabelFrame):
 
         self.var_goniotool_tx = IntVar(value=1)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def invert_angle(self):
         angle = self.var_target_angle.get()
         self.var_target_angle.set(-angle)
@@ -257,7 +253,6 @@ class ExperimentalTVIPS(LabelFrame):
         # self.e_target_angle.config(state=DISABLED)
         params = self.get_params(task='get_ready')
         self.q.put(('cred_tvips', params))
-        self.triggerEvent.set()
 
         def worker(button=None, state=None):
             barrier.wait()  # wait for experiment to be primed
@@ -272,19 +267,16 @@ class ExperimentalTVIPS(LabelFrame):
         self.AcquireButton.config(state=DISABLED)
         params = self.get_params(task='acquire')
         self.q.put(('cred_tvips', params))
-        self.triggerEvent.set()
 
     def stop_collection(self):
         self.enable_ui()
         params = self.get_params(task='stop')
         self.q.put(('cred_tvips', params))
-        self.triggerEvent.set()
 
     def serial_collection(self):
         self.disable_ui()
         params = self.get_params(task='serial')
         self.q.put(('cred_tvips', params))
-        self.triggerEvent.set()
 
     def browse_instructions(self):
         fn = filedialog.askopenfilename(
@@ -342,11 +334,9 @@ class ExperimentalTVIPS(LabelFrame):
 
     def start_liveview(self):
         self.q.put(('ctrl', {'task': 'cam.start_liveview'}))
-        self.triggerEvent.set()
 
     def stop_liveview(self):
         self.q.put(('ctrl', {'task': 'cam.stop_liveview'}))
-        self.triggerEvent.set()
 
     def toggle_diff_defocus(self):
         toggle = self.var_toggle_diff_defocus.get()
