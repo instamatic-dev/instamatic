@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import threading
+from functools import wraps
 from queue import Queue
 from tkinter import *
 from tkinter.ttk import *
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from instamatic import controller
 from instamatic.utils.spinbox import Spinbox
@@ -13,7 +14,6 @@ from .base_module import BaseModule
 
 pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
-width = {'width': 19}
 angle_lim = {'from_': -90, 'to': 90, 'increment': 1, 'width': 20}
 angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1, 'width': 20}
 duration = {'from_': 0, 'to': 60, 'increment': 0.1}
@@ -49,7 +49,7 @@ class FastADTConfigProxy:
 class ExperimentalFastADTVariables:
     """A collection of tkinter Variable instances passed to the experiment."""
 
-    def __init__(self):
+    def __init__(self, on_change: Optional[Callable[[], None]] = None) -> None:
         self.diffraction_mode = StringVar()
         self.diffraction_start = DoubleVar(value=-30)
         self.diffraction_stop = DoubleVar(value=30)
@@ -59,12 +59,29 @@ class ExperimentalFastADTVariables:
         self.tracking_time = DoubleVar(value=0.5)
         self.tracking_step = DoubleVar(value=5.0)
 
+        if on_change:
+            self._add_callback(on_change)
+
+    def _add_callback(self, callback: Callable[[], None]) -> None:
+        """Add a safe trace callback to all `Variable` instances in self."""
+
+        @wraps(callback)
+        def safe_callback(*_):
+            try:
+                callback()
+            except TclError as e:  # Ignore invalid/incomplete GUI edits
+                if 'expected floating-point number' not in str(e):
+                    raise
+            except AttributeError as e:  # Ignore incomplete initialization
+                if 'object has no attribute' not in str(e):
+                    raise
+
+        for name, var in vars(self).items():
+            if isinstance(var, Variable):
+                var.trace_add('write', safe_callback)
+
     def as_dict(self):
-        return {
-            v: getattr(self, v).get()
-            for v in dir(self)
-            if isinstance(getattr(self, v), Variable)
-        }
+        return {n: v.get() for n, v in vars(self).items() if isinstance(v, Variable)}
 
 
 class ExperimentalFastADT(LabelFrame):
@@ -73,7 +90,7 @@ class ExperimentalFastADT(LabelFrame):
     def __init__(self, parent):
         super().__init__(parent, text='Experiment with a priori tracking options')
         self.parent = parent
-        self.var = ExperimentalFastADTVariables()
+        self.var = ExperimentalFastADTVariables(on_change=self.update_widget)
         self.q: Optional[Queue] = None
         self.triggerEvent: Optional[threading.Event] = None
         self.busy: bool = False
@@ -187,14 +204,6 @@ class ExperimentalFastADT(LabelFrame):
         self.start_button = Button(self, text='Start', width=1, command=self.start_collection)
         self.start_button.pack(side='bottom', fill='x', padx=10, pady=10)
 
-        # update the state of the widget if any of these variavles changes
-        self.var.diffraction_start.trace('w', self.update_widget)
-        self.var.diffraction_stop.trace('w', self.update_widget)
-        self.var.diffraction_step.trace('w', self.update_widget)
-        self.var.diffraction_time.trace('w', self.update_widget)
-        self.var.tracking_algo.trace('w', self.update_widget)
-        self.var.tracking_step.trace('w', self.update_widget)
-        self.var.tracking_time.trace('w', self.update_widget)
         self.update_widget()
 
     def estimate_times(self) -> tuple[float, float]:
