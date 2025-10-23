@@ -238,7 +238,10 @@ class ExperimentalFastADT(LabelFrame, HasQMixin):
         self.tracking_step.config(state=tracking_state)
         self.tracking_time.config(state=tracking_state)
 
-        tracking_time, diffraction_time = self.estimate_times()
+        try:
+            tracking_time, diffraction_time = self.estimate_times()
+        except ZeroDivisionError:
+            return
         tt = '{:.0f}:{:02.0f}'.format(*divmod(tracking_time, 60))
         dt = '{:.0f}:{:02.0f}'.format(*divmod(diffraction_time, 60))
         if tracking_time:  # don't display tracking time or per-attempts if zero
