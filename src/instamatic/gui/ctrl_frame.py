@@ -284,21 +284,20 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.var_stage_z.set(round(z))
 
     def toggle_alpha_wobbler(self):
-        current_wobble_stop_event = getattr(self, 'current_wobble_stop_event', None)
         if self.var_alpha_wobbler_on.get():
-            self.current_wobble_stop_event = stop_event = threading.Event()
+            self.wobble_stop_event = threading.Event()
             wobbler_task_keywords = {
                 'task': 'stage.alpha_wobbler',
                 'delta': self.var_alpha_wobbler.get(),
-                'event': stop_event,
+                'event': self.wobble_stop_event,
             }
             try:
                 self.q.put(('ctrl', wobbler_task_keywords), block=False)
             except queue.Full:
                 pass
         else:
-            if current_wobble_stop_event:
-                current_wobble_stop_event.set()
+            if self.wobble_stop_event:
+                self.wobble_stop_event.set()
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
