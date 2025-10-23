@@ -181,8 +181,8 @@ For optimum performance, the FastADT frame uses three separate TEM setting which
 **Diffraction exposure (s)**  
 : The time taken to collect each diffraction image in seconds. In the `continuous` mode it will additionally dictate the rotation speed.
 
-**Tracking mode**
-: Dictates whether `none` or `manual` tracking is to be performed at the start of the experiment.
+**Tracking algorithm**
+: Dictates whether `none` or `manual` tracking algorithm is to be performed at the start of the experiment to determine pathing.
 
 **Tracking step (deg)**
 : The target spacing between angles at which subsequent tracking images are collected within the tracking series in degrees.

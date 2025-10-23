@@ -57,12 +57,12 @@ class CalibBeamShift:
     def __repr__(self):
         return f'CalibBeamShift(transform=\n{self.transform},\n   reference_shift=\n{self.reference_shift},\n   reference_pixel=\n{self.reference_pixel})'
 
-    def beamshift_to_pixelcoord(self, beamshift: Sequence[float, float]) -> Vector2:
+    def beamshift_to_pixelcoord(self, beamshift: Sequence[float]) -> Vector2:
         """Converts from beamshift x,y to pixel coordinates."""
         r_i = np.linalg.inv(self.transform)
         return np.dot(self.reference_shift - np.array(beamshift), r_i) + self.reference_pixel
 
-    def pixelcoord_to_beamshift(self, pixelcoord: Sequence[float, float]) -> Vector2:
+    def pixelcoord_to_beamshift(self, pixelcoord: Sequence[float]) -> Vector2:
         """Converts from pixel coordinates to beamshift x,y."""
         pc = np.array(pixelcoord)
         return self.reference_shift - np.dot(pc - self.reference_pixel, self.transform)

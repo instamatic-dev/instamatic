@@ -160,6 +160,10 @@ class VideoStream(threading.Thread):
     def blocked(self):
         yield
 
+    @contextmanager
+    def unblocked(self):
+        yield
+
 
 class LiveVideoStream(VideoStream):
     """Handle the continuous stream of incoming data from the ImageGrabber."""
@@ -236,6 +240,17 @@ class LiveVideoStream(VideoStream):
         finally:
             if not was_set_before:
                 self.grabber.continuousCollectionEvent.clear()
+
+    @contextmanager
+    def unblocked(self):
+        """Clear `continuousCollectionEvent` in the statement scope only."""
+        was_set_before = self.grabber.continuousCollectionEvent.is_set()
+        try:
+            self.grabber.continuousCollectionEvent.clear()
+            yield
+        finally:
+            if was_set_before:
+                self.grabber.continuousCollectionEvent.set()
 
     def show_stream(self):
         from instamatic.gui import videostream_frame
