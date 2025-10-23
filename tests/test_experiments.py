@@ -61,7 +61,7 @@ ExperimentTestCase(
 fast_adt_common_collect_kwargs = {
     'diffraction_step': 0.5,
     'diffraction_time': 0.01,
-    'tracking_mode': 'none',
+    'tracking_algo': 'none',
     'tracking_time': 0.01,
 }
 
