@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import os
 import pickle
 import threading
 from pathlib import Path
@@ -14,10 +13,10 @@ from instamatic import config
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.filenames import *
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 
-class ExperimentalautocRED(LabelFrame):
+class ExperimentalautocRED(LabelFrame, HasQMixin):
     """Data collection protocol for SerialRED data collection on a high-speed
     Timepix camera using automated screening and crystal tracking.
 
@@ -211,10 +210,6 @@ class ExperimentalautocRED(LabelFrame):
         self.var_backlash = DoubleVar(value=1.0)
         self.var_rotspeed = DoubleVar(value=0.86)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def start_collection(self):
         self.CollectionStopButton.config(state=NORMAL)
         self.CollectionButton.config(state=DISABLED)
@@ -225,8 +220,6 @@ class ExperimentalautocRED(LabelFrame):
 
         params = self.get_params()
         self.q.put(('autocred', params))
-
-        self.triggerEvent.set()
 
     def stop_collection(self, event=None):
         self.stopEvent_experiment.set()
@@ -314,7 +307,6 @@ class ExperimentalautocRED(LabelFrame):
         difffocus = self.var_diff_defocus.get()
 
         self.q.put(('toggle_difffocus', {'value': difffocus, 'toggle': toggle}))
-        self.triggerEvent.set()
 
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig

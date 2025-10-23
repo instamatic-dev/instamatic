@@ -7,10 +7,10 @@ from tkinter.ttk import *
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 
-class ExperimentalCtrl(LabelFrame):
+class ExperimentalCtrl(LabelFrame, HasQMixin):
     """This panel holds some frequently used functions to control the electron
     microscope."""
 
@@ -210,17 +210,12 @@ class ExperimentalCtrl(LabelFrame):
 
         self.var_stage_wait = BooleanVar(value=True)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def set_mode(self, event=None):
         self.ctrl.mode.set(self.var_mode.get())
 
     def set_brightness(self, event=None):
         self.var_brightness.set(self.var_brightness.get())
         self.q.put(('ctrl', {'task': 'brightness.set', 'value': self.var_brightness.get()}))
-        self.triggerEvent.set()
 
     def get_brightness(self, event=None):
         self.var_brightness.set(self.ctrl.brightness.get())
@@ -239,7 +234,6 @@ class ExperimentalCtrl(LabelFrame):
     def set_difffocus(self, event=None):
         self.var_difffocus.set(self.var_difffocus.get())
         self.q.put(('ctrl', {'task': 'difffocus.set', 'value': self.var_difffocus.get()}))
-        self.triggerEvent.set()
 
     def get_difffocus(self, event=None):
         self.var_difffocus.set(self.ctrl.difffocus.get())
@@ -247,7 +241,6 @@ class ExperimentalCtrl(LabelFrame):
     def _set_angle(self, var: Variable) -> None:
         kwargs = {'task': 'stage.set', 'a': var.get(), 'wait': self.var_stage_wait.get()}
         self.q.put(('ctrl', kwargs))
-        self.triggerEvent.set()
 
     def set_negative_angle(self):
         return self._set_angle(self.var_negative_angle)
@@ -280,7 +273,6 @@ class ExperimentalCtrl(LabelFrame):
                 },
             )
         )
-        self.triggerEvent.set()
 
     def get_stage(self, event=None):
         x, y, z, _, _ = self.ctrl.stage.get()
@@ -301,17 +293,14 @@ class ExperimentalCtrl(LabelFrame):
                     },
                 )
             )
-            self.triggerEvent.set()
         else:  # wobbler off
             self.wobble_stop_event.set()
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
-        self.triggerEvent.set()
 
     def find_eucentric_height(self):
         self.q.put(('ctrl', {'task': 'find_eucentric_height'}))
-        self.triggerEvent.set()
 
     def toggle_diff_defocus(self):
         if self.var_diff_defocus_on.get():

@@ -11,13 +11,13 @@ import numpy as np
 from PIL import Image, ImageTk
 from PIL.Image import Resampling
 
-from instamatic.gui.base_module import BaseModule
+from instamatic.gui.base_module import BaseModule, HasQMixin
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.gui.videostream_processor import VideoStreamProcessor
 from instamatic.utils.spinbox import Spinbox
 
 
-class VideoStreamFrame(LabelFrame):
+class VideoStreamFrame(LabelFrame, HasQMixin):
     """GUI panel to continuously display the last frame streamed from the
     camera."""
 
@@ -224,16 +224,10 @@ class VideoStreamFrame(LabelFrame):
     def save_frame(self):
         """Save currently shown raw frame from the stream to a file in cwd."""
         self.q.put(('save_frame', {'frame': self.frame}))
-        self.triggerEvent.set()
 
     def save_image(self):
         """Save currently shown, modified, & scaled image to a file in cwd."""
         self.q.put(('save_image', {'image': self.processor.image}))
-        self.triggerEvent.set()
-
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
 
     def close(self):
         self.stream.close()

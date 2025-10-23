@@ -9,7 +9,7 @@ from tkinter.ttk import *
 from instamatic.calibrate import CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT, CALIB_DIRECTBEAM
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 # import matplotlib
 # matplotlib.use('TkAgg')
@@ -50,7 +50,7 @@ message3 = """
 Press <OK> to start"""
 
 
-class ExperimentalSED(LabelFrame):
+class ExperimentalSED(LabelFrame, HasQMixin):
     """GUI panel to start a SerialED experiment."""
 
     def __init__(self, parent):
@@ -129,16 +129,11 @@ class ExperimentalSED(LabelFrame):
         self.var_image_spotsize = IntVar(value=4)
         self.var_diff_brightness = IntVar(value=40000)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def start_collection(self):
         okay = tkinter.messagebox.askokcancel('Start experiment', message3, icon='warning')
         if okay:
             params = self.get_params()
             self.q.put(('sed', params))
-            self.triggerEvent.set()
 
     def show_calib_beamshift(self):
         # TODO: use mpl_frame.ShowMatplotlibFig
