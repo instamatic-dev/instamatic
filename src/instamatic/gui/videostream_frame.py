@@ -2,18 +2,23 @@ from __future__ import annotations
 
 import threading
 import time
+from datetime import datetime
+from pathlib import Path
 from tkinter import *
 from tkinter import Label as TkLabel
 from tkinter.ttk import *
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 from PIL import Image, ImageTk
 from PIL.Image import Resampling
 
+from instamatic._typing import AnyPath
+from instamatic.formats import read_tiff, write_tiff
 from instamatic.gui.base_module import BaseModule, HasQMixin
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.gui.videostream_processor import VideoStreamProcessor
+from instamatic.processing import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 
@@ -221,13 +226,33 @@ class VideoStreamFrame(LabelFrame, HasQMixin):
         except BaseException:
             pass
 
-    def save_frame(self):
+    def save_frame(self, frame: Optional[np.ndarray] = None, path: Optional[AnyPath] = None):
         """Save currently shown raw frame from the stream to a file in cwd."""
-        self.q.put(('save_frame', {'frame': self.frame}))
+        frame = frame if frame is not None else self.processor.frame
+        path = path or Path(self._saving_path_template().format('frame', 'tiff'))
+        try:
+            flatfield, _ = read_tiff(self.app.get_module('io').get_flatfield())
+            frame = apply_flatfield_correction(frame, flatfield)
+        except BaseException:
+            frame = frame
+        write_tiff(path, frame)
+        print('Wrote frame:', path)
 
-    def save_image(self):
+    def save_image(self, image: Optional[Image.Image] = None, path: Optional[AnyPath] = None):
         """Save currently shown, modified, & scaled image to a file in cwd."""
-        self.q.put(('save_image', {'image': self.processor.image}))
+        image = image if image is not None else self.processor.image
+        path = path or Path(self._saving_path_template().format('image', 'png'))
+        image.save(path, format='PNG')
+        print('Wrote image:', path)
+
+    def _saving_path_template(self) -> str:
+        try:
+            drc = self.app.get_module('io').get_experiment_directory()
+            drc.mkdir(exist_ok=True, parents=True)
+        except (AttributeError, FileExistsError, PermissionError):
+            drc = Path.cwd()
+        timestamp = datetime.now().strftime('%H-%M-%S_%f')[:-3]
+        return str(drc / f'{{}}_{timestamp}.{{}}')
 
     def close(self):
         self.stream.close()
