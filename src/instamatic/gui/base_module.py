@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from queue import Queue
+
 
 class BaseModule:
     """BaseModule for the gui composition.
@@ -31,3 +33,9 @@ class BaseModule:
         frame = self.tk_frame(parent, **self.kwargs)
         self.frame = frame
         return frame
+
+
+class HasQMixin:
+    """Asserts module.q remains reserved for DataCollectionController.q."""
+
+    q: Queue

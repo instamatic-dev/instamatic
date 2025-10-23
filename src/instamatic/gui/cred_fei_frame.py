@@ -5,10 +5,10 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 
-class ExperimentalcRED_FEI(LabelFrame):
+class ExperimentalcRED_FEI(LabelFrame, HasQMixin):
     """Simple panel to assist cRED data collection (mainly rotation control) on
     a FEI microscope."""
 
@@ -94,10 +94,6 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.var_save_tiff = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def start_collection(self):
         self.StartButton.config(state=DISABLED)
         self.FinalizeButton.config(state=NORMAL)
@@ -114,7 +110,6 @@ class ExperimentalcRED_FEI(LabelFrame):
                 },
             )
         )
-        self.triggerEvent.set()
 
     def stop_collection(self):
         self.StartButton.config(state=NORMAL)
@@ -123,7 +118,6 @@ class ExperimentalcRED_FEI(LabelFrame):
         self.e_rotspeed.config(state=NORMAL)
         params = self.get_params(task='None')
         self.q.put(('credfei', params))
-        self.triggerEvent.set()
 
     def get_params(self, task=None):
         params = {

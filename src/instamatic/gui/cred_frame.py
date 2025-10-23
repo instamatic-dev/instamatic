@@ -6,12 +6,12 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 ENABLE_FOOTFREE_OPTION = False
 
 
-class ExperimentalcRED(LabelFrame):
+class ExperimentalcRED(LabelFrame, HasQMixin):
     """GUI panel for doing cRED experiments on a Timepix camera."""
 
     def __init__(self, parent):
@@ -183,10 +183,6 @@ class ExperimentalcRED(LabelFrame):
         self.var_save_dials = BooleanVar(value=True)
         self.var_save_red = BooleanVar(value=True)
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def start_collection(self):
         # TODO: make a pop up window with the STOP button?
         if self.var_toggle_diff_defocus.get():
@@ -208,8 +204,6 @@ class ExperimentalcRED(LabelFrame):
 
         params = self.get_params()
         self.q.put(('cred', params))
-
-        self.triggerEvent.set()
 
     def stop_collection(self, event=None):
         self.stopEvent.set()
@@ -258,7 +252,6 @@ class ExperimentalcRED(LabelFrame):
         difffocus = self.var_diff_defocus.get()
 
         self.q.put(('relax_beam', {'value': difffocus}))
-        self.triggerEvent.set()
 
     def toggle_footfree(self):
         enable = self.var_toggle_footfree.get()
@@ -274,7 +267,6 @@ class ExperimentalcRED(LabelFrame):
         difffocus = self.var_diff_defocus.get()
 
         self.q.put(('toggle_difffocus', {'value': difffocus, 'toggle': toggle}))
-        self.triggerEvent.set()
 
 
 def acquire_data_cRED(controller, **kwargs):
@@ -301,7 +293,6 @@ def acquire_data_cRED(controller, **kwargs):
 
     if controller.use_indexing_server:
         controller.q.put(('autoindex', {'task': 'run', 'path': cexp.smv_path}))
-        controller.triggerEvent.set()
 
 
 module = BaseModule(

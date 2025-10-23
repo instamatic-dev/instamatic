@@ -8,7 +8,7 @@ from tkinter.ttk import *
 
 from instamatic import config
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 
 scripts_drc = config.locations['scripts']
 
@@ -22,7 +22,7 @@ VMHOST = config.settings.VM_server_host
 VMPORT = config.settings.VM_server_port
 
 
-class DebugFrame(LabelFrame):
+class DebugFrame(LabelFrame, HasQMixin):
     """GUI panel with advanced / debugging functions."""
 
     def __init__(self, parent):
@@ -139,20 +139,17 @@ class DebugFrame(LabelFrame):
 
         frame = Frame(self)
 
-        self.resetTriggers = Button(frame, text='Report status', command=self.report_status)
-        self.resetTriggers.grid(row=0, column=0, sticky='EW')
+        self.reportStatus = Button(frame, text='Report status', command=self.report_status)
+        self.reportStatus.grid(row=0, column=0, sticky='EW')
 
-        self.resetTriggers = Button(frame, text='Close down', command=self.close_down)
-        self.resetTriggers.grid(row=0, column=1, sticky='EW')
-
-        self.resetTriggers = Button(frame, text='Reset triggers', command=self.reset_triggers)
-        self.resetTriggers.grid(row=1, column=0, sticky='EW')
+        self.closeDown = Button(frame, text='Close down', command=self.close_down)
+        self.closeDown.grid(row=0, column=1, sticky='EW')
 
         self.openIPython = Button(frame, text='Open IPython shell', command=self.open_ipython)
         self.openIPython.grid(row=1, column=1, sticky='EW')
 
-        self.resetTriggers = Button(frame, text='Empty queue', command=self.empty_queue)
-        self.resetTriggers.grid(row=2, column=0, sticky='EW')
+        self.emptyQueue = Button(frame, text='Empty queue', command=self.empty_queue)
+        self.emptyQueue.grid(row=1, column=0, sticky='EW')
 
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -175,19 +172,15 @@ class DebugFrame(LabelFrame):
 
     def kill_server(self):
         self.q.put(('autoindex', {'task': 'kill_server'}))
-        self.triggerEvent.set()
 
     def start_server(self):
         self.q.put(('autoindex', {'task': 'start_server'}))
-        self.triggerEvent.set()
 
     def register_server(self):
         self.q.put(('autoindex', {'task': 'register_server'}))
-        self.triggerEvent.set()
 
     def kill_server_xdsVM(self):
         self.q.put(('autoindex_xdsVM', {'task': 'kill_server_xdsVM'}))
-        self.triggerEvent.set()
 
     def start_server_xdsVM(self):
         compos = self.var_e_compo.get()
@@ -209,17 +202,14 @@ class DebugFrame(LabelFrame):
                 },
             )
         )
-        self.triggerEvent.set()
 
     def register_server_xdsVM(self):
         self.q.put(('autoindex_xdsVM', {'task': 'register_server_xdsVM'}))
-        self.triggerEvent.set()
 
     def send_path_to_autosolution(self):
         path = self.var_e_smvpath.get()
 
         self.q.put(('autosolution_path', {'path': path}))
-        self.triggerEvent.set()
 
     def scripts_combobox_update(self, event=None):
         for fn in self.scripts_drc.rglob('*.py'):
@@ -230,14 +220,6 @@ class DebugFrame(LabelFrame):
         self.scripts[fn.name] = fn
         self.e_script_file['values'] = list(self.scripts.keys())
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
-    def reset_triggers(self):
-        self.triggerEvent.clear()
-        print('>> trigger event has been reset.')
-
     def empty_queue(self):
         print(f'There are {self.q.qsize()} items left in the queue.')
         while not self.q.empty():
@@ -246,11 +228,9 @@ class DebugFrame(LabelFrame):
 
     def open_ipython(self):
         self.q.put(('debug', {'task': 'open_ipython'}))
-        self.triggerEvent.set()
 
     def report_status(self):
         self.q.put(('debug', {'task': 'report_status'}))
-        self.triggerEvent.set()
 
     def close_down(self):
         script = self.scripts_drc / 'close_down.py'
@@ -258,7 +238,6 @@ class DebugFrame(LabelFrame):
         if not script.exists():
             return OSError(f'No such script: {script}')
         self.q.put(('debug', {'task': 'run_script', 'script': script}))
-        self.triggerEvent.set()
 
     def browse(self):
         fn = tkinter.filedialog.askopenfilename(
@@ -276,7 +255,6 @@ class DebugFrame(LabelFrame):
         if script in self.scripts:
             script = self.scripts[script]
         self.q.put(('debug', {'task': 'run_script', 'script': script}))
-        self.triggerEvent.set()
 
     def run_flatfield_collection(self):
         self.q.put(
@@ -289,7 +267,6 @@ class DebugFrame(LabelFrame):
                 },
             )
         )
-        self.triggerEvent.set()
 
     def toggle_use_shelxt(self):
         enable = self.var_use_shelxt.get()

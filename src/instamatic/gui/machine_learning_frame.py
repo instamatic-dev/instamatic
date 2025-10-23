@@ -10,7 +10,7 @@ import numpy as np
 
 from instamatic.formats import read_image
 
-from .base_module import BaseModule
+from .base_module import BaseModule, HasQMixin
 from .mpl_frame import ShowMatplotlibFig
 
 
@@ -25,7 +25,7 @@ def treeview_sort_column(tv, col, reverse):
     tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
 
 
-class MachineLearningFrame(LabelFrame):
+class MachineLearningFrame(LabelFrame, HasQMixin):
     """GUI Panel to read in the results from the machine learning algorithm to
     identify good/poor crystals based on their diffraction pattern."""
 
@@ -86,10 +86,6 @@ class MachineLearningFrame(LabelFrame):
         self.fns = {}
         self.var_directory = StringVar(value=Path.cwd())
 
-    def set_trigger(self, trigger=None, q=None):
-        self.triggerEvent = trigger
-        self.q = q
-
     def load_table(self):
         fn = tkinter.filedialog.askopenfilename(
             parent=self.parent, initialdir=self.var_directory.get(), title='Select crystal data'
@@ -125,7 +121,6 @@ class MachineLearningFrame(LabelFrame):
             return
 
         self.q.put(('ctrl', {'task': 'stage.set', 'x': float(stage_x), 'y': float(stage_y)}))
-        self.triggerEvent.set()
 
     def show_image(self):
         row = self.tv.item(self.tv.focus())
