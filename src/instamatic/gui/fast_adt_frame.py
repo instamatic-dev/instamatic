@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import threading
-from queue import Queue
 from tkinter import *
 from tkinter.ttk import *
 from typing import Any, Optional
@@ -74,7 +72,6 @@ class ExperimentalFastADT(LabelFrame, HasQMixin):
         super().__init__(parent, text='Experiment with a priori tracking options')
         self.parent = parent
         self.var = ExperimentalFastADTVariables()
-        self.q: Optional[Queue] = None
         self.busy: bool = False
         self.ctrl = controller.get_instance()
 
