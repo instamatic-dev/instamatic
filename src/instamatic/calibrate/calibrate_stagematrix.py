@@ -12,7 +12,7 @@ from skimage.registration import phase_cross_correlation
 from instamatic import config
 from instamatic._typing import AnyPath, int_nm
 from instamatic.calibrate.fit import fit_affine_transformation
-from instamatic.formats import read_tiff, write_tiff
+from instamatic.formats import read_tiff
 from instamatic.io import get_new_work_subdirectory
 from instamatic.microscope.utils import StagePositionTuple
 from instamatic.utils.iterating import pairwise
@@ -147,23 +147,14 @@ def calibrate_stage_from_stageshifts(
     binning = ctrl.cam.get_binning()
 
     for i, (n_shifts, (shift_x, shift_y)) in enumerate(stage_shift_plans):
-        j = 0
-
-        current_stage_pos = ctrl.stage.get()
-        last_img, _ = ctrl.get_image()
-
-        if drc:
-            write_tiff(drc / f'{i}_{j}.tiff', last_img)
+        last_img, _ = ctrl.get_image(out=drc / f'{i}_0.tiff' if drc else None)
 
         for j in range(1, n_shifts):
-            new_x_pos = current_stage_pos.x + shift_x
-            new_y_pos = current_stage_pos.y + shift_y
+            new_x_pos = stage_starting_position.x + j * shift_x
+            new_y_pos = stage_starting_position.y + j * shift_y
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            img, _ = ctrl.get_image()
-
-            if drc:
-                write_tiff(drc / f'{i}_{j}.tiff', img)
+            img, _ = ctrl.get_image(out=drc / f'{i}_{j}.tiff' if drc else None)
 
             translations.append(cross_correlate_image_pair(last_img, img))
             stage_shifts.append((shift_x, shift_y))
