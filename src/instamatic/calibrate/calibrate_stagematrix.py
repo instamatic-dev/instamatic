@@ -42,7 +42,7 @@ def is_outlier(data: list[np.ndarray], threshold: float = 2.0) -> np.ndarray:
 
 def cross_correlate_image_pair(img0: np.ndarray, img1: np.ndarray) -> np.ndarray:
     """Cross correlate a pair of images and return translation between them."""
-    translation, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10)
+    translation, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10, normalization=None)
     print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
     return translation
 
@@ -300,7 +300,7 @@ def calibrate_stage(
 
 def calibrate_stage_all(
     ctrl,
-    modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']] = ('mag1', 'lowmag'),
+    modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']] = ('mag1', 'mag2', 'lowmag', 'samag'),
     mag_ranges: dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], int] = None,
     overlap: float = 0.8,
     stage_length: int_nm = 40_000,
@@ -536,3 +536,15 @@ The stagematrix takes the image binning into account."""
 
 if __name__ == '__main__':
     main_entry()
+
+# TODOS IN THE CODE BECAUSE I AM LAZY:
+# - normalization is a must on my machine, without it it never works
+# - modes must include all modes, otherwise it does not work
+# - more feedback on the fitting process + recursive outlier detection would be nice
+# - for my tiny detector upsample could be way tinier
+# - a hexagonal grid would work way better, currently precision is meh:
+    # Repeated 22000 in 3 different places just to check out precision
+    # 8.564163 / [8.6588, 1.1024, -1.1472, 8.3209]
+    # 8.492503 / [8.5327, 1.1842, -1.2202, 8.2811]
+    # 8.145053 / [7.8192, 0.5705, -0.529, 8.4335]
+# could add routine to estimate pixelsize / matrix from neighbours
