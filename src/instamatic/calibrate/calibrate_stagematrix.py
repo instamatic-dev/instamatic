@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,54 +10,51 @@ from scipy import stats
 from skimage.registration import phase_cross_correlation
 
 from instamatic import config
+from instamatic._typing import AnyPath, int_nm
 from instamatic.calibrate.fit import fit_affine_transformation
 from instamatic.formats import read_tiff, write_tiff
-from instamatic.image_utils import rotate_image
 from instamatic.io import get_new_work_subdirectory
+from instamatic.microscope.utils import StagePositionTuple
+from instamatic.utils.iterating import pairwise
 
 np.set_printoptions(suppress=True)
 
 data_drc = config.locations['data']
 
 
-def stagematrix_to_pixelsize(stagematrix: np.array) -> float:
+def stagematrix_to_pixelsize(stagematrix: np.ndarray) -> float:
     """Calculate approximate pixelsize from the stagematrix."""
-    return np.mean(np.linalg.norm(stagematrix, axis=1))
+    return float(np.mean(np.linalg.norm(stagematrix, axis=1)))
 
 
-def get_outlier_filter(data, threshold: float = 2.0) -> list:
+def is_outlier(data: list[np.ndarray], threshold: float = 2.0) -> np.ndarray:
     """Simple outlier filter based on zscore.
 
     `threshold` defines the cut-off value for which zscores are still
-    accepted as an inlier. Returns an boolean numpy array.
+    accepted as an inlier. Returns a numpy array of dtype bool.
     """
     zscore = stats.zscore(np.linalg.norm(data, axis=1))
-    sel = abs(zscore) < threshold
-
+    sel: np.ndarray = abs(zscore) < threshold
     if not np.all(sel):
         print(f'Filtered {len(sel) - np.sum(sel)} outliers.')
-
     return sel
 
 
-def cross_correlate_image_pairs(pairs: tuple) -> list:
-    """Cross correlate image pairs."""
-    translations = []
-    for img0, img1 in pairs:
-        translation, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10)
-        print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
-        translations.append(translation)
-    return translations
+def cross_correlate_image_pair(img0: np.ndarray, img1: np.ndarray) -> np.ndarray:
+    """Cross correlate a pair of images and return translation between them."""
+    translation, error, phasediff = phase_cross_correlation(img0, img1, upsample_factor=10)
+    print(f'shift {translation} error {error:.4f} phasediff {phasediff:.4f}')
+    return translation
 
 
-def calibrate_stage_from_file(drc: str, plot: bool = False):
+def calibrate_stage_from_file(drc: AnyPath, plot: bool = False) -> np.ndarray:
     """Calibrate the stage from the saved log/tiff files. This is essentially
     the same function as below, with the exception that it reads the `log.yaml`
     to recalculate the stage matrix.
 
     Parameters
     ----------
-    drc : str
+    drc : AnyPath
         Directory containing the `log.yaml` and tiff files.
     plot : bool
         Plot the results of the fitting.
@@ -68,59 +66,42 @@ def calibrate_stage_from_file(drc: str, plot: bool = False):
         coordinates
     """
     drc = Path(drc)
-    fn = drc / 'log.yaml'
-
-    d = yaml.full_load(open(fn))
+    with open(drc / 'log.yaml', 'r') as yaml_file:
+        d = yaml.full_load(yaml_file)
 
     binning = d['binning']
-    args = d['args']
+    stage_shift_plans = d['args']
 
-    stage_shifts = []  # um
-    pairs = []
+    stage_shifts: list[tuple[int_nm, int_nm]] = []
+    translations: list[np.ndarray] = []
 
-    for i, (n_steps, step) in enumerate(args):
-        dx, dy = step
-
-        for j in range(0, n_steps):
-            img, _ = read_tiff(drc / f'{i}_{j}.tiff')
-
-            if j > 0:
-                pairs.append((last_img, img))
-                stage_shifts.append((dx, dy))
-
-            last_img = img
-
-    translations = cross_correlate_image_pairs(pairs)
+    for i, (n_shifts, (shift_x, shift_y)) in enumerate(stage_shift_plans):
+        images = [read_tiff(drc / f'{i}_{j}.tiff') for j in range(n_shifts)]
+        for img0, img1 in pairwise(images):
+            translations.append(cross_correlate_image_pair(img0, img1))
+            stage_shifts.append((shift_x, shift_y))
 
     # Filter outliers
-    sel = get_outlier_filter(translations)
-    stage_shifts = np.array(stage_shifts)[sel]
-    translations = np.array(translations)[sel]
+    sel: np.ndarray = is_outlier(translations)
+    stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
+    translations: np.ndarray = np.array(translations)[sel]
 
     # Fit stagematrix
     fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
     r = fit_result.r
-    t = fit_result.t
 
     if plot:
-        r_i = np.linalg.inv(r)
-        translations_ = np.dot(stage_shifts, r_i)
-
-        plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
-        plt.scatter(*translations_.T, marker='>', label='Calculated pixel coordinates')
-        plt.legend()
-        plt.show()
+        plot_results(r, translations, stage_shifts)
 
     stagematrix = r / binning
-
     return stagematrix
 
 
 def calibrate_stage_from_stageshifts(
     ctrl,
-    *args,
+    *stage_shift_plans: tuple[int, tuple[int_nm, int_nm]],
     plot: bool = False,
-    drc=None,
+    drc: Optional[AnyPath] = None,
 ) -> np.array:
     """Run the calibration algorithm on the given X/Y ranges. An image will be
     taken at each position for cross correlation with the previous. An affine
@@ -133,12 +114,14 @@ def calibrate_stage_from_stageshifts(
     ----------
     ctrl: `TEMController`
         TEM control object to allow stage movement to different coordinates.
-    ranges: np.array (Nx2)
-        Each range is a List of tuples with X/Y stage shifts (i.e.
-        displacements from the current position). Multiple ranges can be
-        specified to be run in sequence.
+    stage_shift_plans: tuple[int, tuple[int, int]]
+        A list of unique shift series to apply to the stage one after another.
+        Each stage shift plan consist of a number of steps to apply (int) and
+        the stage translation to be applied with each individual step.
     plot: bool
         Plot the fitting result.
+    drc: Optional[AnyPath]
+        If present, directory where resulting `log.yaml` and tiff will be saved.
 
     Returns
     -------
@@ -148,37 +131,33 @@ def calibrate_stage_from_stageshifts(
 
     Usage
     -----
-    >>> x_shifts = [3, (10000, 0)]
-    >>> y_shifts = [3, (0, 10000)]
+    >>> x_shifts = (3, (10000, 0))
+    >>> y_shifts = (3, (0, 10000))
     >>> stagematrix = calibrate_stage_from_stageshifts(ctrl, x_shifts, y_shifts)
     """
     if drc:
         drc = Path(drc)
 
-    stage_x, stage_y = ctrl.stage.xy
-
-    stage_shifts = []  # um
+    stage_starting_position: StagePositionTuple = ctrl.stage.get()
+    stage_shifts: list[tuple[int_nm, int_nm]] = []
+    translations: list[np.ndarray] = []
 
     mag = ctrl.magnification.value
     mode = ctrl.mode.get()
     binning = ctrl.cam.get_binning()
 
-    pairs = []
-
-    for i, (n_steps, step) in enumerate(args):
+    for i, (n_shifts, (shift_x, shift_y)) in enumerate(stage_shift_plans):
         j = 0
 
-        current_stage_pos = ctrl.stage
-        dx, dy = step
-
+        current_stage_pos = ctrl.stage.get()
         last_img, _ = ctrl.get_image()
 
         if drc:
             write_tiff(drc / f'{i}_{j}.tiff', last_img)
 
-        for j in range(1, n_steps):
-            new_x_pos = current_stage_pos.x + dx
-            new_y_pos = current_stage_pos.y + dy
+        for j in range(1, n_shifts):
+            new_x_pos = current_stage_pos.x + shift_x
+            new_y_pos = current_stage_pos.y + shift_y
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
             img, _ = ctrl.get_image()
@@ -186,24 +165,19 @@ def calibrate_stage_from_stageshifts(
             if drc:
                 write_tiff(drc / f'{i}_{j}.tiff', img)
 
-            pairs.append((last_img, img))
-            stage_shifts.append((dx, dy))
+            translations.append(cross_correlate_image_pair(last_img, img))
+            stage_shifts.append((shift_x, shift_y))
 
-            current_stage_pos = ctrl.stage
-
-            print(f'{i:02d}-{j:02d}: {current_stage_pos}')
+            print(f'{i:02d}-{j:02d}: {ctrl.stage}')
 
             last_img = img
 
-        # return to original position
-        ctrl.stage.xy = (stage_x, stage_y)
-
-    translations = cross_correlate_image_pairs(pairs)
+        ctrl.stage.set(*stage_starting_position)
 
     # Filter outliers
-    sel = get_outlier_filter(translations)
-    stage_shifts = np.array(stage_shifts)[sel]
-    translations = np.array(translations)[sel]
+    sel: np.ndarray = is_outlier(translations)
+    stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
+    translations: np.ndarray = np.array(translations)[sel]
 
     # Fit stagematrix
     fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
@@ -212,12 +186,12 @@ def calibrate_stage_from_stageshifts(
 
     if drc:
         d = {
-            'n_ranges': len(args),
-            'stage_x': stage_x,
-            'stage_y': stage_y,
+            'n_ranges': len(stage_shift_plans),
+            'stage_x': stage_starting_position.x,
+            'stage_y': stage_starting_position.y,
             'mode': mode,
             'magnification': mag,
-            'args': args,
+            'args': stage_shift_plans,
             'translations': translations,
             'stage_shifts': stage_shifts,
             'r': r,
@@ -227,30 +201,32 @@ def calibrate_stage_from_stageshifts(
         yaml.dump(d, open(drc / 'log.yaml', 'w'))
 
     if plot:
-        r_i = np.linalg.inv(r)
-        translations_ = np.dot(stage_shifts, r_i)
-
-        plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
-        plt.scatter(*translations_.T, marker='>', label='Calculated pixel coordinates')
-        plt.legend()
-        plt.show()
+        plot_results(r, translations, stage_shifts)
 
     stagematrix = r / binning
-
     return stagematrix
+
+
+def plot_results(r: np.ndarray, translations: np.ndarray, stage_shifts: np.ndarray) -> None:
+    """Show the list of pixel translation from CC (<) vs calculated (>)"""
+    calculated = np.dot(stage_shifts, np.linalg.inv(r))
+    plt.scatter(*translations.T, marker='<', label='Pixel translations (CC)')
+    plt.scatter(*calculated.T, marker='>', label='Calculated pixel coordinates')
+    plt.legend()
+    plt.show()
 
 
 def calibrate_stage(
     ctrl,
-    mode: str = None,
-    mag: int = None,
+    mode: Optional[Literal['mag1', 'mag2', 'lowmag', 'samag']] = None,
+    mag: Optional[int] = None,
     overlap: float = 0.5,
-    stage_length: int = 40_000,
+    stage_length: int_nm = 40_000,
     min_n_step: int = 3,
     max_n_step: int = 15,
     plot: bool = False,
-    drc: str = None,
-) -> np.array:
+    drc: Optional[AnyPath] = None,
+) -> np.ndarray:
     """Calibrate the stage movement (nm) and the position of the camera
     (pixels) at a specific magnification.
 
@@ -258,16 +234,16 @@ def calibrate_stage(
 
     Parameters
     ----------
-    mode: str
+    mode: Optional[Literal['mag1', 'mag2', 'lowmag', 'samag']]
         Select the imaging mode (mag1/mag2/lowmag/samag).
         If the imaging mode and magnification are not given, the current
         values are used.
-    mag: int
+    mag: Optional[int]
         Select the imaging magnification.
     overlap: float
         Specify the approximate overlap between images for cross
         correlation.
-    stage_length: int
+    stage_length: int_nm
         Specify the minimum length (in stage coordinates) the calibration
         should cover.
     min_n_step: int
@@ -278,7 +254,7 @@ def calibrate_stage(
         calibration. This is used for higher magnifications.
     plot: bool
         Plot the fitting result.
-    drc: str
+    drc: Optional[AnyPath]
         Path to store the raw data (optional).
 
     Returns
@@ -316,14 +292,14 @@ def calibrate_stage(
     else:
         n_y_step = min(int(stage_length // y_step), max_n_step)
 
-    args = (
+    stage_shift_plans = (
         (n_x_step, [x_step, 0.0]),
         (n_y_step, [0.0, y_step]),
     )
 
     stagematrix = calibrate_stage_from_stageshifts(
         ctrl,
-        *args,
+        *stage_shift_plans,
         plot=plot,
         drc=drc,
     )
@@ -333,10 +309,10 @@ def calibrate_stage(
 
 def calibrate_stage_all(
     ctrl,
-    modes=('mag1', 'lowmag'),
-    mag_ranges: dict = None,
+    modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']] = ('mag1', 'lowmag'),
+    mag_ranges: dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], int] = None,
     overlap: float = 0.8,
-    stage_length: int = 40_000,
+    stage_length: int_nm = 40_000,
     min_n_step: int = 5,
     max_n_step: int = 9,
     save: bool = False,
@@ -346,14 +322,16 @@ def calibrate_stage_all(
 
     Parameters
     ----------
-    mag_ranges : dict
-        Dictionary with the mag ranges to calibrate. Format example:
+    modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']]
+        A tuple of modes to calibrate.
+    mag_ranges : dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], int]
+        Dictionary with the magnification ranges to calibrate. Format example:
         `mag_ranges = {'lowmag': (100, 200, 300), 'mag1': (1000, 2000, 3000)}`
-        If not defined, all mag ranges (`lowmag`, `mag1`) as defined above are taken.
+        If not defined, all mag ranges (`lowmag`, `mag1`) from modes are taken.
     overlap: float
         Specify the approximate overlap between images for cross
         correlation.
-    stage_length: int
+    stage_length: int_nm
         Specify the minimum length (in stage coordinates) the calibration
         should cover.
     min_n_step: int
@@ -397,6 +375,7 @@ def calibrate_stage_all(
                     mode=mode,
                     mag=mag,
                     overlap=overlap,
+                    stage_length=stage_length,
                     min_n_step=min_n_step,
                     max_n_step=max_n_step,
                     drc=drc,
@@ -405,7 +384,7 @@ def calibrate_stage_all(
                 print(e)
                 continue
 
-            cfg[mode]['pixelsize'][mag] = float(stagematrix_to_pixelsize(stagematrix))
+            cfg[mode]['pixelsize'][mag] = stagematrix_to_pixelsize(stagematrix)
             cfg[mode]['stagematrix'][mag] = stagematrix.round(4).flatten().tolist()
 
     print('\nUpdate this config file:\n  ', config.locations['calibration'])
@@ -415,7 +394,7 @@ def calibrate_stage_all(
     return cfg
 
 
-def main_entry():
+def main_entry() -> None:
     import argparse
 
     description = """Run the stagematrix calibration routine for all magnifications
