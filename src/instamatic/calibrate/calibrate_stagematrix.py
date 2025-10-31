@@ -334,7 +334,7 @@ def calibrate_stage_all(
     mag_ranges : dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], Iterable[int]]
         Dictionary with the magnification ranges to calibrate. Format example:
         `mag_ranges = {'lowmag': (100, 200, 300), 'mag1': (1000, 2000, 3000)}`
-        If not defined, all mag ranges (`lowmag`, `mag1`) from modes are taken.
+        If not defined, all mag ranges from modes are taken.
     overlap: float
         Specify the approximate overlap between images for cross
         correlation.
