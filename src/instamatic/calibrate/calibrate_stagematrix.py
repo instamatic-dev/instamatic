@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Iterable, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,6 +18,8 @@ from instamatic.microscope.utils import StagePositionTuple
 from instamatic.utils.iterating import pairwise
 
 np.set_printoptions(suppress=True)
+
+Mode = Literal['mag1', 'mag2', 'lowmag', 'samag']
 
 data_drc = config.locations['data']
 
@@ -211,7 +213,7 @@ def plot_results(r: np.ndarray, translations: np.ndarray, stage_shifts: np.ndarr
 
 def calibrate_stage(
     ctrl,
-    mode: Optional[Literal['mag1', 'mag2', 'lowmag', 'samag']] = None,
+    mode: Optional[Mode] = None,
     mag: Optional[int] = None,
     overlap: float = 0.5,
     stage_length: int_nm = 40_000,
@@ -302,13 +304,8 @@ def calibrate_stage(
 
 def calibrate_stage_all(
     ctrl,
-    modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']] = (
-        'mag1',
-        'mag2',
-        'lowmag',
-        'samag',
-    ),
-    mag_ranges: dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], int] = None,
+    modes: tuple[Mode] = ('mag1', 'mag2', 'lowmag', 'samag'),
+    mag_ranges: dict[Mode, Iterable[int]] = None,
     overlap: float = 0.8,
     stage_length: int_nm = 40_000,
     min_n_step: int = 5,
@@ -322,7 +319,7 @@ def calibrate_stage_all(
     ----------
     modes: tuple[Literal['mag1', 'mag2', 'lowmag', 'samag']]
         A tuple of modes to calibrate.
-    mag_ranges : dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], int]
+    mag_ranges : dict[Literal['mag1', 'mag2', 'lowmag', 'samag'], Iterable[int]]
         Dictionary with the magnification ranges to calibrate. Format example:
         `mag_ranges = {'lowmag': (100, 200, 300), 'mag1': (1000, 2000, 3000)}`
         If not defined, all mag ranges (`lowmag`, `mag1`) from modes are taken.
@@ -500,52 +497,40 @@ The stagematrix takes the image binning into account."""
 
     options = parser.parse_args()
 
-    mode = options.mode
-    mags = options.mags
+    mode: Optional[Mode] = options.mode
+    mags: Optional[list[int]] = options.mags
 
     from instamatic import controller
 
     ctrl = controller.initialize()
 
     if not mode:
-        mode = ctrl.mode.get()
+        mode: Mode = ctrl.mode.get()
     if not mags:
-        mags = (ctrl.magnification.get(),)
+        mags: list[int] = [
+            ctrl.magnification.get(),
+        ]
 
     kwargs = {
         'overlap': options.overlap,
         'stage_length': options.stage_length,
         'min_n_step': options.min_n_step,
         'max_n_step': options.max_n_step,
+        'save': options.save,
     }
 
-    if mode == 'all':
-        calibrate_stage_all(
-            ctrl,
-            save=options.save,
-            **kwargs,
-        )
-    elif options.all_mags:
-        calibrate_stage_all(
-            ctrl,
-            mode=mode,
-            save=options.save,
-            **kwargs,
-        )
-    else:
-        calibrate_stage_all(
-            ctrl,
-            mag_ranges={mode: mags},
-            save=options.save,
-            **kwargs,
-        )
+    if mode != 'all':
+        if options.all_mags:
+            kwargs['modes'] = (mode,)
+        else:
+            kwargs['mag_ranges'] = {mode: mags}
+    calibrate_stage_all(ctrl, **kwargs)
 
 
 if __name__ == '__main__':
     main_entry()
 
 # TODOS IN THE CODE BECAUSE I AM LAZY:
-# - modes must include all modes, otherwise it does not work
 # - more feedback on the fitting process + recursive outlier detection would be nice
 # - for my tiny detector upsample could be way tinier
 # - a hexagonal grid would work way better, currently precision is meh:
