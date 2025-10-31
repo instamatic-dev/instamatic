@@ -41,7 +41,7 @@ def stagematrix_to_pixelsize(stagematrix: np.ndarray) -> float:
     return float(np.mean(np.linalg.norm(stagematrix, axis=1)))
 
 
-def is_outlier(data: list[np.ndarray], threshold: float = 2.0) -> np.ndarray:
+def get_outlier_filter(data: list[np.ndarray], threshold: float = 2.0) -> np.ndarray:
     """Simple outlier filter based on zscore.
 
     `threshold` defines the cut-off value for which zscores are still
@@ -98,7 +98,7 @@ def calibrate_stage_from_file(drc: AnyPath, plot: bool = False) -> np.ndarray:
             stage_shifts.append((shift_x, shift_y))
 
     # Filter outliers
-    sel: np.ndarray = is_outlier(translations)
+    sel: np.ndarray = get_outlier_filter(translations)
     stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
     translations: np.ndarray = np.array(translations)[sel]
 
@@ -182,7 +182,7 @@ def calibrate_stage_from_stageshifts(
         ctrl.stage.set(*stage_starting_position)
 
     # Filter outliers
-    sel: np.ndarray = is_outlier(translations)
+    sel: np.ndarray = get_outlier_filter(translations)
     stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
     translations: np.ndarray = np.array(translations)[sel]
 
