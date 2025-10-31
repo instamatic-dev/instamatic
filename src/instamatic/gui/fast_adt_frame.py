@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import threading
 from functools import wraps
-from queue import Queue
 from tkinter import *
 from tkinter.ttk import *
 from typing import Any, Callable, Optional
@@ -91,7 +89,6 @@ class ExperimentalFastADT(LabelFrame, HasQMixin):
         super().__init__(parent, text='Experiment with a priori tracking options')
         self.parent = parent
         self.var = ExperimentalFastADTVariables(on_change=self.update_widget)
-        self.q: Optional[Queue] = None
         self.busy: bool = False
         self.ctrl = controller.get_instance()
 
@@ -241,7 +238,10 @@ class ExperimentalFastADT(LabelFrame, HasQMixin):
         self.tracking_step.config(state=tracking_state)
         self.tracking_time.config(state=tracking_state)
 
-        tracking_time, diffraction_time = self.estimate_times()
+        try:
+            tracking_time, diffraction_time = self.estimate_times()
+        except ZeroDivisionError:
+            return
         tt = '{:.0f}:{:02.0f}'.format(*divmod(tracking_time, 60))
         dt = '{:.0f}:{:02.0f}'.format(*divmod(diffraction_time, 60))
         if tracking_time:  # don't display tracking time or per-attempts if zero

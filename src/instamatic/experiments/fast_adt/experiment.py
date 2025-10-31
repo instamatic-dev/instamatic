@@ -15,6 +15,7 @@ from typing import Any, Iterator, Optional, Sequence, Union, cast
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from PIL.Image import Image
 from typing_extensions import Self
 
 from instamatic import config
@@ -392,7 +393,8 @@ class Experiment(ExperimentBase):
 
         self.ctrl.restore('FastADT_track')
         Thread(target=self.collect_run, args=(run,), daemon=True).start()
-        tracking_images = deque(maxlen=len(run))
+        tracking_frames = deque(maxlen=len(run))
+        tracking_images: list[Optional[Image]] = [None] * len(run)
         tracking_in_progress = True
         while tracking_in_progress:
             while (step := self.steps.get()) is not None:
@@ -404,15 +406,18 @@ class Experiment(ExperimentBase):
                 click_beamshift_xy = self.beamshift.pixelcoord_to_beamshift(click_beampixel_yx)
                 cols = ['beampixel_x', 'beampixel_y', 'beamshift_x', 'beamshift_y']
                 run.table.loc[step.Index, cols] = *click.xy, *click_beamshift_xy
-                tracking_images.append(step.image)
+                tracking_frames.append(step.image)
             if 'image' not in run.table:
-                run.table['image'] = tracking_images
+                run.table['image'] = tracking_frames
             self.runs.pathing.append(deepcopy(run))
 
             self.msg1('Displaying tracking. Click LEFT mouse button to start the experiment,')
             self.msg2('MIDDLE to track another point, or RIGHT to cancel the experiment.')
             for step in sawtooth(self.runs.tracking.steps):
                 with self.displayed_pathing(step=step):
+                    image = self.videostream_processor.image
+                    image.info['_annotated_runs'] = len(self.runs.pathing)
+                    tracking_images[step.Index] = image
                     with self.click_listener:
                         click = self.click_listener.get_click(timeout=0.5)
                     if click is None:
@@ -427,6 +432,16 @@ class Experiment(ExperimentBase):
                         for new_step in [*self.runs.tracking.steps, None]:
                             self.steps.put(new_step)
                     break
+
+        drc = self.path / 'tracking'
+        drc.mkdir(parents=True, exist_ok=True)
+        with self.ctrl.cam.blocked():
+            for step, image in zip(run.steps, tracking_images):
+                i = f'image{step.Index:02d}_al{step.alpha:+03.0f}.png'.replace('+', '0')
+                if image is None or image.info['_annotated_runs'] < len(self.runs.pathing):
+                    with self.displayed_pathing(step=step):
+                        image = self.videostream_processor.image
+                self.videostream_processor.vsf.save_image(image=image, path=drc / i)
 
     def collect_run(self, run: Run) -> None:
         """Collect `run.steps` and place them in `self.steps` Queue."""
