@@ -24,6 +24,18 @@ Mode = Literal['mag1', 'mag2', 'lowmag', 'samag']
 data_drc = config.locations['data']
 
 
+def get_or_roughly_estimate_pixelsize(mode: Mode, magnification: int) -> float:
+    """Get or estimate pixelsize, assuming constant mag * pixelsize in mode."""
+    pixel_sizes = config.calibration[mode]['pixelsize']
+    pixel_size = pixel_sizes.get(magnification)
+    if pixel_size is None:
+        products = [mag * pxs for mag, pxs in pixel_sizes.items()]
+        if (sum_ := sum(products)) <= 0:
+            raise KeyError(f'No legal reference pixel sizes defined for mag={magnification}')
+        pixel_size = sum_ / (len(products) * magnification)
+    return pixel_size
+
+
 def stagematrix_to_pixelsize(stagematrix: np.ndarray) -> float:
     """Calculate approximate pixelsize from the stagematrix."""
     return float(np.mean(np.linalg.norm(stagematrix, axis=1)))
@@ -269,7 +281,7 @@ def calibrate_stage(
     print(f'\nCalibrating stagematrix mode=`{mode}` mag={mag}\n')
 
     camera_shape = ctrl.cam.get_camera_dimensions()
-    pixelsize = config.calibration[mode]['pixelsize'][mag]
+    pixelsize = get_or_roughly_estimate_pixelsize(mode=mode, magnification=mag)
 
     if pixelsize == 1.0 or pixelsize == 0.0:
         raise ValueError(f'Invalid pixelsize for `{mode}` @ {mag}x -> {pixelsize}')
@@ -529,13 +541,3 @@ The stagematrix takes the image binning into account."""
 
 if __name__ == '__main__':
     main_entry()
-
-# TODOS IN THE CODE BECAUSE I AM LAZY:
-# - more feedback on the fitting process + recursive outlier detection would be nice
-# - for my tiny detector upsample could be way tinier
-# - a hexagonal grid would work way better, currently precision is meh:
-# Repeated 22000 in 3 different places just to check out precision
-# 8.564163 / [8.6588, 1.1024, -1.1472, 8.3209]
-# 8.492503 / [8.5327, 1.1842, -1.2202, 8.2811]
-# 8.145053 / [7.8192, 0.5705, -0.529, 8.4335]
-# could add routine to estimate pixelsize / matrix from neighbours
