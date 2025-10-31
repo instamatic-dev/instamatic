@@ -9,10 +9,7 @@ T = TypeVar('T')
 def pairwise(iterable: Iterable[T]) -> Iterator[T]:
     """Yield pairs of subsequent iterable elements: 'abc' -> (a, b), (b, c)"""
     iterator = iter(iterable)
-    try:
-        left = next(iterator)
-    except StopIteration:
-        return  # empty iterable
+    left = next(iterator, None)
     for right in iterator:
         yield left, right
         left = right
