@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from textwrap import dedent
@@ -14,10 +13,10 @@ import numpy as np
 import yaml
 from scipy.optimize import curve_fit
 from tqdm import tqdm
-from typing_extensions import Self
 
 from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION
 from instamatic.config import calibration_drc
+from instamatic.utils.domains import NumericDomain, NumericDomainConstrained
 
 logger = logging.getLogger(__name__)
 
@@ -27,46 +26,8 @@ def log(s: str) -> None:
     print(s)
 
 
-@dataclass
-class FloatOptions(ABC):
-    """Store valid float options & help finding the nearest available one."""
-
-    def __new__(cls, *args, **kwargs) -> Self:
-        """Init subclass based on kwargs, as needed to save/load calib@yaml."""
-        if cls is not FloatOptions:
-            return super().__new__(cls)  # avoids circular __new__
-        if 'lower_lim' in kwargs and 'upper_lim' in kwargs:
-            return FloatOptionsLimited(**kwargs)
-        elif 'options' in kwargs:
-            return FloatOptionsListed(**kwargs)
-        else:
-            raise ValueError("Can't determine child class based on kwargs.")
-
-    @abstractmethod
-    def nearest(self, to: float) -> float:
-        """Find and return the nearest available float option."""
-
-
-@dataclass
-class FloatOptionsLimited(FloatOptions):
-    lower_lim: float
-    upper_lim: float
-
-    def nearest(self, to: float) -> float:
-        return float(np.clip(to, self.lower_lim, self.upper_lim))
-
-
-@dataclass
-class FloatOptionsListed(FloatOptions):
-    options: list[float]
-
-    def nearest(self, to: float) -> float:
-        options = np.array(self.options)
-        return float(options[(np.abs(options - to)).argmin()])
-
-
-FEI_ROTATION_SPEED_OPTIONS = FloatOptionsLimited(lower_lim=0.0, upper_lim=1.0)
-JEOL_ROTATION_SPEED_OPTIONS = FloatOptionsListed(options=list(range(1, 13)))
+FEI_ROTATION_SPEED_OPTIONS = NumericDomain(lower_lim=0.0, upper_lim=1.0)
+JEOL_ROTATION_SPEED_OPTIONS = NumericDomain(options=range(1, 13))
 
 
 @dataclass
@@ -94,7 +55,7 @@ class CalibStageRotation:
     - alpha_windup: constant time for stage speed up or slow down in seconds;
     - delay: small constant time needed for stage communication in seconds;
 
-    The calibration also accepts `FloatOptions`-type `speed_options` to account
+    The calibration also accepts `NumericDomain`-type `speed_options` to account
     for the fact that different goniometers accept different speed settings.
     If given, `CalibStageRotation.speed_options.nearest(requested)` can be used
     to find the speed setting nearest to the one requested.
@@ -103,14 +64,14 @@ class CalibStageRotation:
     alpha_pace: float
     alpha_windup: float
     delay: float
-    speed_options: Optional[FloatOptions] = (None,)
+    speed_options: Optional[NumericDomain] = (None,)
 
     def __post_init__(self) -> None:
         self.alpha_pace = float(self.alpha_pace)
         self.alpha_windup = float(self.alpha_windup)
         self.delay = float(self.delay)
         if isinstance(self.speed_options, dict):
-            self.speed_options = FloatOptions(**self.speed_options)
+            self.speed_options = NumericDomain(**self.speed_options)
 
     @staticmethod
     def curve_fit_model(
@@ -170,10 +131,10 @@ class CalibStageRotation:
         """Plot calib and measurement results (simulated or experimental)."""
         if sst is None:
             spans = np.linspace(0.1, 1.0, 10, endpoint=True)
-            if isinstance(self.speed_options, FloatOptionsLimited):
-                so: FloatOptionsLimited = self.speed_options
+            if isinstance(self.speed_options, NumericDomainConstrained):
+                so: NumericDomainConstrained = self.speed_options
                 speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
-            else:  # isinstance(calib.speed_options, FloatOptionsListed):
+            else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
                 speeds = self.speed_options.options  # noqa - has options
             speeds = [s for s in speeds if s != 0]
             sst = []
@@ -267,9 +228,9 @@ def calibrate_stage_rotation_live(
         speed_options = JEOL_ROTATION_SPEED_OPTIONS
     speed_range = speed_range or speed_range_default
     if calib_mode == 'limited':
-        speed_options = FloatOptionsLimited(min(speed_range), max(speed_range))
+        speed_options = NumericDomain(lower_lim=min(speed_range), upper_lim=max(speed_range))
     elif calib_mode == 'listed':
-        speed_options = FloatOptionsListed(sorted(speed_range))
+        speed_options = NumericDomain(options=sorted(speed_range))
 
     calib_points: list[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
