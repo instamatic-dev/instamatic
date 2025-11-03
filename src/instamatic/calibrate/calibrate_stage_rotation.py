@@ -6,14 +6,16 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from textwrap import dedent
 from time import perf_counter
-from typing import Literal, NamedTuple, Optional, Sequence, Tuple
+from typing import Literal, NamedTuple, Optional, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from scipy.optimize import curve_fit
 from tqdm import tqdm
+from typing_extensions import Self
 
+from instamatic._typing import AnyPath
 from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION
 from instamatic.config import calibration_drc
 from instamatic.utils.domains import NumericDomain, NumericDomainConstrained
@@ -64,7 +66,7 @@ class CalibStageRotation:
     alpha_pace: float
     alpha_windup: float
     delay: float
-    speed_options: Optional[NumericDomain] = (None,)
+    speed_options: Optional[NumericDomain] = None
 
     def __post_init__(self) -> None:
         self.alpha_pace = float(self.alpha_pace)
@@ -75,7 +77,7 @@ class CalibStageRotation:
 
     @staticmethod
     def curve_fit_model(
-        span_speed: Tuple[float, float],
+        span_speed: tuple[float, float],
         alpha_pace: float,
         alpha_windup: float,
         delay: float,
@@ -105,7 +107,7 @@ class CalibStageRotation:
         return RotationPlan(nearest_pace, nearest_speed, total_delay)
 
     @classmethod
-    def from_file(cls, path: Optional[str] = None) -> CalibStageRotation:
+    def from_file(cls, path: Optional[AnyPath] = None) -> Self:
         if path is None:
             path = Path(calibration_drc) / CALIB_STAGE_ROTATION
         try:
@@ -116,7 +118,7 @@ class CalibStageRotation:
             raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
 
     @classmethod
-    def live(cls, ctrl: 'TEMController', **kwargs) -> CalibStageRotation:
+    def live(cls, ctrl: 'TEMController', **kwargs) -> Self:
         return calibrate_stage_rotation_live(ctrl=ctrl, **kwargs)
 
     def to_file(self, outdir: Optional[str] = None) -> None:
