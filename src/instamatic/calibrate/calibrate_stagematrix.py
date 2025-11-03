@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Literal, Optional
+from typing import Any, Iterable, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,6 +26,7 @@ data_drc = config.locations['data']
 
 def get_or_roughly_estimate_pixelsize(mode: Mode, magnification: int) -> float:
     """Get or estimate pixelsize, assuming constant mag * pixelsize in mode."""
+    assert config.calibration is not None
     pixel_sizes = config.calibration[mode]['pixelsize']
     pixel_size = pixel_sizes.get(magnification)
     if pixel_size is None:
@@ -88,19 +89,19 @@ def calibrate_stage_from_file(drc: AnyPath, plot: bool = False) -> np.ndarray:
     binning = d['binning']
     stage_shift_plans = d['args']
 
-    stage_shifts: list[tuple[int_nm, int_nm]] = []
-    translations: list[np.ndarray] = []
+    stage_shift_list: list[tuple[int_nm, int_nm]] = []
+    translation_list: list[np.ndarray] = []
 
     for i, (n_shifts, (shift_x, shift_y)) in enumerate(stage_shift_plans):
-        images = [read_tiff(drc / f'{i}_{j}.tiff') for j in range(n_shifts)]
+        images = [read_tiff(str(drc / f'{i}_{j}.tiff')) for j in range(n_shifts)]
         for img0, img1 in pairwise(images):
-            translations.append(cross_correlate_image_pair(img0, img1))
-            stage_shifts.append((shift_x, shift_y))
+            stage_shift_list.append((shift_x, shift_y))
+            translation_list.append(cross_correlate_image_pair(img0, img1))
 
     # Filter outliers
-    sel: np.ndarray = get_outlier_filter(translations)
-    stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
-    translations: np.ndarray = np.array(translations)[sel]
+    sel: np.ndarray = get_outlier_filter(translation_list)
+    stage_shifts: np.ndarray = np.array(stage_shift_list)[sel]
+    translations: np.ndarray = np.array(translation_list)[sel]
 
     # Fit stagematrix
     fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
@@ -118,7 +119,7 @@ def calibrate_stage_from_stageshifts(
     *stage_shift_plans: tuple[int, tuple[int_nm, int_nm]],
     plot: bool = False,
     drc: Optional[AnyPath] = None,
-) -> np.array:
+) -> np.ndarray:
     """Run the calibration algorithm on the given X/Y ranges. An image will be
     taken at each position for cross correlation with the previous. An affine
     transformation matrix defines the relation between the pixel shift and the
@@ -151,29 +152,29 @@ def calibrate_stage_from_stageshifts(
     >>> y_shifts = (3, (0, 10000))
     >>> stagematrix = calibrate_stage_from_stageshifts(ctrl, x_shifts, y_shifts)
     """
-    if drc:
+    if drc is not None:
         drc = Path(drc)
 
     stage_starting_position: StagePositionTuple = ctrl.stage.get()
-    stage_shifts: list[tuple[int_nm, int_nm]] = []
-    translations: list[np.ndarray] = []
+    stage_shift_list: list[tuple[int_nm, int_nm]] = []
+    translation_list: list[np.ndarray] = []
 
     mag = ctrl.magnification.value
     mode = ctrl.mode.get()
     binning = ctrl.cam.get_binning()
 
     for i, (n_shifts, (shift_x, shift_y)) in enumerate(stage_shift_plans):
-        last_img, _ = ctrl.get_image(out=drc / f'{i}_0.tiff' if drc else None)
+        last_img, _ = ctrl.get_image(out=None if drc is None else drc / f'{i}_0.tiff')
 
         for j in range(1, n_shifts):
             new_x_pos = stage_starting_position.x + j * shift_x
             new_y_pos = stage_starting_position.y + j * shift_y
             ctrl.stage.set_xy_with_backlash_correction(x=new_x_pos, y=new_y_pos)
 
-            img, _ = ctrl.get_image(out=drc / f'{i}_{j}.tiff' if drc else None)
+            img, _ = ctrl.get_image(out=None if drc is None else drc / f'{i}_{j}.tiff')
 
-            translations.append(cross_correlate_image_pair(last_img, img))
-            stage_shifts.append((shift_x, shift_y))
+            translation_list.append(cross_correlate_image_pair(last_img, img))
+            stage_shift_list.append((shift_x, shift_y))
 
             print(f'{i:02d}-{j:02d}: {ctrl.stage}')
 
@@ -182,9 +183,9 @@ def calibrate_stage_from_stageshifts(
         ctrl.stage.set(*stage_starting_position)
 
     # Filter outliers
-    sel: np.ndarray = get_outlier_filter(translations)
-    stage_shifts: np.ndarray = np.array(stage_shifts)[sel]
-    translations: np.ndarray = np.array(translations)[sel]
+    sel: np.ndarray = get_outlier_filter(translation_list)
+    stage_shifts: np.ndarray = np.array(stage_shift_list)[sel]
+    translations: np.ndarray = np.array(translation_list)[sel]
 
     # Fit stagematrix
     fit_result = fit_affine_transformation(translations, stage_shifts, verbose=True)
@@ -300,8 +301,8 @@ def calibrate_stage(
         n_y_step = min(int(stage_length // y_step), max_n_step)
 
     stage_shift_plans = (
-        (n_x_step, [x_step, 0.0]),
-        (n_y_step, [0.0, y_step]),
+        (n_x_step, (x_step, 0)),
+        (n_y_step, (0, y_step)),
     )
 
     stagematrix = calibrate_stage_from_stageshifts(
@@ -316,8 +317,8 @@ def calibrate_stage(
 
 def calibrate_stage_all(
     ctrl,
-    modes: tuple[Mode] = ('mag1', 'mag2', 'lowmag', 'samag'),
-    mag_ranges: dict[Mode, Iterable[int]] = None,
+    modes: tuple[Mode, ...] = ('mag1', 'mag2', 'lowmag', 'samag'),
+    mag_ranges: Optional[dict[Mode, Iterable[int]]] = None,
     overlap: float = 0.8,
     stage_length: int_nm = 40_000,
     min_n_step: int = 5,
@@ -357,10 +358,10 @@ def calibrate_stage_all(
         calibrated values.
     """
 
-    if not mag_ranges:
+    if mag_ranges is None:
         mag_ranges = config.microscope.ranges
 
-    cfg = {mode: {} for mode in modes if mode in mag_ranges}
+    cfg: dict[Mode, dict[str, Any]] = {mode: {} for mode in modes if mode in mag_ranges}
 
     for mode in modes:
         if mode not in mag_ranges:
