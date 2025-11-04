@@ -40,9 +40,9 @@ class CalibStageRotation(CalibStageMotion):
 
 def calibrate_stage_rotation_live(
     ctrl: 'TEMController',
-    alpha_spans: Optional[Sequence[float]] = None,
-    speed_range: Optional[Sequence[float]] = None,
-    calib_mode: Literal['auto', 'limited', 'listed'] = 'auto',
+    spans: Optional[Sequence[float]] = None,
+    speeds: Optional[Sequence[float]] = None,
+    mode: Literal['auto', 'limited', 'listed'] = 'auto',
     outdir: Optional[str] = None,
     plot: Optional[bool] = None,
 ) -> CalibStageRotation:
@@ -66,11 +66,11 @@ def calibrate_stage_rotation_live(
 
     ctrl: instance of `TEMController`
         contains tem + cam interface
-    alpha_spans: `Optional[Sequence[float]]`
+    spans: `Optional[Sequence[float]]`
         Alpha rotations whose speed will be measured. Default: range(1, 11, 1).
-    speed_range: `Optional[Sequence[Union[float, int]]]`
+    speeds: `Optional[Sequence[Union[float, int]]]`
         Spead range to measure. Default: range(1, 13, 1) or range(.1, 1.1, .1).
-    calib_mode: `Literal['auto', 'limited', 'listed']`
+    mode: `Literal['auto', 'limited', 'listed']`
         Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
@@ -79,38 +79,38 @@ def calibrate_stage_rotation_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    alpha_spans = np.array(alpha_spans or [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    alternating_ones = np.ones(len(alpha_spans)) * (-1) ** np.arange(len(alpha_spans))
-    alpha_targets = np.cumsum(alpha_spans * alternating_ones)
+    spans = np.array(spans or [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    alternating_ones = np.ones(len(spans)) * (-1) ** np.arange(len(spans))
+    alpha_targets = np.cumsum(spans * alternating_ones)
 
     try:
         ctrl.stage.set_rotation_speed(12)
         assert ctrl.stage.get_rotation_speed() == 12
     except AssertionError:  # or any other raised if speed can't be set
-        speed_range_default = np.linspace(0.01, 0.2, num=20)
+        speeds_default = np.linspace(0.01, 0.2, num=20)
         speed_options = FEI_ROTATION_SPEED_OPTIONS
     else:
-        speed_range_default = np.arange(1, 13, step=1)
+        speeds_default = np.arange(1, 13, step=1)
         speed_options = JEOL_ROTATION_SPEED_OPTIONS
 
-    speed_range = speed_range or speed_range_default
-    if calib_mode == 'limited':
-        speed_options = NumericDomain(lower_lim=min(speed_range), upper_lim=max(speed_range))
-    elif calib_mode == 'listed':
-        speed_options = NumericDomain(options=sorted(speed_range))
+    speeds = speeds or speeds_default
+    if mode == 'limited':
+        speed_options = NumericDomain(lower_lim=min(speeds), upper_lim=max(speeds))
+    elif mode == 'listed':
+        speed_options = NumericDomain(options=sorted(speeds))
 
     calib_points: list[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
     starting_stage_speed = ctrl.stage.get_rotation_speed()
     ctrl.cam.block()
     try:
-        n_calib_points = len(speed_range) * len(alpha_spans)
+        n_calib_points = len(speeds) * len(spans)
         log(f'Starting rotation speed calibration based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
-            for speed in speed_range:
+            for speed in speeds:
                 with ctrl.stage.rotation_speed(speed=float(speed)):
                     ctrl.stage.a = 0.0
-                    for target, span in zip(alpha_targets, alpha_spans):
+                    for target, span in zip(alpha_targets, spans):
                         t1 = perf_counter()
                         ctrl.stage.a = float(target)
                         t2 = perf_counter()
@@ -167,11 +167,11 @@ def main_entry() -> None:
 
     from instamatic import controller
 
-    kwargs = {'calib_mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
+    kwargs = {'mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
     if options.alphas:
-        kwargs['alpha_spans'] = [float(a) for a in options.alphas.split(',')]
+        kwargs['spans'] = [float(a) for a in options.spans.split(',')]
     if options.speeds:
-        kwargs['speed_range'] = [float(s) for s in options.speeds.split(',')]
+        kwargs['speeds'] = [float(s) for s in options.speeds.split(',')]
 
     ctrl = controller.initialize()
     calibrate_stage_rotation_live(ctrl=ctrl, **kwargs)

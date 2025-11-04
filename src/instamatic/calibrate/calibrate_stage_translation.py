@@ -27,7 +27,7 @@ def log(s: str) -> None:
 
 @dataclass
 class CalibStageTranslation(CalibStageMotion):
-    _program_name: ClassVar[str] = 'instamatic.calibrate_stage_rotation'
+    _program_name: ClassVar[str] = 'instamatic.calibrate_stage_translation'
     _span_typical_limits: ClassVar[tuple[float, float]] = (10_000, 100_000)
     _span_units: ClassVar[str] = 'nm'
     _yaml_filename: ClassVar[str] = CALIB_STAGE_TRANSLATION
@@ -61,7 +61,7 @@ def calibrate_stage_translation_live(
         Translations that will be timed. Default: 10_000 to 100_000 every 10_000
     speeds: `Optional[Sequence[Union[float, int]]]`
         All speed settings used for calibration. Default: 0.1 to 1.0 every 0.1.
-    calib_mode: `Literal['auto', 'limited', 'listed']`
+    mode: `Literal['auto', 'limited', 'listed']`
         Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
@@ -80,13 +80,15 @@ def calibrate_stage_translation_live(
         ctrl.stage.set_with_speed(*stage0)
     except KeyError:
         log('TEM does not support setting with speed, assuming default = 1.')
-        speeds = [None, None, None]  # TEM does not support translation w/ speed
+        speeds_default = [None, None, None]  # TEM does not support translation w/ speed
         speed_options = None
     else:
-        speeds = speeds or [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        speeds_default = speeds or [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         speed_options = NumericDomain(lower_lim=0.0, upper_lim=1.0)
     finally:
         ctrl.stage.set(*stage0)
+
+    speeds = speeds or speeds_default
     if mode == 'limited':
         speed_options = NumericDomain(lower_lim=min(speeds), upper_lim=max(speeds))
     elif mode == 'listed':
@@ -96,7 +98,7 @@ def calibrate_stage_translation_live(
     ctrl.cam.block()
     try:
         n_calib_points = len(speeds) * len(span_delta)
-        log(f'Starting translation (speed) calibration based on {n_calib_points} points.')
+        log(f'Starting translation speed calibration based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
             for speed in speeds:
                 setter = ctrl.stage.set if speed is None else ctrl.stage.set_with_speed
@@ -134,8 +136,8 @@ def main_entry() -> None:
         description=main_entry.__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    h = 'Comma-delimited list of x/y spans to calibrate (in microns). '
-    h += 'Default: "10,20,30,40,50,60,70,80,90,100".'
+    h = 'Comma-delimited list of x/y spans to calibrate (in nanometers). '
+    h += 'Default: "10000,20000,30000,40000,50000,60000,70000,80000,90000,100000".'
     parser.add_argument('-a', '--spans', type=str, help=h)
 
     h = 'Comma-delimited list of speed settings to calibrate for.'
@@ -159,9 +161,9 @@ def main_entry() -> None:
 
     from instamatic import controller
 
-    kwargs = {'calib_mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
+    kwargs = {'mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
     if options.spans:
-        kwargs['spans'] = [int(a * 1000) for a in options.spans.split(',')]
+        kwargs['spans'] = [int(a) for a in options.spans.split(',')]
     if options.speeds:
         kwargs['speeds'] = [float(s) for s in options.speeds.split(',')]
 
