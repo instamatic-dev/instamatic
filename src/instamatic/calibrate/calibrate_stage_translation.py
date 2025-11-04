@@ -3,25 +3,19 @@ from __future__ import annotations
 import argparse
 import logging
 from dataclasses import dataclass
-from pathlib import Path
+from itertools import cycle
+from textwrap import dedent
 from time import perf_counter
-from typing import NamedTuple, Optional, Sequence
+from typing import ClassVar, Literal, Optional, Self, Sequence
 
 import numpy as np
-import yaml
-from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit
-from skimage.registration import phase_cross_correlation
 from tqdm import tqdm
-from typing_extensions import Self
 
-from instamatic._typing import AnyPath, int_nm
-from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION, CALIB_STAGE_TRANSLATION
-from instamatic.config import calibration_drc
-from instamatic.image_utils import autoscale, imgscale
+from instamatic._typing import AnyPath
+from instamatic.calibrate.calibrate_stage_motion import CalibStageMotion, SpanSpeedTime
+from instamatic.calibrate.filenames import CALIB_STAGE_TRANSLATION
 from instamatic.microscope.utils import StagePositionTuple
-from instamatic.utils.domains import NumericDomain, NumericDomainConstrained
-from instamatic.utils.iterating import sawtooth
+from instamatic.utils.domains import NumericDomain
 
 logger = logging.getLogger(__name__)
 
@@ -31,172 +25,88 @@ def log(s: str) -> None:
     print(s)
 
 
-TRANSLATION_SPEED_OPTIONS = NumericDomain(lower_lim=0.0, upper_lim=1.0)
-
-
 @dataclass
-class TranslationPlan:
-    """A set of translation parameters that are the nearest to ones
-    requested."""
-
-    pace: float  # time it takes goniometer to cover 1 distance unit (nm/deg)
-    speed: float  # speed setting that needs to be set to get desired pace
-    total_delay: float  # total goniometer delay: delay + windup / speed
-
-
-@dataclass
-class CalibStageTranslation:
-    pace: float
-    windup: float
-    delay: float
-    speed_options: Optional[NumericDomain] = None
-
-    def __post_init__(self) -> None:
-        self.pace = float(self.pace)
-        self.windup = float(self.windup)
-        self.delay = float(self.delay)
-        if isinstance(self.speed_options, dict):
-            self.speed_options = NumericDomain(**self.speed_options)
-
-    @staticmethod
-    def curve_fit_model(
-        span_speed: tuple[float, float],
-        pace: float,
-        windup: float,
-        delay: float,
-    ) -> float:
-        """Model equation for estimating total translation time for scipy."""
-        span, speed = span_speed
-        return (pace * span + windup) / speed + delay
-
-    def span_speed_to_time(self, span: float, speed: float) -> float:
-        """`time` needed to translate stage by `span` with `speed`."""
-        return (self.pace * span + self.windup) / speed + self.delay
-
-    def span_time_to_speed(self, span: float, time: float) -> float:
-        """`speed` that allows to translate stage by `span` with `speed`."""
-        return (self.pace * span + self.windup) / (time - self.delay)
-
-    def speed_time_to_span(self, speed: float, time: float) -> float:
-        """Maximum `span` covered with `speed` in `time` (including delay)."""
-        return (speed * (time - self.delay) - self.windup) / self.pace
-
-    def plan_translation(self, target_pace: float) -> TranslationPlan:
-        """Given target pace in sec / nm, find nearest pace, speed, delay."""
-        target_speed = abs(self.pace / target_pace)  # exact speed setting needed
-        nearest_speed = self.speed_options.nearest(target_speed)  # nearest setting
-        nearest_pace = self.pace / nearest_speed  # nearest in sec/deg
-        total_delay = self.windup / nearest_speed + self.delay
-        return TranslationPlan(nearest_pace, nearest_speed, total_delay)
-
-    @classmethod
-    def from_file(cls, path: Optional[AnyPath] = None) -> Self:
-        if path is None:
-            path = Path(calibration_drc) / CALIB_STAGE_TRANSLATION
-        try:
-            with open(Path(path), 'r') as yaml_file:
-                return cls(**yaml.safe_load(yaml_file))
-        except OSError as e:
-            prog = 'instamatic.calibrate_stage_translation'
-            raise OSError(f'{e.strerror}: {path}. Please run {prog} first.')
+class CalibStageTranslation(CalibStageMotion):
+    _program_name: ClassVar[str] = 'instamatic.calibrate_stage_rotation'
+    _span_typical_limits: ClassVar[tuple[float, float]] = (10_000, 100_000)
+    _span_units: ClassVar[str] = 'nm'
+    _yaml_filename: ClassVar[str] = CALIB_STAGE_TRANSLATION
 
     @classmethod
     def live(cls, ctrl: 'TEMController', **kwargs) -> Self:
         return calibrate_stage_translation_live(ctrl=ctrl, **kwargs)
 
-    def to_file(self, outdir: Optional[str] = None) -> None:
-        if outdir is None:
-            outdir = calibration_drc
-        yaml_path = Path(outdir) / CALIB_STAGE_TRANSLATION
-        with open(yaml_path, 'w') as yaml_file:
-            yaml.safe_dump(asdict(self), yaml_file)  # type: ignore[arg-type]
-        log(f'{self} saved to {yaml_path}.')
-
-    def plot(self, sst: Optional[list[SpanSpeedTime]] = None) -> None:
-        """Plot calib and measurement results (simulated or experimental)."""
-        if sst is None:
-            spans = np.linspace(1e4, 1e5, 10, endpoint=True)
-            if isinstance(self.speed_options, NumericDomainConstrained):
-                so: NumericDomainConstrained = self.speed_options
-                speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
-            else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
-                speeds = self.speed_options.options  # noqa - has options
-            speeds = [s for s in speeds if s != 0]
-            sst = []
-            for span in spans:
-                for speed in speeds:
-                    time = self.span_speed_to_time(span, speed)
-                    sst.append(SpanSpeedTime(span, speed, time))
-        else:
-            sst = sorted(sst)
-
-        fig, ax = plt.subplots()
-        ax.axvline(x=0, color='k')
-        ax.axhline(y=0, color='k')
-        ax.axhline(y=self.delay, color='r')
-
-        speeds = list(dict.fromkeys(s.speed for s in sst).keys())
-        colors = plt.colormaps['viridis'](np.linspace(0, 1, num=len(speeds)))
-        for color, speed in zip(colors, speeds):
-            spans = [s.span for s in sst if s.speed == speed]
-            times = [s.time for s in sst if s.speed == speed]
-            ax.plot(spans, times, color=color, label=f'Speed setting {speed:.2f}')
-
-        ax.set_xlabel('XY span [degrees]')
-        ax.set_ylabel('Time required [s]')
-        ax.set_title('Stage translation time vs. motion span at different speeds')
-        ax.legend()
-        plt.show()
-
-
-class SpanSpeedTime(NamedTuple):
-    """Holds a single measurement point used to calibrate translation speed."""
-
-    span: float  # xy span traveled by the goniometer expressed in nm
-    speed: float  # nearest available speed setting expressed in arbitrary units
-    time: float  # time taken to travel span with speed expressed in seconds
-
 
 def calibrate_stage_translation_live(
     ctrl: 'TEMController',
-    xy_spans: Optional[Sequence[float]] = None,
-    speed_range: Optional[Sequence[float]] = None,
+    spans: Optional[Sequence[float]] = None,
+    speeds: Optional[Sequence[float]] = None,
+    mode: Literal['auto', 'limited', 'listed'] = 'auto',
     outdir: Optional[AnyPath] = None,
     plot: Optional[bool] = None,
-) -> CalibStageTranslation:
-    xy_spans = np.array(xy_spans or [10, 20, 30, 40, 50, 60, 70, 80])  # px
-    alternating_ones = np.ones(len(xy_spans)) * (-1) ** np.arange(len(xy_spans))
-    delta_dir = sawtooth(['x', 'y', 'x', 'y'])
-    delta_span = np.repeat(xy_spans * alternating_ones, 2)
+) -> CalibStageMotion:
+    """Calibrate stage translation speed live on the microscope.
+
+    By default, this function will try testing for rotation speeds of
+    [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] i.e. FEI settings.
+    However, it is worth noting that a microscope might technically support
+    every speed setting above while in practice introduce linear changed
+    only in its limited range, e.g. up to 0.25, as noted on a FEI Tecnai.
+    It is advised to look for irregularities during calibration and limit
+    the calibration only to the range of speeds that will be used in practice.
+
+    ctrl: instance of `TEMController`
+        contains tem + cam interface
+    spans: `Optional[Sequence[float]]`
+        Translations that will be timed. Default: 10_000 to 100_000 every 10_000
+    speeds: `Optional[Sequence[Union[float, int]]]`
+        All speed settings used for calibration. Default: 0.1 to 1.0 every 0.1.
+    calib_mode: `Literal['auto', 'limited', 'listed']`
+        Determines the way speed settings restrictions are set in calib file.
+    outdir: `str` or None
+        Directory where the final calibration file will be saved.
+
+    return:
+        instance of `CalibStageTranslation` class with conversion methods
+    """
+
+    spans = np.array(spans or [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5])
+    alternating_ones = np.ones(len(spans)) * (-1) ** np.arange(len(spans))
+    span_direction = cycle(['x', 'y'])
+    span_delta = np.repeat(spans * alternating_ones, 2)
 
     stage0: StagePositionTuple = ctrl.stage.get()
     try:
         ctrl.stage.set_with_speed(*stage0)
-    except KeyError:  # if stage cannot move with speed, investigate shifts only
-        speed_range = [0]
+    except KeyError:
+        log('TEM does not support setting with speed, assuming default = 1.')
+        speeds = [None, None, None]  # TEM does not support translation w/ speed
+        speed_options = None
     else:
-        speed_range = speed_range or [0.1, 0.2, 0.3]
+        speeds = speeds or [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        speed_options = NumericDomain(lower_lim=0.0, upper_lim=1.0)
     finally:
-        ctrl.stage.set(stage0.x, stage0.y, stage0.z, 0, 0)
-    stage0 = ctrl.stage.get()
-    image0, h0 = ctrl.get_image(header_keys=None)
-    image0s, scale = autoscale(image0)
+        ctrl.stage.set(*stage0)
+    if mode == 'limited':
+        speed_options = NumericDomain(lower_lim=min(speeds), upper_lim=max(speeds))
+    elif mode == 'listed':
+        speed_options = NumericDomain(options=sorted(speeds))
 
     calib_points: list[SpanSpeedTime] = []
     ctrl.cam.block()
     try:
-        n_calib_points = len(speed_range) * len(delta_span)
+        n_calib_points = len(speeds) * len(span_delta)
         log(f'Starting translation (speed) calibration based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
-            for speed in speed_range:
-                setter = ctrl.stage.set_with_speed if speed > 0 else ctrl.stage.set
-                setter_kw = {'speed': speed} if speed > 0 else {}
+            for speed in speeds:
+                setter = ctrl.stage.set if speed is None else ctrl.stage.set_with_speed
+                speed_keyword = {} if speed is None else {'speed': speed}
 
                 ctrl.stage.set(*stage0)
-                for d, s in zip(delta_dir, delta_span):
+                for d, s in zip(span_direction, span_delta):
                     stage1 = ctrl.stage.get()
                     t1 = perf_counter()
-                    setter(**{**{d: getattr(stage1, d) + s}, **setter_kw})
+                    setter(**({d: getattr(stage1, d) + s} | speed_keyword))
                     t2 = perf_counter()
                     calib_points.append(SpanSpeedTime(span=s, speed=speed, time=t2 - t1))
                     progress_bar.update(1)
@@ -204,34 +114,59 @@ def calibrate_stage_translation_live(
         ctrl.stage.set(*stage0)
         ctrl.cam.unblock()
 
-    calib_points_array = np.array(calib_points).T
-    all_spans_speeds = calib_points_array[:2]
-    all_times = calib_points_array[2]
-    f = CalibStageTranslation.curve_fit_model
-    p = curve_fit(f, all_spans_speeds, ydata=all_times, p0=[1, 0, 0])
-    (pace, windup, delay), p_cov = p  # noqa - this unpacking is OK
-    pace_u, windup_u, delay_u = np.sqrt(np.diag(p_cov))
-
-    log('Stage rotation speed calibration fit complete:')
-    log(f'pace   = {pace:12.6f} +/- {pace_u:12.6f} s / deg')
-    log(f'windup = {windup:12.6f} +/- {windup_u:12.6f} s')
-    log(f'delay  = {delay:12.6f} +/- {delay_u:12.6f} s')
-    log('model time   = (pace * span + windup) / speed + delay')
-
-    c = CalibStageTranslation(*p[0], speed_options=speed_options)
+    c = CalibStageMotion.from_data(calib_points)
+    c.speed_options = speed_options
     c.to_file(outdir)
     if plot:
         log('Attempting to plot calibration results.')
         c.plot(calib_points)
-
     return c
 
 
-def main_entry():  # TODO
+def main_entry() -> None:
+    """Calibrate goniometer stage translation speed against speed setting.
+
+    For a quick test or a debug run for the simulated TEM, run
+    `instamatic.calibrate_stage_translation -a "10,20,30" -s "8,10,12"`.
+    """
+
+    parser = argparse.ArgumentParser(
+        description=main_entry.__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    h = 'Comma-delimited list of x/y spans to calibrate (in microns). '
+    h += 'Default: "10,20,30,40,50,60,70,80,90,100".'
+    parser.add_argument('-a', '--spans', type=str, help=h)
+
+    h = 'Comma-delimited list of speed settings to calibrate for.'
+    h += 'Default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0".'
+    parser.add_argument('-s', '--speeds', type=str, help=h)
+
+    h = """Calibration mode to be used:
+    "auto" - auto-determine upper and lower speed limits based on TEM response;
+    "limited" - restrict TEM goniometer speed limits between min and max of --speeds;
+    "listed" - restrict TEM goniometer speed settings exactly to --speeds provided."""
+    parser.add_argument('-m', '--mode', type=str, default='auto', help=dedent(h.strip()))
+
+    h = 'Path to the directory where calibration file should be output. '
+    h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
+    parser.add_argument('-o', '--outdir', type=str, help=h)
+
+    h = 'After calibration, attempt to `--plot` / `--no-plot` its results.'
+    parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
+
+    options = parser.parse_args()
+
     from instamatic import controller
 
+    kwargs = {'calib_mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
+    if options.spans:
+        kwargs['spans'] = [int(a * 1000) for a in options.spans.split(',')]
+    if options.speeds:
+        kwargs['speeds'] = [float(s) for s in options.speeds.split(',')]
+
     ctrl = controller.initialize()
-    calibrate_stage_translation_live(ctrl=ctrl)
+    calibrate_stage_translation_live(ctrl=ctrl, **kwargs)
 
 
 if __name__ == '__main__':
