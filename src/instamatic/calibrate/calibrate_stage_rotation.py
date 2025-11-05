@@ -10,7 +10,8 @@ from typing import ClassVar, Literal, Optional, Self, Sequence
 import numpy as np
 from tqdm import tqdm
 
-from instamatic.calibrate.calibrate_stage_motion import CalibStageMotion, SpanSpeedTime
+from instamatic._typing import float_deg
+from instamatic.calibrate.calibrate_stage_motion import CalibStageMotion, SpanSpeedTime, Speed
 from instamatic.calibrate.filenames import CALIB_STAGE_ROTATION
 from instamatic.utils.domains import NumericDomain
 
@@ -29,7 +30,7 @@ JEOL_ROTATION_SPEED_OPTIONS = NumericDomain(options=range(1, 13))
 @dataclass
 class CalibStageRotation(CalibStageMotion):
     _program_name: ClassVar[str] = 'instamatic.calibrate_stage_rotation'
-    _span_typical_limits: ClassVar[tuple[float, float]] = (1.0, 10.0)
+    _span_typical_limits: ClassVar[tuple[float_deg, float_deg]] = (1.0, 10.0)
     _span_units: ClassVar[str] = 'degree'
     _yaml_filename: ClassVar[str] = CALIB_STAGE_ROTATION
 
@@ -105,7 +106,7 @@ def calibrate_stage_rotation_live(
     ctrl.cam.block()
     try:
         n_calib_points = len(speeds) * len(spans)
-        log(f'Starting rotation speed calibration based on {n_calib_points} points.')
+        log(f'Calibrating a-axis rotation speed based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
             for speed in speeds:
                 with ctrl.stage.rotation_speed(speed=float(speed)):
@@ -134,7 +135,7 @@ def main_entry() -> None:
     """Calibrate the goniometer stage rotation speed setting of the stage.
 
     For a quick test or a debug run for the simulated TEM, run
-    `instamatic.calibrate_stage_rotation -a "1,2,3" -s "8,10,12"`.
+    `instamatic.calibrate_stage_rotation -x 1 2 3 -s 8 10 12`.
     """
 
     parser = argparse.ArgumentParser(
@@ -142,19 +143,22 @@ def main_entry() -> None:
     )
 
     h = 'Comma-delimited list of alpha spans to calibrate (in degrees). '
-    h += 'Default: "1,2,3,4,5,6,7,8,9,10".'
-    parser.add_argument('-a', '--spans', type=str, help=h)
+    h += 'Default: "1 2 3 4 5 6 7 8 9 10".'
+    parser.add_argument('-x', '--spans', type=float, default=None, nargs='*', help=h)
 
     h = """Comma-delimited list of speed settings to calibrate for.
-    Default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or
-    "1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope."""
-    parser.add_argument('-s', '--speeds', type=str, help=dedent(h.strip()))
+    Default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" or
+    "1 2 3 4 5 6 7 8 9 10 11 12", whichever is accepted by the microscope."""
+    h = dedent(h.strip())
+    parser.add_argument('-s', '--speeds', type=float, default=None, nargs='*', help=h)
 
     h = """Calibration mode to be used:
     "auto" - auto-determine upper and lower speed limits based on TEM response;
     "limited" - restrict TEM goniometer speed limits between min and max of --speeds;
     "listed" - restrict TEM goniometer speed settings exactly to --speeds provided."""
-    parser.add_argument('-m', '--mode', type=str, default='auto', help=dedent(h.strip()))
+    h = dedent(h.strip())
+    c = ['auto', 'limited', 'listed']
+    parser.add_argument('-m', '--mode', type=str, default=c[0], nargs='?', choices=c, help=h)
 
     h = 'Path to the directory where calibration file should be output. '
     h += 'Default: "%%appdata%%/calib" (Windows) or "$AppData/calib" (Unix).'
@@ -163,15 +167,9 @@ def main_entry() -> None:
     h = 'After calibration, attempt to `--plot` / `--no-plot` its results.'
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
-    options = parser.parse_args()
+    kwargs = vars(parser.parse_args())
 
     from instamatic import controller
-
-    kwargs = {'mode': options.mode, 'outdir': options.outdir, 'plot': options.plot}
-    if options.alphas:
-        kwargs['spans'] = [float(a) for a in options.spans.split(',')]
-    if options.speeds:
-        kwargs['speeds'] = [float(s) for s in options.speeds.split(',')]
 
     ctrl = controller.initialize()
     calibrate_stage_rotation_live(ctrl=ctrl, **kwargs)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from bisect import bisect_left
 from dataclasses import dataclass
-from typing import Sequence, TypeVar, Union
+from typing import Generic, Sequence, TypeVar, Union, overload
 
 from typing_extensions import Self
 
@@ -11,7 +11,7 @@ Numeric = TypeVar('Numeric', int, float)
 
 
 @dataclass(frozen=True)
-class NumericDomain(ABC):
+class NumericDomain(Generic[Numeric], ABC):
     """Base class for numeric domains and nearest-value lookup."""
 
     def __new__(cls, *args, **kwargs) -> Self:
@@ -30,18 +30,24 @@ class NumericDomain(ABC):
 
 
 @dataclass(frozen=True)
-class NumericDomainConstrained(NumericDomain):
+class NumericDomainConstrained(NumericDomain[Numeric]):
     """Continuous numeric domain limited to [lower_lim, upper_lim]."""
 
     lower_lim: Numeric
     upper_lim: Numeric
+
+    @overload
+    def nearest(self, to: int) -> Numeric: ...
+
+    @overload
+    def nearest(self, to: float) -> float: ...
 
     def nearest(self, to: float) -> Union[Numeric, float]:
         return max(self.lower_lim, min(self.upper_lim, to))
 
 
 @dataclass(frozen=True)
-class NumericDomainDiscrete(NumericDomain):
+class NumericDomainDiscrete(NumericDomain[Numeric]):
     """Discrete numeric domain with a finite sequence of allowed values."""
 
     options: Sequence[Numeric]

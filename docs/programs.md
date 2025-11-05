@@ -194,10 +194,10 @@ instamatic.calibrate_stage_rotation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o OU
 : Show this help message and exit  
 
 `-a SPANS`, `--spans SPANS`
-: Comma-delimited list of alpha spans to calibrate (default: "1,2,3,4,5,6,7,8,9,10").
+: Space-delimited list of alpha spans to calibrate (default: "1 2 3 4 5 6 7 8 9 10").
 
 `-s SPEEDS`, `--speeds SPEEDS`
-: Comma-delimited list of speed settings to calibrate (default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0" or "1,2,3,4,5,6,7,8,9,10,11,12", whichever is accepted by the microscope).
+: Space-delimited list of speed settings to calibrate (default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" or "1 2 3 4 5 6 7 8 9 10 11 12", whichever is accepted by the microscope).
 
 `-m MODE`, `--mode MODE`
 : Calibration mode to be used: "auto" - auto-determine upper and lower speed limits based on TEM response (default); "limited" - restrict TEM goniometer speed limits between min and max of --speeds; or "listed" - restrict TEM goniometer speed settings exactly to --speeds provided.
@@ -208,11 +208,11 @@ instamatic.calibrate_stage_rotation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o OU
 
 ## instamatic.calibrate_stage_translation
 
-Program to calibrate and plan the stage x/y translation pace (in seconds / nm) against speed settings available on the microscope.
+Program to calibrate and plan the stage translation pace (in seconds / nm) along given axis x/y/z against speed settings available on the microscope.
 
 **Usage:**  
 ```bash
-instamatic.calibrate_stage_translation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o OUTDIR]
+instamatic.calibrate_stage_translation [-h] [-x SPANS] [-s SPEEDS] [-a AXIS] [-m MODE] [-o OUTDIR]
 ```
 
 **Optional arguments:**  
@@ -220,11 +220,14 @@ instamatic.calibrate_stage_translation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o
 `-h`, `--help`
 : Show this help message and exit  
 
-`-a SPANS`, `--spans SPANS`
-: Comma-delimited list of x/y spans to calibrate (default: "10000,20000,30000,40000,50000,60000,70000,80000,90000,100000").
+`-x SPANS`, `--spans SPANS`
+: Space-delimited list of axis spans to calibrate (default: "10000 20000 30000 40000 50000 60000 70000 80000 90000 100000").
 
 `-s SPEEDS`, `--speeds SPEEDS`
-: Comma-delimited list of speed settings to calibrate (default: "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0").
+: Space-delimited list of speed settings to calibrate (default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0").
+
+`-a AXIX`, `--axis AXIS`
+: Axis whose translation speed should be calibrated. Possible choices: 'x', 'y', or 'z'. Default 'x'.
 
 `-m MODE`, `--mode MODE`
 : Calibration mode to be used: "auto" - auto-determine upper and lower speed limits based on TEM response (default); "limited" - restrict TEM goniometer speed limits between min and max of --speeds; or "listed" - restrict TEM goniometer speed settings exactly to --speeds provided.

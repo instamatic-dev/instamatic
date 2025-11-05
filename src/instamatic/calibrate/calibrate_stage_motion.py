@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import ClassVar, NamedTuple, Optional, Sequence, Union
+from typing import ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,12 +24,16 @@ def log(s: str) -> None:
     print(s)
 
 
+Span = TypeVar('Span', float_deg, int_nm)
+Speed = TypeVar('Speed', None, float, int)
+
+
 @dataclass
 class MotionPlan:
     """A set of motion parameters/outcomes nearest to the ones requested."""
 
-    pace: float  # time it takes goniometer to cover 1 distance unit (nm/deg)
-    speed: Optional[float]  # setting to get desired pace, None = not supported
+    pace: float  # time it takes goniometer to cover 1 span unit (nm or degree)
+    speed: Speed  # speed setting to get desired pace, None = not supported
     total_delay: float  # total goniometer delay: delay + windup / speed
 
 
@@ -41,8 +45,8 @@ class SpanSpeedTime(NamedTuple):
     - time: time taken to travel span with speed expressed in seconds.
     """
 
-    span: Union[float_deg, int_nm]
-    speed: Union[float, int, None]
+    span: Span
+    speed: Speed
     time: float
 
 
@@ -94,7 +98,7 @@ class CalibStageMotion(ABC):
 
     @staticmethod
     def model1(
-        span_speed: tuple[float, float],
+        span_speed: tuple[Span, Speed],
         pace: float,
         windup: float,
         delay: float,
@@ -104,36 +108,35 @@ class CalibStageMotion(ABC):
         return (pace * span + windup) / speed + delay
 
     @staticmethod
-    def model2(span: float, pace: float, delay: float):
+    def model2(span: Span, pace: float, delay: float):
         """Simplified model used when speed is not supported i.e. = None."""
         return pace * span + delay
 
-    def span_speed_to_time(self, span: float, speed: Optional[float] = None) -> float:
+    def span_speed_to_time(self, span: Span, speed: Speed = None) -> float:
         """`time` needed to move stage by `span` with `speed`."""
         return (self.pace * span + self.windup) / (speed or 1.0) + self.delay
 
-    def span_time_to_speed(self, span: float, time: float) -> float:
+    def span_time_to_speed(self, span: Span, time: float) -> float:
         """`speed` that allows to move stage by `span` with `speed`."""
         return (self.pace * span + self.windup) / (time - self.delay)
 
-    def time_speed_to_span(self, time: float, speed: Optional[float] = None) -> float:
+    def time_speed_to_span(self, time: float, speed: Speed = None) -> float:
         """Maximum `span` covered with `speed` in `time` (including delay)."""
         return ((speed or 1.0) * (time - self.delay) - self.windup) / self.pace
 
     def plan_motion(self, target_pace: float) -> MotionPlan:
         """Given target pace, find nearest pace, needed speed, and delay."""
-        target_speed = abs(self.pace / target_pace)
         if self.speed_options is None:
             return MotionPlan(self.pace, None, self.windup + self.delay)
-        nearest_speed = self.speed_options.nearest(target_speed)
-        nearest_pace = self.pace / nearest_speed
-        total_delay = self.windup / nearest_speed + self.delay
+        target_speed: float = abs(self.pace / target_pace)
+        nearest_speed: Union[float, int] = self.speed_options.nearest(target_speed)
+        nearest_pace: float = self.pace / nearest_speed
+        total_delay: float = self.windup / nearest_speed + self.delay
         return MotionPlan(nearest_pace, nearest_speed, total_delay)
 
     def plot(self, sst: Optional[Sequence[SpanSpeedTime]] = None) -> None:
         """Generic, subclasses should override labels/units via properties."""
         if sst is None:
-            spans = np.linspace(*self._span_typical_limits, 10)
             if self.speed_options is None:
                 speeds = [1.0]
             elif isinstance(self.speed_options, NumericDomainConstrained):
@@ -141,9 +144,9 @@ class CalibStageMotion(ABC):
                 speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
             else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
                 speeds = list(getattr(self.speed_options, 'options', [1.0]))
-            speeds = [s for s in speeds if s != 0]
+            speeds: Sequence[Union[float, int]] = [s for s in speeds if s != 0]
             sst = []
-            for span in spans:
+            for span in np.linspace(*self._span_typical_limits, 10):
                 for speed in speeds:
                     t = self.span_speed_to_time(span, speed)
                     sst.append(SpanSpeedTime(span, speed, t))
