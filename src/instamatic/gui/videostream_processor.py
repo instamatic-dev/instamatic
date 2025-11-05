@@ -8,7 +8,6 @@ from functools import wraps
 from typing import Any, Iterator, Literal, Optional, Protocol, Union
 
 import numpy as np
-import PIL.Image
 from matplotlib.figure import Figure
 from PIL import Image, ImageDraw
 

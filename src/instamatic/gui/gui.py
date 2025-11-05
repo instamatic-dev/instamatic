@@ -131,20 +131,20 @@ class MainFrame:
 
     def __init__(self, root, cam, modules: list = []):
         super().__init__()
+
+        self.root = root
+        self.app = AppLoader()
+
         # the stream window is a special case, because it needs access
-        # to the cam module
+        # to the cam module and the AppLoader itself
         if cam:
             from .videostream_frame import module as stream_module
 
-            stream_module.set_kwargs(stream=cam)
+            stream_module.set_kwargs(stream=cam, app=self.app)
             modules.insert(0, stream_module)
-
-        self.root = root
 
         self.module_frame = Frame(root)
         self.module_frame.pack(side='top', fill='both', expand=True)
-
-        self.app = AppLoader()
         self.app.load(modules, self.module_frame)
 
         self.root.wm_title(instamatic.__long_title__)

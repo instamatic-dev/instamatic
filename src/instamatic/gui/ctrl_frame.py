@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import queue
 import threading
+from threading import Event
 from tkinter import *
 from tkinter.ttk import *
+from typing import Dict
 
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
@@ -282,19 +285,21 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
 
     def toggle_alpha_wobbler(self):
         if self.var_alpha_wobbler_on.get():
-            self.wobble_stop_event = threading.Event()
-            self.q.put(
-                (
-                    'ctrl',
-                    {
-                        'task': 'stage.alpha_wobbler',
-                        'delta': self.var_alpha_wobbler.get(),
-                        'event': self.wobble_stop_event,
-                    },
-                )
-            )
-        else:  # wobbler off
-            self.wobble_stop_event.set()
+            wobble_stop_event = threading.Event()
+            wobbler_task_keywords = {
+                'task': 'stage.alpha_wobbler',
+                'delta': self.var_alpha_wobbler.get(),
+                'event': wobble_stop_event,
+            }
+            try:
+                self.q.put(('ctrl', wobbler_task_keywords), block=False)
+            except queue.Full:
+                pass
+            else:
+                self.wobble_stop_event = wobble_stop_event
+        else:
+            if self.wobble_stop_event:
+                self.wobble_stop_event.set()
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
