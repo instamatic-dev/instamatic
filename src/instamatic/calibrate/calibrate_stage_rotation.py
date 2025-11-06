@@ -5,10 +5,11 @@ import logging
 from dataclasses import dataclass
 from textwrap import dedent
 from time import perf_counter
-from typing import ClassVar, Literal, Optional, Self, Sequence
+from typing import ClassVar, Literal, Optional, Sequence
 
 import numpy as np
 from tqdm import tqdm
+from typing_extensions import Self
 
 from instamatic._typing import float_deg
 from instamatic.calibrate.calibrate_stage_motion import CalibStageMotion, SpanSpeedTime, Speed
