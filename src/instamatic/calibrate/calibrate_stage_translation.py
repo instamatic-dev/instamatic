@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from textwrap import dedent
 from time import perf_counter
-from typing import ClassVar, Iterable, Literal, Optional, Self, Sequence
+from typing import ClassVar, Literal, Optional, Self, Sequence
 
 import numpy as np
 from tqdm import tqdm
@@ -30,32 +30,31 @@ def log(s: str) -> None:
 
 @dataclass
 class CalibStageTranslation(CalibStageMotion):
-    _calib_axes: ClassVar[Iterable[Literal['x', 'y', 'z']]] = ('x', 'y', 'z')
+    _calib_axis: ClassVar[Literal['x', 'y', 'z']] = NotImplemented
     _program_name: ClassVar[str] = 'instamatic.calibrate_stage_translation'
     _span_typical_limits: ClassVar[tuple[int_nm, int_nm]] = (10_000, 100_000)
     _span_units: ClassVar[str] = 'nm'
 
     @classmethod
     def live(cls, ctrl: 'TEMController', **kwargs) -> Self:
-        for axis in cls._calib_axes:
-            return calibrate_stage_translation_live(ctrl=ctrl, axis=axis, **kwargs)
+        return calibrate_stage_translation_live(ctrl=ctrl, axis=cls._calib_axis, **kwargs)
 
 
 @dataclass
 class CalibStageTranslationX(CalibStageTranslation):
-    _calib_axes: ClassVar[Iterable[Literal['x', 'y', 'z']]] = ('x',)
+    _calib_axis: ClassVar[Literal['x', 'y', 'z']] = 'x'
     _yaml_filename: ClassVar[str] = CALIB_STAGE_TRANSLATION_X
 
 
 @dataclass
 class CalibStageTranslationY(CalibStageTranslation):
-    _calib_axes: ClassVar[Iterable[Literal['x', 'y', 'z']]] = ('y',)
+    _calib_axis: ClassVar[Literal['x', 'y', 'z']] = 'y'
     _yaml_filename: ClassVar[str] = CALIB_STAGE_TRANSLATION_Y
 
 
 @dataclass
 class CalibStageTranslationZ(CalibStageTranslation):
-    _calib_axes: ClassVar[Iterable[Literal['x', 'y', 'z']]] = ('z',)
+    _calib_axis: ClassVar[Literal['x', 'y', 'z']] = 'z'
     _yaml_filename: ClassVar[str] = CALIB_STAGE_TRANSLATION_Z
 
 
@@ -75,16 +74,16 @@ def calibrate_stage_translation_live(
     outdir: Optional[AnyPath] = None,
     plot: Optional[bool] = None,
 ) -> CalibStageTranslation:
-    """Calibrate stage translation speed along axis live on the microscope.
-    By default, this is run for a large number of stage span and speed settings
-    and should take between 10 and 30 minutes per axis. Calibration can be made
-    shorter if desired, but this is ill-advised. Tests performed using
-    a Tecnai T20 machine show how more calibration points offer better accuracy
-    (pace in seconds / meter, windup and delay in miliseconds):
+    """Calibrate stage translation speed along axis live on the microscope. By
+    default, this is run for a large number of stage span and speed settings
+    and should take up to 30 minutes per axis. Calibration can be made shorter
+    if desired but this is ill-advised. Tests run on a Tecnai T20 machine show
+    how more calibration points offer better accuracy (delay may be unreliable;
+    pace given in seconds / meter, windup and delay in milliseconds):
 
-    -  5 x  6 pts: pace 9667+/-118, windup -67+/-9, delay 2235+/-58 (4 min)
-    - 10 x  6 pts: pace 9682+/- 78, windup -68+/-6, delay 2227+/-39 (7 min)
-    - 10 x 15 pts: pace 9715+/- 47, windup -32+/-3, delay 1924+/-30 (20 min)
+    -  5 x  6 cal pts: pace 9667+/-118, windup -67+/-9, delay 2235+/-58 (4 min)
+    - 10 x  6 cal pts: pace 9682+/- 78, windup -68+/-6, delay 2227+/-39 (7 min)
+    - 10 x 15 cal pts: pace 9715+/- 47, windup -32+/-3, delay 1924+/-30 (20 min)
 
     By default, this function will try testing for translation speeds of
     [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] i.e. FEI settings.
@@ -111,16 +110,16 @@ def calibrate_stage_translation_live(
         instance of `CalibStageTranslation` class with conversion methods
     """
 
-    spans = np.array(spans or [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5])
-    alternating_ones = np.ones(len(spans)) * (-1) ** np.arange(len(spans))
-    span_deltas = spans * alternating_ones
+    spans_array = np.array(spans or [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5])
+    alternating_ones = np.ones(len(spans_array)) * (-1) ** np.arange(len(spans_array))
+    span_deltas = spans_array * alternating_ones
 
     stage0: StagePositionTuple = ctrl.stage.get()
     try:
         ctrl.stage.set_with_speed(*stage0)
     except KeyError:
         log('TEM does not support setting with speed, assuming default = 1.')
-        speeds_default = [None, None, None]  # TEM does not support translation w/ speed
+        speeds_default: Sequence[Speed] = [None, None, None]  # no translation w/ speed
         speed_options = None
     else:
         speeds_default = speeds or [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -128,19 +127,19 @@ def calibrate_stage_translation_live(
     finally:
         ctrl.stage.set(*stage0)
 
-    speeds: Sequence[Speed] = speeds or speeds_default
+    speeds_: Sequence[Speed] = speeds or speeds_default
     if mode == 'limited':
-        speed_options = NumericDomain(lower_lim=min(speeds), upper_lim=max(speeds))
+        speed_options = NumericDomain(lower_lim=min(speeds_), upper_lim=max(speeds_))
     elif mode == 'listed':
-        speed_options = NumericDomain(options=sorted(speeds))
+        speed_options = NumericDomain(options=sorted(speeds_))
 
     calib_points: list[SpanSpeedTime] = []
     ctrl.cam.block()
     try:
-        n_calib_points = len(speeds) * len(span_deltas)
+        n_calib_points = len(speeds_) * len(span_deltas)
         log(f'Calibrating {axis}-axis translation speed based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
-            for speed in speeds:
+            for speed in speeds_:
                 setter = ctrl.stage.set if speed is None else ctrl.stage.set_with_speed
                 speed_kwarg = {} if speed is None else {'speed': speed}
 

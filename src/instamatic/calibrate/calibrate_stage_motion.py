@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
+from typing import ClassVar, Generic, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,19 +26,20 @@ def log(s: str) -> None:
 
 
 Span = TypeVar('Span', float_deg, int_nm)
-Speed = TypeVar('Speed', None, float, int)
+SpeedN = TypeVar('SpeedN', float, int)
+Speed = Optional[SpeedN]
 
 
 @dataclass
-class MotionPlan:
+class MotionPlan(Generic[SpeedN]):
     """A set of motion parameters/outcomes nearest to the ones requested."""
 
     pace: float  # time it takes goniometer to cover 1 span unit (nm or degree)
-    speed: Speed  # speed setting to get desired pace, None = not supported
+    speed: Optional[SpeedN]  # speed setting to get pace, None = not supported
     total_delay: float  # total goniometer delay: delay + windup / speed
 
 
-class SpanSpeedTime(NamedTuple):
+class SpanSpeedTime(NamedTuple, Generic[Span, SpeedN]):
     """A single measurement point used to calibrate stage motion speed.
 
     - span: the motion span expressed in degrees (rotation) or nm (translation);
@@ -47,7 +48,7 @@ class SpanSpeedTime(NamedTuple):
     """
 
     span: Span
-    speed: Speed
+    speed: Optional[SpeedN]
     time: float
 
 
@@ -99,7 +100,7 @@ class CalibStageMotion(ABC):
 
     @staticmethod
     def model1(
-        span_speed: tuple[Span, Speed],
+        span_speed: tuple[Span, SpeedN],
         pace: float,
         windup: float,
         delay: float,
@@ -149,7 +150,7 @@ class CalibStageMotion(ABC):
             speeds = list(np.linspace(so.lower_lim, so.upper_lim, 10))
         else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
             speeds = sorted(getattr(self.speed_options, 'options', [1.0]))
-        speeds: list[Speed] = [s for s in speeds if s != 0]
+        speeds = [s for s in speeds if s != 0]
 
         # determine spans to plot; use experimental if given, fabricate otherwise
         spans: list[float]  # sorted

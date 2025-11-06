@@ -80,9 +80,9 @@ def calibrate_stage_rotation_live(
         instance of `CalibStageRotation` class with conversion methods
     """
 
-    spans = np.array(spans or [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    alternating_ones = np.ones(len(spans)) * (-1) ** np.arange(len(spans))
-    alpha_targets = np.cumsum(spans * alternating_ones)
+    spans_array = np.array(spans or [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    alternating_ones = np.ones(len(spans_array)) * (-1) ** np.arange(len(spans_array))
+    alpha_targets = np.cumsum(spans_array * alternating_ones)
 
     try:
         ctrl.stage.set_rotation_speed(12)
@@ -94,24 +94,24 @@ def calibrate_stage_rotation_live(
         speeds_default = np.arange(1, 13, step=1)
         speed_options = JEOL_ROTATION_SPEED_OPTIONS
 
-    speeds = speeds or speeds_default
+    speeds_: Sequence[float] = speeds or speeds_default
     if mode == 'limited':
-        speed_options = NumericDomain(lower_lim=min(speeds), upper_lim=max(speeds))
+        speed_options = NumericDomain(lower_lim=min(speeds_), upper_lim=max(speeds_))
     elif mode == 'listed':
-        speed_options = NumericDomain(options=sorted(speeds))
+        speed_options = NumericDomain(options=sorted(speeds_))
 
     calib_points: list[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
     starting_stage_speed = ctrl.stage.get_rotation_speed()
     ctrl.cam.block()
     try:
-        n_calib_points = len(speeds) * len(spans)
+        n_calib_points = len(speeds_) * len(spans_array)
         log(f'Calibrating a-axis rotation speed based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
-            for speed in speeds:
+            for speed in speeds_:
                 with ctrl.stage.rotation_speed(speed=float(speed)):
                     ctrl.stage.a = 0.0
-                    for target, span in zip(alpha_targets, spans):
+                    for target, span in zip(alpha_targets, spans_array):
                         t1 = perf_counter()
                         ctrl.stage.a = float(target)
                         t2 = perf_counter()
