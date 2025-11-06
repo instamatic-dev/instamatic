@@ -211,7 +211,7 @@ class CalibStageMotion(ABC):
             pace_u, windup_u, delay_u = np.sqrt(np.diag(p_cov))
 
         log(f'{cls.__name__} fit of motion model complete:')
-        log(f'pace       = {pace_n:12.6f} +/- {pace_u:12.6f} s / {cls._span_units}')
+        log(f'pace       = {pace_n:12.6g} +/- {pace_u:12.6g} s / {cls._span_units}')
         log(f'windup     = {windup_n:12.6f} +/- {windup_u:12.6f} s')
         log(f'delay      = {delay_n:12.6f} +/- {delay_u:12.6f} s')
         log('model time = (pace * span + windup) / speed + delay')

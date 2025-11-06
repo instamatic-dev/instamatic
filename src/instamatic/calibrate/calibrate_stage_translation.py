@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-from abc import ABC
 from dataclasses import dataclass
 from textwrap import dedent
 from time import perf_counter
@@ -77,6 +76,15 @@ def calibrate_stage_translation_live(
     plot: Optional[bool] = None,
 ) -> CalibStageTranslation:
     """Calibrate stage translation speed along axis live on the microscope.
+    By default, this is run for a large number of stage span and speed settings
+    and should take between 10 and 30 minutes per axis. Calibration can be made
+    shorter if desired, but this is ill-advised. Tests performed using
+    a Tecnai T20 machine show how more calibration points offer better accuracy
+    (pace in seconds / meter, windup and delay in miliseconds):
+
+    -  5 x  6 pts: pace 9667+/-118, windup -67+/-9, delay 2235+/-58 (4 min)
+    - 10 x  6 pts: pace 9682+/- 78, windup -68+/-6, delay 2227+/-39 (7 min)
+    - 10 x 15 pts: pace 9715+/- 47, windup -32+/-3, delay 1924+/-30 (20 min)
 
     By default, this function will try testing for translation speeds of
     [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] i.e. FEI settings.
