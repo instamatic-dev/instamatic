@@ -30,14 +30,14 @@ def log(s: str) -> None:
 
 
 @dataclass
-class CalibStageTranslation(ABC, CalibStageMotion):
+class CalibStageTranslation(CalibStageMotion):
     _calib_axes: ClassVar[Iterable[Literal['x', 'y', 'z']]] = ('x', 'y', 'z')
     _program_name: ClassVar[str] = 'instamatic.calibrate_stage_translation'
     _span_typical_limits: ClassVar[tuple[int_nm, int_nm]] = (10_000, 100_000)
     _span_units: ClassVar[str] = 'nm'
 
     @classmethod
-    def live(cls, ctrl: 'TEMController', **kwargs) -> tuple[Self, ...]:
+    def live(cls, ctrl: 'TEMController', **kwargs) -> Self:
         for axis in cls._calib_axes:
             return calibrate_stage_translation_live(ctrl=ctrl, axis=axis, **kwargs)
 
@@ -142,7 +142,7 @@ def calibrate_stage_translation_live(
                     t1 = perf_counter()
                     setter(**({axis: getattr(stage1, axis) + s} | speed_kwarg))
                     t2 = perf_counter()
-                    calib_points.append(SpanSpeedTime(span=s, speed=speed, time=t2 - t1))
+                    calib_points.append(SpanSpeedTime(span=abs(s), speed=speed, time=t2 - t1))
                     progress_bar.update(1)
     finally:
         ctrl.stage.set(*stage0)
@@ -196,6 +196,8 @@ def main_entry() -> None:
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
     kwargs = vars(parser.parse_args())
+    if kwargs['speeds'] is not None and all(v.is_integer() for v in kwargs['speeds']):
+        kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
 
     from instamatic import controller
 

@@ -9,6 +9,7 @@ from typing import ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
+from matplotlib.lines import Line2D
 from scipy.optimize import curve_fit
 from typing_extensions import Self
 
@@ -135,40 +136,59 @@ class CalibStageMotion(ABC):
         return MotionPlan(nearest_pace, nearest_speed, total_delay)
 
     def plot(self, sst: Optional[Sequence[SpanSpeedTime]] = None) -> None:
-        """Generic, subclasses should override labels/units via properties."""
-        if sst is None:
-            if self.speed_options is None:
-                speeds = [1.0]
-            elif isinstance(self.speed_options, NumericDomainConstrained):
-                so: NumericDomainConstrained = self.speed_options
-                speeds = np.linspace(so.lower_lim, so.upper_lim, 10)
-            else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
-                speeds = list(getattr(self.speed_options, 'options', [1.0]))
-            speeds: Sequence[Union[float, int]] = [s for s in speeds if s != 0]
-            sst = []
-            for span in np.linspace(*self._span_typical_limits, 10):
-                for speed in speeds:
-                    t = self.span_speed_to_time(span, speed)
-                    sst.append(SpanSpeedTime(span, speed, t))
+        """Generic plot of experimental (if given) & fit motion speed data."""
+
+        # determine speeds to plot; use experimental if given, fabricate otherwise
+        speeds: list[Speed]  # sorted
+        if sst is not None:
+            speeds = sorted(dict.fromkeys(s.speed for s in sst).keys())
+        elif self.speed_options is None:
+            speeds = [None]
+        elif isinstance(self.speed_options, NumericDomainConstrained):
+            so: NumericDomainConstrained = self.speed_options
+            speeds = list(np.linspace(so.lower_lim, so.upper_lim, 10))
+        else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
+            speeds = sorted(getattr(self.speed_options, 'options', [1.0]))
+        speeds: list[Speed] = [s for s in speeds if s != 0]
+
+        # determine spans to plot; use experimental if given, fabricate otherwise
+        spans: list[float]  # sorted
+        if sst is not None:
+            spans = list(dict.fromkeys(s.span for s in sst).keys())
         else:
-            sst = sorted(sst)
+            spans = list(np.linspace(*self._span_typical_limits, 10))
+
+        # generate simulated span/speed/times data to be drawn later as lines
+        simulated_sst = []
+        for span in spans:
+            for speed in speeds:
+                t = self.span_speed_to_time(span, speed)
+                simulated_sst.append(SpanSpeedTime(span, speed, t))
+        plotted: list[tuple[Sequence[SpanSpeedTime], str]] = [(simulated_sst, '-')]
+
+        # generate experimental span/speed/times to be drawn later as points
+        if sst is not None:
+            plotted.append((sst, 'o'))
 
         fig, ax = plt.subplots()
         ax.axvline(x=0, color='k')
         ax.axhline(y=0, color='k')
         ax.axhline(y=self.delay, color='r')
 
-        speeds = list(dict.fromkeys(s.speed for s in sst).keys())
-        colors = plt.colormaps['viridis'](np.linspace(0, 1, num=len(speeds)))
+        colors = plt.colormaps['coolwarm'](np.linspace(0, 1, num=len(speeds)))
+        handles: list[Line2D] = []
         for color, speed in zip(colors, speeds):
-            spans = [s.span for s in sst if s.speed == speed]
-            times = [s.time for s in sst if s.speed == speed]
-            ax.plot(spans, times, color=color, label=f'Speed setting {speed:.2f}')
+            for sst, fmt in plotted:
+                spans = [s.span for s in sst if s.speed == speed]
+                times = [s.time for s in sst if s.speed == speed]
+                ax.plot(spans, times, fmt, color=color)
+            label = f'Speed setting {speed:.2f}'
+            handles.append(Line2D([], [], color=color, marker='o', label=label))
 
         ax.set_xlabel(f'Motion span [{self._span_units}]')
         ax.set_ylabel('Time required [s]')
         ax.set_title('Stage motion time vs span at different speeds')
-        ax.legend()
+        ax.legend(handles=handles, loc='best')
         plt.show()
 
     @classmethod
@@ -180,7 +200,7 @@ class CalibStageMotion(ABC):
         times = np.array(sst_array[2], dtype=float)
 
         if np.all(np.isnan(speeds)):  # TEM does not support setting with speed
-            p = curve_fit(CalibStageMotion.model2, spans, times, p0=[1, 0])
+            p = curve_fit(CalibStageMotion.model2, spans, ydata=times, p0=[1, 0])
             (pace_n, delay_n), p_cov = p  # noqa - this unpacking is OK
             pace_u, delay_u = np.sqrt(np.diag(p_cov))
             windup_n, windup_u = 0.0, 0.0

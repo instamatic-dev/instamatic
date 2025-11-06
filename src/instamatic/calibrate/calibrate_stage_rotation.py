@@ -168,6 +168,8 @@ def main_entry() -> None:
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
     kwargs = vars(parser.parse_args())
+    if kwargs['speeds'] is not None and all(v.is_integer() for v in kwargs['speeds']):
+        kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
 
     from instamatic import controller
 
