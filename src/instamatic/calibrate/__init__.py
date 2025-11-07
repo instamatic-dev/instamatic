@@ -6,5 +6,6 @@ from .calibrate_directbeam import CalibDirectBeam
 from .calibrate_movie_delays import CalibMovieDelays
 from .calibrate_stage_lowmag import CalibStage
 from .calibrate_stage_rotation import CalibStageRotation
+from .calibrate_stage_translation import CalibStageTranslation
 
 # from .calibrate_stage_mag1 import CalibStageMag1
