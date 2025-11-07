@@ -169,7 +169,7 @@ def main_entry() -> None:
     """Calibrate goniometer stage translation speed against speed setting.
 
     For a quick test or a debug run for the simulated TEM, run
-    `instamatic.calibrate_stage_translation -x 10 20 30 -s 8 10 12`.
+    `instamatic.calibrate_stage_translation -x 10000 20000 -s 8 10 12`.
     """
 
     parser = argparse.ArgumentParser(

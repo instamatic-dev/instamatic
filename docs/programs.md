@@ -185,7 +185,7 @@ Program to calibrate and plan the stage alpha rotation pace (in seconds / angle)
 
 **Usage:**  
 ```bash
-instamatic.calibrate_stage_rotation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o OUTDIR]
+instamatic.calibrate_stage_rotation [-h] [-x SPANS] [-s SPEEDS] [-m MODE] [-o OUTDIR]
 ```
 
 **Optional arguments:**  
@@ -193,7 +193,7 @@ instamatic.calibrate_stage_rotation [-h] [-a SPANS] [-s SPEEDS] [-m MODE] [-o OU
 `-h`, `--help`
 : Show this help message and exit  
 
-`-a SPANS`, `--spans SPANS`
+`-x SPANS`, `--spans SPANS`
 : Space-delimited list of alpha spans to calibrate (default: "1 2 3 4 5 6 7 8 9 10").
 
 `-s SPEEDS`, `--speeds SPEEDS`
