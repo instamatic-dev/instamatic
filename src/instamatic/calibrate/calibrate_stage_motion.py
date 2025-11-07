@@ -39,7 +39,7 @@ class MotionPlan(Generic[SpeedN]):
     total_delay: float  # total goniometer delay: delay + windup / speed
 
 
-class SpanSpeedTime(Generic[Span, SpeedN], NamedTuple):
+class SpanSpeedTime(NamedTuple):
     """A single measurement point used to calibrate stage motion speed.
 
     - span: the motion span expressed in degrees (rotation) or nm (translation);
@@ -48,7 +48,7 @@ class SpanSpeedTime(Generic[Span, SpeedN], NamedTuple):
     """
 
     span: Span
-    speed: Optional[SpeedN]
+    speed: Speed
     time: float
 
 
