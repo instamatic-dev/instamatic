@@ -8,7 +8,7 @@ from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, HasQMixin
 
-ENABLE_FOOTFREE_OPTION = False
+ENABLE_FOOTFREE_OPTION = True
 
 
 class ExperimentalcRED(LabelFrame, HasQMixin):
@@ -175,6 +175,7 @@ class ExperimentalcRED(LabelFrame, HasQMixin):
         self.var_exposure_time_image = DoubleVar(value=0.01)
 
         self.var_footfree_rotate_to = DoubleVar(value=65.0)
+        self.var_footfree_rotate_speed = DoubleVar(value=0.0)
         self.var_toggle_footfree = BooleanVar(value=False)
         self.mode = 'regular'
 

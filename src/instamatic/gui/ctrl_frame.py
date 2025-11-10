@@ -8,6 +8,9 @@ from tkinter.ttk import *
 from typing import Dict
 
 from instamatic import config
+from instamatic.calibrate import CalibBeamShift
+from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, HasQMixin
@@ -43,6 +46,9 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         modes = list(config.microscope.ranges.keys())
         self.o_mode = OptionMenu(frame, self.var_mode, modes[0], *modes, command=self.set_mode)
         self.o_mode.grid(row=8, column=1, sticky='EW')
+
+        self.rmb_beam = Checkbutton(frame, text='Move beam w/ RMB', variable=self.var_rmb_beam)
+        self.rmb_beam.grid(row=8, column=3)
 
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
@@ -212,6 +218,8 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.var_diff_defocus_on = BooleanVar(value=False)
 
         self.var_stage_wait = BooleanVar(value=True)
+        self.var_rmb_beam = BooleanVar(value=False)
+        self.var_rmb_beam.trace_add('write', self.toggle_rmb_beam)
 
     def set_mode(self, event=None):
         self.ctrl.mode.set(self.var_mode.get())
@@ -300,6 +308,34 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         else:
             if self.wobble_stop_event:
                 self.wobble_stop_event.set()
+
+    def toggle_rmb_beam(self, _name, _index, _mode) -> None:
+        """If self.var_rmb_beam, move beam using Right Mouse Button."""
+
+        try:
+            if not hasattr(self, 'calib_beamshift'):
+                path = self.app.get_module('io').get_experiment_directory().parent / 'calib'
+                print(path / CALIB_BEAMSHIFT)
+                self.calib_beamshift = CalibBeamShift.from_file(path / CALIB_BEAMSHIFT)
+                print(self.calib_beamshift)
+        except OSError:
+            print('No calibration :(')
+            # self.var_rmb_beam.set(False)
+            return
+
+        def _cb(click: ClickEvent) -> None:
+            if click.button == MouseButton.RIGHT:
+                bs = self.calib_beamshift.pixelcoord_to_beamshift((click.y, click.x))
+                self.ctrl.beamshift.set(*bs)
+            print(f'Beam shift at {self.ctrl.beamshift.get()}')
+
+        if self.var_rmb_beam.get():
+            d = self.app.get_module('stream').click_dispatcher
+            n = 'rmb_beam'
+            self.click_listener = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
+            self.click_listener.active = True
+        else:
+            self.click_listener.active = False
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))

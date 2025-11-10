@@ -43,6 +43,8 @@ class DataCollectionController(threading.Thread):
         for module in self.app.modules.values():
             if 'q' in get_type_hints(module.__class__):
                 module.q = getattr(module, 'q', self.q)
+            if 'app' in get_type_hints(module.__class__):
+                module.app = getattr(module, 'app', self.app)
 
         self.exitEvent = threading.Event()
         atexit.register(self.exitEvent.set)

@@ -39,3 +39,4 @@ class HasQMixin:
     """Asserts module.q remains reserved for DataCollectionController.q."""
 
     q: Queue
+    app: None
