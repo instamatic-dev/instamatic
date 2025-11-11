@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import queue
 import threading
-from threading import Event
 from tkinter import *
 from tkinter.ttk import *
-from typing import Dict
+
+import numpy as np
 
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift
@@ -47,9 +47,6 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.o_mode = OptionMenu(frame, self.var_mode, modes[0], *modes, command=self.set_mode)
         self.o_mode.grid(row=8, column=1, sticky='EW')
 
-        self.rmb_beam = Checkbutton(frame, text='Move beam w/ RMB', variable=self.var_rmb_beam)
-        self.rmb_beam.grid(row=8, column=3)
-
         frame.pack(side='top', fill='x', padx=10, pady=10)
 
         frame = Frame(self)
@@ -79,6 +76,14 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
             command=self.toggle_alpha_wobbler,
         )
         b_wobble.grid(row=4, column=2, sticky='W', columnspan=2)
+
+        text = 'Move stage with LMB'
+        self.lmb_stage = Checkbutton(frame, text=text, variable=self.var_lmb_stage)
+        self.lmb_stage.grid(row=1, column=3)
+
+        text = 'Move beam with RMB'
+        self.rmb_beam = Checkbutton(frame, text=text, variable=self.var_rmb_beam)
+        self.rmb_beam.grid(row=2, column=3)
 
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
@@ -220,6 +225,8 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.var_stage_wait = BooleanVar(value=True)
         self.var_rmb_beam = BooleanVar(value=False)
         self.var_rmb_beam.trace_add('write', self.toggle_rmb_beam)
+        self.var_lmb_stage = BooleanVar(value=False)
+        self.var_lmb_stage.trace_add('write', self.toggle_lmb_stage)
 
     def set_mode(self, event=None):
         self.ctrl.mode.set(self.var_mode.get())
@@ -309,6 +316,31 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
             if self.wobble_stop_event:
                 self.wobble_stop_event.set()
 
+    def toggle_lmb_stage(self, _name, _index, _mode):
+        """If self.var_lmb_stage, move stage using Left Mouse Button."""
+
+        try:
+            stage_matrix = self.ctrl.get_stagematrix()
+        except KeyError:
+            print('No calibration :<')
+            # self.var_lmb_stage.set(False)
+            return
+
+        def _cb(click: ClickEvent) -> None:
+            if click.button == MouseButton.LEFT:
+                cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
+                pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
+                stage_shift = np.dot(pixel_delta, stage_matrix)
+                stage_x, stage_y = self.ctrl.stage.xy
+                self.ctrl.stage.set(x=stage_x + stage_shift[0], y=stage_y + stage_shift[1])
+            print(f'Stage position at {self.ctrl.stage.get()}')
+
+        if checked := self.var_lmb_stage.get():
+            d = self.app.get_module('stream').click_dispatcher
+            n = 'lmb_stage'
+            self.lmb_stage_cl = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
+        self.lmb_stage_cl.active = checked
+
     def toggle_rmb_beam(self, _name, _index, _mode) -> None:
         """If self.var_rmb_beam, move beam using Right Mouse Button."""
 
@@ -329,13 +361,11 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
                 self.ctrl.beamshift.set(*bs)
             print(f'Beam shift at {self.ctrl.beamshift.get()}')
 
-        if self.var_rmb_beam.get():
+        if checked := self.var_rmb_beam.get():
             d = self.app.get_module('stream').click_dispatcher
             n = 'rmb_beam'
-            self.click_listener = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
-            self.click_listener.active = True
-        else:
-            self.click_listener.active = False
+            self.rmb_beam_cl = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
+        self.rmb_beam_cl.active = checked
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
