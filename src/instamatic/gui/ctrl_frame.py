@@ -10,6 +10,7 @@ import numpy as np
 from instamatic import config
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.exceptions import TEMCommunicationError
 from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 from instamatic.utils.spinbox import Spinbox
 
@@ -79,11 +80,11 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
 
         text = 'Move stage with LMB'
         self.lmb_stage = Checkbutton(frame, text=text, variable=self.var_lmb_stage)
-        self.lmb_stage.grid(row=1, column=3)
+        self.lmb_stage.grid(row=1, column=3, columnspan=3, sticky='W')
 
         text = 'Move beam with RMB'
         self.rmb_beam = Checkbutton(frame, text=text, variable=self.var_rmb_beam)
-        self.rmb_beam.grid(row=2, column=3)
+        self.rmb_beam.grid(row=2, column=3, columnspan=3, sticky='W')
 
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
@@ -92,14 +93,14 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         e_stage_z = Spinbox(frame, textvariable=self.var_stage_z, **stage)
         e_stage_z.grid(row=6, column=3, sticky='EW')
 
+        Label(frame, text='Rotation Speed', width=20).grid(row=5, column=0, sticky='W')
+        e_goniotool_tx = Spinbox(
+            frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
+        )
+        e_goniotool_tx.grid(row=5, column=1, sticky='EW')
+        b_goniotool_set = Button(frame, text='Set', command=self.set_goniotool_tx)
+        b_goniotool_set.grid(row=5, column=2, sticky='EW')
         if config.settings.use_goniotool:
-            Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
-            e_goniotool_tx = Spinbox(
-                frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
-            )
-            e_goniotool_tx.grid(row=5, column=1, sticky='EW')
-            b_goniotool_set = Button(frame, text='Set', command=self.set_goniotool_tx)
-            b_goniotool_set.grid(row=5, column=2, sticky='W')
             b_goniotool_default = Button(
                 frame, text='Default', command=self.set_goniotool_tx_default
             )
@@ -272,7 +273,12 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
     def set_goniotool_tx(self, event=None, value=None):
         if not value:
             value = self.var_goniotool_tx.get()
-        self.ctrl.stage.set_rotation_speed(value)
+        try:
+            self.ctrl.stage.set_rotation_speed(value)
+        except AttributeError:
+            print('This TEM does not implement `setRotationSpeed` method')
+        except TEMCommunicationError:
+            print('Could not connect to the stage rotation speed controller')
 
     def set_goniotool_tx_default(self, event=None):
         value = 12
