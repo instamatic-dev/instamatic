@@ -4,9 +4,11 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import Optional, Type, Union
 
+import numpy as np
 import pytest
 
 from instamatic.utils.domains import NumericDomain
+from instamatic.utils.native import AnyNumber, NativeNumber, native
 from tests.utils import InstanceAutoTracker
 
 
@@ -35,3 +37,21 @@ def test_float_domain(test_case) -> None:
     c = test_case
     with pytest.raises(r) if (r := c.raises) else nullcontext():
         assert NumericDomain(**c.kwargs).nearest(to=42) == c.returns
+
+
+@dataclass
+class NativeTestCase(InstanceAutoTracker):
+    input_value: AnyNumber
+    output_type: Type[NativeNumber]
+
+
+NativeTestCase(input_value=np.float64(1.23), output_type=float)
+NativeTestCase(input_value=np.int64(1), output_type=int)
+NativeTestCase(input_value=float(1.23), output_type=float)
+NativeTestCase(input_value=int(1), output_type=int)
+
+
+@pytest.mark.parametrize('test_case', NativeTestCase.INSTANCES)
+def test_native(test_case) -> None:
+    """Assert `native` always returns numpy native NativeNumber types."""
+    assert isinstance(native(test_case.input_value), test_case.output_type)
