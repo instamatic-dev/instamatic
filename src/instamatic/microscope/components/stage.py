@@ -9,23 +9,7 @@ import numpy as np
 from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
-
-
-AnyNumber = Union[int, float, np.floating, np.integer]
-NativeNumber = Union[int, float]
-
-@overload
-def native(x: np.floating) -> float: ...
-@overload
-def native(x: np.integer) -> int: ...
-@overload
-def native(x: float) -> float: ...
-@overload
-def native(x: int) -> int: ...
-
-
-def native(x: AnyNumber) -> NativeNumber:
-    return x.item() if hasattr(x, "item") else x
+from instamatic.utils.native import AnyNumber, NativeNumber, native
 
 
 class Stage:
@@ -38,7 +22,7 @@ class Stage:
         self._getter = self._tem.getStagePosition
         self._wait = True  # properties only
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         x, y, z, a, b = self.get()
         return f'{self.name}(x={x}, y={y}, z={z}, a={a:.1f}, b={b:.1f})'
 
@@ -95,7 +79,7 @@ class Stage:
         """Sets the stage (rotation) movement speed on the TEM."""
         self._tem.setRotationSpeed(value=native(speed))
 
-    def set_a_with_speed(self, a: float, speed: AnyNumber, wait: bool = False):
+    def set_a_with_speed(self, a: float, speed: AnyNumber, wait: bool = False) -> None:
         """Rotate to angle `a` with speed (JEOL, Tecnai only).
 
         wait: bool, block until stage movement is complete.
