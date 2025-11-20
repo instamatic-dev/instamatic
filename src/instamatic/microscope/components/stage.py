@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Generator, Optional, Tuple, Union
+from typing import Generator, Optional, Tuple, Union, overload
 
 import numpy as np
 
@@ -10,7 +10,22 @@ from instamatic._typing import float_deg, int_nm
 from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
 
-Number = Union[int, float]
+
+AnyNumber = Union[int, float, np.floating, np.integer]
+NativeNumber = Union[int, float]
+
+@overload
+def native(x: np.floating) -> float: ...
+@overload
+def native(x: np.integer) -> int: ...
+@overload
+def native(x: float) -> float: ...
+@overload
+def native(x: int) -> int: ...
+
+
+def native(x: AnyNumber) -> NativeNumber:
+    return x.item() if hasattr(x, "item") else x
 
 
 class Stage:
@@ -73,15 +88,15 @@ class Stage:
             float(a) if a is not None else None,
             float(b) if b is not None else None,
             wait=wait,
-            speed=speed,
+            speed=native(speed),
         )
 
-    def set_rotation_speed(self, speed: Number = 1) -> None:
+    def set_rotation_speed(self, speed: AnyNumber = 1) -> None:
         """Sets the stage (rotation) movement speed on the TEM."""
-        self._tem.setRotationSpeed(value=speed)
+        self._tem.setRotationSpeed(value=native(speed))
 
-    def set_a_with_speed(self, a: float, speed: int, wait: bool = False):
-        """Rotate to angle `a` with speed (JEOL only).
+    def set_a_with_speed(self, a: float, speed: AnyNumber, wait: bool = False):
+        """Rotate to angle `a` with speed (JEOL, Tecnai only).
 
         wait: bool, block until stage movement is complete.
         """
@@ -92,7 +107,7 @@ class Stage:
             self.wait()
 
     @contextmanager
-    def rotation_speed(self, speed: Number) -> Generator[None, None, None]:
+    def rotation_speed(self, speed: AnyNumber) -> Generator[None, None, None]:
         """Context manager that sets the rotation speed for the duration of the
         `with` statement (JEOL, Tecnai only).
 
@@ -147,7 +162,7 @@ class Stage:
         x, y = values
         self.set(x=x, y=y, wait=self._wait)
 
-    def get_rotation_speed(self) -> Number:
+    def get_rotation_speed(self) -> NativeNumber:
         """Gets the stage (rotation) movement speed on the TEM."""
         return self._tem.getRotationSpeed()
 
