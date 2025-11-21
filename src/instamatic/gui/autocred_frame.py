@@ -13,10 +13,10 @@ from instamatic import config
 from instamatic.calibrate import CalibBeamShift
 from instamatic.calibrate.filenames import *
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 
-class ExperimentalautocRED(LabelFrame, HasQMixin):
+class ExperimentalautocRED(LabelFrame, ModuleFrameMixin):
     """Data collection protocol for SerialRED data collection on a high-speed
     Timepix camera using automated screening and crystal tracking.
 

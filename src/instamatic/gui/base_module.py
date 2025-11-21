@@ -35,8 +35,8 @@ class BaseModule:
         return frame
 
 
-class HasQMixin:
-    """Asserts module.q remains reserved for DataCollectionController.q."""
+class ModuleFrameMixin:
+    """Asserts some class attributes i.e. module.q, app remain reserved."""
 
     q: Queue
     app: None

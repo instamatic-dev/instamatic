@@ -9,12 +9,12 @@ from tkinter.ttk import *
 from instamatic import config
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 barrier = threading.Barrier(2, timeout=60)
 
 
-class ExperimentalTVIPS(LabelFrame, HasQMixin):
+class ExperimentalTVIPS(LabelFrame, ModuleFrameMixin):
     """GUI panel for doing cRED / SerialRED experiments on a TVIPS camera."""
 
     def __init__(self, parent):

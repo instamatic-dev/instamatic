@@ -14,10 +14,10 @@ from instamatic.exceptions import TEMCommunicationError
 from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 
-class ExperimentalCtrl(LabelFrame, HasQMixin):
+class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
     """This panel holds some frequently used functions to control the electron
     microscope."""
 

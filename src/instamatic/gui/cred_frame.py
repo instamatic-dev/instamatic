@@ -6,12 +6,12 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 ENABLE_FOOTFREE_OPTION = True
 
 
-class ExperimentalcRED(LabelFrame, HasQMixin):
+class ExperimentalcRED(LabelFrame, ModuleFrameMixin):
     """GUI panel for doing cRED experiments on a Timepix camera."""
 
     def __init__(self, parent):

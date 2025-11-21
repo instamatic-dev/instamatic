@@ -15,14 +15,14 @@ from PIL.Image import Resampling
 
 from instamatic._typing import AnyPath
 from instamatic.formats import read_tiff, write_tiff
-from instamatic.gui.base_module import BaseModule, HasQMixin
+from instamatic.gui.base_module import BaseModule, ModuleFrameMixin
 from instamatic.gui.click_dispatcher import ClickDispatcher
 from instamatic.gui.videostream_processor import VideoStreamProcessor
 from instamatic.processing import apply_flatfield_correction
 from instamatic.utils.spinbox import Spinbox
 
 
-class VideoStreamFrame(LabelFrame, HasQMixin):
+class VideoStreamFrame(LabelFrame, ModuleFrameMixin):
     """GUI panel to continuously display the last frame streamed from the
     camera."""
 

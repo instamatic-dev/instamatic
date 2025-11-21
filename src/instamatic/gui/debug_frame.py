@@ -8,7 +8,7 @@ from tkinter.ttk import *
 
 from instamatic import config
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 scripts_drc = config.locations['scripts']
 
@@ -22,7 +22,7 @@ VMHOST = config.settings.VM_server_host
 VMPORT = config.settings.VM_server_port
 
 
-class DebugFrame(LabelFrame, HasQMixin):
+class DebugFrame(LabelFrame, ModuleFrameMixin):
     """GUI panel with advanced / debugging functions."""
 
     def __init__(self, parent):
