@@ -81,10 +81,12 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         text = 'Move stage with LMB'
         self.lmb_stage = Checkbutton(frame, text=text, variable=self.var_lmb_stage)
         self.lmb_stage.grid(row=1, column=3, columnspan=3, sticky='W')
+        self.var_lmb_stage.trace_add('write', self.toggle_lmb_stage)
 
         text = 'Move beam with RMB'
         self.rmb_beam = Checkbutton(frame, text=text, variable=self.var_rmb_beam)
         self.rmb_beam.grid(row=2, column=3, columnspan=3, sticky='W')
+        self.var_rmb_beam.trace_add('write', self.toggle_rmb_beam)
 
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
@@ -224,10 +226,8 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         self.var_diff_defocus_on = BooleanVar(value=False)
 
         self.var_stage_wait = BooleanVar(value=True)
-        self.var_rmb_beam = BooleanVar(value=False)
-        self.var_rmb_beam.trace_add('write', self.toggle_rmb_beam)
         self.var_lmb_stage = BooleanVar(value=False)
-        self.var_lmb_stage.trace_add('write', self.toggle_lmb_stage)
+        self.var_rmb_beam = BooleanVar(value=False)
 
     def set_mode(self, event=None):
         self.ctrl.mode.set(self.var_mode.get())
@@ -325,53 +325,50 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
     def toggle_lmb_stage(self, _name, _index, _mode):
         """If self.var_lmb_stage, move stage using Left Mouse Button."""
 
-        try:
-            stage_matrix = self.ctrl.get_stagematrix()
-        except KeyError:
-            print('No calibration :<')
-            # self.var_lmb_stage.set(False)
-            return
+        d = self.app.get_module('stream').click_dispatcher
+        if self.var_lmb_stage.get():
+            try:
+                stage_matrix = self.ctrl.get_stagematrix()
+            except KeyError:
+                print('No stage matrix for current mode and magnification found.')
+                print('Run `instamatic.calibrate_stagematrix` to use this feature.')
+                self.var_lmb_stage.set(False)
+                return
 
-        def _cb(click: ClickEvent) -> None:
-            if click.button == MouseButton.LEFT:
-                cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
-                pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
-                stage_shift = np.dot(pixel_delta, stage_matrix)
-                stage_x, stage_y = self.ctrl.stage.xy
-                self.ctrl.stage.set(x=stage_x + stage_shift[0], y=stage_y + stage_shift[1])
-            print(f'Stage position at {self.ctrl.stage.get()}')
+            def _callback(click: ClickEvent) -> None:
+                if click.button == MouseButton.LEFT:
+                    cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
+                    pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
+                    stage_shift = np.dot(pixel_delta, stage_matrix)
+                    x, y = self.ctrl.stage.xy
+                    self.ctrl.stage.set(x=x + stage_shift[0], y=y + stage_shift[1])
 
-        if checked := self.var_lmb_stage.get():
-            d = self.app.get_module('stream').click_dispatcher
-            n = 'lmb_stage'
-            self.lmb_stage_cl = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
-        self.lmb_stage_cl.active = checked
+            d.add_listener('lmb_stage', _callback, active=True)
+        else:
+            d.listeners.pop('lmb_stage', None)
 
     def toggle_rmb_beam(self, _name, _index, _mode) -> None:
         """If self.var_rmb_beam, move beam using Right Mouse Button."""
 
-        try:
-            if not hasattr(self, 'calib_beamshift'):
-                path = self.app.get_module('io').get_experiment_directory().parent / 'calib'
-                print(path / CALIB_BEAMSHIFT)
-                self.calib_beamshift = CalibBeamShift.from_file(path / CALIB_BEAMSHIFT)
-                print(self.calib_beamshift)
-        except OSError:
-            print('No calibration :(')
-            # self.var_rmb_beam.set(False)
-            return
+        d = self.app.get_module('stream').click_dispatcher
+        if self.var_rmb_beam.get():
+            path = self.app.get_module('io').get_experiment_directory().parent / 'calib'
+            try:
+                calib_beamshift = CalibBeamShift.from_file(path / CALIB_BEAMSHIFT)
+            except OSError:
+                print(f'No {CALIB_BEAMSHIFT} file in directory {path} found.')
+                print('Run `instamatic.calibrate_beamshift` there to use this feature.')
+                self.var_rmb_beam.set(False)
+                return
 
-        def _cb(click: ClickEvent) -> None:
-            if click.button == MouseButton.RIGHT:
-                bs = self.calib_beamshift.pixelcoord_to_beamshift((click.y, click.x))
-                self.ctrl.beamshift.set(*bs)
-            print(f'Beam shift at {self.ctrl.beamshift.get()}')
+            def _callback(click: ClickEvent) -> None:
+                if click.button == MouseButton.RIGHT:
+                    bs = calib_beamshift.pixelcoord_to_beamshift((click.y, click.x))
+                    self.ctrl.beamshift.set(*[float(b) for b in bs])
 
-        if checked := self.var_rmb_beam.get():
-            d = self.app.get_module('stream').click_dispatcher
-            n = 'rmb_beam'
-            self.rmb_beam_cl = c if (c := d.listeners.get(n)) else d.add_listener(n, _cb)
-        self.rmb_beam_cl.active = checked
+            d.add_listener('rmb_beam', _callback, active=True)
+        else:
+            d.listeners.pop('rmb_beam', None)
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
