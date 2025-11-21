@@ -8,7 +8,7 @@ from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, ModuleFrameMixin
 
-ENABLE_FOOTFREE_OPTION = False
+ENABLE_FOOTFREE_OPTION = True
 
 
 class ExperimentalcRED(LabelFrame, ModuleFrameMixin):
