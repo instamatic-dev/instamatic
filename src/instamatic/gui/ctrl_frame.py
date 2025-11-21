@@ -95,7 +95,7 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         e_stage_z = Spinbox(frame, textvariable=self.var_stage_z, **stage)
         e_stage_z.grid(row=6, column=3, sticky='EW')
 
-        Label(frame, text='Rotation Speed', width=20).grid(row=5, column=0, sticky='W')
+        Label(frame, text='Rotation speed', width=20).grid(row=5, column=0, sticky='W')
         e_goniotool_tx = Spinbox(
             frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
         )
