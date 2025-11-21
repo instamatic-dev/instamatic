@@ -138,11 +138,11 @@ class MainFrame:
         self.app = AppLoader()
 
         # the stream window is a special case, because it needs access
-        # to the cam module and the AppLoader itself
+        # to the cam module
         if cam:
             from .videostream_frame import module as stream_module
 
-            stream_module.set_kwargs(stream=cam, app=self.app)
+            stream_module.set_kwargs(stream=cam)
             modules.insert(0, stream_module)
 
         self.module_frame = Frame(root)

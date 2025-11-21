@@ -26,13 +26,12 @@ class VideoStreamFrame(LabelFrame, HasQMixin):
     """GUI panel to continuously display the last frame streamed from the
     camera."""
 
-    def __init__(self, parent, stream, app=None):
+    def __init__(self, parent, stream):
         LabelFrame.__init__(self, parent, text='Stream')
 
         self.parent = parent
 
         self.stream = stream
-        self.app = app
 
         self.panel = None
 
