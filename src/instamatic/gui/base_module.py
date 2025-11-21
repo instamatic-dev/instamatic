@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from queue import Queue
+from typing import Any
 
 
 class BaseModule:
@@ -39,4 +40,4 @@ class ModuleFrameMixin:
     """Asserts some class attributes i.e. module.q, app remain reserved."""
 
     q: Queue
-    app: None
+    app: Any
