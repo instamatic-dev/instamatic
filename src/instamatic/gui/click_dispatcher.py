@@ -82,9 +82,11 @@ class ClickDispatcher:
         self,
         name: str,
         callback: Optional[Callable[[ClickEvent], None]] = None,
+        active: bool = False,
     ) -> ClickListener:
         """Convenience method that adds and returns a new `ClickListener`"""
         listener = ClickListener(name, callback)
+        listener.active = active
         self.listeners[name] = listener
         return listener
 

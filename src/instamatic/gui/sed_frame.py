@@ -9,7 +9,7 @@ from tkinter.ttk import *
 from instamatic.calibrate import CalibDirectBeam
 from instamatic.calibrate.filenames import CALIB_BEAMSHIFT, CALIB_DIRECTBEAM
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 # import matplotlib
 # matplotlib.use('TkAgg')
@@ -50,7 +50,7 @@ message3 = """
 Press <OK> to start"""
 
 
-class ExperimentalSED(LabelFrame, HasQMixin):
+class ExperimentalSED(LabelFrame, ModuleFrameMixin):
     """GUI panel to start a SerialED experiment."""
 
     def __init__(self, parent):

@@ -5,10 +5,10 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 
-class ExperimentalcRED_FEI(LabelFrame, HasQMixin):
+class ExperimentalcRED_FEI(LabelFrame, ModuleFrameMixin):
     """Simple panel to assist cRED data collection (mainly rotation control) on
     a FEI microscope."""
 

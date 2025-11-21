@@ -5,10 +5,10 @@ from tkinter.ttk import *
 
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 
-class ExperimentalRED(LabelFrame, HasQMixin):
+class ExperimentalRED(LabelFrame, ModuleFrameMixin):
     """GUI panel to perform a simple RED experiment using discrete rotation
     steps."""
 

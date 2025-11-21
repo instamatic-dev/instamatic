@@ -10,7 +10,7 @@ import numpy as np
 
 from instamatic.formats import read_image
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 from .mpl_frame import ShowMatplotlibFig
 
 
@@ -25,7 +25,7 @@ def treeview_sort_column(tv, col, reverse):
     tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
 
 
-class MachineLearningFrame(LabelFrame, HasQMixin):
+class MachineLearningFrame(LabelFrame, ModuleFrameMixin):
     """GUI Panel to read in the results from the machine learning algorithm to
     identify good/poor crystals based on their diffraction pattern."""
 
