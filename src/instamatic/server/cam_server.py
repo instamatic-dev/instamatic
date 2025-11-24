@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-import pickle
 import queue
 import socket
 import threading
@@ -12,9 +11,8 @@ import numpy as np
 
 from instamatic import config
 from instamatic.camera import get_camera
+from instamatic.server.serializer import dumper, loader
 from instamatic.utils import high_precision_timers
-
-from .serializer import dumper, loader
 
 high_precision_timers.enable()
 
@@ -174,13 +172,13 @@ This program initializes a connection to the camera as defined in the config. Th
 
 The host and port are defined in `config/settings.yaml`.
 
-The data sent over the socket is a pickled dictionary with the following elements:
+The data sent over the socket is a serialized dict with the following elements:
 
 - `attr_name`: Name of the function to call or attribute to return (str)
 - `args`: (Optional) List of arguments for the function (list)
 - `kwargs`: (Optiona) Dictionary of keyword arguments for the function (dict)
 
-The response is returned as a pickle object.
+The response is returned as a serialized object.
 """
 
     parser = argparse.ArgumentParser(

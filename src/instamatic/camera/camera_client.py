@@ -3,9 +3,9 @@ from __future__ import annotations
 import atexit
 import socket
 import subprocess as sp
+import threading
 import time
 from functools import wraps
-from typing import Dict
 
 import numpy as np
 
@@ -55,6 +55,7 @@ class CamClient:
         self.name = name
         self.interface = interface
         self._bufsize = BUFSIZE
+        self._eval_lock = threading.Lock()
         self.verbose = False
 
         try:
@@ -79,7 +80,7 @@ class CamClient:
         )
         print('Use shared memory:', self.use_shared_memory)
 
-        self.buffers: Dict[str, np.ndarray] = {}
+        self.buffers: dict[str, np.ndarray] = {}
         self.shms = {}
 
         self._attr_dct: dict = {}
@@ -122,36 +123,37 @@ class CamClient:
 
     def _eval_dct(self, dct):
         """Takes approximately 0.2-0.3 ms per call if HOST=='localhost'."""
-        self.s.send(dumper(dct))
+        with self._eval_lock:
+            self.s.send(dumper(dct))
 
-        acquiring_image = dct['attr_name'] == 'get_image'
-        acquiring_movie = dct['attr_name'] == 'get_movie'
+            acquiring_image = dct['attr_name'] == 'get_image'
+            acquiring_movie = dct['attr_name'] == 'get_movie'
 
-        if acquiring_movie:
-            raise NotImplementedError('Acquiring movies over a socket is not supported.')
+            if acquiring_movie:
+                raise NotImplementedError('Acquiring movies over a socket is not supported.')
 
-        if acquiring_image and not self.use_shared_memory:
-            response = self.s.recv(self._imagebufsize)
-        else:
-            response = self.s.recv(self._bufsize)
+            if acquiring_image and not self.use_shared_memory:
+                response = self.s.recv(self._imagebufsize)
+            else:
+                response = self.s.recv(self._bufsize)
 
-        if response:
-            status, data = loader(response)
-        else:
-            raise RuntimeError(f'Received empty response when evaluating {dct=}')
+            if response:
+                status, data = loader(response)
+            else:
+                raise RuntimeError(f'Received empty response when evaluating {dct=}')
 
-        if self.use_shared_memory and acquiring_image:
-            data = self.get_data_from_shared_memory(**data)
+            if self.use_shared_memory and acquiring_image:
+                data = self.get_data_from_shared_memory(**data)
 
-        if status == 200:
-            return data
+            if status == 200:
+                return data
 
-        elif status == 500:
-            error_code, args = data
-            raise exception_list.get(error_code, TEMCommunicationError)(*args)
+            elif status == 500:
+                error_code, args = data
+                raise exception_list.get(error_code, TEMCommunicationError)(*args)
 
-        else:
-            raise ConnectionError(f'Unknown status code: {status}')
+            else:
+                raise ConnectionError(f'Unknown status code: {status}')
 
     def _init_dict(self):
         """Get list of functions and their doc strings from the uninitialized
