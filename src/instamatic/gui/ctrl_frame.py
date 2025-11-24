@@ -326,26 +326,27 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         """If self.var_lmb_stage, move stage using Left Mouse Button."""
 
         d = self.app.get_module('stream').click_dispatcher
-        if self.var_lmb_stage.get():
-            try:
-                stage_matrix = self.ctrl.get_stagematrix()
-            except KeyError:
-                print('No stage matrix for current mode and magnification found.')
-                print('Run `instamatic.calibrate_stagematrix` to use this feature.')
-                self.var_lmb_stage.set(False)
-                return
-
-            def _callback(click: ClickEvent) -> None:
-                if click.button == MouseButton.LEFT:
-                    cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
-                    pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
-                    stage_shift = np.dot(pixel_delta, stage_matrix)
-                    x, y = self.ctrl.stage.xy
-                    self.ctrl.stage.set(x=x + stage_shift[0], y=y + stage_shift[1])
-
-            d.add_listener('lmb_stage', _callback, active=True)
-        else:
+        if not self.var_lmb_stage.get():
             d.listeners.pop('lmb_stage', None)
+            return
+            
+        try:
+            stage_matrix = self.ctrl.get_stagematrix()
+        except KeyError:
+            print('No stage matrix for current mode and magnification found.')
+            print('Run `instamatic.calibrate_stagematrix` to use this feature.')
+            self.var_lmb_stage.set(False)
+            return
+
+        def _callback(click: ClickEvent) -> None:
+            if click.button == MouseButton.LEFT:
+                cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
+                pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
+                stage_shift = np.dot(pixel_delta, stage_matrix)
+                x, y = self.ctrl.stage.xy
+                self.ctrl.stage.set(x=x + stage_shift[0], y=y + stage_shift[1])
+
+        d.add_listener('lmb_stage', _callback, active=True)
 
     def toggle_rmb_beam(self, _name, _index, _mode) -> None:
         """If self.var_rmb_beam, move beam using Right Mouse Button."""
