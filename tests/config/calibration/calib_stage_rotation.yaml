@@ -1,5 +1,5 @@
-alpha_pace: 1.0
-alpha_windup: 0.0
+pace: 1.0
+windup: 0.0
 delay: 0.0
 speed_options:
   options: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]

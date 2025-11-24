@@ -256,9 +256,21 @@ This file holds the specifications of the camera. This file is must be located t
 ```
 
 **pets_prefix**
-: Arbitrary information to be added at the beginning of the `.pts` file created after an experiment. The prefix can include any [valid PETS2 input lines](http://pets.fzu.cz/download/pets2_manual.pdf). In the case of duplicate commands, prefix lines take precedence over hard-coded and suffix commands, and prevent the latter ones from being added. Additionally, this field can contain new python-style [replacement fields](https://pyformat.info/) which, if present among the `ImgConversion` instance attributes, will be filled automatically after each experiment (see the `pets_suffix` example). A typical `pets_prefix`, capable of overwriting the default detector specification output can look like this:
+: Arbitrary information to be added at the beginning of the `.pts` file created after an experiment. The prefix can include any [valid PETS2 input lines](http://pets.fzu.cz/download/pets2_manual.pdf). In the case of duplicate commands, prefix lines take precedence over hard-coded and suffix commands, and prevent the latter ones from being added. Additionally, this field can contain new python-style [replacement fields](https://pyformat.info/) which, if present among the `ImgConversion` instance attributes, will be filled automatically after each experiment. A typical `pets_prefix`, capable of overwriting the default detector specification output can look like this:
 ```yaml
-pets_prefix: "noiseparameters 4.2 0\nreflectionsize 8\ndetector asi"
+pets_prefix: |
+
+  # MEASUREMENT CONDITIONS:
+  # Start angle:               {start_angle:6.2f} deg
+  # End angle:                 {end_angle:6.2f} deg
+  # Step size:                 {osc_angle:6.2f} deg
+  # Exposure:                  {acquisition_time:6.3f} s
+  # Wave length:      {wavelength:15.8g} A
+  # Camera distance:  {distance:15.8g} mm
+
+  noiseparameters 4.2 0
+  reflectionsize 8
+  detector asi
 ```
 
 **pets_suffix**

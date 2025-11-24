@@ -217,7 +217,7 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         self.var_stage_y = IntVar(value=0)
         self.var_stage_z = IntVar(value=0)
 
-        self.var_goniotool_tx = IntVar(value=1)
+        self.var_goniotool_tx = DoubleVar(value=1)
 
         self.var_brightness = IntVar(value=65535)
         self.var_difffocus = IntVar(value=65535)
