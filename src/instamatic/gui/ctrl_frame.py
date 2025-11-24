@@ -329,7 +329,7 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
         if not self.var_lmb_stage.get():
             d.listeners.pop('lmb_stage', None)
             return
-            
+
         try:
             stage_matrix = self.ctrl.get_stagematrix()
         except KeyError:
@@ -356,7 +356,7 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
             d.listeners.pop('rmb_beam', None)
             return
 
-        path = self.app.get_module('io').get_experiment_directory().parent / 'calib'
+        path = self.app.get_module('io').get_working_directory() / 'calib'
         try:
             calib_beamshift = CalibBeamShift.from_file(path / CALIB_BEAMSHIFT)
         except OSError:
@@ -370,7 +370,7 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
                 bs = calib_beamshift.pixelcoord_to_beamshift((click.y, click.x))
                 self.ctrl.beamshift.set(*[float(b) for b in bs])
 
-        d.add_listener('rmb_beam', _callback, active=True)            
+        d.add_listener('rmb_beam', _callback, active=True)
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))
