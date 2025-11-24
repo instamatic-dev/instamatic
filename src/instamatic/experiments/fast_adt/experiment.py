@@ -281,7 +281,7 @@ class Experiment(ExperimentBase):
         detector_dead_time = self.get_dead_time(run.exposure)
         time_for_one_frame = run.exposure + detector_dead_time
         rot_calib = self.get_stage_rotation()
-        rot_plan = rot_calib.plan_rotation(time_for_one_frame / run.osc_angle)
+        rot_plan = rot_calib.plan_motion(time_for_one_frame / run.osc_angle)
         exposure = abs(rot_plan.pace * run.osc_angle) - detector_dead_time
         return rot_plan.speed, exposure
 
