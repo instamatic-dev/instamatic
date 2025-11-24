@@ -384,7 +384,7 @@ class JeolMicroscope(MicroscopeBase):
 
     def setRotationSpeed(self, value: int):
         if self.goniotool_available:
-            self.goniotool.set_rate(value)
+            self.goniotool.set_rate(int(value))
         else:
             raise TEMCommunicationError('Goniotool connection is not available.')
 
