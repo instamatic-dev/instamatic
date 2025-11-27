@@ -2,18 +2,22 @@ from __future__ import annotations
 
 import queue
 import threading
-from threading import Event
 from tkinter import *
 from tkinter.ttk import *
-from typing import Dict
+
+import numpy as np
 
 from instamatic import config
+from instamatic.calibrate import CalibBeamShift
+from instamatic.calibrate.filenames import CALIB_BEAMSHIFT
+from instamatic.exceptions import TEMCommunicationError
+from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 
-class ExperimentalCtrl(LabelFrame, HasQMixin):
+class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
     """This panel holds some frequently used functions to control the electron
     microscope."""
 
@@ -74,6 +78,16 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         )
         b_wobble.grid(row=4, column=2, sticky='W', columnspan=2)
 
+        text = 'Move stage with LMB'
+        self.lmb_stage = Checkbutton(frame, text=text, variable=self.var_lmb_stage)
+        self.lmb_stage.grid(row=1, column=3, columnspan=3, sticky='W')
+        self.var_lmb_stage.trace_add('write', self.toggle_lmb_stage)
+
+        text = 'Move beam with RMB'
+        self.rmb_beam = Checkbutton(frame, text=text, variable=self.var_rmb_beam)
+        self.rmb_beam.grid(row=2, column=3, columnspan=3, sticky='W')
+        self.var_rmb_beam.trace_add('write', self.toggle_rmb_beam)
+
         e_stage_x = Spinbox(frame, textvariable=self.var_stage_x, **stage)
         e_stage_x.grid(row=6, column=1, sticky='EW')
         e_stage_y = Spinbox(frame, textvariable=self.var_stage_y, **stage)
@@ -81,14 +95,14 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         e_stage_z = Spinbox(frame, textvariable=self.var_stage_z, **stage)
         e_stage_z.grid(row=6, column=3, sticky='EW')
 
+        Label(frame, text='Rotation speed', width=20).grid(row=5, column=0, sticky='W')
+        e_goniotool_tx = Spinbox(
+            frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
+        )
+        e_goniotool_tx.grid(row=5, column=1, sticky='EW')
+        b_goniotool_set = Button(frame, text='Set', command=self.set_goniotool_tx)
+        b_goniotool_set.grid(row=5, column=2, sticky='EW')
         if config.settings.use_goniotool:
-            Label(frame, text='Rot. Speed', width=20).grid(row=5, column=0, sticky='W')
-            e_goniotool_tx = Spinbox(
-                frame, width=10, textvariable=self.var_goniotool_tx, from_=1, to=12, increment=1
-            )
-            e_goniotool_tx.grid(row=5, column=1, sticky='EW')
-            b_goniotool_set = Button(frame, text='Set', command=self.set_goniotool_tx)
-            b_goniotool_set.grid(row=5, column=2, sticky='W')
             b_goniotool_default = Button(
                 frame, text='Default', command=self.set_goniotool_tx_default
             )
@@ -203,7 +217,7 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.var_stage_y = IntVar(value=0)
         self.var_stage_z = IntVar(value=0)
 
-        self.var_goniotool_tx = IntVar(value=1)
+        self.var_goniotool_tx = DoubleVar(value=1)
 
         self.var_brightness = IntVar(value=65535)
         self.var_difffocus = IntVar(value=65535)
@@ -212,6 +226,8 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         self.var_diff_defocus_on = BooleanVar(value=False)
 
         self.var_stage_wait = BooleanVar(value=True)
+        self.var_lmb_stage = BooleanVar(value=False)
+        self.var_rmb_beam = BooleanVar(value=False)
 
     def set_mode(self, event=None):
         self.ctrl.mode.set(self.var_mode.get())
@@ -257,7 +273,12 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
     def set_goniotool_tx(self, event=None, value=None):
         if not value:
             value = self.var_goniotool_tx.get()
-        self.ctrl.stage.set_rotation_speed(value)
+        try:
+            self.ctrl.stage.set_rotation_speed(value)
+        except AttributeError:
+            print('This TEM does not implement `setRotationSpeed` method')
+        except TEMCommunicationError:
+            print('Could not connect to the stage rotation speed controller')
 
     def set_goniotool_tx_default(self, event=None):
         value = 12
@@ -300,6 +321,55 @@ class ExperimentalCtrl(LabelFrame, HasQMixin):
         else:
             if self.wobble_stop_event:
                 self.wobble_stop_event.set()
+
+    def toggle_lmb_stage(self, _name, _index, _mode):
+        """If self.var_lmb_stage, move stage using Left Mouse Button."""
+
+        d = self.app.get_module('stream').click_dispatcher
+        if not self.var_lmb_stage.get():
+            d.listeners.pop('lmb_stage', None)
+            return
+
+        try:
+            stage_matrix = self.ctrl.get_stagematrix()
+        except KeyError:
+            print('No stage matrix for current mode and magnification found.')
+            print('Run `instamatic.calibrate_stagematrix` to use this feature.')
+            self.var_lmb_stage.set(False)
+            return
+
+        def _callback(click: ClickEvent) -> None:
+            if click.button == MouseButton.LEFT:
+                cam_dim_x, cam_dim_y = self.ctrl.cam.get_camera_dimensions()
+                pixel_delta = np.array([click.y - cam_dim_y / 2, click.x - cam_dim_x / 2])
+                stage_delta = np.dot(pixel_delta, stage_matrix)
+                self.ctrl.stage.move_in_projection(*stage_delta)
+
+        d.add_listener('lmb_stage', _callback, active=True)
+
+    def toggle_rmb_beam(self, _name, _index, _mode) -> None:
+        """If self.var_rmb_beam, move beam using Right Mouse Button."""
+
+        d = self.app.get_module('stream').click_dispatcher
+        if not self.var_rmb_beam.get():
+            d.listeners.pop('rmb_beam', None)
+            return
+
+        path = self.app.get_module('io').get_working_directory() / 'calib'
+        try:
+            calib_beamshift = CalibBeamShift.from_file(path / CALIB_BEAMSHIFT)
+        except OSError:
+            print(f'No {CALIB_BEAMSHIFT} file in directory {path} found.')
+            print('Run `instamatic.calibrate_beamshift` there to use this feature.')
+            self.var_rmb_beam.set(False)
+            return
+
+        def _callback(click: ClickEvent) -> None:
+            if click.button == MouseButton.RIGHT:
+                bs = calib_beamshift.pixelcoord_to_beamshift((click.y, click.x))
+                self.ctrl.beamshift.set(*[float(b) for b in bs])
+
+        d.add_listener('rmb_beam', _callback, active=True)
 
     def stage_stop(self):
         self.q.put(('ctrl', {'task': 'stage.stop'}))

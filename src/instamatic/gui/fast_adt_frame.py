@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 from instamatic import controller
 from instamatic.utils.spinbox import Spinbox
 
-from .base_module import BaseModule, HasQMixin
+from .base_module import BaseModule, ModuleFrameMixin
 
 pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
@@ -82,7 +82,7 @@ class ExperimentalFastADTVariables:
         return {n: v.get() for n, v in vars(self).items() if isinstance(v, Variable)}
 
 
-class ExperimentalFastADT(LabelFrame, HasQMixin):
+class ExperimentalFastADT(LabelFrame, ModuleFrameMixin):
     """GUI panel to perform selected FastADT-style (c)RED & PED experiments."""
 
     def __init__(self, parent):
