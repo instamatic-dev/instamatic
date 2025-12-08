@@ -11,7 +11,7 @@ __banner__ = r"""
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 """
 
-__version__ = '2.1.1'
+__version__ = '2.2.0'
 __title__ = 'instamatic'
 __long_title__ = f'{__title__} v{__version__}'
 __author__ = 'Stef Smeets'

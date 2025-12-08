@@ -32,5 +32,5 @@ doi: "10.5281/zenodo.1090388"
 license: "BSD-3-Clause"
 message: "If you use this software, please cite it using these metadata."
 title: Instamatic
-version: "2.1.1"
+version: "2.2.0"
 ...
