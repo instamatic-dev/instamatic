@@ -116,6 +116,8 @@ class CalibBeamShift:
     def plot(self, to_file: Optional[AnyPath] = None):
         """Assuming the data is present, plot the data."""
         shifts = np.dot(self.shifts, np.linalg.inv(self.transform))
+        print(self.pixels.T)
+        print(shifts.T)
         plt.scatter(*self.pixels.T, marker='>', label='Observed pixel shifts')
         plt.scatter(*shifts.T, marker='<', label='Reconstructed pixel shifts')
         plt.legend()
@@ -136,6 +138,8 @@ class CalibBeamShift:
         for p, s in zip(self.pixels, shifts):
             p = (p + self.reference_pixel)[::-1]  # xy coords inverted for plot
             s = (s + self.reference_pixel)[::-1]  # xy coords inverted for plot
+            p /= 4  # HARD-CODED binning because I don't have time to do it nicely
+            s /= 4  # HARD-CODED binning because I don't have time to do it nicely
             ins.append(vsp.draw.circle(p, radius=3, fill='blue'))
             ins.append(vsp.draw.circle(s, radius=3, fill='orange'))
         ins.append(vsp.draw.circle(self.reference_pixel[::-1], radius=3, fill='black'))
