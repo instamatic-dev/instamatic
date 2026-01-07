@@ -213,7 +213,6 @@ class Experiment(ExperimentBase):
         self.flatfield = flatfield
         self.fast_adt_frame = experiment_frame
         self.beamshift: Optional[CalibBeamShift] = None
-        self.binsize: int = 1
         self.camera_length: int = 0
 
         if videostream_frame is not None:
@@ -338,7 +337,6 @@ class Experiment(ExperimentBase):
 
         with self.ctrl.beam.blanked(), self.ctrl.cam.blocked():
             if params['tracking_algo'] == 'manual':
-                self.binsize = self.ctrl.cam.default_binsize
                 self.runs.tracking = TrackingRun.from_params(params)
                 self.determine_pathing_manually()
             for pathing_run in self.runs.pathing:
@@ -390,7 +388,7 @@ class Experiment(ExperimentBase):
             self.beamshift = self.get_beamshift()
             self.msg1('Locate the beam (move it if needed) and click on its center.')
             with self.click_listener as cl:
-                obs_beampixel_xy = np.array(cl.get_click().xy) * self.binsize
+                obs_beampixel_xy = np.array(cl.get_click().xy)
         cal_beampixel_yx = self.beamshift.beamshift_to_pixelcoord(self.ctrl.beamshift.get())
 
         self.ctrl.restore('FastADT_track')
@@ -403,12 +401,11 @@ class Experiment(ExperimentBase):
                 self.msg1(f'Click on tracked point: {step.summary}.')
                 with self.displayed_pathing(step=step), self.click_listener:
                     click = self.click_listener.get_click()
-                click_xy = np.array(click.xy) * self.binsize
-                delta_yx = (click_xy - obs_beampixel_xy)[::-1]
+                delta_yx = (np.array(click.xy) - obs_beampixel_xy)[::-1]
                 click_beampixel_yx = cast(Sequence[float], cal_beampixel_yx + delta_yx)
                 click_beamshift_xy = self.beamshift.pixelcoord_to_beamshift(click_beampixel_yx)
                 cols = ['beampixel_x', 'beampixel_y', 'beamshift_x', 'beamshift_y']
-                run.table.loc[step.Index, cols] = *click_xy, *click_beamshift_xy
+                run.table.loc[step.Index, cols] = *click.xy, *click_beamshift_xy
                 tracking_frames.append(step.image)
             if 'image' not in run.table:
                 run.table['image'] = tracking_frames
