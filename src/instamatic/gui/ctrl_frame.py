@@ -363,14 +363,14 @@ class ExperimentalCtrl(LabelFrame, ModuleFrameMixin):
             print('Run `instamatic.calibrate_beamshift` there to use this feature.')
             self.var_rmb_beam.set(False)
             return
-        
+
         binning = self.ctrl.cam.default_binsize
 
         def _callback(click: ClickEvent) -> None:
             if click.button == MouseButton.RIGHT:
                 pixel_x = click.x * binning
                 pixel_y = click.y * binning
-                bs = calib_beamshift.pixelcoord_to_beamshift((pixel_x, pixel_y))
+                bs = calib_beamshift.pixelcoord_to_beamshift((pixel_y, pixel_x))
                 self.ctrl.beamshift.set(*[float(b) for b in bs])
 
         d.add_listener('rmb_beam', _callback, active=True)
