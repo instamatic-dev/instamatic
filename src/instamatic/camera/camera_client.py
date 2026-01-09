@@ -144,7 +144,7 @@ class CamClient:
         with self._eval_lock:
             self.s.send(dumper(dct))
 
-            acquiring_image = dct['attr_name'] in {'get_image', 'get_movie'}
+            acquiring_image = dct['attr_name'] in {'get_image', 'get_movie', '__gen_next__'}
 
             if acquiring_image and not self.use_shared_memory:
                 response = self.s.recv(self._imagebufsize)
@@ -232,8 +232,8 @@ class CamClient:
             try:
                 while True:
                     dct = {'attr_name': '__gen_next__', 'kwargs': kwargs}
-                    status, value = self._eval_dct(dct)
-                    if status == 204:
+                    value = self._eval_dct(dct)
+                    if value is None:
                         return
                     yield value
             finally:
