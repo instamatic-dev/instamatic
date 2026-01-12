@@ -39,23 +39,6 @@ def start_server_in_subprocess():
     atexit.register(kill_server, p)
 
 
-#
-# def recv_pickle(sock: socket.socket, timeout: float = 60.0):
-#     import pickle
-#
-#     buffer = b''
-#     t0 = time.perf_counter()
-#     while time.perf_counter() - t0 < timeout:
-#         buffer += sock.recv(BUFSIZE)
-#         if not buffer:
-#             raise EOFError('Socket closed before pickle was complete')
-#         try:
-#             return pickle.loads(buffer)
-#         except (EOFError, pickle.UnpicklingError):
-#             continue
-#     return (500, None)  # after timeout
-
-
 class CamClient:
     """Simulates a Camera object and synchronizes calls over a socket server.
 
@@ -148,7 +131,6 @@ class CamClient:
 
             if acquiring_image and not self.use_shared_memory:
                 response = self.s.recv(self._imagebufsize)
-                # response = recv_pickle(self.s)  # may be needed if image is too large
             else:
                 response = self.s.recv(self._bufsize)
 

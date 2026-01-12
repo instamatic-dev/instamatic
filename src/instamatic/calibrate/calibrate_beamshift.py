@@ -117,8 +117,6 @@ class CalibBeamShift:
     def plot(self, to_file: Optional[AnyPath] = None):
         """Assuming the data is present, plot the data."""
         shifts = np.dot(self.shifts, np.linalg.inv(self.transform))
-        print(self.pixels.T)
-        print(shifts.T)
         plt.scatter(*self.pixels.T, marker='>', label='Observed pixel shifts')
         plt.scatter(*shifts.T, marker='<', label='Reconstructed pixel shifts')
         plt.legend()
