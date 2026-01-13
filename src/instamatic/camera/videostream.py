@@ -72,8 +72,8 @@ class MediaGrabber:
             if self.acquireInitiateEvent.is_set():
                 r = self.request
                 self.acquireInitiateEvent.clear()
-                e = r.exposure if r.exposure else self.default_exposure
-                b = r.binsize if r.binsize else self.default_binsize
+                e = float(r.exposure if r.exposure else self.default_exposure)
+                b = int(r.binsize if r.binsize else self.default_binsize)
                 if isinstance(r, ImageRequest):
                     media = self.cam.get_image(exposure=e, binsize=b)
                     self.callback(media, request=r)

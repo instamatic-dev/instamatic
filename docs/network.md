@@ -40,7 +40,7 @@ use_cam_server: False
 
 ## Example 2
 
-This is an example where the microscope and camera PCs should be controlled through an intermediate support PC.
+In this example, the microscope and camera are controlled by a dedicated computer(s), distinct from an intermediate support PC running the Instamatic GUI. This scenario is preferred if, for any reason, Instamatic can not be fully installed on the Microscope/Camera PC such as when using [instamatic-tecnai-server](https://github.com/instamatic-dev/instamatic-tecnai-server) in lieu of the full Instamatic.
 
 If your camera can be controlled directly through TCP/IP, such as the MerlinEM or ASI Cheetah (via `serval`), do not use `instamatic.camserver`, but connect directly to the IP. For example, for Merlin.
 
@@ -71,6 +71,8 @@ cam_server_host: 0.0.0.0
 cam_server_port: 8088
 cam_use_shared_memory: False
 ```
+
+A case of a setup where the Microscope PC supports both the TEM and a camera server via the Tecnai server while the main GUI runs on a separate Support PC is partially discussed [here](https://sites.google.com/view/instamatic-on-titan).
 
 ## Example 3
 

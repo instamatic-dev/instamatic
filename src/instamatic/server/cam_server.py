@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import datetime
+import inspect
 import logging
 import queue
 import socket
 import threading
 import traceback
+import uuid
 
 import numpy as np
 
@@ -19,6 +21,7 @@ high_precision_timers.enable()
 if config.settings.cam_use_shared_memory:
     from multiprocessing import shared_memory
 
+_generators = {}
 condition = threading.Condition()
 box = []
 
@@ -97,6 +100,10 @@ class CamServer(threading.Thread):
                 try:
                     ret = self.evaluate(attr_name, args, kwargs)
                     status = 200
+                    if inspect.isgenerator(ret):
+                        gen_id = uuid.uuid4().hex
+                        _generators[gen_id] = ret
+                        ret = {'__generator__': gen_id}
                 except Exception as e:
                     traceback.print_exc()
                     if self.log:
@@ -121,7 +128,19 @@ class CamServer(threading.Thread):
     def evaluate(self, attr_name: str, args: list, kwargs: dict):
         """Evaluate the function or attribute `attr_name` on `self.cam`, if
         `attr_name` refers to a function, call it with *args and **kwargs."""
-        # print(attr_name, args, kwargs)
+
+        if attr_name == '__gen_next__':
+            gen = _generators[kwargs['id']]
+            try:
+                return next(gen)
+            except StopIteration:
+                del _generators[kwargs['id']]
+                return
+
+        if attr_name == '__gen_close__':
+            _generators.pop(kwargs['id'], None)
+            return
+
         f = getattr(self.cam, attr_name)
         return f(*args, **kwargs) if callable(f) else f
 

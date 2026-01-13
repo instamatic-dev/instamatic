@@ -22,11 +22,12 @@ Cameras supported:
 - ASI CheeTah through `serval-toolkit` library
 - TVIPS cameras through EMMENU4 API
 - Quantum Detectors MerlinEM
+- Gatan cameras through FEI scripting interface
 - (Gatan cameras through DM plugin [1])
 
 Instamatic has been developed on a JEOL-2100 with a Timepix camera, and a JEOL-1400 and JEOL-3200 with TVIPS cameras (XF416/F416).
 
-See [instamatic-dev/instamatic-tecnai-server](https://github.com/instamatic-dev/instamatic-tecnai-server) for a TEM interface to control a FEI Tecnai-TEM on Windows XP/Python 3.4 via instamatic.
+See [instamatic-dev/instamatic-tecnai-server](https://github.com/instamatic-dev/instamatic-tecnai-server) for a TEM interface to control a FEI Tecnai or FEI Titan TEM and associated cameras on Windows XP/Python 3.4 via instamatic.
 
 [1]: Support for Gatan cameras is somewhat underdeveloped. As an alternative, a DigitalMicrograph script for collecting cRED data on a OneView camera (or any other Gatan camera) can be found [here](https://github.com/instamatic-dev/InsteaDMatic).
 
@@ -47,7 +48,7 @@ pip install instamatic
 
 ## OS requirement
 
-The package requires Windows 7 or higher. It has been mainly developed and tested under windows 7 and higher.
+The package requires Windows 7 or higher. It has been mainly developed and tested under Windows 7 and higher.
 
 ## Package dependencies
 

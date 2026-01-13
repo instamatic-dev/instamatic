@@ -6,6 +6,7 @@ import subprocess as sp
 import threading
 import time
 from functools import wraps
+from typing import Any, Generator
 
 import numpy as np
 
@@ -126,11 +127,7 @@ class CamClient:
         with self._eval_lock:
             self.s.send(dumper(dct))
 
-            acquiring_image = dct['attr_name'] == 'get_image'
-            acquiring_movie = dct['attr_name'] == 'get_movie'
-
-            if acquiring_movie:
-                raise NotImplementedError('Acquiring movies over a socket is not supported.')
+            acquiring_image = dct['attr_name'] in {'get_image', 'get_movie', '__gen_next__'}
 
             if acquiring_image and not self.use_shared_memory:
                 response = self.s.recv(self._imagebufsize)
@@ -146,6 +143,8 @@ class CamClient:
                 data = self.get_data_from_shared_memory(**data)
 
             if status == 200:
+                if isinstance(data, dict) and '__generator__' in data:
+                    return self._wrap_remote_generator(data['__generator__'])
                 return data
 
             elif status == 500:
@@ -206,3 +205,20 @@ class CamClient:
 
     def unblock(self):
         raise NotImplementedError('This camera cannot be streamed.')
+
+    def _wrap_remote_generator(self, gen_id: str) -> Generator[Any]:
+        """Pass a reference to yield from a remote __generator__ with id."""
+
+        def generator():
+            kwargs = {'id': gen_id}
+            try:
+                while True:
+                    dct = {'attr_name': '__gen_next__', 'kwargs': kwargs}
+                    value = self._eval_dct(dct)
+                    if value is None:
+                        return
+                    yield value
+            finally:
+                self._eval_dct({'attr_name': '__gen_close__', 'kwargs': kwargs})
+
+        return generator()

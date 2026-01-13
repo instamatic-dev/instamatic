@@ -101,7 +101,8 @@ class CalibBeamShift:
     ) -> Self:
         while True:
             c = calibrate_beamshift(ctrl=ctrl, save_images=True, outdir=outdir)
-            with c.annotate_videostream(vsp) if vsp else nullcontext():
+            binsize = ctrl.cam.default_binsize
+            with c.annotate_videostream(vsp, binsize) if vsp else nullcontext():
                 if input(' >> Accept? [y/n] ') == 'y':
                     return c
 
@@ -127,15 +128,15 @@ class CalibBeamShift:
             plt.show()
 
     @contextmanager
-    def annotate_videostream(self, vsp: Optional[VideoStreamProcessor] = None) -> None:
+    def annotate_videostream(self, vsp: VideoStreamProcessor, binsize: int = 1) -> None:
         shifts = np.dot(self.shifts, np.linalg.inv(self.transform))
         ins: list[DeferredImageDraw.Instruction] = []
 
         vsp.temporary_frame = np.max(self.images, axis=0)
         print('Determined (blue) vs calibrated (orange) beam positions:')
         for p, s in zip(self.pixels, shifts):
-            p = (p + self.reference_pixel)[::-1]  # xy coords inverted for plot
-            s = (s + self.reference_pixel)[::-1]  # xy coords inverted for plot
+            p = (p + self.reference_pixel)[::-1] / binsize  # xy coords inverted for plot
+            s = (s + self.reference_pixel)[::-1] / binsize  # xy coords inverted for plot
             ins.append(vsp.draw.circle(p, radius=3, fill='blue'))
             ins.append(vsp.draw.circle(s, radius=3, fill='orange'))
         ins.append(vsp.draw.circle(self.reference_pixel[::-1], radius=3, fill='black'))
