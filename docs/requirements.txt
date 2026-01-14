@@ -3,5 +3,5 @@ mkdocs
 mkdocs-jupyter
 mkdocs-gen-files
 mkdocs-material
-mkdocstrings>=0.26
-mkdocstrings-python>=1.10
+mkdocstrings>=0.26,<1.0
+mkdocstrings-python>=1.10,<2.0
