@@ -1,4 +1,5 @@
 [![build](https://github.com/instamatic-dev/instamatic/actions/workflows/test.yml/badge.svg)](https://github.com/instamatic-dev/instamatic/actions/workflows/test.yml)
+[![docs](https://camo.githubusercontent.com/3303c8b478a6de9b1e736a919b54d743c7af0ea2c1795cc9ae92ace209c4f5b7/68747470733a2f2f6170702e72656164746865646f63732e6f72672f70726f6a656374732f696e7374616d617469632f62616467652f)](https://app.readthedocs.org/projects/instamatic/builds/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/instamatic)](https://pypi.org/project/instamatic/)
 [![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/instamatic/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1090388.svg)](https://doi.org/10.5281/zenodo.1090388)
