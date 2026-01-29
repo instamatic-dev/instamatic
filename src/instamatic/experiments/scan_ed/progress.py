@@ -16,14 +16,14 @@ class GridWindowProtocol(Protocol):
 class ProgressTable(ttk.Frame):
     """Use a ttk.TreeView to display the progress of scanning experiment."""
 
-    COLUMNS = 'Geometry hits refls steps hits/step refls/step'.split()
+    COLUMNS = 'geometry hits peaks steps hits/step peaks/step'.split()
 
     def __init__(self, parent: tk.Misc, **kwargs) -> None:
         super().__init__(parent, **kwargs)
         self.tree = None
         self._build_tree()
-        self._scan_geom: list[Union[int, str]] = []
-        self._window_totals: tuple[int, int, int] = (0, 0, 0)  # hits, refls, steps
+        self._scan_geom: dict[tuple[int, int], tuple[int, int, int, int, int]] = {}
+        self._window_totals: tuple[int, int, int] = (0, 0, 0)  # hits, peaks, steps
 
     def _build_tree(self) -> None:
         self.tree = ttk.Treeview(self, columns=self.COLUMNS, show='tree headings')
@@ -32,12 +32,12 @@ class ProgressTable(ttk.Frame):
             self.tree.heading(column, text=column)
 
         self.tree.column('#0', width=30, stretch=True)
-        self.tree.column('Geometry', anchor=tk.CENTER, width=60)
+        self.tree.column('geometry', anchor=tk.CENTER, width=120)
         self.tree.column('hits', anchor=tk.E, width=20)
-        self.tree.column('refls', anchor=tk.E, width=20)
+        self.tree.column('peaks', anchor=tk.E, width=20)
         self.tree.column('steps', anchor=tk.E, width=20)
         self.tree.column('hits/step', anchor=tk.E, width=20)
-        self.tree.column('refls/step', anchor=tk.E, width=20)
+        self.tree.column('peaks/step', anchor=tk.E, width=20)
 
         vsb = ttk.Scrollbar(orient='vertical', command=self.tree.yview)
         hsb = ttk.Scrollbar(orient='horizontal', command=self.tree.xview)
@@ -75,68 +75,72 @@ class ProgressTable(ttk.Frame):
         scan: int,
         x0: int,
         y0: int,
-        direction: str,
-        span: int,
+        axis: int,
         step: int,
-    ):
-        """Add a new child scan line to the tree called Scan #."""
+        n_steps: int,
+    ) -> None:
+        """Add a new child scan line to the tree called Scan # (planned)."""
         window_iid = self._window_iid(window)
         scan_iid = self._scan_iid(window, scan)
         scan_name = f'Scan {scan:d}'
-        if direction.endswith('x'):
-            geom = f'y: {y0}, x: {x0} -> {x0 + span}'
+
+        start = (x0, y0)[axis]
+        end = start + step * n_steps
+
+        if axis == 0:  # x
+            geom = f'y={y0}, x: {start} -> {end}'
         else:
-            geom = f'x: {x0}, y: {y0} -> {y0 + span}'
-        values = (geom, '-', '-', -(-span // step), '-', '-')
+            geom = f'x={x0}, y: {start} -> {end}'
+
+        values = (geom, '-', '-', str(int(n_steps)), '-', '-')
         self.tree.insert(window_iid, tk.END, iid=scan_iid, text=scan_name, values=values)
-        self._scan_geom = [x0, y0, direction, span]
+
+        self._scan_geom[(window, scan)] = (x0, y0, axis, step, n_steps)
 
     def fill_scan(
         self,
         window: int,
         scan: int,
-        success: Union[np.ndarray, Sequence[Union[bool, None]]],
+        hits: Union[np.ndarray, Sequence[bool]],
         n_peaks: Union[np.ndarray, Sequence[int]],
     ) -> None:
         """Add lines for successful experiments, update scan & column lines."""
 
         scan_iid = self._scan_iid(window, scan)
         window_iid = self._window_iid(window)
-        x0, y0, direction, span = self._scan_geom
-        step = span / len(success) * (-1 if direction.startswith('-') else 1)
+        x0, y0, axis, step, n_steps = self._scan_geom[(int(window), int(scan))]
 
-        s_hits = sum(bool(s) for s in success)
-        s_refls = sum(int(n) for ok, n in zip(success, n_peaks) if ok)
-        s_steps = len(success)
+        s_hits = sum(hits)
+        s_peaks = sum(int(n) for ok, n in zip(hits, n_peaks) if ok)
+        s_steps = len(hits)
         s_hits_per_step = s_hits / s_steps if s_steps else 0.0
-        s_refls_per_step = s_refls / s_steps if s_steps else 0.0
+        s_peaks_per_step = s_peaks / s_steps if s_steps else 0.0
 
         self.tree.set(scan_iid, 'hits', str(s_hits))
-        self.tree.set(scan_iid, 'refls', str(s_refls))
+        self.tree.set(scan_iid, 'peaks', str(s_peaks))
         self.tree.set(scan_iid, 'steps', str(s_steps))
         self.tree.set(scan_iid, 'hits/step', f'{s_hits_per_step:.3g}')
-        self.tree.set(scan_iid, 'refls/step', f'{s_refls_per_step:.3g}')
+        self.tree.set(scan_iid, 'peaks/step', f'{s_peaks_per_step:.3g}')
 
         w_hits = self._window_totals[0] + s_hits
-        w_refls = self._window_totals[1] + s_refls
+        w_peaks = self._window_totals[1] + s_peaks
         w_steps = self._window_totals[2] + s_steps
         w_hits_per_step = w_hits / w_steps if w_steps else 0.0
-        w_refls_per_step = w_refls / w_steps if w_steps else 0.0
-        self._window_totals = (w_hits, w_refls, w_steps)
+        w_peaks_per_step = w_peaks / w_steps if w_steps else 0.0
+        self._window_totals = (w_hits, w_peaks, w_steps)
 
         self.tree.set(window_iid, 'hits', str(w_hits))
-        self.tree.set(window_iid, 'refls', str(w_refls))
+        self.tree.set(window_iid, 'peaks', str(w_peaks))
         self.tree.set(window_iid, 'steps', str(w_steps))
         self.tree.set(window_iid, 'hits/step', f'{w_hits_per_step:.3g}')
-        self.tree.set(window_iid, 'refls/step', f'{w_refls_per_step:.3g}')
+        self.tree.set(window_iid, 'peaks/step', f'{w_peaks_per_step:.3g}')
 
-        for i, (ok, n) in enumerate(zip(success, n_peaks)):
+        for i, (ok, n) in enumerate(zip(hits, n_peaks)):
             if not ok:
                 continue
             step_name = f'Step {i:d}'
             step_iid = self._step_iid(window, scan, i)
-            axis = direction[-1]
-            geom = f'{axis}: {int((x0 if axis == "x" else y0) + i * step)}'
+            geom = f'{"xy"[axis]}: {(x0, y0)[axis] + i * step}'
             values = (geom, '', int(n), '', '', '')
             self.tree.insert(scan_iid, tk.END, iid=step_iid, text=step_name, values=values)
 
@@ -151,8 +155,8 @@ def edits_progress(method: Callable) -> Callable:
         if (progress := getattr(self, 'progress', None)) is not None:
             bound = method_signature.bind(self, *args, **kwargs)
             bound.apply_defaults()
-            kwargs = {k: v for k, v in bound.arguments.items() if k != 'self'}
-            getattr(progress, method.__name__)(**kwargs)
+            kwargs2 = {k: v for k, v in bound.arguments.items() if k != 'self'}
+            getattr(progress, method.__name__)(**kwargs2)
         return out
 
     return wrapper
@@ -163,10 +167,16 @@ if __name__ == '__main__':
     root.title('Test progress listbox')
     listbox = ProgressTable(root)
     listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
     listbox.add_window(0, 'Some geometry')
-    listbox.add_scan(0, 0, 100, 200, '+x', 1000, 50)
-    listbox.fill_scan(0, 0, success=[True, False, True, None, True], n_peaks=[12, 3, 8, 0, 21])
-    listbox.add_scan(0, 1, 90, 210, '+x', 1020, 50)
-    listbox.fill_scan(0, 1, success=[1, 0, 1, 0, 1, 1], n_peaks=[17, 3, 28, 0, 21, 19])
+
+    # axis=0 => x scan, step sign gives direction
+    listbox.add_scan(0, 0, x0=100, y0=200, axis=0, step=50, n_steps=6)
+    listbox.fill_scan(
+        0, 0, hits=[True, False, True, False, True, False], n_peaks=[12, 3, 8, 0, 21, 0]
+    )
+
+    listbox.add_scan(0, 1, x0=400, y0=210, axis=1, step=-25, n_steps=5)
+    listbox.fill_scan(0, 1, hits=[1, 0, 1, 0, 1], n_peaks=[17, 3, 28, 0, 21])
 
     root.mainloop()

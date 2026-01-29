@@ -120,61 +120,30 @@ class Experiment(ExperimentBase):
 
         while not stop_event.is_set():
             try:
-                window_id, window = self.locate_next_window(grid=grid, params=params)
+                window_idx, window = self.locate_next_window(grid=grid, params=params)
             except IndexError:
                 break
             grid.windows['window_id'] = window
-            self.state.add_window(idx=window_id, window=window)
+            self.state.add_window(idx=window_idx, window=window)
 
-            if params['scan_geometry'].lower().startswith('x'):
-                fast_axis, scan_factory = 'x', window.x_intersections
-                fast_step, slow_step = params['scan_x_step'], params['scan_y_step']
-                slow_axis_idx = 1
-            else:  # params['scan_geometry'].lower().startswith('y'):
-                fast_axis, scan_factory = 'y', window.y_intersections
-                fast_step, slow_step = params['scan_y_step'], params['scan_x_step']
-                slow_axis_idx = 0
+            self.add_scans(window_idx=window_idx, params=params)
 
-            if params['scan_geometry'].lower().endswith('raster'):
-                scan_signs = cycle([1, -1])
-            else:  # params['scan_geometry'].lower().endswith('raster'):
-                scan_signs = [
-                    1,
-                ]
-
-            slow_min = np.min(window.corners[:, slow_axis_idx])
-            slow_max = np.max(window.corners[:, slow_axis_idx])
-            for scan_id, slow in enumerate(
-                np.arange(slow_min + slow_step, slow_max, slow_step)
-            ):
-                fast_min, fast_max = scan_factory(float(slow))
-                self.state.add_scan(
-                    window=window_id,
-                    scan_id=scan_id,
-                    x0=fast_min if fast_axis == 'x' else slow_min,
-                    y0=fast_min if fast_axis == 'y' else slow_min,
-                    direction=('+' if next(scan_signs) >= 0 else '-') + fast_axis,
-                    span=abs(fast_max - fast_min),
-                    step=fast_step,
-                )
-
-            for scan_id in self.state.scans.loc[window_id].index:
-                idx = pd.IndexSlice[window_id, scan_id, :]
-                if self.state.steps.loc[idx, 'success'].notna().any():
+            for scan_id in self.state.scans.loc[window_idx].index:
+                idx = pd.IndexSlice[window_idx, scan_id, :]
+                if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
                     continue  # this scan has been already done
-                x0 = self.state.scans.at[(window_id, scan_id), 'x0']
-                y0 = self.state.scans.at[(window_id, scan_id), 'y0']
+                scan = self.state.scans.loc[(window_idx, scan_id)]
+                x0 = scan['x0']
+                y0 = scan['y0']
                 self.ctrl.stage.set(x0=x0, y0=y0)
 
                 movie = self.ctrl.get_movie(
                     n_frames=len(idx), exposure=exposure, header_keys=None
                 )
-                self.dispatcher.switch_buffer(len(idx), name=f'w:{window_id}/s:{scan_id}')
-                span = self.state.scans.at[(window_id, scan_id), 'span']
-                direction = self.state.scans.at[(window_id, scan_id), 'direction']
-                sign = +1 if direction.startswith('+') else -1
-                fast1 = (x0 if direction.endswith('X') else y0) + sign * span
-                setter_kwargs = {fast_axis: fast1, 'speed': speed}
+                self.dispatcher.switch_buffer(len(idx), name=f'w:{window_idx}/s:{scan_id}')
+                axis = scan['axis']
+                fast1 = (x0, y0)[axis] + scan['step'] * scan['n_steps']
+                setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
 
                 self.ctrl.stage.set_with_speed(**setter_kwargs)
                 for frame, header in movie:
@@ -209,6 +178,41 @@ class Experiment(ExperimentBase):
             self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
             return window_id, grid.window_type.from_sweeping()
         raise IndexError('Could not locate next window within limits')
+
+    def add_scans(self, window_idx: int, params: dict[str, Any]) -> None:
+        """Add scans for window, asserting it does not have scans yet."""
+
+        window = self.state.grid.windows[window_idx]
+        if params['scan_geometry'].lower().startswith('x'):
+            axis = 0
+            scan_factory = window.x_intersections
+            step = params['scan_x_step']
+            spacing = params['scan_y_step']
+        else:  # params['scan_geometry'].lower().startswith('y'):
+            axis = 1
+            scan_factory = window.y_intersections
+            step = params['scan_y_step']
+            spacing = params['scan_x_step']
+
+        if params['scan_geometry'].lower().endswith('raster'):
+            scan_signs = cycle([1, -1])
+        else:  # params['scan_geometry'].lower().endswith('raster'):
+            scan_signs = cycle([1])
+
+        slow_min = np.min(window.corners[:, 1 - axis])
+        slow_max = np.max(window.corners[:, 1 - axis])
+        slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
+        for scan_id, slow in enumerate(slows):
+            fast_min, fast_max = scan_factory(slow)[:: next(scan_signs)]
+            self.state.add_scan(
+                window=window_idx,
+                scan_id=scan_id,
+                x0=slow_min if axis else fast_min,
+                y0=fast_min if axis else slow_min,
+                axis=axis,
+                step=step,
+                n_steps=-(-abs(fast_max - fast_min) % step),
+            )
 
     def finalize(self) -> None:
         ...
