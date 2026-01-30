@@ -21,6 +21,28 @@ class Journal:
         self.path: Path = Path(path)
         self.writing: bool = True
         self._seq: int = 0
+        self._init_seq_from_file()
+
+    def _init_seq_from_file(self) -> None:
+        """Initialize sequence counter from existing journal file (if any)."""
+        if not self.path.exists():
+            return
+
+        last = 0
+        with self.path.open('r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    break  # tolerate truncated last line
+                seq = rec.get('seq')
+                if isinstance(seq, int) and seq > last:
+                    last = seq
+
+        self._seq = last
 
     def write(self, method: str, kwargs: dict[str, Any]) -> None:
         """Write the new event record directly to the journal."""

@@ -40,9 +40,9 @@ class Experiment(ExperimentBase):
         self.flatfield: Optional[np.ndarray] = flatfield
         self.state = self.get_state(load=load, progress=progress)
 
-        self.dispatcher = DiffHuntDispatcher(shape=(514, 514), dtype=np.uint16)
-        self.dispatcher.initialize_workers()
-        # TODO init the dispatcher correctly once actual camera size is known
+        # attributes initialized once an experiment starts
+        self.params: dict[str, Any] = {}
+        self.dispatcher: Optional[DiffHuntDispatcher] = None
 
     def get_dead_time(
         self,
@@ -62,6 +62,11 @@ class Experiment(ExperimentBase):
             return 0.0
         else:
             return c.dead_time
+
+    def get_dispatcher(self) -> DiffHuntDispatcher:
+        """Start a multiprocessing helper once you have full access to cam."""
+        image, h = self.ctrl.get_image()
+        return DiffHuntDispatcher(shape=image.shape, dtype=image.dtype)
 
     def get_stage_translation(self) -> CalibStageTranslationX:
         """Get rotation calibration if present; otherwise warn & terminate."""
@@ -97,24 +102,20 @@ class Experiment(ExperimentBase):
                 grid.windows[wid] = w
         return grid
 
-    def determine_exposure_and_speed(
-        self,
-        exposure: float,
-        step_size: int_nm,
-    ) -> tuple[float, float]:
-        detector_dead_time = self.get_dead_time(exposure)
-        time_for_one_frame = exposure + detector_dead_time
+    def determine_exposure_and_speed(self, step_size: int_nm) -> tuple[float, float]:
+        """Determine exposure/speed reachable by TEM close to requested."""
+        detector_dead_time = self.get_dead_time(self.params['exposure'])
+        time_for_one_frame = self.params['exposure'] + detector_dead_time
         trans_calib = self.get_stage_translation()
-        mot_plan = trans_calib.plan_motion(1e9 * time_for_one_frame / step_size)
-        exposure = abs(mot_plan.pace * step_size) - detector_dead_time
-        speed = mot_plan.speed
-        return exposure, speed
+        motion_plan = trans_calib.plan_motion(time_for_one_frame / step_size)
+        exposure = abs(motion_plan.pace * step_size) - detector_dead_time
+        return exposure, motion_plan.speed
 
     def start_collection(self, **params) -> None:
-        # precalculate sliding speeds
-        exposure, speed = self.determine_exposure_and_speed(
-            params['exposure'], params['step_size']
-        )
+        """Method that governs the entirety of scan ED experiment work flow."""
+
+        self.params = params
+
         grid = self.get_grid(params=params)
         stop_event = params['stop_event']
 
@@ -128,31 +129,10 @@ class Experiment(ExperimentBase):
 
             self.add_scans(window_idx=window_idx, params=params)
 
-            for scan_id in self.state.scans.loc[window_idx].index:
-                idx = pd.IndexSlice[window_idx, scan_id, :]
-                if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
-                    continue  # this scan has been already done
-                scan = self.state.scans.loc[(window_idx, scan_id)]
-                x0 = scan['x0']
-                y0 = scan['y0']
-                self.ctrl.stage.set(x0=x0, y0=y0)
-
-                movie = self.ctrl.get_movie(
-                    n_frames=len(idx), exposure=exposure, header_keys=None
-                )
-                self.dispatcher.switch_buffer(len(idx), name=f'w:{window_idx}/s:{scan_id}')
-                axis = scan['axis']
-                fast1 = (x0, y0)[axis] + scan['step'] * scan['n_steps']
-                setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
-
-                self.ctrl.stage.set_with_speed(**setter_kwargs)
-                for frame, header in movie:
-                    self.dispatcher.process(frame, header)
-                    # TODO: receive all dispatch feedback
-                    # TODO somehow wait until entire buffer is filled
-                    self.dispatcher.write_buffer(self.path)
-                    # TODO: write from history to state
-                    # TODO: new writing path for every scan
+            for scan_idx in self.state.scans.loc[window_idx].index:
+                if self.dispatcher is None:
+                    self.dispatcher = self.get_dispatcher()
+                self.run_scan(window_idx, scan_idx)
 
             # TODO: add missing logic, repeated scans
             # TODO: state: replace windows list with grid to avoid duplication
@@ -213,6 +193,36 @@ class Experiment(ExperimentBase):
                 step=step,
                 n_steps=-(-abs(fast_max - fast_min) % step),
             )
+
+    def run_scan(self, window_idx: int, scan_idx: int) -> None:
+        """Run a single scan previously added to state on the grid."""
+
+        idx = pd.IndexSlice[window_idx, scan_idx, :]
+        if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
+            return  # none-op for all scans that have been already done
+
+        scan = self.state.scans.loc[(window_idx, scan_idx)]
+        self.ctrl.stage.set(x0=scan['x0'], y0=scan['y0'])
+
+        exposure, speed = self.determine_exposure_and_speed(scan['step'])
+        movie = self.ctrl.get_movie(n_frames=len(idx), exposure=exposure, header_keys=None)
+        self.dispatcher.begin_scan(len(idx))
+        axis = scan['axis']  # x: 0, y: 1
+        fast0 = scan['y0' if axis else 'x0']
+        fast1 = fast0 + scan['step'] * scan['n_steps']
+        setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
+
+        self.ctrl.stage.set_with_speed(**setter_kwargs)
+        for frame, header in movie:
+            self.dispatcher.process(frame, header)
+            # TODO: receive all dispatch feedback
+            # TODO somehow wait until entire buffer is filled
+            self.dispatcher.write_buffer(self.path)
+            # TODO: write from history to state
+            # TODO: new writing path for every scan
+
+        # TODO: this code still needs to be modified but remember this:
+        self.state.finalize_scan(window_idx, scan_idx)
 
     def finalize(self) -> None:
         ...

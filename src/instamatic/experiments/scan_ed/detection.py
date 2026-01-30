@@ -22,7 +22,7 @@ class DiffHuntResults:
     mask: Optional[np.ndarray] = None
 
 
-def ring_quartile_detection(
+def ring_percentile_detection(
     frame: np.ndarray,
     min_radius: int = 40,
     percentile: float = 99.0,
@@ -208,5 +208,5 @@ if __name__ == '__main__':
         path = rf'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\00{i:03d}.tiff'
         tiff = Image.open(path)
         image = np.array(tiff)
-        results = ring_quartile_detection(image, mask=mask)
+        results = ring_percentile_detection(image, mask=mask)
         plot_diffraction_debug(image, results)

@@ -4,11 +4,10 @@ from pathlib import Path
 from threading import Event as ThreadingEvent
 from tkinter import *
 from tkinter.ttk import *
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from instamatic import controller
-from instamatic._typing import AnyPath
-from instamatic.experiments.scan_ed.progress import ProgressTable
+from instamatic.experiments.scan_ed.progress import ProgressTable, ThreadSafeProgressTableProxy
 from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, ModuleFrameMixin
@@ -62,6 +61,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
     def __init__(self, parent):
         text = 'Automatically scan entire grid until any finish condition is met'
         super().__init__(parent, text=text)
+        self.pack_propagate(False)  # keep the width fixed
         self.parent = parent
         self.var = ExperimentalScanEDVariables()
         self.busy: bool = False
@@ -149,12 +149,13 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         f.pack(side='bottom', fill=BOTH, expand=True, pady=10)
 
     def start_collection(self) -> None:
-        kwargs = {'load': True, 'progress': self.progress}
+        progress = ThreadSafeProgressTableProxy(self, self.progress)
+        kwargs = {'load': True, 'progress': progress}
         self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
 
     def load_collection(self) -> None:
-        kwargs = {'progress': self.progress}
-        self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
+        progress = ThreadSafeProgressTableProxy(self, self.progress)
+        self.q.put(('scan_ed', {'progress': progress, **self.var.as_dict()}))
 
 
 def sced_interface_command(controller, **params: Any) -> None:

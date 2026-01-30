@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 import inspect
+import queue
 import tkinter as tk
 import tkinter.ttk as ttk
+from collections import Counter
 from functools import wraps
-from typing import Callable, Protocol, Sequence, Union
+from typing import Any, Callable, Protocol, Sequence, Union
 
 import numpy as np
 
 
 class GridWindowProtocol(Protocol):
     def __repr__(self) -> str: ...
+
+
+def safe_ratio(d: dict, k1: str, k2: str, alt: str = '0.0') -> str:
+    """Return a formatted d1-to-d2 ratio if defined, else hyphen."""
+    return f'{d[k1] / v2:.3g}' if (v2 := d[k2]) else alt
 
 
 class ProgressTable(ttk.Frame):
@@ -22,8 +29,9 @@ class ProgressTable(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.tree = None
         self._build_tree()
-        self._scan_geom: dict[tuple[int, int], tuple[int, int, int, int, int]] = {}
-        self._window_totals: tuple[int, int, int] = (0, 0, 0)  # hits, peaks, steps
+        self._scan_geom: dict[tuple[int, int], tuple[int, int, int, int]] = {}
+        self._scan_totals: dict[tuple[int, int], Counter] = {}  # hits, peaks, done, n_steps
+        self._window_totals: dict[int, Counter] = {}  # hits, peaks, steps
 
     def _build_tree(self) -> None:
         self.tree = ttk.Treeview(self, columns=self.COLUMNS, show='tree headings')
@@ -40,11 +48,9 @@ class ProgressTable(ttk.Frame):
         self.tree.column('peaks/step', anchor=tk.E, width=20)
 
         vsb = ttk.Scrollbar(orient='vertical', command=self.tree.yview)
-        hsb = ttk.Scrollbar(orient='horizontal', command=self.tree.xview)
-        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        self.tree.configure(yscrollcommand=vsb.set)
         self.tree.grid(column=0, row=0, sticky='nsew', in_=self)
         vsb.grid(column=1, row=0, sticky='ns', in_=self)
-        hsb.grid(column=0, row=1, sticky='ew', in_=self)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
@@ -67,7 +73,7 @@ class ProgressTable(ttk.Frame):
         geom = repr(window)
         values = (geom, '-', '-', '-', '-', '-')
         self.tree.insert('', tk.END, iid=window_iid, text=window_name, values=values)
-        self._window_totals = (0, 0, 0)
+        self._window_totals[idx] = Counter()
 
     def add_scan(
         self,
@@ -95,7 +101,50 @@ class ProgressTable(ttk.Frame):
         values = (geom, '-', '-', str(int(n_steps)), '-', '-')
         self.tree.insert(window_iid, tk.END, iid=scan_iid, text=scan_name, values=values)
 
-        self._scan_geom[(window, scan)] = (x0, y0, axis, step, n_steps)
+        self._scan_geom[(window, scan)] = (x0, y0, axis, step)
+        self._scan_totals[(window, scan)] = Counter(n_steps=int(n_steps))
+        self.tree.set(scan_iid, 'steps', f'0/{int(n_steps)}')
+
+    def mark_processing(self, window: int, scan: int, step: int) -> None:
+        scan_iid = self._scan_iid(window, scan)
+        for column in 'hits peaks hits/step peaks/step'.split():
+            if not self.tree.set(scan_iid, column).isnumeric():  # don't overwrite numbers
+                self.tree.set(scan_iid, column, '...')
+
+    def fill_step(self, window: int, scan: int, step: int, hit: bool, n_peaks: int) -> None:
+        scan_iid = self._scan_iid(window, scan)
+        window_iid = self._window_iid(window)
+
+        st = self._scan_totals[(window, scan)]
+        st['done'] += 1
+        if hit:
+            st['hits'] += 1
+            st['peaks'] += int(n_peaks)
+
+        self.tree.set(scan_iid, 'hits', str(st['hits']))
+        self.tree.set(scan_iid, 'peaks', str(st['peaks']))
+        self.tree.set(scan_iid, 'steps', f'{st["done"]}/{st["n_steps"]}')
+        self.tree.set(scan_iid, 'hits/step', safe_ratio(st, 'hits', 'done'))
+        self.tree.set(scan_iid, 'peaks/step', safe_ratio(st, 'peaks', 'done'))
+
+        wt = self._window_totals[window]
+        wt['steps'] += 1
+        if hit:
+            wt['hits'] += 1
+            wt['peaks'] += int(n_peaks)
+
+        self.tree.set(window_iid, 'hits', str(wt['hits']))
+        self.tree.set(window_iid, 'peaks', str(wt['peaks']))
+        self.tree.set(window_iid, 'steps', str(wt['steps']))
+        self.tree.set(window_iid, 'hits/step', safe_ratio(wt, 'hits', 'steps'))
+        self.tree.set(window_iid, 'peaks/step', safe_ratio(wt, 'peaks', 'steps'))
+
+        if hit:
+            x0, y0, axis, step_size = self._scan_geom[(window, scan)]
+            step_iid = self._step_iid(window, scan, step)
+            geom = f'{"xy"[axis]}: {(x0, y0)[axis] + step * step_size}'
+            v = (geom, '', int(n_peaks), '', '', '')
+            self.tree.insert(scan_iid, tk.END, iid=step_iid, text=f'Step {step}', values=v)
 
     def fill_scan(
         self,
@@ -108,41 +157,76 @@ class ProgressTable(ttk.Frame):
 
         scan_iid = self._scan_iid(window, scan)
         window_iid = self._window_iid(window)
-        x0, y0, axis, step, n_steps = self._scan_geom[(int(window), int(scan))]
+        hits_arr = np.asarray(hits, dtype=bool)
+        peaks_arr = np.asarray(n_peaks, dtype=int)
 
-        s_hits = sum(hits)
-        s_peaks = sum(int(n) for ok, n in zip(hits, n_peaks) if ok)
-        s_steps = len(hits)
-        s_hits_per_step = s_hits / s_steps if s_steps else 0.0
-        s_peaks_per_step = s_peaks / s_steps if s_steps else 0.0
+        s_steps = int(hits_arr.size)
+        s_hits = int(hits_arr.sum())
+        s_peaks = int(peaks_arr[hits_arr].sum()) if s_hits else 0
 
         self.tree.set(scan_iid, 'hits', str(s_hits))
         self.tree.set(scan_iid, 'peaks', str(s_peaks))
         self.tree.set(scan_iid, 'steps', str(s_steps))
-        self.tree.set(scan_iid, 'hits/step', f'{s_hits_per_step:.3g}')
-        self.tree.set(scan_iid, 'peaks/step', f'{s_peaks_per_step:.3g}')
+        self.tree.set(scan_iid, 'hits/step', f'{s_hits / s_steps if s_steps else 0.0:.3g}')
+        self.tree.set(scan_iid, 'peaks/step', f'{s_peaks / s_steps if s_steps else 0.0:.3g}')
 
-        w_hits = self._window_totals[0] + s_hits
-        w_peaks = self._window_totals[1] + s_peaks
-        w_steps = self._window_totals[2] + s_steps
-        w_hits_per_step = w_hits / w_steps if w_steps else 0.0
-        w_peaks_per_step = w_peaks / w_steps if w_steps else 0.0
-        self._window_totals = (w_hits, w_peaks, w_steps)
+        wt = self._window_totals[window]
+        wt['hits'] += s_hits
+        wt['peaks'] += s_peaks
+        wt['steps'] += s_steps
 
-        self.tree.set(window_iid, 'hits', str(w_hits))
-        self.tree.set(window_iid, 'peaks', str(w_peaks))
-        self.tree.set(window_iid, 'steps', str(w_steps))
-        self.tree.set(window_iid, 'hits/step', f'{w_hits_per_step:.3g}')
-        self.tree.set(window_iid, 'peaks/step', f'{w_peaks_per_step:.3g}')
+        self.tree.set(window_iid, 'hits', str(wt['hits']))
+        self.tree.set(window_iid, 'peaks', str(wt['peaks']))
+        self.tree.set(window_iid, 'steps', str(wt['steps']))
+        self.tree.set(window_iid, 'hits/step', safe_ratio(wt, 'hits', 'steps'))
+        self.tree.set(window_iid, 'peaks/step', safe_ratio(wt, 'peaks', 'steps'))
 
-        for i, (ok, n) in enumerate(zip(hits, n_peaks)):
-            if not ok:
-                continue
-            step_name = f'Step {i:d}'
-            step_iid = self._step_iid(window, scan, i)
-            geom = f'{"xy"[axis]}: {(x0, y0)[axis] + i * step}'
-            values = (geom, '', int(n), '', '', '')
-            self.tree.insert(scan_iid, tk.END, iid=step_iid, text=step_name, values=values)
+
+class ThreadSafeProgressTableProxy:
+    """Thread-safe proxy: same API as ProgressTable, executed on Tk thread."""
+
+    def __init__(self, parent: tk.Misc, target) -> None:
+        self._parent = parent
+        self._target = target
+        self._q: queue.Queue[tuple[str, tuple[Any, ...], dict[str, Any]]] = queue.Queue()
+        self._scheduled = False
+
+    def _schedule(self) -> None:
+        """Lets the main Tk thread know to drain and run commands from _q."""
+        if not self._scheduled:
+            self._scheduled = True
+            self._parent.after(0, self._drain)
+
+    def _drain(self) -> None:
+        """Run at the main Tk thread, calls all scheduled commands from _q."""
+        self._scheduled = False
+        while True:
+            try:
+                name, args, kwargs = self._q.get_nowait()
+            except queue.Empty:
+                break
+            getattr(self._target, name)(*args, **kwargs)
+
+    def _post(self, name: str, *args, **kwargs) -> None:
+        """Instead of running command, schedule it to be run on main thread."""
+        self._q.put((name, args, kwargs))
+        self._schedule()
+
+    # Keep the API fixed and consistent, generalizing this is annoying
+    def add_window(self, **kwargs):
+        self._post('add_window', **kwargs)
+
+    def add_scan(self, **kwargs):
+        self._post('add_scan', **kwargs)
+
+    def mark_processing(self, **kwargs):
+        self._post('mark_processing', **kwargs)
+
+    def fill_step(self, **kwargs):
+        self._post('fill_step', **kwargs)
+
+    def fill_scan(self, **kwargs):
+        self._post('fill_scan', **kwargs)
 
 
 def edits_progress(method: Callable) -> Callable:
