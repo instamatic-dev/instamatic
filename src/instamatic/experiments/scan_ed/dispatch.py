@@ -6,6 +6,7 @@ import uuid
 from dataclasses import dataclass
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
+from threading import Event
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
@@ -20,15 +21,15 @@ if TYPE_CHECKING:
 
 N_PROCESSORS = 4
 
-Task = Literal['INIT', 'PROCESS', 'WRITE', 'TERMINATE']
-Event = Literal['PROCESSING', 'PROCESSED']
+CommandKind = Literal['INIT', 'PROCESS', 'WRITE', 'TERMINATE']
+FeedbackKind = Literal['PROCESSING', 'PROCESSED']
 
 
 @dataclass(frozen=True)
 class Command:
     """Schema used to communicate commands from dispatcher to any worker."""
 
-    task: Task
+    kind: CommandKind
     buffer_name: Optional[str] = None
     buffer_pointer: Optional[int] = None
     buffer_shape: Optional[tuple[int, int, int]] = None
@@ -39,7 +40,7 @@ class Command:
 class Feedback:
     """Schema used to communicate feedback from any worker to dispatcher."""
 
-    event: Event
+    kind: FeedbackKind
     worker_id: int
     buffer_pointer: Optional[int] = None
     details: Optional[DiffHuntResults] = None
@@ -65,6 +66,7 @@ class DiffHuntDispatcher:
         self._next_ptr: int = 0
         self._in_flight: set[int] = set()
 
+        self.scan_processed: Event = Event()
         self.hits: Optional[np.ndarray] = None
         self.headers: list[Optional[dict]] = []
 
@@ -75,7 +77,7 @@ class DiffHuntDispatcher:
             worker.start()
             self._workers.append(worker)
 
-    def emit(self, task: Task, *args, **kwargs) -> None:
+    def emit(self, task: CommandKind, *args, **kwargs) -> None:
         """Shorthand to create and put Command in the self.commands queue."""
         self.commands.put(Command(task, *args, **kwargs))
 
@@ -89,6 +91,7 @@ class DiffHuntDispatcher:
         size = int(np.prod(shape3) * self.dtype.itemsize)
         self._shm = SharedMemory(name=self._buffer_name, create=True, size=size)
         self._frames = np.ndarray(shape3, dtype=self.dtype, buffer=self._shm.buf)
+        self.scan_processed.clear()
         self.hits = np.zeros(self._n_frames, dtype=bool)
         self.headers = [None] * self._n_frames
         for _ in self._workers:
@@ -111,7 +114,7 @@ class DiffHuntDispatcher:
             self.hits = None
             self.headers = []
 
-    def submit(self, frame: np.ndarray, header: Optional[dict]) -> int:
+    def process(self, frame: np.ndarray, header: Optional[dict]) -> int:
         """Copy a frame into the shared buffer and enqueue processing."""
         if self._frames is None:
             raise RuntimeError('Call begin_scan() first.')
@@ -127,10 +130,6 @@ class DiffHuntDispatcher:
         self.commands.put(Command('PROCESS', buffer_pointer=ptr))
         return ptr
 
-    def all_frames_processed(self) -> bool:
-        """All submitted frames have been processed and scan is complete."""
-        return (self._next_ptr == self._n_frames) and (not self._in_flight)
-
     def write_scan(self, path: AnyPath) -> None:
         """Request workers to write all hit frames from the active scan."""
         for pointer, hit in enumerate(self.hits):
@@ -139,10 +138,13 @@ class DiffHuntDispatcher:
                 kwargs = {'path': path, 'header': self.headers[pointer]}
                 self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
 
-    # HANDLE FEEDBACK INCOMING FROM THE WORKERS
+    def handle_feedback(self, state: State, window: int, scan: int) -> None:
+        """Continuously drain the feedback queue until scan is fully processed.
 
-    def drain_feedback(self, state: State, window: int, scan: int) -> None:
-        """Drains feedback queue; If using tk, call from main thread only!"""
+        This call modifies a decorated State table. Therefore, either it
+        must be run from the main thread, or a proxy Progress table must
+        be used.
+        """
         for _ in range(2 * self._n_frames):
             try:
                 fb: Feedback = self.feedback.get(timeout=15)
@@ -151,15 +153,16 @@ class DiffHuntDispatcher:
 
             pointer = int(fb.buffer_pointer)
 
-            if fb.event == 'PROCESSING':
+            if fb.kind == 'PROCESSING':
                 state.mark_processing(window, scan, pointer)
 
-            elif fb.event == 'PROCESSED':
+            elif fb.kind == 'PROCESSED':
                 d: DiffHuntResults = fb.details
                 state.fill_step(window, scan, pointer, d.success, len(d.peaks))
                 if self.hits is not None:
                     self.hits[pointer] = d.success
                 self._in_flight.discard(pointer)
+        self.scan_processed.set()
 
     def terminate_workers(self) -> None:
         """Command all workers to 'TERMINATE' and report the success."""
@@ -178,37 +181,37 @@ class DiffHuntWorker(mp.Process):
         self.commands = commands
         self.feedback = feedback
         self.dtype = np.dtype(dtype)
-        self._frames: Optional[np.ndarray] = None
-        self._shm: Optional[SharedMemory] = None
+        self.frames: Optional[np.ndarray] = None
+        self.shm: Optional[SharedMemory] = None
+
+    def emit(self, kind: FeedbackKind, **kwargs) -> None:
+        self.feedback.put(Feedback(kind=kind, worker_id=self.worker_id, **kwargs))
 
     def run(self) -> None:
         while True:
             cmd: Command = self.commands.get()
 
-            if cmd.task == 'INIT':
-                if self._shm is not None:
-                    self._shm.close()
-                self._shm = SharedMemory(name=cmd.buffer_name)
-                self._frames = np.ndarray(
-                    cmd.buffer_shape, dtype=self.dtype, buffer=self._shm.buf
-                )
+            if cmd.kind == 'INIT':
+                if self.shm is not None:
+                    self.shm.close()
+                self.shm = SharedMemory(name=cmd.buffer_name)
+                shape = cmd.buffer_shape
+                self.frames = np.ndarray(shape, dtype=self.dtype, buffer=self.shm.buf)
 
-            elif cmd.task == 'PROCESS':
+            elif cmd.kind == 'PROCESS':
                 ptr = int(cmd.buffer_pointer)
-                frame = self._frames[ptr]
-                d = ring_percentile_detection(frame=frame)
-                self.feedback.put(
-                    Feedback('PROCESSED', self.worker_id, buffer_pointer=ptr, details=d)
-                )
+                self.emit('PROCESSING', buffer_pointer=ptr)
+                d = ring_percentile_detection(frame=self.frames[ptr])
+                self.emit('PROCESSED', buffer_pointer=ptr, details=d)
 
-            elif cmd.task == 'WRITE':
+            elif cmd.kind == 'WRITE':
                 path = Path(cmd.kwargs['path']).resolve()
                 filename = f'{cmd.buffer_name}_{cmd.buffer_pointer:06d}.tiff'
-                frame = self._frames[cmd.buffer_pointer]
+                frame = self.frames[cmd.buffer_pointer]
                 header = cmd.kwargs.get('header', {})
                 write_tiff(fname=str(path / filename), data=frame, header=header)
 
-            elif cmd.task == 'TERMINATE':
-                if self._shm is not None:
-                    self._shm.close()
+            elif cmd.kind == 'TERMINATE':
+                if self.shm is not None:
+                    self.shm.close()
                 return

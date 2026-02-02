@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from itertools import cycle
 from pathlib import Path
+from threading import Thread
 from typing import Any, Optional
 
 import numpy as np
@@ -19,6 +20,7 @@ from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.grid import ConvexPolygonGrid
 from instamatic.grid.window import ConvexPolygonWindow, RectangularWindow
+from instamatic.utils.beamstop import find_beamstop_rect
 
 
 class Experiment(ExperimentBase):
@@ -199,30 +201,36 @@ class Experiment(ExperimentBase):
 
         idx = pd.IndexSlice[window_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
-            return  # none-op for all scans that have been already done
+            return  # none-op for a scans that has been already done
 
         scan = self.state.scans.loc[(window_idx, scan_idx)]
         self.ctrl.stage.set(x0=scan['x0'], y0=scan['y0'])
 
-        exposure, speed = self.determine_exposure_and_speed(scan['step'])
-        movie = self.ctrl.get_movie(n_frames=len(idx), exposure=exposure, header_keys=None)
         self.dispatcher.begin_scan(len(idx))
+        fb_kwargs = {'state': self.state, 'window': window_idx, 'scan': scan_idx}
+        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
+        fb_thread.start()
+
+        exposure, speed = self.determine_exposure_and_speed(scan['step'])
         axis = scan['axis']  # x: 0, y: 1
         fast0 = scan['y0' if axis else 'x0']
         fast1 = fast0 + scan['step'] * scan['n_steps']
         setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
-
         self.ctrl.stage.set_with_speed(**setter_kwargs)
+
+        movie = self.ctrl.get_movie(n_frames=len(idx), exposure=exposure, header_keys=None)
         for frame, header in movie:
             self.dispatcher.process(frame, header)
-            # TODO: receive all dispatch feedback
-            # TODO somehow wait until entire buffer is filled
-            self.dispatcher.write_buffer(self.path)
-            # TODO: write from history to state
-            # TODO: new writing path for every scan
+        self.dispatcher.scan_processed.wait(timeout=60)  # should process live
 
-        # TODO: this code still needs to be modified but remember this:
+        self.dispatcher.write_scan(path=self.path / 'tiff')
+        self.dispatcher.end_scan()
+        fb_thread.join()
         self.state.finalize_scan(window_idx, scan_idx)
+
+    def teardown(self) -> None:
+        """Close all threads and safely shut down when requested."""
+        self.dispatcher.terminate_workers()
 
     def finalize(self) -> None:
         ...
