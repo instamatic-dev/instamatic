@@ -155,7 +155,7 @@ class RegularPolygonWindow(Window):
             bess = list(chain.from_iterable(zip(bess, bisectors(bess))))
 
         edge_xy = np.vstack([bes.position for bes in bess])  # Nx2
-        return cls.from_edge_xys(edge_xy)  # TODO continue refactoring
+        return cls.from_edge_xys(edge_xy)
 
     @classmethod
     @abstractmethod
