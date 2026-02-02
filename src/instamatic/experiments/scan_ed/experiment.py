@@ -19,7 +19,7 @@ from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.polygon import ConvexPolygonGrid
-from instamatic.grid.window import ConvexPolygonWindow, SquareWindow
+from instamatic.grid.window import RectangularWindow, RegularPolygonWindow
 from instamatic.utils.beamstop import find_beamstop_rect
 
 
@@ -142,7 +142,7 @@ class Experiment(ExperimentBase):
         self,
         grid: ConvexPolygonGrid,
         params: dict,
-    ) -> tuple[int, ConvexPolygonWindow]:
+    ) -> tuple[int, RegularPolygonWindow]:
         """Find a next window on the grid, or raise if none can be found."""
         last_window_id = max(grid.windows)
         for window_id in range(last_window_id + 1, 2 * last_window_id + 10):

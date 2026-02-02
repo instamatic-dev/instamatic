@@ -8,9 +8,9 @@ from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
 from instamatic.grid.polygon import ConvexPolygonGrid
-from instamatic.grid.window import ConvexPolygonWindow
+from instamatic.grid.window import RegularPolygonWindow
 
-WindowFactory: Callable[[float, float, float, ...], type[ConvexPolygonWindow]]
+WindowFactory: Callable[[float, float, float, ...], type[RegularPolygonWindow]]
 
 
 class State:
@@ -64,7 +64,7 @@ class State:
 
     @edits_journal
     @edits_progress
-    def add_window(self, idx: int, window: ConvexPolygonWindow) -> None:
+    def add_window(self, idx: int, window: RegularPolygonWindow) -> None:
         """For journaling purposes, can be added via instance or __repr__."""
         self.grid.windows[idx] = window
 

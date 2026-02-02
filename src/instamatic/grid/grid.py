@@ -6,12 +6,12 @@ import numpy as np
 
 from instamatic._collections import VersionedDict
 from instamatic._typing import float_nm, int_nm
-from instamatic.grid.window import ConvexPolygonWindow
+from instamatic.grid.window import RegularPolygonWindow
 
 DualIndex = tuple[int, int]
 SpiralIndex = Annotated[int, 'positive']
 WindowIndex = Union[DualIndex, SpiralIndex]
-WindowType = TypeVar('WindowType', bound=ConvexPolygonWindow)
+WindowType = TypeVar('WindowType', bound=RegularPolygonWindow)
 
 
 class PairingFunction(Protocol):
@@ -66,13 +66,13 @@ class PeriodicConvexPolygonGrid(ConvexPolygonGrid[WindowType]):
     def a(self) -> np.ndarray:
         """Grid coordinate vector aligned with X pointing to next window."""
         w0 = self.windows[0]
-        return w0.w_axis * (2.0 + float(self.spacing) / np.linalg.norm(w0.w_axis))
+        return w0.a * (2.0 + float(self.spacing) / np.linalg.norm(w0.a))
 
     @property
     def b(self) -> np.ndarray:
         """Second grid coordinate vector (not ~X) pointing to next window."""
         w0 = self.windows[0]
-        return w0.h_axis * (2.0 + float(self.spacing) / np.linalg.norm(w0.h_axis))
+        return w0.b * (2.0 + float(self.spacing) / np.linalg.norm(w0.b))
 
     @property
     def spacing(self) -> float_nm:
@@ -88,8 +88,8 @@ class PeriodicConvexPolygonGrid(ConvexPolygonGrid[WindowType]):
             return float(self.default_spacing)
 
         w0 = self.windows[0]
-        a_axis = np.asarray(w0.w_axis, dtype=float)
-        b_axis = np.asarray(w0.h_axis, dtype=float)
+        a_axis = np.asarray(w0.a, dtype=float)
+        b_axis = np.asarray(w0.b, dtype=float)
         a_hat = a_axis / np.linalg.norm(a_axis)
         b_hat = b_axis / np.linalg.norm(b_axis)
 

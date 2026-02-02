@@ -3,7 +3,7 @@ from __future__ import annotations
 from instamatic._collections import NoOverwriteDict
 from instamatic.grid.grid import PeriodicConvexPolygonGrid, WindowType
 from instamatic.grid.pairing import ij2ulam, spiral2uv, ulam2ij, uv2spiral
-from instamatic.grid.window import HexagonalWindow, SquareWindow
+from instamatic.grid.window import HexagonalWindow, RectangularWindow, SquareWindow
 
 GRID_REGISTRY = NoOverwriteDict[str, WindowType]()
 
@@ -26,14 +26,14 @@ class HexagonalGrid(PeriodicConvexPolygonGrid[HexagonalWindow]):
 
 
 @register_grid(name='Rectangular')
-class RectangularGrid(PeriodicConvexPolygonGrid[SquareWindow]):
-    window_type = SquareWindow
+class RectangularGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
+    window_type = RectangularWindow
     pairing_function = staticmethod(ij2ulam)
     pairing_inverse = staticmethod(ulam2ij)
 
 
 @register_grid(name='Square')
-class SquareGrid(PeriodicConvexPolygonGrid[SquareWindow]):
+class SquareGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
     window_type = SquareWindow
     pairing_function = staticmethod(ij2ulam)
     pairing_inverse = staticmethod(ulam2ij)
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     import numpy as np
 
     g = RectangularGrid()
-    w0 = SquareWindow(0, 0, 50_000, 50_000, np.deg2rad(10))
+    w0 = RectangularWindow(0, 0, 50_000, 50_000, np.deg2rad(10))
     g.windows[0] = w0
     for i in range(200):
         p = g.predict_window(i)
