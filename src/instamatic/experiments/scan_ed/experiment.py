@@ -18,7 +18,7 @@ from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
-from instamatic.grid.grid import ConvexPolygonGrid
+from instamatic.grid.polygon import ConvexPolygonGrid
 from instamatic.grid.window import ConvexPolygonWindow, RectangularWindow
 from instamatic.utils.beamstop import find_beamstop_rect
 
@@ -92,14 +92,14 @@ class Experiment(ExperimentBase):
 
     def get_grid(self, params: dict[str, Any]) -> ConvexPolygonGrid:
         """Reconstruct the grid from current params and state."""
-        from instamatic.grid.grid import HexagonalGrid, RectangularGrid
+        from instamatic.grid.polygon import HexagonalGrid, RectangularGrid
 
         if params.get('grid_geometry', '').lower().startswith('hex'):
             grid = HexagonalGrid()
         else:
             grid = RectangularGrid()
-        if self.state.windows:
-            for wid, w in self.state.windows.items():
+        if self.state.grid.windows:
+            for wid, w in self.state.grid.windows.items():
                 assert isinstance(w, grid.window_type)
                 grid.windows[wid] = w
         return grid
@@ -135,10 +135,6 @@ class Experiment(ExperimentBase):
                 if self.dispatcher is None:
                     self.dispatcher = self.get_dispatcher()
                 self.run_scan(window_idx, scan_idx)
-
-            # TODO: add missing logic, repeated scans
-            # TODO: state: replace windows list with grid to avoid duplication
-            # TODO: simplify scans logic because right now it is difficult
 
         return
 

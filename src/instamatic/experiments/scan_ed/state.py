@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
-import numpy as np
 import pandas as pd
 
 from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
-from instamatic.grid.grid import ConvexPolygonGrid
+from instamatic.grid.polygon import ConvexPolygonGrid
 from instamatic.grid.window import ConvexPolygonWindow
 
 WindowFactory: Callable[[float, float, float, ...], type[ConvexPolygonWindow]]
@@ -57,9 +56,11 @@ class State:
     def load_from_journal(self) -> None:
         with self.journal.writing_off():
             for event in self.journal.events():
-                method = getattr(self, event['method'])
+                method_name = event['method']
                 kwargs = event.get('kwargs', {})
-                method(**kwargs)
+                if method_name == 'add_window':
+                    kwargs['window'] = GridWindow.from_repr(kwargs['window'])
+                getattr(self, method_name)(**kwargs)
 
     @edits_journal
     @edits_progress
