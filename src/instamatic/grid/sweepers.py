@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Literal, Sequence
+from typing import Any, Literal, Sequence
 
 import numpy as np
 from typing_extensions import Self

@@ -144,7 +144,7 @@ class ConvexPolygonWindow(ABC):
         return min(intersection_ys), max(intersection_ys)
 
 
-class RectangularWindow(ConvexPolygonWindow):
+class SquareWindow(ConvexPolygonWindow):
     """Describes one rectangular window without assumptions about the grid.
 
     Geometry is described using five immutable float scalars (nm / radian):

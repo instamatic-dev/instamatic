@@ -19,7 +19,7 @@ from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.polygon import ConvexPolygonGrid
-from instamatic.grid.window import ConvexPolygonWindow, RectangularWindow
+from instamatic.grid.window import ConvexPolygonWindow, SquareWindow
 from instamatic.utils.beamstop import find_beamstop_rect
 
 
