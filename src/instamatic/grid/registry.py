@@ -5,38 +5,29 @@ from instamatic.grid.grid import PeriodicConvexPolygonGrid, WindowType
 from instamatic.grid.pairing import ij2ulam, spiral2uv, ulam2ij, uv2spiral
 from instamatic.grid.window import HexagonalWindow, RectangularWindow, SquareWindow
 
-GRID_REGISTRY = NoOverwriteDict[str, WindowType]()
 
-
-def register_grid(name: str):
-    """A decorator to cleanly puts grid class in GRID_REGISTRY under name."""
-
-    def decorator(cls):
-        GRID_REGISTRY[name] = cls
-        return cls
-
-    return decorator
-
-
-@register_grid(name='Hexagonal')
 class HexagonalGrid(PeriodicConvexPolygonGrid[HexagonalWindow]):
     window_type = HexagonalWindow
     pairing_function = staticmethod(uv2spiral)
     pairing_inverse = staticmethod(spiral2uv)
 
 
-@register_grid(name='Rectangular')
 class RectangularGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
     window_type = RectangularWindow
     pairing_function = staticmethod(ij2ulam)
     pairing_inverse = staticmethod(ulam2ij)
 
 
-@register_grid(name='Square')
 class SquareGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
     window_type = SquareWindow
     pairing_function = staticmethod(ij2ulam)
     pairing_inverse = staticmethod(ulam2ij)
+
+
+GRID_REGISTRY = NoOverwriteDict[str, type[PeriodicConvexPolygonGrid]]()
+GRID_REGISTRY['hexagonal'] = HexagonalGrid
+GRID_REGISTRY['rectangular'] = RectangularGrid
+GRID_REGISTRY['square'] = SquareGrid
 
 
 # development test code; to be moved to artist/tests

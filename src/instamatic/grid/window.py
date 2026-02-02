@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from itertools import chain
-from typing import Literal, Optional, Sequence
+from typing import Literal, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -101,8 +101,8 @@ class ConvexPolygonWindow(Window):
         return min(intersection_ys), max(intersection_ys)
 
 
-class RegularPolygonWindow(Window):
-    """Describes regular polygon window with a 2D ab coordinate system.
+class GridablePolygonWindow(ConvexPolygonWindow):
+    """Describes a polygon window with a 2D (a, b) grid coordinate system.
 
     This kind of window is expected to exist in a periodic grid,
     therefore it should include an internal coordinate system with two
@@ -161,8 +161,11 @@ class RegularPolygonWindow(Window):
     @abstractmethod
     def from_edge_xys(cls, edge_xy: np.ndarray) -> Self: ...
 
+    @abstractmethod
+    def to_params(self) -> dict[str, float]: ...
 
-class HexagonalWindow(RegularPolygonWindow):
+
+class HexagonalWindow(GridablePolygonWindow):
     """Describes a regular hexagonal window with a 2D ab coordinate system.
 
     Geometry is described using four immutable float scalars (nm / radian):
@@ -176,11 +179,11 @@ class HexagonalWindow(RegularPolygonWindow):
     ROT60MAT = np.array([[1, -np.sqrt(3)], [np.sqrt(3), 1]], dtype=float) / 2
 
     def __init__(self, x: float, y: float, w: float, t: float):
-        t = (t + (np.pi / 6)) % (np.pi / 3) - (np.pi / 6)  # cast to [-pi/6, pi/6]
-        self.center_x: float_nm = x
-        self.center_y: float_nm = y
-        self.width = w = abs(w)
-        self.theta: float = t
+        t = (float(t) + (np.pi / 6)) % (np.pi / 3) - (np.pi / 6)  # cast to [-pi/6, pi/6]
+        self.center_x: float_nm = float(x)
+        self.center_y: float_nm = float(y)
+        self.width = w = abs(float(w))
+        self.theta: float = float(t)  # expressed in radian
 
         self.center = c = np.array([x, y], dtype=float)
         self.a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
@@ -249,6 +252,9 @@ class HexagonalWindow(RegularPolygonWindow):
         outside = np.maximum(distances.max(axis=1), 0.0)  # (N,)
         return float(np.sum(outside**2))
 
+    def to_params(self) -> dict[str, float]:
+        return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
+
     def translated(self, delta: np.ndarray) -> Self:
         """Return a new window translated by (dx, dy) in nm."""
         d = np.asarray(delta, dtype=float).reshape(
@@ -262,7 +268,7 @@ class HexagonalWindow(RegularPolygonWindow):
         )
 
 
-class RectangularWindow(RegularPolygonWindow):
+class RectangularWindow(GridablePolygonWindow):
     """Describes one rectangular window with a 2D ab coordinate system.
 
     Geometry is described using five immutable float scalars (nm / radian):
@@ -275,15 +281,15 @@ class RectangularWindow(RegularPolygonWindow):
     """
 
     def __init__(self, x: float, y: float, w: float, h: float, t: float):
-        t = (t + (np.pi / 2)) % np.pi - (np.pi / 2)  # cast to [-pi/2, pi/2]
+        t = (float(t) + (np.pi / 2)) % np.pi - (np.pi / 2)  # cast to [-pi/2, pi/2]
         if not -np.pi / 4 < t < np.pi / 4:  # cast to [-pi/4, pi/4]
             w, h, t = h, w, (np.pi - t) % np.pi - np.pi / 2
 
-        self.center_x: float_nm = x
-        self.center_y: float_nm = y
-        self.width = w = abs(w)
-        self.height = h = abs(h)
-        self.theta: float = t  # expressed in radian
+        self.center_x: float_nm = float(x)
+        self.center_y: float_nm = float(y)
+        self.width = w = abs(float(w))
+        self.height = h = abs(float(h))
+        self.theta: float = float(t)  # expressed in radian
 
         self.center = c = np.array([x, y], dtype=float)
         self.a = a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
@@ -326,6 +332,15 @@ class RectangularWindow(RegularPolygonWindow):
         d4 = np.abs(np.dot(xys - (center - b), b_hat))
         return np.sum(np.min([d1, d2, d3, d4], axis=0) ** 2)
 
+    def to_params(self) -> dict[str, float]:
+        return {
+            'x': self.center_x,
+            'y': self.center_y,
+            'w': self.width,
+            'h': self.height,
+            't': self.theta,
+        }
+
     def translated(self, delta: np.ndarray) -> Self:
         """Return a new window translated by (dx, dy) in nm."""
         d = np.asarray(delta, dtype=float).reshape(2)
@@ -338,7 +353,7 @@ class RectangularWindow(RegularPolygonWindow):
         )
 
 
-class SquareWindow(RegularPolygonWindow):
+class SquareWindow(GridablePolygonWindow):
     """Describes one square window with a 2D ab coordinate system.
 
     Geometry is described using four immutable float scalars (nm / radian):
@@ -349,17 +364,17 @@ class SquareWindow(RegularPolygonWindow):
     - theta: signed angle from X axis towards A axis and the X-aligned edge.
     """
 
-    def __init__(self, x: float, y: float, s: float, t: float):
-        t = (t + (np.pi / 4)) % (np.pi / 2) - (np.pi / 4)  # cast to [-pi/4, pi/4]
+    def __init__(self, x: float, y: float, w: float, t: float):
+        t = (float(t) + (np.pi / 4)) % (np.pi / 2) - (np.pi / 4)  # cast to [-pi/4, pi/4]
 
         self.center_x: float_nm = x
         self.center_y: float_nm = y
-        self.width = s = abs(s)
+        self.width = w = abs(w)
         self.theta: float = float(t)
 
         self.center = c = np.array([x, y], dtype=float)
-        self.a = a = 0.5 * s * np.array([np.cos(t), np.sin(t)], dtype=float)
-        self.b = b = 0.5 * s * np.array([-np.sin(t), np.cos(t)], dtype=float)
+        self.a = a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
+        self.b = b = 0.5 * w * np.array([-np.sin(t), np.cos(t)], dtype=float)
         self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
 
     def __repr__(self) -> str:
@@ -398,6 +413,9 @@ class SquareWindow(RegularPolygonWindow):
         distances = deltas @ normals.T - 0.5 * width  # (N,4)
         outside = np.maximum(distances.max(axis=1), 0.0)  # (N,)
         return float(np.sum(outside**2))
+
+    def to_params(self) -> dict[str, float]:
+        return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
 
     def translated(self, delta: np.ndarray) -> Self:
         d = np.asarray(delta, dtype=float).reshape(2)

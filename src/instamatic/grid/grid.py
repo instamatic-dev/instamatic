@@ -6,12 +6,12 @@ import numpy as np
 
 from instamatic._collections import VersionedDict
 from instamatic._typing import float_nm, int_nm
-from instamatic.grid.window import RegularPolygonWindow
+from instamatic.grid.window import GridablePolygonWindow
 
 DualIndex = tuple[int, int]
 SpiralIndex = Annotated[int, 'positive']
 WindowIndex = Union[DualIndex, SpiralIndex]
-WindowType = TypeVar('WindowType', bound=RegularPolygonWindow)
+WindowType = TypeVar('WindowType', bound=GridablePolygonWindow)
 
 
 class PairingFunction(Protocol):

@@ -7,10 +7,10 @@ import pandas as pd
 from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
-from instamatic.grid.polygon import ConvexPolygonGrid
-from instamatic.grid.window import RegularPolygonWindow
+from instamatic.grid.grid import PeriodicConvexPolygonGrid
+from instamatic.grid.window import GridablePolygonWindow
 
-WindowFactory: Callable[[float, float, float, ...], type[RegularPolygonWindow]]
+WindowFactory: Callable[[float, float, float, ...], type[GridablePolygonWindow]]
 
 
 class State:
@@ -19,11 +19,11 @@ class State:
     def __init__(
         self,
         journal: Journal,
-        grid: ConvexPolygonGrid,
+        grid: PeriodicConvexPolygonGrid,
         progress: Optional[ProgressTable] = None,
     ) -> None:
         self.journal: Journal = journal
-        self.grid: ConvexPolygonGrid = grid
+        self.grid: PeriodicConvexPolygonGrid = grid
         self.progress: Optional[ProgressTable] = progress
 
         self.scans: pd.DataFrame = pd.DataFrame()
@@ -59,12 +59,13 @@ class State:
                 method_name = event['method']
                 kwargs = event.get('kwargs', {})
                 if method_name == 'add_window':
-                    kwargs['window'] = GridWindow.from_repr(kwargs['window'])
+                    wkw = {k: float(v) for k, v in kwargs.pop('window').items()}
+                    kwargs['window'] = self.grid.window_type(**wkw)
                 getattr(self, method_name)(**kwargs)
 
     @edits_journal
     @edits_progress
-    def add_window(self, idx: int, window: RegularPolygonWindow) -> None:
+    def add_window(self, idx: int, window: GridablePolygonWindow) -> None:
         """For journaling purposes, can be added via instance or __repr__."""
         self.grid.windows[idx] = window
 

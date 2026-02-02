@@ -11,7 +11,7 @@ from typing import Any, Callable, Iterator
 import numpy as np
 
 from instamatic._typing import AnyPath
-from instamatic.grid.window import RegularPolygonWindow
+from instamatic.grid.window import GridablePolygonWindow
 
 
 class Journal:
@@ -90,8 +90,8 @@ def serialize(obj):
         return int(obj)
     elif isinstance(obj, (np.floating,)):
         return float(obj)
-    elif isinstance(obj, (RegularPolygonWindow,)):
-        return repr(obj)
+    elif isinstance(obj, (GridablePolygonWindow,)):
+        return obj.to_params()
     return obj
 
 
