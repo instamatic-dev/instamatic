@@ -134,3 +134,11 @@ class State:
         if peaks_arr.size != n_steps:
             raise ValueError(f'Corrupt scan payload: {peaks_arr.size=} != {n_steps=}')
         self.fill_scan(window, scan, hits_arr, peaks_arr)
+
+    def untouched_scans(self, window: Optional[int] = None) -> pd.MultiIndex:
+        """An iterable of (window, scan)-idx of planned-but-untouched scans."""
+        n_peaks = self.steps['n_peaks']
+        if window is not None:
+            n_peaks = n_peaks.xs(window, level='window', drop_level=False)
+        untouched = n_peaks.eq(-1).groupby(level=['window', 'scan']).all()
+        return untouched[untouched].index

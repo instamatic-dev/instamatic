@@ -103,18 +103,24 @@ class Experiment(ExperimentBase):
         """Method that governs the entirety of scan ED experiment work flow."""
 
         self.params = params
+        if self.dispatcher is None:
+            self.dispatcher = self.get_dispatcher()
 
         while not params['stop_event'].is_set():
+            window_idx: int = max(self.state.grid.windows.keys())
+            for _, scan_idx in self.state.untouched_scans(window=window_idx):
+                self.run_scan(window_idx, scan_idx)
+                if params['stop_event'].is_set():
+                    break
             try:
                 window_idx, window = self.locate_next_window()
             except IndexError:
+                params['stop_event'].set()
                 break
             self.state.add_window(idx=window_idx, window=window)
             self.add_scans(window_idx=window_idx, params=params)
-            for scan_idx in self.state.scans.loc[window_idx].index:
-                if self.dispatcher is None:
-                    self.dispatcher = self.get_dispatcher()
-                self.run_scan(window_idx, scan_idx)
+
+        self.teardown()
 
     def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
         """Find a next window on the grid, or raise if none can be found."""

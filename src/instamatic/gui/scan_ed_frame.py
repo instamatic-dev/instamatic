@@ -14,12 +14,12 @@ from .base_module import BaseModule, ModuleFrameMixin
 
 pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
-scan_step = {'from_': 0, 'to': 100_000, 'increment': 100, 'width': 20}
-scan_exposure = {'from_': 0, 'to': 10, 'increment': 0.01, 'width': 20}
-target_hits = {'from_': 0, 'to': 1_000_000, 'increment': 100, 'width': 20}
-target_time = {'from_': 0, 'to': 43_200, 'increment': 60, 'width': 20}
-target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000, 'width': 20}
-angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1, 'width': 20}
+scan_step = {'from_': 0, 'to': 100_000, 'increment': 100}
+scan_exposure = {'from_': 0, 'to': 10, 'increment': 0.01}
+target_hits = {'from_': 0, 'to': 1_000_000, 'increment': 100}
+target_time = {'from_': 0, 'to': 43_200, 'increment': 60}
+target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000}
+angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1}
 duration = {'from_': 0, 'to': 60, 'increment': 0.1}
 
 
@@ -32,16 +32,19 @@ class ExperimentalScanEDVariables:
         self.scan_x_step = IntVar(value=500)
         self.scan_y_step = IntVar(value=500)
         self.scan_exposure = DoubleVar(value=0.1)
+        self.grid_finder = StringVar()
 
         self.target_hits = IntVar(value=1000)
         self.target_x = IntVar(value=500_000)
         self.target_y = IntVar(value=500_000)
         self.target_time = IntVar(value=480)
+        self.target_alpha = IntVar(value=0)
 
         self.target_hits_b = BooleanVar(value=False)
         self.target_x_b = BooleanVar(value=False)
         self.target_y_b = BooleanVar(value=False)
         self.target_time_b = BooleanVar(value=False)
+        self.target_alpha_b = BooleanVar(value=False)
 
         self.stop_event = ThreadingEvent()
 
@@ -98,34 +101,43 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.scan_exposure = Spinbox(f, textvariable=var, **scan_exposure)
         self.scan_exposure.grid(row=7, column=1, **pad10)
 
+        Label(f, text='Increment tilt to (deg):').grid(row=8, column=0, **pad10)
+        self.target_alpha = Spinbox(f, textvariable=self.var.target_alpha, **angle_delta)
+        self.target_alpha.grid(row=8, column=1, **pad10)
+
         # Finish conditions area with tick marks
 
+        Label(f, text='Find grid windows:').grid(row=3, column=2, **pad10)
+        m = ['All manually', 'First manually', 'All automatically']
+        self.grid_finder = OptionMenu(f, self.var.grid_finder, m[1], *m)
+        self.grid_finder.grid(row=3, column=3, **pad10)
+
         text = 'Finish conditions – experiment ends once:'
-        Label(f, text=text).grid(row=3, column=2, columnspan=2, **pad10)
+        Label(f, text=text).grid(row=4, column=2, columnspan=2, **pad10)
 
         text = 'Hits exceed:'
         self.target_hits_b = Checkbutton(f, variable=self.var.target_hits_b, text=text)
-        self.target_hits_b.grid(row=4, column=2, **pad10)
+        self.target_hits_b.grid(row=5, column=2, **pad10)
         self.target_hits = Spinbox(f, textvariable=self.var.target_hits, **target_hits)
-        self.target_hits.grid(row=4, column=3, **pad10)
+        self.target_hits.grid(row=5, column=3, **pad10)
 
         text = '±X exceeds (nm):'
         self.target_x_b = Checkbutton(f, variable=self.var.target_x_b, text=text)
-        self.target_x_b.grid(row=5, column=2, **pad10)
+        self.target_x_b.grid(row=6, column=2, **pad10)
         self.target_x = Spinbox(f, textvariable=self.var.target_x, **target_xy)
-        self.target_x.grid(row=5, column=3, **pad10)
+        self.target_x.grid(row=6, column=3, **pad10)
 
         text = '±Y exceeds (nm):'
         self.target_y_b = Checkbutton(f, variable=self.var.target_y_b, text=text)
-        self.target_y_b.grid(row=6, column=2, **pad10)
+        self.target_y_b.grid(row=7, column=2, **pad10)
         self.target_y = Spinbox(f, textvariable=self.var.target_y, **target_xy)
-        self.target_y.grid(row=6, column=3, **pad10)
+        self.target_y.grid(row=7, column=3, **pad10)
 
         text = 'Time exceeds (h):'
         self.target_time_b = Checkbutton(f, variable=self.var.target_time_b, text=text)
-        self.target_time_b.grid(row=7, column=2, **pad10)
+        self.target_time_b.grid(row=8, column=2, **pad10)
         self.target_time = Spinbox(f, textvariable=self.var.target_time, **target_time)
-        self.target_time.grid(row=7, column=3, **pad10)
+        self.target_time.grid(row=8, column=3, **pad10)
 
         # Bottom area for progress and experiment flow control buttons
 
