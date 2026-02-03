@@ -74,7 +74,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         f.grid_rowconfigure(10, weight=1)
 
         Label(f, text='Grid geometry:').grid(row=3, column=0, **pad10)
-        m = ['hexagonal', 'rectangular']
+        m = ['hexagonal', 'rectangular', 'square']
         self.grid_geometry = OptionMenu(f, self.var.grid_geometry, m[1], *m)
         self.grid_geometry.grid(row=3, column=1, **pad10)
 

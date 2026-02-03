@@ -18,10 +18,8 @@ from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
-
-# TODO from instamatic.grid.polygon import ConvexPolygonGrid
-from instamatic.grid.window import GridablePolygonWindow, RectangularWindow
-from instamatic.utils.beamstop import find_beamstop_rect
+from instamatic.grid.registry import GRID_REGISTRY, PeriodicConvexPolygonGrid
+from instamatic.grid.window import GridablePolygonWindow
 
 
 class Experiment(ExperimentBase):
@@ -84,26 +82,13 @@ class Experiment(ExperimentBase):
         """Initialize a state, fill it from journal; raise at load issues."""
         journal_path = self.path / 'journal.jsonl'
         journal = Journal(path=journal_path)
-        state = State(journal=journal, progress=progress)
+        grid = GRID_REGISTRY[self.params['grid_geometry']]()
+        state = State(journal=journal, grid=grid, progress=progress)
         if load:
             if not journal_path.exists() or not journal_path.is_file():
                 raise FileNotFoundError(f'No journal file found at {journal_path=}')
             state.load_from_journal()
         return state
-
-    def get_grid(self, params: dict[str, Any]) -> ConvexPolygonGrid:
-        """Reconstruct the grid from current params and state."""
-        # TODO from instamatic.grid import HexagonalGrid, RectangularGrid
-
-        if params.get('grid_geometry', '').lower().startswith('hex'):
-            grid = HexagonalGrid()
-        else:
-            grid = RectangularGrid()
-        if self.state.grid.windows:
-            for wid, w in self.state.grid.windows.items():
-                assert isinstance(w, grid.window_type)
-                grid.windows[wid] = w
-        return grid
 
     def determine_exposure_and_speed(self, step_size: int_nm) -> tuple[float, float]:
         """Determine exposure/speed reachable by TEM close to requested."""
@@ -119,37 +104,26 @@ class Experiment(ExperimentBase):
 
         self.params = params
 
-        grid = self.get_grid(params=params)
-        stop_event = params['stop_event']
-
-        while not stop_event.is_set():
+        while not params['stop_event'].is_set():
             try:
-                window_idx, window = self.locate_next_window(grid=grid, params=params)
+                window_idx, window = self.locate_next_window()
             except IndexError:
                 break
-            grid.windows['window_id'] = window
             self.state.add_window(idx=window_idx, window=window)
-
             self.add_scans(window_idx=window_idx, params=params)
-
             for scan_idx in self.state.scans.loc[window_idx].index:
                 if self.dispatcher is None:
                     self.dispatcher = self.get_dispatcher()
                 self.run_scan(window_idx, scan_idx)
 
-        return
-
-    def locate_next_window(
-        self,
-        grid: ConvexPolygonGrid,
-        params: dict,
-    ) -> tuple[int, GridablePolygonWindow]:
+    def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
         """Find a next window on the grid, or raise if none can be found."""
+        grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
         last_window_id = max(grid.windows)
         for window_id in range(last_window_id + 1, 2 * last_window_id + 10):
             predicted = grid.predict_window(window_id)
-            x_lim = tx if (tx := params['target_x']) is not None else float('inf')
-            y_lim = ty if (ty := params['target_x']) is not None else float('inf')
+            x_lim = tx if (tx := self.params['target_x']) is not None else float('inf')
+            y_lim = ty if (ty := self.params['target_x']) is not None else float('inf')
             x_fits = np.all(np.abs(predicted.corners[:, 0]) < x_lim)
             y_fits = np.all(np.abs(predicted.corners[:, 0]) < y_lim)
             if not (x_fits and y_fits):
