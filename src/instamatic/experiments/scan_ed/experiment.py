@@ -109,6 +109,7 @@ class Experiment(ExperimentBase):
         while not params['stop_event'].is_set():
             window_idx: int = max(self.state.grid.windows.keys())
             for _, scan_idx in self.state.untouched_scans(window=window_idx):
+                self.set_tilt(window_idx)
                 self.run_scan(window_idx, scan_idx)
                 if params['stop_event'].is_set():
                     break
@@ -172,6 +173,13 @@ class Experiment(ExperimentBase):
                 step=step,
                 n_steps=-(-abs(fast_max - fast_min) % step),
             )
+
+    def set_tilt(self, window_idx: int) -> None:
+        """Set alpha (0 to +/-max to 0) as a function of window progress."""
+        p = self.state.window_progress(window=window_idx)
+        m = self.params['max_alpha']
+        a = m * 2 * p if p <= 0.5 else m * (2 * p - 1)  # 0 to m, then -m to 0
+        self.ctrl.stage.set(a=a)
 
     def run_scan(self, window_idx: int, scan_idx: int) -> None:
         """Run a single scan previously added to state on the grid."""

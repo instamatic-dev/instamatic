@@ -142,3 +142,16 @@ class State:
             n_peaks = n_peaks.xs(window, level='window', drop_level=False)
         untouched = n_peaks.eq(-1).groupby(level=['window', 'scan']).all()
         return untouched[untouched].index
+
+    def window_progress(self, window: int) -> float:
+        """Return measured fraction of the window scans (length-weighted)."""
+        if self.scans.empty or window not in self.scans.index.get_level_values('window'):
+            return 0.0
+        scans = self.scans.xs(window, level='window', drop_level=False)
+        total_steps = int(scans['n_steps'].sum())
+        if total_steps == 0:
+            return 0.0
+        n_peaks = self.steps['n_peaks'].xs(window, level='window', drop_level=False)
+        touched = n_peaks.ge(0).groupby(level=['window', 'scan']).any()
+        touched = touched.reindex(scans.index, fill_value=False)
+        return scans.loc[touched, 'n_steps'].sum() / total_steps

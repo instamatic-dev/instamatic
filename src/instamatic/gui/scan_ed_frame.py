@@ -38,13 +38,12 @@ class ExperimentalScanEDVariables:
         self.target_x = IntVar(value=500_000)
         self.target_y = IntVar(value=500_000)
         self.target_time = IntVar(value=480)
-        self.target_alpha = IntVar(value=0)
+        self.max_alpha = DoubleVar(value=0)
 
         self.target_hits_b = BooleanVar(value=False)
         self.target_x_b = BooleanVar(value=False)
         self.target_y_b = BooleanVar(value=False)
         self.target_time_b = BooleanVar(value=False)
-        self.target_alpha_b = BooleanVar(value=False)
 
         self.stop_event = ThreadingEvent()
 
@@ -101,9 +100,9 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.scan_exposure = Spinbox(f, textvariable=var, **scan_exposure)
         self.scan_exposure.grid(row=7, column=1, **pad10)
 
-        Label(f, text='Increment tilt to (deg):').grid(row=8, column=0, **pad10)
-        self.target_alpha = Spinbox(f, textvariable=self.var.target_alpha, **angle_delta)
-        self.target_alpha.grid(row=8, column=1, **pad10)
+        Label(f, text='Max alpha tilt (deg):').grid(row=8, column=0, **pad10)
+        self.max_alpha = Spinbox(f, textvariable=self.var.max_alpha, **angle_delta)
+        self.max_alpha.grid(row=8, column=1, **pad10)
 
         # Finish conditions area with tick marks
 
@@ -183,9 +182,6 @@ def sced_interface_command(controller, **params: Any) -> None:
         exp_dir = controller.module_io.get_experiment_directory()
         journal_path = Path(exp_dir) / 'journal.jsonl'
         assert journal_path.is_file(), f'No journal file found at {journal_path}'
-        journal = Journal(path=journal_path)
-        state = State(journal=journal, progress=progress)
-        state.load_from_journal()
     else:
         exp_dir = controller.module_io.get_new_experiment_directory()
         exp_dir.mkdir(exist_ok=True, parents=True)
@@ -196,7 +192,7 @@ def sced_interface_command(controller, **params: Any) -> None:
         log=controller.log,
         flatfield=flat_field,
         progress=progress,
-        state=state,
+        load=load,
     )
     try:
         controller.fast_adt.start_collection(**params)
