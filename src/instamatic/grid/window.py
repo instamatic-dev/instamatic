@@ -34,44 +34,6 @@ class ConvexPolygonWindow(Window):
 
     corners: np.ndarray = ...  # a Nx2 ordered array of xy corner coordinates
 
-    def plot(self, ax=None, pad: float = 0.1) -> None:
-        """Plot a simple visual representation of the window geometry."""
-        if ax is None:
-            _, ax = plt.subplots()
-
-        corners = self.corners
-        cx, cy = self.center
-        xmin, ymin = corners.min(axis=0)
-        xmax, ymax = corners.max(axis=0)
-        dx, dy = xmax - xmin, ymax - ymin
-
-        ax.set_facecolor('0.85')
-        ax.add_patch(
-            Polygon(
-                corners,
-                closed=True,
-                facecolor='white',
-                edgecolor='black',
-                linewidth=1.5,
-                zorder=1,
-            )
-        )
-
-        ax.plot(corners[:, 0], corners[:, 1], 'ro', zorder=2)
-        ax.plot(cx, cy, 'r+', markersize=10, markeredgewidth=2, zorder=3)
-
-        if hasattr(self, '_edge_xys'):
-            xys = self._edge_xys
-            ax.plot(xys[:, 0], xys[:, 1], 'bx', markersize=6, zorder=5)
-
-        ax.set_aspect('equal', adjustable='box')
-        ax.set_xlim(xmin - pad * dx, xmax + pad * dx)
-        ax.set_ylim(ymin - pad * dy, ymax + pad * dy)
-        ax.set_xlabel('x / nm')
-        ax.set_ylabel('y / nm')
-
-        plt.show()
-
     def x_intersections(self, y: float_nm) -> Optional[tuple[float, float]]:
         """Return (x_min, x_max) for a horizontal line intersecting at y."""
         intersection_xs: list[float] = []

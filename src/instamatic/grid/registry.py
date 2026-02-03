@@ -33,25 +33,37 @@ GRID_REGISTRY['square'] = SquareGrid
 # development test code; to be moved to artist/tests
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
     import numpy as np
 
-    g = RectangularGrid()
-    w0 = RectangularWindow(0, 0, 50_000, 50_000, np.deg2rad(10))
-    g.windows[0] = w0
-    for i in range(200):
-        p = g.predict_window(i)
-        if np.linalg.norm(p.center - w0.center) < 400_000:
-            g.windows[i] = p
+    from instamatic.grid.artist import plot
 
-    g.plot()
+    g1 = HexagonalGrid()
+    w1 = HexagonalWindow(0, 0, 50_000, np.deg2rad(10))
+    g1.windows[0] = w1
 
-    h = HexagonalGrid()
-    v0 = HexagonalWindow(0, 0, 50_000, np.deg2rad(10))
-    h.windows[0] = v0
+    g2 = RectangularGrid()
+    w2 = RectangularWindow(0, 0, 40_000, 60_000, np.deg2rad(10))
+    g2.windows[0] = w2
 
-    for i in range(200):
-        q = h.predict_window(i)
-        if np.linalg.norm(q.center - v0.center) < 400_000:
-            h.windows[i] = q
+    g3 = RectangularGrid()
+    w3 = RectangularWindow(0, 0, 20_000, 200_000, np.deg2rad(10))
+    g3.windows[0] = w3
 
-    h.plot()
+    g4 = SquareGrid()
+    w4 = SquareWindow(0, 0, 50_000, np.deg2rad(10))
+    g4.windows[0] = w4
+
+    for grid in [g1, g2, g3, g4]:
+        for i in range(120):
+            w = grid.predict_window(i)
+            if np.linalg.norm(w.center - grid.windows[0].center) < 200_000:
+                grid.windows[i] = w
+
+    fig, axs = plt.subplots(2, 2)
+    fig.tight_layout()
+    plot(g1.windows, ax=axs[0, 0])
+    plot(g2.windows, ax=axs[0, 1])
+    plot(g3.windows, ax=axs[1, 0])
+    plot(g4.windows, ax=axs[1, 1])
+    plt.show()

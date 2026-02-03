@@ -18,7 +18,8 @@ from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
-from instamatic.grid.polygon import ConvexPolygonGrid
+
+# TODO from instamatic.grid.polygon import ConvexPolygonGrid
 from instamatic.grid.window import GridablePolygonWindow, RectangularWindow
 from instamatic.utils.beamstop import find_beamstop_rect
 
@@ -92,7 +93,7 @@ class Experiment(ExperimentBase):
 
     def get_grid(self, params: dict[str, Any]) -> ConvexPolygonGrid:
         """Reconstruct the grid from current params and state."""
-        from instamatic.grid.polygon import HexagonalGrid, RectangularGrid
+        # TODO from instamatic.grid import HexagonalGrid, RectangularGrid
 
         if params.get('grid_geometry', '').lower().startswith('hex'):
             grid = HexagonalGrid()
