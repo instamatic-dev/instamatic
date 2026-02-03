@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Generic, Protocol, TypeVar, Union, cast
+from typing import Annotated, Generic, Protocol, Sequence, TypeVar, Union, cast
 
 import numpy as np
 
@@ -131,7 +131,7 @@ class PeriodicConvexPolygonGrid(ConvexPolygonGrid[WindowType]):
         return np.array([w.center for w in self.windows.values()], dtype=float)
 
     def nearest_window(self, idx: WindowIndex) -> SpiralIndex:
-        """Return Ulam index of existing window nearest to the one with idx."""
+        """Return spiral index of existing window nearest to the one w/ idx."""
         predicted_center = self.predict_center(idx)
         offsets2 = np.sum((self.windows_xy - predicted_center) ** 2, axis=1)
         nearest = int(np.argmin(offsets2))
@@ -141,6 +141,14 @@ class PeriodicConvexPolygonGrid(ConvexPolygonGrid[WindowType]):
         """Predict center position of window idx given the rest of the grid."""
         ij: DualIndex = self.pairing_inverse(idx) if isinstance(idx, int) else idx
         return self.windows[0].center + self.a * ij[0] + self.b * ij[1]
+
+    def predict_index(self, center: Sequence[float]) -> int:
+        """Return spiral index of predicted window nearest to the center."""
+        delta = np.asarray(center, dtype=float) - self.windows[0].center
+        metric = np.column_stack([self.a, self.b])
+        ij, *_ = np.linalg.lstsq(metric, delta, rcond=None)
+        i, j = (int(np.rint(v)) for v in ij)
+        return int(self.pairing_function(i, j))
 
     def predict_window(self, idx: WindowIndex) -> WindowType:
         """Predict the window of index idx given the rest of the grid."""

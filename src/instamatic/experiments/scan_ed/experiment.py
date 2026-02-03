@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from itertools import cycle
+from itertools import count, cycle
 from pathlib import Path
 from threading import Thread
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -19,8 +19,13 @@ from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
+from instamatic.grid.artist import plot
 from instamatic.grid.registry import GRID_REGISTRY, PeriodicConvexPolygonGrid
 from instamatic.grid.window import GridablePolygonWindow
+from instamatic.gui.click_dispatcher import ClickListener, MouseButton
+
+if TYPE_CHECKING:
+    from instamatic.gui import videostream_frame as vsf_type
 
 
 class Experiment(ExperimentBase):
@@ -34,6 +39,7 @@ class Experiment(ExperimentBase):
         flatfield: Optional[np.ndarray] = None,
         progress: Optional[ProgressTable] = None,
         load: bool = False,
+        videostream_frame: Optional[vsf_type] = None,
     ):
         super().__init__()
         self.ctrl = ctrl
@@ -42,6 +48,7 @@ class Experiment(ExperimentBase):
         self.flatfield: Optional[np.ndarray] = flatfield
         self.state = self.get_state(load=load, progress=progress)
         self.start_time = datetime.now()
+        self.videostream_frame: Optional[vsf_type] = videostream_frame
 
         # attributes initialized once an experiment starts
         self.params: dict[str, Any] = {}
@@ -108,14 +115,17 @@ class Experiment(ExperimentBase):
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher()
 
+        windows = self.determine_manual_windows()
+        self.order_and_add_manual_windows(windows)
+
         while not params['stop_event'].is_set():
-            window_idx: int = max(self.state.grid.windows.keys())
-            for _, scan_idx in self.state.untouched_scans(window=window_idx):
-                self.set_tilt(window_idx)
-                self.run_scan(window_idx, scan_idx)
-                self.set_stop_event_if_target_met()
-                if params['stop_event'].is_set():
-                    break
+            for window_idx in self.state.grid.windows.keys():
+                for _, scan_idx in self.state.untouched_scans(window=window_idx):
+                    self.set_tilt(window_idx)
+                    self.run_scan(window_idx, scan_idx)
+                    self.set_stop_event_if_target_met()
+                    if params['stop_event'].is_set():
+                        break
             try:
                 window_idx, window = self.locate_next_window()
             except IndexError:
@@ -125,22 +135,6 @@ class Experiment(ExperimentBase):
             self.add_scans(window_idx=window_idx, params=params)
 
         self.teardown()
-
-    def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
-        """Find a next window on the grid, or raise if none can be found."""
-        grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
-        last_window_id = max(grid.windows)
-        for window_id in range(last_window_id + 1, 2 * last_window_id + 10):
-            predicted = grid.predict_window(window_id)
-            x_lim = tx if (tx := self.params['target_x']) is not None else float('inf')
-            y_lim = ty if (ty := self.params['target_x']) is not None else float('inf')
-            x_fits = np.all(np.abs(predicted.corners[:, 0]) < x_lim)
-            y_fits = np.all(np.abs(predicted.corners[:, 0]) < y_lim)
-            if not (x_fits and y_fits):
-                continue
-            self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
-            return window_id, grid.window_type.from_sweeping()
-        raise IndexError('Could not locate next window within limits')
 
     def add_scans(self, window_idx: int, params: dict[str, Any]) -> None:
         """Add scans for window, asserting it does not have scans yet."""
@@ -176,6 +170,81 @@ class Experiment(ExperimentBase):
                 step=step,
                 n_steps=-(-abs(fast_max - fast_min) % step),
             )
+
+    def determine_manual_windows(self) -> list[GridablePolygonWindow]:
+        method = self.params.get('grid_finder', 'All automatically')
+        if method == 'All automatically':
+            return []
+
+        d = self.videostream_frame.click_dispatcher
+        n = self.name
+        cl: ClickListener = c if (c := d.listeners.get(n)) else d.add_listener(n)
+
+        print('Please navigate the stage as many points on the edge as possible')
+        print('(at least the corners and approximate midpoints). At each point,')
+        print('position the edge at the center of the screen.')
+        print('Left-click the screen to add the point, right-click to finish.')
+        print('')
+
+        windows = {}
+        for window_idx in count():
+            edge_xys = []
+            with cl:
+                while True:
+                    c = cl.get_click()
+                    if c.button == MouseButton.RIGHT:
+                        break
+                    edge_xys.append(self.ctrl.stage.xy)
+            edge_xys = np.asarray(edge_xys, dtype=float)
+            window = self.state.grid.window_type.from_edge_xys(edge_xy=edge_xys)
+            fig, ax = plot({**windows, window_idx: window}, debug_edges=True)
+            with self.videostream_frame.processor.temporary(figure=fig):
+                print('LMB to accept and finish, RMB to retry, MMB to accept and add new')
+                c = cl.get_click()
+                if c.button == MouseButton.LEFT:
+                    windows[window_idx] = window
+                    return list(windows.values())
+                elif c.button == MouseButton.RIGHT:
+                    continue
+                else:  # middle or any other
+                    windows[window_idx] = window
+                    continue
+
+    def order_and_add_manual_windows(self, windows: list[GridablePolygonWindow]) -> None:
+        """Based on the first, correctly reindex+add the following windows."""
+        if not windows:
+            return
+        self.state.add_window(idx=0, window=windows.pop(0))
+        for window in windows:
+            idx = self.state.grid.predict_index(window.center)
+            self.state.add_window(idx=idx, window=window)
+
+    def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
+        """Find a next window on the grid, or raise if none can be found."""
+        if self.params.get('grid_finder') == 'All manually':
+            raise IndexError('Experiment params disallow locating new windows')
+        grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
+        for window_id in range(1, 2 * max(grid.windows) + 10):
+            if window_id in grid.windows:
+                continue
+            predicted = grid.predict_window(window_id)
+            x_lim = tx if (tx := self.params['target_x']) is not None else float('inf')
+            y_lim = ty if (ty := self.params['target_x']) is not None else float('inf')
+            x_fits = np.all(np.abs(predicted.corners[:, 0]) < x_lim)
+            y_fits = np.all(np.abs(predicted.corners[:, 0]) < y_lim)
+            if not (x_fits and y_fits):
+                continue
+            self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
+            return window_id, grid.window_type.from_sweeping()
+        raise IndexError('Could not locate next window within limits')
+
+    def set_stop_event_if_target_met(self) -> None:
+        time_passed = datetime.now() - self.start_time
+        time_target = timedelta(hours=self.params['target_time'])
+        hits_found = self.state.steps['hits'].sum()
+        hits_target = self.params['target_hits']
+        if time_passed > time_target or hits_found > hits_target:
+            self.params['stop_event'].set()
 
     def set_tilt(self, window_idx: int) -> None:
         """Set alpha (0 to +/-max to 0) as a function of window progress."""
@@ -215,14 +284,6 @@ class Experiment(ExperimentBase):
         self.dispatcher.end_scan()
         fb_thread.join()
         self.state.finalize_scan(window_idx, scan_idx)
-
-    def set_stop_event_if_target_met(self) -> None:
-        time_passed = datetime.now() - self.start_time
-        time_target = timedelta(hours=self.params['target_time'])
-        hits_found = self.state.steps['hits'].sum()
-        hits_target = self.params['target_hits']
-        if time_passed > time_target or hits_found > hits_target:
-            self.params['stop_event'].set()
 
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""

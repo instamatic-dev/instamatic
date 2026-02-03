@@ -171,8 +171,6 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
 
 def sced_interface_command(controller, **params: Any) -> None:
     from instamatic.experiments.scan_ed.experiment import Experiment
-    from instamatic.experiments.scan_ed.journal import Journal
-    from instamatic.experiments.scan_ed.state import State
 
     load: bool = params.get('load', False)
     progress: Optional[ProgressTable] = params.get('progress', None)
@@ -186,6 +184,12 @@ def sced_interface_command(controller, **params: Any) -> None:
         exp_dir = controller.module_io.get_new_experiment_directory()
         exp_dir.mkdir(exist_ok=True, parents=True)
 
+    # get the videostreaming frame only if needed for manual window determination
+    if params.get('grid_finder') == 'All automatically':
+        vsf = None
+    else:
+        vsf = controller.app.get_module('stream')
+
     controller.fast_adt = Experiment(
         ctrl=controller.ctrl,
         path=exp_dir,
@@ -193,6 +197,7 @@ def sced_interface_command(controller, **params: Any) -> None:
         flatfield=flat_field,
         progress=progress,
         load=load,
+        videostream_frame=vsf,
     )
     try:
         controller.fast_adt.start_collection(**params)

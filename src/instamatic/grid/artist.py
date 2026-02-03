@@ -17,7 +17,6 @@ def plot(
     windows: Dict[int, ConvexPolygonWindow],
     ax: Optional[Axes] = None,
     show_indices: bool = True,
-    show_axes: bool = True,
     debug_edges: bool = False,
     figsize: tuple[float, float] = (5, 5),
     dpi: int = 100,
@@ -52,9 +51,7 @@ def plot(
             ax.plot(xys[:, 0], xys[:, 1], 'bx', markersize=6, zorder=5)
 
     ax.autoscale()
-
-    if show_axes:
-        ax.axhline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
-        ax.axvline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
+    ax.axhline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
+    ax.axvline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
 
     return fig, ax
