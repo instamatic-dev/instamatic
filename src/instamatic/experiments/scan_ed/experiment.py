@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta
 from itertools import cycle
 from pathlib import Path
 from threading import Thread
@@ -40,6 +41,7 @@ class Experiment(ExperimentBase):
         self.log: logging.Logger = log
         self.flatfield: Optional[np.ndarray] = flatfield
         self.state = self.get_state(load=load, progress=progress)
+        self.start_time = datetime.now()
 
         # attributes initialized once an experiment starts
         self.params: dict[str, Any] = {}
@@ -111,6 +113,7 @@ class Experiment(ExperimentBase):
             for _, scan_idx in self.state.untouched_scans(window=window_idx):
                 self.set_tilt(window_idx)
                 self.run_scan(window_idx, scan_idx)
+                self.set_stop_event_if_target_met()
                 if params['stop_event'].is_set():
                     break
             try:
@@ -212,6 +215,14 @@ class Experiment(ExperimentBase):
         self.dispatcher.end_scan()
         fb_thread.join()
         self.state.finalize_scan(window_idx, scan_idx)
+
+    def set_stop_event_if_target_met(self) -> None:
+        time_passed = datetime.now() - self.start_time
+        time_target = timedelta(hours=self.params['target_time'])
+        hits_found = self.state.steps['hits'].sum()
+        hits_target = self.params['target_hits']
+        if time_passed > time_target or hits_found > hits_target:
+            self.params['stop_event'].set()
 
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
