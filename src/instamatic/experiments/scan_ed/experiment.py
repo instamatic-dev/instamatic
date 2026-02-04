@@ -5,14 +5,14 @@ from datetime import datetime, timedelta
 from itertools import count, cycle
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
 
 from instamatic._typing import AnyPath, int_nm
 from instamatic.calibrate import CalibMovieDelays
-from instamatic.calibrate.calibrate_stage_translation import CalibStageTranslationX
+from instamatic.calibrate.calibrate_stage_translation import *
 from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.experiments.fast_adt.experiment import FastADTMissingCalibError
 from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
@@ -96,23 +96,25 @@ class Experiment(ExperimentBase):
         image, h = self.ctrl.get_image()
         return DiffHuntDispatcher(shape=image.shape, dtype=image.dtype)
 
-    def get_stage_translation(self) -> CalibStageTranslationX:
+    def get_stage_translation(self) -> CalibStageMotion:
         """Get rotation calibration if present; otherwise warn & terminate."""
         try:
-            return CalibStageTranslationX.from_file()
+            if self.params['scan_geometry'].lower().startswith('x'):
+                return CalibStageTranslationX.from_file()
+            return CalibStageTranslationY.from_file()
         except OSError:
             print(m1 := 'This script requires stage rotation to be calibrated.')
             print(m2 := 'Please run `instamatic.calibrate_stage_rotation` first.')
             raise FastADTMissingCalibError(m1 + ' ' + m2)
 
-    def determine_exposure_and_speed(self, step_size: int_nm) -> tuple[float, float]:
-        """Determine exposure/speed reachable by TEM close to requested."""
+    def determine_timing(self, step_size: int_nm) -> tuple[float, float, float]:
+        """Determine exposure/reachable speed/total delay expected from TEM."""
         detector_dead_time = self.get_dead_time(self.params['scan_exposure'])
         time_for_one_frame = self.params['scan_exposure'] + detector_dead_time
         trans_calib = self.get_stage_translation()
         motion_plan = trans_calib.plan_motion(time_for_one_frame / step_size)
         exposure = abs(motion_plan.pace * step_size) - detector_dead_time
-        return exposure, motion_plan.speed
+        return exposure, motion_plan.speed, motion_plan.total_delay
 
     def start_collection(self, **params) -> None:
         """Method that governs the entirety of scan ED experiment work flow."""
@@ -167,20 +169,26 @@ class Experiment(ExperimentBase):
             step = params['scan_y_step']
             spacing = params['scan_x_step']
 
-        scan_signs = cycle([1] if 'raster' in params['scan_geometry'] else [1, -1])
+        _, _, total_delay = self.determine_timing(step)
+        error_margin = max(step * total_delay / self.params['scan_exposure'], 0)
+
+        scan_dirs = cycle([1] if 'raster' in params['scan_geometry'] else [1, -1])
         slow_min = np.min(window.corners[:, 1 - axis])
         slow_max = np.max(window.corners[:, 1 - axis])
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
         for scan_id, slow in enumerate(slows):
-            fast_min, fast_max = scan_factory(slow)[:: next(scan_signs)]
+            fast_min, fast_max = scan_factory(slow)
+            fast_min -= error_margin
+            fast_max += error_margin
+            fast_start, fast_stop = [fast_min, fast_max][:: next(scan_dirs)]
             self.state.add_scan(
                 window=int(window_idx),
                 scan=int(scan_id),
-                x0=int(slow if axis else fast_min),
-                y0=int(fast_min if axis else slow),
+                x0=int(slow if axis else fast_start),
+                y0=int(fast_start if axis else slow),
                 axis=int(axis),
                 step=int(step),
-                n_steps=-int(-abs(fast_max - fast_min) // step),
+                n_steps=-int(-abs(fast_stop - fast_start) // step),
             )
 
     def determine_manual_windows(self) -> list[GridablePolygonWindow]:
@@ -283,7 +291,7 @@ class Experiment(ExperimentBase):
         fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
         fb_thread.start()
 
-        exposure, speed = self.determine_exposure_and_speed(scan['step'])
+        exposure, speed, _ = self.determine_timing(scan['step'])
         axis = scan['axis']  # x: 0, y: 1
         fast0 = scan['y0' if axis else 'x0']
         fast1 = fast0 + scan['step'] * scan['n_steps']
