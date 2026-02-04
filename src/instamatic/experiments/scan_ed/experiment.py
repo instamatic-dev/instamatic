@@ -167,11 +167,7 @@ class Experiment(ExperimentBase):
             step = params['scan_y_step']
             spacing = params['scan_x_step']
 
-        if params['scan_geometry'].lower().endswith('raster'):
-            scan_signs = cycle([1, -1])
-        else:  # params['scan_geometry'].lower().endswith('raster'):
-            scan_signs = cycle([1])
-
+        scan_signs = cycle([1] if 'raster' in params['scan_geometry'] else [1, -1])
         slow_min = np.min(window.corners[:, 1 - axis])
         slow_max = np.max(window.corners[:, 1 - axis])
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
