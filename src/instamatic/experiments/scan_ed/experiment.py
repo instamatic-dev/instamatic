@@ -141,6 +141,8 @@ class Experiment(ExperimentBase):
                             break
             finally:
                 self.ctrl.stage.set(a=0)
+            if params['stop_event'].is_set():
+                break
             try:
                 window_idx, window = self.locate_next_window()
             except IndexError:
@@ -307,6 +309,7 @@ class Experiment(ExperimentBase):
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
         self.dispatcher.terminate_workers()
+        self.params['stop_event'].clear()
 
     def finalize(self) -> None:
         ...

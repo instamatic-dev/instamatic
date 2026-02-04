@@ -39,8 +39,8 @@ class ProgressTable(ttk.Frame):
         for column in self.COLUMNS:
             self.tree.heading(column, text=column)
 
-        self.tree.column('#0', width=30, stretch=True)
-        self.tree.column('geometry', anchor=tk.CENTER, width=120)
+        self.tree.column('#0', width=40, stretch=True)
+        self.tree.column('geometry', anchor=tk.CENTER, width=160)
         self.tree.column('hits', anchor=tk.E, width=20)
         self.tree.column('peaks', anchor=tk.E, width=20)
         self.tree.column('steps', anchor=tk.E, width=20)
@@ -181,6 +181,14 @@ class ProgressTable(ttk.Frame):
         self.tree.set(window_iid, 'hits/step', safe_ratio(wt, 'hits', 'steps'))
         self.tree.set(window_iid, 'peaks/step', safe_ratio(wt, 'peaks', 'steps'))
 
+    def clear(self) -> None:
+        """Remove all rows and reset cached totals (e.g. before loading)."""
+        for iid in self.tree.get_children(''):
+            self.tree.delete(iid)
+        self._scan_geom.clear()
+        self._scan_totals.clear()
+        self._window_totals.clear()
+
 
 class ThreadSafeProgressTableProxy:
     """Thread-safe proxy: same API as ProgressTable, executed on Tk thread."""
@@ -227,6 +235,9 @@ class ThreadSafeProgressTableProxy:
 
     def fill_scan(self, **kwargs):
         self._post('fill_scan', **kwargs)
+
+    def clear(self, **kwargs):
+        self._post('clear', **kwargs)
 
 
 def edits_progress(method: Callable) -> Callable:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from pathlib import Path
 from threading import Event as ThreadingEvent
 from tkinter import *
@@ -21,6 +22,23 @@ target_time = {'from_': 0, 'to': 43_200, 'increment': 60}
 target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000}
 angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1}
 duration = {'from_': 0, 'to': 60, 'increment': 0.1}
+
+
+class WidgetState(Enum):
+    IDLE = 0
+    BUSY = 1
+    STOPPING = 2
+
+
+class ThreadSafeTkCallback:
+    """Run callback(*args, **kwargs) on the Tk thread."""
+
+    def __init__(self, parent, callback):
+        self._parent = parent
+        self._callback = callback
+
+    def __call__(self, *args, **kwargs):
+        self._parent.after(0, lambda: self._callback(*args, **kwargs))
 
 
 class ExperimentalScanEDVariables:
@@ -150,32 +168,51 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
 
         self.start_button = Button(g, text='Start collection', command=self.start_collection)
         self.start_button.grid(row=20, column=0, sticky=EW)
-
         self.load_button = Button(g, text='Load and continue', command=self.load_collection)
         self.load_button.grid(row=20, column=1, sticky=EW)
-
-        self.stop_button = Button(g, text='Stop collection', command=self.var.stop_event.set)
+        self.stop_button = Button(g, text='Stop collection', command=self.stop_collection)
         self.stop_button.grid(row=20, column=2, sticky=EW)
+        self.update_widget()
 
         g.pack(side='bottom', fill=BOTH, expand=True, padx=10)
         f.pack(side='bottom', fill=BOTH, expand=True, pady=10)
 
     def start_collection(self) -> None:
+        self.progress.clear()
+        callback = ThreadSafeTkCallback(self, self.update_widget)
         progress = ThreadSafeProgressTableProxy(self, self.progress)
-        self.q.put(('scan_ed', {'progress': progress, **self.var.as_dict()}))
+        kwargs = {'callback': callback, 'load': False, 'progress': progress}
+        self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
+        self.update_widget(state=WidgetState.BUSY)
 
     def load_collection(self) -> None:
+        self.progress.clear()
+        callback = ThreadSafeTkCallback(self, self.update_widget)
         progress = ThreadSafeProgressTableProxy(self, self.progress)
-        kwargs = {'load': True, 'progress': progress}
+        kwargs = {'callback': callback, 'load': True, 'progress': progress}
         self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
+        self.update_widget(state=WidgetState.BUSY)
+
+    def stop_collection(self) -> None:
+        self.var.stop_event.set()
+        self.update_widget(state=WidgetState.STOPPING)
+
+    def update_widget(self, state: WidgetState = WidgetState.IDLE) -> None:
+        """Update the buttons to reflect the current state of the widget."""
+        self.start_button.config(state=NORMAL if state is WidgetState.IDLE else DISABLED)
+        self.load_button.config(state=NORMAL if state is WidgetState.IDLE else DISABLED)
+        self.stop_button.config(state=NORMAL if state is WidgetState.BUSY else DISABLED)
 
 
 def sced_interface_command(controller, **params: Any) -> None:
     from instamatic.experiments.scan_ed.experiment import Experiment
 
+    callback = params.pop('callback', lambda: None)
     load: bool = params.get('load', False)
     progress: Optional[ProgressTable] = params.get('progress', None)
     flat_field = controller.module_io.get_flatfield()
+    if params.get('stop_event', None) is not None:
+        params['stop_event'].clear()
 
     if load:
         exp_dir = controller.module_io.get_experiment_directory()
@@ -205,6 +242,7 @@ def sced_interface_command(controller, **params: Any) -> None:
     except RuntimeError:
         pass  # RuntimeError is raised if experiment is terminated early
     finally:
+        callback()
         del controller.fast_adt
 
 
