@@ -46,13 +46,31 @@ class Experiment(ExperimentBase):
         self.path: Path = Path(path)
         self.log: logging.Logger = log
         self.flatfield: Optional[np.ndarray] = flatfield
-        self.state = self.get_state(load=load, progress=progress)
+        self.progress: Optional[ProgressTable] = progress
+        self.load: bool = load
+        self._state: Optional[State] = None
         self.start_time = datetime.now()
         self.videostream_frame: Optional[vsf_type] = videostream_frame
 
         # attributes initialized once an experiment starts
         self.params: dict[str, Any] = {}
         self.dispatcher: Optional[DiffHuntDispatcher] = None
+
+    @property
+    def state(self) -> State:
+        """Initialize, fill a state if first access; raise at load issues."""
+        if self._state is not None:
+            return self._state
+        journal_path = self.path / 'journal.jsonl'
+        journal = Journal(path=journal_path)
+        grid = GRID_REGISTRY[self.params['grid_geometry']]()
+        state = State(journal=journal, grid=grid, progress=self.progress)
+        if self.load:
+            if not journal_path.exists() or not journal_path.is_file():
+                raise FileNotFoundError(f'No journal file found at {journal_path=}')
+            state.load_from_journal()
+        self._state = state
+        return state
 
     def get_dead_time(
         self,
@@ -87,22 +105,10 @@ class Experiment(ExperimentBase):
             print(m2 := 'Please run `instamatic.calibrate_stage_rotation` first.')
             raise FastADTMissingCalibError(m1 + ' ' + m2)
 
-    def get_state(self, load: bool, progress: Optional[ProgressTable] = None) -> State:
-        """Initialize a state, fill it from journal; raise at load issues."""
-        journal_path = self.path / 'journal.jsonl'
-        journal = Journal(path=journal_path)
-        grid = GRID_REGISTRY[self.params['grid_geometry']]()
-        state = State(journal=journal, grid=grid, progress=progress)
-        if load:
-            if not journal_path.exists() or not journal_path.is_file():
-                raise FileNotFoundError(f'No journal file found at {journal_path=}')
-            state.load_from_journal()
-        return state
-
     def determine_exposure_and_speed(self, step_size: int_nm) -> tuple[float, float]:
         """Determine exposure/speed reachable by TEM close to requested."""
-        detector_dead_time = self.get_dead_time(self.params['exposure'])
-        time_for_one_frame = self.params['exposure'] + detector_dead_time
+        detector_dead_time = self.get_dead_time(self.params['scan_exposure'])
+        time_for_one_frame = self.params['scan_exposure'] + detector_dead_time
         trans_calib = self.get_stage_translation()
         motion_plan = trans_calib.plan_motion(time_for_one_frame / step_size)
         exposure = abs(motion_plan.pace * step_size) - detector_dead_time
@@ -112,27 +118,35 @@ class Experiment(ExperimentBase):
         """Method that governs the entirety of scan ED experiment work flow."""
 
         self.params = params
+        _ = self.state  # loads the journal
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher()
 
-        windows = self.determine_manual_windows()
-        self.order_and_add_manual_windows(windows)
+        # windows are only added if no defined; TODO: allow adding after loading
+        self.ctrl.stage.set(a=0)
+        if not self.state.grid.windows:
+            windows = self.determine_manual_windows()
+            self.order_and_add_manual_windows(windows)
 
         while not params['stop_event'].is_set():
-            for window_idx in self.state.grid.windows.keys():
-                for _, scan_idx in self.state.untouched_scans(window=window_idx):
-                    self.set_tilt(window_idx)
-                    self.run_scan(window_idx, scan_idx)
-                    self.set_stop_event_if_target_met()
-                    if params['stop_event'].is_set():
-                        break
+            try:
+                for window_idx in self.state.grid.windows.keys():
+                    if not self.state.has_any_scans(window_idx):
+                        self.add_scans(window_idx=window_idx, params=params)
+                    for _, scan_idx in self.state.untouched_scans(window=window_idx):
+                        self.set_tilt(window_idx)
+                        self.run_scan(window_idx, scan_idx)
+                        self.set_stop_event_if_target_met()
+                        if params['stop_event'].is_set():
+                            break
+            finally:
+                self.ctrl.stage.set(a=0)
             try:
                 window_idx, window = self.locate_next_window()
             except IndexError:
                 params['stop_event'].set()
                 break
             self.state.add_window(idx=window_idx, window=window)
-            self.add_scans(window_idx=window_idx, params=params)
 
         self.teardown()
 
@@ -162,13 +176,13 @@ class Experiment(ExperimentBase):
         for scan_id, slow in enumerate(slows):
             fast_min, fast_max = scan_factory(slow)[:: next(scan_signs)]
             self.state.add_scan(
-                window=window_idx,
-                scan_id=scan_id,
-                x0=slow_min if axis else fast_min,
-                y0=fast_min if axis else slow_min,
-                axis=axis,
-                step=step,
-                n_steps=-(-abs(fast_max - fast_min) % step),
+                window=int(window_idx),
+                scan=int(scan_id),
+                x0=int(slow if axis else fast_min),
+                y0=int(fast_min if axis else slow),
+                axis=int(axis),
+                step=int(step),
+                n_steps=-int(-abs(fast_max - fast_min) // step),
             )
 
     def determine_manual_windows(self) -> list[GridablePolygonWindow]:
@@ -239,10 +253,12 @@ class Experiment(ExperimentBase):
         raise IndexError('Could not locate next window within limits')
 
     def set_stop_event_if_target_met(self) -> None:
-        time_passed = datetime.now() - self.start_time
-        time_target = timedelta(hours=self.params['target_time'])
+        th: Optional[int] = self.params.get('target_hits', None)
+        tt: Optional[int] = self.params.get('target_time', None)
         hits_found = self.state.steps['hits'].sum()
-        hits_target = self.params['target_hits']
+        hits_target = th if th else float('inf')
+        time_passed = datetime.now() - self.start_time
+        time_target = timedelta(hours=tt) if tt else timedelta.max
         if time_passed > time_target or hits_found > hits_target:
             self.params['stop_event'].set()
 
@@ -259,11 +275,12 @@ class Experiment(ExperimentBase):
         idx = pd.IndexSlice[window_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
             return  # none-op for a scans that has been already done
+        n_frames = int(self.state.scans.loc[(window_idx, scan_idx), 'n_steps'])
 
         scan = self.state.scans.loc[(window_idx, scan_idx)]
-        self.ctrl.stage.set(x0=scan['x0'], y0=scan['y0'])
+        self.ctrl.stage.set(x=scan['x0'], y=scan['y0'])
 
-        self.dispatcher.begin_scan(len(idx))
+        self.dispatcher.begin_scan(n_frames)
         fb_kwargs = {'state': self.state, 'window': window_idx, 'scan': scan_idx}
         fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
         fb_thread.start()
@@ -275,14 +292,16 @@ class Experiment(ExperimentBase):
         setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
         self.ctrl.stage.set_with_speed(**setter_kwargs)
 
-        movie = self.ctrl.get_movie(n_frames=len(idx), exposure=exposure, header_keys=None)
+        movie = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
         for frame, header in movie:
             self.dispatcher.process(frame, header)
+        self.dispatcher.scan_finished.set()  # signals no more data is coming
         self.dispatcher.scan_processed.wait(timeout=60)  # should process live
+        fb_thread.join()
 
         self.dispatcher.write_scan(path=self.path / 'tiff')
+        self.dispatcher.handle_feedback(self.state, window_idx, scan_idx)
         self.dispatcher.end_scan()
-        fb_thread.join()
         self.state.finalize_scan(window_idx, scan_idx)
 
     def teardown(self) -> None:

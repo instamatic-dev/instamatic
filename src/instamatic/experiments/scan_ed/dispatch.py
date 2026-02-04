@@ -4,6 +4,7 @@ import multiprocessing as mp
 import queue
 import uuid
 from dataclasses import dataclass
+from itertools import count
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
 from threading import Event
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 N_PROCESSORS = 4
 
 CommandKind = Literal['INIT', 'PROCESS', 'WRITE', 'TERMINATE']
-FeedbackKind = Literal['PROCESSING', 'PROCESSED']
+FeedbackKind = Literal['PROCESSING', 'PROCESSED', 'WRITTEN']
 
 
 @dataclass(frozen=True)
@@ -52,9 +53,10 @@ class DiffHuntDispatcher:
     def __init__(self, shape: tuple[int, int], dtype: np.dtype) -> None:
         self.shape: tuple[int, int] = shape
         self.dtype: np.dtype = np.dtype(dtype)
-        self.commands: mp.Queue[Command] = mp.Queue()
+        self.commands: list[mp.Queue[Command]] = []
         self.feedback: mp.Queue[Feedback] = mp.Queue()
 
+        self._round_robin = count()
         self._workers: list[mp.Process] = []
         self._spawn_workers()
 
@@ -65,7 +67,9 @@ class DiffHuntDispatcher:
         self._n_frames: int = 0
         self._next_ptr: int = 0
         self._in_flight: set[int] = set()
+        self._write_pending: set[int] = set()
 
+        self.scan_finished: Event = Event()
         self.scan_processed: Event = Event()
         self.hits: Optional[np.ndarray] = None
         self.headers: list[Optional[dict]] = []
@@ -73,13 +77,16 @@ class DiffHuntDispatcher:
     def _spawn_workers(self) -> None:
         """Run once at the start of experiment to spawn eval processes."""
         for wid in range(N_PROCESSORS):
-            worker = DiffHuntWorker(wid, self.commands, self.feedback, self.dtype)
+            command_queue = mp.Queue()
+            worker = DiffHuntWorker(wid, command_queue, self.feedback, self.dtype)
             worker.start()
+            self.commands.append(command_queue)
             self._workers.append(worker)
 
     def emit(self, task: CommandKind, *args, **kwargs) -> None:
-        """Shorthand to create and put Command in the self.commands queue."""
-        self.commands.put(Command(task, *args, **kwargs))
+        """Shorthand to create and put Command in next self.commands queue."""
+        q = self.commands[next(self._round_robin) % N_PROCESSORS]
+        q.put(Command(task, *args, **kwargs))
 
     def begin_scan(self, n_frames: int, name: Optional[str] = None) -> None:
         """Allocate a new shared buffer and reset all tracking for one scan."""
@@ -87,10 +94,12 @@ class DiffHuntDispatcher:
         self._n_frames = int(n_frames)
         self._next_ptr = 0
         self._in_flight.clear()
+        self._write_pending.clear()
         shape3 = (self._n_frames, self.shape[0], self.shape[1])
         size = int(np.prod(shape3) * self.dtype.itemsize)
         self._shm = SharedMemory(name=self._buffer_name, create=True, size=size)
         self._frames = np.ndarray(shape3, dtype=self.dtype, buffer=self._shm.buf)
+        self.scan_finished.clear()
         self.scan_processed.clear()
         self.hits = np.zeros(self._n_frames, dtype=bool)
         self.headers = [None] * self._n_frames
@@ -111,6 +120,7 @@ class DiffHuntDispatcher:
             self._n_frames = 0
             self._next_ptr = 0
             self._in_flight.clear()
+            self._write_pending.clear()
             self.hits = None
             self.headers = []
 
@@ -127,13 +137,14 @@ class DiffHuntDispatcher:
         self._in_flight.add(ptr)
         self._next_ptr += 1
 
-        self.commands.put(Command('PROCESS', buffer_pointer=ptr))
+        self.emit('PROCESS', buffer_pointer=ptr)
         return ptr
 
     def write_scan(self, path: AnyPath) -> None:
         """Request workers to write all hit frames from the active scan."""
         for pointer, hit in enumerate(self.hits):
             if hit:
+                self._write_pending.add(pointer)
                 bn = self._buffer_name
                 kwargs = {'path': path, 'header': self.headers[pointer]}
                 self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
@@ -145,7 +156,7 @@ class DiffHuntDispatcher:
         must be run from the main thread, or a proxy Progress table must
         be used.
         """
-        for _ in range(2 * self._n_frames):
+        while (not self.scan_finished.is_set()) or self._in_flight or self._write_pending:
             try:
                 fb: Feedback = self.feedback.get(timeout=15)
             except queue.Empty as e:
@@ -162,6 +173,10 @@ class DiffHuntDispatcher:
                 if self.hits is not None:
                     self.hits[pointer] = d.success
                 self._in_flight.discard(pointer)
+
+            elif fb.kind == 'WRITTEN':
+                self._write_pending.discard(pointer)
+
         self.scan_processed.set()
 
     def terminate_workers(self) -> None:
@@ -205,11 +220,14 @@ class DiffHuntWorker(mp.Process):
                 self.emit('PROCESSED', buffer_pointer=ptr, details=d)
 
             elif cmd.kind == 'WRITE':
-                path = Path(cmd.kwargs['path']).resolve()
-                filename = f'{cmd.buffer_name}_{cmd.buffer_pointer:06d}.tiff'
-                frame = self.frames[cmd.buffer_pointer]
-                header = cmd.kwargs.get('header', {})
-                write_tiff(fname=str(path / filename), data=frame, header=header)
+                try:
+                    path = Path(cmd.kwargs['path']).resolve()
+                    filename = f'{cmd.buffer_name}_{cmd.buffer_pointer:06d}.tiff'
+                    frame = self.frames[cmd.buffer_pointer]
+                    header = cmd.kwargs.get('header', {})
+                    write_tiff(fname=str(path / filename), data=frame, header=header)
+                finally:
+                    self.emit('WRITTEN', buffer_pointer=cmd.buffer_pointer)
 
             elif cmd.kind == 'TERMINATE':
                 if self.shm is not None:

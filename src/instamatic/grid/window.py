@@ -37,7 +37,7 @@ class ConvexPolygonWindow(Window):
     def x_intersections(self, y: float_nm) -> Optional[tuple[float, float]]:
         """Return (x_min, x_max) for a horizontal line intersecting at y."""
         intersection_xs: list[float] = []
-        for x1, y1, x2, y2 in pairwise(self.corners, closed=True):
+        for (x1, y1), (x2, y2) in pairwise(self.corners, closed=True):
             if y1 == y2:  # edge case (degeneracy / double counting)
                 continue
             intersection_fraction = (y - y1) / (y2 - y1)
@@ -51,7 +51,7 @@ class ConvexPolygonWindow(Window):
     def y_intersections(self, x: float_nm) -> Optional[tuple[float, float]]:
         """Return (y_min, y_max) for a vertical line intersecting at x."""
         intersection_ys: list[float] = []
-        for x1, y1, x2, y2 in pairwise(self.corners, closed=True):
+        for (x1, y1), (x2, y2) in pairwise(self.corners, closed=True):
             if x1 == x2:  # edge case (degeneracy / double counting)
                 continue
             intersection_fraction = (x - x1) / (x2 - x1)
@@ -121,7 +121,7 @@ class GridablePolygonWindow(ConvexPolygonWindow):
 
     @classmethod
     @abstractmethod
-    def from_edge_xys(cls, edge_xy: np.ndarray) -> Self: ...
+    def from_edge_xys(cls, edge_xys: np.ndarray) -> Self: ...
 
     @abstractmethod
     def to_params(self) -> dict[str, float]: ...

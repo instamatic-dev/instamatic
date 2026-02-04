@@ -50,6 +50,7 @@ class ExperimentalScanEDVariables:
     def as_dict(self) -> dict[str, Union[float, int, str]]:
         """Return self as dict, replace values with None if key_b is False."""
         d = {n: v.get() for n, v in vars(self).items() if isinstance(v, Variable)}
+        d['stop_event'] = self.stop_event
         for key in d.copy().keys():
             if (key_b := key + '_b') in d:
                 if d.pop(key_b) is False:
@@ -106,7 +107,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
 
         # Finish conditions area with tick marks
 
-        Label(f, text='Find grid windows:').grid(row=3, column=2, **pad10)
+        Label(f, text='Find new grid windows:').grid(row=3, column=2, **pad10)
         m = ['All manually', 'First manually', 'All automatically']
         self.grid_finder = OptionMenu(f, self.var.grid_finder, m[1], *m)
         self.grid_finder.grid(row=3, column=3, **pad10)
@@ -161,12 +162,12 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
 
     def start_collection(self) -> None:
         progress = ThreadSafeProgressTableProxy(self, self.progress)
-        kwargs = {'load': True, 'progress': progress}
-        self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
+        self.q.put(('scan_ed', {'progress': progress, **self.var.as_dict()}))
 
     def load_collection(self) -> None:
         progress = ThreadSafeProgressTableProxy(self, self.progress)
-        self.q.put(('scan_ed', {'progress': progress, **self.var.as_dict()}))
+        kwargs = {'load': True, 'progress': progress}
+        self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
 
 
 def sced_interface_command(controller, **params: Any) -> None:

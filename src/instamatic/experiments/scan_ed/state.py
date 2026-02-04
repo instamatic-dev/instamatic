@@ -33,20 +33,20 @@ class State:
     def _init_dataframes(self) -> None:
         """Create a new empty history with required index and columns."""
         scan_columns = {
-            'window': pd.Series(dtype=np.uint16),
-            'scan': pd.Series(dtype=np.uint16),
-            'x0': pd.Series(dtype=np.int32),
-            'y0': pd.Series(dtype=np.int32),
-            'axis': pd.Series(dtype=np.uint8),
-            'step': pd.Series(dtype=np.int32),
-            'n_steps': pd.Series(dtype=np.uint16),
+            'window': pd.Series(dtype='UInt16'),
+            'scan': pd.Series(dtype='UInt16'),
+            'x0': pd.Series(dtype='Int32'),
+            'y0': pd.Series(dtype='Int32'),
+            'axis': pd.Series(dtype='UInt8'),
+            'step': pd.Series(dtype='Int32'),
+            'n_steps': pd.Series(dtype='UInt16'),
         }
         steps_columns = {
-            'window': pd.Series(dtype=np.uint16),
-            'scan': pd.Series(dtype=np.uint16),
-            'step': pd.Series(dtype=np.uint16),
-            'hits': pd.Series(dtype=np.bool_),
-            'n_peaks': pd.Series(dtype=np.int16),
+            'window': pd.Series(dtype='UInt16'),
+            'scan': pd.Series(dtype='UInt16'),
+            'step': pd.Series(dtype='UInt16'),
+            'hits': pd.Series(dtype='boolean'),
+            'n_peaks': pd.Series(dtype='Int16'),
         }
         self.scans = pd.DataFrame(scan_columns)
         self.scans.set_index(['window', 'scan'], inplace=True)
@@ -86,8 +86,11 @@ class State:
         self.scans.loc[(window, scan), scan_cols] = (x0, y0, axis, step, n_steps)
         idx_names = ['window', 'scan', 'step']
         idx = pd.MultiIndex.from_product([[window], [scan], range(n_steps)], names=idx_names)
-        self.steps.loc[idx, 'hits'] = np.full(n_steps, False, dtype=np.bool_)
-        self.steps.loc[idx, 'n_peaks'] = np.full(n_steps, -1, dtype=np.int16)
+        new_scans = {
+            'hits': np.zeros(n_steps, dtype=np.bool_),
+            'n_peaks': np.full(n_steps, -1, dtype=np.int16),
+        }
+        self.steps = pd.concat([self.steps, pd.DataFrame(new_scans, index=idx)])
 
     def finalize_scan(self, window: int, scan: int) -> None:
         idx = pd.IndexSlice[window, scan, :]
@@ -134,6 +137,11 @@ class State:
         if peaks_arr.size != n_steps:
             raise ValueError(f'Corrupt scan payload: {peaks_arr.size=} != {n_steps=}')
         self.fill_scan(window, scan, hits_arr, peaks_arr)
+
+    def has_any_scans(self, window: int) -> bool:
+        """Returns True if window has any defined scans with any status."""
+        i, k = self.scans.index, 'window'
+        return len(self.scans) > 0 and k in i.names and (i.get_level_values(k) == window).any()
 
     def untouched_scans(self, window: Optional[int] = None) -> pd.MultiIndex:
         """An iterable of (window, scan)-idx of planned-but-untouched scans."""
