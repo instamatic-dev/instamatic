@@ -13,15 +13,13 @@ from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, ModuleFrameMixin
 
-pad0 = {'sticky': 'EW', 'padx': 0, 'pady': 1}
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
-scan_step = {'from_': 0, 'to': 100_000, 'increment': 100}
-scan_exposure = {'from_': 0, 'to': 10, 'increment': 0.01}
+scan_step = {'from_': 100, 'to': 100_000, 'increment': 100}
+scan_exposure = {'from_': 0.01, 'to': 10, 'increment': 0.01}
 target_hits = {'from_': 0, 'to': 1_000_000, 'increment': 100}
 target_time = {'from_': 0, 'to': 43_200, 'increment': 60}
 target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000}
-angle_delta = {'from_': 0, 'to': 180, 'increment': 0.1}
-duration = {'from_': 0, 'to': 60, 'increment': 0.1}
+angle_delta = {'from_': 0, 'to': 30, 'increment': 1}
 
 
 class WidgetState(Enum):

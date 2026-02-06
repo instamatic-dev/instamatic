@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timedelta
 from itertools import count, cycle
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 
-from instamatic._typing import AnyPath, int_nm
 from instamatic.calibrate import CalibMovieDelays
 from instamatic.calibrate.calibrate_stage_translation import *
 from instamatic.experiments.experiment_base import ExperimentBase
@@ -181,6 +179,7 @@ class Experiment(ExperimentBase):
             fast_min -= error_margin
             fast_max += error_margin
             fast_start, fast_stop = [fast_min, fast_max][:: next(scan_dirs)]
+            step = step if fast_stop > fast_start else -step
             self.state.add_scan(
                 window=int(window_idx),
                 scan=int(scan_id),
@@ -188,7 +187,7 @@ class Experiment(ExperimentBase):
                 y0=int(fast_start if axis else slow),
                 axis=int(axis),
                 step=int(step),
-                n_steps=-int(-abs(fast_stop - fast_start) // step),
+                n_steps=int(np.ceil(abs((fast_stop - fast_start) / step))),
             )
 
     def determine_manual_windows(self) -> list[GridablePolygonWindow]:
@@ -244,14 +243,15 @@ class Experiment(ExperimentBase):
         if self.params.get('grid_finder') == 'All manually':
             raise IndexError('Experiment params disallow locating new windows')
         grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
-        for window_id in range(1, 2 * max(grid.windows) + 10):
+        max_index = 10 + 2 * (max(grid.windows) if grid.windows else 0)
+        for window_id in range(0, max_index):
             if window_id in grid.windows:
                 continue
             predicted = grid.predict_window(window_id)
             x_lim = tx if (tx := self.params['target_x']) is not None else float('inf')
-            y_lim = ty if (ty := self.params['target_x']) is not None else float('inf')
+            y_lim = ty if (ty := self.params['target_y']) is not None else float('inf')
             x_fits = np.all(np.abs(predicted.corners[:, 0]) < x_lim)
-            y_fits = np.all(np.abs(predicted.corners[:, 0]) < y_lim)
+            y_fits = np.all(np.abs(predicted.corners[:, 1]) < y_lim)
             if not (x_fits and y_fits):
                 continue
             self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
@@ -272,7 +272,7 @@ class Experiment(ExperimentBase):
         """Set alpha (0 to +/-max to 0) as a function of window progress."""
         p = self.state.window_progress(window=window_idx)
         m = self.params['max_alpha']
-        a = m * 2 * p if p <= 0.5 else m * (2 * p - 1)  # 0 to m, then -m to 0
+        a = m * 2 * p if p <= 0.5 else m * (2 * p - 2)  # 0 to m, then -m to 0
         self.ctrl.stage.set(a=a)
 
     def run_scan(self, window_idx: int, scan_idx: int) -> None:

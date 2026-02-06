@@ -216,8 +216,12 @@ class DiffHuntWorker(mp.Process):
             elif cmd.kind == 'PROCESS':
                 ptr = int(cmd.buffer_pointer)
                 self.emit('PROCESSING', buffer_pointer=ptr)
-                d = ring_percentile_detection(frame=self.frames[ptr])
-                self.emit('PROCESSED', buffer_pointer=ptr, details=d)
+                try:
+                    d = ring_percentile_detection(frame=self.frames[ptr])
+                except Exception as e:
+                    d = DiffHuntResults(success=False)
+                finally:
+                    self.emit('PROCESSED', buffer_pointer=ptr, details=d)
 
             elif cmd.kind == 'WRITE':
                 try:

@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle
 from scipy import ndimage as ndi
+
+
+def make_cross_mask():
+    c = 511 / 2
+    yy, xx = np.indices((512, 512))
+    vertical = np.abs(xx - c) <= 1.9
+    horizontal = np.abs(yy - c) <= 1.9
+    cross = vertical | horizontal
+    return ~cross
+
+
+HARD_CODED_MASK = make_cross_mask()
 
 
 @dataclass
@@ -29,7 +41,7 @@ def ring_percentile_detection(
     threshold_mult: float = 3.0,
     min_peak_count: int = 10,
     min_peak_sep: int = 5,
-    mask: np.ndarray | None = None,
+    mask: Union[np.ndarray, None] = HARD_CODED_MASK,
     n_bins: int = 10,
 ):
     """Fast diffraction detector with radial-binned background subtraction.
@@ -49,7 +61,7 @@ def ring_percentile_detection(
 
     valid_idx = np.flatnonzero(valid)
     if valid_idx.size == 0:
-        DiffHuntResults(success=False, bin_center=(cy, cx), mask=valid)
+        return DiffHuntResults(success=False, bin_center=(cy, cx), mask=valid)
 
     vals = frame.flat[valid_idx].astype(np.float32, copy=False)
     rr_vals = rr.flat[valid_idx].astype(np.float32, copy=False)
@@ -189,15 +201,6 @@ def plot_diffraction_debug(
     ax.legend(loc='lower right', fontsize=8)
     plt.tight_layout()
     plt.show()
-
-
-def make_cross_mask():
-    c = 511 / 2
-    yy, xx = np.indices((512, 512))
-    vertical = np.abs(xx - c) <= 1.9
-    horizontal = np.abs(yy - c) <= 1.9
-    cross = vertical | horizontal
-    return ~cross
 
 
 if __name__ == '__main__':
