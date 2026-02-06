@@ -64,7 +64,7 @@ class EdgeSweeperTeam(InstanceAutoNameRegistry):
     name: str = ''  # identifier used for registration in INSTANCES
     step_size: int_nm = 10_000  # largest step size allowed
     precision: int_nm = 1  # smallest step size allowed
-    threshold: float = 0.01  # fraction of light_max that signals the edge
+    threshold: float = 0.05  # fraction of light_max that signals the edge
     light_max: int = -1  # maximum light observed at any point by any sweeper
 
 
@@ -120,7 +120,7 @@ class BinaryEdgeSweeper(EdgeSweeper):
         n = np.linalg.norm(s := self.heading + other.heading)
         if n == 0:
             raise ValueError('Cannot breed sweepers with parallel heading')
-        return self.__class__(origin=o, heading=s / n, team=self.team)
+        return self.__class__(origin=o, heading=s / n, team=self.team.name)
 
     def sweep(self) -> None:
         """Bin-search the edge based on peaked light vs max * threshold."""

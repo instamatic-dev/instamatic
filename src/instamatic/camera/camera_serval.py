@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import contextlib
 import json
 import logging
 import math
@@ -46,6 +47,14 @@ class CameraServal(CameraBase):
         self.movie_bufsize = 2 * 4 * prod(self.dimensions)
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
+
+    @staticmethod
+    def _local_ip_for(remote_host: str, remote_port: int) -> str:
+        """Return the local IP used to reach (remote_host, remote_port)."""
+        # UDP "connect" does not send packets, but lets the OS choose interface/IP.
+        with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
+            s.connect((remote_host, remote_port))
+            return s.getsockname()[0]
 
     def get_image(self, exposure: Optional[float] = None, **kwargs) -> np.ndarray:
         """Image acquisition interface. If the exposure is not given, the
@@ -136,7 +145,8 @@ class CameraServal(CameraBase):
 
         http_url = urlparse(self.conn.url)
         tcp_port = (http_url.port or 8080) + 1
-        tcp_base = f'tcp://connect@{http_url.hostname}:{tcp_port}'
+        local_ip = self._local_ip_for(http_url.hostname, tcp_port)
+        tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
         tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
 
         self.conn.measurement_stop()

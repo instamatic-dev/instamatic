@@ -244,6 +244,8 @@ class Experiment(ExperimentBase):
         if self.params.get('grid_finder') == 'All manually':
             raise IndexError('Experiment params disallow locating new windows')
         grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
+        if not self.state.grid.windows:
+            return 0, grid.window_type.from_sweeping()
         max_index = 10 + 2 * (max(grid.windows) if grid.windows else 0)
         for window_id in range(0, max_index):
             if window_id in grid.windows:
