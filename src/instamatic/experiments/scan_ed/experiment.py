@@ -306,7 +306,7 @@ class Experiment(ExperimentBase):
         fast0 = scan['y0' if axis else 'x0']
         fast1 = fast0 + scan['step'] * scan['n_steps']
         setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
-        self.ctrl.stage.set_with_speed(**setter_kwargs)
+        self.ctrl.stage.set_with_speed(**setter_kwargs, wait=False)
 
         movie = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
         for frame, header in movie:
