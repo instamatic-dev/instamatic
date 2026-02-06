@@ -128,7 +128,7 @@ class Experiment(ExperimentBase):
             windows = self.determine_manual_windows()
             self.order_and_add_manual_windows(windows)
         for window_idx, window in self.state.grid.windows.items():
-            self.draw_windows_to_file(window_idx=window_idx, window=window)
+            self.draw_window_to_file(window_idx=window_idx, window=window)
 
         while not params['stop_event'].is_set():
             try:
@@ -151,7 +151,7 @@ class Experiment(ExperimentBase):
                 params['stop_event'].set()
                 break
             self.state.add_window(idx=window_idx, window=window)
-            self.draw_windows_to_file(window_idx=window_idx, window=window)
+            self.draw_window_to_file(window_idx=window_idx, window=window)
 
         self.teardown()
 
@@ -259,7 +259,7 @@ class Experiment(ExperimentBase):
             return window_id, grid.window_type.from_sweeping()
         raise IndexError('Could not locate next window within limits')
 
-    def draw_windows_to_file(self, window_idx: int, window: GridablePolygonWindow) -> None:
+    def draw_window_to_file(self, window_idx: int, window: GridablePolygonWindow) -> None:
         """Use grid.artist.plot to draw window into its own file for debug."""
         file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
