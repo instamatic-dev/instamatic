@@ -181,15 +181,15 @@ class Experiment(ExperimentBase):
             fast_min, fast_max = scan_factory(slow)
             fast_min -= error_margin
             fast_max += error_margin
-            fast_start, fast_stop = [fast_min, fast_max][:: next(scan_dirs)]
-            step = step if fast_stop > fast_start else -step
+            direction = next(scan_dirs)
+            fast_start, fast_stop = [fast_min, fast_max][:: direction]
             self.state.add_scan(
                 window=int(window_idx),
                 scan=int(scan_id),
                 x0=int(slow if axis else fast_start),
                 y0=int(fast_start if axis else slow),
                 axis=int(axis),
-                step=int(step),
+                step=int(step * direction),
                 n_steps=int(np.ceil(abs((fast_stop - fast_start) / step))),
             )
 
@@ -245,7 +245,7 @@ class Experiment(ExperimentBase):
             raise IndexError('Experiment params disallow locating new windows')
         grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
         if not self.state.grid.windows:
-            return 0, grid.window_type.from_sweeping()
+            return 0, grid.window_type.from_sweeping(order=4)
         max_index = 10 + 2 * (max(grid.windows) if grid.windows else 0)
         for window_id in range(0, max_index):
             if window_id in grid.windows:
@@ -258,7 +258,7 @@ class Experiment(ExperimentBase):
             if not (x_fits and y_fits):
                 continue
             self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
-            return window_id, grid.window_type.from_sweeping()
+            return window_id, grid.window_type.from_sweeping(order=3)
         raise IndexError('Could not locate next window within limits')
 
     def draw_window_to_file(self, window_idx: int, window: GridablePolygonWindow) -> None:

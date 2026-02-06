@@ -150,10 +150,9 @@ class HexagonalWindow(GridablePolygonWindow):
         self.b = self.ROT60MAT @ (self.ROT60MAT @ self.a)
 
         r_circum = w / np.sqrt(3.0)
-        corners = []
-        for angle in np.linspace(t + np.pi / 6, t + 13 * np.pi / 6, num=6, endpoint=False):
-            corners.append(r_circum * np.array([np.cos(angle), np.sin(angle)], dtype=float))
-        self.corners = c + np.vstack(corners)
+        angles = t + np.pi / 6 + np.arange(6) * (np.pi / 3)
+        corners = r_circum * np.stack([np.cos(angles), np.sin(angles)], axis=1)
+        self.corners = c + corners
 
     def __repr__(self) -> str:
         args = [self.center_x, self.center_y, self.width, self.theta]
@@ -195,22 +194,22 @@ class HexagonalWindow(GridablePolygonWindow):
         """Objective: squared distance of points to nearest hexagon side (regular)."""
         center_x, center_y, width, theta = geom
         if width <= 0:
-            return np.inf
+            return float("inf")
 
         center = np.array([center_x, center_y], dtype=float)
         deltas = np.asarray(xys, dtype=float) - center
 
-        # Unit normals to the 6 sides (pointing outward).
-        # If an axis points to a side midpoint at angle theta, then that side's outward normal is along theta.
-        # Other side normals are spaced by 60 degrees.
+        # 6 outward normals, rotated by theta
         angles = theta + np.arange(6) * (np.pi / 3.0)
         normals = np.stack([np.cos(angles), np.sin(angles)], axis=1)  # (6,2)
 
-        # Signed distances to each supporting line: (n·p - a)
-        # Point is inside if all <= 0. We want distance to boundary: max(n·p - a) clipped at 0.
-        distances = deltas @ normals.T - 0.5 * width  # (N,6)
-        outside = np.maximum(distances.max(axis=1), 0.0)  # (N,)
-        return float(np.sum(outside**2))
+        apothem = 0.5 * width  # if width is flat-to-flat
+        # signed distances to the six supporting lines
+        signed = deltas @ normals.T - apothem  # (N,6)
+
+        # edge distance: nearest line in absolute value
+        d = np.min(np.abs(signed), axis=1)  # (N,)
+        return float(np.sum(d ** 2))
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
@@ -242,8 +241,9 @@ class RectangularWindow(GridablePolygonWindow):
 
     def __init__(self, x: float, y: float, w: float, h: float, t: float):
         t = (float(t) + (np.pi / 2)) % np.pi - (np.pi / 2)  # cast to [-pi/2, pi/2]
-        if not -np.pi / 4 < t < np.pi / 4:  # cast to [-pi/4, pi/4]
-            w, h, t = h, w, (np.pi - t) % np.pi - np.pi / 2
+        if abs(t) > (np.pi / 4):  # cast to [-pi/4, pi/4]
+            w, h = h, w
+            t = t - np.copysign(np.pi / 2, t)
 
         self.center_x: float_nm = float(x)
         self.center_y: float_nm = float(y)
@@ -281,16 +281,24 @@ class RectangularWindow(GridablePolygonWindow):
     def edge_d2_sum(geom: tuple[float, float, float, float, float], xys: np.ndarray) -> float:
         """scipy.optimize.minimize fitting func; for geometry see cls docs."""
         center_x, center_y, width, height, theta = geom
+        if width <= 0 or height <= 0:
+            return float("inf")
+
         center = np.array([center_x, center_y], dtype=float)
-        a = 0.5 * width * np.array([np.cos(theta), np.sin(theta)])
-        b = 0.5 * height * np.array([-np.sin(theta), np.cos(theta)])
-        a_hat = a / np.linalg.norm(a)
-        b_hat = b / np.linalg.norm(b)
-        d1 = np.abs(np.dot(xys - (center + a), a_hat))
-        d2 = np.abs(np.dot(xys - (center - a), a_hat))
-        d3 = np.abs(np.dot(xys - (center + b), b_hat))
-        d4 = np.abs(np.dot(xys - (center - b), b_hat))
-        return np.sum(np.min([d1, d2, d3, d4], axis=0) ** 2)
+        deltas = np.asarray(xys, dtype=float) - center
+
+        a_hat = np.array([np.cos(theta), np.sin(theta)], dtype=float)
+        b_hat = np.array([-np.sin(theta), np.cos(theta)], dtype=float)
+
+        # local coordinates
+        u = deltas @ a_hat
+        v = deltas @ b_hat
+
+        # distance to nearest supporting line among the 4 edges
+        du = np.abs(np.abs(u) - 0.5 * width)
+        dv = np.abs(np.abs(v) - 0.5 * height)
+        d = np.minimum(du, dv)
+        return float(np.sum(d ** 2))
 
     def to_params(self) -> dict[str, float]:
         return {
@@ -367,12 +375,14 @@ class SquareWindow(GridablePolygonWindow):
             return np.inf
         center = np.array([center_x, center_y], dtype=float)
         deltas = np.asarray(xys, dtype=float) - center
-        angles = theta + np.arange(4) * (np.pi / 2.0)
-        normals = np.stack([np.cos(angles), np.sin(angles)], axis=1)  # (4,2)
-        # Signed distances to supporting lines: n·p - a, where a = side/2
-        distances = deltas @ normals.T - 0.5 * width  # (N,4)
-        outside = np.maximum(distances.max(axis=1), 0.0)  # (N,)
-        return float(np.sum(outside**2))
+        a_hat = np.array([np.cos(theta), np.sin(theta)], dtype=float)
+        b_hat = np.array([-np.sin(theta), np.cos(theta)], dtype=float)
+        u = deltas @ a_hat  # signed coordinates in the square frame
+        v = deltas @ b_hat
+        du = np.abs(np.abs(u) - 0.5 * width)
+        dv = np.abs(np.abs(v) - 0.5 * width)
+        d = np.minimum(du, dv)
+        return float(np.sum(d ** 2))
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
