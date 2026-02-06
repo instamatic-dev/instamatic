@@ -127,6 +127,8 @@ class Experiment(ExperimentBase):
         if not self.state.grid.windows:
             windows = self.determine_manual_windows()
             self.order_and_add_manual_windows(windows)
+        for window_idx, window in self.state.grid.windows.items():
+            self.draw_windows_to_file(window_idx=window_idx, window=window)
 
         while not params['stop_event'].is_set():
             try:
@@ -149,6 +151,7 @@ class Experiment(ExperimentBase):
                 params['stop_event'].set()
                 break
             self.state.add_window(idx=window_idx, window=window)
+            self.draw_windows_to_file(window_idx=window_idx, window=window)
 
         self.teardown()
 
@@ -199,11 +202,9 @@ class Experiment(ExperimentBase):
         n = self.name
         cl: ClickListener = c if (c := d.listeners.get(n)) else d.add_listener(n)
 
-        print('Please navigate the stage as many points on the edge as possible')
-        print('(at least the corners and approximate midpoints). At each point,')
-        print('position the edge at the center of the screen.')
-        print('Left-click the screen to add the point, right-click to finish.')
-        print('')
+        print('Please navigate the stage to as many points on the windows edge as possible')
+        print('(at least the corners and midpoints). At each point, position the edge at')
+        print('the center of the screen and LMB to add the point. RMB to finish.')
 
         windows = {}
         for window_idx in count():
@@ -215,7 +216,7 @@ class Experiment(ExperimentBase):
                         break
                     edge_xys.append(self.ctrl.stage.xy)
             edge_xys = np.asarray(edge_xys, dtype=float)
-            window = self.state.grid.window_type.from_edge_xys(edge_xy=edge_xys)
+            window = self.state.grid.window_type.from_edge_xys(edge_xys=edge_xys)
             fig, ax = plot({**windows, window_idx: window}, debug_edges=True)
             with self.videostream_frame.processor.temporary(figure=fig):
                 print('LMB to accept and finish, RMB to retry, MMB to accept and add new')
@@ -257,6 +258,13 @@ class Experiment(ExperimentBase):
             self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
             return window_id, grid.window_type.from_sweeping()
         raise IndexError('Could not locate next window within limits')
+
+    def draw_windows_to_file(self, window_idx: int, window: GridablePolygonWindow) -> None:
+        """Use grid.artist.plot to draw window into its own file for debug."""
+        file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+        fig, ax = plot({window_idx: window}, debug_edges=True)
+        fig.savefig(file_path)
 
     def set_stop_event_if_target_met(self) -> None:
         th: Optional[int] = self.params.get('target_hits', None)
