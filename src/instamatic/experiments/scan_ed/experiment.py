@@ -296,7 +296,7 @@ class Experiment(ExperimentBase):
         scan = self.state.scans.loc[(window_idx, scan_idx)]
         self.ctrl.stage.set(x=scan['x0'], y=scan['y0'])
 
-        self.dispatcher.begin_scan(n_frames)
+        self.dispatcher.begin_scan(n_frames, name=f'w{window_idx:03d}_s{scan_idx:06d}')
         fb_kwargs = {'state': self.state, 'window': window_idx, 'scan': scan_idx}
         fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
         fb_thread.start()
@@ -319,6 +319,7 @@ class Experiment(ExperimentBase):
         self.dispatcher.handle_feedback(self.state, window_idx, scan_idx)
         self.dispatcher.end_scan()
         self.state.finalize_scan(window_idx, scan_idx)
+        self.ctrl.stage.wait()
 
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
