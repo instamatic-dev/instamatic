@@ -95,7 +95,7 @@ class EdgeSweeper(Sweeper):
         """Change sweeper position by `length` in `heading` direction."""
         x0, y0 = _ctrl.stage.xy
         x1 = int(x0 + self.heading[0].item() * length)
-        y1 = int(x0 + self.heading[1].item() * length)
+        y1 = int(y0 + self.heading[1].item() * length)
         self.goto(x1, y1)
 
 
@@ -120,7 +120,7 @@ class BinaryEdgeSweeper(EdgeSweeper):
         n = np.linalg.norm(s := self.heading + other.heading)
         if n == 0:
             raise ValueError('Cannot breed sweepers with parallel heading')
-        return self.__class__(origin=o, heading=s / n)
+        return self.__class__(origin=o, heading=s / n, team=self.team)
 
     def sweep(self) -> None:
         """Bin-search the edge based on peaked light vs max * threshold."""

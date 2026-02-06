@@ -5,12 +5,10 @@ from itertools import chain
 from typing import Literal, Optional
 
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.patches import Polygon
 from scipy.optimize import minimize
 from typing_extensions import Self
 
-from instamatic._typing import float_nm, int_nm
+from instamatic._typing import float_nm
 from instamatic.controller import TEMController, _ctrl, initialize
 from instamatic.grid.sweepers import BinaryEdgeSweeper, EdgeSweeperTeam, MarchingEdgeSweeper
 from instamatic.utils.iterating import pairwise
@@ -81,24 +79,24 @@ class GridablePolygonWindow(ConvexPolygonWindow):
     def __repr__(self) -> str: ...
 
     @classmethod
-    def from_sweeping(cls, order: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] = 3) -> Self:
+    def from_sweeping(cls, order: Literal[1, 2, 3, 4, 5] = 3) -> Self:
         """Return new using `EdgeSweeper`s scanning around current position."""
         origin = np.array(_ctrl.stage.xy, dtype=int)
         team = str(origin)
         _ = EdgeSweeperTeam(name=team)
 
         # define and sweep with initial marching sweepers to approx. grid center
-        dirs = [+X, -X, +Y, -Y]
+        dirs = [+X, +Y, -X, -Y]
         mess = [MarchingEdgeSweeper(origin=origin, heading=d, team=team) for d in dirs]
         for mes in mess:
             mes.sweep()
-        center_x = (mess[0].position[0] + mess[1].position[0]) / 2
-        center_y = (mess[2].position[1] + mess[3].position[1]) / 2
+        center_x = (mess[0].position[0] + mess[2].position[0]) / 2
+        center_y = (mess[1].position[1] + mess[3].position[1]) / 2
         center = np.array([center_x, center_y], dtype=float)
 
         # define binary sweepers, step to edge of marchers-probed region & sweep
         mess_position_pairs = list(pairwise([mes.position for mes in mess], closed=True))
-        bess = [BinaryEdgeSweeper(origin=center, heading=d) for d in (X, Y, -X, -Y)]
+        bess = [BinaryEdgeSweeper(origin=center, heading=d, team=team) for d in (X, Y, -X, -Y)]
         for bes in bess:
             dists = [bes.dist2segment(*p1, *p2) for p1, p2 in mess_position_pairs]
             safe_dist = min(dists) - bes.team.step_size

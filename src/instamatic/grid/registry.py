@@ -18,7 +18,7 @@ class RectangularGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
     pairing_inverse = staticmethod(ulam2ij)
 
 
-class SquareGrid(PeriodicConvexPolygonGrid[RectangularWindow]):
+class SquareGrid(PeriodicConvexPolygonGrid[SquareWindow]):
     window_type = SquareWindow
     pairing_function = staticmethod(ij2ulam)
     pairing_inverse = staticmethod(ulam2ij)
