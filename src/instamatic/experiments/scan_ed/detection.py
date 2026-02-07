@@ -17,8 +17,7 @@ def make_cross_mask():
     yy, xx = np.indices((512, 512))
     vertical = np.abs(xx - c) <= 1.9
     horizontal = np.abs(yy - c) <= 1.9
-    zero_zero = (np.abs(xx) < 2) & (np.abs(yy) < 2)
-    cross = vertical | horizontal | zero_zero
+    cross = vertical | horizontal
     return ~cross
 
 
@@ -56,8 +55,15 @@ def ring_percentile_detection(
 
     # Build a locally-averaged "score" image for candidate selection.
     score = frame.astype(np.float32, copy=False)
+    if mask is not None:
+        m = mask.astype(np.float32, copy=False)
+        numer = ndi.gaussian_filter(score * m, sigma=gaussian_sigma, mode='mirror')
+        denom = ndi.gaussian_filter(m, sigma=gaussian_sigma, mode='mirror')
+        score = np.divide(numer, denom, out=np.zeros_like(numer), where=denom > 0)
+    else:
+        score = ndi.gaussian_filter(score, sigma=gaussian_sigma, mode='mirror')
     if gaussian_sigma and gaussian_sigma > 0:
-        score = ndi.gaussian_filter(score, sigma=float(gaussian_sigma), mode='nearest')
+        score = ndi.gaussian_filter(score, sigma=float(gaussian_sigma), mode='mirror')
 
     cy, cx = estimate_beam_center(frame, sigma=3.0)
     ys, xs = np.indices(frame.shape)
@@ -215,8 +221,10 @@ if __name__ == '__main__':
     from PIL import Image
 
     mask = make_cross_mask()
-    # paths = glob(r"C:\Users\tchon\x\2026-02-06-SPED_test\experiment_5\tiff\w000000_s000031_0000*.tiff")
-    paths = glob(r'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\0000*')
+    paths = glob(
+        r'C:\Users\tchon\x\2026-02-06-SPED_test\experiment_5\tiff\w000000_s000031_0000*.tiff'
+    )
+    # paths = glob(r'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\0000*')
     for path in paths:
         tiff = Image.open(path)
         image = np.array(tiff)
