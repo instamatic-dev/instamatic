@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
@@ -16,7 +17,8 @@ def make_cross_mask():
     yy, xx = np.indices((512, 512))
     vertical = np.abs(xx - c) <= 1.9
     horizontal = np.abs(yy - c) <= 1.9
-    cross = vertical | horizontal
+    zero_zero = (np.abs(xx) < 2) & (np.abs(yy) < 2)
+    cross = vertical | horizontal | zero_zero
     return ~cross
 
 
@@ -38,20 +40,24 @@ def ring_percentile_detection(
     frame: np.ndarray,
     min_radius: int = 40,
     percentile: float = 99.0,
-    threshold_mult: float = 3.0,
+    threshold_mult: float = 2.0,
     min_peak_count: int = 10,
     min_peak_sep: int = 5,
-    mask: Union[np.ndarray, None] = HARD_CODED_MASK,
+    mask: np.ndarray | None = None,
     n_bins: int = 10,
-):
-    """Fast diffraction detector with radial-binned background subtraction.
+    gaussian_sigma: float = 1.2,
+) -> DiffHuntResults:
+    """Radial-binned detector with thresholds computed on a *locally averaged*
+    image.
 
-    - estimate center of incident beam based on a blurred central ROI
-    - excludes (mask == False) and excludes rr <= beam_radius_px regions
-    - estimates background and reflection threshold in `n_bins` radial shells
-    - reflections must exceed `percentile` * `threshold_mult` of their ring
-    - the algorithm is good at finding a small number of strongest reflections
+    This suppresses single-pixel spikes (stray electrons / hot pixels),
+    while keeping multi-pixel reflection profiles detectable.
     """
+
+    # Build a locally-averaged "score" image for candidate selection.
+    score = frame.astype(np.float32, copy=False)
+    if gaussian_sigma and gaussian_sigma > 0:
+        score = ndi.gaussian_filter(score, sigma=float(gaussian_sigma), mode='nearest')
 
     cy, cx = estimate_beam_center(frame, sigma=3.0)
     ys, xs = np.indices(frame.shape)
@@ -63,7 +69,7 @@ def ring_percentile_detection(
     if valid_idx.size == 0:
         return DiffHuntResults(success=False, bin_center=(cy, cx), mask=valid)
 
-    vals = frame.flat[valid_idx].astype(np.float32, copy=False)
+    vals = score.flat[valid_idx]  # (N,) float32
     rr_vals = rr.flat[valid_idx].astype(np.float32, copy=False)
 
     r_max = float(rr_vals.max())
@@ -72,7 +78,6 @@ def ring_percentile_detection(
     bin_ids = np.digitize(rr_vals, bin_edges) - 1
     np.clip(bin_ids, 0, n_bins - 1, out=bin_ids)
 
-    # Per-bin bg and thresholds (still a small loop)
     backgrounds = np.zeros(n_bins, dtype=np.float32)
     thresholds = np.full(n_bins, np.inf, dtype=np.float32)
 
@@ -81,19 +86,20 @@ def ring_percentile_detection(
         if not np.any(sel):
             continue
         v = vals[sel]
-        bg = np.median(v)
+        bg = float(np.median(v))
         backgrounds[b] = bg
 
-        threshold_perc = max(1.0, np.percentile(v, percentile) - bg)
-        thresholds[b] = threshold_mult * threshold_perc if v.size else np.inf
+        # Threshold in "score" units: (percentile - bg) times multiplier, with a small floor.
+        threshold_perc = max(1.0, float(np.percentile(v, percentile) - bg))
+        thresholds[b] = threshold_mult * threshold_perc
 
-    # Candidate selection purely in 1D
+    # Candidate selection purely in 1D on the locally averaged image
     keep = vals >= (thresholds[bin_ids] + backgrounds[bin_ids])
 
-    # Scatter to 2D only once (needed for clustering / argmax)
     peak_mask = np.zeros(frame.shape, dtype=bool)
     peak_mask.flat[valid_idx[keep]] = True
 
+    # Pick peak positions using the *raw* frame intensities (not the averaged score)
     peaks = cluster_peak_mask(peak_mask, frame, min_dist=min_peak_sep)
     n_peaks = int(peaks.shape[0])
 
@@ -106,7 +112,7 @@ def ring_percentile_detection(
     )
 
 
-def estimate_beam_center(frame: np.ndarray, sigma: float = 3.0) -> tuple[int, int]:
+def estimate_beam_center(frame: np.ndarray, sigma: float = 10.0) -> tuple[int, int]:
     """Estimate beam center by Gaussian-blurring a small ROI and taking max."""
     h, w = frame.shape
     cy0, cx0 = np.unravel_index(np.argmax(frame), frame.shape)
@@ -179,7 +185,7 @@ def plot_diffraction_debug(
     ax.set_title('Diffraction detection debug')
     ax.axis('off')
 
-    img_log = np.log10(frame.astype(np.float32) + 1.0)
+    img_log = np.log10(np.maximum(frame.astype(np.float32), 0) + 1.0)
     ax.imshow(img_log, cmap='gray')
 
     if (mask := results.mask) is not None:  # False == excluded areas = red tint
@@ -204,12 +210,16 @@ def plot_diffraction_debug(
 
 
 if __name__ == '__main__':
+    from glob import glob
+
     from PIL import Image
 
     mask = make_cross_mask()
-    for i in range(0, 50):
-        path = rf'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\00{i:03d}.tiff'
+    # paths = glob(r"C:\Users\tchon\x\2026-02-06-SPED_test\experiment_5\tiff\w000000_s000031_0000*.tiff")
+    paths = glob(r'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\0000*')
+    for path in paths:
         tiff = Image.open(path)
         image = np.array(tiff)
         results = ring_percentile_detection(image, mask=mask)
+        print(Path(path).stem, results.success, len(results.peaks))
         plot_diffraction_debug(image, results)
