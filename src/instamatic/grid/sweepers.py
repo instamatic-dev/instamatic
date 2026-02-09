@@ -64,7 +64,7 @@ class EdgeSweeperTeam(InstanceAutoNameRegistry):
     name: str = ''  # identifier used for registration in INSTANCES
     step_size: int_nm = 10_000  # largest step size allowed
     precision: int_nm = 1  # smallest step size allowed
-    threshold: float = 0.05  # fraction of light_max that signals the edge
+    threshold: float = 0.1  # fraction of light_max that signals the edge
     light_max: int = -1  # maximum light observed at any point by any sweeper
 
 
