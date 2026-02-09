@@ -218,7 +218,7 @@ def sced_interface_command(controller, **params: Any) -> None:
         try:
             if not journal_path.is_file():
                 raise FileNotFoundError(f'No journal file found at {journal_path}')
-        finally:
+        except FileNotFoundError:
             callback()
     else:
         exp_dir = controller.module_io.get_new_experiment_directory()
