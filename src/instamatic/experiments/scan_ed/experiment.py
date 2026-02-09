@@ -129,6 +129,7 @@ class Experiment(ExperimentBase):
             self.order_and_add_manual_windows(windows)
         for window_idx, window in self.state.grid.windows.items():
             self.draw_window_to_file(window_idx=window_idx, window=window)
+        self.draw_grid_to_file()
 
         while not params['stop_event'].is_set():
             try:
@@ -152,6 +153,7 @@ class Experiment(ExperimentBase):
                 break
             self.state.add_window(idx=window_idx, window=window)
             self.draw_window_to_file(window_idx=window_idx, window=window)
+            self.draw_grid_to_file()
 
         self.teardown()
 
@@ -218,7 +220,7 @@ class Experiment(ExperimentBase):
             edge_xys = np.asarray(edge_xys, dtype=float)
             window = self.state.grid.window_type.from_edge_xys(edge_xys=edge_xys)
             fig, ax = plot({**windows, window_idx: window}, debug_edges=True)
-            with self.videostream_frame.processor.temporary(figure=fig):
+            with self.videostream_frame.processor.temporary(figure=fig), cl:
                 print('LMB to accept and finish, RMB to retry, MMB to accept and add new')
                 c = cl.get_click()
                 if c.button == MouseButton.LEFT:
@@ -266,6 +268,13 @@ class Experiment(ExperimentBase):
         file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
         fig, ax = plot({window_idx: window}, debug_edges=True)
+        fig.savefig(file_path)
+
+    def draw_grid_to_file(self):
+        """Use grid.artist.plot to draw grid into its own file for debug."""
+        file_path = self.path / 'windows' / f'windows_all.png'
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+        fig, ax = plot(self.state.grid.windows, debug_edges=False)
         fig.savefig(file_path)
 
     def set_stop_event_if_target_met(self) -> None:
