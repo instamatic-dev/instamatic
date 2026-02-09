@@ -70,8 +70,7 @@ class ProgressTable(ttk.Frame):
         """Add a new parent line to the tree called Window #."""
         window_iid = self._window_iid(idx)
         window_name = f'Window {idx:d}'
-        geom = repr(window)
-        values = (geom, '-', '-', '-', '-', '-')
+        values = (str(window), '-', '-', '-', '-', '-')
         self.tree.insert('', tk.END, iid=window_iid, text=window_name, values=values)
         self._window_totals[idx] = Counter()
 

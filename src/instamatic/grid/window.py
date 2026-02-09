@@ -75,8 +75,17 @@ class GridablePolygonWindow(ConvexPolygonWindow):
     a: np.ndarray = ...  # from center towards the side, aligned in ~X direction
     b: np.ndarray = ...  # from center towards the side, not aligned with ~X
 
-    @abstractmethod
-    def __repr__(self) -> str: ...
+    def __repr__(self) -> str:
+        """Accurate representation, show params as floats (from to_params)."""
+        p = self.to_params()
+        parts = [f'{k}={float(v)}' for k, v in p.items()]
+        return f'{type(self).__name__}(' + ', '.join(parts) + ')'
+
+    def __str__(self) -> str:
+        """Nicely display self, show params as integers (from to_params)."""
+        p = self.to_params()
+        parts = [f'{k}={int(np.rint(float(v)))}' for k, v in p.items()]
+        return f'{type(self).__name__}(' + ', '.join(parts) + ')'
 
     @classmethod
     def from_sweeping(cls, order: Literal[1, 2, 3, 4, 5] = 3) -> Self:
@@ -154,10 +163,6 @@ class HexagonalWindow(GridablePolygonWindow):
         corners = r_circum * np.stack([np.cos(angles), np.sin(angles)], axis=1)
         self.corners = c + corners
 
-    def __repr__(self) -> str:
-        args = [self.center_x, self.center_y, self.width, self.theta]
-        return self.__class__.__name__ + '(x={}, y={}, w={}, t={})'.format(*args)
-
     @classmethod
     def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
         """Return new by fitting a regular hexagon to a Nx2 list of edge
@@ -194,7 +199,7 @@ class HexagonalWindow(GridablePolygonWindow):
         """Objective: squared distance of points to nearest hexagon side (regular)."""
         center_x, center_y, width, theta = geom
         if width <= 0:
-            return float("inf")
+            return float('inf')
 
         center = np.array([center_x, center_y], dtype=float)
         deltas = np.asarray(xys, dtype=float) - center
@@ -209,7 +214,7 @@ class HexagonalWindow(GridablePolygonWindow):
 
         # edge distance: nearest line in absolute value
         d = np.min(np.abs(signed), axis=1)  # (N,)
-        return float(np.sum(d ** 2))
+        return float(np.sum(d**2))
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
@@ -256,10 +261,6 @@ class RectangularWindow(GridablePolygonWindow):
         self.b = b = 0.5 * h * np.array([-np.sin(t), np.cos(t)], dtype=float)
         self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
 
-    def __repr__(self) -> str:
-        args = [self.center_x, self.center_y, self.width, self.height, self.theta]
-        return self.__class__.__name__ + '(x={}, y={}, w={}, h={}, t={})'.format(*args)
-
     @classmethod
     def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
         """Return new by fitting the edge to a Nx2 list of edge positions."""
@@ -282,7 +283,7 @@ class RectangularWindow(GridablePolygonWindow):
         """scipy.optimize.minimize fitting func; for geometry see cls docs."""
         center_x, center_y, width, height, theta = geom
         if width <= 0 or height <= 0:
-            return float("inf")
+            return float('inf')
 
         center = np.array([center_x, center_y], dtype=float)
         deltas = np.asarray(xys, dtype=float) - center
@@ -298,7 +299,7 @@ class RectangularWindow(GridablePolygonWindow):
         du = np.abs(np.abs(u) - 0.5 * width)
         dv = np.abs(np.abs(v) - 0.5 * height)
         d = np.minimum(du, dv)
-        return float(np.sum(d ** 2))
+        return float(np.sum(d**2))
 
     def to_params(self) -> dict[str, float]:
         return {
@@ -345,10 +346,6 @@ class SquareWindow(GridablePolygonWindow):
         self.b = b = 0.5 * w * np.array([-np.sin(t), np.cos(t)], dtype=float)
         self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
 
-    def __repr__(self) -> str:
-        args = [self.center_x, self.center_y, self.width, self.theta]
-        return self.__class__.__name__ + '(x={}, y={}, w={}, t={})'.format(*args)
-
     @classmethod
     def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
         """Return new by fitting the edge to a Nx2 list of edge positions."""
@@ -382,7 +379,7 @@ class SquareWindow(GridablePolygonWindow):
         du = np.abs(np.abs(u) - 0.5 * width)
         dv = np.abs(np.abs(v) - 0.5 * width)
         d = np.minimum(du, dv)
-        return float(np.sum(d ** 2))
+        return float(np.sum(d**2))
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
