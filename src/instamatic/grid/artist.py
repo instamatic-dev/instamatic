@@ -50,7 +50,18 @@ def plot(
             xys = np.asarray(window._edge_xys, dtype=float)
             ax.plot(xys[:, 0], xys[:, 1], 'bx', markersize=6, zorder=5)
 
-    ax.autoscale()
+    ax.relim()
+    ax.autoscale_view()
+
+    x0, x1 = ax.get_xlim()
+    y0, y1 = ax.get_ylim()
+    cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
+    r = 0.5 * max(x1 - x0, y1 - y0)
+    ax.set_xlim(cx - r, cx + r)
+    ax.set_ylim(cy - r, cy + r)
+
+
+    ax.set_autoscale_on(False)  # Freeze limits so lines don't affect view
     ax.axhline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
     ax.axvline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
 
