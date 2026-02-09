@@ -215,7 +215,11 @@ def sced_interface_command(controller, **params: Any) -> None:
     if load:
         exp_dir = controller.module_io.get_experiment_directory()
         journal_path = Path(exp_dir) / 'journal.jsonl'
-        assert journal_path.is_file(), f'No journal file found at {journal_path}'
+        try:
+            if not journal_path.is_file():
+                raise FileNotFoundError(f'No journal file found at {journal_path}')
+        finally:
+            callback()
     else:
         exp_dir = controller.module_io.get_new_experiment_directory()
         exp_dir.mkdir(exist_ok=True, parents=True)
