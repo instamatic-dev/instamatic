@@ -262,6 +262,17 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
             self._recv_more()
         i, j = header_end, header_end + self.size
         frame = np.frombuffer(self.buffer[i:j], dtype=self.dtype).reshape(self.shape).copy()
+
+        # Decode Serval-packed 32-bit jsonimage payload into the physical 24-bit count:
+        # observed packing (byte lanes): [b0, b1, b2, b3] with b1 unused/zero,
+        # count = b0 | (b3<<8) | (b2<<16). Contact Daniel Tchon, tchon@fzu.cz, for details.
+        if __debug__ and np.any((frame & np.uint32(0x0000FF00)) != 0):
+            raise ValueError('Unexpected nonzero byte1 in Serval packed uint32 payload.')
+        if frame.dtype == np.uint32:
+            bytes02 = frame & np.uint32(0x00F00FF)
+            bytes3 = frame & np.uint32(0xFF000000)
+            frame = bytes02 | (bytes3 >> np.uint32(16))
+
         self.buffer[: self.used - j] = self.buffer[j : self.used]
         self.used -= j
         self.i_frame += 1
