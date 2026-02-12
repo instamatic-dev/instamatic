@@ -184,7 +184,7 @@ class Experiment(ExperimentBase):
             fast_min -= error_margin
             fast_max += error_margin
             direction = next(scan_dirs)
-            fast_start, fast_stop = [fast_min, fast_max][:: direction]
+            fast_start, fast_stop = [fast_min, fast_max][::direction]
             self.state.add_scan(
                 window=int(window_idx),
                 scan=int(scan_id),
@@ -268,11 +268,12 @@ class Experiment(ExperimentBase):
         file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
         fig, ax = plot({window_idx: window}, debug_edges=True)
-        fig.savefig(file_path)
+        if not file_path.exists():  # don't overwrite previous img with _edge_xys
+            fig.savefig(file_path)
 
     def draw_grid_to_file(self):
         """Use grid.artist.plot to draw grid into its own file for debug."""
-        file_path = self.path / 'windows' / f'windows_all.png'
+        file_path = self.path / 'windows' / 'windows_all.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
         fig, ax = plot(self.state.grid.windows, debug_edges=False)
         fig.savefig(file_path)
