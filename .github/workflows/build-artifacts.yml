@@ -1,0 +1,13 @@
+name: Build & Inspect Distributions
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hynek/build-and-inspect-python-package@v2
