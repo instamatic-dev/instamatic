@@ -129,9 +129,12 @@ publishing = [
 "instamatic.autoconfig" = "instamatic.config.autoconfig:main"
 
 [tool.setuptools]
-packages = ["instamatic"]
 package-dir = {"" = "src"}
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["instamatic*"]
 
 [tool.ruff]
 target-version = 'py39'
