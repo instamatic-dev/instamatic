@@ -269,7 +269,7 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
         if __debug__ and np.any((frame & np.uint32(0x0000FF00)) != 0):
             raise ValueError('Unexpected nonzero byte1 in Serval packed uint32 payload.')
         if frame.dtype == np.uint32:
-            bytes02 = frame & np.uint32(0x00F00FF)
+            bytes02 = frame & np.uint32(0x00FF00FF)
             bytes3 = frame & np.uint32(0xFF000000)
             frame = bytes02 | (bytes3 >> np.uint32(16))
 
