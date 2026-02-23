@@ -28,3 +28,4 @@ include src/instamatic/config/microscope/*.yaml
 include src/instamatic/config/scripts/*.md
 include src/instamatic/neural_network/*.p
 include src/instamatic/processing/PETS_input_keywords.csv
+include src/instamatic/processing/XDS_template.inp

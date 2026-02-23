@@ -84,7 +84,7 @@ class ImgConversionTPX(ImgConversion):
         self.name = 'TimePix_SU'
         self.method = method
 
-        from .XDS_templateTPX import XDS_template
+        from .XDS_template import XDS_template_TPX as XDS_template
 
         self.XDS_template = XDS_template
 

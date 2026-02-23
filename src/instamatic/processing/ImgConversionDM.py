@@ -72,7 +72,7 @@ class ImgConversionDM(ImgConversion):
         self.name = 'DigitalMicrograph'
         self.method = method
 
-        from .XDS_templateDM import XDS_template
+        from .XDS_template import XDS_template_DM as XDS_template
 
         self.XDS_template = XDS_template
 

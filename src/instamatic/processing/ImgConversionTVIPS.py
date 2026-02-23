@@ -74,7 +74,7 @@ class ImgConversionTVIPS(ImgConversion):
         self.name = 'TVIPS F416'
         self.method = method
 
-        from .XDS_templateTVIPS import XDS_template
+        from .XDS_template import XDS_template_TVIPS as XDS_template
 
         self.XDS_template = XDS_template
 
