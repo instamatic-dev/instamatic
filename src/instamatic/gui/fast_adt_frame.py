@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from tkinter import *
+from tkinter.filedialog import askopenfilenames
 from tkinter.ttk import *
 from typing import Any, Callable, Optional
 
@@ -54,6 +55,7 @@ class ExperimentalFastADTVariables:
         self.diffraction_step = DoubleVar(value=0.5)
         self.diffraction_time = DoubleVar(value=0.5)
         self.tracking_algo = StringVar()
+        self.tracking_details = StringVar(value='')
         self.tracking_time = DoubleVar(value=0.5)
         self.tracking_step = DoubleVar(value=5.0)
 
@@ -122,7 +124,8 @@ class ExperimentalFastADT(LabelFrame, ModuleFrameMixin):
 
         Label(f, text='Tracking algorithm:').grid(row=3, column=2, **pad10)
         var = self.var.tracking_algo
-        m = ['none', 'manual']
+        var.trace_add('write', self.load_path_files)
+        m = ['none', 'manual', 'load']
         self.tracking_algo = OptionMenu(f, var, m[0], *m)
         self.tracking_algo.grid(row=3, column=3, **pad10)
 
@@ -219,12 +222,28 @@ class ExperimentalFastADT(LabelFrame, ModuleFrameMixin):
         diff_time = self.var.diffraction_time.get() * a_span / diff_step
         return track_time, diff_time
 
+    def load_path_files(self, *_) -> None:
+        if self.var.tracking_algo.get() == 'load':
+            paths = askopenfilenames(
+                filetypes=[('CSV files', '*.csv'), ('All files', '*')],
+                initialdir=self.app.get_module('io').get_experiment_directory(),
+                parent=self,
+                title='Select tracking path files to use',
+            )
+            if not paths:
+                if not self.var.tracking_details.get():
+                    self.var.tracking_algo.set('none')
+            else:
+                self.var.tracking_details.set(';'.join(paths))
+        else:
+            self.var.tracking_details.set('')
+
     def toggle_beam_blank(self) -> None:
         (self.ctrl.beam.unblank if self.ctrl.beam.is_blanked else self.ctrl.beam.blank)()
 
     def update_widget(self, *_, busy: Optional[bool] = None, **__) -> None:
         self.busy = busy if busy is not None else self.busy
-        no_tracking = self.var.tracking_algo.get() == 'none'
+        no_tracking = self.var.tracking_algo.get() in ('none', 'load')
         widget_state = 'disabled' if self.busy else 'enabled'
         tracking_state = 'disabled' if self.busy or no_tracking else 'enabled'
 
@@ -244,10 +263,15 @@ class ExperimentalFastADT(LabelFrame, ModuleFrameMixin):
             return
         tt = '{:.0f}:{:02.0f}'.format(*divmod(tracking_time, 60))
         dt = '{:.0f}:{:02.0f}'.format(*divmod(diffraction_time, 60))
-        if tracking_time:  # don't display tracking time or per-attempts if zero
-            msg = f'Estimated time required: {tt} + {dt} / tracking.'
-        else:
-            msg = f'Estimated time required: {dt}.'
+
+        if (ta := self.var.tracking_algo.get()) == 'none':
+            msg = f'Minimum time required: {dt}.'
+        elif ta == 'manual':
+            msg = f'Minimum time required: {tt} + {dt} / tracking.'
+        else:  # ta == 'load'
+            track_count = 1 + self.var.tracking_details.get().count(';')
+            st = '{:.0f}:{:02.0f}'.format(*divmod(diffraction_time * track_count, 60))
+            msg = f'Minimum time required: {dt} x {track_count} paths loaded = {st}.'
         self.message2.set(msg)
 
     def start_collection(self) -> None:
