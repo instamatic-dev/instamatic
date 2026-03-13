@@ -57,28 +57,3 @@ class PartialFormatter(string.Formatter):
 
 
 partial_formatter = PartialFormatter()
-
-
-class VersionedDict(MutableMapping[T1, T2]):
-    """A dict whose version changes with every mutation; useful for caching."""
-
-    def __init__(self, d: dict = None) -> None:
-        self._d: dict[T1, T2] = d or {}
-        self.version = 0
-
-    def __getitem__(self, k: T1) -> T2:
-        return self._d[k]
-
-    def __iter__(self) -> Iterator[T1]:
-        return iter(self._d)
-
-    def __len__(self) -> int:
-        return len(self._d)
-
-    def __setitem__(self, k, v) -> None:
-        self._d[k] = v
-        self.version += 1
-
-    def __delitem__(self, k) -> None:
-        del self._d[k]
-        self.version += 1

@@ -18,7 +18,7 @@ from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.artist import plot
-from instamatic.grid.registry import GRID_REGISTRY, PeriodicConvexPolygonGrid
+from instamatic.grid.registry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
 from instamatic.grid.window import GridablePolygonWindow
 from instamatic.gui.click_dispatcher import ClickListener, MouseButton
 
@@ -238,14 +238,14 @@ class Experiment(ExperimentBase):
             return
         self.state.add_window(idx=0, window=windows.pop(0))
         for window in windows:
-            idx = self.state.grid.predict_index(window.center)
+            idx = self.state.grid.nearest_index(*window.center)
             self.state.add_window(idx=idx, window=window)
 
     def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
         """Find a next window on the grid, or raise if none can be found."""
         if self.params.get('grid_finder') == 'All manually':
             raise IndexError('Experiment params disallow locating new windows')
-        grid: PeriodicConvexPolygonGrid[GridablePolygonWindow] = self.state.grid
+        grid: PeriodicConvexPolygonGridGeometry[GridablePolygonWindow] = self.state.grid
         if not self.state.grid.windows:
             return 0, grid.window_type.from_sweeping(order=4)
         max_index = 10 + 2 * (max(grid.windows) if grid.windows else 0)

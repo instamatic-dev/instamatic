@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from itertools import chain
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 import numpy as np
 from scipy.optimize import minimize
@@ -19,6 +19,19 @@ if not _ctrl:
 
 X = np.array([1, 0], dtype=float)
 Y = np.array([0, 1], dtype=float)
+
+
+WindowGeometryTuple = tuple[float_nm, float_nm, float, float_nm, Optional[float_nm]]
+
+
+def versor(
+    *,
+    deg: Optional[Union[float, np.ndarray]] = None,
+    rad: Optional[Union[float, np.ndarray]] = None,
+) -> np.ndarray:
+    """A versor in the direction of angle expressed in radians or degrees."""
+    radians = np.deg2rad(deg) if rad is None else rad
+    return np.array([np.cos(radians), np.sin(radians)], dtype=float)
 
 
 class Window(ABC):
@@ -70,10 +83,39 @@ class GridablePolygonWindow(ConvexPolygonWindow):
     angle between axes "a" and X is minimal and the angle from "a" to
     "b" is positive and minimal. The length of "a" and "b" should match
     the distance between window center and its edge.
+
+    Any subclass of GridablePolygonWindow should initialize using at least
+    four following parameters in this order, and other as needed:
+
+    - x: x coordinate of the window center in the stage XY coordinate system;
+    - y: y coordinate of the window center in the stage XY coordinate system;
+    - t: smallest signed angle from stage +X axis towards "a" axis in degrees;
+    - w: double the distance between window center and its' edge midpoint;
     """
 
-    a: np.ndarray = ...  # from center towards the side, aligned in ~X direction
+    INTERIOR_ANGLE: float = ...  # class attribute: angle between a and b axes
+    USES_HEIGHT: bool = ...  # True if a secondary metric i.e. height is needed
+    a: np.ndarray = ...
     b: np.ndarray = ...  # from center towards the side, not aligned with ~X
+
+    def __init__(
+        self,
+        x: float_nm,
+        y: float_nm,
+        t: float,
+        w: float_nm,
+        h: Optional[float_nm] = None,
+    ) -> None:
+        """A uniform abstract constructor for all subclasses (nm/degrees)."""
+        self.x: float_nm = float(x)
+        self.y: float_nm = float(y)
+        self.t: float = float(t)
+        self.w: float_nm = float(w)
+        self.h: float_nm = self.w if h is None else float(h)
+
+        self.a: np.ndarray = ...  # vector aligned with ~X direction
+        self.b: np.ndarray = ...  # "a" rotated by INTERIOR_ANGLE anti-clockwise
+        self.corners: np.ndarray = ...  # ordered anti-clockwise, start from "a"
 
     def __repr__(self) -> str:
         """Accurate representation, show params as floats (from to_params)."""
@@ -86,6 +128,38 @@ class GridablePolygonWindow(ConvexPolygonWindow):
         p = self.to_params()
         parts = [f'{k}={int(np.rint(float(v)))}' for k, v in p.items()]
         return f'{type(self).__name__}(' + ', '.join(parts) + ')'
+
+    @property
+    def center(self) -> np.ndarray:
+        return np.array([self.x, self.y], dtype=float)
+
+    def edge_residuals(self, xys: np.ndarray) -> np.ndarray:
+        """Return residual distance to the nearest edge per point."""
+        xys = np.asarray(xys, dtype=float)
+        if len(xys) == 0:
+            return np.empty(0, dtype=float)
+
+        p1 = np.asarray(self.corners, dtype=float)  # (M, 2)
+        edge_vecs = np.roll(p1, -1, axis=0) - p1  # (M, 2)
+        edge_l2 = np.sum(edge_vecs * edge_vecs, axis=1)  # (M,)
+
+        if np.any(edge_l2 == 0):
+            raise ValueError('Degenerate polygon edge: consecutive corners coincide')
+
+        # Vector from each segment start to each point
+        rel = xys[:, None, :] - p1[None, :, :]  # (N, M, 2)
+
+        # Projection parameter onto each edge, then clamp to the finite segment
+        t = np.sum(rel * edge_vecs[None, :, :], axis=2) / edge_l2[None, :]  # (N, M)
+        t = np.clip(t, 0.0, 1.0)
+
+        # Closest point on each segment
+        closest = p1[None, :, :] + t[:, :, None] * edge_vecs[None, :, :]  # (N, M, 2)
+
+        # Distance from each point to each segment
+        dists = np.linalg.norm(xys[:, None, :] - closest, axis=2)  # (N, M)
+
+        return np.min(dists, axis=1)
 
     @classmethod
     def from_sweeping(cls, order: Literal[1, 2, 3, 4, 5] = 3) -> Self:
@@ -135,33 +209,20 @@ class GridablePolygonWindow(ConvexPolygonWindow):
 
 
 class HexagonalWindow(GridablePolygonWindow):
-    """Describes a regular hexagonal window with a 2D ab coordinate system.
+    """A regular hexagonal window with a 2D "ab" coordinate system."""
 
-    Geometry is described using four immutable float scalars (nm / radian):
-
-    - center_x: coordinate of the window center on the X axis;
-    - center_y: coordinate of the window center on the Y axis;
-    - width: distance between two opposite sides ("flat-to-flat");
-    - theta: signed angle from world X axis towards the +a axis direction.
-    """
-
+    INTERIOR_ANGLE: float = 60.0
     ROT60MAT = np.array([[1, -np.sqrt(3)], [np.sqrt(3), 1]], dtype=float) / 2
+    USES_HEIGHT = False
 
-    def __init__(self, x: float, y: float, w: float, t: float):
-        t = (float(t) + (np.pi / 6)) % (np.pi / 3) - (np.pi / 6)  # cast to [-pi/6, pi/6]
-        self.center_x: float_nm = float(x)
-        self.center_y: float_nm = float(y)
-        self.width = w = abs(float(w))
-        self.theta: float = float(t)  # expressed in radian
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
-        self.center = c = np.array([x, y], dtype=float)
-        self.a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
-        self.b = self.ROT60MAT @ (self.ROT60MAT @ self.a)
+        self.a = 0.5 * self.w * versor(deg=self.t).T
+        self.b = self.ROT60MAT @ self.a
 
-        r_circum = w / np.sqrt(3.0)
-        angles = t + np.pi / 6 + np.arange(6) * (np.pi / 3)
-        corners = r_circum * np.stack([np.cos(angles), np.sin(angles)], axis=1)
-        self.corners = c + corners
+        angles = self.t + np.array([0, 60, 120, 180, 240, 300], dtype=float)
+        self.corners = self.center + self.w / np.sqrt(3.0) * versor(deg=angles).T
 
     @classmethod
     def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
@@ -180,62 +241,32 @@ class HexagonalWindow(GridablePolygonWindow):
 
         # Use principal axis as a crude guess for a vertex direction; convert to theta for a axis
         theta0 = float(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]) - np.pi / 6.0)
+        theta0_deg = np.rad2deg(theta0)
 
         # Guess width from projected spread onto a axis direction (apothem approx)
-        w_hat0 = np.array([np.cos(theta0), np.sin(theta0)], dtype=float)
-        proj = xys_deltas @ w_hat0
+        proj = xys_deltas @ versor(rad=theta0)
         # apothem ~ median absolute projection to a side midpoint direction
         a0 = float(np.median(np.abs(proj)))
-        width0 = max(1.0, 2.0 * a0)
 
-        guess = np.array([xys_com[0], xys_com[1], width0, theta0], dtype=float)
+        guess = np.array([xys_com[0], xys_com[1], theta0_deg, 2 * a0, None], dtype=float)
         res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
         new = cls(*res.x)
         new._edge_xys = edge_xys
         return new
 
-    @staticmethod
-    def edge_d2_sum(geom: tuple[float, float, float, float], xys: np.ndarray) -> float:
-        """Objective: squared distance of points to nearest hexagon side (regular)."""
-        center_x, center_y, width, theta = geom
-        if width <= 0:
-            return float('inf')
-
-        center = np.array([center_x, center_y], dtype=float)
-        deltas = np.asarray(xys, dtype=float) - center
-
-        # 6 outward normals, rotated by theta
-        angles = theta + np.arange(6) * (np.pi / 3.0)
-        normals = np.stack([np.cos(angles), np.sin(angles)], axis=1)  # (6,2)
-
-        apothem = 0.5 * width  # if width is flat-to-flat
-        # signed distances to the six supporting lines
-        signed = deltas @ normals.T - apothem  # (N,6)
-
-        # edge distance: nearest line in absolute value
-        d = np.min(np.abs(signed), axis=1)  # (N,)
-        return float(np.sum(d**2))
-
     def to_params(self) -> dict[str, float]:
-        return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
+        return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w}
 
     def translated(self, delta: np.ndarray) -> Self:
         """Return a new window translated by (dx, dy) in nm."""
-        d = np.asarray(delta, dtype=float).reshape(
-            2,
-        )
-        return type(self)(
-            float(self.center_x + d[0]),
-            float(self.center_y + d[1]),
-            float(self.width),
-            float(self.theta),
-        )
+        d = np.asarray(delta, dtype=float)
+        return type(self)(self.x + d[0], self.y + d[1], self.t, self.w)
 
 
 class RectangularWindow(GridablePolygonWindow):
     """Describes one rectangular window with a 2D ab coordinate system.
 
-    Geometry is described using five immutable float scalars (nm / radian):
+    Geometry is described using five immutable float scalars (nm / degree):
 
     - center_x: coordinate of the window center on the X axis;
     - center_y: coordinate of the window center on the Y axis;
@@ -244,21 +275,15 @@ class RectangularWindow(GridablePolygonWindow):
     - theta: signed angle from X axis towards A axis and the X-aligned edge.
     """
 
-    def __init__(self, x: float, y: float, w: float, h: float, t: float):
-        t = (float(t) + (np.pi / 2)) % np.pi - (np.pi / 2)  # cast to [-pi/2, pi/2]
-        if abs(t) > (np.pi / 4):  # cast to [-pi/4, pi/4]
-            w, h = h, w
-            t = t - np.copysign(np.pi / 2, t)
+    INTERIOR_ANGLE: float = 90.0
+    USES_HEIGHT = True
 
-        self.center_x: float_nm = float(x)
-        self.center_y: float_nm = float(y)
-        self.width = w = abs(float(w))
-        self.height = h = abs(float(h))
-        self.theta: float = float(t)  # expressed in radian
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
-        self.center = c = np.array([x, y], dtype=float)
-        self.a = a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
-        self.b = b = 0.5 * h * np.array([-np.sin(t), np.cos(t)], dtype=float)
+        c = self.center
+        self.a = a = 0.5 * self.w * versor(deg=self.t)
+        self.b = b = 0.5 * self.h * versor(deg=self.t + 90)
         self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
 
     @classmethod
@@ -271,80 +296,26 @@ class RectangularWindow(GridablePolygonWindow):
         eigenvector_proj = xys_deltas @ eigenvectors
         width0 = eigenvector_proj[:, 1].max() - eigenvector_proj[:, 1].min()
         height0 = eigenvector_proj[:, 0].max() - eigenvector_proj[:, 0].min()
-        theta0 = np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1])
-        guess = np.array([xys_com[0], xys_com[1], width0, height0, theta0])
+        theta0 = np.rad2deg(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]))
+        guess = np.array([xys_com[0], xys_com[1], theta0, width0, height0])
         res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
         new = cls(*res.x)
         new._edge_xys = edge_xys
         return new
 
-    @staticmethod
-    def edge_d2_sum(geom: tuple[float, float, float, float, float], xys: np.ndarray) -> float:
-        """scipy.optimize.minimize fitting func; for geometry see cls docs."""
-        center_x, center_y, width, height, theta = geom
-        if width <= 0 or height <= 0:
-            return float('inf')
-
-        center = np.array([center_x, center_y], dtype=float)
-        deltas = np.asarray(xys, dtype=float) - center
-
-        a_hat = np.array([np.cos(theta), np.sin(theta)], dtype=float)
-        b_hat = np.array([-np.sin(theta), np.cos(theta)], dtype=float)
-
-        # local coordinates
-        u = deltas @ a_hat
-        v = deltas @ b_hat
-
-        # distance to nearest supporting line among the 4 edges
-        du = np.abs(np.abs(u) - 0.5 * width)
-        dv = np.abs(np.abs(v) - 0.5 * height)
-        d = np.minimum(du, dv)
-        return float(np.sum(d**2))
-
     def to_params(self) -> dict[str, float]:
-        return {
-            'x': self.center_x,
-            'y': self.center_y,
-            'w': self.width,
-            'h': self.height,
-            't': self.theta,
-        }
+        return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w, 'h': self.h}
 
     def translated(self, delta: np.ndarray) -> Self:
         """Return a new window translated by (dx, dy) in nm."""
-        d = np.asarray(delta, dtype=float).reshape(2)
-        return type(self)(
-            float(self.center_x + d[0]),
-            float(self.center_y + d[1]),
-            float(self.width),
-            float(self.height),
-            float(self.theta),
-        )
+        d = np.asarray(delta, dtype=float)
+        return type(self)(self.x + d[0], self.y + d[1], self.t, self.w, self.h)
 
 
-class SquareWindow(GridablePolygonWindow):
-    """Describes one square window with a 2D ab coordinate system.
+class SquareWindow(RectangularWindow):
+    """A regular square window with a 2D "ab" coordinate system."""
 
-    Geometry is described using four immutable float scalars (nm / radian):
-
-    - center_x: coordinate of the window center on the X axis;
-    - center_y: coordinate of the window center on the Y axis;
-    - width: length of the square side (>= 0)
-    - theta: signed angle from X axis towards A axis and the X-aligned edge.
-    """
-
-    def __init__(self, x: float, y: float, w: float, t: float):
-        t = (float(t) + (np.pi / 4)) % (np.pi / 2) - (np.pi / 4)  # cast to [-pi/4, pi/4]
-
-        self.center_x: float_nm = x
-        self.center_y: float_nm = y
-        self.width = w = abs(w)
-        self.theta: float = float(t)
-
-        self.center = c = np.array([x, y], dtype=float)
-        self.a = a = 0.5 * w * np.array([np.cos(t), np.sin(t)], dtype=float)
-        self.b = b = 0.5 * w * np.array([-np.sin(t), np.cos(t)], dtype=float)
-        self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
+    USES_HEIGHT = True
 
     @classmethod
     def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
@@ -356,39 +327,18 @@ class SquareWindow(GridablePolygonWindow):
         eigenvector_proj = xys_deltas @ eigenvectors
         width0 = float(eigenvector_proj[:, 1].max() - eigenvector_proj[:, 1].min())
         height0 = float(eigenvector_proj[:, 0].max() - eigenvector_proj[:, 0].min())
-        theta0 = float(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]))
+        theta0 = np.rad2deg(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]))
         side0 = max(1.0, 0.5 * (height0 + width0))
-        guess = np.array([xys_com[0], xys_com[1], side0, theta0], dtype=float)
+        guess = np.array([xys_com[0], xys_com[1], theta0, side0, None], dtype=float)
         res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
         new = cls(*res.x)
         new._edge_xys = edge_xys
         return new
 
-    @staticmethod
-    def edge_d2_sum(geom: tuple[float, float, float, float], xys: np.ndarray) -> float:
-        """Objective: squared distance of points to nearest of 4 square sides."""
-        center_x, center_y, width, theta = geom
-        if width <= 0:
-            return np.inf
-        center = np.array([center_x, center_y], dtype=float)
-        deltas = np.asarray(xys, dtype=float) - center
-        a_hat = np.array([np.cos(theta), np.sin(theta)], dtype=float)
-        b_hat = np.array([-np.sin(theta), np.cos(theta)], dtype=float)
-        u = deltas @ a_hat  # signed coordinates in the square frame
-        v = deltas @ b_hat
-        du = np.abs(np.abs(u) - 0.5 * width)
-        dv = np.abs(np.abs(v) - 0.5 * width)
-        d = np.minimum(du, dv)
-        return float(np.sum(d**2))
-
     def to_params(self) -> dict[str, float]:
-        return {'x': self.center_x, 'y': self.center_y, 'w': self.width, 't': self.theta}
+        return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w}
 
     def translated(self, delta: np.ndarray) -> Self:
-        d = np.asarray(delta, dtype=float).reshape(2)
-        return type(self)(
-            float(self.center_x + d[0]),
-            float(self.center_y + d[1]),
-            float(self.width),
-            float(self.theta),
-        )
+        """Return a new window translated by (dx, dy) in nm."""
+        d = np.asarray(delta, dtype=float)
+        return type(self)(self.x + d[0], self.y + d[1], self.t, self.w)

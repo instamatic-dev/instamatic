@@ -7,7 +7,7 @@ import pandas as pd
 from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
-from instamatic.grid.grid import PeriodicConvexPolygonGrid
+from instamatic.grid.geometry import PeriodicConvexPolygonGridGeometry
 from instamatic.grid.window import GridablePolygonWindow
 
 WindowFactory: Callable[[float, float, float, ...], type[GridablePolygonWindow]]
@@ -19,11 +19,11 @@ class State:
     def __init__(
         self,
         journal: Journal,
-        grid: PeriodicConvexPolygonGrid,
+        grid: PeriodicConvexPolygonGridGeometry,
         progress: Optional[ProgressTable] = None,
     ) -> None:
         self.journal: Journal = journal
-        self.grid: PeriodicConvexPolygonGrid = grid
+        self.grid: PeriodicConvexPolygonGridGeometry = grid
         self.progress: Optional[ProgressTable] = progress
 
         self.scans: pd.DataFrame = pd.DataFrame()

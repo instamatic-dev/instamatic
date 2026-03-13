@@ -107,36 +107,27 @@ def spiral2uv(n: int) -> tuple[int, int]:
     if t < k:
         u = t + 1
         v = u - k
-        return (u, v)
-
     # Segment 2: up the right-up edge (u=k), v = 1..k
-    if t < 2 * k:
+    elif t < 2 * k:
         u = k
         v = (t - k) + 1
-        return (u, v)
-
     # Segment 3: along the top edge (v=k), u = k-1 .. 0
-    if t < 3 * k:
+    elif t < 3 * k:
         v = k
         u = (3 * k - 1) - t
-        return (u, v)
-
     # Segment 4: down the upper-left edge (v-u=k), u = -1 .. -k
-    if t < 4 * k:
+    elif t < 4 * k:
         u = (3 * k) - t - 1
         v = u + k
-        return (u, v)
-
     # Segment 5: down the left edge (u=-k), v = -1 .. -k
-    if t < 5 * k:
+    elif t < 5 * k:
         u = -k
         v = (4 * k) - t - 1
-        return (u, v)
-
     # Segment 6: along the bottom edge (v=-k), u = -k+1 .. 0
-    v = -k
-    u = t - 6 * k + 1
-    return (u, v)
+    else:
+        v = -k
+        u = t - 6 * k + 1
+    return u - v, v  # conversion from previously used 120-deg system to 60-deg
 
 
 def uv2spiral(u: int, v: int) -> int:
@@ -145,6 +136,7 @@ def uv2spiral(u: int, v: int) -> int:
     if u == 0 and v == 0:
         return 0
 
+    u = u + v  # conversion from previously used 120-deg system to 60-deg
     k = max(abs(u), abs(v), abs(u - v))  # Hex "radius" in (u,v) system
     s0 = 1 + 3 * (k - 1) * k  # first index on ring k
     # point with lowest s0 lies right above bottom right corner of the hexagon
@@ -208,7 +200,7 @@ if __name__ == '__main__':  # tests
     # pretty-print spiral indices
     print('Spiral index grid:')
     for i, row in enumerate(spiral_grid):
-        print('  ' * i + ' '.join(f'{n:3d}' for n in row))
+        print('  ' * (8 - i) + ' '.join(f'{n:3d}' for n in row))
 
     for i in range(100):
         assert ij2ulam(*ulam2ij(i)) == i
