@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+from itertools import count
 from typing import Annotated, Generic, Optional, Protocol, Self, Sequence, TypeVar, Union, cast
 
 import numpy as np
+from pywinauto.sysinfo import is_x64_OS
 from scipy.optimize import least_squares
 
+from instamatic._collections import NoOverwriteDict
 from instamatic._typing import float_nm, int_nm
-from instamatic.grid.window import GridablePolygonWindow
+from instamatic.grid.pairing import ij2ulam, spiral2uv, ulam2ij, uv2spiral
+from instamatic.grid.window import (
+    GridablePolygonWindow,
+    HexagonalWindow,
+    RectangularWindow,
+    SquareWindow,
+)
 
 DualIndex = tuple[int, int]
 SpiralIndex = Annotated[int, 'positive']
@@ -49,6 +58,7 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
     "a" and "b" should match expected distance to next windows.
     """
 
+    neighborhood: np.ndarray[int]
     pairing_function: PairingFunction
     pairing_inverse: PairingInverse
     window_type: type[WindowType]
@@ -139,13 +149,31 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
 
     def window_geometry(self, idx: WindowIndex) -> WindowGeometryTuple:
         """Return the current geom: origin + shape params of window "idx"."""
-        ij: DualIndex = self.pairing_inverse(idx) if isinstance(idx, int) else idx
+        ij: DualIndex = idx if isinstance(idx, tuple) else self.pairing_inverse(idx)
         x, y = self.origin + ij[0] * self.a_grid + ij[1] * self.b_grid
         return x, y, self.t, self.w, self.h
 
     def window(self, idx: WindowIndex) -> WindowType:
         """Convenience method that makes a window located at requested idx."""
         return self.window_type(*self.window_geometry(idx))
+
+    def windows_in_limits(self, x: float_nm, y: float_nm) -> list[int]:
+        """List indices of windows intersecting the box [-x, x] x [-y, y]."""
+        candidates_idx: set[int] = {0, self.nearest_index(0.0, 0.0)}
+        idx_in_limits: list[int] = []
+
+        while candidates_idx:
+            idx = min(candidates_idx)
+            candidates_idx.remove(idx)
+
+            if self.window(idx=idx).intersects_limits(x, y):
+                idx_in_limits.append(idx)
+                for nb in np.array(self.pairing_inverse(idx)) + self.neighborhood:
+                    nb_idx = self.pairing_function(nb[0], nb[1])
+                    if nb_idx > idx:
+                        candidates_idx.add(nb_idx)
+
+        return idx_in_limits
 
     def nearest_index(self, x: float_nm, y: float_nm) -> int:
         """Return spiral index of predicted window nearest to the center."""
@@ -256,3 +284,30 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
         self.w = geometry.w
         self.h = geometry.h
         self.s = geometry._s
+
+
+class HexagonalGridGeometry(PeriodicConvexPolygonGridGeometry):
+    neighborhood = np.array([(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)], dtype=int)
+    pairing_function: PairingFunction = staticmethod(uv2spiral)
+    pairing_inverse: PairingInverse = staticmethod(spiral2uv)
+    window_type: type[WindowType] = HexagonalWindow
+
+
+class RectangularGridGeometry(PeriodicConvexPolygonGridGeometry[RectangularWindow]):
+    neighborhood = np.array([(1, 0), (0, 1), (-1, 0), (0, -1)], dtype=int)
+    pairing_function: PairingFunction = staticmethod(ij2ulam)
+    pairing_inverse: PairingInverse = staticmethod(ulam2ij)
+    window_type: type[WindowType] = RectangularWindow
+
+
+class SquareGridGeometry(PeriodicConvexPolygonGridGeometry[SquareWindow]):
+    neighborhood = np.array([(1, 0), (0, 1), (-1, 0), (0, -1)], dtype=int)
+    pairing_function: PairingFunction = staticmethod(ij2ulam)
+    pairing_inverse: PairingInverse = staticmethod(ulam2ij)
+    window_type: type[WindowType] = SquareWindow
+
+
+GRID_REGISTRY = NoOverwriteDict[str, type[PeriodicConvexPolygonGridGeometry]]()
+GRID_REGISTRY['hexagonal'] = HexagonalGridGeometry
+GRID_REGISTRY['rectangular'] = RectangularGridGeometry
+GRID_REGISTRY['square'] = SquareGridGeometry

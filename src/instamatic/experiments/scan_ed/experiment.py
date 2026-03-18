@@ -219,7 +219,7 @@ class Experiment(ExperimentBase):
                     edge_xys.append(self.ctrl.stage.xy)
             edge_xys = np.asarray(edge_xys, dtype=float)
             window = self.state.grid.window_type.from_edge_xys(edge_xys=edge_xys)
-            fig, ax = plot({**windows, window_idx: window}, debug_edges=True)
+            fig, ax = plot({**windows, window_idx: window}, show_intercepts=True)
             with self.videostream_frame.processor.temporary(figure=fig), cl:
                 print('LMB to accept and finish, RMB to retry, MMB to accept and add new')
                 c = cl.get_click()
@@ -267,7 +267,7 @@ class Experiment(ExperimentBase):
         """Use grid.artist.plot to draw window into its own file for debug."""
         file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        fig, ax = plot({window_idx: window}, debug_edges=True)
+        fig, ax = plot({window_idx: window}, show_intercepts=True)
         if not file_path.exists():  # don't overwrite previous img with _edge_xys
             fig.savefig(file_path)
 
@@ -275,7 +275,7 @@ class Experiment(ExperimentBase):
         """Use grid.artist.plot to draw grid into its own file for debug."""
         file_path = self.path / 'windows' / 'windows_all.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        fig, ax = plot(self.state.grid.windows, debug_edges=False)
+        fig, ax = plot(self.state.grid.windows, show_intercepts=False)
         fig.savefig(file_path)
 
     def set_stop_event_if_target_met(self) -> None:

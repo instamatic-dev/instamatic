@@ -200,9 +200,48 @@ class GridablePolygonWindow(ConvexPolygonWindow):
         edge_xy = np.vstack([bes.position for bes in bess])  # Nx2
         return cls.from_edge_xys(edge_xy)
 
-    @classmethod
-    @abstractmethod
-    def from_edge_xys(cls, edge_xys: np.ndarray) -> Self: ...
+    # @classmethod
+    # @abstractmethod
+    # def from_edge_xys(cls, edge_xys: np.ndarray) -> Self: ...
+    # TODO: implement non-abstract based on the geometry implementation w/ no spacing
+
+    def intersects_limits(self, x: float_nm, y: float_nm) -> bool:
+        """Test whether the window intersects the box [-x, x] x [-y, y]. To
+        this aim, in seven consecutive blocks:
+
+        1) Alias the corners and their coordinates for further
+        convenience; 2) Test whether the window bounding box (min/max)
+        is beyond limits; 3) Test whether any window corner is inside
+        the limits; 4) to 7) Test if any limit line intersects the
+        window within limits.
+        """
+        c = np.asarray(self.corners, dtype=float)  # window corners
+        cx = c[:, 0]  # view of window corners' x coordinates
+        cy = c[:, 1]  # view of window corners' x coordinates
+
+        if cx.max() < -x or cx.min() > x or cy.max() < -y or cy.min() > y:
+            return False
+
+        if np.any((cx > -x) & (cx < x) & (cy > -y) & (cy < y)):
+            return True
+
+        xs = self.x_intersections(y=y)
+        if xs is not None and xs[0] < x and xs[1] > -x:
+            return True
+
+        xs = self.x_intersections(y=-y)
+        if xs is not None and xs[0] < x and xs[1] > -x:
+            return True
+
+        ys = self.y_intersections(x=x)
+        if ys is not None and ys[0] < y and ys[1] > -y:
+            return True
+
+        ys = self.y_intersections(x=-x)
+        if ys is not None and ys[0] < y and ys[1] > -y:
+            return True
+
+        return False
 
     @abstractmethod
     def to_params(self) -> dict[str, float]: ...
@@ -221,38 +260,8 @@ class HexagonalWindow(GridablePolygonWindow):
         self.a = 0.5 * self.w * versor(deg=self.t).T
         self.b = self.ROT60MAT @ self.a
 
-        angles = self.t + np.array([0, 60, 120, 180, 240, 300], dtype=float)
+        angles = self.t + np.array([30, 90, 150, 210, 270, 330], dtype=float)
         self.corners = self.center + self.w / np.sqrt(3.0) * versor(deg=angles).T
-
-    @classmethod
-    def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
-        """Return new by fitting a regular hexagon to a Nx2 list of edge
-        positions.
-
-        Uses a simple initial guess from PCA and refines with Powell.
-        """
-        edge_xys = np.asarray(edge_xys, dtype=float)
-        xys_com = np.mean(edge_xys, axis=0)
-
-        # PCA for an initial orientation guess
-        xys_deltas = edge_xys - xys_com
-        xys_cov = np.cov(xys_deltas.T)
-        _, eigenvectors = np.linalg.eigh(xys_cov)
-
-        # Use principal axis as a crude guess for a vertex direction; convert to theta for a axis
-        theta0 = float(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]) - np.pi / 6.0)
-        theta0_deg = np.rad2deg(theta0)
-
-        # Guess width from projected spread onto a axis direction (apothem approx)
-        proj = xys_deltas @ versor(rad=theta0)
-        # apothem ~ median absolute projection to a side midpoint direction
-        a0 = float(np.median(np.abs(proj)))
-
-        guess = np.array([xys_com[0], xys_com[1], theta0_deg, 2 * a0, None], dtype=float)
-        res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
-        new = cls(*res.x)
-        new._edge_xys = edge_xys
-        return new
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w}
@@ -286,23 +295,6 @@ class RectangularWindow(GridablePolygonWindow):
         self.b = b = 0.5 * self.h * versor(deg=self.t + 90)
         self.corners = np.vstack([c + a + b, c + a - b, c - a - b, c - a + b])
 
-    @classmethod
-    def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
-        """Return new by fitting the edge to a Nx2 list of edge positions."""
-        xys_com = np.mean(edge_xys, axis=0)
-        xys_deltas = edge_xys - xys_com
-        xys_cov = np.cov(xys_deltas.T)
-        _, eigenvectors = np.linalg.eigh(xys_cov)
-        eigenvector_proj = xys_deltas @ eigenvectors
-        width0 = eigenvector_proj[:, 1].max() - eigenvector_proj[:, 1].min()
-        height0 = eigenvector_proj[:, 0].max() - eigenvector_proj[:, 0].min()
-        theta0 = np.rad2deg(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]))
-        guess = np.array([xys_com[0], xys_com[1], theta0, width0, height0])
-        res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
-        new = cls(*res.x)
-        new._edge_xys = edge_xys
-        return new
-
     def to_params(self) -> dict[str, float]:
         return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w, 'h': self.h}
 
@@ -315,25 +307,7 @@ class RectangularWindow(GridablePolygonWindow):
 class SquareWindow(RectangularWindow):
     """A regular square window with a 2D "ab" coordinate system."""
 
-    USES_HEIGHT = True
-
-    @classmethod
-    def from_edge_xys(cls, edge_xys: np.ndarray) -> Self:
-        """Return new by fitting the edge to a Nx2 list of edge positions."""
-        xys_com = np.mean(edge_xys, axis=0)
-        xys_deltas = edge_xys - xys_com
-        xys_cov = np.cov(xys_deltas.T)
-        _, eigenvectors = np.linalg.eigh(xys_cov)
-        eigenvector_proj = xys_deltas @ eigenvectors
-        width0 = float(eigenvector_proj[:, 1].max() - eigenvector_proj[:, 1].min())
-        height0 = float(eigenvector_proj[:, 0].max() - eigenvector_proj[:, 0].min())
-        theta0 = np.rad2deg(np.arctan2(eigenvectors[1, 1], eigenvectors[0, 1]))
-        side0 = max(1.0, 0.5 * (height0 + width0))
-        guess = np.array([xys_com[0], xys_com[1], theta0, side0, None], dtype=float)
-        res = minimize(cls.edge_d2_sum, guess, args=(edge_xys,), method='Powell')
-        new = cls(*res.x)
-        new._edge_xys = edge_xys
-        return new
+    USES_HEIGHT = False
 
     def to_params(self) -> dict[str, float]:
         return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w}
