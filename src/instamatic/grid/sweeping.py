@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence
+from itertools import chain
+from typing import Any, Literal, Optional, Sequence, Union
 
 import numpy as np
 from typing_extensions import Self
 
-from instamatic._typing import float_nm, int_nm
+from instamatic._typing import float_deg, float_nm, int_nm
 from instamatic.controller import TEMController, _ctrl, initialize
+from instamatic.utils.iterating import pairwise
 
 if not _ctrl:
     _ctrl: TEMController = initialize()
@@ -19,6 +21,16 @@ Vector2 = Sequence[float]
 def cross2d(a: np.ndarray, b: np.ndarray) -> float:
     """A scalar 2d cross product between two arrays of length 2."""
     return (a[0] * b[1] - a[1] * b[0]).item()
+
+
+def versor(
+    *,
+    deg: Optional[Union[float, np.ndarray]] = None,
+    rad: Optional[Union[float, np.ndarray]] = None,
+) -> np.ndarray:
+    """A versor in the direction of angle expressed in radians or degrees."""
+    radians = np.deg2rad(deg) if rad is None else rad
+    return np.array([np.cos(radians), np.sin(radians)], dtype=float)
 
 
 class InstanceAutoNameRegistry:
@@ -138,3 +150,32 @@ class BinaryEdgeSweeper(EdgeSweeper):
             if refining:
                 step_size *= 0.5
             self.step(length=direction * step_size)
+
+
+def star_sweep(
+    arms: Literal[3, 4, 5, 6, 7] = 5,
+    order: Literal[1, 2, 3, 4, 5] = 5,
+    offset: float_deg = 0,
+) -> np.ndarray:
+    """Sweep window, return (arms*2**order)x2 list of points on its edge."""
+    center: Vector2 = np.array(_ctrl.stage.xy, dtype=int)
+    team = str(center)
+    _ = EdgeSweeperTeam(name=team)
+
+    # define and sweep with initial marching sweepers to approx. grid center
+    headings = offset + np.linspace(0, 360, num=arms, endpoint=False, dtype=float)
+    directions = [versor(deg=h) for h in headings]
+    bess = [BinaryEdgeSweeper(origin=center, heading=d, team=team) for d in directions]
+    for bes in bess:
+        bes.sweep()
+
+    # for each order, create a new generation of beam sweepers and sweep
+    def bisectors(sweepers: list[BinaryEdgeSweeper]) -> list[BinaryEdgeSweeper]:
+        new = [a.breed(b) for a, b in pairwise(sweepers, closed=True)]
+        for ns in new:
+            ns.sweep()
+        return new
+
+    for _ in range(1, order):
+        bess = list(chain.from_iterable(zip(bess, bisectors(bess))))
+    return np.vstack([bes.position for bes in bess])  # Nx2

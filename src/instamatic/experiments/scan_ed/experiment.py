@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from itertools import count, cycle
+from itertools import count, cycle, product
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterator
 
-import numpy as np
 import pandas as pd
 
 from instamatic.calibrate import CalibMovieDelays
@@ -18,8 +17,8 @@ from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.artist import plot
-from instamatic.grid.registry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
-from instamatic.grid.window import GridablePolygonWindow
+from instamatic.grid.geometry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
+from instamatic.grid.sweeping import star_sweep
 from instamatic.gui.click_dispatcher import ClickListener, MouseButton
 
 if TYPE_CHECKING:
@@ -61,7 +60,7 @@ class Experiment(ExperimentBase):
             return self._state
         journal_path = self.path / 'journal.jsonl'
         journal = Journal(path=journal_path)
-        grid = GRID_REGISTRY[self.params['grid_geometry']]()
+        grid = GRID_REGISTRY[self.params['grid_geometry']](0, 0, 0, 50_000, 50_000)
         state = State(journal=journal, grid=grid, progress=self.progress)
         if self.load:
             if not journal_path.exists() or not journal_path.is_file():
@@ -117,76 +116,107 @@ class Experiment(ExperimentBase):
     def start_collection(self, **params) -> None:
         """Method that governs the entirety of scan ED experiment work flow."""
 
+        # Save parameters to a variable, load the journal and dispatcher
         self.params = params
         _ = self.state  # loads the journal
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher()
 
-        # windows are only added if no defined; TODO: allow adding after loading
+        # if allowed, add manually as many windows as the user desires.
         self.ctrl.stage.set(a=0)
-        if not self.state.grid.windows:
-            windows = self.determine_manual_windows()
-            self.order_and_add_manual_windows(windows)
-        for window_idx, window in self.state.grid.windows.items():
-            self.draw_window_to_file(window_idx=window_idx, window=window)
+        if not self.state.intercepts:
+            grid, intercepts = self.determine_grid_manually()
+            self.state.update_grid(grid.to_params())
+            for idx, idx_intercepts in intercepts.values():
+                self.state.add_intercepts(idx, idx_intercepts)
+
+        # Whenever any new window is added manually, draw it and then whole grid
+        for window_idx in self.state.intercepts:
+            self.draw_window_to_file(window_idx=window_idx)
         self.draw_grid_to_file()
 
-        while not params['stop_event'].is_set():
-            try:
-                for window_idx in self.state.grid.windows.keys():
-                    if not self.state.has_any_scans(window_idx):
-                        self.add_scans(window_idx=window_idx, params=params)
-                    for _, scan_idx in self.state.untouched_scans(window=window_idx):
-                        self.set_tilt(window_idx)
-                        self.run_scan(window_idx, scan_idx)
-                        self.set_stop_event_if_target_met()
+        # MAIN LOOP: define new region and request locating all windows in it
+        try:
+            for region_idx in count():
+                windows_idx = self.region_members(cluster_idx=region_idx)
+                for window_idx in windows_idx:
+                    if window_idx not in self.state.intercepts:
+                        try:
+                            _, intercepts = self.locate_window(window_idx)
+                        except IndexError:
+                            intercepts = np.zeros(shape=(0, 2), dtype=float)
+                        self.state.add_intercepts(window_idx, intercepts)
+                        self.draw_window_to_file(window_idx=window_idx)
+                        self.draw_grid_to_file()
                         if params['stop_event'].is_set():
                             break
-            finally:
-                self.ctrl.stage.set(a=0)
-            if params['stop_event'].is_set():
-                break
-            try:
-                window_idx, window = self.locate_next_window()
-            except IndexError:
-                params['stop_event'].set()
-                break
-            self.state.add_window(idx=window_idx, window=window)
-            self.draw_window_to_file(window_idx=window_idx, window=window)
-            self.draw_grid_to_file()
 
+                # sanitation step: assert the current region is in limits
+                if sum(self.state.intercepts[i].shape[0] for i in windows_idx) == 0:
+                    continue  # should break if no more windows are in limits
+
+                # once region is located, add and run the scans over it
+                if not self.state.has_any_scans(region_idx):
+                    self.add_scans(region_idx=region_idx)
+                for _, scan_idx in self.state.untouched_scans(region=region_idx):
+                    self.run_scan(region_idx, scan_idx)
+                    self.set_stop_event_if_target_met()
+                    if params['stop_event'].is_set():
+                        break
+        finally:
+            self.ctrl.stage.set(a=0)
         self.teardown()
 
-    def add_scans(self, window_idx: int, params: dict[str, Any]) -> None:
+    def region_members(self, cluster_idx: int) -> Iterator[int]:
+        """Find windows idx of all windows that belong to region idx."""
+        region_size: str = self.params.get('region_size', '1x1')
+        region_shape = np.array([int(i.strip()) for i in region_size.split('x')], dtype=int)
+        region_ij = self.state.grid.pairing_inverse(cluster_idx)
+
+        i_span = np.arange(region_shape[0]) - (region_shape[0] - 1) // 2
+        j_span = np.arange(region_shape[1]) - (region_shape[1] - 1) // 2
+
+        window_ij = region_ij * region_shape
+        for i, j in product(i_span, j_span):
+            yield self.state.grid.pairing_function(window_ij[0] + i, window_ij[1] + j)
+
+    def add_scans(self, region_idx: int) -> None:
         """Add scans for window, asserting it does not have scans yet."""
 
-        window = self.state.grid.windows[window_idx]
-        if params['scan_geometry'].lower().startswith('x'):
+        p = self.params
+        windows_idx = self.region_members(cluster_idx=region_idx)
+        windows = [self.state.grid.window(idx) for idx in windows_idx]
+
+        if p['scan_geometry'].lower().startswith('x'):
             axis = 0
-            scan_factory = window.x_intersections
-            step = params['scan_x_step']
-            spacing = params['scan_y_step']
+            scan_factory = 'x_intersections'
+            step = p['scan_x_step']
+            spacing = p['scan_y_step']
         else:  # params['scan_geometry'].lower().startswith('y'):
             axis = 1
-            scan_factory = window.y_intersections
-            step = params['scan_y_step']
-            spacing = params['scan_x_step']
+            scan_factory = 'y_intersections'
+            step = p['scan_y_step']
+            spacing = p['scan_x_step']
 
         _, _, total_delay = self.determine_timing(step)
-        error_margin = max(step * total_delay / self.params['scan_exposure'], 0)
+        error_margin = max(step * total_delay / p['scan_exposure'], 0)
 
-        scan_dirs = cycle([1] if 'raster' in params['scan_geometry'] else [1, -1])
-        slow_min = np.min(window.corners[:, 1 - axis])
-        slow_max = np.max(window.corners[:, 1 - axis])
+        scan_dirs = cycle([1] if 'raster' in p['scan_geometry'] else [1, -1])
+        slow_min = np.min(w.corners[:, 1 - axis] for w in windows)
+        slow_max = np.max(w.corners[:, 1 - axis] for w in windows)
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
         for scan_id, slow in enumerate(slows):
-            fast_min, fast_max = scan_factory(slow)
+            # TODO: incorporate variable tilt (as different scans or new index)
+            #  since it's float, likely better as variable, then series = local
+            fast_scans = np.array([getattr(w, scan_factory)(slow) for w in windows])
+            fast_min = np.min(fast_scans)
+            fast_max = np.max(fast_scans)
             fast_min -= error_margin
             fast_max += error_margin
             direction = next(scan_dirs)
             fast_start, fast_stop = [fast_min, fast_max][::direction]
             self.state.add_scan(
-                window=int(window_idx),
+                region=int(region_idx),
                 scan=int(scan_id),
                 x0=int(slow if axis else fast_start),
                 y0=int(fast_start if axis else slow),
@@ -195,21 +225,24 @@ class Experiment(ExperimentBase):
                 n_steps=int(np.ceil(abs((fast_stop - fast_start) / step))),
             )
 
-    def determine_manual_windows(self) -> list[GridablePolygonWindow]:
+    def determine_grid_manually(self) -> tuple[PeriodicConvexPolygonGridGeometry, dict]:
+        grid = self.state.grid
         method = self.params.get('grid_finder', 'All automatically')
         if method == 'All automatically':
-            return []
+            return grid, {}
 
         d = self.videostream_frame.click_dispatcher
         n = self.name
         cl: ClickListener = c if (c := d.listeners.get(n)) else d.add_listener(n)
 
-        print('Please navigate the stage to as many points on the windows edge as possible')
+        print('Please navigate the stage to as many points on one windows edge as possible')
         print('(at least the corners and midpoints). At each point, position the edge at')
         print('the center of the screen and LMB to add the point. RMB to finish.')
 
-        windows = {}
-        for window_idx in count():
+        candidates: dict[int, np.ndarray] = {}
+        intercepts: dict[int, np.ndarray] = {}
+        window_idx: int = 0
+        while True:
             edge_xys = []
             with cl:
                 while True:
@@ -218,56 +251,58 @@ class Experiment(ExperimentBase):
                         break
                     edge_xys.append(self.ctrl.stage.xy)
             edge_xys = np.asarray(edge_xys, dtype=float)
-            window = self.state.grid.window_type.from_edge_xys(edge_xys=edge_xys)
-            fig, ax = plot({**windows, window_idx: window}, show_intercepts=True)
+
+            if 0 in intercepts:
+                new_center = (np.max(edge_xys, axis=0) - np.min(edge_xys, axis=0)) / 2
+                window_idx = grid.nearest_index(*new_center)
+                print(f'Adding another window: estimated index {window_idx}')
+                if window_idx in candidates:
+                    print(f'Warning: window {window_idx} was already added! Overwriting...')
+            candidates[window_idx] = np.asarray(edge_xys, dtype=float)
+
+            grid.refine(candidates)
+            fig, ax = plot(grid, show_intercepts=True)
             with self.videostream_frame.processor.temporary(figure=fig), cl:
-                print('LMB to accept and finish, RMB to retry, MMB to accept and add new')
+                print('LMB to accept and finish, RMB to retry, MMB to accept and new window')
                 c = cl.get_click()
                 if c.button == MouseButton.LEFT:
-                    windows[window_idx] = window
-                    return list(windows.values())
+                    intercepts[window_idx] = candidates[window_idx]
+                    return grid, intercepts
                 elif c.button == MouseButton.RIGHT:
                     continue
                 else:  # middle or any other
-                    windows[window_idx] = window
+                    intercepts[window_idx] = candidates[window_idx]
                     continue
 
-    def order_and_add_manual_windows(self, windows: list[GridablePolygonWindow]) -> None:
-        """Based on the first, correctly reindex+add the following windows."""
-        if not windows:
-            return
-        self.state.add_window(idx=0, window=windows.pop(0))
-        for window in windows:
-            idx = self.state.grid.nearest_index(*window.center)
-            self.state.add_window(idx=idx, window=window)
-
-    def locate_next_window(self) -> tuple[int, GridablePolygonWindow]:
-        """Find a next window on the grid, or raise if none can be found."""
+    def locate_window(self, idx: int = -1) -> tuple[int, np.ndarray]:
+        """Find intersects with a next window, raise if no window be found."""
         if self.params.get('grid_finder') == 'All manually':
             raise IndexError('Experiment params disallow locating new windows')
-        grid: PeriodicConvexPolygonGridGeometry[GridablePolygonWindow] = self.state.grid
-        if not self.state.grid.windows:
-            return 0, grid.window_type.from_sweeping(order=4)
-        max_index = 10 + 2 * (max(grid.windows) if grid.windows else 0)
-        for window_id in range(0, max_index):
-            if window_id in grid.windows:
-                continue
-            predicted = grid.predict_window(window_id)
-            x_lim = tx if (tx := self.params['target_x']) is not None else float('inf')
-            y_lim = ty if (ty := self.params['target_y']) is not None else float('inf')
-            x_fits = np.all(np.abs(predicted.corners[:, 0]) < x_lim)
-            y_fits = np.all(np.abs(predicted.corners[:, 1]) < y_lim)
-            if not (x_fits and y_fits):
-                continue
-            self.ctrl.stage.set(*[int(xy) for xy in predicted.center])
-            return window_id, grid.window_type.from_sweeping(order=3)
-        raise IndexError('Could not locate next window within limits')
+        if not self.state.intercepts:
+            return 0, star_sweep(arms=3, order=4)
 
-    def draw_window_to_file(self, window_idx: int, window: GridablePolygonWindow) -> None:
+        x_lim = tx if (tx := self.params['target_x']) is not None else 1_000_000
+        y_lim = ty if (ty := self.params['target_y']) is not None else 1_000_000
+
+        in_limits = self.state.grid.windows_in_limits(x=x_lim, y=y_lim)
+        if idx == -1:
+            try:
+                idx = min([i for i in in_limits if i not in self.state.intercepts])
+            except ValueError:
+                raise IndexError('Could not locate next window within limits')
+        else:
+            if idx not in in_limits:
+                raise IndexError(f'Requested window {idx} is not within limits')
+
+        self.ctrl.stage.set(*[int(xy) for xy in self.state.grid.window(idx).center])
+        return idx, star_sweep(arms=3, order=2, offset=11 * idx)
+
+    def draw_window_to_file(self, window_idx: int) -> None:
         """Use grid.artist.plot to draw window into its own file for debug."""
         file_path = self.path / 'windows' / f'window_{window_idx:04d}.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        fig, ax = plot({window_idx: window}, show_intercepts=True)
+        intercepts = {window_idx: self.state.intercepts[window_idx]}
+        fig, ax = plot(self.state.grid, intercepts=intercepts, show_intercepts=True)
         if not file_path.exists():  # don't overwrite previous img with _edge_xys
             fig.savefig(file_path)
 
@@ -275,7 +310,7 @@ class Experiment(ExperimentBase):
         """Use grid.artist.plot to draw grid into its own file for debug."""
         file_path = self.path / 'windows' / 'windows_all.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        fig, ax = plot(self.state.grid.windows, show_intercepts=False)
+        fig, ax = plot(self.state.grid, intercepts=self.state.intercepts)
         fig.savefig(file_path)
 
     def set_stop_event_if_target_met(self) -> None:
@@ -288,26 +323,19 @@ class Experiment(ExperimentBase):
         if time_passed > time_target or hits_found > hits_target:
             self.params['stop_event'].set()
 
-    def set_tilt(self, window_idx: int) -> None:
-        """Set alpha (0 to +/-max to 0) as a function of window progress."""
-        p = self.state.window_progress(window=window_idx)
-        m = self.params['max_alpha']
-        a = m * 2 * p if p <= 0.5 else m * (2 * p - 2)  # 0 to m, then -m to 0
-        self.ctrl.stage.set(a=a)
-
-    def run_scan(self, window_idx: int, scan_idx: int) -> None:
+    def run_scan(self, region_idx: int, scan_idx: int) -> None:
         """Run a single scan previously added to state on the grid."""
 
-        idx = pd.IndexSlice[window_idx, scan_idx, :]
+        idx = pd.IndexSlice[region_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
             return  # none-op for a scans that has been already done
-        n_frames = int(self.state.scans.loc[(window_idx, scan_idx), 'n_steps'])
+        n_frames = int(self.state.scans.loc[(region_idx, scan_idx), 'n_steps'])
 
-        scan = self.state.scans.loc[(window_idx, scan_idx)]
+        scan = self.state.scans.loc[(region_idx, scan_idx)]
         self.ctrl.stage.set(x=scan['x0'], y=scan['y0'])
 
-        self.dispatcher.begin_scan(n_frames, name=f'w{window_idx:03d}_s{scan_idx:06d}')
-        fb_kwargs = {'state': self.state, 'window': window_idx, 'scan': scan_idx}
+        self.dispatcher.begin_scan(n_frames, name=f'r{region_idx:03d}_s{scan_idx:06d}')
+        fb_kwargs = {'state': self.state, 'region': region_idx, 'scan': scan_idx}
         fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
         fb_thread.start()
 
@@ -326,15 +354,22 @@ class Experiment(ExperimentBase):
         fb_thread.join()
 
         self.dispatcher.write_scan(path=self.path / 'tiff')
-        self.dispatcher.handle_feedback(self.state, window_idx, scan_idx)
+        self.dispatcher.handle_feedback(self.state, region_idx, scan_idx)
         self.dispatcher.end_scan()
-        self.state.finalize_scan(window_idx, scan_idx)
+        self.state.finalize_scan(region_idx, scan_idx)
         self.ctrl.stage.wait()
 
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
         self.dispatcher.terminate_workers()
         self.params['stop_event'].clear()
+
+    def tilt_list(self) -> Sequence[float]:
+        """Return a list of tilts from - to + params[tilt_range] for scans."""
+        tilt_extent = self.params.get('tilt_extent', 0)
+        tilt_step = self.params.get('tilt_step', 0)
+        tilt_count = np.round(2 * tilt_extent / tilt_step) + 1
+        return np.linspace(-tilt_extent, tilt_extent, num=tilt_count, endpoint=True)
 
     def finalize(self) -> None:
         ...

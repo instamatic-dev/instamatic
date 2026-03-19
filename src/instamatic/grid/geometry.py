@@ -285,6 +285,9 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
         self.h = geometry.h
         self.s = geometry._s
 
+    def to_params(self):
+        return {'x': self.x, 'y': self.y, 't': self.t, 'w': self.w, 'h': self._h, 's': self._s}
+
 
 class HexagonalGridGeometry(PeriodicConvexPolygonGridGeometry):
     neighborhood = np.array([(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)], dtype=int)

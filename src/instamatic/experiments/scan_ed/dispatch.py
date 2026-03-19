@@ -149,7 +149,7 @@ class DiffHuntDispatcher:
                 kwargs = {'path': path, 'header': self.headers[pointer]}
                 self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
 
-    def handle_feedback(self, state: State, window: int, scan: int) -> None:
+    def handle_feedback(self, state: State, region: int, scan: int) -> None:
         """Continuously drain the feedback queue until scan is fully processed.
 
         This call modifies a decorated State table. Therefore, either it
@@ -165,11 +165,11 @@ class DiffHuntDispatcher:
             pointer = int(fb.buffer_pointer)
 
             if fb.kind == 'PROCESSING':
-                state.mark_processing(window, scan, pointer)
+                state.mark_processing(region, scan, pointer)
 
             elif fb.kind == 'PROCESSED':
                 d: DiffHuntResults = fb.details
-                state.fill_step(window, scan, pointer, d.success, len(d.peaks))
+                state.fill_step(region, scan, pointer, d.success, len(d.peaks))
                 if self.hits is not None:
                     self.hits[pointer] = d.success
                 self._in_flight.discard(pointer)

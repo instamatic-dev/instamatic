@@ -220,7 +220,7 @@ class ThreadSafeProgressTableProxy:
         self._schedule()
 
     # Keep the API fixed and consistent, generalizing this is annoying
-    def add_window(self, **kwargs):
+    def add_intercepts(self, **kwargs):
         self._post('add_window', **kwargs)
 
     def add_scan(self, **kwargs):
