@@ -6,13 +6,19 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from collections import Counter
 from functools import wraps
-from typing import Any, Callable, Protocol, Sequence, Union
+from typing import Any, Callable, Optional, Protocol, Sequence, Union
 
 import numpy as np
 
 
 class GridWindowProtocol(Protocol):
     def __repr__(self) -> str: ...
+
+
+def new_counter(**kwargs):
+    """A new counter to sum current hit, peak, step, and total step count."""
+    starting_dict = {'hits': 0, 'peaks': 0, 'steps': 0, 'n_steps': 0} | kwargs
+    return Counter(**starting_dict)
 
 
 def safe_ratio(d: dict, k1: str, k2: str, alt: str = '0.0') -> str:
@@ -23,15 +29,17 @@ def safe_ratio(d: dict, k1: str, k2: str, alt: str = '0.0') -> str:
 class ProgressTable(ttk.Frame):
     """Use a ttk.TreeView to display the progress of scanning experiment."""
 
-    COLUMNS = 'geometry hits peaks steps hits/step peaks/step'.split()
+    COLUMNS = ('geometry', 'hits', 'peaks', 'steps', 'hit rate')
 
     def __init__(self, parent: tk.Misc, **kwargs) -> None:
         super().__init__(parent, **kwargs)
-        self.tree = None
+        self.tree: Optional[ttk.Treeview] = None
         self._build_tree()
-        self._scan_geom: dict[tuple[int, int], tuple[int, int, int, int]] = {}
-        self._scan_totals: dict[tuple[int, int], Counter] = {}  # hits, peaks, done, n_steps
-        self._window_totals: dict[int, Counter] = {}  # hits, peaks, steps
+
+        self._line_geom: dict[tuple[int, int], tuple[int, int, int, int, int]] = {}
+        self._region_totals: dict[int, Counter] = {}
+        self._line_totals: dict[tuple[int, int], Counter] = {}
+        self._scan_totals: dict[tuple[int, int, int], Counter] = {}
 
     def _build_tree(self) -> None:
         self.tree = ttk.Treeview(self, columns=self.COLUMNS, show='tree headings')
@@ -44,8 +52,7 @@ class ProgressTable(ttk.Frame):
         self.tree.column('hits', anchor=tk.E, width=20)
         self.tree.column('peaks', anchor=tk.E, width=20)
         self.tree.column('steps', anchor=tk.E, width=20)
-        self.tree.column('hits/step', anchor=tk.E, width=20)
-        self.tree.column('peaks/step', anchor=tk.E, width=20)
+        self.tree.column('hit rate', anchor=tk.E, width=20)
 
         vsb = ttk.Scrollbar(orient='vertical', command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -55,138 +62,175 @@ class ProgressTable(ttk.Frame):
         self.grid_rowconfigure(0, weight=1)
 
     @staticmethod
-    def _window_iid(window: int) -> str:
-        return f'w:{window}'
+    def _region_iid(region: int) -> str:
+        return f'r:{region}'
 
     @staticmethod
-    def _scan_iid(window: int, scan: int) -> str:
-        return f'w:{window}/s:{scan}'
+    def _line_iid(region: int, line: int) -> str:
+        return f'r:{region}/l:{line}'
 
     @staticmethod
-    def _step_iid(window: int, scan: int, step: int) -> str:
-        return f'w:{window}/s:{scan}/p:{step}'
+    def _scan_iid(region: int, line: int, scan: int) -> str:
+        return f'r:{region}/l:{line}/s:{scan}/'
 
-    def add_window(self, idx: int, window: GridWindowProtocol) -> None:
-        """Add a new parent line to the tree called Window #."""
-        window_iid = self._window_iid(idx)
-        window_name = f'Window {idx:d}'
-        values = (str(window), '-', '-', '-', '-', '-')
-        self.tree.insert('', tk.END, iid=window_iid, text=window_name, values=values)
-        self._window_totals[idx] = Counter()
+    @staticmethod
+    def _step_iid(region: int, line: int, scan: int, step: int) -> str:
+        return f'r:{region}/l:{line}/s:{scan}/p:{step}'
 
-    def add_scan(
+    def add_region(self, region: int, windows: Sequence[int]) -> None:
+        """Add a new parent line called Region # with window information."""
+        region_iid = self._region_iid(region)
+        region_name = f'Region {region:d}'
+        geometry = 'Windows: ' + ' '.join(str(w) for w in windows)
+        values = (geometry, '-', '-', '-', '-', '-')
+        self.tree.insert('', tk.END, iid=region_iid, text=region_name, values=values)
+        self._region_totals[region] = new_counter()
+
+    def add_line(
         self,
-        window: int,
-        scan: int,
+        region: int,
+        line: int,
         x0: int,
         y0: int,
         axis: int,
         step: int,
         n_steps: int,
     ) -> None:
-        """Add a new child scan line to the tree called Scan # (planned)."""
-        window_iid = self._window_iid(window)
-        scan_iid = self._scan_iid(window, scan)
-        scan_name = f'Scan {scan:d}'
+        """Add a new line under region for "line" geometry called Line #."""
+        region_iid = self._region_iid(region)
+        line_iid = self._line_iid(region, line)
+        line_name = f'Line {line}'
 
         start = (x0, y0)[axis]
         end = start + step * n_steps
-
-        if axis == 0:  # x
+        if axis == 0:
             geom = f'y={y0}, x: {start} -> {end}'
         else:
             geom = f'x={x0}, y: {start} -> {end}'
 
-        values = (geom, '-', '-', str(int(n_steps)), '-', '-')
-        self.tree.insert(window_iid, tk.END, iid=scan_iid, text=scan_name, values=values)
+        v = (geom, '-', '-', f'0/{n_steps}', '-')
+        self.tree.insert(region_iid, tk.END, iid=line_iid, text=line_name, values=v)
+        self._line_geom[(region, line)] = (x0, y0, axis, step, n_steps)
+        self._line_totals[(region, line)] = new_counter()
 
-        self._scan_geom[(window, scan)] = (x0, y0, axis, step)
-        self._scan_totals[(window, scan)] = Counter(n_steps=int(n_steps))
-        self.tree.set(scan_iid, 'steps', f'0/{int(n_steps)}')
+    def add_scan(
+        self,
+        region: int,
+        line: int,
+        scan: int,
+        tilt: float,
+    ) -> None:
+        """Add a new child scan line to the tree called Scan # (planned)."""
+        line_iid = self._line_iid(region, line)
+        scan_iid = self._scan_iid(region, line, scan)
+        scan_name = f'Scan {scan}'
 
-    def mark_processing(self, window: int, scan: int, step: int) -> None:
-        scan_iid = self._scan_iid(window, scan)
-        for column in 'hits peaks hits/step peaks/step'.split():
+        x0, y0, axis, step, n_steps = self._line_geom[(region, line)]
+        v = (f'tilt: {tilt:+6.3f} deg', '0', '0', f'0/{n_steps}', '0.0')
+        self.tree.insert(line_iid, tk.END, iid=scan_iid, text=scan_name, values=v)
+
+        self._region_totals[region]['n_steps'] += n_steps
+        self._line_totals[(region, line)]['n_steps'] += n_steps
+        self._scan_totals[(region, line, scan)] = new_counter(n_steps=n_steps)
+        self._update_totals_display(region, line, scan)
+
+    def mark_processing(self, region: int, line: int, scan: int, *_) -> None:
+        scan_iid = self._scan_iid(region, line, scan)
+        for column in ['hits', 'peaks', 'hit rate']:
             if not self.tree.set(scan_iid, column).isnumeric():  # don't overwrite numbers
                 self.tree.set(scan_iid, column, '...')
 
-    def fill_step(self, window: int, scan: int, step: int, hit: bool, n_peaks: int) -> None:
-        scan_iid = self._scan_iid(window, scan)
-        window_iid = self._window_iid(window)
+    def _update_totals_display(self, region: int, line: int, scan: int) -> None:
+        self._update_region_totals_display(region=region)
+        self._update_line_totals_display(region=region, line=line)
+        self._update_scan_totals_display(region=region, line=line, scan=scan)
 
-        st = self._scan_totals[(window, scan)]
-        st['done'] += 1
-        if hit:
-            st['hits'] += 1
-            st['peaks'] += int(n_peaks)
+    def _update_region_totals_display(self, region: int) -> None:
+        region_iid = self._region_iid(region)
+        region_totals = self._region_totals[region]
+        self._update_row_display(row_iid=region_iid, totals=region_totals)
 
-        self.tree.set(scan_iid, 'hits', str(st['hits']))
-        self.tree.set(scan_iid, 'peaks', str(st['peaks']))
-        self.tree.set(scan_iid, 'steps', f'{st["done"]}/{st["n_steps"]}')
-        self.tree.set(scan_iid, 'hits/step', safe_ratio(st, 'hits', 'done'))
-        self.tree.set(scan_iid, 'peaks/step', safe_ratio(st, 'peaks', 'done'))
+    def _update_line_totals_display(self, region: int, line: int) -> None:
+        line_iid = self._line_iid(region, line)
+        line_totals = self._line_totals[(region, line)]
+        self._update_row_display(row_iid=line_iid, totals=line_totals)
 
-        wt = self._window_totals[window]
-        wt['steps'] += 1
-        if hit:
-            wt['hits'] += 1
-            wt['peaks'] += int(n_peaks)
+    def _update_scan_totals_display(self, region: int, line: int, scan: int) -> None:
+        scan_iid = self._scan_iid(region, line, scan)
+        scan_totals = self._scan_totals[(region, line, scan)]
+        self._update_row_display(row_iid=scan_iid, totals=scan_totals)
 
-        self.tree.set(window_iid, 'hits', str(wt['hits']))
-        self.tree.set(window_iid, 'peaks', str(wt['peaks']))
-        self.tree.set(window_iid, 'steps', str(wt['steps']))
-        self.tree.set(window_iid, 'hits/step', safe_ratio(wt, 'hits', 'steps'))
-        self.tree.set(window_iid, 'peaks/step', safe_ratio(wt, 'peaks', 'steps'))
+    def _update_row_display(self, row_iid: str, totals: Counter) -> None:
+        self.tree.set(row_iid, 'hits', str(totals['hits']))
+        self.tree.set(row_iid, 'peaks', str(totals['peaks']))
+        self.tree.set(row_iid, 'steps', f'{totals["steps"]}/{totals["n_steps"]}')
+        self.tree.set(row_iid, 'hit rate', safe_ratio(totals, 'hits', 'steps'))
 
-        if hit:
-            x0, y0, axis, step_size = self._scan_geom[(window, scan)]
-            step_iid = self._step_iid(window, scan, step)
-            geom = f'{"xy"[axis]}: {(x0, y0)[axis] + step * step_size}'
-            v = (geom, '', int(n_peaks), '', '', '')
-            self.tree.insert(scan_iid, tk.END, iid=step_iid, text=f'Step {step}', values=v)
+    def fill_step(
+        self,
+        region: int,
+        line: int,
+        scan: int,
+        step: int,
+        hit: bool,
+        light: int,
+        n_peaks: int,
+    ) -> None:
+        rt = self._region_totals[region]
+        lt = self._line_totals[(region, line)]
+        st = self._scan_totals[(region, line, scan)]
+        for totals_counter in rt, lt, st:
+            totals_counter['steps'] += 1
+            if hit:
+                totals_counter['hits'] += 1
+                totals_counter['peaks'] += int(n_peaks)
+        self._update_totals_display(region, line, scan)
 
     def fill_scan(
         self,
-        window: int,
+        region: int,
+        line: int,
         scan: int,
-        hits: Union[np.ndarray, Sequence[bool]],
-        n_peaks: Union[np.ndarray, Sequence[int]],
+        step: int,
+        hits: bool,
+        light: int,
+        n_peaks: int,
     ) -> None:
         """Add lines for successful experiments, update scan & column lines."""
 
-        scan_iid = self._scan_iid(window, scan)
-        window_iid = self._window_iid(window)
         hits_arr = np.asarray(hits, dtype=bool)
         peaks_arr = np.asarray(n_peaks, dtype=int)
+        sum_steps = int(hits_arr.size)
+        sum_hits = int(hits_arr.sum())
+        sum_peaks = int(peaks_arr[hits_arr].sum()) if sum_hits else 0
 
-        s_steps = int(hits_arr.size)
-        s_hits = int(hits_arr.sum())
-        s_peaks = int(peaks_arr[hits_arr].sum()) if s_hits else 0
+        st = self._scan_totals[(region, line, scan)]
+        old_hits = int(st['hits'])
+        old_peaks = int(st['peaks'])
+        old_steps = int(st['steps'])
+        st['hits'] = sum_hits
+        st['peaks'] = sum_peaks
+        st['steps'] = sum_steps
 
-        self.tree.set(scan_iid, 'hits', str(s_hits))
-        self.tree.set(scan_iid, 'peaks', str(s_peaks))
-        self.tree.set(scan_iid, 'steps', str(s_steps))
-        self.tree.set(scan_iid, 'hits/step', f'{s_hits / s_steps if s_steps else 0.0:.3g}')
-        self.tree.set(scan_iid, 'peaks/step', f'{s_peaks / s_steps if s_steps else 0.0:.3g}')
+        lt = self._line_totals[(region, line)]
+        lt['hits'] += sum_hits - old_hits
+        lt['peaks'] += sum_peaks - old_peaks
+        lt['steps'] += sum_steps - old_steps
 
-        wt = self._window_totals[window]
-        wt['hits'] += s_hits
-        wt['peaks'] += s_peaks
-        wt['steps'] += s_steps
+        rt = self._region_totals[region]
+        rt['hits'] += sum_hits - old_hits
+        rt['peaks'] += sum_peaks - old_peaks
+        rt['steps'] += sum_steps - old_steps
 
-        self.tree.set(window_iid, 'hits', str(wt['hits']))
-        self.tree.set(window_iid, 'peaks', str(wt['peaks']))
-        self.tree.set(window_iid, 'steps', str(wt['steps']))
-        self.tree.set(window_iid, 'hits/step', safe_ratio(wt, 'hits', 'steps'))
-        self.tree.set(window_iid, 'peaks/step', safe_ratio(wt, 'peaks', 'steps'))
+        self._update_totals_display(region, line, scan)
 
     def clear(self) -> None:
         """Remove all rows and reset cached totals (e.g. before loading)."""
         for iid in self.tree.get_children(''):
             self.tree.delete(iid)
-        self._scan_geom.clear()
+        self._line_geom.clear()
         self._scan_totals.clear()
-        self._window_totals.clear()
+        self._region_totals.clear()
 
 
 class ThreadSafeProgressTableProxy:

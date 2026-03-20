@@ -24,3 +24,13 @@ def encode_i16(a: np.ndarray) -> str:
 def decode_i16(s: str) -> np.ndarray:
     raw = base64.b64decode(s.encode('ascii'))
     return np.frombuffer(raw, dtype=np.int16)
+
+
+def encode_u32(a: np.ndarray) -> str:
+    a = np.asarray(a, dtype=np.uint32)
+    return base64.b64encode(a.tobytes()).decode('ascii')
+
+
+def decode_u32(s: str) -> np.ndarray:
+    raw = base64.b64decode(s.encode('ascii'))
+    return np.frombuffer(raw, dtype=np.uint32)

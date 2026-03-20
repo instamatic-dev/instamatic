@@ -139,6 +139,7 @@ class Experiment(ExperimentBase):
         try:
             for region_idx in count():
                 windows_idx = self.region_members(cluster_idx=region_idx)
+                self.state.add_region(region_idx, windows_idx)
                 for window_idx in windows_idx:
                     if window_idx not in self.state.intercepts:
                         try:
@@ -201,29 +202,35 @@ class Experiment(ExperimentBase):
         _, _, total_delay = self.determine_timing(step)
         error_margin = max(step * total_delay / p['scan_exposure'], 0)
 
-        scan_dirs = cycle([1] if 'raster' in p['scan_geometry'] else [1, -1])
+        # prepare the limits to be scanned over the slow axis
         slow_min = np.min(w.corners[:, 1 - axis] for w in windows)
         slow_max = np.max(w.corners[:, 1 - axis] for w in windows)
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
-        for scan_id, slow in enumerate(slows):
-            # TODO: incorporate variable tilt (as different scans or new index)
-            #  since it's float, likely better as variable, then series = local
-            fast_scans = np.array([getattr(w, scan_factory)(slow) for w in windows])
-            fast_min = np.min(fast_scans)
-            fast_max = np.max(fast_scans)
-            fast_min -= error_margin
-            fast_max += error_margin
-            direction = next(scan_dirs)
-            fast_start, fast_stop = [fast_min, fast_max][::direction]
-            self.state.add_scan(
-                region=int(region_idx),
-                scan=int(scan_id),
-                x0=int(slow if axis else fast_start),
-                y0=int(fast_start if axis else slow),
-                axis=int(axis),
-                step=int(step * direction),
-                n_steps=int(np.ceil(abs((fast_stop - fast_start) / step))),
-            )
+
+        # In raster mode, scans are added line after line, tilt after tilt:
+        # l# - line, t# - tilt, > - direction: l1t1> l1t2> l1t3> l2t1> l2t2> ...
+        # if serpentine, lines are paired, so all scans along a line share dir:
+        # l1t1> l2t1< l1t2> l2t2< l1t3> l2t3< ... l3t1> l4t1< l3t2> l4t2< ...
+
+        for scan_id, tilt in enumerate(self.tilt_list()):
+            scan_dirs = cycle([1] if 'raster' in p['scan_geometry'] else [1, -1])
+            for line_id, slow in enumerate(slows):
+                shared_id = {'region': int(region_idx), 'line': int(line_id)}
+                fasts = np.array([getattr(w, scan_factory)(slow) for w in windows])
+                fast_min = np.min(fasts) - error_margin
+                fast_max = np.max(fasts) + error_margin
+                direction = next(scan_dirs)
+                fast_start, fast_stop = [fast_min, fast_max][::direction]
+                if tuple(shared_id.values()) not in self.state.lines.index:
+                    self.state.add_line(
+                        x0=int(slow if axis else fast_start),
+                        y0=int(fast_start if axis else slow),
+                        axis=int(axis),
+                        step=int(step * direction),
+                        n_steps=int(np.ceil(abs((fast_stop - fast_start) / step))),
+                        **shared_id,
+                    )
+                self.state.add_scan(scan=int(scan_id), tilt=tilt, **shared_id)
 
     def determine_grid_manually(self) -> tuple[PeriodicConvexPolygonGridGeometry, dict]:
         grid = self.state.grid
@@ -329,9 +336,9 @@ class Experiment(ExperimentBase):
         idx = pd.IndexSlice[region_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
             return  # none-op for a scans that has been already done
-        n_frames = int(self.state.scans.loc[(region_idx, scan_idx), 'n_steps'])
+        n_frames = int(self.state.lines.loc[(region_idx, scan_idx), 'n_steps'])
 
-        scan = self.state.scans.loc[(region_idx, scan_idx)]
+        scan = self.state.lines.loc[(region_idx, scan_idx)]
         self.ctrl.stage.set(x=scan['x0'], y=scan['y0'])
 
         self.dispatcher.begin_scan(n_frames, name=f'r{region_idx:03d}_s{scan_idx:06d}')
