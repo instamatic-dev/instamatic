@@ -82,7 +82,7 @@ class ProgressTable(ttk.Frame):
         region_iid = self._region_iid(region)
         region_name = f'Region {region:d}'
         geometry = 'Windows: ' + ' '.join(str(w) for w in windows)
-        values = (geometry, '-', '-', '-', '-', '-')
+        values = (geometry, '-', '-', '-', '-')
         self.tree.insert('', tk.END, iid=region_iid, text=region_name, values=values)
         self._region_totals[region] = new_counter()
 
@@ -125,7 +125,7 @@ class ProgressTable(ttk.Frame):
         scan_iid = self._scan_iid(region, line, scan)
         scan_name = f'Scan {scan}'
 
-        x0, y0, axis, step, n_steps = self._line_geom[(region, line)]
+        _, _, _, _, n_steps = self._line_geom[(region, line)]
         v = (f'tilt: {tilt:+6.3f} deg', '0', '0', f'0/{n_steps}', '0.0')
         self.tree.insert(line_iid, tk.END, iid=scan_iid, text=scan_name, values=v)
 

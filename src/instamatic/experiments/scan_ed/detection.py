@@ -33,6 +33,7 @@ class DiffHuntResults:
     bin_edges: Optional[Sequence[float]] = None
     peaks: Optional[np.ndarray] = None
     mask: Optional[np.ndarray] = None
+    light: int = 0
 
 
 def ring_percentile_detection(
@@ -115,6 +116,7 @@ def ring_percentile_detection(
         bin_edges=bin_edges,
         peaks=peaks,
         mask=valid,
+        light=int(np.sum(frame, axis=None)),
     )
 
 

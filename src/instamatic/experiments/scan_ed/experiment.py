@@ -159,8 +159,8 @@ class Experiment(ExperimentBase):
                 # once region is located, add and run the scans over it
                 if not self.state.has_any_scans(region_idx):
                     self.add_scans(region_idx=region_idx)
-                for _, scan_idx in self.state.untouched_scans(region=region_idx):
-                    self.run_scan(region_idx, scan_idx)
+                for _, line_idx, scan_idx in self.state.untouched_scans(region=region_idx):
+                    self.run_scan(region_idx, line_idx, scan_idx)
                     self.set_stop_event_if_target_met()
                     if params['stop_event'].is_set():
                         break
@@ -207,11 +207,7 @@ class Experiment(ExperimentBase):
         slow_max = np.max(w.corners[:, 1 - axis] for w in windows)
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
 
-        # In raster mode, scans are added line after line, tilt after tilt:
-        # l# - line, t# - tilt, > - direction: l1t1> l1t2> l1t3> l2t1> l2t2> ...
-        # if serpentine, lines are paired, so all scans along a line share dir:
-        # l1t1> l2t1< l1t2> l2t2< l1t3> l2t3< ... l3t1> l4t1< l3t2> l4t2< ...
-
+        # Scan the region at every tilt, going along the same line each time
         for scan_id, tilt in enumerate(self.tilt_list()):
             scan_dirs = cycle([1] if 'raster' in p['scan_geometry'] else [1, -1])
             for line_id, slow in enumerate(slows):
@@ -330,20 +326,25 @@ class Experiment(ExperimentBase):
         if time_passed > time_target or hits_found > hits_target:
             self.params['stop_event'].set()
 
-    def run_scan(self, region_idx: int, scan_idx: int) -> None:
+    def run_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
         """Run a single scan previously added to state on the grid."""
 
-        idx = pd.IndexSlice[region_idx, scan_idx, :]
+        idx = pd.IndexSlice[region_idx, line_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
             return  # none-op for a scans that has been already done
         n_frames = int(self.state.lines.loc[(region_idx, scan_idx), 'n_steps'])
 
-        scan = self.state.lines.loc[(region_idx, scan_idx)]
-        self.ctrl.stage.set(x=scan['x0'], y=scan['y0'])
+        line = self.state.lines.loc[(region_idx, line_idx)]
+        self.ctrl.stage.set(x=line['x0'], y=line['y0'])
 
-        self.dispatcher.begin_scan(n_frames, name=f'r{region_idx:03d}_s{scan_idx:06d}')
-        fb_kwargs = {'state': self.state, 'region': region_idx, 'scan': scan_idx}
-        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=fb_kwargs)
+        scan = self.state.scans.loc[(region_idx, line_idx, scan_idx)]
+        if abs(self.ctrl.stage.a - scan['tilt']) > 0.05:  # epsilon:
+            self.ctrl.stage.a = scan['tilt']
+
+        name = f'r{region_idx:03d}_l{line_idx:06d}_s{scan_idx:03d}'
+        self.dispatcher.begin_scan(n_frames, name=name)
+        kw = {'state': self.state, 'region': region_idx, 'line': line_idx, 'scan': scan_idx}
+        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=kw)
         fb_thread.start()
 
         exposure, speed, _ = self.determine_timing(scan['step'])
@@ -361,9 +362,9 @@ class Experiment(ExperimentBase):
         fb_thread.join()
 
         self.dispatcher.write_scan(path=self.path / 'tiff')
-        self.dispatcher.handle_feedback(self.state, region_idx, scan_idx)
+        self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
         self.dispatcher.end_scan()
-        self.state.finalize_scan(region_idx, scan_idx)
+        self.state.finalize_scan(region_idx, line_idx, scan_idx)
         self.ctrl.stage.wait()
 
     def teardown(self) -> None:
