@@ -6,6 +6,7 @@ from pathlib import Path
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Iterator
 
+import numpy as np
 import pandas as pd
 
 from instamatic.calibrate import CalibMovieDelays
@@ -14,10 +15,15 @@ from instamatic.experiments.experiment_base import ExperimentBase
 from instamatic.experiments.fast_adt.experiment import FastADTMissingCalibError
 from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
+from instamatic.experiments.scan_ed.profile import ScanProfile
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.artist import plot
-from instamatic.grid.geometry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
+from instamatic.grid.geometry import (
+    GRID_REGISTRY,
+    PeriodicConvexPolygonGridGeometry,
+    WindowType,
+)
 from instamatic.grid.sweeping import star_sweep
 from instamatic.gui.click_dispatcher import ClickListener, MouseButton
 
@@ -190,12 +196,10 @@ class Experiment(ExperimentBase):
 
         if p['scan_geometry'].lower().startswith('x'):
             axis = 0
-            scan_factory = 'x_intersections'
             step = p['scan_x_step']
             spacing = p['scan_y_step']
         else:  # params['scan_geometry'].lower().startswith('y'):
             axis = 1
-            scan_factory = 'y_intersections'
             step = p['scan_y_step']
             spacing = p['scan_x_step']
 
@@ -212,9 +216,8 @@ class Experiment(ExperimentBase):
             scan_dirs = cycle([1] if 'raster' in p['scan_geometry'] else [1, -1])
             for line_id, slow in enumerate(slows):
                 shared_id = {'region': int(region_idx), 'line': int(line_id)}
-                fasts = np.array([getattr(w, scan_factory)(slow) for w in windows])
-                fast_min = np.min(fasts) - error_margin
-                fast_max = np.max(fasts) + error_margin
+                scan_profile = ScanProfile(windows=windows, **{'xy'[axis]: slow})
+                fast_min, fast_max = scan_profile.envelope(margin=error_margin)
                 direction = next(scan_dirs)
                 fast_start, fast_stop = [fast_min, fast_max][::direction]
                 if tuple(shared_id.values()) not in self.state.lines.index:
@@ -364,7 +367,23 @@ class Experiment(ExperimentBase):
         self.dispatcher.write_scan(path=self.path / 'tiff')
         self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
         self.dispatcher.end_scan()
-        self.state.finalize_scan(region_idx, line_idx, scan_idx)
+
+    def finalize_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
+        """Calculate scan offset, finalize it, save state to journal etc."""
+
+        windows_idx = self.region_members(cluster_idx=region_idx)
+        windows = [self.state.grid.window(idx) for idx in windows_idx]
+        line = self.state.lines.loc[(region_idx, line_idx)]
+        axis = 'xy'[line['axis']]
+        fast0 = line['x0'] if axis == 'x' else line['y0']
+        slow0 = line['y0'] if axis == 'x' else line['x0']
+        scan_profile = ScanProfile(windows=windows, **{axis: slow0})
+
+        fast = fast0 + (0.5 + np.arange(line['n_steps'])) * line['step']
+        light = self.state.steps.loc[(region_idx, line_idx, scan_idx), 'light']
+        offset, _ = scan_profile.fit(x=fast, light=light)
+
+        self.state.finalize_scan(region_idx, line_idx, scan_idx, offset=offset)
         self.ctrl.stage.wait()
 
     def teardown(self) -> None:

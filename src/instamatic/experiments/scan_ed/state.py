@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from instamatic._collections import NoOverwriteDict
+from instamatic._typing import float_nm
 from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
@@ -51,6 +52,7 @@ class State:
             'line': pd.Series(dtype='UInt16'),
             'scan': pd.Series(dtype='UInt8'),
             'tilt': pd.Series(dtype='Float32'),
+            'offset': pd.Series(dtype='Float32'),
         }
         self.scans = pd.DataFrame(scans_columns)
         self.scans.set_index(['region', 'line', 'scan'], inplace=True)
@@ -125,12 +127,14 @@ class State:
         }
         self.steps = pd.concat([self.steps, pd.DataFrame(new_scans, index=idx)])
 
-    def finalize_scan(self, region: int, line: int, scan: int) -> None:
+    def finalize_scan(self, region: int, line: int, scan: int, offset: float_nm = 0) -> None:
         """Converts scan results to an encoded scan, writes it to journal."""
         idx = pd.IndexSlice[region, line, scan, :]
         n_peaks = self.steps.loc[idx, 'n_peaks'].to_numpy(np.int16, copy=False)
         if (n_peaks < 0).any():
             raise RuntimeError('Scan not complete.')
+
+        self.scans.loc[(region, line, scan), 'offset'] = offset
 
         hits = self.steps.loc[idx, 'hits'].to_numpy(np.bool_, copy=False)
         light = self.steps.loc[idx, 'light'].to_numpy(np.uint32, copy=False)
@@ -139,6 +143,7 @@ class State:
             'region': int(region),
             'line': int(line),
             'scan': int(scan),
+            'offset': float(offset),
             'hits': encode_hits(hits),
             'light': encode_u32(light),
             'n_peaks': encode_i16(n_peaks),
@@ -175,11 +180,13 @@ class State:
         region: int,
         line: int,
         scan: int,
+        offset: float_nm,
         hits: Sequence[bool],
         light: Sequence[int],
         n_peaks: Sequence[int],
     ) -> None:
         """An alternative to repeated fill_step, fills whole scan at once."""
+        self.scans.loc[(region, line, scan), 'offset'] = offset
         idx = pd.IndexSlice[region, line, scan, :]
         self.steps.loc[idx, 'hits'] = np.asarray(hits, dtype=np.bool_)
         self.steps.loc[idx, 'light'] = np.asarray(light, dtype=np.uint32)
@@ -190,6 +197,7 @@ class State:
         region: int,
         line: int,
         scan: int,
+        offset: float_nm,
         hits: str,
         light: str,
         n_peaks: str,
@@ -201,7 +209,7 @@ class State:
         peaks_arr = decode_i16(n_peaks)
         if peaks_arr.size != n_steps:
             raise ValueError(f'Corrupt scan payload: {peaks_arr.size=} != {n_steps=}')
-        self.fill_scan(region, line, scan, hits_arr, light_arr, peaks_arr)
+        self.fill_scan(region, line, scan, offset, hits_arr, light_arr, peaks_arr)
 
     def has_any_scans(self, region: int) -> bool:
         """Returns True if region has any defined scans with any status."""
