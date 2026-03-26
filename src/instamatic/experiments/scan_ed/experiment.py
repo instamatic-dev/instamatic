@@ -17,6 +17,7 @@ from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 from instamatic.experiments.scan_ed.journal import Journal
 from instamatic.experiments.scan_ed.profile import ScanProfile
 from instamatic.experiments.scan_ed.progress import ProgressTable
+from instamatic.experiments.scan_ed.region import Regionalization
 from instamatic.experiments.scan_ed.state import State
 from instamatic.grid.artist import plot
 from instamatic.grid.geometry import (
@@ -58,6 +59,7 @@ class Experiment(ExperimentBase):
         # attributes initialized once an experiment starts
         self.params: dict[str, Any] = {}
         self.dispatcher: Optional[DiffHuntDispatcher] = None
+        self.regionalization: Optional[Regionalization] = None
 
     @property
     def state(self) -> State:
@@ -141,10 +143,14 @@ class Experiment(ExperimentBase):
             self.draw_window_to_file(window_idx=window_idx)
         self.draw_grid_to_file()
 
+        # Introduce the logic for grouping windows by regions
+        rs = params.get('region_shape', '1x1')
+        self.regionalization = Regionalization.from_str(grid=self.state.grid, shape=rs)
+
         # MAIN LOOP: define new region and request locating all windows in it
         try:
             for region_idx in count():
-                windows_idx = self.region_members(cluster_idx=region_idx)
+                windows_idx = self.regionalization.windows(region_idx=region_idx)
                 self.state.add_region(region_idx, windows_idx)
                 for window_idx in windows_idx:
                     if window_idx not in self.state.intercepts:
@@ -177,24 +183,11 @@ class Experiment(ExperimentBase):
             self.draw_hits_to_file()
         self.teardown()
 
-    def region_members(self, cluster_idx: int) -> Iterator[int]:
-        """Find windows idx of all windows that belong to region idx."""
-        region_size: str = self.params.get('region_size', '1x1')
-        region_shape = np.array([int(i.strip()) for i in region_size.split('x')], dtype=int)
-        region_ij = self.state.grid.pairing_inverse(cluster_idx)
-
-        i_span = np.arange(region_shape[0]) - (region_shape[0] - 1) // 2
-        j_span = np.arange(region_shape[1]) - (region_shape[1] - 1) // 2
-
-        window_ij = region_ij * region_shape
-        for i, j in product(i_span, j_span):
-            yield self.state.grid.pairing_function(window_ij[0] + i, window_ij[1] + j)
-
     def add_scans(self, region_idx: int) -> None:
         """Add scans for window, asserting it does not have scans yet."""
 
         p = self.params
-        windows_idx = self.region_members(cluster_idx=region_idx)
+        windows_idx = self.regionalization.windows(region_idx=region_idx)
         windows = [self.state.grid.window(idx) for idx in windows_idx]
 
         if p['scan_geometry'].lower().startswith('x'):
@@ -387,7 +380,7 @@ class Experiment(ExperimentBase):
     def finalize_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
         """Calculate scan offset, finalize it, save state to journal etc."""
 
-        windows_idx = self.region_members(cluster_idx=region_idx)
+        windows_idx = self.regionalization.windows(region_idx=region_idx)
         windows = [self.state.grid.window(idx) for idx in windows_idx]
         line = self.state.lines.loc[(region_idx, line_idx)]
         axis = 'xy'[line['axis']]

@@ -79,6 +79,7 @@ def plot(
     ax.axvline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
 
     # draw imshow with light and hits, if lines, scans, and steps are given
+    # TODO: lines, scans, steps belong strictly to ScanED - move it there
     if lines and scans and steps:
         slow_idx = 'y0' if (lines['axis'] == 0).all() else 'x0'
         slows = lines[slow_idx]
