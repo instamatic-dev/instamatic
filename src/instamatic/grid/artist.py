@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
@@ -19,6 +20,9 @@ def plot(
     limit_x: Optional[float_nm] = None,
     limit_y: Optional[float_nm] = None,
     ax: Optional[Axes] = None,
+    lines: Optional[pd.DataFrame] = None,
+    scans: Optional[pd.DataFrame] = None,
+    steps: Optional[pd.DataFrame] = None,
     show_indices: bool = True,
     show_intercepts: bool = False,
     figsize: tuple[float, float] = (5, 5),
@@ -73,6 +77,59 @@ def plot(
     ax.set_autoscale_on(False)  # Freeze limits so lines don't affect view
     ax.axhline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
     ax.axvline(0, color='white', linewidth=1.0, alpha=0.6, zorder=0)
+
+    # draw imshow with light and hits, if lines, scans, and steps are given
+    if lines and scans and steps:
+        slow_idx = 'y0' if (lines['axis'] == 0).all() else 'x0'
+        slows = lines[slow_idx]
+        slow_step = (np.maximum(slows) - np.minimum(slows)) / (len(slows) - 1)
+        slow_min = np.minimum(slows) - 0.5 * slow_step
+        slow_max = np.maximum(slows) + 0.5 * slow_step
+        slow_count = len(slows)
+
+        max_offset = scans['offset'].abs().max()
+
+        fast_idx = 'x0' if (lines['axis'] == 0).all() else 'y0'
+        fast_start = lines[fast_idx]
+        fast_end = lines[fast_idx] + lines['step'] * lines['n_steps']
+        fast_step = lines['step'].abs().mean()
+        fast_min = np.minimum(fast_start, fast_end).min() - max_offset * fast_step
+        fast_max = np.maximum(fast_start, fast_end).max() + max_offset * fast_step
+        fast_count = np.ceil((fast_max - fast_min) / fast_step).astype(int)
+
+        level = ['region', 'line', 'scan']
+        hits = {k: g['hits'].to_numpy(dtype=float) for k, g in steps.groupby(level=level)}
+
+        patch = np.zeros(shape=(slow_count, fast_count), dtype=float)
+        for region, line, line_row in lines.iterrows():
+            slow = line_row[slow_idx]
+            i = int((slow - slow_min) // slow_step)
+
+            step = line_row['step']
+            n_steps = line_row['n_steps']
+            fast0 = line_row[fast_idx]
+            fast1 = fast0 + step * n_steps
+            fast0, fast1 = (fast0, fast1) if fast0 < fast1 else (fast1, fast0)
+
+            sc = scans.loc[(region, line)]
+            offsets = sc['offset'].to_numpy()
+            j0s = np.floor((fast0 - fast_min + offsets) / fast_step).astype(int)
+
+            hits_arr = np.stack([hits[(region, line, s)] for s in sc.index], axis=0)
+            if step < 0:
+                hits_arr = hits_arr[:, :-1]
+            for k in range(len(j0s)):
+                j0 = j0s[k]
+                patch[i, j0 : j0 + n_steps] += hits_arr[k]
+
+        if fast_idx == 'x0':
+            x0, x1, y0, y1 = fast_min, fast_max, slow_min, slow_max
+        else:
+            x0, x1, y0, y1 = slow_min, slow_max, fast_min, fast_max
+            patch = patch.T
+
+        a = patch / patch_max if (patch_max := patch.max()) > 0 else patch
+        plt.imshow(patch, cmap='reds', alpha=a, origin='lower', extent=(x0, x1, y0, y1))
 
     if limit_x is not None:
         ax.axvline(-limit_x, color='red', linewidth=1.0, zorder=4)

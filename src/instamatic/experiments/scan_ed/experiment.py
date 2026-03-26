@@ -167,11 +167,14 @@ class Experiment(ExperimentBase):
                     self.add_scans(region_idx=region_idx)
                 for _, line_idx, scan_idx in self.state.untouched_scans(region=region_idx):
                     self.run_scan(region_idx, line_idx, scan_idx)
+                    self.finalize_scan(region_idx, line_idx, scan_idx)
                     self.set_stop_event_if_target_met()
                     if params['stop_event'].is_set():
                         break
+                self.draw_hits_to_file()
         finally:
             self.ctrl.stage.set(a=0)
+            self.draw_hits_to_file()
         self.teardown()
 
     def region_members(self, cluster_idx: int) -> Iterator[int]:
@@ -317,6 +320,19 @@ class Experiment(ExperimentBase):
         file_path = self.path / 'windows' / 'windows_all.png'
         file_path.parent.mkdir(exist_ok=True, parents=True)
         fig, ax = plot(self.state.grid, intercepts=self.state.intercepts)
+        fig.savefig(file_path)
+
+    def draw_hits_to_file(self):
+        """Overlay, save a heatmap of hits onto the plot of grid geometry."""
+        file_path = self.path / 'windows' / 'heat_all.png'
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+        fig, ax = plot(
+            self.state.grid,
+            lines=self.state.lines,
+            scans=self.state.scans,
+            steps=self.state.steps,
+            figsize=(10, 10),
+        )
         fig.savefig(file_path)
 
     def set_stop_event_if_target_met(self) -> None:
