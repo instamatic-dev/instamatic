@@ -128,7 +128,7 @@ def plot(
             x0, x1, y0, y1 = slow_min, slow_max, fast_min, fast_max
             patch = patch.T
 
-        a = patch / patch_max if (patch_max := patch.max()) > 0 else patch
+        a = 0.5 + 0.5 * (patch / patch_max) if (patch_max := patch.max()) > 0 else 0.5
         plt.imshow(patch, cmap='reds', alpha=a, origin='lower', extent=(x0, x1, y0, y1))
 
     if limit_x is not None:
