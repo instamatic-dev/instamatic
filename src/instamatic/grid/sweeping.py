@@ -93,7 +93,7 @@ class EdgeSweeper(Sweeper):
 
     def peak(self) -> int:
         """Return light (image sum) at current position, update light max."""
-        light = int(_ctrl.get_image(header_keys=())[0].sum())
+        light = int(_ctrl.get_image(header_keys=())[0].sum(np.int64))
         self.team.light_max = max(light, self.team.light_max)
         return light
 
