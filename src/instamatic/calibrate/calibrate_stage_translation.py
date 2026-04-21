@@ -99,7 +99,8 @@ def calibrate_stage_translation_live(
     spans: `Optional[Sequence[float]]`
         Translations that will be timed. Default: 10_000 to 100_000 every 10_000
     speeds: `Optional[Sequence[Union[float, int]]]`
-        All speed settings used for calibration. Default: 0.1 to 1.0 every 0.1.
+        All speed settings used for calibration. Default: 0.1 to 1.0 every 0.1,
+        or [None, None, None], 3 runs without setting speed if it's not possible
     axis: `Literal['x', 'y', 'z']`
         Axis the speed of which is to be calibrated. Default: 'x'.
     mode: `Literal['auto', 'limited', 'listed']`
@@ -118,7 +119,7 @@ def calibrate_stage_translation_live(
     stage0: StagePositionTuple = ctrl.stage.get()
     try:
         ctrl.stage.set_with_speed(*stage0)
-    except KeyError:
+    except TypeError:
         log('TEM does not support setting with speed, assuming default = 1.')
         speeds_default: Sequence[Speed] = [None, None, None]  # no translation w/ speed
         speed_options = None
@@ -180,8 +181,9 @@ def main_entry() -> None:
     h += 'Default: "10000 20000 30000 40000 50000 60000 70000 80000 90000 100000".'
     parser.add_argument('-x', '--spans', type=int, default=None, nargs='*', help=h)
 
-    h = 'Comma-delimited list of speed settings to calibrate for.'
-    h += 'Default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0".'
+    h = 'Comma-delimited list of speed settings to calibrate for. '
+    h += 'Default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0". '
+    h += '"-s" with no values forces 3 rounds using "set" instead of "set_with_speed".'
     parser.add_argument('-s', '--speeds', type=float, default=None, nargs='*', help=h)
 
     h = 'Axis whose translation speed should be calibrated, x, y, or z. Default: x'
@@ -204,8 +206,11 @@ def main_entry() -> None:
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
     kwargs = vars(parser.parse_args())
-    if kwargs['speeds'] is not None and all(v.is_integer() for v in kwargs['speeds']):
-        kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
+    if kwargs['speeds'] is not None:
+        if all(v.is_integer() for v in kwargs['speeds']):
+            kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
+        if not kwargs['speeds']:
+            kwargs['speeds'] = [None, None, None]
 
     from instamatic import controller
 

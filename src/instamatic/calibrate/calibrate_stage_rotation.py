@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from contextlib import nullcontext
 from dataclasses import dataclass
 from textwrap import dedent
 from time import perf_counter
@@ -71,7 +72,8 @@ def calibrate_stage_rotation_live(
     spans: `Optional[Sequence[float]]`
         Alpha rotations whose speed will be measured. Default: range(1, 11, 1).
     speeds: `Optional[Sequence[Union[float, int]]]`
-        Spead range to measure. Default: range(1, 13, 1) or range(.1, 1.1, .1).
+        Spead range to measure. Default: range(1, 13, 1) or range(.1, 1.1, .1),
+        or [None, None, None], 3 runs without setting speed if it's not possible
     mode: `Literal['auto', 'limited', 'listed']`
         Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
@@ -91,6 +93,10 @@ def calibrate_stage_rotation_live(
     except AssertionError:  # or any other raised if speed can't be set
         speeds_default = np.linspace(0.01, 0.2, num=20)
         speed_options = FEI_ROTATION_SPEED_OPTIONS
+    except (AttributeError, ConnectionError, TypeError):
+        log('TEM does not support setting with speed, assuming default = 1.')
+        speeds_default: Sequence[Speed] = [None, None, None]  # no translation w/ speed
+        speed_options = None
     else:
         speeds_default = np.arange(1, 13, step=1)
         speed_options = JEOL_ROTATION_SPEED_OPTIONS
@@ -101,16 +107,20 @@ def calibrate_stage_rotation_live(
     elif mode == 'listed':
         speed_options = NumericDomain(options=sorted(speeds_))
 
+    try:
+        starting_stage_speed = ctrl.stage.get_rotation_speed()
+    except (AttributeError, ConnectionError, TypeError):
+        starting_stage_speed = None
+
     calib_points: list[SpanSpeedTime] = []
     starting_stage_alpha = ctrl.stage.a
-    starting_stage_speed = ctrl.stage.get_rotation_speed()
     ctrl.cam.block()
     try:
         n_calib_points = len(speeds_) * len(spans_array)
         log(f'Calibrating a-axis rotation speed based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
             for speed in speeds_:
-                with ctrl.stage.rotation_speed(speed=float(speed)):
+                with ctrl.stage.rotation_speed(float(speed)) if speed else nullcontext():
                     ctrl.stage.a = 0.0
                     for target, span in zip(alpha_targets, spans_array):
                         t1 = perf_counter()
@@ -120,7 +130,8 @@ def calibrate_stage_rotation_live(
                         progress_bar.update(1)
     finally:
         ctrl.stage.set(a=starting_stage_alpha)
-        ctrl.stage.set_rotation_speed(starting_stage_speed)
+        if starting_stage_speed is not None:
+            ctrl.stage.set_rotation_speed(starting_stage_speed)
         ctrl.cam.unblock()
 
     c = CalibStageRotation.from_data(calib_points)
@@ -149,7 +160,8 @@ def main_entry() -> None:
 
     h = """Comma-delimited list of speed settings to calibrate for.
     Default: "0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0" or
-    "1 2 3 4 5 6 7 8 9 10 11 12", whichever is accepted by the microscope."""
+    "1 2 3 4 5 6 7 8 9 10 11 12", whichever is accepted by the microscope. "-s"
+    with no values forces 3 rounds using "set" instead of "set_with_speed"."""
     h = dedent(h.strip())
     parser.add_argument('-s', '--speeds', type=float, default=None, nargs='*', help=h)
 
@@ -169,8 +181,11 @@ def main_entry() -> None:
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
 
     kwargs = vars(parser.parse_args())
-    if kwargs['speeds'] is not None and all(v.is_integer() for v in kwargs['speeds']):
-        kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
+    if kwargs['speeds'] is not None:
+        if all(v.is_integer() for v in kwargs['speeds']):
+            kwargs['speeds'] = [int(v) for v in kwargs['speeds']]
+        if not kwargs['speeds']:
+            kwargs['speeds'] = [None, None, None]
 
     from instamatic import controller
 
