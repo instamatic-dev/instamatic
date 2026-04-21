@@ -196,7 +196,7 @@ class CamClient:
             print(f'Retrieve data from buffer `{name}`')
 
         buffer = self.buffers[name]
-        data = buffer[:]
+        data = buffer[:].copy()
 
         return data
 
