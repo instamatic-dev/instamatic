@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Optional, Tuple
+from contextlib import contextmanager, nullcontext
+from typing import Literal, Optional, Tuple
 
 from instamatic import config
 from instamatic._typing import float_deg, int_nm
@@ -126,7 +127,7 @@ class SimuMicroscope(MicroscopeBase):
                 speed = 20.0  # degree / sec
                 current = random.randint(-40, 40)
             elif key in ('x', 'y'):
-                speed = 1_000_000.0  # nm / sec
+                speed = 100_000.0  # nm / sec
                 current = random.randint(-100000, 100000)
             elif key == 'z':
                 speed = 100_000.0  # nm / sec
@@ -198,6 +199,19 @@ class SimuMicroscope(MicroscopeBase):
             ret = d['current']
 
         return ret
+
+    @contextmanager
+    def _speed_setting(self, key: Literal['a', 'b', 'x', 'y', 'z'], value: int):
+        previous_setting = self._stage_dict[key]['speed_setting']
+        previous_speed = self._stage_dict[key]['speed']
+        speed_base = {'x': 100_000, 'y': 100_000, 'z': 100_000, 'a': 20, 'b': 20}
+        try:
+            self._stage_dict[key]['speed_setting'] = value
+            self._stage_dict[key]['speed'] = speed_base[key] * value / 12
+            yield
+        finally:
+            self._stage_dict[key]['speed_setting'] = previous_setting
+            self._stage_dict[key]['speed'] = previous_speed
 
     @property
     def StagePosition_a(self):
@@ -438,26 +452,33 @@ class SimuMicroscope(MicroscopeBase):
         wait: bool = True,
     ) -> None:
         if z is not None:
-            self.setStageZ(z, wait=wait)
+            with nullcontext() if speed is None else self._speed_setting('z', speed):
+                self.setStageZ(z, wait=wait)
         if a is not None:
-            self.setStageA(a, wait=wait)
+            with nullcontext() if speed is None else self._speed_setting('a', speed):
+                self.setStageA(a, wait=wait)
         if b is not None:
-            self.setStageB(b, wait=wait)
+            with nullcontext() if speed is None else self._speed_setting('b', speed):
+                self.setStageB(b, wait=wait)
 
         if (x is not None) and (y is not None):
-            self.setStageXY(x=x, y=y, wait=wait)
+            with nullcontext() if speed is None else self._speed_setting('x', speed):
+                with nullcontext() if speed is None else self._speed_setting('y', speed):
+                    self.setStageXY(x=x, y=y, wait=wait)
         else:
             if x is not None:
-                self.setStageX(x, wait=wait)
+                with nullcontext() if speed is None else self._speed_setting('x', speed):
+                    self.setStageX(x, wait=wait)
             if y is not None:
-                self.setStageY(y, wait=wait)
+                with nullcontext() if speed is None else self._speed_setting('y', speed):
+                    self.setStageY(y, wait=wait)
 
     def getRotationSpeed(self) -> int:
         return self._stage_dict['a']['speed_setting']
 
     def setRotationSpeed(self, value: int):
         self._stage_dict['a']['speed_setting'] = value
-        self._stage_dict['a']['speed'] = 10.0 * (value / 12)
+        self._stage_dict['a']['speed'] = 20.0 * (value / 12)
 
     def getFunctionMode(self) -> str:
         """Mag1, mag2, lowmag, samag, diff."""
