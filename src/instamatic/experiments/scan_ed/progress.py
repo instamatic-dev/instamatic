@@ -10,6 +10,8 @@ from typing import Any, Callable, Optional, Protocol, Sequence, Union
 
 import numpy as np
 
+from instamatic._typing import float_nm
+
 
 class GridWindowProtocol(Protocol):
     def __repr__(self) -> str: ...
@@ -191,10 +193,10 @@ class ProgressTable(ttk.Frame):
         region: int,
         line: int,
         scan: int,
-        step: int,
-        hits: bool,
-        light: int,
-        n_peaks: int,
+        offset: float_nm,
+        hits: Sequence[bool],
+        light: Sequence[int],
+        n_peaks: Sequence[int],
     ) -> None:
         """Add lines for successful experiments, update scan & column lines."""
 

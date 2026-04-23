@@ -264,7 +264,8 @@ class Experiment(ExperimentBase):
                     print(f'Warning: window {window_idx} was already added! Overwriting...')
             candidates[window_idx] = np.asarray(edge_xys, dtype=float)
 
-            grid = grid.guess(candidates).refine(candidates)
+            grid = grid.guess(candidates)
+            grid.refine(candidates)
             fig, ax = plot(grid, show_intercepts=True)
             with self.videostream_frame.processor.temporary(figure=fig), cl:
                 print('LMB to accept and finish, RMB to retry, MMB to accept and new window')
@@ -412,3 +413,20 @@ class Experiment(ExperimentBase):
     def finalize(self) -> None:
         ...
         # TODO
+
+# TODO: something tries adding a window at every load
+# Exception in Tkinter callback
+# Traceback (most recent call last):
+#   File "C:\Program Files\Instamatic\Python312\Lib\tkinter\__init__.py", line 1968, in __call__
+#     return self.func(*args)
+#            ^^^^^^^^^^^^^^^^
+#   File "C:\Program Files\Instamatic\Python312\Lib\tkinter\__init__.py", line 862, in callit
+#     func(*args)
+#   File "C:\Program Files\Instamatic\instamatic\src\instamatic\experiments\scan_ed\progress.py", line 261, in _drain
+#     getattr(self._target, name)(*args, **kwargs)
+#   File "C:\Program Files\Instamatic\instamatic\src\instamatic\experiments\scan_ed\progress.py", line 88, in add_region
+#     self.tree.insert('', tk.END, iid=region_iid, text=region_name, values=values)
+#   File "C:\Program Files\Instamatic\Python312\Lib\tkinter\ttk.py", line 1339, in insert
+#     res = self.tk.call(self._w, "insert", parent, index,
+#           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# _tkinter.TclError: Item r:0 already exists
