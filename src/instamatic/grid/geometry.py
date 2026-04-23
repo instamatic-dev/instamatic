@@ -278,7 +278,7 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
 
         self.x = geometry.x
         self.y = geometry.y
-        self.t = geometry.t
+        self.t = (geometry.t + 90) % 180 - 90
         self.w = geometry.w
         self.h = geometry.h
         self.s = geometry._s
