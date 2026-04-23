@@ -7,12 +7,7 @@ import numpy as np
 from typing_extensions import Self
 
 from instamatic._typing import float_nm
-from instamatic.controller import TEMController, _ctrl, initialize
 from instamatic.utils.iterating import pairwise
-
-if not _ctrl:
-    _ctrl: TEMController = initialize()
-
 
 X = np.array([1, 0], dtype=float)
 Y = np.array([0, 1], dtype=float)

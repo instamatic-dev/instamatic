@@ -159,6 +159,8 @@ class Experiment(ExperimentBase):
                         except IndexError:
                             intercepts = np.zeros(shape=(0, 2), dtype=float)
                         self.state.add_intercepts(window_idx, intercepts)
+                        self.state.grid.refine(intercepts=self.state.intercepts)
+                        self.state.update_grid(self.state.grid.to_params())
                         self.draw_window_to_file(window_idx=window_idx)
                         self.draw_grid_to_file()
                         if params['stop_event'].is_set():
@@ -262,7 +264,7 @@ class Experiment(ExperimentBase):
                     print(f'Warning: window {window_idx} was already added! Overwriting...')
             candidates[window_idx] = np.asarray(edge_xys, dtype=float)
 
-            grid.refine(candidates)
+            grid = grid.guess(candidates).refine(candidates)
             fig, ax = plot(grid, show_intercepts=True)
             with self.videostream_frame.processor.temporary(figure=fig), cl:
                 print('LMB to accept and finish, RMB to retry, MMB to accept and new window')
