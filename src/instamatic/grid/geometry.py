@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from itertools import count
-from typing import Annotated, Generic, Optional, Protocol, Self, Sequence, TypeVar, Union, cast
+from typing import Annotated, Generic, Optional, Protocol, Self, TypeVar, Union
 
 import numpy as np
-from pywinauto.sysinfo import is_x64_OS
 from scipy.optimize import least_squares
 
 from instamatic._collections import NoOverwriteDict
@@ -223,6 +221,8 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
     def refine(self, intercepts: dict[int, np.ndarray]) -> None:
         """Refine self to match the window_id: intercepts dictionary."""
 
+        print(intercepts)
+
         windows = sorted(intercepts.keys())
         refine_spacing = len(windows) > 1
         fit_h = self.window_type.USES_HEIGHT
@@ -265,7 +265,6 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
         if refine_spacing:
             lower.append(0.0)
             upper.append(np.inf)
-
         res = least_squares(
             residuals,
             x0=serialize(self),
@@ -273,7 +272,7 @@ class PeriodicConvexPolygonGridGeometry(Generic[WindowType]):
             method='trf',
             loss='soft_l1',
         )
-
+        print(res.x)
         geometry = deserialize(res.x)
         if not refine_spacing:
             geometry._s = fixed_s  # keep spacing unknown/fixed in the 1-window case
@@ -314,3 +313,54 @@ GRID_REGISTRY = NoOverwriteDict[str, type[PeriodicConvexPolygonGridGeometry]]()
 GRID_REGISTRY['hexagonal'] = HexagonalGridGeometry
 GRID_REGISTRY['rectangular'] = RectangularGridGeometry
 GRID_REGISTRY['square'] = SquareGridGeometry
+
+
+if __name__ == '__main__':
+    import numpy as np
+    residuals = {0: np.array([[572543.92272, 458611.73068],
+       [564971.6688 , 458611.73068],
+       [564971.6688 , 458611.73068],
+       [564971.6688 , 458611.73068],
+       [552876.06528, 458609.70234],
+       [552876.06528, 458609.70234],
+       [538110.39744, 458608.68817],
+       [538110.39744, 458608.68817],
+       [538110.39744, 458608.68817],
+       [518853.20256, 458610.71651],
+       [518853.20256, 458610.71651],
+       [496719.8544 , 458613.75902],
+       [496719.8544 , 458613.75902],
+       [487814.08368, 434983.59802],
+       [484349.97072, 421938.32931],
+       [484349.97072, 421938.32931],
+       [483886.27056, 411164.8014 ],
+       [483886.27056, 411164.8014 ],
+       [486744.23952, 397380.20276],
+       [486744.23952, 397380.20276],
+       [486744.23952, 397380.20276],
+       [486183.55632, 380419.22368],
+       [486183.55632, 380419.22368],
+       [496566.80304, 365588.0016 ],
+       [496566.80304, 365588.0016 ],
+       [503120.73504, 365593.07245],
+       [503120.73504, 365593.07245],
+       [511500.67584, 365799.96313],
+       [511500.67584, 365799.96313],
+       [520806.5016 , 366044.3781 ],
+       [520806.5016 , 366044.3781 ],
+       [532121.69472, 366439.9044 ],
+       [543770.26704, 366439.9044 ],
+       [543770.26704, 366439.9044 ],
+       [555862.83984, 366764.4388 ],
+       [555862.83984, 366764.4388 ],
+       [568560.04128, 367445.96104],
+       [568560.04128, 367445.96104],
+       [572369.65632, 406690.28336],
+       [576968.77392, 419188.91444],
+       [575013.95952, 431882.26616],
+       [572419.6632 , 441778.53702],
+       [572422.69392, 454949.56281]])}
+    a = SquareGridGeometry(10000, 20000, 0, 50000)
+    a.refine(residuals)
+    print(a.to_params())
+    # TODO this does not fit correctly at all

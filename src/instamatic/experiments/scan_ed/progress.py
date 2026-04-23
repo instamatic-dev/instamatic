@@ -134,7 +134,7 @@ class ProgressTable(ttk.Frame):
         self._scan_totals[(region, line, scan)] = new_counter(n_steps=n_steps)
         self._update_totals_display(region, line, scan)
 
-    def mark_processing(self, region: int, line: int, scan: int, *_) -> None:
+    def mark_processing(self, region: int, line: int, scan: int, *_, **__) -> None:
         scan_iid = self._scan_iid(region, line, scan)
         for column in ['hits', 'peaks', 'hit rate']:
             if not self.tree.set(scan_iid, column).isnumeric():  # don't overwrite numbers
@@ -172,7 +172,7 @@ class ProgressTable(ttk.Frame):
         line: int,
         scan: int,
         step: int,
-        hit: bool,
+        hits: bool,
         light: int,
         n_peaks: int,
     ) -> None:
@@ -181,7 +181,7 @@ class ProgressTable(ttk.Frame):
         st = self._scan_totals[(region, line, scan)]
         for totals_counter in rt, lt, st:
             totals_counter['steps'] += 1
-            if hit:
+            if hits:
                 totals_counter['hits'] += 1
                 totals_counter['peaks'] += int(n_peaks)
         self._update_totals_display(region, line, scan)
@@ -264,8 +264,11 @@ class ThreadSafeProgressTableProxy:
         self._schedule()
 
     # Keep the API fixed and consistent, generalizing this is annoying
-    def add_intercepts(self, **kwargs):
-        self._post('add_window', **kwargs)
+    def add_region(self, **kwargs):
+        self._post('add_region', **kwargs)
+
+    def add_line(self, **kwargs):
+        self._post('add_line', **kwargs)
 
     def add_scan(self, **kwargs):
         self._post('add_scan', **kwargs)

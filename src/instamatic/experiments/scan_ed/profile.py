@@ -22,7 +22,7 @@ class ScanProfile:
     ) -> None:
         assert Counter([x, y])[None] == 1, 'Exactly one of x or y must be given'
         self.var = x if y is None else y
-        self.method = 'x_intersection' if y is None else 'y_intersection'
+        self.method = 'x_intersections' if y is None else 'y_intersections'
         self.windows = windows
 
         self.intersections = [getattr(w, self.method)(self.var) for w in windows]

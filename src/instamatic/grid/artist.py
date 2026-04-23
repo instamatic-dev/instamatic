@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
 from matplotlib.ticker import FuncFormatter
-
 from instamatic._typing import float_nm
 from instamatic.grid.geometry import PeriodicConvexPolygonGridGeometry
 
@@ -80,12 +80,12 @@ def plot(
 
     # draw imshow with light and hits, if lines, scans, and steps are given
     # TODO: lines, scans, steps belong strictly to ScanED - move it there
-    if lines and scans and steps:
+    if all(x is not None and not x.empty for x in [lines, scans, steps]):
         slow_idx = 'y0' if (lines['axis'] == 0).all() else 'x0'
         slows = lines[slow_idx]
-        slow_step = (np.maximum(slows) - np.minimum(slows)) / (len(slows) - 1)
-        slow_min = np.minimum(slows) - 0.5 * slow_step
-        slow_max = np.maximum(slows) + 0.5 * slow_step
+        slow_step = (np.max(slows) - np.min(slows)) / (len(slows) - 1)
+        slow_min = np.min(slows) - 0.5 * slow_step
+        slow_max = np.max(slows) + 0.5 * slow_step
         slow_count = len(slows)
 
         max_offset = scans['offset'].abs().max()
@@ -93,7 +93,7 @@ def plot(
         fast_idx = 'x0' if (lines['axis'] == 0).all() else 'y0'
         fast_start = lines[fast_idx]
         fast_end = lines[fast_idx] + lines['step'] * lines['n_steps']
-        fast_step = lines['step'].abs().mean()
+        fast_step = lines['step'].abs().mean()  # TODO fails of zero steps
         fast_min = np.minimum(fast_start, fast_end).min() - max_offset * fast_step
         fast_max = np.maximum(fast_start, fast_end).max() + max_offset * fast_step
         fast_count = np.ceil((fast_max - fast_min) / fast_step).astype(int)
@@ -102,7 +102,7 @@ def plot(
         hits = {k: g['hits'].to_numpy(dtype=float) for k, g in steps.groupby(level=level)}
 
         patch = np.zeros(shape=(slow_count, fast_count), dtype=float)
-        for region, line, line_row in lines.iterrows():
+        for (region, line), line_row in lines.iterrows():
             slow = line_row[slow_idx]
             i = int((slow - slow_min) // slow_step)
 
@@ -130,7 +130,7 @@ def plot(
             patch = patch.T
 
         a = 0.5 + 0.5 * (patch / patch_max) if (patch_max := patch.max()) > 0 else 0.5
-        plt.imshow(patch, cmap='reds', alpha=a, origin='lower', extent=(x0, x1, y0, y1))
+        ax.imshow(patch, cmap='reds', alpha=a, origin='lower', extent=(x0, x1, y0, y1))
 
     if limit_x is not None:
         ax.axvline(-limit_x, color='red', linewidth=1.0, zorder=4)

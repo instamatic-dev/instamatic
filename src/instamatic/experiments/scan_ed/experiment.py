@@ -135,7 +135,7 @@ class Experiment(ExperimentBase):
         if not self.state.intercepts:
             grid, intercepts = self.determine_grid_manually()
             self.state.update_grid(grid.to_params())
-            for idx, idx_intercepts in intercepts.values():
+            for idx, idx_intercepts in intercepts.items():
                 self.state.add_intercepts(idx, idx_intercepts)
 
         # Whenever any new window is added manually, draw it and then whole grid
@@ -150,7 +150,7 @@ class Experiment(ExperimentBase):
         # MAIN LOOP: define new region and request locating all windows in it
         try:
             for region_idx in count():
-                windows_idx = self.regionalization.windows(region_idx=region_idx)
+                windows_idx = list(self.regionalization.windows(region_idx=region_idx))
                 self.state.add_region(region_idx, windows_idx)
                 for window_idx in windows_idx:
                     if window_idx not in self.state.intercepts:
@@ -203,8 +203,8 @@ class Experiment(ExperimentBase):
         error_margin = max(step * total_delay / p['scan_exposure'], 0)
 
         # prepare the limits to be scanned over the slow axis
-        slow_min = np.min(w.corners[:, 1 - axis] for w in windows)
-        slow_max = np.max(w.corners[:, 1 - axis] for w in windows)
+        slow_min = np.min([w.corners[:, 1 - axis] for w in windows])
+        slow_max = np.max([w.corners[:, 1 - axis] for w in windows])
         slows = np.arange(slow_min + spacing, slow_max, spacing, dtype=int)
 
         # Scan the region at every tilt, going along the same line each time
@@ -359,10 +359,10 @@ class Experiment(ExperimentBase):
         fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=kw)
         fb_thread.start()
 
-        exposure, speed, _ = self.determine_timing(scan['step'])
-        axis = scan['axis']  # x: 0, y: 1
-        fast0 = scan['y0' if axis else 'x0']
-        fast1 = fast0 + scan['step'] * scan['n_steps']
+        exposure, speed, _ = self.determine_timing(line['step'])  # loc of 'step' does not work
+        axis = line['axis']  # x: 0, y: 1
+        fast0 = line['y0' if axis else 'x0']
+        fast1 = fast0 + line['step'] * line['n_steps']
         setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
         self.ctrl.stage.set_with_speed(**setter_kwargs, wait=False)
 
@@ -403,8 +403,8 @@ class Experiment(ExperimentBase):
     def tilt_list(self) -> Sequence[float]:
         """Return a list of tilts from - to + params[tilt_range] for scans."""
         tilt_extent = self.params.get('tilt_extent', 0)
-        tilt_step = self.params.get('tilt_step', 0)
-        tilt_count = np.round(2 * tilt_extent / tilt_step) + 1
+        tilt_step = self.params.get('tilt_step', 1)
+        tilt_count = np.round(2 * tilt_extent / tilt_step).astype(int) + 1
         return np.linspace(-tilt_extent, tilt_extent, num=tilt_count, endpoint=True)
 
     def finalize(self) -> None:
