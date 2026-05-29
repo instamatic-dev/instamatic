@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timedelta
 from itertools import count, cycle, product
 from pathlib import Path
@@ -347,7 +348,7 @@ class Experiment(ExperimentBase):
         idx = pd.IndexSlice[region_idx, line_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
             return  # none-op for a scans that has been already done
-        n_frames = int(self.state.lines.loc[(region_idx, scan_idx), 'n_steps'])
+        n_frames = int(self.state.lines.loc[(region_idx, line_idx), 'n_steps'])
 
         line = self.state.lines.loc[(region_idx, line_idx)]
         self.ctrl.stage.set(x=line['x0'], y=line['y0'])
@@ -374,7 +375,7 @@ class Experiment(ExperimentBase):
             self.dispatcher.process(frame, header)
         self.dispatcher.scan_finished.set()  # signals no more data is coming
         self.dispatcher.scan_processed.wait(timeout=60)  # should process live
-        fb_thread.join()
+        self.ctrl.stage.wait()
 
         self.dispatcher.write_scan(path=self.path / 'tiff')
         self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
