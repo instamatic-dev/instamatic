@@ -139,7 +139,7 @@ class CamClient:
             else:
                 raise RuntimeError(f'Received empty response when evaluating {dct=}')
 
-            if self.use_shared_memory and acquiring_image and data:
+            if status == 200 and self.use_shared_memory and acquiring_image and data:
                 data = self.get_data_from_shared_memory(**data)
 
             if status == 200:
