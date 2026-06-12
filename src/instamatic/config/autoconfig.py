@@ -206,7 +206,7 @@ It establishes a connection to the microscope and reads out the camera lengths a
     print(f' 1. Check and update the pixelsizes in `{calib_config_fn}`')
     print('    - In real space, pixelsize in nm')
     print('    - In reciprocal space, pixelsize in px/Angstrom')
-    print(f' 2. Check and update magnification ranges in `{microscope_config_fn}`')
+    print(f' 2. Check and update magnification ranges in `{tem_config_fn}`')
 
 
 if __name__ == '__main__':
