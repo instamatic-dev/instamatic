@@ -55,6 +55,7 @@ class ExperimentalScanEDVariables:
         self.target_y = IntVar(value=500_000)
         self.target_time = IntVar(value=480)
         self.max_alpha = DoubleVar(value=0)
+        self.save_all = BooleanVar(value=False)
 
         self.target_hits_b = BooleanVar(value=False)
         self.target_x_b = BooleanVar(value=False)
@@ -155,10 +156,15 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.target_time = Spinbox(f, textvariable=self.var.target_time, **target_time)
         self.target_time.grid(row=8, column=3, **pad10)
 
+        text = 'Save all images in ./all:'
+        self.save_all_b = Checkbutton(f, variable=self.var.save_all, text=text)
+        self.save_all_b.grid(row=9, column=2, columnspan=2, **pad10)
+
         # Bottom area for progress and experiment flow control buttons
 
         self.progress = ProgressTable(f)
-        self.progress.grid(row=10, columnspan=4, sticky=NSEW, padx=10, pady=10)
+        self.progress.grid(row=10, columnspan=4, sticky=NSEW, padx=10, pady=0)
+        f.pack(side='top', fill=BOTH, expand=True, pady=10)
 
         g = Frame(self)
         for column in range(3):
@@ -171,9 +177,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.stop_button = Button(g, text='Stop collection', command=self.stop_collection)
         self.stop_button.grid(row=20, column=2, sticky=EW)
         self.update_widget()
-
-        g.pack(side='bottom', fill=BOTH, expand=True, padx=10)
-        f.pack(side='bottom', fill=BOTH, expand=True, pady=10)
+        g.pack(side='bottom', fill=X, padx=10, pady=(0, 10))  # pad from the bottom only
 
     def start_collection(self) -> None:
         self.progress.clear()

@@ -377,7 +377,7 @@ class Experiment(ExperimentBase):
         self.dispatcher.scan_processed.wait(timeout=60)  # should process live
         self.ctrl.stage.wait()
 
-        self.dispatcher.write_scan(path=self.path / 'tiff')
+        self.dispatcher.write_scan(path=self.path, all_=self.params.get('save_all', False))
         self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
         self.dispatcher.end_scan()
 
@@ -414,6 +414,7 @@ class Experiment(ExperimentBase):
     def finalize(self) -> None:
         ...
         # TODO
+
 
 # TODO: something tries adding a window at every load
 # Exception in Tkinter callback
