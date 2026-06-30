@@ -146,19 +146,20 @@ class DiffHuntDispatcher:
         self.emit('PROCESS', buffer_pointer=ptr)
         return ptr
 
-    def write_scan(self, path: AnyPath, all_: False) -> None:
+    def write_scan(self, path: AnyPath, all_: bool = False) -> None:
         """Request workers to write all hit frames from the active scan."""
         bn = self._buffer_name
-        paths = []
         for pointer, hit in enumerate(self.hits):
-            if all_ or hit:
-                if all_:
-                    paths.append(str(Path(path) / 'all'))
-                if hit:
-                    paths.append(str(Path(path) / 'tiff'))
-                self._write_pending.add(pointer)
-                kwargs = {'paths': paths, 'header': self.headers[pointer]}
-                self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
+            paths = []
+            if all_:
+                paths.append(str(Path(path) / 'all'))
+            if hit:
+                paths.append(str(Path(path) / 'tiff'))
+            if not paths:
+                continue
+            self._write_pending.add(pointer)
+            kwargs = {'paths': paths, 'header': self.headers[pointer]}
+            self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
 
     def handle_feedback(self, state: State, region: int, line: int, scan: int) -> None:
         """Continuously drain the feedback queue until scan is fully processed.
@@ -240,14 +241,19 @@ class DiffHuntWorker(mp.Process):
 
             elif cmd.kind == 'WRITE':
                 try:
-                    paths = [Path(path).resolve() for path in cmd.kwargs['paths']]
+                    dirs = [Path(p).resolve() for p in cmd.kwargs['paths']]
                     filename = f'{cmd.buffer_name}_{cmd.buffer_pointer:06d}.tiff'
                     frame = self.frames[cmd.buffer_pointer]
                     header = cmd.kwargs.get('header', {})
-                    write_tiff(fname=str(paths[0] / filename), data=frame, header=header)
-                    for path in paths[1:]:  # I assume no cross-device and won't raise
-                        path.parent.mkdir(parents=True, exist_ok=True)
-                        os.link(paths[0], path)
+                    first = dirs[0] / filename
+                    first.parent.mkdir(parents=True, exist_ok=True)
+                    write_tiff(fname=str(first), data=frame, header=header)
+                    for d in dirs[1:]:  # I assume no cross-device and won't raise
+                        d.mkdir(parents=True, exist_ok=True)
+                        target = d / filename
+                        if target.exists() or target.is_symlink():
+                            target.unlink()
+                        os.link(first, target)
                 finally:
                     self.emit('WRITTEN', buffer_pointer=cmd.buffer_pointer)
 

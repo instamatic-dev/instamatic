@@ -74,11 +74,30 @@ class State:
         self.steps.set_index(['region', 'line', 'scan', 'step'], inplace=True)
 
     def load_from_journal(self) -> None:
-        """Recreate an instance of experiment state from journal file."""
+        """Recreate an instance of experiment state from journal file.
+
+        First, get the list of events. Then, specifically look at fill
+        events. Only apply the latest fill event to save on display
+        time.
+        """
+
+        events = list(self.journal.events())
+
+        latest_fill_event: dict[tuple[int, int, int], int] = {}
+        for event in events:
+            if event['method'] == 'fill_encoded_scan':
+                k = event['kwargs']
+                latest_fill_event[(k['region'], k['line'], k['scan'])] = event['seq']
+
         with self.journal.writing_off():
-            for event in self.journal.events():
-                method_name = event['method']
-                kwargs = event.get('kwargs', {})
+            for event in events:
+                method_name, kwargs = event['method'], event.get('kwargs', {})
+                if method_name == 'configure_dispatcher':
+                    continue  # reapplied live, not part of structural state
+                if method_name == 'fill_encoded_scan':
+                    key = (kwargs['region'], kwargs['line'], kwargs['scan'])
+                    if event['seq'] != latest_fill_event[key]:
+                        continue  # superseded by a later reprocess pass
                 getattr(self, method_name)(**kwargs)
 
     @edits_journal

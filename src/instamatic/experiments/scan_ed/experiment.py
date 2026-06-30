@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import time
 from datetime import datetime, timedelta
 from itertools import count, cycle, product
@@ -20,6 +21,7 @@ from instamatic.experiments.scan_ed.profile import ScanProfile
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.region import Regionalization
 from instamatic.experiments.scan_ed.state import State
+from instamatic.formats import read_tiff
 from instamatic.grid.artist import plot
 from instamatic.grid.geometry import (
     GRID_REGISTRY,
@@ -70,7 +72,7 @@ class Experiment(ExperimentBase):
         journal = Journal(path=journal_path)
         grid = GRID_REGISTRY[self.params['grid_geometry']](0, 0, 0, 50_000, 50_000)
         state = State(journal=journal, grid=grid, progress=self.progress)
-        if self.mode == 'continue':
+        if self.mode in ('continue', 'reprocess'):
             if not journal_path.exists() or not journal_path.is_file():
                 raise FileNotFoundError(f'No journal file found at {journal_path=}')
             state.load_from_journal()
@@ -99,10 +101,16 @@ class Experiment(ExperimentBase):
         else:
             return c.dead_time
 
-    def get_dispatcher(self) -> DiffHuntDispatcher:
+    def get_dispatcher_live(self) -> DiffHuntDispatcher:
         """Start a multiprocessing helper once you have full access to cam."""
         image, h = self.ctrl.get_image()
         return DiffHuntDispatcher(shape=image.shape, dtype=image.dtype)
+
+    def get_dispatcher_from_file(self) -> DiffHuntDispatcher:
+        """Start a multiprocessing helper using a sample frame on the disk."""
+        sample_path = next((self.path / 'all').glob('*.tiff'))
+        sample, _ = read_tiff(str(sample_path))
+        return DiffHuntDispatcher(shape=sample.shape, dtype=sample.dtype)
 
     def get_stage_translation(self) -> CalibStageMotion:
         """Get rotation calibration if present; otherwise warn & terminate."""
@@ -130,8 +138,12 @@ class Experiment(ExperimentBase):
         # Save parameters to a variable, load the journal and dispatcher
         self.params = params
         self.initialize_state()
+        if self.mode == 'reprocess':
+            self.reprocess_collection()
+            return
         if self.dispatcher is None:
-            self.dispatcher = self.get_dispatcher()
+            self.dispatcher = self.get_dispatcher_live()
+        self.state.dispatcher = self.dispatcher
         self.state.configure_dispatcher(params=params)
 
         # if allowed, add manually as many windows as the user desires.
@@ -401,6 +413,58 @@ class Experiment(ExperimentBase):
 
         self.state.finalize_scan(region_idx, line_idx, scan_idx, offset=offset)
         self.ctrl.stage.wait()
+
+    def reprocess_collection(self) -> None:
+        """Re-evaluate frames already saved in `all/` with current detection
+        params, rewriting the journal's hit data and `tiff/` from scratch.
+
+        Never drives the microscope and never resumes collection
+        afterward.
+        """
+
+        if self.dispatcher is None:
+            self.dispatcher = self.get_dispatcher_from_file()
+        self.state.dispatcher = self.dispatcher
+        self.state.configure_dispatcher(params=self.params)
+
+        shutil.rmtree(self.path / 'tiff', ignore_errors=True)
+
+        for region_idx, line_idx, scan_idx in self.state.scans.index:
+            self.reprocess_scan(region_idx, line_idx, scan_idx)
+            if self.params['stop_event'].is_set():
+                break
+
+        self.draw_hits_to_file()
+        self.teardown()
+
+    def reprocess_scan(self, region_idx, line_idx, scan_idx) -> None:
+        """Re-run detection on one previously collected scan's saved frames."""
+
+        n_frames = int(self.state.lines.loc[(region_idx, line_idx), 'n_steps'])
+        name = f'r{region_idx:03d}_l{line_idx:06d}_s{scan_idx:03d}'
+        frame_paths = [self.path / 'all' / f'{name}_{p:06d}.tiff' for p in range(n_frames)]
+        if not all(p.is_file() for p in frame_paths):
+            self.log.warning(f'Skipping reprocess of {name}: missing frame(s) in all/')
+            return
+
+        self.dispatcher.begin_scan(n_frames, name=name)
+        kw = {'state': self.state, 'region': region_idx, 'line': line_idx, 'scan': scan_idx}
+        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=kw)
+        fb_thread.start()
+
+        for frame_path in frame_paths:
+            frame, header = read_tiff(str(frame_path))
+            self.dispatcher.process(frame, header=header)
+
+        self.dispatcher.scan_finished.set()
+        self.dispatcher.scan_processed.wait(timeout=60)
+        self.dispatcher.write_scan(
+            path=self.path, all_=False
+        )  # tiff/ hits only, all/ untouched
+        self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
+        self.dispatcher.end_scan()
+
+        self.finalize_scan(region_idx, line_idx, scan_idx)
 
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
