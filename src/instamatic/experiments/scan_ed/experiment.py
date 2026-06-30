@@ -32,6 +32,8 @@ from instamatic.gui.click_dispatcher import ClickListener, MouseButton
 if TYPE_CHECKING:
     from instamatic.gui import videostream_frame as vsf_type
 
+SCAN_ED_MODE = Literal['start', 'continue', 'reprocess']
+
 
 class Experiment(ExperimentBase):
     name = 'SPED'
@@ -43,7 +45,7 @@ class Experiment(ExperimentBase):
         log: logging.Logger,
         flatfield: Optional[np.ndarray] = None,
         progress: Optional[ProgressTable] = None,
-        load: bool = False,
+        mode: SCAN_ED_MODE = 'start',
         videostream_frame: Optional[vsf_type] = None,
     ):
         super().__init__()
@@ -52,7 +54,7 @@ class Experiment(ExperimentBase):
         self.log: logging.Logger = log
         self.flatfield: Optional[np.ndarray] = flatfield
         self.progress: Optional[ProgressTable] = progress
-        self.load: bool = load
+        self.mode: SCAN_ED_MODE = mode
         self._state: Optional[State] = None
         self.start_time = datetime.now()
         self.videostream_frame: Optional[vsf_type] = videostream_frame
@@ -62,21 +64,21 @@ class Experiment(ExperimentBase):
         self.dispatcher: Optional[DiffHuntDispatcher] = None
         self.regionalization: Optional[Regionalization] = None
 
-    @property
-    def state(self) -> State:
+    def initialize_state(self) -> None:
         """Initialize, fill a state if first access; raise at load issues."""
-        if self._state is not None:
-            return self._state
         journal_path = self.path / 'journal.jsonl'
         journal = Journal(path=journal_path)
         grid = GRID_REGISTRY[self.params['grid_geometry']](0, 0, 0, 50_000, 50_000)
         state = State(journal=journal, grid=grid, progress=self.progress)
-        if self.load:
+        if self.mode == 'continue':
             if not journal_path.exists() or not journal_path.is_file():
                 raise FileNotFoundError(f'No journal file found at {journal_path=}')
             state.load_from_journal()
         self._state = state
-        return state
+
+    @property
+    def state(self) -> State:
+        return self._state
 
     def get_dead_time(
         self,
@@ -127,7 +129,7 @@ class Experiment(ExperimentBase):
 
         # Save parameters to a variable, load the journal and dispatcher
         self.params = params
-        _ = self.state  # loads the journal
+        self.initialize_state()
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher()
         self.state.configure_dispatcher(params=params)

@@ -5,13 +5,15 @@ from pathlib import Path
 from threading import Event as ThreadingEvent
 from tkinter import *
 from tkinter.ttk import *
-from typing import Any, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from instamatic import controller
 from instamatic.experiments.scan_ed.progress import ProgressTable, ThreadSafeProgressTableProxy
 from instamatic.utils.spinbox import Spinbox
 
 from .base_module import BaseModule, ModuleFrameMixin
+
+SCAN_ED_MODE = Literal['start', 'continue', 'reprocess']
 
 pad10 = {'sticky': 'EW', 'padx': 10, 'pady': 1}
 scan_step = {'from_': 100, 'to': 100_000, 'increment': 100}
@@ -184,32 +186,37 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         for column in range(3):
             g.grid_columnconfigure(column, weight=1, uniform='buttons')
 
-        self.start_button = Button(g, text='Start collection', command=self.start_collection)
+        self.start_button = Button(g, text='Start collection', command=self.run_start)
         self.start_button.grid(row=20, column=0, sticky=EW)
-        self.load_button = Button(g, text='Load and continue', command=self.load_collection)
+        self.load_button = Button(g, text='Load and continue', command=self.run_continue)
         self.load_button.grid(row=20, column=1, sticky=EW)
-        self.stop_button = Button(g, text='Stop collection', command=self.stop_collection)
-        self.stop_button.grid(row=20, column=2, sticky=EW)
+        self.load_button = Button(g, text='Load and reprocess', command=self.run_reprocess)
+        self.load_button.grid(row=20, column=2, sticky=EW)
+        self.stop_button = Button(g, text='Stop collection', command=self.run_stop)
+        self.stop_button.grid(row=20, column=3, sticky=EW)
         self.update_widget()
         g.pack(side='bottom', fill=X, padx=10, pady=(0, 10))  # pad from the bottom only
 
-    def start_collection(self) -> None:
+    def _run(self, mode: SCAN_ED_MODE) -> None:
+        """Schedule the scan_ed job on the experiment thread in appropriate
+        mode."""
         self.progress.clear()
         callback = ThreadSafeTkCallback(self, self.update_widget)
         progress = ThreadSafeProgressTableProxy(self, self.progress)
-        kwargs = {'callback': callback, 'load': False, 'progress': progress}
+        kwargs = {'callback': callback, 'mode': mode, 'progress': progress}
         self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
         self.update_widget(state=WidgetState.BUSY)
 
-    def load_collection(self) -> None:
-        self.progress.clear()
-        callback = ThreadSafeTkCallback(self, self.update_widget)
-        progress = ThreadSafeProgressTableProxy(self, self.progress)
-        kwargs = {'callback': callback, 'load': True, 'progress': progress}
-        self.q.put(('scan_ed', {**kwargs, **self.var.as_dict()}))
-        self.update_widget(state=WidgetState.BUSY)
+    def run_start(self) -> None:
+        self._run(mode='start')
 
-    def stop_collection(self) -> None:
+    def run_continue(self) -> None:
+        self._run(mode='continue')
+
+    def run_reprocess(self) -> None:
+        self._run(mode='reprocess')
+
+    def run_stop(self) -> None:
         self.var.stop_event.set()
         self.update_widget(state=WidgetState.STOPPING)
 
@@ -224,13 +231,16 @@ def sced_interface_command(controller, **params: Any) -> None:
     from instamatic.experiments.scan_ed.experiment import Experiment
 
     callback = params.pop('callback', lambda: None)
-    load: bool = params.get('load', False)
+    mode: SCAN_ED_MODE = params.get('mode', 'start')  # noqa type
     progress: Optional[ProgressTable] = params.get('progress', None)
     flat_field = controller.module_io.get_flatfield()
     if params.get('stop_event', None) is not None:
         params['stop_event'].clear()
 
-    if load:
+    if mode == 'start':
+        exp_dir = controller.module_io.get_new_experiment_directory()
+        exp_dir.mkdir(exist_ok=True, parents=True)
+    else:
         exp_dir = controller.module_io.get_experiment_directory()
         journal_path = Path(exp_dir) / 'journal.jsonl'
         try:
@@ -238,9 +248,6 @@ def sced_interface_command(controller, **params: Any) -> None:
                 raise FileNotFoundError(f'No journal file found at {journal_path}')
         except FileNotFoundError:
             callback()
-    else:
-        exp_dir = controller.module_io.get_new_experiment_directory()
-        exp_dir.mkdir(exist_ok=True, parents=True)
 
     # get the videostreaming frame only if needed for manual window determination
     if params.get('grid_finder') == 'All automatically':
@@ -254,7 +261,7 @@ def sced_interface_command(controller, **params: Any) -> None:
         log=controller.log,
         flatfield=flat_field,
         progress=progress,
-        load=load,
+        mode=mode,
         videostream_frame=vsf,
     )
     try:
