@@ -22,7 +22,7 @@ target_hits = {'from_': 0, 'to': 1_000_000, 'increment': 100}
 target_time = {'from_': 0, 'to': 43_200, 'increment': 60}
 target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000}
 angle_delta = {'from_': 0, 'to': 30, 'increment': 1}
-radius_range = {'from_': 40, 'to': 1000, 'increment': 1}
+radius_range = {'from_': 0, 'to': 1000, 'increment': 1}
 
 
 class WidgetState(Enum):
@@ -66,7 +66,7 @@ class ExperimentalScanEDVariables:
         self.target_time_b = BooleanVar(value=False)
 
         self.min_peak_count = IntVar(value=10)
-        self.min_radius = DoubleVar(value=0.5)
+        self.min_radius = DoubleVar(value=40)
 
         self.stop_event = ThreadingEvent()
 
