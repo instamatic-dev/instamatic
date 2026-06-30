@@ -130,6 +130,7 @@ class Experiment(ExperimentBase):
         _ = self.state  # loads the journal
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher()
+        self.state.configure_dispatcher(params=params)
 
         # if allowed, add manually as many windows as the user desires.
         self.ctrl.stage.set(a=0)

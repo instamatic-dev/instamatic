@@ -43,9 +43,10 @@ def ring_percentile_detection(
     threshold_mult: float = 2.0,
     min_peak_count: int = 10,
     min_peak_sep: int = 5,
-    mask: np.ndarray | None = None,
+    mask: np.ndarray | None = HARD_CODED_MASK,
     n_bins: int = 10,
     gaussian_sigma: float = 1.2,
+    return_mask: bool = False,
 ) -> DiffHuntResults:
     """Radial-binned detector with thresholds computed on a *locally averaged*
     image.
@@ -73,8 +74,9 @@ def ring_percentile_detection(
     valid &= rr > min_radius
 
     valid_idx = np.flatnonzero(valid)
+    returned_mask = valid if return_mask else None
     if valid_idx.size == 0:
-        return DiffHuntResults(success=False, bin_center=(cy, cx), mask=valid)
+        return DiffHuntResults(success=False, bin_center=(cy, cx), mask=returned_mask)
 
     vals = score.flat[valid_idx]  # (N,) float32
     rr_vals = rr.flat[valid_idx].astype(np.float32, copy=False)
@@ -115,7 +117,7 @@ def ring_percentile_detection(
         bin_center=(cy, cx),
         bin_edges=bin_edges,
         peaks=peaks,
-        mask=valid,
+        mask=returned_mask,
         light=int(np.sum(frame, axis=None)),
     )
 
@@ -230,6 +232,6 @@ if __name__ == '__main__':
     for path in paths:
         tiff = Image.open(path)
         image = np.array(tiff)
-        results = ring_percentile_detection(image, mask=mask)
+        results = ring_percentile_detection(image, mask=mask, return_mask=True)
         print(Path(path).stem, results.success, len(results.peaks))
         plot_diffraction_debug(image, results)

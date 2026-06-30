@@ -9,7 +9,7 @@ from itertools import count
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
 from threading import Event
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from typing_extensions import Literal
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 N_PROCESSORS = 4
 
-CommandKind = Literal['INIT', 'PROCESS', 'WRITE', 'TERMINATE']
+CommandKind = Literal['CONFIGURE', 'INIT', 'PROCESS', 'WRITE', 'TERMINATE']
 FeedbackKind = Literal['PROCESSING', 'PROCESSED', 'WRITTEN']
 
 
@@ -88,6 +88,11 @@ class DiffHuntDispatcher:
         """Shorthand to create and put Command in next self.commands queue."""
         q = self.commands[next(self._round_robin) % N_PROCESSORS]
         q.put(Command(task, *args, **kwargs))
+
+    def configure(self, **params: dict[str, Any]) -> None:
+        """Update worker config with provided params dictionary."""
+        for _ in self._workers:
+            self.emit('CONFIGURE', **params)
 
     def begin_scan(self, n_frames: int, name: Optional[str] = None) -> None:
         """Allocate a new shared buffer and reset all tracking for one scan."""
@@ -202,6 +207,7 @@ class DiffHuntWorker(mp.Process):
         self.commands = commands
         self.feedback = feedback
         self.dtype = np.dtype(dtype)
+        self.config: dict[str, Any] = {}
         self.frames: Optional[np.ndarray] = None
         self.shm: Optional[SharedMemory] = None
 
@@ -219,11 +225,14 @@ class DiffHuntWorker(mp.Process):
                 shape = cmd.buffer_shape
                 self.frames = np.ndarray(shape, dtype=self.dtype, buffer=self.shm.buf)
 
+            elif cmd.kind == 'CONFIGURE':
+                self.config.update(cmd.kwargs)
+
             elif cmd.kind == 'PROCESS':
                 ptr = int(cmd.buffer_pointer)
                 self.emit('PROCESSING', buffer_pointer=ptr)
                 try:
-                    d = ring_percentile_detection(frame=self.frames[ptr])
+                    d = ring_percentile_detection(frame=self.frames[ptr], **self.config)
                 except Exception as e:
                     d = DiffHuntResults(success=False)
                 finally:

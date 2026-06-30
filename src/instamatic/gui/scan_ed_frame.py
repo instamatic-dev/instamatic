@@ -20,6 +20,7 @@ target_hits = {'from_': 0, 'to': 1_000_000, 'increment': 100}
 target_time = {'from_': 0, 'to': 43_200, 'increment': 60}
 target_xy = {'from_': 0, 'to': 1_000_000, 'increment': 1000}
 angle_delta = {'from_': 0, 'to': 30, 'increment': 1}
+radius_range = {'from_': 40, 'to': 1000, 'increment': 1}
 
 
 class WidgetState(Enum):
@@ -62,6 +63,9 @@ class ExperimentalScanEDVariables:
         self.target_y_b = BooleanVar(value=False)
         self.target_time_b = BooleanVar(value=False)
 
+        self.min_peak_count = IntVar(value=10)
+        self.min_radius = DoubleVar(value=0.5)
+
         self.stop_event = ThreadingEvent()
 
     def as_dict(self) -> dict[str, Union[float, int, str]]:
@@ -89,7 +93,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
 
         # Top-aligned part of the frame with experiment parameters
         f = Frame(self)
-        for column in range(4):
+        for column in range(6):
             f.grid_columnconfigure(column, weight=1, uniform='buttons')
         f.grid_rowconfigure(10, weight=1)
 
@@ -156,14 +160,24 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.target_time = Spinbox(f, textvariable=self.var.target_time, **target_time)
         self.target_time.grid(row=8, column=3, **pad10)
 
+        Label(f, text='Min peak count:').grid(row=3, column=4, **pad10)
+        var = self.var.min_peak_count
+        self.min_peak_count = Spinbox(f, textvariable=var, **angle_delta)
+        self.min_peak_count.grid(row=3, column=5, **pad10)
+
+        Label(f, text='Min radius (px):').grid(row=4, column=4, **pad10)
+        var = self.var.min_radius
+        self.min_resolution = Spinbox(f, textvariable=var, **radius_range)
+        self.min_resolution.grid(row=4, column=5, **pad10)
+
         text = 'Save all images in ./all:'
         self.save_all_b = Checkbutton(f, variable=self.var.save_all, text=text)
-        self.save_all_b.grid(row=9, column=2, columnspan=2, **pad10)
+        self.save_all_b.grid(row=8, column=4, columnspan=2, **pad10)
 
         # Bottom area for progress and experiment flow control buttons
 
         self.progress = ProgressTable(f)
-        self.progress.grid(row=10, columnspan=4, sticky=NSEW, padx=10, pady=0)
+        self.progress.grid(row=10, columnspan=6, sticky=NSEW, padx=10, pady=0)
         f.pack(side='top', fill=BOTH, expand=True, pady=10)
 
         g = Frame(self)

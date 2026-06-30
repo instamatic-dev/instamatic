@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -11,6 +11,9 @@ from instamatic.experiments.scan_ed.encoding import *
 from instamatic.experiments.scan_ed.journal import Journal, edits_journal
 from instamatic.experiments.scan_ed.progress import ProgressTable, edits_progress
 from instamatic.grid.geometry import PeriodicConvexPolygonGridGeometry
+
+if TYPE_CHECKING:
+    from instamatic.experiments.scan_ed.dispatch import DiffHuntDispatcher
 
 
 class State:
@@ -27,6 +30,7 @@ class State:
         self.grid: PeriodicConvexPolygonGridGeometry = grid
         self.progress: Optional[ProgressTable] = progress
         self.intercepts: NoOverwriteDict[int, np.ndarray] = NoOverwriteDict(intercepts or {})
+        self.dispatcher: Optional[DiffHuntDispatcher] = None
 
         self.lines: pd.DataFrame = pd.DataFrame()
         self.scans: pd.DataFrame = pd.DataFrame()
@@ -102,6 +106,11 @@ class State:
         """Append to scans and pre-allocate space in the steps dataframe."""
         lines_cols = ['x0', 'y0', 'axis', 'step', 'n_steps']
         self.lines.loc[(region, line), lines_cols] = (x0, y0, axis, step, n_steps)
+
+    @edits_journal
+    def configure_dispatcher(self, **params) -> None:
+        assert self.dispatcher is not None
+        self.dispatcher.configure(**params)
 
     @edits_journal
     @edits_progress
