@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import shutil
-import time
 from datetime import datetime, timedelta
-from itertools import count, cycle, product
+from itertools import count, cycle
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 import pandas as pd
 
 from instamatic.calibrate import CalibMovieDelays

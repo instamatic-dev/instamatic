@@ -135,7 +135,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         self.grid_finder = OptionMenu(f, self.var.grid_finder, m[1], *m)
         self.grid_finder.grid(row=3, column=3, **pad10)
 
-        text = 'Finish conditions – experiment ends once:'
+        text = 'Finish experiment once:'
         Label(f, text=text).grid(row=4, column=2, columnspan=2, **pad10)
 
         text = 'Hits exceed:'
@@ -183,7 +183,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         f.pack(side='top', fill=BOTH, expand=True, pady=10)
 
         g = Frame(self)
-        for column in range(3):
+        for column in range(4):
             g.grid_columnconfigure(column, weight=1, uniform='buttons')
 
         self.start_button = Button(g, text='Start collection', command=self.run_start)
@@ -198,8 +198,7 @@ class ExperimentalScanED(LabelFrame, ModuleFrameMixin):
         g.pack(side='bottom', fill=X, padx=10, pady=(0, 10))  # pad from the bottom only
 
     def _run(self, mode: SCAN_ED_MODE) -> None:
-        """Schedule the scan_ed job on the experiment thread in appropriate
-        mode."""
+        """Schedule the scan_ed job on the experiment thread in given mode."""
         self.progress.clear()
         callback = ThreadSafeTkCallback(self, self.update_widget)
         progress = ThreadSafeProgressTableProxy(self, self.progress)

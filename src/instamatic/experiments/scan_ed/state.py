@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Optional, Sequence
 
-import numpy as np
 import pandas as pd
 
 from instamatic._collections import NoOverwriteDict
