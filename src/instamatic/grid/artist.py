@@ -9,6 +9,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
 from matplotlib.ticker import FuncFormatter
+
 from instamatic._typing import float_nm
 from instamatic.grid.geometry import PeriodicConvexPolygonGridGeometry
 
@@ -83,60 +84,66 @@ def plot(
     try:
         if all(x is not None and not x.empty for x in [lines, scans, steps]):
             slow_idx = 'y0' if (lines['axis'] == 0).all() else 'x0'
+            fast_idx = 'x0' if (lines['axis'] == 0).all() else 'y0'
+
             slows = lines[slow_idx]
-            slow_step = (np.max(slows) - np.min(slows)) / (len(slows) - 1)
+            try:
+                slow_step = (np.max(slows) - np.min(slows)) / (len(slows) - 1)
+            except ZeroDivisionError:
+                slow_step = abs(lines['step'])  # fallback: assume same as fast
             slow_min = np.min(slows) - 0.5 * slow_step
             slow_max = np.max(slows) + 0.5 * slow_step
             slow_count = len(slows)
 
             max_offset = scans['offset'].abs().max()
+            fast_step = lines['step'].abs().mean()  # TODO fails if zero steps
 
-            fast_idx = 'x0' if (lines['axis'] == 0).all() else 'y0'
             fast_start = lines[fast_idx]
             fast_end = lines[fast_idx] + lines['step'] * lines['n_steps']
-            fast_step = lines['step'].abs().mean()  # TODO fails of zero steps
-            fast_min = np.minimum(fast_start, fast_end).min() - max_offset * fast_step
-            fast_max = np.maximum(fast_start, fast_end).max() + max_offset * fast_step
+            fast_min = np.minimum(fast_start, fast_end).min() - max_offset
+            fast_max = np.maximum(fast_start, fast_end).max() + max_offset
             fast_count = np.ceil((fast_max - fast_min) / fast_step).astype(int)
 
             level = ['region', 'line', 'scan']
             hits = {k: g['hits'].to_numpy(dtype=float) for k, g in steps.groupby(level=level)}
 
-            patch = np.zeros(shape=(slow_count, fast_count), dtype=float)
+            hits_matrix = np.zeros(shape=(slow_count, fast_count), dtype=float)
             for (region, line), line_row in lines.iterrows():
                 slow = line_row[slow_idx]
+                step = int(line_row['step'])
+                n_steps = int(line_row['n_steps'])
+                fast0 = float(line_row[fast_idx])
                 i = int((slow - slow_min) // slow_step)
-
-                step = line_row['step']
-                n_steps = line_row['n_steps']
-                fast0 = line_row[fast_idx]
-                fast1 = fast0 + step * n_steps
-                fast0, fast1 = (fast0, fast1) if fast0 < fast1 else (fast1, fast0)
 
                 sc = scans.loc[(region, line)]
                 offsets = sc['offset'].to_numpy()
+                hits_array = np.stack([hits[(region, line, s)] for s in sc.index], axis=0)
+                if step < 0:  # reverse dir: flip hit matrix and recalculate fast0
+                    hits_array = hits_array[:, ::-1]
+                    fast0 = fast0 + step * (n_steps - 1)
                 j0s = np.floor((fast0 - fast_min + offsets) / fast_step).astype(int)
 
-                hits_arr = np.stack([hits[(region, line, s)] for s in sc.index], axis=0)
-                if step < 0:
-                    hits_arr = hits_arr[:, ::-1]
                 for k in range(len(j0s)):
                     j0 = j0s[k]
-                    patch[i, j0 : j0 + n_steps] += hits_arr[k]
+                    hits_matrix[i, j0 : j0 + n_steps] += hits_array[k]
                     # TODO
-                    # patch[i, j0 : j0 + n_steps] += hits_arr[k]
                     # ValueError: operands could not be broadcast together with shapes (0,) (211,) (0,)
 
             if fast_idx == 'x0':
                 x0, x1, y0, y1 = fast_min, fast_max, slow_min, slow_max
             else:
                 x0, x1, y0, y1 = slow_min, slow_max, fast_min, fast_max
-                patch = patch.T
+                hits_matrix = hits_matrix.T
 
-            a = 0.5 + 0.5 * (patch / patch_max) if (patch_max := patch.max()) > 0 else 0.5
-            ax.imshow(patch, cmap='reds', alpha=a, origin='lower', extent=(x0, x1, y0, y1))
+            rgba = np.zeros((*hits_matrix.shape, 4), dtype=np.float32)
+            if (hits_max := hits_matrix.max()) > 0:
+                rgba[..., 0] = 1.0  # red square with opacity ~ hit density
+                rgba[..., 3] = hits_matrix / hits_max
+            ax.imshow(rgba, origin='lower', extent=(x0, x1, y0, y1), aspect='auto', zorder=3)
     except ValueError:
-        pass  # currently I don't know how to plot this, and this is not my largest concern
+        import traceback
+
+        traceback.print_exc()  # if fails, not my largest concern
 
     if limit_x is not None:
         ax.axvline(-limit_x, color='red', linewidth=1.0, zorder=4)

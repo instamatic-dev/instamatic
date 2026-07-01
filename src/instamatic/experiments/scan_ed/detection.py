@@ -58,20 +58,18 @@ def ring_percentile_detection(
     # Build a locally-averaged "score" image for candidate selection.
     score = frame.astype(np.float32, copy=False)
     if mask is not None:
-        m = mask.astype(np.float32, copy=False)
+        m = mask.astype(np.float32, copy=True)
         numer = ndi.gaussian_filter(score * m, sigma=gaussian_sigma, mode='mirror')
         denom = ndi.gaussian_filter(m, sigma=gaussian_sigma, mode='mirror')
         score = np.divide(numer, denom, out=np.zeros_like(numer), where=denom > 0)
     else:
-        score = ndi.gaussian_filter(score, sigma=gaussian_sigma, mode='mirror')
-    if gaussian_sigma and gaussian_sigma > 0:
+        mask = np.ones(frame.shape, dtype=bool)
         score = ndi.gaussian_filter(score, sigma=float(gaussian_sigma), mode='mirror')
 
     cy, cx = estimate_beam_center(frame, sigma=3.0)
     ys, xs = np.indices(frame.shape)
     rr = np.sqrt((ys - cy) ** 2 + (xs - cx) ** 2)
-    valid = mask.astype(bool) if mask is not None else np.ones(frame.shape, dtype=bool)
-    valid &= rr > min_radius
+    valid = mask & (rr > min_radius)
 
     valid_idx = np.flatnonzero(valid)
     returned_mask = valid if return_mask else None

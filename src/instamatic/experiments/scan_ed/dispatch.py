@@ -148,6 +148,8 @@ class DiffHuntDispatcher:
 
     def write_scan(self, path: AnyPath, all_: bool = False) -> None:
         """Request workers to write all hit frames from the active scan."""
+        if not self.scan_processed.is_set():
+            raise RuntimeError('Call handle_feedback() to completion before write_scan().')
         bn = self._buffer_name
         for pointer, hit in enumerate(self.hits):
             paths = []
@@ -164,9 +166,9 @@ class DiffHuntDispatcher:
     def handle_feedback(self, state: State, region: int, line: int, scan: int) -> None:
         """Continuously drain the feedback queue until scan is fully processed.
 
-        This call modifies a decorated State table. Therefore, either it
-        must be run from the main thread, or a proxy Progress table must
-        be used.
+        This call modifies the decorated State table. Therefore, either
+        it must be run from the main thread, or a proxy Progress table
+        must be used.
         """
         while (not self.scan_finished.is_set()) or self._in_flight or self._write_pending:
             try:

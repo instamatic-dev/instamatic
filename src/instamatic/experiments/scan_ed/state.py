@@ -160,7 +160,7 @@ class State:
         idx = pd.IndexSlice[region, line, scan, :]
         n_peaks = self.steps.loc[idx, 'n_peaks'].to_numpy(np.int16, copy=False)
         if (n_peaks < 0).any():
-            raise RuntimeError('Scan not complete.')
+            raise RuntimeError(f'Scan incomplete or still in process: {n_peaks}')
 
         self.scans.loc[(region, line, scan), 'offset'] = offset
 

@@ -6,15 +6,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from collections import Counter
 from functools import wraps
-from typing import Any, Callable, Optional, Protocol, Sequence, Union
+from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
 
 from instamatic._typing import float_nm
-
-
-class GridWindowProtocol(Protocol):
-    def __repr__(self) -> str: ...
 
 
 def new_counter(**kwargs):
@@ -233,6 +229,7 @@ class ProgressTable(ttk.Frame):
         self._line_geom.clear()
         self._scan_totals.clear()
         self._region_totals.clear()
+        self._line_totals.clear()
 
 
 class ThreadSafeProgressTableProxy:
