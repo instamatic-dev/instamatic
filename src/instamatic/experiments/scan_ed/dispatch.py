@@ -4,15 +4,14 @@ import multiprocessing as mp
 import os
 import queue
 import uuid
-from dataclasses import dataclass
 from itertools import count
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
 from threading import Event
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Sequence
 
 import numpy as np
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from instamatic._typing import AnyPath
 from instamatic.experiments.scan_ed.detection import DiffHuntResults, ring_percentile_detection
@@ -26,26 +25,8 @@ N_PROCESSORS = 4
 CommandKind = Literal['CONFIGURE', 'INIT', 'PROCESS', 'WRITE', 'TERMINATE']
 FeedbackKind = Literal['PROCESSING', 'PROCESSED', 'WRITTEN']
 
-
-@dataclass(frozen=True)
-class Command:
-    """Schema used to communicate commands from dispatcher to any worker."""
-
-    kind: CommandKind
-    buffer_name: Optional[str] = None
-    buffer_pointer: Optional[int] = None
-    buffer_shape: Optional[tuple[int, int, int]] = None
-    kwargs: Optional[dict] = None
-
-
-@dataclass(frozen=True)
-class Feedback:
-    """Schema used to communicate feedback from any worker to dispatcher."""
-
-    kind: FeedbackKind
-    worker_id: int
-    buffer_pointer: Optional[int] = None
-    details: Optional[DiffHuntResults] = None
+Command: TypeAlias = tuple[CommandKind, dict[str, Any]]
+Feedback: TypeAlias = tuple[FeedbackKind, dict[str, Any]]
 
 
 class DiffHuntDispatcher:
@@ -54,11 +35,11 @@ class DiffHuntDispatcher:
     def __init__(self, shape: tuple[int, int], dtype: np.dtype) -> None:
         self.shape: tuple[int, int] = shape
         self.dtype: np.dtype = np.dtype(dtype)
-        self.commands: list[mp.Queue[Command]] = []
-        self.feedback: mp.Queue[Feedback] = mp.Queue()
+        self.command_queues: list[mp.Queue[Command]] = []
+        self.feedback_queue: mp.Queue[Feedback] = mp.Queue()
 
         self._round_robin = count()
-        self._workers: list[mp.Process] = []
+        self._workers: list[DiffHuntWorker] = []
         self._spawn_workers()
 
         self._buffer_name: str = ''
@@ -78,21 +59,20 @@ class DiffHuntDispatcher:
     def _spawn_workers(self) -> None:
         """Run once at the start of experiment to spawn eval processes."""
         for wid in range(N_PROCESSORS):
-            command_queue = mp.Queue()
-            worker = DiffHuntWorker(wid, command_queue, self.feedback, self.dtype)
-            worker.start()
-            self.commands.append(command_queue)
-            self._workers.append(worker)
+            w = DiffHuntWorker(wid, (q := mp.Queue()), self.feedback_queue, self.dtype)
+            w.start()
+            self.command_queues.append(q)
+            self._workers.append(w)
 
-    def emit(self, task: CommandKind, *args, **kwargs) -> None:
+    def emit(self, task: CommandKind, **kwargs) -> None:
         """Shorthand to create and put Command in next self.commands queue."""
-        q = self.commands[next(self._round_robin) % N_PROCESSORS]
-        q.put(Command(task, *args, **kwargs))
+        q = self.command_queues[next(self._round_robin) % N_PROCESSORS]
+        q.put((task, kwargs))
 
-    def configure(self, **params: dict[str, Any]) -> None:
-        """Update worker config with provided params dictionary."""
-        for _ in self._workers:
-            self.emit('CONFIGURE', **params)
+    def emit_all(self, task: CommandKind, **kwargs) -> None:
+        """Shorthand to create and put Command in ALL self.commands queues."""
+        for q in self.command_queues:
+            q.put((task, kwargs))
 
     def begin_scan(self, n_frames: int, name: Optional[str] = None) -> None:
         """Allocate a new shared buffer and reset all tracking for one scan."""
@@ -109,8 +89,7 @@ class DiffHuntDispatcher:
         self.scan_processed.clear()
         self.hits = np.zeros(self._n_frames, dtype=bool)
         self.headers = [None] * self._n_frames
-        for _ in self._workers:
-            self.emit('INIT', buffer_name=self._buffer_name, buffer_shape=shape3)
+        self.emit_all('INIT', buffer_name=self._buffer_name, buffer_shape=shape3)
 
     def end_scan(self) -> None:
         """Release shared memory for the active scan."""
@@ -151,7 +130,7 @@ class DiffHuntDispatcher:
         if not self.scan_processed.is_set():
             raise RuntimeError('Call handle_feedback() to completion before write_scan().')
         bn = self._buffer_name
-        for pointer, hit in enumerate(self.hits):
+        for ptr, hit in enumerate(self.hits):
             paths = []
             if all_:
                 paths.append(str(Path(path) / 'all'))
@@ -159,44 +138,43 @@ class DiffHuntDispatcher:
                 paths.append(str(Path(path) / 'tiff'))
             if not paths:
                 continue
-            self._write_pending.add(pointer)
-            kwargs = {'paths': paths, 'header': self.headers[pointer]}
-            self.emit('WRITE', buffer_name=bn, buffer_pointer=pointer, kwargs=kwargs)
+            self._write_pending.add(ptr)
+            kwargs = {'paths': paths, 'header': self.headers[ptr]}
+            self.emit('WRITE', buffer_name=bn, buffer_pointer=ptr, **kwargs)
 
     def handle_feedback(self, state: State, region: int, line: int, scan: int) -> None:
         """Continuously drain the feedback queue until scan is fully processed.
 
-        This call modifies the decorated State table. Therefore, either
-        it must be run from the main thread, or a proxy Progress table
-        must be used.
+        This call modifies the decorated State table. Thus, either it
+        must be run from the main thread, or a proxy Progress table must
+        be used.
         """
         while (not self.scan_finished.is_set()) or self._in_flight or self._write_pending:
             try:
-                fb: Feedback = self.feedback.get(timeout=15)
+                fb_name, fb_kwargs = self.feedback_queue.get(timeout=15)
             except queue.Empty as e:
                 raise RuntimeError('Did not receive Feedback within 15s') from e
 
-            pointer = int(fb.buffer_pointer)
+            ptr = int(fb_kwargs['buffer_pointer'])
 
-            if fb.kind == 'PROCESSING':
-                state.mark_processing(region, line, scan, pointer)
+            if fb_name == 'PROCESSING':
+                state.mark_processing(region, line, scan, ptr)
 
-            elif fb.kind == 'PROCESSED':
-                d: DiffHuntResults = fb.details
-                state.fill_step(region, line, scan, pointer, d.success, d.light, len(d.peaks))
+            elif fb_name == 'PROCESSED':
+                d: DiffHuntResults = fb_kwargs['details']
+                state.fill_step(region, line, scan, ptr, d.success, d.light, len(d.peaks))
                 if self.hits is not None:
-                    self.hits[pointer] = d.success
-                self._in_flight.discard(pointer)
+                    self.hits[ptr] = d.success
+                self._in_flight.discard(ptr)
 
-            elif fb.kind == 'WRITTEN':
-                self._write_pending.discard(pointer)
+            elif fb_name == 'WRITTEN':
+                self._write_pending.discard(ptr)
 
         self.scan_processed.set()
 
     def terminate_workers(self) -> None:
         """Command all workers to 'TERMINATE' and report the success."""
-        for _ in self._workers:
-            self.emit('TERMINATE')
+        self.emit_all('TERMINATE')
         for p in self._workers:
             p.join()
             p.close()
@@ -213,53 +191,69 @@ class DiffHuntWorker(mp.Process):
         self.config: dict[str, Any] = {}
         self.frames: Optional[np.ndarray] = None
         self.shm: Optional[SharedMemory] = None
+        self.terminating: bool = False
 
     def emit(self, kind: FeedbackKind, **kwargs) -> None:
-        self.feedback.put(Feedback(kind=kind, worker_id=self.worker_id, **kwargs))
+        kwargs['worker_id'] = self.worker_id
+        self.feedback.put((kind, kwargs))
 
     def run(self) -> None:
-        while True:
-            cmd: Command = self.commands.get()
+        """Run the worker, continuously await and run `self.cmd_*` commands."""
+        while not self.terminating:
+            cmd_name, cmd_kwargs = self.commands.get()
+            cmd_method = getattr(self, f'cmd_{cmd_name.lower()}')
+            cmd_method(**cmd_kwargs)
 
-            if cmd.kind == 'INIT':
-                if self.shm is not None:
-                    self.shm.close()
-                self.shm = SharedMemory(name=cmd.buffer_name)
-                shape = cmd.buffer_shape
-                self.frames = np.ndarray(shape, dtype=self.dtype, buffer=self.shm.buf)
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~ self.cmd_COMMANDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
-            elif cmd.kind == 'CONFIGURE':
-                self.config.update(cmd.kwargs)
+    def cmd_init(self, *, buffer_name: str, buffer_shape: tuple[int, ...]) -> None:
+        """INIT: Close previous buffer if exists and reattach to a new one."""
+        if self.shm is not None:
+            self.shm.close()
+        self.shm = SharedMemory(name=buffer_name)
+        self.frames = np.ndarray(buffer_shape, dtype=self.dtype, buffer=self.shm.buf)
 
-            elif cmd.kind == 'PROCESS':
-                ptr = int(cmd.buffer_pointer)
-                self.emit('PROCESSING', buffer_pointer=ptr)
-                try:
-                    d = ring_percentile_detection(frame=self.frames[ptr], **self.config)
-                except Exception as e:
-                    d = DiffHuntResults(success=False)
-                finally:
-                    self.emit('PROCESSED', buffer_pointer=ptr, details=d)
+    def cmd_configure(self, **diffhunt_kwargs) -> None:
+        """CONFIGURE: Pass kwargs to self.config to be used at peak finding"""
+        self.config.update(**diffhunt_kwargs)
 
-            elif cmd.kind == 'WRITE':
-                try:
-                    dirs = [Path(p).resolve() for p in cmd.kwargs['paths']]
-                    filename = f'{cmd.buffer_name}_{cmd.buffer_pointer:06d}.tiff'
-                    frame = self.frames[cmd.buffer_pointer]
-                    header = cmd.kwargs.get('header', {})
-                    first = dirs[0] / filename
-                    first.parent.mkdir(parents=True, exist_ok=True)
-                    write_tiff(fname=str(first), data=frame, header=header)
-                    for d in dirs[1:]:  # I assume no cross-device and won't raise
-                        d.mkdir(parents=True, exist_ok=True)
-                        target = d / filename
-                        if target.exists() or target.is_symlink():
-                            target.unlink()
-                        os.link(first, target)
-                finally:
-                    self.emit('WRITTEN', buffer_pointer=cmd.buffer_pointer)
+    def cmd_process(self, *, buffer_pointer: int) -> None:
+        """PROCESS: Eval diffraction results for image at assigned pointer"""
+        ptr = int(buffer_pointer)
+        self.emit('PROCESSING', buffer_pointer=ptr)
+        try:
+            d = ring_percentile_detection(frame=self.frames[ptr], **self.config)
+        except Exception as e:
+            d = DiffHuntResults(success=False)
+        finally:
+            self.emit('PROCESSED', buffer_pointer=ptr, details=d)
 
-            elif cmd.kind == 'TERMINATE':
-                if self.shm is not None:
-                    self.shm.close()
-                return
+    def cmd_write(
+        self,
+        *,
+        paths: Sequence[AnyPath],
+        buffer_name: str,
+        buffer_pointer: int,
+        header: dict[str, Any],
+    ) -> None:
+        """WRITE: save image at assigned pointer on drive under buffer name"""
+        try:
+            dirs = [Path(p).resolve() for p in paths]
+            filename = f'{buffer_name}_{buffer_pointer:06d}.tiff'
+            frame = self.frames[buffer_pointer]
+            first = dirs[0] / filename
+            first.parent.mkdir(parents=True, exist_ok=True)
+            write_tiff(fname=str(first), data=frame, header=header)
+            for d in dirs[1:]:  # I assume no cross-device and won't raise
+                d.mkdir(parents=True, exist_ok=True)
+                target = d / filename
+                if target.exists() or target.is_symlink():
+                    target.unlink()
+                os.link(first, target)
+        finally:
+            self.emit('WRITTEN', buffer_pointer=buffer_pointer)
+
+    def cmd_terminate(self) -> None:
+        self.terminating = True
+        if self.shm is not None:
+            self.shm.close()

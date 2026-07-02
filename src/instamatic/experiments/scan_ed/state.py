@@ -128,7 +128,7 @@ class State:
     @edits_journal
     def configure_dispatcher(self, **params) -> None:
         assert self.dispatcher is not None
-        self.dispatcher.configure(**params)
+        self.dispatcher.emit_all('CONFIGURE', **params)
 
     @edits_journal
     @edits_progress
