@@ -6,14 +6,14 @@ import queue
 import uuid
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence, Union
 
 import numpy as np
 from typing_extensions import Literal, TypeAlias
 
 from instamatic._typing import AnyPath
 from instamatic.experiments.scan_ed.detection import DiffHuntResults, ring_percentile_detection
-from instamatic.formats import write_tiff
+from instamatic.formats import read_tiff, write_tiff
 
 if TYPE_CHECKING:
     from instamatic.experiments.scan_ed.state import State
@@ -30,22 +30,23 @@ Feedback: TypeAlias = tuple[FeedbackKind, dict[str, Any]]
 class DiffHuntDispatcher:
     """Proxy class: ask workers on other processes if image has diffraction."""
 
-    def __init__(self, shape: tuple[int, int], dtype: np.dtype) -> None:
+    def __init__(self, state: State, shape: tuple[int, int], dtype: np.dtype) -> None:
+        self.state: State = state  # directly affect the state: fill scans, steps
         self.shape: tuple[int, int] = shape
         self.dtype: np.dtype = np.dtype(dtype)
+
         self.command_queues: list[mp.Queue[Command]] = []
         self.feedback_queue: mp.Queue[Feedback] = mp.Queue()
 
         self._workers: list[DiffHuntWorker] = []
         self._spawn_workers()
+        self._busy_workers: dict[int, Optional[int]] = {}  # worker ID: pointer
+        self._free_workers: set[int] = set()  # IDs of worker not running a task
 
         self._buffer_name: str = ''
         self._shm: Optional[SharedMemory] = None
         self._frames: Optional[np.ndarray] = None
-
         self._n_frames: int = 0
-        self._busy_workers: dict[int, Optional[int]] = {}  # worker ID: pointer
-        self._free_workers: set[int] = set()  # IDs of worker not running a task
 
         self.hits: Optional[np.ndarray] = None
         self.headers: list[Optional[dict]] = []
@@ -98,7 +99,7 @@ class DiffHuntDispatcher:
             self.hits = None
             self.headers = []
 
-    def _handle_one_fb(self, state: State, region: int, line: int, scan: int) -> None:
+    def _handle_feedback(self, region: int, line: int, scan: int) -> None:
         """Receive one feedback item and apply it to state and bookkeeping.
 
         PROCESSING: update the state table (no worker freed yet — still running).
@@ -111,14 +112,15 @@ class DiffHuntDispatcher:
             raise RuntimeError('Did not receive feedback within 15 s') from e
 
         wid = int(fb_kwargs['worker_id'])
-        ptr = int(fb_kwargs['buffer_pointer'])
+        ptr = int(self._busy_workers.get(wid, -1))
 
         if fb_name == 'PROCESSING':
-            state.mark_processing(region, line, scan, ptr)
+            self.state.mark_processing(region, line, scan, ptr)
 
         elif fb_name == 'PROCESSED':
             d: DiffHuntResults = fb_kwargs['details']
-            state.fill_step(region, line, scan, ptr, d.success, d.light, len(d.peaks))
+            p = len(d.peaks)
+            self.state.fill_step(region, line, scan, ptr, d.success, d.light, p)
             if self.hits is not None:
                 self.hits[ptr] = d.success
 
@@ -128,8 +130,7 @@ class DiffHuntDispatcher:
 
     def process_scan(
         self,
-        movie: Iterable[tuple[np.ndarray, Optional[dict]]],
-        state: State,
+        movie: Iterable[Union[tuple[np.ndarray, Optional[dict]], AnyPath]],
         region: int,
         line: int,
         scan: int,
@@ -138,37 +139,23 @@ class DiffHuntDispatcher:
         if self._frames is None:
             raise RuntimeError('Call begin_scan() first.')
 
-        for ptr, (frame, header) in enumerate(movie):
+        for ptr, src in enumerate(movie):
+            frame, header = src if isinstance(src, tuple) else read_tiff(src)
             if ptr >= self._n_frames:
                 raise RuntimeError('Buffer overflow for active scan.')
 
             while not self._free_workers:  # Block until some worker finishes.
-                self._handle_one_fb(state, region, line, scan)
+                self._handle_feedback(region, line, scan)
 
             self._frames[ptr] = frame
             self.headers[ptr] = header
             self.emit('PROCESS', buffer_pointer=ptr)
 
-        # Movie exhausted — drain until every dispatched frame is accounted for.
-        while self._busy_workers:
-            self._handle_one_fb(state, region, line, scan)
+        while self._busy_workers:  # drain until every worker is accounted for
+            self._handle_feedback(region, line, scan)
 
-    def write_scan(
-        self,
-        path: AnyPath,
-        state: State,
-        region: int,
-        line: int,
-        scan: int,
-        all_: bool = False,
-    ) -> None:
-        """Send WRITE tasks for all hit frames and block until every write
-        completes.
-
-        Identical flow to process(): dispatch to a free worker, drain
-        feedback whenever all workers are busy, and finish with a final
-        drain loop.
-        """
+    def write_scan(self, path: AnyPath, all_: bool = False) -> None:
+        """Send WRITE for all hit frames, block until every write completes."""
         if self.hits is None:
             raise RuntimeError('Call begin_scan() first.')
 
@@ -184,11 +171,11 @@ class DiffHuntDispatcher:
                 continue
 
             while not self._free_workers:
-                self._handle_one_fb(state, region, line, scan)
+                self._handle_feedback(-1, -1, -1)
             self.emit('WRITE', paths=p, header=h, buffer_name=bn, buffer_pointer=ptr)
 
-        while self._busy_workers:
-            self._handle_one_fb(state, region, line, scan)
+        while self._busy_workers:  # drain until every worker is accounted for
+            self._handle_feedback(-1, -1, -1)
 
     def terminate_workers(self) -> None:
         """Command all workers to terminate and join them."""
@@ -238,13 +225,13 @@ class DiffHuntWorker(mp.Process):
     def cmd_process(self, *, buffer_pointer: int) -> None:
         """PROCESS: Eval diffraction results for image at assigned pointer"""
         ptr = int(buffer_pointer)
-        self.emit('PROCESSING', buffer_pointer=ptr)
+        self.emit('PROCESSING')
         try:
             d = ring_percentile_detection(frame=self.frames[ptr], **self.config)
-        except Exception as e:
+        except Exception as _:
             d = DiffHuntResults(success=False)
         finally:
-            self.emit('PROCESSED', buffer_pointer=ptr, details=d)
+            self.emit('PROCESSED', details=d)
 
     def cmd_write(
         self,
@@ -261,7 +248,8 @@ class DiffHuntWorker(mp.Process):
             frame = self.frames[buffer_pointer]
             first = dirs[0] / filename
             first.parent.mkdir(parents=True, exist_ok=True)
-            write_tiff(fname=str(first), data=frame, header=header)
+            if not first.exists():
+                write_tiff(fname=str(first), data=frame, header=header)
             for d in dirs[1:]:  # I assume no cross-device and won't raise
                 d.mkdir(parents=True, exist_ok=True)
                 target = d / filename
@@ -269,7 +257,7 @@ class DiffHuntWorker(mp.Process):
                     target.unlink()
                 os.link(first, target)
         finally:
-            self.emit('WRITTEN', buffer_pointer=buffer_pointer)
+            self.emit('WRITTEN')
 
     def cmd_terminate(self) -> None:
         self.terminating = True

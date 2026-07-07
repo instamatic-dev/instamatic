@@ -4,7 +4,6 @@ import shutil
 from datetime import datetime, timedelta
 from itertools import count, cycle
 from pathlib import Path
-from threading import Thread
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -97,14 +96,14 @@ class Experiment(ExperimentBase):
 
     def get_dispatcher_live(self) -> DiffHuntDispatcher:
         """Start a multiprocessing helper once you have full access to cam."""
-        image, h = self.ctrl.get_image()
-        return DiffHuntDispatcher(shape=image.shape, dtype=image.dtype)
+        i, _ = self.ctrl.get_image()
+        return DiffHuntDispatcher(state=self.state, shape=i.shape, dtype=i.dtype)
 
     def get_dispatcher_from_file(self) -> DiffHuntDispatcher:
         """Start a multiprocessing helper using a sample frame on the disk."""
         sample_path = next((self.path / 'all').glob('*.tiff'))
-        sample, _ = read_tiff(str(sample_path))
-        return DiffHuntDispatcher(shape=sample.shape, dtype=sample.dtype)
+        i, _ = read_tiff(str(sample_path))
+        return DiffHuntDispatcher(state=self.state, shape=i.shape, dtype=i.dtype)
 
     def get_stage_translation(self) -> CalibStageMotion:
         """Get rotation calibration if present; otherwise warn & terminate."""
@@ -374,14 +373,13 @@ class Experiment(ExperimentBase):
         setter_kwargs = {'xy'[axis]: fast1, 'speed': speed}
         self.ctrl.stage.set_with_speed(**setter_kwargs, wait=False)
 
-        movie = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
-        kw = dict(state=self.state, region=region_idx, line=line_idx, scan=scan_idx)
-        self.dispatcher.process_scan(movie, **kw)
+        m = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
+        kw = {'region': region_idx, 'line': line_idx, 'scan': scan_idx}
+        self.dispatcher.process_scan(m, **kw)
         self.ctrl.stage.wait()
 
-        self.dispatcher.write_scan(
-            path=self.path, **kw, all_=self.params.get('save_all', False)
-        )
+        all_ = self.params.get('save_all', False)
+        self.dispatcher.write_scan(path=self.path, all_=all_)
         self.dispatcher.end_scan()
 
     def finalize_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
@@ -404,7 +402,7 @@ class Experiment(ExperimentBase):
 
     def reprocess_collection(self) -> None:
         """Re-evaluate frames already saved in `all/` with current detection
-        params, rewriting the journal's hit data and `tiff/` from scratch.
+        params, rewriting the journal's hit data and `tiff/`.
 
         Never drives the microscope and never resumes collection
         afterward.
@@ -436,20 +434,9 @@ class Experiment(ExperimentBase):
             return
 
         self.dispatcher.begin_scan(n_frames, name=name)
-        kw = {'state': self.state, 'region': region_idx, 'line': line_idx, 'scan': scan_idx}
-        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=kw)
-        fb_thread.start()
-
-        for frame_path in frame_paths:
-            frame, header = read_tiff(str(frame_path))
-            self.dispatcher.process_scan(frame, header=header)
-
-        self.dispatcher.scan_finished.set()
-        self.dispatcher.scan_processed.wait(timeout=60)
-        self.dispatcher.write_scan(
-            path=self.path, all_=False
-        )  # tiff/ hits only, all/ untouched
-        self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
+        kw = {'region': region_idx, 'line': line_idx, 'scan': scan_idx}
+        self.dispatcher.process_scan(frame_paths, **kw)
+        self.dispatcher.write_scan(path=self.path, all_=True)
         self.dispatcher.end_scan()
 
         self.finalize_scan(region_idx, line_idx, scan_idx)
