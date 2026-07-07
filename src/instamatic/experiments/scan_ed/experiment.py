@@ -21,11 +21,7 @@ from instamatic.experiments.scan_ed.region import Regionalization
 from instamatic.experiments.scan_ed.state import State
 from instamatic.formats import read_tiff
 from instamatic.grid.artist import plot
-from instamatic.grid.geometry import (
-    GRID_REGISTRY,
-    PeriodicConvexPolygonGridGeometry,
-    WindowType,
-)
+from instamatic.grid.geometry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
 from instamatic.grid.sweeping import star_sweep
 from instamatic.gui.click_dispatcher import ClickListener, MouseButton
 
@@ -357,12 +353,10 @@ class Experiment(ExperimentBase):
 
     def run_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
         """Run a single scan previously added to state on the grid."""
-
         idx = pd.IndexSlice[region_idx, line_idx, scan_idx, :]
         if np.any(self.state.steps.loc[idx, 'n_peaks'] != -1):
-            return  # none-op for a scans that has been already done
+            return  # non-op for a scans that has been already done
         n_frames = int(self.state.lines.loc[(region_idx, line_idx), 'n_steps'])
-
         line = self.state.lines.loc[(region_idx, line_idx)]
         self.ctrl.stage.set(x=line['x0'], y=line['y0'])
 
@@ -372,11 +366,8 @@ class Experiment(ExperimentBase):
 
         name = f'r{region_idx:03d}_l{line_idx:06d}_s{scan_idx:03d}'
         self.dispatcher.begin_scan(n_frames, name=name)
-        kw = {'state': self.state, 'region': region_idx, 'line': line_idx, 'scan': scan_idx}
-        fb_thread = Thread(target=self.dispatcher.handle_feedback, kwargs=kw)
-        fb_thread.start()
 
-        exposure, speed, _ = self.determine_timing(line['step'])  # loc of 'step' does not work
+        exposure, speed, _ = self.determine_timing(line['step'])
         axis = line['axis']  # x: 0, y: 1
         fast0 = line['y0' if axis else 'x0']
         fast1 = fast0 + line['step'] * line['n_steps']
@@ -384,14 +375,13 @@ class Experiment(ExperimentBase):
         self.ctrl.stage.set_with_speed(**setter_kwargs, wait=False)
 
         movie = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
-        for frame, header in movie:
-            self.dispatcher.process(frame, header)
-        self.dispatcher.scan_finished.set()  # signals no more data is coming
-        self.dispatcher.scan_processed.wait(timeout=60)  # should process live
+        kw = dict(state=self.state, region=region_idx, line=line_idx, scan=scan_idx)
+        self.dispatcher.process_scan(movie, **kw)
         self.ctrl.stage.wait()
 
-        self.dispatcher.write_scan(path=self.path, all_=self.params.get('save_all', False))
-        self.dispatcher.handle_feedback(self.state, region_idx, line_idx, scan_idx)
+        self.dispatcher.write_scan(
+            path=self.path, **kw, all_=self.params.get('save_all', False)
+        )
         self.dispatcher.end_scan()
 
     def finalize_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
@@ -452,7 +442,7 @@ class Experiment(ExperimentBase):
 
         for frame_path in frame_paths:
             frame, header = read_tiff(str(frame_path))
-            self.dispatcher.process(frame, header=header)
+            self.dispatcher.process_scan(frame, header=header)
 
         self.dispatcher.scan_finished.set()
         self.dispatcher.scan_processed.wait(timeout=60)
