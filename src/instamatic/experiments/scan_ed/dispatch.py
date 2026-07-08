@@ -6,6 +6,7 @@ import queue
 import uuid
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
+from time import sleep
 from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence, Union
 
 import numpy as np
@@ -51,6 +52,22 @@ class DiffHuntDispatcher:
         self.hits: Optional[np.ndarray] = None
         self.headers: list[Optional[dict]] = []
 
+    @staticmethod
+    def _create_shm(name: str, size: int) -> SharedMemory:
+        """Initialize shared memory, try to close previous one if needed."""
+        exc = None
+        for _ in range(500):
+            try:
+                return SharedMemory(name=name, create=True, size=size)
+            except FileExistsError as e:
+                old = SharedMemory(name=name, create=False)
+                old.close()
+                old.unlink()
+                exc = e
+                sleep(0.01)
+        else:
+            raise FileExistsError(f'Could not init shared memory {name}') from exc
+
     def _spawn_workers(self) -> None:
         """Run once at the start of experiment to spawn eval processes."""
         for wid in range(N_PROCESSORS):
@@ -78,7 +95,7 @@ class DiffHuntDispatcher:
         self._busy_workers = {}
         shape3 = (self._n_frames, self.shape[0], self.shape[1])
         size = int(np.prod(shape3) * self.dtype.itemsize)
-        self._shm = SharedMemory(name=self._buffer_name, create=True, size=size)
+        self._shm = self._create_shm(name=self._buffer_name, size=size)
         self._frames = np.ndarray(shape3, dtype=self.dtype, buffer=self._shm.buf)
         self.hits = np.zeros(self._n_frames, dtype=bool)
         self.headers = [None] * self._n_frames
@@ -221,11 +238,9 @@ class DiffHuntWorker(mp.Process):
     def cmd_configure(self, **diffhunt_kwargs) -> None:
         """CONFIGURE: Pass kwargs to self.config to be used at peak finding"""
         self.config.update(**diffhunt_kwargs)
-        print(self.config)
 
     def cmd_process(self, *, buffer_pointer: int) -> None:
         """PROCESS: Eval diffraction results for image at assigned pointer"""
-        print(self.config)
         ptr = int(buffer_pointer)
         self.emit('PROCESSING')
         try:

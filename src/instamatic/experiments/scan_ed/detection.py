@@ -55,7 +55,6 @@ def ring_percentile_detection(
     This suppresses single-pixel spikes (stray electrons / hot pixels),
     while keeping multi-pixel reflection profiles detectable.
     """
-    print(f'{min_peak_count=}, {min_radius=}')
     # Build a locally-averaged "score" image for candidate selection.
     score = frame.astype(np.float32, copy=False)
     if mask is not None:
