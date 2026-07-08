@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Sequence, Union
 
@@ -31,7 +31,7 @@ class DiffHuntResults:
     success: bool
     bin_center: Optional[tuple[float, float]] = None
     bin_edges: Optional[Sequence[float]] = None
-    peaks: Optional[np.ndarray] = None
+    peaks: np.ndarray = field(default_factory=lambda: np.empty((0, 2), dtype=int))
     mask: Optional[np.ndarray] = None
     light: int = 0
 
@@ -47,6 +47,7 @@ def ring_percentile_detection(
     n_bins: int = 10,
     gaussian_sigma: float = 1.2,
     return_mask: bool = False,
+    **_,
 ) -> DiffHuntResults:
     """Radial-binned detector with thresholds computed on a *locally averaged*
     image.
@@ -54,7 +55,7 @@ def ring_percentile_detection(
     This suppresses single-pixel spikes (stray electrons / hot pixels),
     while keeping multi-pixel reflection profiles detectable.
     """
-
+    print(f'{min_peak_count=}, {min_radius=}')
     # Build a locally-averaged "score" image for candidate selection.
     score = frame.astype(np.float32, copy=False)
     if mask is not None:
@@ -227,6 +228,7 @@ if __name__ == '__main__':
         r'C:\Users\tchon\x\2026-02-06-SPED_test\experiment_5\tiff\w000000_s000031_0000*.tiff'
     )
     # paths = glob(r'C:\Users\tchon\x\Instamatic_RATS_cRED_benchmark\instamatic_19\tiff\0000*')
+    paths = [r"G:\USERS\instamatic\2026-07-08\experiment_2\all\r000_l000003_s000_000044.tiff"]
     for path in paths:
         tiff = Image.open(path)
         image = np.array(tiff)

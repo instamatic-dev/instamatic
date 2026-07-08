@@ -221,9 +221,11 @@ class DiffHuntWorker(mp.Process):
     def cmd_configure(self, **diffhunt_kwargs) -> None:
         """CONFIGURE: Pass kwargs to self.config to be used at peak finding"""
         self.config.update(**diffhunt_kwargs)
+        print(self.config)
 
     def cmd_process(self, *, buffer_pointer: int) -> None:
         """PROCESS: Eval diffraction results for image at assigned pointer"""
+        print(self.config)
         ptr = int(buffer_pointer)
         self.emit('PROCESSING')
         try:

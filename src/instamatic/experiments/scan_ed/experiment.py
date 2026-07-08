@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime, timedelta
 from itertools import count, cycle
 from pathlib import Path
+from threading import Event
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -42,6 +43,7 @@ class Experiment(ExperimentBase):
         progress: Optional[ProgressTable] = None,
         mode: SCAN_ED_MODE = 'start',
         videostream_frame: Optional[vsf_type] = None,
+        stop_event: Optional[Event] = None,
     ):
         super().__init__()
         self.ctrl = ctrl
@@ -53,6 +55,7 @@ class Experiment(ExperimentBase):
         self._state: Optional[State] = None
         self.start_time = datetime.now()
         self.videostream_frame: Optional[vsf_type] = videostream_frame
+        self.stop_event: Optional[Event] = stop_event
 
         # attributes initialized once an experiment starts
         self.params: dict[str, Any] = {}
@@ -137,7 +140,7 @@ class Experiment(ExperimentBase):
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher_live()
         self.state.dispatcher = self.dispatcher
-        self.state.configure_dispatcher(params=params)
+        self.state.configure_dispatcher(**params)
 
         # if allowed, add manually as many windows as the user desires.
         self.ctrl.stage.set(a=0)
@@ -172,7 +175,7 @@ class Experiment(ExperimentBase):
                         self.state.update_grid(self.state.grid.to_params())
                         self.draw_window_to_file(window_idx=window_idx)
                         self.draw_grid_to_file()
-                        if params['stop_event'].is_set():
+                        if self.stop_event.is_set():
                             break
 
                 # sanitation step: assert the current region is in limits
@@ -186,10 +189,11 @@ class Experiment(ExperimentBase):
                     self.run_scan(region_idx, line_idx, scan_idx)
                     self.finalize_scan(region_idx, line_idx, scan_idx)
                     self.set_stop_event_if_target_met()
-                    if params['stop_event'].is_set():
+                    if self.stop_event.is_set():
                         break
                 self.draw_hits_to_file()
         finally:
+            self.ctrl.stage.wait()
             self.ctrl.stage.set(a=0)
             self.draw_hits_to_file()
         self.teardown()
@@ -348,7 +352,7 @@ class Experiment(ExperimentBase):
         time_passed = datetime.now() - self.start_time
         time_target = timedelta(hours=tt) if tt else timedelta.max
         if time_passed > time_target or hits_found > hits_target:
-            self.params['stop_event'].set()
+            self.stop_event.set()
 
     def run_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
         """Run a single scan previously added to state on the grid."""
@@ -411,13 +415,16 @@ class Experiment(ExperimentBase):
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher_from_file()
         self.state.dispatcher = self.dispatcher
-        self.state.configure_dispatcher(params=self.params)
+        self.state.configure_dispatcher(**self.params)
+
+        rs = self.params.get('region_shape', '1x1')
+        self.regionalization = Regionalization.from_str(grid=self.state.grid, shape=rs)
 
         shutil.rmtree(self.path / 'tiff', ignore_errors=True)
 
         for region_idx, line_idx, scan_idx in self.state.scans.index:
             self.reprocess_scan(region_idx, line_idx, scan_idx)
-            if self.params['stop_event'].is_set():
+            if self.stop_event.is_set():
                 break
 
         self.draw_hits_to_file()
@@ -444,7 +451,7 @@ class Experiment(ExperimentBase):
     def teardown(self) -> None:
         """Close all threads and safely shut down when requested."""
         self.dispatcher.terminate_workers()
-        self.params['stop_event'].clear()
+        self.stop_event.clear()
 
     def tilt_list(self) -> Sequence[float]:
         """Return a list of tilts from - to + params[tilt_range] for scans."""

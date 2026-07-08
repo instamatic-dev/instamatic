@@ -230,11 +230,12 @@ def sced_interface_command(controller, **params: Any) -> None:
     from instamatic.experiments.scan_ed.experiment import Experiment
 
     callback = params.pop('callback', lambda: None)
-    mode: SCAN_ED_MODE = params.get('mode', 'start')  # noqa type
-    progress: Optional[ProgressTable] = params.get('progress', None)
+    mode: SCAN_ED_MODE = params.pop('mode', 'start')  # noqa type
+    progress: Optional[ProgressTable] = params.pop('progress', None)
     flat_field = controller.module_io.get_flatfield()
-    if params.get('stop_event', None) is not None:
-        params['stop_event'].clear()
+    stop_event: Optional[ThreadingEvent] = params.pop('stop_event', None)
+    if stop_event is not None:
+        stop_event.clear()
 
     if mode == 'start':
         exp_dir = controller.module_io.get_new_experiment_directory()
@@ -262,6 +263,7 @@ def sced_interface_command(controller, **params: Any) -> None:
         progress=progress,
         mode=mode,
         videostream_frame=vsf,
+        stop_event=stop_event,
     )
     try:
         controller.fast_adt.start_collection(**params)
