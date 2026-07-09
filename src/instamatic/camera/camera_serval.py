@@ -176,7 +176,17 @@ class CameraServal(CameraBase):
             except socket.timeout:
                 raise TimeoutError('Serval failed to connect back within 5 seconds.')
             with sock:
-                yield from ServalMovieDeserializer(sock, n_frames, self.movie_bufsize)
+                y = ServalMovieDeserializer(sock, n_frames, self.movie_bufsize)
+                yield from y
+
+                # debugging serval connection
+                hex_str = y.buffer.hex(' ')
+                print(f'HEX PRINT: {hex_str}')
+                logger.info('HEX LOG: %s', hex_str)
+
+                repr_str = repr(y.buffer)
+                print(f'REPR PRINT: {repr_str}')
+                logger.info('REPR LOG: %s', repr_str)
 
         finally:
             listener.close()
