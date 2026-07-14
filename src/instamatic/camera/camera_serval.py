@@ -228,87 +228,48 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
         self.n_frames: int = n_frames
         self.shape: tuple[int, int] = (0, 0)
         self.size: int = 0
-        self.dtype: np.dtype = np.uint32
+        self.dtype: np.dtype = np.dtype(np.uint32)
 
-    def _recv_more(self) -> None:
-        if not (n := self.sock.recv_into(self.view[self.used :])):
+    def _receive_more(self) -> None:
+        """Attempt to receive bytes from the socket into free buffer space."""
+        recv_len = self.sock.recv_into(self.view[self.used :])
+        if not recv_len:
             raise EOFError
-        self.used += n
+        self.used += recv_len
 
-    def _read_until(self, token: bytes) -> int:
+    def _receive_until(self, token: bytes) -> int:
+        """Recv data until `token` is found, return index after the token."""
+        token_idx = self.buffer.find(token, 0, self.used)
         while True:
-            idx = self.buffer.find(token, 0, self.used)
-            if idx >= 0:
-                return idx + len(token)
-            self._recv_more()
+            if token_idx >= 0:
+                return token_idx + len(token)
+            self._receive_more()
 
-    def read_image_shape_from_header(self, header_size: int) -> None:
-        """Read shape, size, dtype of all images from the first header."""
+    def _parse_header(self, header_size: int) -> None:
+        """Read shape, size, dtype of all images from the 1st frame header."""
         header_str = self.buffer[:header_size].decode('utf-8')
         header_dict = json.loads(header_str)
-        d = header_dict['bitDepth'] // 8
-        self.shape = (header_dict['height'], header_dict['width'])
-        self.size = header_dict.get('dataSize', prod(self.shape) * d)
-        self.dtype = np.uint32 if d > 2 else np.uint16 if d > 1 else np.uint8
+        bit_depth = header_dict['bitDepth']
+        self.shape = header_dict['height'], header_dict['width']
+        self.dtype = np.dtype(f'uint{bit_depth}').newbyteorder('>')
+        self.size = header_dict.get('dataSize', prod(self.shape) * self.dtype.itemsize)
 
     def __next__(self) -> np.ndarray:
-        """Recv as much data as needed and use it to yield next frame ASAP."""
+        """Recv as much data as needed, return next frame from TCP stream."""
         if self.i_frame >= self.n_frames:
             raise StopIteration
-        header_end = self._read_until(b'}')
+        header_end = self._receive_until(b'}\n')
         if self.i_frame == 0:
-            self.read_image_shape_from_header(header_end)
+            self._parse_header(header_end)
         while self.used < header_end + self.size:
-            self._recv_more()
+            self._receive_more()
         i, j = header_end, header_end + self.size
         frame = np.frombuffer(self.buffer[i:j], dtype=self.dtype).reshape(self.shape).copy()
-
-        # TESTING APPROACHES TO DECODING IMAGES
-
-        # APPROACH 1: MOSTLY FINE BUT INTRODUCES TEARS ABOVE 256
-        # Decode Serval-packed 32-bit jsonimage payload into the physical 24-bit count:
-        # observed packing (byte lanes): [b0, b1, b2, b3] with b1 unused/zero,
-        # count = b0 | (b3<<8) | (b2<<16). Contact Daniel Tchon, tchon@fzu.cz, for details.
-        if np.any((frame & np.uint32(0x0000FF00)) != 0):  # potentially check harder
-            logger.debug('Unexpected nonzero byte1 in Serval packed uint32 payload.')
-        if frame.dtype == np.uint32:
-            bytes02 = frame & np.uint32(0x00FF00FF)
-            bytes3 = frame & np.uint32(0xFF000000)
-            frame = bytes02 | (bytes3 >> np.uint32(16))
-
-        # APPROACH 2: APPROACH 1 WITH A POST-FIX
-        # if frame.dtype == np.uint32:
-        #     bytes02 = frame & np.uint32(0x00FF00FF)
-        #     bytes3 = frame & np.uint32(0xFF000000)
-        #     frame = bytes02 | (bytes3 >> np.uint32(16))
-        #     array = frame.ravel()
-        #     bit8_mask = array & np.uint32(0xFFFF00)
-        #     array &= ~np.uint32(0xFFFF00)
-        #     array[1:] |= bit8_mask[:-1]
-        #     frame = array.reshape(self.shape)
 
         self.buffer[: self.used - j] = self.buffer[j : self.used]
         self.used -= j
         self.i_frame += 1
         return frame
-
-    # APPROACH 3: THEORETICALLY CORRECT READ THAT TAKES \n INTO CONSIDERATION
-    # def __next__(self) -> np.ndarray:
-    #     """Recv as much data as needed and use it to yield next frame ASAP."""
-    #     if self.i_frame >= self.n_frames:
-    #         raise StopIteration
-    #     header_end = self._read_until(b'}\n')
-    #     if self.i_frame == 0:
-    #         self.read_image_shape_from_header(header_end)
-    #     while self.used < header_end + self.size:
-    #         self._recv_more()
-    #     i, j = header_end, header_end + self.size
-    #     frame = np.frombuffer(self.buffer[i:j], dtype=self.dtype).reshape(self.shape).copy()
-    #
-    #     self.buffer[: self.used - j] = self.buffer[j : self.used]
-    #     self.used -= j
-    #     self.i_frame += 1
-    #     return frame
 
 
 if __name__ == '__main__':
