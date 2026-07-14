@@ -73,7 +73,7 @@ class Experiment(ExperimentBase):
         if self.mode in ('continue', 'reprocess'):
             if not journal_path.exists() or not journal_path.is_file():
                 raise FileNotFoundError(f'No journal file found at {journal_path=}')
-            state.load_from_journal()
+            state.load_from_journal(fill=self.mode == 'reprocess')
         self._state = state
 
     @property
@@ -408,11 +408,8 @@ class Experiment(ExperimentBase):
 
     def reprocess_collection(self) -> None:
         """Re-evaluate frames already saved in `all/` with current detection
-        params, rewriting the journal's hit data and `tiff/`.
-
-        Never drives the microscope and never resumes collection
-        afterward.
-        """
+        params, rewriting the journal's hit data and `tiff/`; Never drives the
+        microscope and never resumes collection afterward."""
 
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher_from_file()
