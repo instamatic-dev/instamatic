@@ -3,7 +3,6 @@ from __future__ import annotations
 import multiprocessing as mp
 import os
 import queue
-import uuid
 from multiprocessing.shared_memory import SharedMemory
 from pathlib import Path
 from time import sleep
@@ -14,6 +13,7 @@ from typing_extensions import Literal, TypeAlias
 
 from instamatic._typing import AnyPath
 from instamatic.experiments.scan_ed.detection import DiffHuntResults, ring_percentile_detection
+from instamatic.experiments.scan_ed.utils import SaveName
 from instamatic.formats import read_tiff, write_tiff
 
 if TYPE_CHECKING:
@@ -26,6 +26,7 @@ FeedbackKind = Literal['PROCESSING', 'PROCESSED', 'WRITTEN']
 
 Command: TypeAlias = tuple[CommandKind, dict[str, Any]]
 Feedback: TypeAlias = tuple[FeedbackKind, dict[str, Any]]
+MovieOrPaths: TypeAlias = Iterable[Union[tuple[np.ndarray, Optional[dict]], AnyPath]]
 
 
 class DiffHuntDispatcher:
@@ -44,7 +45,7 @@ class DiffHuntDispatcher:
         self._busy_workers: dict[int, Optional[int]] = {}  # worker ID: pointer
         self._free_workers: set[int] = set()  # IDs of worker not running a task
 
-        self._buffer_name: str = ''
+        self.region_line_scan: Optional[tuple[int, int, int]] = None
         self._shm: Optional[SharedMemory] = None
         self._frames: Optional[np.ndarray] = None
         self._n_frames: int = 0
@@ -76,6 +77,10 @@ class DiffHuntDispatcher:
             self.command_queues.append(q)
             self._workers.append(w)
 
+    @property
+    def buffer_name(self) -> str:
+        return str(SaveName(*self.region_line_scan))
+
     def emit(self, task: CommandKind, **kwargs) -> None:
         """Shorthand to create and put Command in free self.commands queue."""
         wid = self._free_workers.pop()
@@ -87,19 +92,19 @@ class DiffHuntDispatcher:
         for q in self.command_queues:
             q.put((task, kwargs))
 
-    def begin_scan(self, n_frames: int, name: Optional[str] = None) -> None:
+    def begin_scan(self, region: int, line: int, scan: int, n_frames: int) -> None:
         """Allocate a new shared buffer and reset all tracking for one scan."""
-        self._buffer_name = name or uuid.uuid4().hex
+        self.region_line_scan = region, line, scan
         self._n_frames = int(n_frames)
         self._free_workers = set(range(N_PROCESSORS))
         self._busy_workers = {}
         shape3 = (self._n_frames, self.shape[0], self.shape[1])
         size = int(np.prod(shape3) * self.dtype.itemsize)
-        self._shm = self._create_shm(name=self._buffer_name, size=size)
+        self._shm = self._create_shm(name=self.buffer_name, size=size)
         self._frames = np.ndarray(shape3, dtype=self.dtype, buffer=self._shm.buf)
         self.hits = np.zeros(self._n_frames, dtype=bool)
         self.headers = [None] * self._n_frames
-        self.emit_all('INIT', buffer_name=self._buffer_name, buffer_shape=shape3)
+        self.emit_all('INIT', buffer_name=self.buffer_name, buffer_shape=shape3)
 
     def end_scan(self) -> None:
         """Release shared memory for the active scan."""
@@ -111,12 +116,12 @@ class DiffHuntDispatcher:
         finally:
             self._shm = None
             self._frames = None
-            self._buffer_name = ''
+            self.region_line_scan = None
             self._n_frames = 0
             self.hits = None
             self.headers = []
 
-    def _handle_feedback(self, region: int, line: int, scan: int) -> None:
+    def _handle_feedback(self) -> None:
         """Receive one feedback item and apply it to state and bookkeeping.
 
         PROCESSING: update the state table (no worker freed yet — still running).
@@ -132,12 +137,12 @@ class DiffHuntDispatcher:
         ptr = int(self._busy_workers.get(wid, -1))
 
         if fb_name == 'PROCESSING':
-            self.state.mark_processing(region, line, scan, ptr)
+            self.state.mark_processing(*self.region_line_scan, ptr)
 
         elif fb_name == 'PROCESSED':
             d: DiffHuntResults = fb_kwargs['details']
             p = len(d.peaks)
-            self.state.fill_step(region, line, scan, ptr, d.success, d.light, p)
+            self.state.fill_step(*self.region_line_scan, ptr, d.success, d.light, p)
             if self.hits is not None:
                 self.hits[ptr] = d.success
 
@@ -145,38 +150,35 @@ class DiffHuntDispatcher:
             self._busy_workers.pop(wid, None)
             self._free_workers.add(wid)
 
-    def process_scan(
-        self,
-        movie: Iterable[Union[tuple[np.ndarray, Optional[dict]], AnyPath]],
-        region: int,
-        line: int,
-        scan: int,
-    ) -> None:
+    def process_scan(self, movie: MovieOrPaths) -> None:
         """Write `movie` frames into shared buffer, dispatch PROCESS tasks."""
         if self._frames is None:
             raise RuntimeError('Call begin_scan() first.')
 
-        for ptr, src in enumerate(movie):
-            frame, header = src if isinstance(src, tuple) else read_tiff(src)
+        for ptr, src in enumerate(movie):  # if given movie, iterate one-by-one
+            if isinstance(src, tuple):
+                frame, header = src
+            else:  # if given a path list, inherit pointer from the path name
+                frame, header = read_tiff(src)
+                ptr = SaveName(Path(src).stem).as_dict()['frame']
             if ptr >= self._n_frames:
                 raise RuntimeError('Buffer overflow for active scan.')
 
             while not self._free_workers:  # Block until some worker finishes.
-                self._handle_feedback(region, line, scan)
+                self._handle_feedback()
 
             self._frames[ptr] = frame
             self.headers[ptr] = header
             self.emit('PROCESS', buffer_pointer=ptr)
 
         while self._busy_workers:  # drain until every worker is accounted for
-            self._handle_feedback(region, line, scan)
+            self._handle_feedback()
 
     def write_scan(self, path: AnyPath, all_: bool = False) -> None:
         """Send WRITE for all hit frames, block until every write completes."""
         if self.hits is None:
             raise RuntimeError('Call begin_scan() first.')
 
-        bn = self._buffer_name
         for ptr, hit in enumerate(self.hits):
             h: dict = self.headers[ptr]
             p: list[str] = []
@@ -188,11 +190,11 @@ class DiffHuntDispatcher:
                 continue
 
             while not self._free_workers:
-                self._handle_feedback(-1, -1, -1)
-            self.emit('WRITE', paths=p, header=h, buffer_name=bn, buffer_pointer=ptr)
+                self._handle_feedback()
+            self.emit('WRITE', paths=p, header=h, buffer_pointer=ptr)
 
         while self._busy_workers:  # drain until every worker is accounted for
-            self._handle_feedback(-1, -1, -1)
+            self._handle_feedback()
 
     def terminate_workers(self) -> None:
         """Command all workers to terminate and join them."""
@@ -211,8 +213,9 @@ class DiffHuntWorker(mp.Process):
         self.feedback = feedback
         self.dtype = np.dtype(dtype)
         self.config: dict[str, Any] = {}
-        self.frames: Optional[np.ndarray] = None
+        self.buffer_name: Optional[str] = None
         self.shm: Optional[SharedMemory] = None
+        self.frames: Optional[np.ndarray] = None
         self.terminating: bool = False
 
     def emit(self, kind: FeedbackKind, **kwargs) -> None:
@@ -230,8 +233,7 @@ class DiffHuntWorker(mp.Process):
 
     def cmd_init(self, *, buffer_name: str, buffer_shape: tuple[int, ...]) -> None:
         """INIT: Close previous buffer if exists and reattach to a new one."""
-        if self.shm is not None:
-            self.shm.close()
+        self.buffer_name = buffer_name
         self.shm = SharedMemory(name=buffer_name)
         self.frames = np.ndarray(buffer_shape, dtype=self.dtype, buffer=self.shm.buf)
 
@@ -254,14 +256,13 @@ class DiffHuntWorker(mp.Process):
         self,
         *,
         paths: Sequence[AnyPath],
-        buffer_name: str,
         buffer_pointer: int,
-        header: dict[str, Any],
+        header: Optional[dict[str, Any]],
     ) -> None:
         """WRITE: save image at assigned pointer on drive under buffer name"""
         try:
             dirs = [Path(p).resolve() for p in paths]
-            filename = f'{buffer_name}_{buffer_pointer:06d}.tiff'
+            filename = f'{self.buffer_name}_{buffer_pointer:06d}.tiff'
             frame = self.frames[buffer_pointer]
             first = dirs[0] / filename
             first.parent.mkdir(parents=True, exist_ok=True)

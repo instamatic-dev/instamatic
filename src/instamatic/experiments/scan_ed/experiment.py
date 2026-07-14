@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 from datetime import datetime, timedelta
+from glob import glob
 from itertools import count, cycle
 from pathlib import Path
 from threading import Event
@@ -19,6 +20,7 @@ from instamatic.experiments.scan_ed.profile import ScanProfile
 from instamatic.experiments.scan_ed.progress import ProgressTable
 from instamatic.experiments.scan_ed.region import Regionalization
 from instamatic.experiments.scan_ed.state import State
+from instamatic.experiments.scan_ed.utils import SaveName
 from instamatic.formats import read_tiff
 from instamatic.grid.artist import plot
 from instamatic.grid.geometry import GRID_REGISTRY, PeriodicConvexPolygonGridGeometry
@@ -367,7 +369,7 @@ class Experiment(ExperimentBase):
         if abs(self.ctrl.stage.a - scan['tilt']) > 0.05:  # epsilon:
             self.ctrl.stage.a = scan['tilt']
 
-        name = f'r{region_idx:03d}_l{line_idx:06d}_s{scan_idx:03d}'
+        name = str(SaveName().append(region_idx, line_idx, scan_idx))
         self.dispatcher.begin_scan(n_frames, name=name)
 
         exposure, speed, _ = self.determine_timing(line['step'])
@@ -434,15 +436,13 @@ class Experiment(ExperimentBase):
         """Re-run detection on one previously collected scan's saved frames."""
 
         n_frames = int(self.state.lines.loc[(region_idx, line_idx), 'n_steps'])
-        name = f'r{region_idx:03d}_l{line_idx:06d}_s{scan_idx:03d}'
-        frame_paths = [self.path / 'all' / f'{name}_{p:06d}.tiff' for p in range(n_frames)]
-        if not all(p.is_file() for p in frame_paths):
-            self.log.warning(f'Skipping reprocess of {name}: missing frame(s) in all/')
+        name = str(SaveName().append(region_idx, line_idx, scan_idx))
+        frame_paths = glob(str(self.path / 'all' / f'{name}*.tiff'))
+        if not frame_paths:
             return
 
-        self.dispatcher.begin_scan(n_frames, name=name)
-        kw = {'region': region_idx, 'line': line_idx, 'scan': scan_idx}
-        self.dispatcher.process_scan(frame_paths, **kw)
+        self.dispatcher.begin_scan(region_idx, line_idx, scan_idx, n_frames)
+        self.dispatcher.process_scan(frame_paths)
         self.dispatcher.write_scan(path=self.path, all_=True)
         self.dispatcher.end_scan()
 
