@@ -239,8 +239,8 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
 
     def _receive_until(self, token: bytes) -> int:
         """Recv data until `token` is found, return index after the token."""
-        token_idx = self.buffer.find(token, 0, self.used)
         while True:
+            token_idx = self.buffer.find(token, 0, self.used)
             if token_idx >= 0:
                 return token_idx + len(token)
             self._receive_more()
@@ -258,7 +258,7 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
         """Recv as much data as needed, return next frame from TCP stream."""
         if self.i_frame >= self.n_frames:
             raise StopIteration
-        header_end = self._receive_until(b'}\n')
+        header_end = self._receive_until(b'}') + 1
         if self.i_frame == 0:
             self._parse_header(header_end)
         while self.used < header_end + self.size:
@@ -273,6 +273,12 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
 
 
 if __name__ == '__main__':
+
+    # debugging block
+    cam = CameraServal()
+    cam.get_movie(10, 1.0)
+    exit()
+
     cam = CameraServal()
     from IPython import embed
 
