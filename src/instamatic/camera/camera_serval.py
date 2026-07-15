@@ -26,7 +26,10 @@ logger = logging.getLogger(__name__)
 # 2. `java -jar .\server\serv-2.1.3.jar`
 # 3. launch `instamatic`
 
-Ignore = object()  # sentinel object: informs `_get_images` to get a single image
+class Ignore:  # sentinel object: informs `_get_images` to get a single image
+    pass
+
+IGNORE = Ignore()
 
 
 class CameraServal(CameraBase):
@@ -63,7 +66,7 @@ class CameraServal(CameraBase):
         exposure: `float` or `None`
             Exposure time in seconds.
         """
-        return self._get_images(n_frames=Ignore, exposure=exposure, **kwargs)
+        return self._get_images(n_frames=IGNORE, exposure=exposure, **kwargs)
 
     def _get_images(
         self,
@@ -72,15 +75,15 @@ class CameraServal(CameraBase):
         **kwargs,
     ) -> Union[np.ndarray, List[np.ndarray]]:
         """General media acquisition dispatcher for other protected methods."""
-        n: int = 1 if n_frames is Ignore else n_frames
+        n: int = 1 if n_frames is IGNORE else n_frames
         e: float = self.default_exposure if exposure is None else exposure
 
-        if n_frames == 0:  # single image is communicated via n_frames = Ignore
+        if n_frames == 0:  # single image is communicated via n_frames = IGNORE
             return []
 
         elif e < self.MIN_EXPOSURE:
             logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
-            if n_frames is Ignore:
+            if n_frames is IGNORE:
                 return self._get_image_null(exposure=e, **kwargs)
             return [self._get_image_null(exposure=e, **kwargs) for _ in range(n)]
 
@@ -89,12 +92,12 @@ class CameraServal(CameraBase):
             n1 = math.ceil(e / self.MAX_EXPOSURE)
             e = (e + self.dead_time) / n1 - self.dead_time
             images = self._get_image_stack(n_frames=n * n1, exposure=e, **kwargs)
-            if n_frames is Ignore:
+            if n_frames is IGNORE:
                 return self._spliced_sum(images, exposure=e)
             return [self._spliced_sum(i, exposure=e) for i in batched(images, n1)]
 
         else:  # if exposure is within limits
-            if n_frames is Ignore:
+            if n_frames is IGNORE:
                 return self._get_image_single(exposure=e, **kwargs)
             return self._get_image_stack(n_frames=n, exposure=e, **kwargs)
 
@@ -273,11 +276,6 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
 
 
 if __name__ == '__main__':
-
-    # debugging block
-    cam = CameraServal()
-    cam.get_movie(10, 1.0)
-    exit()
 
     cam = CameraServal()
     from IPython import embed
