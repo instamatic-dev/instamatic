@@ -139,8 +139,7 @@ class Run:
     def has_beamshifts(self) -> bool:
         columns = ['beamshift_x', 'beamshift_y']
         columns_exist = set(columns).issubset(self.table.columns)
-        columns_have_nans = self.table[columns].isna().any().any()
-        return columns_exist and not columns_have_nans
+        return columns_exist and not self.table[columns].isna().any().any()
 
     @property
     def osc_angle(self) -> float:
