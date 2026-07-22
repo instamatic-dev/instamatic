@@ -67,23 +67,25 @@ class CameraServal(CameraBase):
 
         f = dict(bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path)
         conn = ServalCamera()
-        conn.connect(http_url)
+        conn.connect(http_url.geturl())
+        print(http_url.geturl())
+        print(self.url)
         conn.set_chip_config_files(**f)
         conn.set_detector_config(**self.detector_config)
 
-        tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_listener.settimeout(5.0)
-        tcp_listener.bind(('0.0.0.0', tcp_port))
-        tcp_listener.listen(1)
+        # tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # tcp_listener.settimeout(5.0)
+        # tcp_listener.bind(('0.0.0.0', tcp_port))
+        # tcp_listener.listen(1)
 
-        self.conn.destination = {'Image': [http_dest]}
-        return conn, tcp_listener
+        conn.destination = {'Image': [http_dest]}
+        return conn, None # tcp_listener
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
-        self.tcp_listener.close()
+        # self.tcp_listener.close()
         msg = f"Connection to camera '{self.get_name()}' released"
         logger.info(msg)
 
@@ -117,12 +119,19 @@ class CameraServal(CameraBase):
             return self._spliced_sum(images, exposure=e)
 
         logger.debug(f'Collecting a single image with exposure {exposure} s')
-        self.conn.set_detector_config(ExposureTime=exposure)
+        print('Setting detector config')
+        self.conn.set_detector_config(ExposureTime=e, TriggerPeriod=e+self.dead_time)
+        print(f'Set detector config to: {self.conn.get_request('/detector/config').json()}')
         db = self.conn.dashboard
         if db['Measurement'] is None or db['Measurement']['Status'] != 'DA_RECORDING':
+            print(f'Starting measurement')
             self.conn.measurement_start()
+        print(f'Started measurement, getting request')
+        self.conn.trigger_start()
+        print(f'Started trigger, getting request')
 
         response = self.conn.get_request('/measurement/image')
+        print(f'Got response: {response}')
         return tifffile.imread(BytesIO(response.content))
 
     def _spliced_sum(self, arrays: Sequence[np.ndarray], exposure: float) -> np.ndarray:
