@@ -65,6 +65,7 @@ class MediaGrabber:
 
         self.stopEvent = threading.Event()
         self.acquireInitiateEvent = threading.Event()
+        self.acquireInitiateEvent2 = threading.Event()
         self.continuousCollectionEvent = threading.Event()
 
     def run(self):
@@ -79,7 +80,9 @@ class MediaGrabber:
                     self.callback(media, request=r)
                 else:  # isinstance(r, MovieRequest):
                     n = r.n_frames if r.n_frames else 1
-                    for media in self.cam.get_movie(n_frames=n, exposure=e, binsize=b):
+                    m = self.cam.get_movie(n_frames=n, exposure=e, binsize=b)
+                    self.acquireInitiateEvent2.wait()
+                    for media in m:
                         self.callback(media, request=r)
                         time.sleep(0)  # yields thread priority to VideoStream
 
@@ -206,16 +209,26 @@ class LiveVideoStream(VideoStream):
     def get_movie(
         self, n_frames: int, exposure=None, binsize=None
     ) -> Generator[np.ndarray, None, None]:
+
+        self.blocked().__enter__()  # Stop the passive collection during request acquisition
         try:
-            with self.blocked():  # Stop the passive collection during request acquisition
-                self.grabber.request = MovieRequest(n_frames, exposure, binsize)
-                self.grabber.acquireInitiateEvent.set()
+            self.grabber.request = MovieRequest(n_frames, exposure, binsize)
+            self.grabber.acquireInitiateEvent.set()
+        except Exception:
+            self.blocked().__exit__(None, None, None)
+
+        def _movie_generator() -> Generator[np.ndarray, None, None]:
+            try:
+                self.grabber.acquireInitiateEvent2.set()
                 for _ in range(n_frames):
                     while not self.requested:
                         time.sleep(0)  # yields thread priority to MediaGrabber
                     yield self.requested.popleft()
-        finally:
-            self.grabber.request = None
+            finally:
+                self.grabber.request = None
+                self.grabber.acquireInitiateEvent2.clear()
+
+        return _movie_generator()
 
     def update_frametime(self, frametime):
         self.frametime = frametime
