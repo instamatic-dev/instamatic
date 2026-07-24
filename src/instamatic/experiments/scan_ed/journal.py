@@ -51,7 +51,7 @@ class Journal:
 
         self._seq += 1
         record = {'seq': self._seq, 'ts': time.time(), 'method': method, 'kwargs': kwargs}
-        line = json.dumps(record, separators=(',', ':')) + '\n'
+        line = json.dumps(record, separators=(',', ':'), default=serialize) + '\n'
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open('a', encoding='utf-8') as f:
             f.write(line)
