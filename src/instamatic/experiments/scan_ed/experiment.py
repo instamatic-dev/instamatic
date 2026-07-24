@@ -370,7 +370,7 @@ class Experiment(ExperimentBase):
             self.ctrl.stage.a = scan['tilt']
 
         name = str(SaveName().append(region_idx, line_idx, scan_idx))
-        self.dispatcher.begin_scan(n_frames, name=name)
+        self.dispatcher.begin_scan(region_idx, line_idx, scan_idx, n_frames)
 
         exposure, speed, _ = self.determine_timing(line['step'])
         axis = line['axis']  # x: 0, y: 1
@@ -380,8 +380,8 @@ class Experiment(ExperimentBase):
         self.ctrl.stage.set_with_speed(**setter_kwargs, wait=False)
 
         m = self.ctrl.get_movie(n_frames=n_frames, exposure=exposure, header_keys=None)
-        kw = {'region': region_idx, 'line': line_idx, 'scan': scan_idx}
-        self.dispatcher.process_scan(m, **kw)
+        # kw = {'region': region_idx, 'line': line_idx, 'scan': scan_idx}
+        self.dispatcher.process_scan(m)
         self.ctrl.stage.wait()
 
         all_ = self.params.get('save_all', False)

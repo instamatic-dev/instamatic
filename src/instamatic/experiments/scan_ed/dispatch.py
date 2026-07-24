@@ -79,7 +79,7 @@ class DiffHuntDispatcher:
 
     @property
     def buffer_name(self) -> str:
-        return str(SaveName(*self.region_line_scan))
+        return str(SaveName().append(*self.region_line_scan))
 
     def emit(self, task: CommandKind, **kwargs) -> None:
         """Shorthand to create and put Command in free self.commands queue."""

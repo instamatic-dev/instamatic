@@ -153,12 +153,10 @@ class CameraServal(CameraBase):
         previous_destination = self.conn.destination
         self.conn.destination = {'Image': [self.tcp_dest]}
         self.set_detector_config(ExposureTime=e, nTriggers=n_frames)
-        print('SETUP PERFORMED')
 
         def _get_movie_inner() -> Iterator[np.ndarray]:  # this runs on next():
             try:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
-                print('MEASUREMENT STARTED')
                 try:
                     sock, _ = self.tcp_listener.accept()
                 except socket.timeout:
