@@ -67,7 +67,7 @@ class CameraServal(CameraBase):
 
         f = dict(bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path)
         conn = ServalCamera()
-        conn.connect(http_url)
+        conn.connect(http_url.geturl())
         conn.set_chip_config_files(**f)
         conn.set_detector_config(**self.detector_config)
 
@@ -77,13 +77,13 @@ class CameraServal(CameraBase):
         tcp_listener.bind(('0.0.0.0', tcp_port))
         tcp_listener.listen(1)
 
-        self.conn.destination = {'Image': [http_dest]}
+        conn.destination = {'Image': [http_dest]}
         return conn, tcp_listener
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
-        self.tcp_listener.close()
+        # self.tcp_listener.close()
         msg = f"Connection to camera '{self.get_name()}' released"
         logger.info(msg)
 
@@ -117,10 +117,11 @@ class CameraServal(CameraBase):
             return self._spliced_sum(images, exposure=e)
 
         logger.debug(f'Collecting a single image with exposure {exposure} s')
-        self.conn.set_detector_config(ExposureTime=exposure)
+        self.conn.set_detector_config(ExposureTime=e, TriggerPeriod=e+self.dead_time)
         db = self.conn.dashboard
         if db['Measurement'] is None or db['Measurement']['Status'] != 'DA_RECORDING':
             self.conn.measurement_start()
+        self.conn.trigger_start()
 
         response = self.conn.get_request('/measurement/image')
         return tifffile.imread(BytesIO(response.content))
@@ -152,10 +153,12 @@ class CameraServal(CameraBase):
         previous_destination = self.conn.destination
         self.conn.destination = {'Image': [self.tcp_dest]}
         self.set_detector_config(ExposureTime=e, nTriggers=n_frames)
+        print('SETUP PERFORMED')
 
         def _get_movie_inner() -> Iterator[np.ndarray]:  # this runs on next():
             try:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
+                print('MEASUREMENT STARTED')
                 try:
                     sock, _ = self.tcp_listener.accept()
                 except socket.timeout:
