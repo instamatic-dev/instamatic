@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import traceback
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
@@ -144,8 +144,6 @@ def plot(
             ax.imshow(rgba, origin='lower', extent=(x0, x1, y0, y1), aspect='auto', zorder=3)
             ax.set_aspect('equal', adjustable='box')
     except (KeyError, ValueError):
-        import traceback
-
         traceback.print_exc()  # if fails, not my largest concern
 
     if limit_x is not None:
