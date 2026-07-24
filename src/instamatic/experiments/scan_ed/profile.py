@@ -5,6 +5,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.special import expit
 
 from instamatic._typing import float_nm
 from instamatic.grid.geometry import WindowType
@@ -36,10 +37,10 @@ class ScanProfile:
     def sigmoid(
         x: Union[float_nm, np.ndarray],
         x0: Union[float_nm, np.ndarray],
-        width: float = 10.0,
+        width: float = 100.0,
     ) -> float:
-        """A sigmoid that grows from 0 to 1 across ~1 unit (99%) around x0."""
-        return 1 / (1 + np.exp(-(x - x0) / width))
+        """Grows (from 0 to 1) by .24/46/99 across 1/2/10 widths around x0."""
+        return expit((x - x0) / width)
 
     def window_model(
         self,
@@ -59,6 +60,6 @@ class ScanProfile:
 
     def fit(self, x: np.ndarray, light: np.ndarray) -> tuple[float_nm, float]:
         """X-offset and y-scale that best fit (x, y) data to scan profile."""
-        p0 = [0.0, np.percentile(light, 99)]
-        popt, _ = curve_fit(self.window_model, x, light, p0=p0)  # noqa
+        p0 = [x[np.argmax(light)] - self.var, np.percentile(light, 99)]
+        popt, _ = curve_fit(self.window_model, x, light, p0=p0)  # noqa unpacking
         return popt[0], popt[1]
