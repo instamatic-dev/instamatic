@@ -86,23 +86,24 @@ def plot(
             slow_idx = 'y0' if (lines['axis'] == 0).all() else 'x0'
             fast_idx = 'x0' if (lines['axis'] == 0).all() else 'y0'
 
-            slows = lines[slow_idx]
-            try:
-                slow_step = (np.max(slows) - np.min(slows)) / (len(slows) - 1)
-            except ZeroDivisionError:
-                slow_step = abs(lines['step'])  # fallback: assume same as fast
-            slow_min = np.min(slows) - 0.5 * slow_step
-            slow_max = np.max(slows) + 0.5 * slow_step
-            slow_count = len(slows)
-
             max_offset = scans['offset'].abs().max()
-            fast_step = lines['step'].abs().mean()  # TODO fails if zero steps
 
+            if (fast_step := lines['step'].abs().mean()) == 0:
+                raise ValueError(f'{fast_step=}: scan data missing or corrupt')
             fast_start = lines[fast_idx]
             fast_end = lines[fast_idx] + lines['step'] * lines['n_steps']
             fast_min = np.minimum(fast_start, fast_end).min() - max_offset
             fast_max = np.maximum(fast_start, fast_end).max() + max_offset
             fast_count = np.ceil((fast_max - fast_min) / fast_step).astype(int)
+
+            slows = lines[slow_idx]
+            try:
+                slow_step = (np.max(slows) - np.min(slows)) / (len(slows) - 1)
+            except ZeroDivisionError:
+                slow_step = fast_step  # fallback in case of a single scan
+            slow_min = np.min(slows) - 0.5 * slow_step
+            slow_max = np.max(slows) + 0.5 * slow_step
+            slow_count = len(slows)
 
             level = ['region', 'line', 'scan']
             hits = {k: g['hits'].to_numpy(dtype=float) for k, g in steps.groupby(level=level)}
@@ -125,9 +126,10 @@ def plot(
 
                 for k in range(len(j0s)):
                     j0 = j0s[k]
-                    hits_matrix[i, j0 : j0 + n_steps] += hits_array[k]
-                    # TODO
-                    # ValueError: operands could not be broadcast together with shapes (0,) (211,) (0,)
+                    j0c = max(0, j0)
+                    j1c = min(fast_count, j0 + n_steps)
+                    if j0c < j1c:
+                        hits_matrix[i, j0c:j1c] += hits_array[k][j0c - j0 : j1c - j0]
 
             if fast_idx == 'x0':
                 x0, x1, y0, y1 = fast_min, fast_max, slow_min, slow_max
@@ -140,7 +142,8 @@ def plot(
                 rgba[..., 0] = 1.0  # red square with opacity ~ hit density
                 rgba[..., 3] = hits_matrix / hits_max
             ax.imshow(rgba, origin='lower', extent=(x0, x1, y0, y1), aspect='auto', zorder=3)
-    except ValueError:
+            ax.set_aspect('equal', adjustable='box')
+    except (KeyError, ValueError):
         import traceback
 
         traceback.print_exc()  # if fails, not my largest concern
