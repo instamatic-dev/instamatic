@@ -149,9 +149,8 @@ class CameraServal(CameraBase):
 
     def get_movie(self, n_frames: int, exposure: Optional[float] = None, **_) -> Movie:
         """Yield `n_frames` images received via HTTP (convenient) or TCP
-        (fast). If the exposure is not given, the default is read from the
-        config file. Binning is ignored. Setup is eager, start is delayed until
-        iteration.
+        (fast); If the exposure is None, the default is read from the config.
+        Binning is ignored. Setup is eager, start is delayed until iteration.
 
         n_frames: `int`
             Number of frames to collect
@@ -179,12 +178,10 @@ class CameraServal(CameraBase):
         return self._get_movie_inner(n_frames=n_frames)
 
     def _get_movie_inner(self, n_frames: int) -> Movie:
-        """Frame generator.
-
-        Separate method because `yield` keyword makes this
-        code execution delayed. In other words, setup runs when `get_movie` is
-        called, but this method only when returned iterator is first iterated.
-        """
+        """Frame generator; Separate method because `yield` keyword makes this
+        code execution delayed; In other words, setup runs when `get_movie` is
+        called, but this method only when returned iterator is first
+        iterated."""
         try:
             if self.tcp_listener:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
