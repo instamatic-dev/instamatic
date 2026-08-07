@@ -9,12 +9,13 @@ import socket
 from io import BytesIO
 from math import prod
 from threading import Thread
-from typing import Iterator, Optional, Sequence, Tuple, Union
+from typing import Iterator, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import numpy as np
 import tifffile
 from serval_toolkit.camera import Camera as ServalCamera
+from typing_extensions import TypeAlias
 
 from instamatic.camera.camera_base import CameraBase
 
@@ -24,6 +25,14 @@ logger = logging.getLogger(__name__)
 # 1. `java -jar .\emu\tpx3_emu.jar`
 # 2. `java -jar .\server\serv-2.1.3.jar`
 # 3. launch `instamatic`
+
+
+# By default, movies are requested image-by-image client-side which can be slow.
+# Setting this var or using `camera.yaml` equivalent causes movies to be streamed
+# by server via TCP which is faster, but may require tweaking firewall settings.
+STREAM_MOVIES_VIA_TCP: bool = False
+
+Movie: TypeAlias = Iterator[np.ndarray]
 
 
 def _local_ip_for(remote_host: str, remote_port: int) -> str:
@@ -42,10 +51,10 @@ class CameraServal(CameraBase):
     BAD_EXPOSURE_MSG = 'Requested exposure exceeds native Serval support (>0-10s)'
 
     def __init__(self, name='serval') -> None:
-        """Initialize camera module."""
+        """Initialize camera module, vars, establish connection & cleanup."""
         super().__init__(name)
 
-        self.tcp_dest: dict[str, str] = {}  # destination for serial movies
+        self.tcp_dest: dict[str, str] = {}  # used if STREAM_MOVIES_VIA_TCP=True
         self.tcp_listener: Optional[socket.socket] = None  # use tcp if not None
 
         dc = self.detector_config  # noqa: loaded from a camera/file.yaml
@@ -63,56 +72,37 @@ class CameraServal(CameraBase):
     def establish_connection(self) -> ServalCamera:
         """Establish cam connection; "Missing" attrs are read from config."""
         http_url = urlparse(self.url)
-        hostname = http_url.hostname or 'localhost'
+        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
         f = dict(bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path)
 
         conn = ServalCamera()
         conn.connect(http_url.geturl())
         conn.set_chip_config_files(**f)
         conn.set_detector_config(**self.detector_config)
-
-        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
         conn.destination = {'Image': [http_dest]}
 
-        # try:
-        #     tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #     tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #     tcp_listener.settimeout(1.0)
-        #     tcp_listener.bind(('0.0.0.0', 0))
-        #     tcp_listener.listen(1)
-        #     tcp_port = tcp_listener.getsockname()[1]
-        #
-        #     local_ip = _local_ip_for(hostname, tcp_port)
-        #     tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
-        #     print(f'{tcp_base=}')
-        #
-        #     self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
-        #     self.conn, self.tcp_listener = conn, tcp_listener
-        #
-        #     # Test movie: will raise TimeoutError or RuntimeError if TCP fails
-        #     _ = list(self.get_movie(n_frames=1, exposure=self.MIN_EXPOSURE))
-        #     logger.info(f'TCP movie streaming ready on {tcp_port=}')
-        #
-        # except Exception as exception:
-        #     if self.tcp_listener is not None:
-        #         self.tcp_listener.close()
-        #         self.tcp_listener = None
-        #
-        #     conn.destination = {'Image': [http_dest]}
-        #     logger.warning(f'TCP movie streaming {exception=}, falling back to HTTP')
-        self.tcp_listener = None
+        if getattr(self, 'stream_movies_via_tcp') or STREAM_MOVIES_VIA_TCP:
+            self.tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.tcp_listener.settimeout(1.0)
+            self.tcp_listener.bind(('0.0.0.0', 0))
+            self.tcp_listener.listen(1)
+            tcp_port = self.tcp_listener.getsockname()[1]
+            local_ip = _local_ip_for(http_url.hostname or 'localhost', tcp_port)
+            tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
+            self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
+
         return conn
 
     def release_connection(self) -> None:
-        """Release the connection to the camera."""
+        """Release the connection to the camera (HTTP & TCP if applicable)."""
         self.conn.measurement_stop()
         if self.tcp_listener is not None:
             self.tcp_listener.close()
-        msg = f"Connection to camera '{self.get_name()}' released"
-        logger.info(msg)
+        logger.info(f"Connection to camera '{self.get_name()}' released")
 
     def set_detector_config(self, **kwargs) -> None:
-        """Set detector config while infering about missing config params."""
+        """Set detector config while inferring about missing config params."""
         if 'TriggerMode' not in kwargs:
             tm = 'AUTOTRIGSTART_TIMERSTOP' if self.dead_time else 'CONTINUOUS'
             kwargs['TriggerMode'] = tm
@@ -157,12 +147,11 @@ class CameraServal(CameraBase):
         live_fraction = len(arrays) * exposure / total_exposure
         return (array_sum / live_fraction).astype(arrays[0].dtype)
 
-    def get_movie(
-        self, n_frames: int, exposure: Optional[float] = None, **kwargs
-    ) -> Iterator[np.ndarray]:
-        """Yield `n_frames` images received via a TCP stream with minimal dead
-        time. If the exposure is not given, the default value is read from the
-        config file. Binning is ignored. Setup is eager, iteration is delayed.
+    def get_movie(self, n_frames: int, exposure: Optional[float] = None, **_) -> Movie:
+        """Yield `n_frames` images received via HTTP (convenient) or TCP
+        (fast). If the exposure is not given, the default is read from the
+        config file. Binning is ignored. Setup is eager, start is delayed until
+        iteration.
 
         n_frames: `int`
             Number of frames to collect
@@ -172,35 +161,38 @@ class CameraServal(CameraBase):
         logger.debug(f'Collecting {n_frames}-frame movie with {exposure=} s')
         e: float = self.default_exposure if exposure is None else exposure
         self.conn.measurement_stop()
-
         get_movie = self._get_movie_tcp if self.tcp_listener else self._get_movie_http
         return get_movie(n_frames=n_frames, exposure=e)
 
-    def _get_movie_http(self, n_frames: int, exposure: float) -> Iterator[np.ndarray]:
-        """Fallback method, polls frames from HTTP if TCP start-up failed."""
+    def _get_movie_http(self, n_frames: int, exposure: float) -> Movie:
+        """Convenient method: poll frames via HTTP using the client socket."""
         self.previous_config = self.conn.detector_config
         self.set_detector_config(ExposureTime=exposure, nTriggers=n_frames)
-        return self._get_movie_inner(n_frames=n_frames, use_tcp=False)
+        return self._get_movie_inner(n_frames=n_frames)
 
-    def _get_movie_tcp(self, n_frames: int, exposure: float) -> Iterator[np.ndarray]:
-        """Fast method, reads frames directly from TCP stream if available."""
+    def _get_movie_tcp(self, n_frames: int, exposure: float) -> Movie:
+        """Fast: stream frames directly via TCP if STREAM_MOVIES_VIA_TCP."""
         self.previous_config = self.conn.detector_config
         self.previous_destination = self.conn.destination
         self.conn.destination = {'Image': [self.tcp_dest]}
         self.set_detector_config(ExposureTime=exposure, nTriggers=n_frames)
-        return self._get_movie_inner(n_frames=n_frames, use_tcp=True)
+        return self._get_movie_inner(n_frames=n_frames)
 
-    def _get_movie_inner(self, n_frames: int, use_tcp: bool) -> Iterator[np.ndarray]:
-        """Movie frame iterator, isolated from config for max performance."""
+    def _get_movie_inner(self, n_frames: int) -> Movie:
+        """Frame generator.
+
+        Separate method because `yield` keyword makes this
+        code execution delayed. In other words, setup runs when `get_movie` is
+        called, but this method only when returned iterator is first iterated.
+        """
         try:
-            if use_tcp:
+            if self.tcp_listener:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
-                self.tcp_listener.settimeout(1.0)
+                self.tcp_listener.settimeout(5.0)
                 sock, _ = self.tcp_listener.accept()
                 sock.settimeout(1.1 * self.MAX_EXPOSURE)
                 with sock:
-                    bs = self.movie_bufsize
-                    yield from ServalMovieDeserializer(sock, n_frames, bs)
+                    yield from ServalMovieDeserializer(sock, n_frames, self.movie_bufsize)
             else:
                 self.conn.measurement_start()
                 for _ in range(n_frames):
@@ -213,7 +205,7 @@ class CameraServal(CameraBase):
                 logger.error(f'Error stopping measurement: {ex}')
             try:
                 self.conn.set_detector_config(**self.previous_config)
-                if use_tcp:
+                if self.tcp_listener:
                     self.conn.destination = self.previous_destination
             except Exception as ex:
                 logger.error(f'Error restoring config and destination: {ex}')
@@ -225,7 +217,7 @@ class CameraServal(CameraBase):
         return int(dim_x / binning), int(dim_y / binning)
 
 
-class ServalMovieDeserializer(Iterator[np.ndarray]):
+class ServalMovieDeserializer(Movie):
     """Deserializes Serval camera TCP byte stream from socket into images."""
 
     def __init__(self, sock: socket.socket, n_frames: int, bufsize: int) -> None:
@@ -259,7 +251,7 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
         header_str = self.buffer[:header_size].decode('utf-8')
         header_dict = json.loads(header_str)
         bit_depth = header_dict['bitDepth']
-        self.shape = header_dict['height'], header_dict['width']
+        self.shape = (header_dict['height'], header_dict['width'])
         self.dtype = np.dtype(f'uint{bit_depth}').newbyteorder('>')
         self.size = header_dict.get('dataSize', prod(self.shape) * self.dtype.itemsize)
 
@@ -267,7 +259,7 @@ class ServalMovieDeserializer(Iterator[np.ndarray]):
         """Recv as much data as needed, return next frame from TCP stream."""
         if self.i_frame >= self.n_frames:
             raise StopIteration
-        header_end = self._receive_until(b'}') + 1
+        header_end = self._receive_until(b'}') + 1  # json image never nests "}"
         if self.i_frame == 0:
             self._parse_header(header_end)
         while self.used < header_end + self.size:
