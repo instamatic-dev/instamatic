@@ -180,8 +180,7 @@ class CameraServal(CameraBase):
     def _get_movie_inner(self, n_frames: int) -> Movie:
         """Frame generator; Separate method because `yield` keyword makes this
         code execution delayed; In other words, setup runs when `get_movie` is
-        called, but this method only when returned iterator is first
-        iterated."""
+        called, but this method only when returned iterator is iterated."""
         try:
             if self.tcp_listener:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
