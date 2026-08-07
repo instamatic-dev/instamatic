@@ -63,12 +63,16 @@ class CameraServal(CameraBase):
     def establish_connection(self) -> ServalCamera:
         """Establish cam connection; "Missing" attrs are read from config."""
         http_url = urlparse(self.url)
+        hostname = http_url.hostname or 'localhost'
         f = dict(bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path)
 
         conn = ServalCamera()
         conn.connect(http_url.geturl())
         conn.set_chip_config_files(**f)
         conn.set_detector_config(**self.detector_config)
+
+        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
+        conn.destination = {'Image': [http_dest]}
 
         try:
             tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,22 +81,19 @@ class CameraServal(CameraBase):
             tcp_listener.bind(('0.0.0.0', 0))
             tcp_listener.listen(1)
             tcp_port = tcp_listener.getsockname()[1]
-            local_ip = _local_ip_for(http_url.hostname, tcp_port)
+            local_ip = _local_ip_for(hostname, tcp_port)
             tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
             self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
             self.conn, self.tcp_listener = conn, tcp_listener
             _ = list(self.get_movie(n_frames=1, exposure=self.MIN_EXPOSURE))
             logger.info(f'TCP movie streaming ready on {tcp_port=}')
-        except OSError as exception:
-            try:
-                tcp_listener.close()  # noqa: NameError excepted
-            except (NameError, OSError):
-                pass
-            self.tcp_listener = None
+        except Exception as exception:
+            if self.tcp_listener is not None:
+                self.tcp_listener.close()
+                self.tcp_listener = None
+            conn.destination = {'Image': [http_dest]}
             logger.info(f'TCP movie streaming {exception=}, falling back to HTTP')
 
-        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
-        conn.destination = {'Image': [http_dest]}
         return conn
 
     def release_connection(self) -> None:
@@ -189,8 +190,9 @@ class CameraServal(CameraBase):
             if use_tcp:
                 try:
                     sock, _ = self.tcp_listener.accept()
+                    sock.settimeout(self.MAX_EXPOSURE)
                 except socket.timeout:
-                    raise TimeoutError('Serval failed to connect back within 1s.')
+                    raise TimeoutError('Serval failed to connect back within 5s.')
                 with sock:
                     bs = self.movie_bufsize
                     yield from ServalMovieDeserializer(sock, n_frames, bs)
