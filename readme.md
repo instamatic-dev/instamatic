@@ -34,11 +34,12 @@ See [instamatic-dev/instamatic-tecnai-server](https://github.com/instamatic-dev/
 
 ## Installation
 
-If you use conda, create a new environment:
+If you use conda, create a new environment with a supported version of python. For maximum convenience, install basic libraries as well as `pycifrw` from conda forge:
 
 ```
-conda create -n instamatic python=3.11
+conda create -n instamatic python=3.12
 conda activate instamatic
+conda install numpy matplotlib pycifrw -c conda-forge
 ```
 
 Install using pip, works with python versions 3.9 or newer:
@@ -47,9 +48,11 @@ Install using pip, works with python versions 3.9 or newer:
 pip install instamatic
 ```
 
+Please mind that one of the indirect Instamatic dependencies, PyCifRW, requires Microsoft Visual C++ 14.0 or greater to compile properly. For this reason, when installing instamatic directly from pip, these build tools must be available on the system to succeed. Installing precompiled `pycifrw` from conda-forge circumvents this issue.  
+
 ## OS requirement
 
-The package requires Windows 7 or higher. It has been mainly developed and tested under Windows 7 and higher.
+The package requires Windows 7 or higher. It has been mainly developed and tested under Windows 7 and higher. Client and camera server installation were shown to successfully run on Unix-based systems but may require additional care. Microscope server installations require Windows OS for communication with the TEM.
 
 ## Package dependencies
 
