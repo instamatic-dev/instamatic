@@ -74,26 +74,33 @@ class CameraServal(CameraBase):
         http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
         conn.destination = {'Image': [http_dest]}
 
-        try:
-            tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            tcp_listener.settimeout(1.0)
-            tcp_listener.bind(('0.0.0.0', 0))
-            tcp_listener.listen(1)
-            tcp_port = tcp_listener.getsockname()[1]
-            local_ip = _local_ip_for(hostname, tcp_port)
-            tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
-            self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
-            self.conn, self.tcp_listener = conn, tcp_listener
-            _ = list(self.get_movie(n_frames=1, exposure=self.MIN_EXPOSURE))
-            logger.info(f'TCP movie streaming ready on {tcp_port=}')
-        except Exception as exception:
-            if self.tcp_listener is not None:
-                self.tcp_listener.close()
-                self.tcp_listener = None
-            conn.destination = {'Image': [http_dest]}
-            logger.info(f'TCP movie streaming {exception=}, falling back to HTTP')
-
+        # try:
+        #     tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #     tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #     tcp_listener.settimeout(1.0)
+        #     tcp_listener.bind(('0.0.0.0', 0))
+        #     tcp_listener.listen(1)
+        #     tcp_port = tcp_listener.getsockname()[1]
+        #
+        #     local_ip = _local_ip_for(hostname, tcp_port)
+        #     tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
+        #     print(f'{tcp_base=}')
+        #
+        #     self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
+        #     self.conn, self.tcp_listener = conn, tcp_listener
+        #
+        #     # Test movie: will raise TimeoutError or RuntimeError if TCP fails
+        #     _ = list(self.get_movie(n_frames=1, exposure=self.MIN_EXPOSURE))
+        #     logger.info(f'TCP movie streaming ready on {tcp_port=}')
+        #
+        # except Exception as exception:
+        #     if self.tcp_listener is not None:
+        #         self.tcp_listener.close()
+        #         self.tcp_listener = None
+        #
+        #     conn.destination = {'Image': [http_dest]}
+        #     logger.warning(f'TCP movie streaming {exception=}, falling back to HTTP')
+        self.tcp_listener = None
         return conn
 
     def release_connection(self) -> None:
@@ -186,17 +193,16 @@ class CameraServal(CameraBase):
     def _get_movie_inner(self, n_frames: int, use_tcp: bool) -> Iterator[np.ndarray]:
         """Movie frame iterator, isolated from config for max performance."""
         try:
-            Thread(target=self.conn.measurement_start, daemon=True).start()
             if use_tcp:
-                try:
-                    sock, _ = self.tcp_listener.accept()
-                    sock.settimeout(self.MAX_EXPOSURE)
-                except socket.timeout:
-                    raise TimeoutError('Serval failed to connect back within 5s.')
+                Thread(target=self.conn.measurement_start, daemon=True).start()
+                self.tcp_listener.settimeout(1.0)
+                sock, _ = self.tcp_listener.accept()
+                sock.settimeout(1.1 * self.MAX_EXPOSURE)
                 with sock:
                     bs = self.movie_bufsize
                     yield from ServalMovieDeserializer(sock, n_frames, bs)
             else:
+                self.conn.measurement_start()
                 for _ in range(n_frames):
                     response = self.conn.get_request('/measurement/image')
                     yield tifffile.imread(BytesIO(response.content))
