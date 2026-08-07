@@ -46,44 +46,60 @@ class CameraServal(CameraBase):
         super().__init__(name)
 
         self.tcp_dest: dict[str, str] = {}  # destination for serial movies
-        self.conn, self.tcp_listener = self.establish_connection()
+        self.tcp_listener: Optional[socket.socket] = None  # use tcp if not None
+
         dc = self.detector_config  # noqa: loaded from a camera/file.yaml
         self.dead_time = dc['TriggerPeriod'] - dc['ExposureTime']
         self.movie_bufsize = 2 * 4 * prod(self.dimensions)
         self.null_image = np.zeros(shape=self.dimensions, dtype=np.uint32)
 
+        self.previous_config: dict = {}  # used to revert to default after movie
+        self.previous_destination: dict = {}
+        self.conn: ServalCamera = self.establish_connection()
+
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
 
-    def establish_connection(self) -> tuple[ServalCamera, socket.socket]:
-        """Establish connection to the camera."""
-
-        http_url = urlparse(self.url)  # noqa - loaded from a camera/file.yaml
-        tcp_port = (http_url.port or 8080) + 1
-        local_ip = _local_ip_for(http_url.hostname, tcp_port)
-        tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
-        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
-        self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
-
+    def establish_connection(self) -> ServalCamera:
+        """Establish cam connection; "Missing" attrs are read from config."""
+        http_url = urlparse(self.url)
         f = dict(bpc_file_path=self.bpc_file_path, dacs_file_path=self.dacs_file_path)
+
         conn = ServalCamera()
         conn.connect(http_url.geturl())
         conn.set_chip_config_files(**f)
         conn.set_detector_config(**self.detector_config)
 
-        tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_listener.settimeout(5.0)
-        tcp_listener.bind(('0.0.0.0', tcp_port))
-        tcp_listener.listen(1)
+        try:
+            tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            tcp_listener.settimeout(1.0)
+            tcp_listener.bind(('0.0.0.0', 0))
+            tcp_listener.listen(1)
+            tcp_port = tcp_listener.getsockname()[1]
+            local_ip = _local_ip_for(http_url.hostname, tcp_port)
+            tcp_base = f'tcp://connect@{local_ip}:{tcp_port}'
+            self.tcp_dest = {'Base': tcp_base, 'Format': 'jsonimage', 'Mode': 'count'}
+            self.conn, self.tcp_listener = conn, tcp_listener
+            _ = list(self.get_movie(n_frames=1, exposure=self.MIN_EXPOSURE))
+            logger.info(f'TCP movie streaming ready on {tcp_port=}')
+        except OSError as exception:
+            try:
+                tcp_listener.close()  # noqa: NameError excepted
+            except (NameError, OSError):
+                pass
+            self.tcp_listener = None
+            logger.info(f'TCP movie streaming {exception=}, falling back to HTTP')
 
+        http_dest = {'Base': 'http://localhost', 'Format': 'tiff', 'Mode': 'count'}
         conn.destination = {'Image': [http_dest]}
-        return conn, tcp_listener
+        return conn
 
     def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
-        self.tcp_listener.close()
+        if self.tcp_listener is not None:
+            self.tcp_listener.close()
         msg = f"Connection to camera '{self.get_name()}' released"
         logger.info(msg)
 
@@ -138,45 +154,61 @@ class CameraServal(CameraBase):
     ) -> Iterator[np.ndarray]:
         """Yield `n_frames` images received via a TCP stream with minimal dead
         time. If the exposure is not given, the default value is read from the
-        config file. Binning is ignored.
+        config file. Binning is ignored. Setup is eager, iteration is delayed.
 
         n_frames: `int`
             Number of frames to collect
         exposure: `float` or `None`
             Exposure time in seconds.
         """
-        logger.debug(f'Collecting {n_frames}-frame movie with {exposure=} s via TCP')
+        logger.debug(f'Collecting {n_frames}-frame movie with {exposure=} s')
         e: float = self.default_exposure if exposure is None else exposure
-
         self.conn.measurement_stop()
-        previous_config = self.conn.detector_config
-        previous_destination = self.conn.destination
-        self.conn.destination = {'Image': [self.tcp_dest]}
-        self.set_detector_config(ExposureTime=e, nTriggers=n_frames)
 
-        def _get_movie_inner() -> Iterator[np.ndarray]:  # this runs on next():
-            try:
-                Thread(target=self.conn.measurement_start, daemon=True).start()
+        get_movie = self._get_movie_tcp if self.tcp_listener else self._get_movie_http
+        return get_movie(n_frames=n_frames, exposure=e)
+
+    def _get_movie_http(self, n_frames: int, exposure: float) -> Iterator[np.ndarray]:
+        """Fallback method, polls frames from HTTP if TCP start-up failed."""
+        self.previous_config = self.conn.detector_config
+        self.set_detector_config(ExposureTime=exposure, nTriggers=n_frames)
+        return self._get_movie_inner(n_frames=n_frames, use_tcp=False)
+
+    def _get_movie_tcp(self, n_frames: int, exposure: float) -> Iterator[np.ndarray]:
+        """Fast method, reads frames directly from TCP stream if available."""
+        self.previous_config = self.conn.detector_config
+        self.previous_destination = self.conn.destination
+        self.conn.destination = {'Image': [self.tcp_dest]}
+        self.set_detector_config(ExposureTime=exposure, nTriggers=n_frames)
+        return self._get_movie_inner(n_frames=n_frames, use_tcp=True)
+
+    def _get_movie_inner(self, n_frames: int, use_tcp: bool) -> Iterator[np.ndarray]:
+        """Movie frame iterator, isolated from config for max performance."""
+        try:
+            Thread(target=self.conn.measurement_start, daemon=True).start()
+            if use_tcp:
                 try:
                     sock, _ = self.tcp_listener.accept()
                 except socket.timeout:
-                    raise TimeoutError('Serval failed to connect back within 5 seconds.')
+                    raise TimeoutError('Serval failed to connect back within 1s.')
                 with sock:
                     bs = self.movie_bufsize
                     yield from ServalMovieDeserializer(sock, n_frames, bs)
-
-            finally:
-                try:
-                    self.conn.measurement_stop()
-                except Exception as ex:
-                    logger.error(f'Error stopping measurement: {ex}')
-                try:
-                    self.conn.destination = previous_destination
-                    self.conn.set_detector_config(**previous_config)
-                except Exception as ex:
-                    logger.error(f'Error restoring config: {ex}')
-
-        return _get_movie_inner()
+            else:
+                for _ in range(n_frames):
+                    response = self.conn.get_request('/measurement/image')
+                    yield tifffile.imread(BytesIO(response.content))
+        finally:
+            try:
+                self.conn.measurement_stop()
+            except Exception as ex:
+                logger.error(f'Error stopping measurement: {ex}')
+            try:
+                self.conn.set_detector_config(**self.previous_config)
+                if use_tcp:
+                    self.conn.destination = self.previous_destination
+            except Exception as ex:
+                logger.error(f'Error restoring config and destination: {ex}')
 
     def get_image_dimensions(self) -> Tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
