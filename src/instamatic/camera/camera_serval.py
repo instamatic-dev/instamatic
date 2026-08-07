@@ -50,7 +50,7 @@ class CameraServal(CameraBase):
         dc = self.detector_config  # noqa: loaded from a camera/file.yaml
         self.dead_time = dc['TriggerPeriod'] - dc['ExposureTime']
         self.movie_bufsize = 2 * 4 * prod(self.dimensions)
-        self.null_image = np.zeros(shape=self.dimensions, dtype=np.int32)
+        self.null_image = np.zeros(shape=self.dimensions, dtype=np.uint32)
 
         logger.info(f'Camera {self.get_name()} initialized')
         atexit.register(self.release_connection)
@@ -83,7 +83,7 @@ class CameraServal(CameraBase):
     def release_connection(self) -> None:
         """Release the connection to the camera."""
         self.conn.measurement_stop()
-        # self.tcp_listener.close()
+        self.tcp_listener.close()
         msg = f"Connection to camera '{self.get_name()}' released"
         logger.info(msg)
 
@@ -106,18 +106,18 @@ class CameraServal(CameraBase):
         e: float = self.default_exposure if exposure is None else exposure
 
         if e < self.MIN_EXPOSURE:
-            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
+            logger.warning('%s: %g', self.BAD_EXPOSURE_MSG, e)
             return self.null_image
 
         elif e > self.MAX_EXPOSURE:
-            logger.warning('%s: %d', self.BAD_EXPOSURE_MSG, e)
+            logger.warning('%s: %g', self.BAD_EXPOSURE_MSG, e)
             n = math.ceil(e / self.MAX_EXPOSURE)
             e = (e + self.dead_time) / n - self.dead_time
             images = list(self.get_movie(n_frames=n, exposure=e))
             return self._spliced_sum(images, exposure=e)
 
         logger.debug(f'Collecting a single image with exposure {exposure} s')
-        self.conn.set_detector_config(ExposureTime=e, TriggerPeriod=e+self.dead_time)
+        self.conn.set_detector_config(ExposureTime=e, TriggerPeriod=e + self.dead_time)
         db = self.conn.dashboard
         if db['Measurement'] is None or db['Measurement']['Status'] != 'DA_RECORDING':
             self.conn.measurement_start()
@@ -153,12 +153,10 @@ class CameraServal(CameraBase):
         previous_destination = self.conn.destination
         self.conn.destination = {'Image': [self.tcp_dest]}
         self.set_detector_config(ExposureTime=e, nTriggers=n_frames)
-        print('SETUP PERFORMED')
 
         def _get_movie_inner() -> Iterator[np.ndarray]:  # this runs on next():
             try:
                 Thread(target=self.conn.measurement_start, daemon=True).start()
-                print('MEASUREMENT STARTED')
                 try:
                     sock, _ = self.tcp_listener.accept()
                 except socket.timeout:
