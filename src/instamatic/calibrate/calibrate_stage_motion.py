@@ -183,7 +183,7 @@ class CalibStageMotion(ABC):
                 spans = [s.span for s in sst if s.speed == speed]
                 times = [s.time for s in sst if s.speed == speed]
                 ax.plot(spans, times, fmt, color=color)
-            label = f'Speed setting {speed:.2f}'
+            label = f'Speed setting {speed:.2f}' if speed else 'Default speed'
             handles.append(Line2D([], [], color=color, marker='o', label=label))
 
         ax.set_xlabel(f'Motion span [{self._span_units}]')

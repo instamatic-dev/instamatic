@@ -128,12 +128,11 @@ class VideoStreamProcessor:
         if (temporary_image := self.temporary_image) is not None:
             return temporary_image
         if (frame := self.frame) is not None:
-            if self.vsf.display_range != 255.0 or self.vsf.brightness != 1.0:
-                if self.vsf.auto_contrast:
-                    display_range = 1 + np.percentile(frame[::4, ::4], 99.5)
-                else:
-                    display_range = self.vsf.display_range
-                frame = (self.vsf.brightness * 255 / display_range) * frame
+            if self.vsf.auto_contrast:
+                display_range = 1 + np.percentile(frame[::4, ::4], 99.5)
+            else:
+                display_range = self.vsf.display_range
+            frame = (self.vsf.brightness * 255 / display_range) * frame
             frame = np.clip(frame.astype(np.int16), 0, 255).astype(np.uint8)
         if self.draw.instructions:
             image = Image.fromarray(frame).convert(self.color_mode)

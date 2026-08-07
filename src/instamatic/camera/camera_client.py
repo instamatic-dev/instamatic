@@ -127,7 +127,7 @@ class CamClient:
         with self._eval_lock:
             self.s.send(dumper(dct))
 
-            acquiring_image = dct['attr_name'] in {'get_image', 'get_movie', '__gen_next__'}
+            acquiring_image = dct['attr_name'] in {'get_image', '__gen_next__'}
 
             if acquiring_image and not self.use_shared_memory:
                 response = self.s.recv(self._imagebufsize)
@@ -139,7 +139,7 @@ class CamClient:
             else:
                 raise RuntimeError(f'Received empty response when evaluating {dct=}')
 
-            if self.use_shared_memory and acquiring_image:
+            if status == 200 and self.use_shared_memory and acquiring_image and data:
                 data = self.get_data_from_shared_memory(**data)
 
             if status == 200:
@@ -196,7 +196,7 @@ class CamClient:
             print(f'Retrieve data from buffer `{name}`')
 
         buffer = self.buffers[name]
-        data = buffer[:]
+        data = buffer[:].copy()
 
         return data
 
