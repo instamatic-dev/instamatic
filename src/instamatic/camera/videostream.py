@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import sys
 import threading
 import time
 from collections import deque
@@ -211,12 +212,14 @@ class LiveVideoStream(VideoStream):
         self, n_frames: int, exposure=None, binsize=None
     ) -> Generator[np.ndarray, None, None]:
         """Stop passive acquisition, request frames once movie is iterated."""
-        self.blocked().__enter__()
+        blocked = self.blocked()
+        blocked.__enter__()
         try:
             self.grabber.request = MovieRequest(n_frames, exposure, binsize)
             self.grabber.acquireInitiateEvent.set()
-        except Exception:
-            self.blocked().__exit__(None, None, None)
+        except BaseException:
+            blocked.__exit__(*sys.exc_info())
+            raise
 
         def _movie_generator() -> Generator[np.ndarray, None, None]:
             try:
@@ -228,7 +231,7 @@ class LiveVideoStream(VideoStream):
             finally:
                 self.grabber.request = None
                 self.grabber.acquireIterateEvent.clear()
-                self.blocked().__exit__(None, None, None)
+                blocked.__exit__(*sys.exc_info())
 
         return _movie_generator()
 
