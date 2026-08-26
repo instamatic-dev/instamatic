@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from instamatic.camera.camera_serval import ServalMovieDeserializer
+from instamatic.camera.serval_movie_deserializer import ServalMovieDeserializer
 
 rng = np.random.default_rng(1337)
-json_image = rng.integers(low=0, high=256, size=(512, 512), dtype=np.uint16)
+json_image = rng.integers(low=0, high=256, size=(512, 512), dtype=np.uint16).astype('>u2')
 json_header = b"""{
     "timeAtFrame": 1655990130.181,
     "frameNumber": 14,
@@ -22,7 +22,7 @@ json_header = b"""{
     "width": 512,
     "height": 512,
     "corrections": []
-}"""
+}\n"""
 json_bytes = json_header + bytearray(json_image.data)
 movie_bufsize = 2 * 4 * 512 * 512
 
