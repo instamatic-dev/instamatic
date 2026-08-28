@@ -16,9 +16,5 @@ url: 'http://localhost:8080'
 api_version: '1.8.0'
 
 detector_config:
-  auto_summation: True
-  countrate_correction_applied: True
-  flatfield_correction_applied:
   trigger_mode: 'ints'
   photon_energy: 200000.0
-  pixel_mask_applied: True

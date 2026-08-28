@@ -109,8 +109,6 @@ class CameraSimplon(CameraBase):
 
         self.put('detector', 'config', 'count_time', value=e)
         self.put('detector', 'config', 'nimages', value=n_frames)
-        self.put('detector', 'config', 'ntrigger', value=1)
-        self.put('detector', 'config', 'trigger_mode', value='ints')
 
         try:
             self.put('monitor', 'command', 'clear')
