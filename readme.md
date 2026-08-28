@@ -21,6 +21,7 @@ Cameras supported:
 
 - ASI Timepix
 - ASI CheeTah through `serval-toolkit` library
+- DECTRIS cameras through SIMPLON API
 - TVIPS cameras through EMMENU4 API
 - Quantum Detectors MerlinEM
 - Gatan cameras through FEI scripting interface

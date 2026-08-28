@@ -1,0 +1,24 @@
+camera_rotation_vs_stage_xy: 0.0
+default_binsize: 1
+default_exposure: 0.05
+
+dimensions: [1030, 1065]  # example dimensions for EIGER2
+
+dynamic_range: 11800
+interface: simplon
+physical_pixelsize: 0.075  # pixel size in mm for EIGER2
+possible_binsizes: [1]
+
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0
+
+url: 'http://localhost:8080'
+api_version: '1.8.0'
+
+detector_config:
+  auto_summation: True
+  countrate_correction_applied: True
+  flatfield_correction_applied:
+  trigger_mode: 'ints'
+  photon_energy: 200000.0
+  pixel_mask_applied: True
