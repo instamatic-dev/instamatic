@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import sys
 import threading
 import time
 from collections import deque
@@ -65,6 +66,7 @@ class MediaGrabber:
 
         self.stopEvent = threading.Event()
         self.acquireInitiateEvent = threading.Event()
+        self.acquireIterateEvent = threading.Event()
         self.continuousCollectionEvent = threading.Event()
 
     def run(self):
@@ -79,7 +81,9 @@ class MediaGrabber:
                     self.callback(media, request=r)
                 else:  # isinstance(r, MovieRequest):
                     n = r.n_frames if r.n_frames else 1
-                    for media in self.cam.get_movie(n_frames=n, exposure=e, binsize=b):
+                    m = self.cam.get_movie(n_frames=n, exposure=e, binsize=b)
+                    self.acquireIterateEvent.wait()
+                    for media in m:
                         self.callback(media, request=r)
                         time.sleep(0)  # yields thread priority to VideoStream
 
@@ -194,7 +198,8 @@ class LiveVideoStream(VideoStream):
         return grabber
 
     def get_image(self, exposure=None, binsize=None) -> np.ndarray:
-        with self.blocked():  # Stop the passive collection during request acquisition
+        """Stop passive acquisition, request one image from MediaGrabber."""
+        with self.blocked():
             self.grabber.request = ImageRequest(exposure=exposure, binsize=binsize)
             self.grabber.acquireInitiateEvent.set()
             while not self.requested:
@@ -206,16 +211,29 @@ class LiveVideoStream(VideoStream):
     def get_movie(
         self, n_frames: int, exposure=None, binsize=None
     ) -> Generator[np.ndarray, None, None]:
+        """Stop passive acquisition, request frames once movie is iterated."""
+        blocked = self.blocked()
+        blocked.__enter__()
         try:
-            with self.blocked():  # Stop the passive collection during request acquisition
-                self.grabber.request = MovieRequest(n_frames, exposure, binsize)
-                self.grabber.acquireInitiateEvent.set()
+            self.grabber.request = MovieRequest(n_frames, exposure, binsize)
+            self.grabber.acquireInitiateEvent.set()
+        except BaseException:
+            blocked.__exit__(*sys.exc_info())
+            raise
+
+        def _movie_generator() -> Generator[np.ndarray, None, None]:
+            try:
+                self.grabber.acquireIterateEvent.set()
                 for _ in range(n_frames):
                     while not self.requested:
                         time.sleep(0)  # yields thread priority to MediaGrabber
                     yield self.requested.popleft()
-        finally:
-            self.grabber.request = None
+            finally:
+                self.grabber.request = None
+                self.grabber.acquireIterateEvent.clear()
+                blocked.__exit__(*sys.exc_info())
+
+        return _movie_generator()
 
     def update_frametime(self, frametime):
         self.frametime = frametime
