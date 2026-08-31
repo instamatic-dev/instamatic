@@ -19,3 +19,17 @@ possible_binsizes: [1]
 stretch_amplitude: 2.43
 stretch_azimuth: 83.37
 dead_time: 0.0
+
+# Simulation parameters
+n_crystals: 1000000
+grid_diameter: 3.05 # mm
+min_crystal_radius: 100 # nm
+max_crystal_radius: 1000 # nm
+unit_cell_a: 10 # Å
+unit_cell_b: 15 # Å
+unit_cell_c: 25 # Å
+unit_cell_alpha: 90 # Degrees
+unit_cell_beta: 90 # Degrees
+unit_cell_gamma: 120 # Degrees
+max_excitation_error: 0.01
+spot_radius: 3 # pixels

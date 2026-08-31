@@ -229,6 +229,7 @@ def test_screen(ctrl):
 def test_align_to(ctrl):
     reference = ctrl.get_raw_image()
     pos = ctrl.stage.xy
+    ctrl.stage.x += 10
 
     shift = ctrl.align_to(reference, apply=True)
 
