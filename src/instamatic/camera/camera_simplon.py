@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import logging
 from io import BytesIO
+from json.decoder import JSONDecodeError
 from typing import Any, Generator, Optional, Tuple
 
 import numpy as np
@@ -47,12 +48,15 @@ class CameraSimplon(CameraBase):
         r.raise_for_status()
         return r.json().get('value')
 
-    def put(self, module: str, *params: str, timeout: int = 0, value=None) -> Any:
+    def put(self, module: str, *params: str, timeout: int = 0, value=None) -> dict:
         """Perform a PUT request to configure a SIMPLON parameter resource."""
         url = self._request_url(module, *params, timeout=timeout)
         r = requests.put(url, json={} if value is None else {'value': value})
         r.raise_for_status()
-        return r.json()
+        try:
+            return r.json()
+        except JSONDecodeError:
+            return {}
 
     def establish_connection(self) -> None:
         """Establish connection, initialize detector, apply initial config."""
@@ -63,12 +67,9 @@ class CameraSimplon(CameraBase):
         except Exception as e:
             logger.warning(f'Initialization failed or already initialized: {e}')
 
-        try:
-            self.put('monitor', 'config', 'mode', 'enabled')
-            self.put('monitor', 'config', 'buffer_size', value=100)
-            self.put('monitor', 'config', 'discard_new', value=False)
-        except Exception as e:
-            logger.warning(f'Could not configure monitor interface: {e}')
+        self.put('monitor', 'config', 'mode', value='enabled')
+        self.put('monitor', 'config', 'buffer_size', value=100)
+        self.put('monitor', 'config', 'discard_new', value=False)
 
         detector_config = getattr(self, 'detector_config', {})
         for key, value in detector_config.items():
