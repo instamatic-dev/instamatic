@@ -4,7 +4,7 @@ import argparse
 from math import sqrt
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import yaml
@@ -12,7 +12,9 @@ import yaml
 from instamatic._typing import AnyPath, float_nm, int_nm
 from instamatic.grid import Intercepts
 from instamatic.grid.grid import GRID_REGISTRY, PeriodicConvexPolygonGrid
-from instamatic.gui.click_dispatcher import ClickEvent, ClickListener, MouseButton
+
+if TYPE_CHECKING:
+    from instamatic.gui.click_dispatcher import ClickListener
 
 
 class GridFinder:
@@ -104,6 +106,8 @@ class GridFinder:
         position the edge at the center of the screen and LMB to add the
         point. RMB to finish.
         """
+        from instamatic.gui.click_dispatcher import MouseButton
+
         print(dedent(self.refine_by_manual_clicking.__doc__))
         while True:
             prev_grid, prev_intercepts = self.grid, self.intercepts
@@ -232,6 +236,7 @@ def main():
     ctrl = initialize()
 
     if args.method == 'manual':
+        from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 
         class TerminalClickListener:
             """Mocks ClickListener for CLI by mapping keyboard inputs to
@@ -247,8 +252,6 @@ def main():
 
             def get_click(self) -> ClickEvent:
                 """Prompt user for terminal input to simulate mouse clicks."""
-                from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
-
                 cmd = input('>> ').strip().lower()
 
                 if cmd == 'r':
