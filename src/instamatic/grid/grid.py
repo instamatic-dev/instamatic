@@ -7,6 +7,7 @@ from scipy.optimize import least_squares
 
 from instamatic._collections import NoOverwriteDict
 from instamatic._typing import float_nm
+from instamatic.grid import versor
 from instamatic.grid.window import (
     GridablePolygonWindow,
     HexagonalWindow,
@@ -19,16 +20,6 @@ DualIndex = tuple[int, int]
 SpiralIndex = Annotated[int, 'positive']
 WindowIndex = Union[DualIndex, SpiralIndex]
 WindowType = TypeVar('WindowType', bound=GridablePolygonWindow)
-
-
-def versor(
-    *,
-    deg: Optional[Union[float, np.ndarray]] = None,
-    rad: Optional[Union[float, np.ndarray]] = None,
-) -> np.ndarray:
-    """A versor in the direction of angle expressed in radians or degrees."""
-    radians = np.deg2rad(deg) if rad is None else rad
-    return np.array([np.cos(radians), np.sin(radians)], dtype=float)
 
 
 class PairingFunction(Protocol):
