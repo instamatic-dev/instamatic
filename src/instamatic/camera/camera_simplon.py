@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import atexit
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from json.decoder import JSONDecodeError
 from typing import Any, Generator, Optional, Tuple
@@ -32,6 +34,9 @@ class CameraSimplon(CameraBase):
 
         self.establish_connection()
         logger.info(f'Camera {self.get_name()} initialized via SIMPLON API')
+
+        te_name = 'simplon-trigger'
+        self._te = ThreadPoolExecutor(max_workers=1, thread_name_prefix=te_name)
         atexit.register(self.release_connection)
 
     def _request_url(self, module: str, *params: str, timeout: int = 0) -> str:
@@ -40,6 +45,15 @@ class CameraSimplon(CameraBase):
         url = f'{base}/{module}/api/{self.api_version}/' + '/'.join(params)
         url += f'?timeout={int(timeout)}' if timeout else ''
         return url
+
+    def _wait4idle(self, timeout=5.0):
+        """Wait until the camera is idle, or raise if timeout reached."""
+        t0 = time.time()
+        while self.get('detector', 'status', 'state') != 'idle':
+            if time.time() - t0 > timeout:
+                m = 'Detector not idle - another client may be controlling it'
+                raise RuntimeError(m)
+            time.sleep(0.1)
 
     def get(self, module: str, *params: str, timeout: int = 0) -> Any:
         """Perform a GET request on a SIMPLON parameter resource."""
@@ -70,6 +84,7 @@ class CameraSimplon(CameraBase):
         self.put('monitor', 'config', 'mode', value='enabled')
         self.put('monitor', 'config', 'buffer_size', value=100)
         self.put('monitor', 'config', 'discard_new', value=False)
+        self.put('detector', 'config', 'trigger_mode', value='ints')
 
         detector_config = getattr(self, 'detector_config', {})
         for key, value in detector_config.items():
@@ -89,6 +104,7 @@ class CameraSimplon(CameraBase):
             self.put('monitor', 'config', 'mode', value='disabled')
         except Exception:
             pass
+        self._te.shutdown(wait=False)
         logger.info(f"Connection to camera '{self.get_name()}' released")
 
     def get_image(self, exposure: Optional[float] = None, **kwargs) -> np.ndarray:
@@ -108,6 +124,7 @@ class CameraSimplon(CameraBase):
             raise ValueError(f'{self.BAD_EXPOSURE_MSG}: {e}s')
         logger.debug(f'Collecting {n_frames} images with exposure {e} s')
 
+        self._wait4idle()
         self.put('detector', 'config', 'count_time', value=e)
         self.put('detector', 'config', 'nimages', value=n_frames)
 
@@ -117,22 +134,32 @@ class CameraSimplon(CameraBase):
             pass
 
         self.put('detector', 'command', 'arm')
-        timeout = int(self.MAX_EXPOSURE)
+        timeout = int(1000 * (e * 2 + 1))  # s -> ms
         url = self._request_url('monitor', 'images', 'next', timeout=timeout)
 
         def _get_movie_inner(_n: int) -> Generator[np.ndarray]:
             """This data collection is executed lazily i.e. when iterating."""
-            self.put('detector', 'command', 'trigger')
+            t_future = self._te.submit(self.put, 'detector', 'command', 'trigger')
             try:
-                for _ in range(_n):
+                for i in range(_n):
                     r = requests.get(url, headers={'Accept': 'image/tiff'})
+                    if r.status_code == 408:
+                        msg = f'No frame {i}/{_n} received within {timeout}ms'
+                        raise TimeoutError(msg)
                     r.raise_for_status()
                     yield tifffile.imread(BytesIO(r.content))
-            finally:
+                t_future.result()  # propagate any late exception, join thread
+            except Exception:
                 try:
-                    self.put('detector', 'command', 'disarm')
+                    self.put('detector', 'command', 'abort')
                 except Exception as exc:
-                    logger.error(f'Error disarming detector after movie: {exc}')
+                    logger.error(f'Error aborting after failed movie: {exc}')
+                if not t_future.done():
+                    try:
+                        t_future.result(timeout=_n * timeout / 1000)
+                    except Exception as exc:
+                        logger.warning(f'Trigger did not return after abort: {exc}')
+                raise
 
         return _get_movie_inner(n_frames)
 
