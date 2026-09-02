@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Annotated, Generic, Optional, Protocol, Self, TypeVar, Union
+from typing import Annotated, Generic, Optional, Protocol, TypeVar, Union
 
 import numpy as np
 from scipy.optimize import least_squares
+from typing_extensions import Self
 
 from instamatic._collections import NoOverwriteDict
 from instamatic._typing import float_nm
