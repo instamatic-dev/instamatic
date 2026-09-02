@@ -97,18 +97,6 @@ class EdgeSweeper(Sweeper):
         self.goto(x1, y1)
 
 
-class MarchingEdgeSweeper(EdgeSweeper):
-    """Moves monotonously, stops when intensity fract < max * threshold."""
-
-    def sweep(self) -> None:
-        """Walk steps into heading until peaked light is below threshold."""
-        self.goto(x=int(self.origin[0]), y=int(self.origin[1]))
-        light_here: int = self.peak()
-        while light_here > self.team.light_max * self.team.threshold:
-            self.step(length=self.team.step_size)
-            light_here = self.peak()
-
-
 class BinaryEdgeSweeper(EdgeSweeper):
     """A stage-state descriptor used to binary-search the grid edge."""
 
