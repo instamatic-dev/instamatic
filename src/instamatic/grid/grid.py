@@ -7,7 +7,7 @@ from scipy.optimize import least_squares
 from typing_extensions import Self
 
 from instamatic._collections import NoOverwriteDict
-from instamatic._typing import float_nm
+from instamatic._typing import float_deg, float_nm
 from instamatic.grid import versor
 from instamatic.grid.window import (
     GridablePolygonWindow,
@@ -18,8 +18,8 @@ from instamatic.grid.window import (
 from instamatic.utils.pairing import hulam2uv, ij2ulam, ulam2ij, uv2hulam
 
 DualIndex = tuple[int, int]
-SpiralIndex = Annotated[int, 'positive']
-WindowIndex = Union[DualIndex, SpiralIndex]
+SingleIndex = Annotated[int, 'positive']
+WindowIndex = Union[DualIndex, SingleIndex]
 WindowType = TypeVar('WindowType', bound=GridablePolygonWindow)
 
 
@@ -31,8 +31,7 @@ class PairingInverse(Protocol):
     def __call__(self, n: int, /) -> tuple[int, int]: ...
 
 
-WindowGeometryTuple = tuple[float_nm, float_nm, float, float_nm, Optional[float_nm]]
-WindowShapeTuple = tuple[float, float_nm, Optional[float_nm]]
+WindowGeometryTuple = tuple[float_nm, float_nm, float_deg, float_nm, Optional[float_nm]]
 
 
 class PeriodicConvexPolygonGrid(Generic[WindowType]):
@@ -59,7 +58,7 @@ class PeriodicConvexPolygonGrid(Generic[WindowType]):
         self,
         x: float_nm,  # x coordinate of the grid origin in stage coordinates
         y: float_nm,  # y coordinate of the grid origin in stage coordinates
-        t: float,  # signed angle from the X-axis towards a-vector in degrees
+        t: float_deg,  # signed angle from the X-axis to a-vector in degrees
         w: float_nm,  # length of X-aligned axis: edge to edge center-points
         h: Optional[float_nm] = None,  # length of the other axis, if relevant
         s: Optional[float_nm] = None,  # spacing between neighbor grid windows
@@ -308,65 +307,3 @@ GRID_REGISTRY = NoOverwriteDict[str, type[PeriodicConvexPolygonGrid]]()
 GRID_REGISTRY['hexagonal'] = HexagonalGrid
 GRID_REGISTRY['rectangular'] = RectangularGrid
 GRID_REGISTRY['square'] = SquareGrid
-
-
-if __name__ == '__main__':
-    import numpy as np
-
-    residuals = {
-        0: np.array(
-            [
-                [572543.92272, 458611.73068],
-                [564971.6688, 458611.73068],
-                [564971.6688, 458611.73068],
-                [564971.6688, 458611.73068],
-                [552876.06528, 458609.70234],
-                [552876.06528, 458609.70234],
-                [538110.39744, 458608.68817],
-                [538110.39744, 458608.68817],
-                [538110.39744, 458608.68817],
-                [518853.20256, 458610.71651],
-                [518853.20256, 458610.71651],
-                [496719.8544, 458613.75902],
-                [496719.8544, 458613.75902],
-                [487814.08368, 434983.59802],
-                [484349.97072, 421938.32931],
-                [484349.97072, 421938.32931],
-                [483886.27056, 411164.8014],
-                [483886.27056, 411164.8014],
-                [486744.23952, 397380.20276],
-                [486744.23952, 397380.20276],
-                [486744.23952, 397380.20276],
-                [486183.55632, 380419.22368],
-                [486183.55632, 380419.22368],
-                [496566.80304, 365588.0016],
-                [496566.80304, 365588.0016],
-                [503120.73504, 365593.07245],
-                [503120.73504, 365593.07245],
-                [511500.67584, 365799.96313],
-                [511500.67584, 365799.96313],
-                [520806.5016, 366044.3781],
-                [520806.5016, 366044.3781],
-                [532121.69472, 366439.9044],
-                [543770.26704, 366439.9044],
-                [543770.26704, 366439.9044],
-                [555862.83984, 366764.4388],
-                [555862.83984, 366764.4388],
-                [568560.04128, 367445.96104],
-                [568560.04128, 367445.96104],
-                [572369.65632, 406690.28336],
-                [576968.77392, 419188.91444],
-                [575013.95952, 431882.26616],
-                [572419.6632, 441778.53702],
-                [572422.69392, 454949.56281],
-            ]
-        )
-    }
-    a = SquareGrid(10000, 20000, 0, 50000)
-    print(a.guess(residuals).to_params())
-    print(a.to_params())
-    a.refine(residuals)
-    print(a.to_params())
-    a = a.guess(residuals)
-    a.refine(residuals)
-    print(a.to_params())
