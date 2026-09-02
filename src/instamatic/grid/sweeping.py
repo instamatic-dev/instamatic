@@ -30,13 +30,36 @@ class InstanceAutoNameRegistry:
         self.__class__.INSTANCES[getattr(self, 'name')] = self
 
 
+@dataclass
+class SweeperTeam(InstanceAutoNameRegistry):
+    """Stores a set of shared variables between the members of sweeper team."""
+
+    name: str = ''  # identifier used for registration in INSTANCES
+    step_size: int_nm = 10_000  # largest step size allowed
+    precision: int_nm = 1  # smallest step size allowed
+    threshold: float = 0.1  # fraction of light_max that signals the edge
+    light_max: int = -1  # maximum light observed at any point by any sweeper
+
+
+default_sweeper_team = SweeperTeam()
+
+
 class Sweeper:
     """A simple descriptor of stage movement with fixed heading."""
 
-    def __init__(self, origin: Vector2, heading: Vector2) -> None:
+    def __init__(self, origin: Vector2, heading: Vector2, team: str = '') -> None:
         self.origin = np.array([origin[0], origin[1]], dtype=float)
         self.heading = np.array([heading[0], heading[1]], dtype=float)
         self.position = np.array([origin[0], origin[1]], dtype=float)
+        self.team = SweeperTeam.INSTANCES[team]
+
+    def breed(self, other: Self) -> Self:
+        """Return a new instance with mean heading and position."""
+        o = (self.position + other.position) / 2
+        n = np.linalg.norm(s := self.heading + other.heading)
+        if n == 0:
+            raise ValueError('Cannot breed sweepers with parallel heading')
+        return self.__class__(origin=o, heading=s / n, team=self.team.name)
 
     def dist2segment(self, x1: float, y1: float, x2: float, y2: float) -> float:
         """Dist to intercept a segment or +inf, stackoverflow.com/q/2931573."""
@@ -54,29 +77,6 @@ class Sweeper:
             return ray1d * np.linalg.norm(self.heading)
         return np.inf
 
-
-@dataclass
-class EdgeSweeperTeam(InstanceAutoNameRegistry):
-    """Stores a set of shared variables between the members of sweeper team."""
-
-    name: str = ''  # identifier used for registration in INSTANCES
-    step_size: int_nm = 10_000  # largest step size allowed
-    precision: int_nm = 1  # smallest step size allowed
-    threshold: float = 0.1  # fraction of light_max that signals the edge
-    light_max: int = -1  # maximum light observed at any point by any sweeper
-
-
-default_edge_sweeper_team = EdgeSweeperTeam()
-
-
-class EdgeSweeper(Sweeper):
-    """Used to determine the edge of the stage based on camera feedback."""
-
-    def __init__(self, origin: Vector2, heading: Vector2, team: str = '') -> None:
-        self.history: list[Vector2] = []
-        self.team = EdgeSweeperTeam.INSTANCES[team]
-        super().__init__(origin, heading)
-
     def peak(self) -> int:
         """Return light (image sum) at current position, update light max."""
         light = int(_ctrl.get_image(header_keys=())[0].sum(dtype=np.int64))
@@ -86,7 +86,6 @@ class EdgeSweeper(Sweeper):
     def goto(self, x: int_nm, y: int_nm) -> None:
         """Change sweeper position to `x`, `y` and update current position."""
         _ctrl.stage.set(x=x, y=y)
-        self.history.append([x, y])
         self.position = np.array([x, y], dtype=float)
 
     def step(self, length: float_nm) -> None:
@@ -97,16 +96,8 @@ class EdgeSweeper(Sweeper):
         self.goto(x1, y1)
 
 
-class BinaryEdgeSweeper(EdgeSweeper):
+class BinarySweeper(Sweeper):
     """A stage-state descriptor used to binary-search the grid edge."""
-
-    def breed(self, other: Self) -> Self:
-        """Return a new instance with mean heading and position."""
-        o = (self.position + other.position) / 2
-        n = np.linalg.norm(s := self.heading + other.heading)
-        if n == 0:
-            raise ValueError('Cannot breed sweepers with parallel heading')
-        return self.__class__(origin=o, heading=s / n, team=self.team.name)
 
     def sweep(self) -> None:
         """Bin-search the edge based on peaked light vs max * threshold."""
@@ -127,31 +118,38 @@ class BinaryEdgeSweeper(EdgeSweeper):
 
 
 def star_sweep(
-    arms: Literal[3, 4, 5, 6, 7] = 5,
-    order: Literal[1, 2, 3, 4, 5] = 5,
+    arms: Literal[3, 4, 5, 6, 7] = 3,
+    order: Literal[1, 2, 3, 4, 5] = 3,
     offset: float_deg = 0,
 ) -> Generator[Vector2, None, None]:
-    """Sweep window, yielding (x, y) points on its edge as they are found."""
+    """Send sweepers in a star shape, yield xy on edge as they are found.
+
+    arms: Number of unique directions to send initial "order=1" sweepers in.
+    order: For each above 1, send new sweepers in bisectors of previous order.
+    offset: Applied when defining "order=1" headings to add more variety.
+
+    With default settings, 1 sweeper takes ~30 seconds, less for higher order.
+    The total number of sweepers = arms * 2 ** (order - 1): 12 with defaults.
+    """
     center: Vector2 = np.array(_ctrl.stage.xy, dtype=int)
     team = str(center)
-    _ = EdgeSweeperTeam(name=team)
+    _ = SweeperTeam(name=team)
 
-    # define and sweep with initial sweepers to approximate grid center (order=1)
+    # define headings, sweep with initial sweepers to approx grid center (order=1)
     headings = offset + np.linspace(0, 360, num=arms, endpoint=False, dtype=float)
-    directions = [versor(deg=h) for h in headings]
-    bes = [BinaryEdgeSweeper(origin=center, heading=d, team=team) for d in directions]
-
-    for sweeper in bes:
-        sweeper.sweep()
-        yield sweeper.position
+    done_sweepers = []
+    for h in headings:
+        bs = BinarySweeper(origin=center, heading=versor(deg=h), team=team)
+        bs.sweep()
+        yield bs.position
+        done_sweepers.append(bs)
 
     # For each order above 1, generate bisectors of previous orders, sweep, yield
-    finished_bes = bes
     for _ in range(1, order):
-        new_bes = []
-        for a, b in pairwise(finished_bes, closed=True):
+        new_sweepers = []
+        for a, b in pairwise(done_sweepers, closed=True):
             ns = a.breed(b)
             ns.sweep()
             yield ns.position
-            new_bes.append(ns)
-        finished_bes = list(chain.from_iterable(zip(finished_bes, new_bes)))
+            new_sweepers.append(ns)
+        done_sweepers = list(chain.from_iterable(zip(done_sweepers, new_sweepers)))
