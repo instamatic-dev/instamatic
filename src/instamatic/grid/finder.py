@@ -47,7 +47,7 @@ class GridFinder:
         grid: Optional[PeriodicConvexPolygonGrid] = None,
         intercepts: Optional[Intercepts] = None,
     ) -> None:
-        self.grid = grid or GRID_REGISTRY['square'](0, 0, 0, 50_000, 50_000)
+        self.grid = grid or GRID_REGISTRY['square'](0, 0, 0, 85_000)
         self.intercepts: Intercepts = intercepts or {}
         self.path: Optional[AnyPath] = None  # if present, auto-save here
 
@@ -134,14 +134,15 @@ class GridFinder:
         window_idx: int = -1,
         x_lim: Optional[int_nm] = None,
         y_lim: Optional[int_nm] = None,
-        arms: Optional[int] = None,
+        arms: int = 3,
         order: Optional[int] = None,
         offset: Optional[float] = None,
     ) -> None:
         """Let grid & intercepts refine by automatically looking for edges.
 
-        Navigate to `window_idx` or next window and, if it is inside a bounding
-        box span by `x_lim` and `y_lim`, look for the edges by monitoring total
+        Move to `window_idx` or next window (if any present, else start here).
+        If the requested window is predicted to lie inside a bounding box span
+        by `x_lim` and `y_lim`, look for the edges by monitoring total beam
         intensity. `arms`, `order`, `offset` determine `star_sweep` precision.
         """
         from instamatic.grid.sweeping import star_sweep
@@ -163,14 +164,14 @@ class GridFinder:
                 if idx not in idc_in_limits:
                     raise IndexError(f'Requested window {idx} is not within limits')
 
-        ctrl.stage.set(*[int(xy) for xy in self.grid.window(idx).center])
+        if idx > 0:
+            ctrl.stage.set(*[int(xy) for xy in self.grid.window(idx).center])
 
         smart_order = 3 if idx == 0 else 2 if len(self.intercepts.keys()) < 4 else 1
         ss_order = smart_order if order is None else order
-        ss_arms = arms if arms is not None else 3
         ss_offset = offset if offset is not None else 17 * idx
 
-        for xy in star_sweep(arms=ss_arms, order=ss_order, offset=ss_offset):
+        for xy in star_sweep(arms=arms, order=ss_order, offset=ss_offset):
             self.add_intercept(idx, *xy)
         self.fit_intercepts(idx)
 
@@ -216,7 +217,7 @@ def main():
     a.add_argument(
         '--order',
         type=int,
-        default=3,
+        default=None,
         choices=[1, 2, 3, 4, 5],
         help='For each order above 1, sweep also in previous orders midpoints',
     )
@@ -224,18 +225,24 @@ def main():
     a.add_argument(
         '--offset',
         type=float,
-        default=0.0,
+        default=None,
         help='Rotate the arms by this many degrees before first order search',
     )
 
     args = parser.parse_args()
 
     # Initialize finding logic and controller
-    gf = GridFinder.from_yaml(args.file)
+    try:
+        gf = GridFinder.from_yaml(args.file)
+    except FileNotFoundError:
+        gf = GridFinder()
     gf.path = args.file
     ctrl = initialize()
 
     if args.method == 'manual':
+        # note: Daniel is an idiot. Also, for manual,
+        # user needs a life view. Attach click listener there.
+
         from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
 
         class TerminalClickListener:
@@ -263,7 +270,7 @@ def main():
         cl = TerminalClickListener()
         gf.refine_by_manual_clicking(ctrl, cl)
 
-    elif args.command == 'auto':
+    elif args.method == 'auto':
         gf.refine_by_auto_sweeping(
             ctrl=ctrl, window_idx=args.idx, arms=args.arms, order=args.order, offset=args.offset
         )

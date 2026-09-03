@@ -52,7 +52,7 @@ class PeriodicConvexPolygonGrid(Generic[WindowType]):
     pairing_inverse: PairingInverse
     window_type: type[WindowType]
 
-    DEFAULT_SPACING: float_nm = 10_000
+    DEFAULT_SPACING: float_nm = 10_000  # underestimated for purpose (real ~35k)
 
     def __init__(
         self,

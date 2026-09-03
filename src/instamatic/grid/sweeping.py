@@ -39,6 +39,7 @@ class SweeperTeam(InstanceAutoNameRegistry):
     precision: int_nm = 1  # smallest step size allowed
     threshold: float = 0.1  # fraction of light_max that signals the edge
     light_max: int = -1  # maximum light observed at any point by any sweeper
+    sampling: int = 2  # confirm edge only if this many consecutive steps are dark
 
 
 default_sweeper_team = SweeperTeam()
@@ -103,18 +104,21 @@ class BinarySweeper(Sweeper):
         """Bin-search the edge based on peaked light vs max * threshold."""
         self.goto(x=int(self.origin[0]), y=int(self.origin[1]))
         step_size: float_nm = self.team.step_size
-        direction: Literal[1, -1]
-        refining: bool = False
-        while step_size > self.team.precision:
-            light_here = self.peak()
-            if light_here > self.team.threshold * self.team.light_max:
-                direction = 1
+        samples: int = 0
+        while True:  # linear search - step forward until `samples` dark frames
+            if self.peak() < self.team.threshold * self.team.light_max:
+                samples += 1
             else:
-                direction = -1
-                refining = True
-            if refining:
-                step_size *= 0.5
-            self.step(length=direction * step_size)
+                samples = 0
+            if samples >= self.team.sampling:
+                break
+            self.step(step_size)
+        step_size *= 0.5
+        self.step(length=-(2 * samples - 1) * step_size)  # half step past 1st dark
+        while step_size > self.team.precision:  # binary search
+            step_size *= 0.5
+            light = (self.peak() > self.team.threshold * self.team.light_max)
+            self.step(length=step_size if light else -step_size)
 
 
 def star_sweep(
