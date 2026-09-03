@@ -81,7 +81,7 @@ class CameraServal(CameraBase):
         conn.set_detector_config(**self.detector_config)
         conn.destination = {'Image': [http_dest]}
 
-        if getattr(self, 'stream_movies_via_tcp') or STREAM_MOVIES_VIA_TCP:
+        if getattr(self, 'stream_movies_via_tcp', None) or STREAM_MOVIES_VIA_TCP:
             self.tcp_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.tcp_listener.settimeout(1.0)

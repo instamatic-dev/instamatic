@@ -41,6 +41,8 @@ Arbitrary tools for viewing, analyzing, or working with instamatic data.
 - [instamatic.defocus_helper](#instamaticdefocus_helper) (`instamatic.gui.defocus_button:main`)
 - [instamatic.find_crystals](#instamaticfind_crystals) (`instamatic.processing.find_crystals:main_entry`)
 - [instamatic.find_crystals_ilastik](#instamaticfind_crystals_ilastik) (`instamatic.processing.find_crystals_ilastik:main_entry`)
+- [instamatic.grid_finder](#instamaticgridfinder) (`instamatic.grid.finder:main`)
+- [instamatic.grid_monitor](#instamaticgridmonitor) (`instamatic.grid.monitor:main`)
 - [instamatic.learn](#instamaticlearn) (`scripts.learn:main_entry`)
 
 **Server**
@@ -545,6 +547,55 @@ d <path>`, `--output <path>`, `--output_name <path>`
 `--mapscaleind`
 : Generate `MapScaleInd.yaml` for `predicrystal` from config.  
 
+
+## instamatic.grid_finder
+
+Determine the geometry and orientation of the copper grid using various methods.
+
+**Usage:**  
+```bash
+instamatic.grid_finder [-h] [FILEPATH] manual
+instamatic.grid_finder [-h] [FILEPATH] auto [--idx IDX] [--arms ARMS]
+                       [--order ORDER] [--offset OFFSET]
+```
+**Positional arguments:**  
+
+`FILEPATH`
+: Path to the file where grid geometry is or is to be stored, typically `grid.yaml`.
+
+**Optional arguments:**  
+
+`-h`, `--help`
+: Show this help message and exit  
+
+`--idx`
+: Target window index to find (default: next available window)
+
+`--arms`
+: Number of directions the sweep arms will go to find edge
+
+`--order`
+: For each order above 1, sweep also in previous orders midpoints
+
+`--offset`
+: Rotate the arms by this many degrees before first order search
+
+`--video`
+: Display the live video stream during automated grid finding
+
+
+## instamatic.grid_monitor
+
+GUI program to monitor a grid.yaml file and plot any updates live.
+
+**Usage:**  
+```bash
+instamatic.grid_monitor [-h] [FILEPATH]
+```
+**Positional arguments:**  
+
+`FILEPATH`
+: Path to the file where grid geometry is stored, typically `grid.yaml`.
 
 ## instamatic.learn
 
