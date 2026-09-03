@@ -117,7 +117,7 @@ class BinarySweeper(Sweeper):
         self.step(length=-(2 * samples - 1) * step_size)  # half step past 1st dark
         while step_size > self.team.precision:  # binary search
             step_size *= 0.5
-            light = (self.peak() > self.team.threshold * self.team.light_max)
+            light = self.peak() > self.team.threshold * self.team.light_max
             self.step(length=step_size if light else -step_size)
 
 
