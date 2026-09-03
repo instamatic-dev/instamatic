@@ -580,6 +580,9 @@ instamatic.grid_finder [-h] [FILEPATH] auto [--idx IDX] [--arms ARMS]
 `--offset`
 : Rotate the arms by this many degrees before first order search
 
+`--video`
+: Display the live video stream during automated grid finding
+
 
 ## instamatic.grid_monitor
 

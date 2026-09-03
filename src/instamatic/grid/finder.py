@@ -22,22 +22,12 @@ class GridFinder:
     Can be written to or read from a yaml file in the following format:
 
     grid_type: square
-    geometry:
-        x: 11111
-        y: 22222  # nm
-        t: 0.033  # degrees
-        w: 44444
-        s: 6666
+    geometry: {x: 11111, y: 22222, t: 33.333, w: 44444, h: null, s: 55555}
     intercepts:
-        0:
-          - [1001, 2002]
-          - [3003, 4004]
-          # ...
-        -1: # negative number = fresh entry, not assigned to a window yet
-          - [88005, 88006]
-          - [99007, 99008]
-          # ...
-        # ...
+        0: [[1001, 2002], [3003, 4004], ] # ...
+        1: [[5005, 6006], [7007, 8008], ] # ...
+        -1: [[88005, 88006], [99007, 99008], ]
+        # negative window number = intercepts not assigned to window yet ...
     """
 
     GRID_REGISTRY_INV = {v: k for k, v in GRID_REGISTRY.items()}
@@ -80,7 +70,10 @@ class GridFinder:
 
     def fit_intercepts(self, window_idx: int) -> None:
         """Fit all intercepts with given window id to a new window."""
-        xy = self.intercepts[window_idx]
+        try:
+            xy = self.intercepts[window_idx]
+        except KeyError as e:
+            raise KeyError(f'No intercepts for {window_idx=} found!') from e
         if 0 in self.intercepts:
             new_center = (np.max(xy, axis=0) + np.min(xy, axis=0)) / 2
             new_window_idx = self.grid.nearest_index(*new_center)
@@ -101,10 +94,9 @@ class GridFinder:
     def refine_by_manual_clicking(self, ctrl, cl: ClickListener) -> None:
         """Update grid & intercepts via clicks when stage is at window edge.
 
-        Navigate the stage to as many points on one windows edge as
-        possible (at least the corners and midpoints). At each point,
-        position the edge at the center of the screen and LMB to add the
-        point. RMB to finish.
+        Move the stage to as many points on one windows edge as possible
+        (at least the corners and midpoints). At each point, click LMB
+        to add current stage position as one edge point. RMB to finish.
         """
         from instamatic.gui.click_dispatcher import MouseButton
 
@@ -229,9 +221,14 @@ def main():
         help='Rotate the arms by this many degrees before first order search',
     )
 
+    a.add_argument(
+        '--video',
+        action='store_true',
+        help='Display the live video stream during automated grid finding',
+    )
+
     args = parser.parse_args()
 
-    # Initialize finding logic and controller
     try:
         gf = GridFinder.from_yaml(args.file)
     except FileNotFoundError:
@@ -239,41 +236,41 @@ def main():
     gf.path = args.file
     ctrl = initialize()
 
-    if args.method == 'manual':
-        # note: Daniel is an idiot. Also, for manual,
-        # user needs a life view. Attach click listener there.
+    def run_grid_finder(_cl: Optional[ClickListener] = None) -> None:
+        """Run the finder logic, without blocking the GUI if it is needed."""
+        try:
+            if args.method == 'manual':
+                gf.refine_by_manual_clicking(ctrl, _cl)
+            elif args.method == 'auto':
+                gf.refine_by_auto_sweeping(
+                    ctrl=ctrl,
+                    window_idx=args.idx,
+                    arms=args.arms,
+                    order=args.order,
+                    offset=args.offset,
+                )
+        finally:
+            if use_video:
+                root.after(0, root.destroy)
 
-        from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
+    use_video = args.method == 'manual' or (args.method == 'auto' and args.video)
+    if use_video:
+        from threading import Thread
+        from tkinter import Tk
 
-        class TerminalClickListener:
-            """Mocks ClickListener for CLI by mapping keyboard inputs to
-            MouseButtons."""
+        from instamatic import config
+        from instamatic.camera import LiveVideoStream
+        from instamatic.gui.videostream_frame import VideoStreamFrame
 
-            def __enter__(self) -> TerminalClickListener:
-                print('Entering terminal mock for mouse button click listener.')
-                print('Press "ENTER" for LMB, R+ENTER for RMB, M+ENTER for MMB.')
-                return self
-
-            def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-                pass
-
-            def get_click(self) -> ClickEvent:
-                """Prompt user for terminal input to simulate mouse clicks."""
-                cmd = input('>> ').strip().lower()
-
-                if cmd == 'r':
-                    return ClickEvent(button=MouseButton.RIGHT)
-                elif cmd == 'm':
-                    return ClickEvent(button=MouseButton.MIDDLE)
-                return ClickEvent(button=MouseButton.LEFT)
-
-        cl = TerminalClickListener()
-        gf.refine_by_manual_clicking(ctrl, cl)
-
-    elif args.method == 'auto':
-        gf.refine_by_auto_sweeping(
-            ctrl=ctrl, window_idx=args.idx, arms=args.arms, order=args.order, offset=args.offset
-        )
+        root = Tk()
+        stream = LiveVideoStream(cam=config.camera.name)
+        vsf = VideoStreamFrame(root, stream=stream)
+        vsf.pack(side='top', fill='both', expand=True)
+        cl = vsf.click_dispatcher.add_listener(name='grid_finder', active=True)
+        Thread(target=run_grid_finder, daemon=True, args=(cl,)).start()
+        root.mainloop()
+    else:
+        run_grid_finder()
 
 
 if __name__ == '__main__':
