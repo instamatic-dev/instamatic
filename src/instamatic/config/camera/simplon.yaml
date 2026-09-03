@@ -4,6 +4,11 @@ default_exposure: 0.05
 
 dimensions: [512, 512]  # example dimensions for QUADRO
 
+calib_beamshift:
+  gridsize: 5
+  stepsize: 2000
+  delay: 0.1
+
 dynamic_range: 11800
 interface: simplon
 physical_pixelsize: 0.075  # pixel size in mm for QUADRO
