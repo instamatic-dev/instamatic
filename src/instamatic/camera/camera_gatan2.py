@@ -4,6 +4,7 @@ import atexit
 import logging
 import sys
 import time
+import warnings
 from pathlib import Path
 from typing import Tuple
 
@@ -12,6 +13,7 @@ import numpy as np
 from instamatic import config
 from instamatic.camera.camera_base import CameraBase
 from instamatic.camera.gatansocket3 import GatanSocket
+from instamatic.utils.deprecated import VisibleDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,6 @@ class CameraGatan2(CameraBase):
         self.load_defaults()
 
         msg = f'Camera `{self.get_camera_name()}` ({self.name}) initialized'
-        # print(msg)
         logger.info(msg)
 
         atexit.register(self.release_connection)
@@ -75,29 +76,56 @@ class CameraGatan2(CameraBase):
 
     def get_image(
         self,
-        exposure=0.400,
-        binning=1,
-        processing='gain normalized',
+        exposure: float | None = None,
+        binsize: int | None = None,
+        *,
+        binning: int | None = None,
+        processing: str = 'gain normalized',
+        **kwargs,
     ) -> 'np.array':
-        """Acquire image through DM and return data as np array."""
+        """Acquire image through DM and return data as np array.
 
-        width, height = self.dimensions
+        Notes
+        -----
+        Instamatic's public API uses `binsize` everywhere (controller,
+        videostream, CLI). Historically this driver used `binning` instead,
+        which prevented GUI/Controller code from changing binning.
+        This implementation accepts both names. `binsize`, `binning`,
+        and `default_binsize` take precedence in this order.
+        Use of `binning` is deprecated and might be removed in the future.
+        """
+
+        exposure = exposure if exposure is not None else self.default_exposure
+
+        if binning is not None:
+            msg = 'Argument `binning` is deprecated since v2.3.0. Use `binsize` instead.'
+            warnings.warn(msg, VisibleDeprecationWarning, stacklevel=2)
+
+        if binsize is None:
+            binsize = binning if binning is not None else self.default_binsize
+
+        if (p := getattr(self, 'possible_binsizes', [])) and binsize not in p:
+            msg = f'Cannot use {binsize=}, should be one of {self.possible_binsizes=}'
+            raise ValueError(msg)
+
+        width, height = [int(wh) for wh in self.dimensions][:2]
         top = 0
         left = 0
-        bottom = height
-        right = width
+        bottom = int(height)
+        right = int(width)
 
         arr = self.g.get_image(
             processing=processing,
             height=height,
             width=width,
-            binning=binning,
+            binning=binsize,
             top=top,
             left=left,
             bottom=bottom,
             right=right,
             exposure=exposure,
             shutterDelay=0,
+            **kwargs,
         )
 
         return arr
