@@ -6,7 +6,7 @@ import sys
 import time
 import warnings
 from pathlib import Path
-from typing import Tuple
+from typing import Iterator, Optional, Tuple
 
 import numpy as np
 
@@ -129,6 +129,17 @@ class CameraGatan2(CameraBase):
         )
 
         return arr
+
+    def get_movie(self, n_frames: int, *args, **kwargs) -> Iterator[np.ndarray]:
+        """Yield `n_frames` images by repeatedly calling `get_image`.
+
+        The SerialEMCCD socket protocol seems to have no native streaming call,
+        so each frame here is a full round trip: re-arm, expose, read. There is
+        no guarantee of even dead time or frame spacing - this is a convenience
+        wrapper only. Provide a better implementation if you can.
+        """
+        for _ in range(n_frames):
+            yield self.get_image(*args, **kwargs)
 
     def acquire_image(self, **kwargs) -> 'np.array':
         """Acquire image through DM."""
