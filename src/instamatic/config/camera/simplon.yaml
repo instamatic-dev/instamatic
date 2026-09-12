@@ -1,0 +1,25 @@
+camera_rotation_vs_stage_xy: 0.0
+default_binsize: 1
+default_exposure: 0.05
+
+dimensions: [512, 512]  # example dimensions for QUADRO
+
+calib_beamshift:
+  gridsize: 5
+  stepsize: 2000
+  delay: 0.1
+
+dynamic_range: 11800
+interface: simplon
+physical_pixelsize: 0.075  # pixel size in mm for QUADRO
+possible_binsizes: [1]
+
+stretch_amplitude: 0.0
+stretch_azimuth: 0.0
+
+url: 'http://localhost:8080'
+api_version: '1.8.0'
+
+detector_config:
+  trigger_mode: 'ints'
+  photon_energy: 200000.0

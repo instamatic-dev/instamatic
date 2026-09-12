@@ -52,6 +52,7 @@ dependencies = [
     "pillow >= 7.0.0",
     "pywinauto >= 0.6.8; sys_platform == 'windows'",
     "pyyaml >= 5.3",
+    "requests >= 2.0.0",
     "scikit-image >= 0.17.1",
     "scipy >= 1.3.2",
     "tifffile >= 2019.7.26.2",
@@ -116,6 +117,8 @@ publishing = [
 "instamatic.defocus_helper" = "instamatic.gui.defocus_button:main"
 "instamatic.find_crystals" = "instamatic.processing.find_crystals:main_entry"
 "instamatic.find_crystals_ilastik" = "instamatic.processing.find_crystals_ilastik:main_entry"
+"instamatic.grid_finder" = "instamatic.grid.finder:main"
+"instamatic.grid_monitor" = "instamatic.grid.monitor:main"
 "instamatic.learn" = "scripts.learn:main_entry"
 # server
 "instamatic.temserver" = "instamatic.server.tem_server:main"

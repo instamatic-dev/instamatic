@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 from typing_extensions import Self
 
-from instamatic._typing import float_nm
+from instamatic._typing import float_deg, float_nm
 from instamatic.grid import versor
 from instamatic.utils.iterating import pairwise
-
-X = np.array([1, 0], dtype=float)
-Y = np.array([0, 1], dtype=float)
-
-
-WindowGeometryTuple = tuple[float_nm, float_nm, float, float_nm, Optional[float_nm]]
 
 
 class Window(ABC):
@@ -76,7 +70,7 @@ class GridablePolygonWindow(ConvexPolygonWindow):
     - w: double the distance between window center and its' edge midpoint;
     """
 
-    INTERIOR_ANGLE: float = ...  # class attribute: angle between a and b axes
+    INTERIOR_ANGLE: float_deg = ...  # class attribute: angle between a and b axes
     USES_HEIGHT: bool = ...  # True if a secondary metric i.e. height is needed
     a: np.ndarray = ...
     b: np.ndarray = ...  # from center towards the side, not aligned with ~X
@@ -85,14 +79,14 @@ class GridablePolygonWindow(ConvexPolygonWindow):
         self,
         x: float_nm,
         y: float_nm,
-        t: float,
+        t: float_deg,
         w: float_nm,
         h: Optional[float_nm] = None,
     ) -> None:
         """A uniform abstract constructor for all subclasses (nm/degrees)."""
         self.x: float_nm = float(x)
         self.y: float_nm = float(y)
-        self.t: float = float(t)
+        self.t: float_deg = float(t)
         self.w: float_nm = float(w)
         self.h: float_nm = self.w if h is None else float(h)
 
@@ -102,14 +96,7 @@ class GridablePolygonWindow(ConvexPolygonWindow):
 
     def __repr__(self) -> str:
         """Accurate representation, show params as floats (from to_params)."""
-        p = self.to_params()
-        parts = [f'{k}={float(v)}' for k, v in p.items()]
-        return f'{type(self).__name__}(' + ', '.join(parts) + ')'
-
-    def __str__(self) -> str:
-        """Nicely display self, show params as integers (from to_params)."""
-        p = self.to_params()
-        parts = [f'{k}={int(np.rint(float(v)))}' for k, v in p.items()]
+        parts = [f'{k}={float(v)}' for k, v in self.to_params().items()]
         return f'{type(self).__name__}(' + ', '.join(parts) + ')'
 
     @property
@@ -189,7 +176,7 @@ class GridablePolygonWindow(ConvexPolygonWindow):
 class HexagonalWindow(GridablePolygonWindow):
     """A regular hexagonal window with a 2D "ab" coordinate system."""
 
-    INTERIOR_ANGLE: float = 60.0
+    INTERIOR_ANGLE: float_deg = 60.0
     ROT60MAT = np.array([[1, -np.sqrt(3)], [np.sqrt(3), 1]], dtype=float) / 2
     USES_HEIGHT = False
 
@@ -223,7 +210,7 @@ class RectangularWindow(GridablePolygonWindow):
     - theta: signed angle from X axis towards A axis and the X-aligned edge.
     """
 
-    INTERIOR_ANGLE: float = 90.0
+    INTERIOR_ANGLE: float_deg = 90.0
     USES_HEIGHT = True
 
     def __init__(self, *args, **kwargs) -> None:

@@ -4,7 +4,7 @@ import argparse
 from math import sqrt
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import yaml
@@ -12,7 +12,9 @@ import yaml
 from instamatic._typing import AnyPath, float_nm, int_nm
 from instamatic.grid import Intercepts
 from instamatic.grid.grid import GRID_REGISTRY, PeriodicConvexPolygonGrid
-from instamatic.gui.click_dispatcher import ClickEvent, ClickListener, MouseButton
+
+if TYPE_CHECKING:
+    from instamatic.gui.click_dispatcher import ClickListener
 
 
 class GridFinder:
@@ -20,22 +22,12 @@ class GridFinder:
     Can be written to or read from a yaml file in the following format:
 
     grid_type: square
-    geometry:
-        x: 11111
-        y: 22222  # nm
-        t: 0.033  # degrees
-        w: 44444
-        s: 6666
+    geometry: {x: 11111, y: 22222, t: 33.333, w: 44444, h: null, s: 55555}
     intercepts:
-        0:
-          - [1001, 2002]
-          - [3003, 4004]
-          # ...
-        -1: # negative number = fresh entry, not assigned to a window yet
-          - [88005, 88006]
-          - [99007, 99008]
-          # ...
-        # ...
+        0: [[1001, 2002], [3003, 4004], ] # ...
+        1: [[5005, 6006], [7007, 8008], ] # ...
+        -1: [[88005, 88006], [99007, 99008], ]
+        # negative window number = intercepts not assigned to window yet ...
     """
 
     GRID_REGISTRY_INV = {v: k for k, v in GRID_REGISTRY.items()}
@@ -45,7 +37,7 @@ class GridFinder:
         grid: Optional[PeriodicConvexPolygonGrid] = None,
         intercepts: Optional[Intercepts] = None,
     ) -> None:
-        self.grid = grid or GRID_REGISTRY['square'](0, 0, 0, 50_000, 50_000)
+        self.grid = grid or GRID_REGISTRY['square'](0, 0, 0, 85_000)
         self.intercepts: Intercepts = intercepts or {}
         self.path: Optional[AnyPath] = None  # if present, auto-save here
 
@@ -78,7 +70,10 @@ class GridFinder:
 
     def fit_intercepts(self, window_idx: int) -> None:
         """Fit all intercepts with given window id to a new window."""
-        xy = self.intercepts[window_idx]
+        try:
+            xy = self.intercepts[window_idx]
+        except KeyError as e:
+            raise KeyError(f'No intercepts for {window_idx=} found!') from e
         if 0 in self.intercepts:
             new_center = (np.max(xy, axis=0) + np.min(xy, axis=0)) / 2
             new_window_idx = self.grid.nearest_index(*new_center)
@@ -99,11 +94,12 @@ class GridFinder:
     def refine_by_manual_clicking(self, ctrl, cl: ClickListener) -> None:
         """Update grid & intercepts via clicks when stage is at window edge.
 
-        Navigate the stage to as many points on one windows edge as
-        possible (at least the corners and midpoints). At each point,
-        position the edge at the center of the screen and LMB to add the
-        point. RMB to finish.
+        Move the stage to as many points on one windows edge as possible
+        (at least the corners and midpoints). At each point, click LMB
+        to add current stage position as one edge point. RMB to finish.
         """
+        from instamatic.gui.click_dispatcher import MouseButton
+
         print(dedent(self.refine_by_manual_clicking.__doc__))
         while True:
             prev_grid, prev_intercepts = self.grid, self.intercepts
@@ -130,14 +126,15 @@ class GridFinder:
         window_idx: int = -1,
         x_lim: Optional[int_nm] = None,
         y_lim: Optional[int_nm] = None,
-        arms: Optional[int] = None,
+        arms: int = 3,
         order: Optional[int] = None,
         offset: Optional[float] = None,
     ) -> None:
         """Let grid & intercepts refine by automatically looking for edges.
 
-        Navigate to `window_idx` or next window and, if it is inside a bounding
-        box span by `x_lim` and `y_lim`, look for the edges by monitoring total
+        Move to `window_idx` or next window (if any present, else start here).
+        If the requested window is predicted to lie inside a bounding box span
+        by `x_lim` and `y_lim`, look for the edges by monitoring total beam
         intensity. `arms`, `order`, `offset` determine `star_sweep` precision.
         """
         from instamatic.grid.sweeping import star_sweep
@@ -159,14 +156,14 @@ class GridFinder:
                 if idx not in idc_in_limits:
                     raise IndexError(f'Requested window {idx} is not within limits')
 
-        ctrl.stage.set(*[int(xy) for xy in self.grid.window(idx).center])
+        if idx > 0:
+            ctrl.stage.set(*[int(xy) for xy in self.grid.window(idx).center])
 
         smart_order = 3 if idx == 0 else 2 if len(self.intercepts.keys()) < 4 else 1
         ss_order = smart_order if order is None else order
-        ss_arms = arms if arms is not None else 3
         ss_offset = offset if offset is not None else 17 * idx
 
-        for xy in star_sweep(arms=ss_arms, order=ss_order, offset=ss_offset):
+        for xy in star_sweep(arms=arms, order=ss_order, offset=ss_offset):
             self.add_intercept(idx, *xy)
         self.fit_intercepts(idx)
 
@@ -212,7 +209,7 @@ def main():
     a.add_argument(
         '--order',
         type=int,
-        default=3,
+        default=None,
         choices=[1, 2, 3, 4, 5],
         help='For each order above 1, sweep also in previous orders midpoints',
     )
@@ -220,50 +217,60 @@ def main():
     a.add_argument(
         '--offset',
         type=float,
-        default=0.0,
-        help='Rotate the arms by this much degrees before first order search.',
+        default=None,
+        help='Rotate the arms by this many degrees before first order search',
+    )
+
+    a.add_argument(
+        '--video',
+        action='store_true',
+        help='Display the live video stream during automated grid finding',
     )
 
     args = parser.parse_args()
 
-    # Initialize finding logic and controller
-    gf = GridFinder.from_yaml(args.file)
+    try:
+        gf = GridFinder.from_yaml(args.file)
+    except FileNotFoundError:
+        gf = GridFinder()
     gf.path = args.file
     ctrl = initialize()
 
-    if args.method == 'manual':
+    def run_grid_finder(_cl: Optional[ClickListener] = None) -> None:
+        """Run the finder logic, without blocking the GUI if it is needed."""
+        try:
+            if args.method == 'manual':
+                gf.refine_by_manual_clicking(ctrl, _cl)
+            elif args.method == 'auto':
+                gf.refine_by_auto_sweeping(
+                    ctrl=ctrl,
+                    window_idx=args.idx,
+                    arms=args.arms,
+                    order=args.order,
+                    offset=args.offset,
+                )
+        finally:
+            if use_video:
+                root.after(0, root.destroy)
 
-        class TerminalClickListener:
-            """Mocks ClickListener for CLI by mapping keyboard inputs to
-            MouseButtons."""
+    use_video = args.method == 'manual' or (args.method == 'auto' and args.video)
+    if use_video:
+        from threading import Thread
+        from tkinter import Tk
 
-            def __enter__(self) -> TerminalClickListener:
-                print('Entering terminal mock for mouse button click listener.')
-                print('Press "ENTER" for LMB, R+ENTER for RMB, M+ENTER for MMB.')
-                return self
+        from instamatic import config
+        from instamatic.camera import LiveVideoStream
+        from instamatic.gui.videostream_frame import VideoStreamFrame
 
-            def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-                pass
-
-            def get_click(self) -> ClickEvent:
-                """Prompt user for terminal input to simulate mouse clicks."""
-                from instamatic.gui.click_dispatcher import ClickEvent, MouseButton
-
-                cmd = input('>> ').strip().lower()
-
-                if cmd == 'r':
-                    return ClickEvent(button=MouseButton.RIGHT)
-                elif cmd == 'm':
-                    return ClickEvent(button=MouseButton.MIDDLE)
-                return ClickEvent(button=MouseButton.LEFT)
-
-        cl = TerminalClickListener()
-        gf.refine_by_manual_clicking(ctrl, cl)
-
-    elif args.command == 'auto':
-        gf.refine_by_auto_sweeping(
-            ctrl=ctrl, window_idx=args.idx, arms=args.arms, order=args.order, offset=args.offset
-        )
+        root = Tk()
+        stream = LiveVideoStream(cam=config.camera.name)
+        vsf = VideoStreamFrame(root, stream=stream)
+        vsf.pack(side='top', fill='both', expand=True)
+        cl = vsf.click_dispatcher.add_listener(name='grid_finder', active=True)
+        Thread(target=run_grid_finder, daemon=True, args=(cl,)).start()
+        root.mainloop()
+    else:
+        run_grid_finder()
 
 
 if __name__ == '__main__':
