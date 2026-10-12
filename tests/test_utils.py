@@ -9,6 +9,7 @@ import pytest
 
 from instamatic.utils.domains import NumericDomain
 from instamatic.utils.native import AnyNumber, NativeNumber, native
+from instamatic.utils.pairing import hulam2uv, ij2ulam, ulam2ij, uv2hulam
 from tests.utils import InstanceAutoTracker
 
 
@@ -55,3 +56,24 @@ NativeTestCase(input_value=int(1), output_type=int)
 def test_native(test_case) -> None:
     """Assert `native` always returns numpy native NativeNumber types."""
     assert isinstance(native(test_case.input_value), test_case.output_type)
+
+
+# 2D coordinates of the first nine Ulam (u9) and hexagonal Ulam (h9) points:
+u9 = [(0, 0), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
+h9 = [(0, 0), (1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1), (2, -1), (2, 0)]
+
+
+def test_ulam_regular():
+    for ulam_index, ij_coords in enumerate(u9):
+        assert ulam_index == ij2ulam(*ij_coords)
+        assert ij_coords == ulam2ij(ulam_index)
+    for ulam_index in range(100):
+        assert ij2ulam(*ulam2ij(ulam_index)) == ulam_index
+
+
+def test_ulam_hexagonal():
+    for hulam_index, uv_coords in enumerate(h9):
+        assert hulam_index == uv2hulam(*uv_coords)
+        assert uv_coords == hulam2uv(hulam_index)
+    for hulam_index in range(100):
+        assert uv2hulam(*hulam2uv(hulam_index)) == hulam_index

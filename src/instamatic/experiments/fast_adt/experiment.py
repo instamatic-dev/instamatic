@@ -137,7 +137,9 @@ class Run:
 
     @property
     def has_beamshifts(self) -> bool:
-        return {'beamshift_x', 'beamshift_y'}.issubset(self.table.columns)
+        columns = ['beamshift_x', 'beamshift_y']
+        columns_exist = set(columns).issubset(self.table.columns)
+        return columns_exist and not self.table[columns].isna().any().any()
 
     @property
     def osc_angle(self) -> float:
@@ -497,6 +499,8 @@ class Experiment(ExperimentBase):
 
     def collect_run(self, run: Run) -> None:
         """Collect `run.steps` and place them in `self.steps` Queue."""
+        if run.has_beamshifts:
+            self.ctrl.beamshift.set(*run.table[['beamshift_x', 'beamshift_y']].iloc[0])
         with self.ctrl.beam.unblanked(delay=0.2):
             if run.continuous:
                 self._collect_scans(run=run)

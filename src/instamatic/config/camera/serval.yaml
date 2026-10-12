@@ -37,3 +37,4 @@ detector_config:
 bpc_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.bpc'
 dacs_file_path: '/home/asi/Desktop/Factory_settings/SPM-HGM/config.dacs'
 url: 'http://localhost:8080'
+stream_movies_via_tcp: false

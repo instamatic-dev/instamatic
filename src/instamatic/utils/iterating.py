@@ -6,13 +6,15 @@ from typing import Iterable, Iterator, TypeVar
 T = TypeVar('T')
 
 
-def pairwise(iterable: Iterable[T]) -> Iterator[tuple[T, T]]:
+def pairwise(iterable: Iterable[T], closed: bool = False) -> Iterator[tuple[T, T]]:
     """Yield pairs of subsequent iterable elements: 'abc' -> (a, b), (b, c)"""
     iterator = iter(iterable)
-    left = next(iterator, None)
+    first = left = next(iterator, None)
     for right in iterator:
         yield left, right
         left = right
+    if closed and first is not None:
+        yield left, first
 
 
 def sawtooth(iterator: Iterable[T]) -> Iterator[T]:

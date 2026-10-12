@@ -709,7 +709,7 @@ class TEMController:
         comment: str = '',
         header_keys: Tuple[str] = MOVIE_HEADER_KEYS_VARIABLE,
         header_keys_common: Tuple[str] = MOVIE_HEADER_KEYS_COMMON,
-    ) -> Generator[np.ndarray, None, None]:
+    ) -> Generator[tuple[np.ndarray, dict], None, None]:
         """Generate (image, header) pairs using camera's movie mode. If the
         exposure and binsize are not given, the default values are read from
         the config file. Common header info is collected before the generator
@@ -732,8 +732,8 @@ class TEMController:
 
         Yields
         -------
-        image_header: Generator[(np.ndarray, collections.ChainMap), None, None]
-            Generator of (numpy arrays with image data, ChainMap with
+        image_header: Generator[(np.ndarray, dict), None, None]
+            Generator of (numpy arrays with image data, dict with
             all the tem parameters and image attributes) pairs.
 
         Usage:
