@@ -98,6 +98,7 @@ class AppLoader:
 
         for location in self.locations:
             selected_modules = [module for module in modules if module.location == location]
+
             is_group = len(selected_modules) > 1
 
             if is_group:
