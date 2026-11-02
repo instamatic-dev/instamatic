@@ -97,8 +97,8 @@ def ring_percentile_detection(
         backgrounds[b] = bg
 
         # Threshold in "score" units: (percentile - bg) times multiplier, with a small floor.
-        threshold_perc = max(1.0, float(np.percentile(v, threshold_perc) - bg))
-        thresholds[b] = threshold_mult * threshold_perc
+        perc_diff = max(1.0, float(np.percentile(v, threshold_perc) - bg))
+        thresholds[b] = threshold_mult * perc_diff
 
     # Candidate selection purely in 1D on the locally averaged image
     keep = vals >= (thresholds[bin_ids] + backgrounds[bin_ids])
