@@ -165,12 +165,13 @@ class MovieBench:
         hk, hkc = header_keys, header_keys_common
         for e in exposures:
             for r in range(self.rounds):
-                if warmup and r == 0:
-                    self._warm_up(exposure=e, header_keys=hk, header_keys_common=hkc)
                 with _ctrl.cam.blocked():
+                    if warmup and r == 0:
+                        self._warm_up(exposure=e, header_keys=hk, header_keys_common=hkc)
                     res = self.run_round(exposure=e, header_keys=hk, header_keys_common=hkc)
                 res.index = r + 1
                 yield res
+                time.sleep(0.05)  # let the camera reconfigure, don't start too quick
 
 
 # -------------------------
