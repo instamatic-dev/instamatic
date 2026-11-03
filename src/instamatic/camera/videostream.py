@@ -72,7 +72,7 @@ class MediaGrabber:
     def run(self):
         while not self.stopEvent.is_set():
             if self.acquireInitiateEvent.is_set():
-                r = self.request
+                r = self.request if self.request is not None else ImageRequest()
                 self.acquireInitiateEvent.clear()
                 e = float(r.exposure if r.exposure else self.default_exposure)
                 b = int(r.binsize if r.binsize else self.default_binsize)

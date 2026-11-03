@@ -14,6 +14,7 @@ all_modules = (
     'cred_tvips',
     'cred_fei',
     'fast_adt',
+    'scan_ed',
     'sed',
     'autocred',
     'red',
