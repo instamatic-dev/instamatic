@@ -26,7 +26,7 @@ repos:
             docs/examples/montage_processing.ipynb
           )$
   - repo: https://github.com/myint/docformatter
-    rev: 'v1.7.7'
+    rev: 'v1.7.8'
     hooks:
       - id: docformatter
   - repo: https://github.com/charliermarsh/ruff-pre-commit
