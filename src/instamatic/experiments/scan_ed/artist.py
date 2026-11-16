@@ -11,7 +11,6 @@ def overlay_scan_hits(
     ax: Axes, lines: pd.DataFrame, scans: pd.DataFrame, steps: pd.DataFrame
 ) -> None:
     """Overlay a heatmap of scan hits onto an existing Axes object."""
-
     if any(x is None or x.empty for x in [lines, scans, steps]):
         return
 

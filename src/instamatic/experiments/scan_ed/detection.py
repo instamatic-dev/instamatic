@@ -185,7 +185,6 @@ def plot_diffraction_debug(
     results: DiffHuntResults,
 ) -> None:
     """Visualize detection results: log-scale image, dots @ peaks & center."""
-
     fig, ax = plt.subplots(figsize=(6, 6))
     h, w = frame.shape
     ax.set_xlim(0, w)

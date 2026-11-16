@@ -106,7 +106,6 @@ class MovieBench:
 
     def _warm_up(self, exposure: float, header_keys: tuple, header_keys_common: tuple) -> None:
         """Optional tiny dummy call warming camera / generator start-up."""
-
         try:
             hk, hkc = header_keys, header_keys_common
             gen = _ctrl.get_movie(1, exposure, header_keys=hk, header_keys_common=hkc)
@@ -318,7 +317,6 @@ def parse_header_keys(arg: Optional[str]) -> tuple:
 
 def generate_plots(results: list[RoundResult]) -> None:
     """Generate basic plots: exposure vs fps, exposure vs dead-time."""
-
     # Aggregate by exposure
     grouped: dict[float, list[RoundResult]] = {}
     for r in results:

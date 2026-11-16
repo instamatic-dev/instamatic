@@ -83,7 +83,6 @@ class Journal:
 
 def serialize(obj):
     """Serialize complex numpy objects to JSON-readable ones."""
-
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, (np.integer,)):

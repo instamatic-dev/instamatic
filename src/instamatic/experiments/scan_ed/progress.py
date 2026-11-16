@@ -195,7 +195,6 @@ class ProgressTable(ttk.Frame):
         n_peaks: Sequence[int],
     ) -> None:
         """Add lines for successful experiments, update scan & column lines."""
-
         hits_arr = np.asarray(hits, dtype=bool)
         peaks_arr = np.asarray(n_peaks, dtype=int)
         sum_steps = int(hits_arr.size)

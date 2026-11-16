@@ -238,11 +238,11 @@ class DiffHuntWorker(mp.Process):
         self.frames = np.ndarray(buffer_shape, dtype=self.dtype, buffer=self.shm.buf)
 
     def cmd_configure(self, **diffhunt_kwargs) -> None:
-        """CONFIGURE: Pass kwargs to self.config to be used at peak finding"""
+        """CONFIGURE: Pass kwargs to self.config to be used at peak finding."""
         self.config.update(**diffhunt_kwargs)
 
     def cmd_process(self, *, buffer_pointer: int) -> None:
-        """PROCESS: Eval diffraction results for image at assigned pointer"""
+        """PROCESS: Eval diffraction results for image at assigned pointer."""
         ptr = int(buffer_pointer)
         self.emit('PROCESSING')
         try:
@@ -259,7 +259,7 @@ class DiffHuntWorker(mp.Process):
         buffer_pointer: int,
         header: Optional[dict[str, Any]],
     ) -> None:
-        """WRITE: save image at assigned pointer on drive under buffer name"""
+        """WRITE: save image at assigned pointer on drive under buffer name."""
         try:
             dirs = [Path(p).resolve() for p in paths]
             filename = f'{self.buffer_name}_{buffer_pointer:06d}.tiff'

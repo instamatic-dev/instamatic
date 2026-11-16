@@ -142,7 +142,6 @@ class Experiment(ExperimentBase):
 
     def start_collection(self, **params) -> None:
         """Method that governs the entirety of scan ED experiment work flow."""
-
         # Save parameters to a variable, load the journal and dispatcher
         self.params = params
         self.initialize_state()
@@ -213,7 +212,6 @@ class Experiment(ExperimentBase):
 
     def add_scans(self, region_idx: int) -> None:
         """Add scans for window, asserting it does not have scans yet."""
-
         p = self.params
         windows_idx = self.reg.windows(region_idx=region_idx)
         windows = [self.grid_finder.grid.window(idx) for idx in windows_idx]
@@ -333,7 +331,6 @@ class Experiment(ExperimentBase):
 
     def finalize_scan(self, region_idx: int, line_idx: int, scan_idx: int) -> None:
         """Calculate scan offset, finalize it, save state to journal etc."""
-
         windows_idx = self.reg.windows(region_idx=region_idx)
         windows = [self.grid_finder.grid.window(idx) for idx in windows_idx]
         line = self.state.lines.loc[(region_idx, line_idx)]
@@ -353,7 +350,6 @@ class Experiment(ExperimentBase):
         """Re-evaluate frames already saved in `all/` with current detection
         params, rewriting the journal's hit data and `tiff/`; Never drives the
         microscope and never resumes collection afterward."""
-
         if self.dispatcher is None:
             self.dispatcher = self.get_dispatcher_from_file()
         self.state.dispatcher = self.dispatcher
@@ -374,7 +370,6 @@ class Experiment(ExperimentBase):
 
     def reprocess_scan(self, region_idx, line_idx, scan_idx) -> None:
         """Re-run detection on one previously collected scan's saved frames."""
-
         n_frames = int(self.state.lines.loc[(region_idx, line_idx), 'n_steps'])
         name = str(SaveName().append(region_idx, line_idx, scan_idx))
         frame_paths = glob(str(self.path / 'all' / f'{name}*.tiff'))

@@ -69,7 +69,6 @@ class State:
     def load_from_journal(self, fill: bool = True) -> None:
         """Recreate experiment state from journal file: get the list of events
         and, if fill=True, apply only the latest fill event to save time."""
-
         events = list(self.journal.events())
 
         latest_fill_event: dict[tuple[int, int, int], int] = {}
