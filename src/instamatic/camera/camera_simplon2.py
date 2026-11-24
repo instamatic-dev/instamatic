@@ -4,8 +4,9 @@ import atexit
 import logging
 import time
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from json.decoder import JSONDecodeError
+from threading import Lock
 from typing import Any, Generator, Optional, Tuple, Union
 from urllib.parse import urlparse
 
@@ -22,12 +23,13 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class _AcquisitionState:
-    """Describes state of image acquisition for optimized arm/trigger use."""
+    """Isolates state of image acquisition for optimized arm/trigger use."""
 
     socket: Optional[zmq.Socket] = None
     armed: bool = False  # armed, "end" message not yet received
     exposure: Optional[float] = None
     triggers_left: int = 0
+    lock: Lock = field(default_factory=Lock)
 
     def can_reuse_trigger(self, exposure: float) -> bool:
         return bool(self.armed and self.exposure == exposure and self.triggers_left)
@@ -286,6 +288,7 @@ class CameraSimplon2(CameraBase):
         e = self.default_exposure if exposure is None else exposure
         self._check_exposure(e)
 
+        self.acq.lock.acquire()
         try:
             if not self.acq.can_reuse_trigger(exposure=e):
                 logger.debug(f'Arming for single images with exposure {e} s')
@@ -303,6 +306,8 @@ class CameraSimplon2(CameraBase):
             except Exception as exc:
                 logger.error(f'Error stopping series after failed get_image: {exc}')
             raise
+        finally:
+            self.acq.lock.release()
 
         return image
 
@@ -325,6 +330,7 @@ class CameraSimplon2(CameraBase):
             """Data collection is executed lazily, only when iterating."""
             timeout = e + self.STREAM_TIMEOUT
             kw = ('detector', 'command', 'trigger')
+            self.acq.lock.acquire()
             t_future = self._te.submit(self.put, *kw, timeout=_n * e + 30)
             completed = False
             try:
@@ -340,6 +346,7 @@ class CameraSimplon2(CameraBase):
             finally:
                 if not completed:  # error or generator closed early
                     self._stop_series(abort=True, pending=t_future)
+                self.acq.lock.release()
 
         return _get_movie_inner(n_frames)
 
