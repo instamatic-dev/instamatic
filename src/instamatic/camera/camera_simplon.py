@@ -25,7 +25,7 @@ class CameraSimplon(CameraBase):
     MAX_EXPOSURE = 60.0
     BAD_EXPOSURE_MSG = 'Requested exposure is out of supported range (>0-1m)'
 
-    def __init__(self, name='dectris') -> None:
+    def __init__(self, name='simplon') -> None:
         """Initialize camera module, vars, establish connection & cleanup."""
         super().__init__(name)
 

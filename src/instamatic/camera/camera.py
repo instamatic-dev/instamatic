@@ -35,6 +35,8 @@ def get_camera_class(interface: str) -> type[CameraBase]:
         from instamatic.camera.camera_serval import CameraServal as cam
     elif interface == 'simplon':
         from instamatic.camera.camera_simplon import CameraSimplon as cam
+    elif interface == 'simplon2':
+        from instamatic.camera.camera_simplon2 import CameraSimplon2 as cam
     elif interface == 'merlin':
         from instamatic.camera.camera_merlin import CameraMerlin as cam
     else:
