@@ -9,7 +9,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from json.decoder import JSONDecodeError
 from threading import Lock
-from typing import Any, Generator, Optional, Tuple, Union
+from typing import Any, Generator, Optional, Union
 from urllib.parse import urlparse
 
 import cbor2
@@ -86,7 +86,7 @@ class _Decoder:
         return _Decoder._decode_typed_array(tag, dtype) if dtype else tag
 
 
-class CameraSimplon2(CameraBase):
+class CameraSimplon(CameraBase):
     """Interfaces with Dectris detectors via the SIMPLON REST-like API.
 
     Commands and settings go through HTTP (SIMPLON API). Images are received
@@ -108,7 +108,7 @@ class CameraSimplon2(CameraBase):
     DEFAULT_STREAM_PORT = 31001
     STREAM_TIMEOUT = 5.0  # s, extra wait for a message on top of the exposure
 
-    def __init__(self, name='simplon2') -> None:
+    def __init__(self, name: str = 'simplon') -> None:
         """Initialize camera module, vars, establish connection & cleanup."""
         super().__init__(name)
 
@@ -133,7 +133,7 @@ class CameraSimplon2(CameraBase):
         base = self.base_url.rstrip('/')
         return f'{base}/{module}/api/{self.api_version}/' + '/'.join(params)
 
-    def _wait4idle(self, timeout=5.0) -> None:
+    def _wait4idle(self, timeout: float = 5.0) -> None:
         """Wait until the camera is idle, or raise if timeout (s) reached."""
         t0 = time.time()
         while self.get('detector', 'status', 'state') != 'idle':
@@ -150,8 +150,8 @@ class CameraSimplon2(CameraBase):
         return r.json().get('value')
 
     def put(
-        self, module: str, *params: str, value=None, timeout: Optional[float] = None
-    ) -> dict:
+        self, module: str, *params: str, value: Any = None, timeout: Optional[float] = None
+    ) -> dict[str, Any]:
         """Perform a PUT request to configure a SIMPLON parameter resource."""
         url = self._request_url(module, *params)
         json = {} if value is None else {'value': value}
@@ -213,7 +213,7 @@ class CameraSimplon2(CameraBase):
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ STREAM HELPERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def _recv(self, timeout: float) -> dict:
+    def _recv(self, timeout: float) -> dict[str, Any]:
         """Receive & decode the next stream message or raise TimeoutError."""
         if not self.acq.socket.poll(int(timeout * 1000)):
             raise TimeoutError(f'No stream message received within {timeout:.1f} s')
@@ -333,8 +333,8 @@ class CameraSimplon2(CameraBase):
             timeout = e + self.STREAM_TIMEOUT
             kw = ('detector', 'command', 'trigger')
             self.acq.lock.acquire()
-            t_future = self._te.submit(self.put, *kw, timeout=_n * e + 30)
             completed = False
+            t_future: Future = self._te.submit(self.put, *kw, timeout=_n * e + 30)
             try:
                 for i in range(_n):
                     image, image_id = self._read_image(timeout)
@@ -352,7 +352,7 @@ class CameraSimplon2(CameraBase):
 
         return _get_movie_inner(n_frames)
 
-    def get_image_dimensions(self) -> Tuple[int, int]:
+    def get_image_dimensions(self) -> tuple[int, int]:
         """Get the binned dimensions reported by the camera."""
         binning = self.get_binning()
         try:
