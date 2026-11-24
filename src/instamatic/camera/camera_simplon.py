@@ -365,5 +365,5 @@ class CameraSimplon(CameraBase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    cam = CameraSimplon2()
+    cam = CameraSimplon()
     print('SIMPLON camera initialized successfully.')
