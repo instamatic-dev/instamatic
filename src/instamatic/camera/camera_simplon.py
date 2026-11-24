@@ -39,6 +39,7 @@ class _AcquisitionState:
 
 class _Decoder:
     """Use CBOR to decode DECTRIS Simplon stream V2 msg; Based on an example:
+
     https://github.com/dectris/documentation/blob/main/stream_v2/examples/client.py.
     """
 
