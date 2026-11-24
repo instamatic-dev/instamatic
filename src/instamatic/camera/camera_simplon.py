@@ -242,7 +242,6 @@ class CameraSimplon(CameraBase):
 
     def _stop_series(self, abort: bool = False, pending: Optional[Future] = None) -> None:
         """Stop the current series (if any) and flush its stream messages."""
-
         command = 'abort' if abort else 'disarm'
         if self.acq.armed:
             try:
@@ -285,7 +284,8 @@ class CameraSimplon(CameraBase):
 
         The detector stays armed for `MAX_N_TRIGGERS` (one image each).
         If called again with the same exposure, only a trigger is sent.
-        Otherwise, the running series is cancelled and a new one is armed.
+        Otherwise, the running series is cancelled and a new one is
+        armed.
         """
         e = self.default_exposure if exposure is None else exposure
         self._check_exposure(e)
