@@ -106,7 +106,6 @@ class MovieBench:
 
     def _warm_up(self, exposure: float, header_keys: tuple, header_keys_common: tuple) -> None:
         """Optional tiny dummy call warming camera / generator start-up."""
-
         try:
             hk, hkc = header_keys, header_keys_common
             gen = _ctrl.get_movie(1, exposure, header_keys=hk, header_keys_common=hkc)
@@ -165,12 +164,13 @@ class MovieBench:
         hk, hkc = header_keys, header_keys_common
         for e in exposures:
             for r in range(self.rounds):
-                if warmup and r == 0:
-                    self._warm_up(exposure=e, header_keys=hk, header_keys_common=hkc)
                 with _ctrl.cam.blocked():
+                    if warmup and r == 0:
+                        self._warm_up(exposure=e, header_keys=hk, header_keys_common=hkc)
                     res = self.run_round(exposure=e, header_keys=hk, header_keys_common=hkc)
                 res.index = r + 1
                 yield res
+                time.sleep(0.05)  # let the camera reconfigure, don't start too quick
 
 
 # -------------------------
@@ -317,7 +317,6 @@ def parse_header_keys(arg: Optional[str]) -> tuple:
 
 def generate_plots(results: list[RoundResult]) -> None:
     """Generate basic plots: exposure vs fps, exposure vs dead-time."""
-
     # Aggregate by exposure
     grouped: dict[float, list[RoundResult]] = {}
     for r in results:

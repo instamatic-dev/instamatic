@@ -38,8 +38,8 @@ class MediaGrabber:
     exposure to `frametime`, otherwise, the default camera exposure is
     used.
 
-    The callback function is used to send the media, either image or movie,
-    back to the parent routine.
+    The callback function is used to send the media, either image or
+    movie, back to the parent routine.
     """
 
     def __init__(self, cam: CameraBase, callback, frametime: float = 0.05):
@@ -72,7 +72,7 @@ class MediaGrabber:
     def run(self):
         while not self.stopEvent.is_set():
             if self.acquireInitiateEvent.is_set():
-                r = self.request
+                r = self.request if self.request is not None else ImageRequest()
                 self.acquireInitiateEvent.clear()
                 e = float(r.exposure if r.exposure else self.default_exposure)
                 b = int(r.binsize if r.binsize else self.default_binsize)
