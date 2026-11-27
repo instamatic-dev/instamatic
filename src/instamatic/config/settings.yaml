@@ -62,6 +62,7 @@ modules:
   - 'fast_adt'
   - 'sed'
   - 'autocred'
+  - 'scan_ed'
   - 'red'
   - 'machine_learning'
   - 'ctrl'

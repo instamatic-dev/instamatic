@@ -193,6 +193,64 @@ For optimum performance, the FastADT frame uses three separate TEM setting which
 The function of config settings' `store` / `restore` buttons has been described above. The `start` button starts the (tracking and then) experiment. Further information and instructions concerning the `fast_adt` experiment may appear in the window and in the console. Collected data is automatically output in all available formats to the target directory at the end of experiment.
 
 
+## ScanED data collection
+
+Module: `scan_ed`
+
+A module used to run continuous serial (precession assisted) electron diffraction experiments in which the grid geometry is determined, long scans in diffraction mode are performed, and only then presence of crystals is determined from live evaluation of diffraction pattern.
+
+Before the experiment, make sure the stage translation speed is calibrated (`instamatic.calib_stage_rotation`). Configure the beam: intensity, position, size, and switch the microscope to observe the diffraction plane. Provide the grid geometry and suggest scanning strategy. Consider your precession and camera rates when suggesting exposure: the protocol can theoretically handle 100 Hz but due to start-up delays a 10 or 20 Hz strategy might be more suitable. Provide finish conditions, especially if the experiment is to be unsupervised. Provide peak-finding parameters used to determine presence of diffraction. If unsure, tick "Save all data for reprocessing" and later "Load and reprocess" data at different parameters to find optimal conditions. Typically, the default should be quite lax, which is fine if the data is to be later filtered based on the unit cell fit.
+
+![FastADT pane](images/gui_scan_ed.png)
+
+**Grid geometry**  
+: `rectangle`, `square`, or `hexagonal` (untested), expected grid geometry used when fitting edge points automatically.
+
+**Find windows**  
+: `All manually`, `First manually`, or `All automatically`: algorithms to used when finding windows; manually – travel with stage around one grid window and click whenever the edge is in beam position; automatically – let stage move by itself until beam is shadowed, note edge position there, repeat.
+
+**Scan geometry**  
+: `X-raster`, `X-serpentine`, `Y-raster`, or `Y-serpentine`: which TEM axis to use as the fast scanning direction (on FEI, X is more stable) and whether to alter the direction sign (serpentine, faster) or not (raster, more consistent) along the slow direction.
+
+**Windows in scan**  
+: `1 x 1`, `3 x 1`, `1 x 3`, or `3 x 3`: switch away from default to scan across multiple windows at once. Useful to avoid large margins / start-up delays when moving the stage fast. Please mind that this makes grid geometry determination take more time and works better if the grid is aligned with X/Y axes.
+
+**X-step (nm)**, **Y-step (nm)**
+: Distance travelled by stage during one exposure in fast direction, spacing between individual scans in slow direction, fast/slow definition depending on scan geometry.
+
+**Exposure (s)**
+: Time taken for one exposure during each fast step; should consider camera speed, precession rate, and TEM precision (example: 500 nm step, 50 Hz exposure will try to move stage at 25 um/s, which might miss edges in case of de-synchronization.)
+
+**Max tilt (deg)**
+: If given, multiple scans along each line will be planned at 1 degree intervals: 0, -1, +1, -2,... This feature is largely untested and aims to increase coverage for electron-hard samples with strong preferential orientation.
+
+**Tracking exposure (s)**
+: The time taken to collect each tracking image in seconds.
+
+**Hits**
+: If ticked, finish experiment once the number of hits i.e. images with identified diffraction exceeds this value.
+
+**Stage X (nm)**, **Stage Y (nm)**
+: If ticked, finish experiment once there are no more windows to collect scans over within the absolute limits specified.
+
+**Time (h)**
+: If ticked, finish acquisition once this amount of time passed since the start time; can be used e.g. for overnight experiments.
+
+**Min radius (px)**
+: Peak-finding parameter specifying that "hit" frame must include at least one reflection at this distance from the beam.
+
+**Threshold perc**, **Threshold mult**
+: Peak-finding parameter specifying that in order to be recognized as valid "reflections", high-intensity pixels must feature count value at least mult-times higher than perc-th-percentile of the data at this resolution, by default at least 2 times 99-th percentile.
+
+**Min peak count**
+: Peak-finding parameter specifying that "hit" frame must contain at least this count of valid reflections post-clustering.
+
+**Min peak sep**
+: Peak-finding parameter specifying that in order to classify as independent, clustered "reflections" must lie at least this many pixels apart.
+
+Experiment progress is stored in `journal.jsonl` and `grid.yaml` files. Data is output to the `tiff\` directory and includes information about scanned region, line, scan, and position along the scan in the filename. If all images are saved, full dataset is stored in `all\` and can be reprocessed via "Load and reprocess". A started experiment can be also continued for as long as the grid was not moved. "Stop collection" schedules termination after the next scan completes. Images shared between `all\` and `tiff\` are hard-linked not to waste drive space.
+
+
 ## Machine learning
 
 Module: `machine_learning`

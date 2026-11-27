@@ -23,3 +23,7 @@ Development of `Instamatic` was supported by the Swiss National Science Foundati
 
 - 2016-2017: [Development of serial crystallography methods for structure solution of polycrystalline materials using electron diffraction](http://p3.snf.ch/project-165282)
 - 2018: [Development of serial electron crystallography methodology for quantitative phase analysis](http://p3.snf.ch/Project-177761)
+
+New method development and maintenance of `Instamatic` were supported by the European Union through projects:
+- 2024-2026: [Physics For Future – Grant Agreement No. 101081515](https://cordis.europa.eu/project/id/101081515)
+- 2027-2028: MSCA Postdoctoral Fellowships CZ (via MŠMT)
