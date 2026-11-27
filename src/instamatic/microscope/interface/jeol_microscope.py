@@ -3,9 +3,10 @@ from __future__ import annotations
 import atexit
 import logging
 import time
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple, Union
 
 import comtypes.client
+from typing_extensions import TypeAlias
 
 from instamatic import config
 from instamatic._typing import float_deg, int_nm
@@ -14,6 +15,8 @@ from instamatic.microscope.base import MicroscopeBase
 from instamatic.microscope.utils import StagePositionTuple
 
 logger = logging.getLogger(__name__)
+
+OverRateTxNum: TypeAlias = Literal[0, 1, 2, 3, 4, 5]
 
 NTRLMAPPING = {
     'GUN1': 0,
@@ -376,17 +379,28 @@ class JeolMicroscope(MicroscopeBase):
         """Return goniotool status."""
         return self.goniotool_available
 
-    def getRotationSpeed(self) -> int:
+    def getRotationSpeed(self) -> Union[int, OverRateTxNum]:
+        """Get alpha/tx tilt speed from goniotool if available, else TEM3."""
         if self.goniotool_available:
             return self.goniotool.get_rate()
         else:
-            raise TEMCommunicationError('Goniotool connection is not available.')
+            try:
+                self.stage3.Getf1OverRateTxNum()
+            except Exception as e:
+                raise TEMCommunicationError('Failed to get tilt speed via TEM3') from e
 
-    def setRotationSpeed(self, value: int):
+    def setRotationSpeed(self, value: Union[int, OverRateTxNum]) -> None:
+        """Set alpha/tx tilt speed using goniotool if available, else TEM3."""
         if self.goniotool_available:
             self.goniotool.set_rate(int(value))
         else:
-            raise TEMCommunicationError('Goniotool connection is not available.')
+            if value not in (a := {0, 1, 2, 3, 4, 5}):
+                msg = f'When setting tilt speed via TEM3, {value=} must be one of {a}'
+                raise TEMCommunicationError(msg)
+            try:
+                self.stage3.Setf1OverRateTxNum(value)
+            except Exception as e:
+                raise TEMCommunicationError('Failed to set tilt speed via TEM3') from e
 
     def resetStage(self):
         """Move stage to origin."""
@@ -443,6 +457,12 @@ class JeolMicroscope(MicroscopeBase):
         self.def3.SetPLA(x, y)
 
     def release_connection(self):
+        """Revert tilt speed back to default for autoloader & release conn."""
+        try:
+            if self.stage3.Getf1OverRateTxNum() != 0:
+                self.stage3.Setf1OverRateTxNum(0)
+        except Exception:
+            pass
         comtypes.CoUninitialize()
         logger.info('Connection to microscope released')
 
