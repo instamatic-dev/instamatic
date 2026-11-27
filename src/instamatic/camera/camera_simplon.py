@@ -120,7 +120,8 @@ class CameraSimplon(CameraBase):
         port = getattr(self, 'stream_port', self.DEFAULT_STREAM_PORT)
         self.stream_url = getattr(self, 'stream_url', f'tcp://{host}:{port}')
 
-        self.acq = _AcquisitionState()
+        self._acq = _AcquisitionState()
+        self._session = requests.Session()
         te_name = 'simplon-trigger'
         self._te = ThreadPoolExecutor(max_workers=1, thread_name_prefix=te_name)
 
@@ -141,12 +142,12 @@ class CameraSimplon(CameraBase):
             if time.time() - t0 > timeout:
                 m = 'Detector not idle - another client may be controlling it'
                 raise RuntimeError(m)
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def get(self, module: str, *params: str, timeout: Optional[float] = None) -> Any:
         """Perform a GET request on a SIMPLON parameter resource."""
         url = self._request_url(module, *params)
-        r = requests.get(url, timeout=timeout)
+        r = self._session.get(url, timeout=timeout)
         r.raise_for_status()
         return r.json().get('value')
 
@@ -156,7 +157,7 @@ class CameraSimplon(CameraBase):
         """Perform a PUT request to configure a SIMPLON parameter resource."""
         url = self._request_url(module, *params)
         json = {} if value is None else {'value': value}
-        r = requests.put(url, json=json, timeout=timeout)
+        r = self._session.put(url, json=json, timeout=timeout)
         r.raise_for_status()
         try:
             return r.json()
@@ -167,9 +168,9 @@ class CameraSimplon(CameraBase):
         """Initialize detector, apply config, and connect to stream."""
         logger.info(f'Connecting to SIMPLON detector at {self.base_url}')
 
-        self.acq.socket = zmq.Context.instance().socket(zmq.PULL)
-        self.acq.socket.setsockopt(zmq.RCVHWM, 0)  # queue instead of dropping
-        self.acq.socket.connect(self.stream_url)
+        self._acq.socket = zmq.Context.instance().socket(zmq.PULL)
+        self._acq.socket.setsockopt(zmq.RCVHWM, 0)  # queue instead of dropping
+        self._acq.socket.connect(self.stream_url)
         logger.info(f'Listening to stream at {self.stream_url}')
 
         try:
@@ -206,9 +207,13 @@ class CameraSimplon(CameraBase):
             self.put('stream', 'config', 'mode', value='disabled')
         except Exception:
             pass
-        if self.acq.socket is not None:
-            self.acq.socket.close(linger=0)
-            self.acq.socket = None
+        if self._acq.socket is not None:
+            self._acq.socket.close(linger=0)
+            self._acq.socket = None
+        try:
+            self._session.close()
+        except Exception:
+            pass
         self._te.shutdown(wait=False)
         logger.info(f"Connection to camera '{self.get_name()}' released")
 
@@ -216,9 +221,9 @@ class CameraSimplon(CameraBase):
 
     def _recv(self, timeout: float) -> dict[str, Any]:
         """Receive & decode the next stream message or raise TimeoutError."""
-        if not self.acq.socket.poll(int(timeout * 1000)):
+        if not self._acq.socket.poll(int(timeout * 1000)):
             raise TimeoutError(f'No stream message received within {timeout:.1f} s')
-        return cbor2.loads(self.acq.socket.recv(), tag_hook=_Decoder.tag_hook)
+        return cbor2.loads(self._acq.socket.recv(), tag_hook=_Decoder.tag_hook)
 
     def _read_image(self, timeout: float) -> tuple[np.ndarray, int]:
         """Return (image, image_id) of the next image msg in the stream."""
@@ -229,7 +234,7 @@ class CameraSimplon(CameraBase):
                 image = next(iter(message['data'].values()))
                 return image, message['image_id']
             if mtype == 'end':
-                self.acq.armed = False
+                self._acq.armed = False
                 raise RuntimeError('Stream series ended before the expected image')
 
     def _drain_until_end(self, timeout: float = 5.0) -> None:
@@ -239,12 +244,12 @@ class CameraSimplon(CameraBase):
                 pass
         except TimeoutError:
             logger.warning("No 'end' message received from stream while closing series")
-        self.acq.armed = False
+        self._acq.armed = False
 
     def _stop_series(self, abort: bool = False, pending: Optional[Future] = None) -> None:
         """Stop the current series (if any) and flush its stream messages."""
         command = 'abort' if abort else 'disarm'
-        if self.acq.armed:
+        if self._acq.armed:
             try:
                 self.put('detector', 'command', command, timeout=30)
             except Exception as exc:
@@ -260,9 +265,9 @@ class CameraSimplon(CameraBase):
                     logger.warning(f'Trigger did not return after {command}: {exc}')
             self._drain_until_end()
 
-        self.acq.armed = False
-        self.acq.exposure = None
-        self.acq.triggers_left = 0
+        self._acq.armed = False
+        self._acq.exposure = None
+        self._acq.triggers_left = 0
 
     def _check_exposure(self, e: float) -> None:
         if e < self.MIN_EXPOSURE or e > self.MAX_EXPOSURE:
@@ -276,7 +281,7 @@ class CameraSimplon(CameraBase):
         self.put('detector', 'config', 'nimages', value=n_images)
         self.put('detector', 'config', 'ntrigger', value=n_trigger)
         self.put('detector', 'command', 'arm', timeout=60)
-        self.acq.armed = True
+        self._acq.armed = True
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~ HIGH-LEVEL INTERFACE ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -291,17 +296,17 @@ class CameraSimplon(CameraBase):
         e = self.default_exposure if exposure is None else exposure
         self._check_exposure(e)
 
-        self.acq.lock.acquire()
+        self._acq.lock.acquire()
         try:
-            if not self.acq.can_reuse_trigger(exposure=e):
+            if not self._acq.can_reuse_trigger(exposure=e):
                 logger.debug(f'Arming for single images with exposure {e} s')
                 self._stop_series()
                 self._arm(e, n_images=1, n_trigger=self.MAX_N_TRIGGERS)
-                self.acq.exposure = e
-                self.acq.triggers_left = self.MAX_N_TRIGGERS
+                self._acq.exposure = e
+                self._acq.triggers_left = self.MAX_N_TRIGGERS
 
             self.put('detector', 'command', 'trigger', timeout=e + 30)
-            self.acq.triggers_left -= 1
+            self._acq.triggers_left -= 1
             image, _ = self._read_image(timeout=e + self.STREAM_TIMEOUT)
         except Exception:
             try:
@@ -310,7 +315,7 @@ class CameraSimplon(CameraBase):
                 logger.error(f'Error stopping series after failed get_image: {exc}')
             raise
         finally:
-            self.acq.lock.release()
+            self._acq.lock.release()
 
         return image
 
@@ -327,18 +332,17 @@ class CameraSimplon(CameraBase):
 
         self._stop_series()
         self._arm(e, n_images=n_frames, n_trigger=1)
-        self.acq.triggers_left = 0
+        self._acq.triggers_left = 0
 
         def _get_movie_inner(_n: int) -> Generator[np.ndarray]:
             """Data collection is executed lazily, only when iterating."""
-            timeout = e + self.STREAM_TIMEOUT
             kw = ('detector', 'command', 'trigger')
-            self.acq.lock.acquire()
+            self._acq.lock.acquire()
             completed = False
             t_future: Future = self._te.submit(self.put, *kw, timeout=_n * e + 30)
             try:
                 for i in range(_n):
-                    image, image_id = self._read_image(timeout)
+                    image, image_id = self._read_image(e + self.STREAM_TIMEOUT)
                     if image_id != i:
                         msg = f'Frame {i}/{_n} expected, received image_id {image_id}'
                         raise RuntimeError(msg)
@@ -349,7 +353,7 @@ class CameraSimplon(CameraBase):
             finally:
                 if not completed:  # error or generator closed early
                     self._stop_series(abort=True, pending=t_future)
-                self.acq.lock.release()
+                self._acq.lock.release()
 
         return _get_movie_inner(n_frames)
 
