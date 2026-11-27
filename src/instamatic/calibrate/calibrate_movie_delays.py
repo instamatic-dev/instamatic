@@ -141,12 +141,13 @@ class CalibMovieDelaysMapping(MutableMapping):
     artificially inflating the "dead" time. This class manages instances of
     `CalibMovieDelays` calibrated for each combination of exposure and headers.
 
-    From the code perspective, the easiest way to express calibration conditions
-    i.e. exposure, variable headers, and common headers, is via a tuple.
-    Unfortunately, tuples can't be used as a key for serialization.
-    This mapping internally uses `CalibConditions` as a key, but allows indexing
-    via `CalibConditionsDict_T` or `CalibConditionsTuple_T` for convenience.
-    It can also serialize/deserialize self to/from a `ListedCalibMovieDelays_T`.
+    From the code perspective, the easiest way to express calibration
+    conditions i.e. exposure, variable headers, and common headers, is
+    via a tuple. Unfortunately, tuples can't be used as a key for
+    serialization. This mapping internally uses `CalibConditions` as a
+    key, but allows indexing via `CalibConditionsDict_T` or
+    `CalibConditionsTuple_T` for convenience. It can also
+    serialize/deserialize self to/from a `ListedCalibMovieDelays_T`.
     """
 
     def __init__(self, dict_: Optional[Dict[CalibConditions, CalibMovieDelays]] = None) -> None:
@@ -349,7 +350,7 @@ def calibrate_movie_delays_live(
     log(f'header_keys: {header_keys}')
     log(f'header_keys_common: {header_keys_common}')
 
-    def _get_movie_times(exposure_=1e-6) -> MovieTimes:
+    def _get_movie_times(exposure_=0.001) -> MovieTimes:
         """Benchmark `get_movie` and put the results into a `MovieTimes`."""
         # first single-frame movie dummy only updates the settings if needed
         _ = next(ctrl.get_movie(1, exposure_, **movie_kwargs))
@@ -368,7 +369,7 @@ def calibrate_movie_delays_live(
     ctrl.cam.block()
     try:
         mte = _get_movie_times(exposure)  # actual movie timestamps
-        mtr = _get_movie_times(1e-6)  # reference movie with ~0 exposure
+        mtr = _get_movie_times(0.001)  # reference movie with ~0 exposure
     finally:
         ctrl.cam.unblock()
 
