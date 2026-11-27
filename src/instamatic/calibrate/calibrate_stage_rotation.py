@@ -48,9 +48,11 @@ def calibrate_stage_rotation_live(
     mode: Literal['auto', 'limited', 'listed'] = 'auto',
     outdir: Optional[str] = None,
     plot: Optional[bool] = None,
+    independent: bool = False,
 ) -> CalibStageRotation:
-    """Calibrate stage rotation speed live on the microscope. By default, this
-    is run with a large precision and should take between 5 and 15 min. Can be
+    """Calibrate stage rotation speed live on the microscope.
+
+    By default, this is run with a large precision and should take between 5 and 15 min. Can be
     made shorter if desired, but this is ill-advised. Even tests done on a
     simulator show that more points offer better accuracy (times in ms):
 
@@ -78,10 +80,16 @@ def calibrate_stage_rotation_live(
         Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
+    independent: `bool`
+        If True, treat every speed setting as unrelated to others and fit it
+        with its own model (for non-linear settings e.g. JEOL OverRateTxNum).
+        Requires `speeds` to be given. Forces the `listed` behavior of `mode`.
 
     return:
         instance of `CalibStageRotation` class with conversion methods
     """
+    if independent and not speeds:
+        raise ValueError('Independent calibration requires explicit speed settings.')
 
     spans_array = np.array(spans or [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     alternating_ones = np.ones(len(spans_array)) * (-1) ** np.arange(len(spans_array))
@@ -102,7 +110,9 @@ def calibrate_stage_rotation_live(
         speed_options = JEOL_ROTATION_SPEED_OPTIONS
 
     speeds_: Sequence[float] = speeds or speeds_default
-    if mode == 'limited':
+    if independent:
+        speed_options = NumericDomain(options=sorted(speeds_))
+    elif mode == 'limited':
         speed_options = NumericDomain(lower_lim=min(speeds_), upper_lim=max(speeds_))
     elif mode == 'listed':
         speed_options = NumericDomain(options=sorted(speeds_))
@@ -120,7 +130,11 @@ def calibrate_stage_rotation_live(
         log(f'Calibrating a-axis rotation speed based on {n_calib_points} points.')
         with tqdm(total=n_calib_points) as progress_bar:
             for speed in speeds_:
-                with ctrl.stage.rotation_speed(float(speed)) if speed else nullcontext():
+                with (
+                    ctrl.stage.rotation_speed(float(speed))
+                    if speed is not None
+                    else nullcontext()
+                ):
                     ctrl.stage.a = 0.0
                     for target, span in zip(alpha_targets, spans_array):
                         t1 = perf_counter()
@@ -134,7 +148,7 @@ def calibrate_stage_rotation_live(
             ctrl.stage.set_rotation_speed(starting_stage_speed)
         ctrl.cam.unblock()
 
-    c = CalibStageRotation.from_data(calib_points)
+    c = CalibStageRotation.from_data(calib_points, independent=independent)
     c.speed_options = speed_options
     c.to_file(outdir)
     if plot:
@@ -149,7 +163,6 @@ def main_entry() -> None:
     For a quick test or a debug run for the simulated TEM, run
     `instamatic.calibrate_stage_rotation -x 1 2 3 -s 8 10 12`.
     """
-
     parser = argparse.ArgumentParser(
         description=main_entry.__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -179,6 +192,12 @@ def main_entry() -> None:
 
     h = 'After calibration, attempt to `--plot` / `--no-plot` its results.'
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
+
+    h = 'Fit every `--speeds` setting with its own independent linear model '
+    h += '(e.g. for JEOL: `-s 0 1 2 3 4 5 --independent`). Requires `--speeds`.'
+    parser.add_argument(
+        '--independent', action=argparse.BooleanOptionalAction, default=False, help=h
+    )
 
     kwargs = vars(parser.parse_args())
     if kwargs['speeds'] is not None:

@@ -74,9 +74,11 @@ def calibrate_stage_translation_live(
     mode: Literal['auto', 'limited', 'listed'] = 'auto',
     outdir: Optional[AnyPath] = None,
     plot: Optional[bool] = None,
+    independent: bool = False,
 ) -> CalibStageTranslation:
-    """Calibrate stage translation speed along axis live on the microscope. By
-    default, this is run for a large number of stage span and speed settings
+    """Calibrate stage translation speed along axis live on the microscope.
+
+    By default, this is run for a large number of stage span and speed settings
     and should take up to 30 minutes per axis. Calibration can be made shorter
     if desired but this is ill-advised. Tests run on a Tecnai T20 machine show
     how more calibration points offer better accuracy (delay may be unreliable;
@@ -107,10 +109,15 @@ def calibrate_stage_translation_live(
         Determines the way speed settings restrictions are set in calib file.
     outdir: `str` or None
         Directory where the final calibration file will be saved.
+    independent: `bool`
+        If True, fit every speed setting with its own independent linear model.
+        Requires `speeds`. Forces the `listed` behavior of `mode`.
 
     return:
         instance of `CalibStageTranslation` class with conversion methods
     """
+    if independent and not speeds:
+        raise ValueError('Independent calibration requires explicit speed settings.')
 
     spans_array = np.array(spans or [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4, 1e5])
     alternating_ones = np.ones(len(spans_array)) * (-1) ** np.arange(len(spans_array))
@@ -130,7 +137,9 @@ def calibrate_stage_translation_live(
         ctrl.stage.set(*stage0)
 
     speeds_: Sequence[Speed] = speeds or speeds_default
-    if mode == 'limited':
+    if independent:
+        speed_options = NumericDomain(options=sorted(speeds_))
+    elif mode == 'limited':
         speed_options = NumericDomain(lower_lim=min(speeds_), upper_lim=max(speeds_))
     elif mode == 'listed':
         speed_options = NumericDomain(options=sorted(speeds_))
@@ -157,7 +166,7 @@ def calibrate_stage_translation_live(
         ctrl.stage.set(*stage0)
         ctrl.cam.unblock()
 
-    c = axis_to_calib_class_dict[axis].from_data(calib_points)
+    c = axis_to_calib_class_dict[axis].from_data(calib_points, independent=independent)
     c.speed_options = speed_options
     c.to_file(outdir)
     if plot:
@@ -172,7 +181,6 @@ def main_entry() -> None:
     For a quick test or a debug run for the simulated TEM, run
     `instamatic.calibrate_stage_translation -x 10000 20000 -s 8 10 12`.
     """
-
     parser = argparse.ArgumentParser(
         description=main_entry.__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -204,6 +212,12 @@ def main_entry() -> None:
 
     h = 'After calibration, attempt to `--plot` / `--no-plot` its results.'
     parser.add_argument('--plot', action=argparse.BooleanOptionalAction, default=True, help=h)
+
+    h = 'Fit every speed setting in `--speeds` with its own independent model. '
+    h += 'Requires `--speeds`.'
+    parser.add_argument(
+        '--independent', action=argparse.BooleanOptionalAction, default=False, help=h
+    )
 
     kwargs = vars(parser.parse_args())
     if kwargs['speeds'] is not None:
