@@ -30,6 +30,28 @@ SpeedN = TypeVar('SpeedN', float, int)
 Speed = Optional[SpeedN]
 
 
+def _normalize_speed(speed: Union[float, int]) -> Union[int, float]:
+    """Return integer-valued speeds as int, so dict keys survive a YAML round
+    trip."""
+    speed = float(speed)
+    return int(speed) if speed.is_integer() else speed
+
+
+@dataclass
+class SpeedModel:
+    """Independent linear model of one speed setting: time = pace * span + delay.
+
+    Here `delay` already includes any windup contribution at this setting.
+    """
+
+    pace: float  # seconds per span unit at this setting
+    delay: float  # total constant delay at this setting, in seconds
+
+    def __post_init__(self) -> None:
+        self.pace = float(self.pace)
+        self.delay = float(self.delay)
+
+
 @dataclass
 class MotionPlan(Generic[SpeedN]):
     """A set of motion parameters/outcomes nearest to the ones requested."""
@@ -76,6 +98,11 @@ class CalibStageMotion(ABC):
     speed setting nearest to the one requested. Any mention of `speed=None`
     signals that the microscope does not allow control over this motion speed.
 
+    If the speed settings are not linearly related to the speed values (e.g.
+    JEOL OverRateTxNum), `speed_models` holds one `SpeedModel` per setting,
+    each fitted independently as time = pace * span + delay. In that case
+    `pace`, `windup` and `delay` are `nan` and only `speed_models` is used.
+
     Concrete subclasses should provide:
       - units and axis labels for plotting
       - a `live` class method that runs live calibration and returns an instance
@@ -85,6 +112,7 @@ class CalibStageMotion(ABC):
     windup: float
     delay: float
     speed_options: Optional[NumericDomain] = None
+    speed_models: Optional[dict[Union[int, float], SpeedModel]] = None
 
     def __post_init__(self) -> None:
         self.pace = float(self.pace)
@@ -92,6 +120,27 @@ class CalibStageMotion(ABC):
         self.delay = float(self.delay)
         if isinstance(self.speed_options, dict):
             self.speed_options = NumericDomain(**self.speed_options)
+
+        if self.speed_models is not None:
+            self.speed_models = {
+                _normalize_speed(k): SpeedModel(**v) if isinstance(v, dict) else v
+                for k, v in self.speed_models.items()
+            }
+
+    @property
+    def independent(self) -> bool:
+        """True if each speed setting has its own independent model."""
+        return self.speed_models is not None
+
+    def _speed_model(self, speed: Speed) -> SpeedModel:
+        """Model calibrated for exactly this speed setting."""
+        assert self.speed_models is not None
+        if speed is None or speed not in self.speed_models:
+            raise ValueError(
+                f'No independent calibration for speed setting {speed}. '
+                f'Calibrated settings: {sorted(self.speed_models)}.'
+            )
+        return self.speed_models[speed]
 
     _program_name: ClassVar[str] = NotImplemented
     _span_typical_limits: ClassVar[tuple[float, float]] = NotImplemented
@@ -116,18 +165,36 @@ class CalibStageMotion(ABC):
 
     def span_speed_to_time(self, span: Span, speed: Speed = None) -> float:
         """`time` needed to move stage by `span` with `speed`."""
+        if self.speed_models is not None:
+            m = self._speed_model(speed)
+            return m.pace * span + m.delay
         return (self.pace * span + self.windup) / (speed or 1.0) + self.delay
 
     def span_time_to_speed(self, span: Span, time: float) -> float:
-        """`speed` that allows to move stage by `span` with `speed`."""
+        """`speed` that best allows to move the stage by `span` in `time`."""
+        if self.speed_models is not None:
+            return min(
+                self.speed_models,
+                key=lambda s: abs(self.span_speed_to_time(span, s) - time),
+            )
         return (self.pace * span + self.windup) / (time - self.delay)
 
     def time_speed_to_span(self, time: float, speed: Speed = None) -> float:
         """Maximum `span` covered with `speed` in `time` (including delay)."""
+        if self.speed_models is not None:
+            m = self._speed_model(speed)
+            return (time - m.delay) / m.pace
         return ((speed or 1.0) * (time - self.delay) - self.windup) / self.pace
 
     def plan_motion(self, target_pace: float) -> MotionPlan:
         """Given target pace, find nearest pace, needed speed, and delay."""
+        if self.speed_models is not None:
+            nearest_speed = min(
+                self.speed_models,
+                key=lambda s: abs(self.speed_models[s].pace - abs(target_pace)),
+            )
+            m = self.speed_models[nearest_speed]
+            return MotionPlan(m.pace, nearest_speed, m.delay)
         if self.speed_options is None:
             return MotionPlan(self.pace, None, self.windup + self.delay)
         target_speed: float = abs(self.pace / target_pace)
@@ -138,11 +205,12 @@ class CalibStageMotion(ABC):
 
     def plot(self, sst: Optional[Sequence[SpanSpeedTime]] = None) -> None:
         """Generic plot of experimental (if given) & fit motion speed data."""
-
         # determine speeds to plot; use experimental if given, fabricate otherwise
         speeds: list[Speed]  # sorted
         if sst is not None:
             speeds = sorted(dict.fromkeys(s.speed for s in sst).keys())
+        elif self.speed_models is not None:
+            speeds = sorted(self.speed_models)
         elif self.speed_options is None:
             speeds = [None]
         elif isinstance(self.speed_options, NumericDomainConstrained):
@@ -150,7 +218,7 @@ class CalibStageMotion(ABC):
             speeds = list(np.linspace(so.lower_lim, so.upper_lim, 10))
         else:  # isinstance(calib.speed_options, NumericDomainDiscrete):
             speeds = sorted(getattr(self.speed_options, 'options', [1.0]))
-        speeds = [s for s in speeds if s != 0]
+        speeds = [s for s in speeds if s != 0 or self.independent]
 
         # determine spans to plot; use experimental if given, fabricate otherwise
         spans: list[float]  # sorted
@@ -174,7 +242,8 @@ class CalibStageMotion(ABC):
         fig, ax = plt.subplots()
         ax.axvline(x=0, color='k')
         ax.axhline(y=0, color='k')
-        ax.axhline(y=self.delay, color='r')
+        if not self.independent:
+            ax.axhline(y=self.delay, color='r')
 
         colors = plt.colormaps['coolwarm'](np.linspace(0, 1, num=len(speeds)))
         handles: list[Line2D] = []
@@ -183,7 +252,7 @@ class CalibStageMotion(ABC):
                 spans = [s.span for s in sst if s.speed == speed]
                 times = [s.time for s in sst if s.speed == speed]
                 ax.plot(spans, times, fmt, color=color)
-            label = f'Speed setting {speed:.2f}' if speed else 'Default speed'
+            label = f'Speed setting {speed:.2f}' if speed is not None else 'Default speed'
             handles.append(Line2D([], [], color=color, marker='o', label=label))
 
         ax.set_xlabel(f'Motion span [{self._span_units}]')
@@ -193,12 +262,19 @@ class CalibStageMotion(ABC):
         plt.show()
 
     @classmethod
-    def from_data(cls, sst: Sequence[SpanSpeedTime]) -> Self:
-        """Fit cls.model to span-speed-time points and init based on result."""
+    def from_data(cls, sst: Sequence[SpanSpeedTime], independent: bool = False) -> Self:
+        """Fit cls.model to span-speed-time points and init based on result.
+
+        If `independent`, fit each speed setting with its own linear
+        model instead.
+        """
         sst_array = np.array(sst).T
         spans = np.array(sst_array[0], dtype=float)
         speeds = np.array(sst_array[1], dtype=float)
         times = np.array(sst_array[2], dtype=float)
+
+        if independent:
+            return cls._from_data_independent(spans, speeds, times)
 
         if np.all(np.isnan(speeds)):  # TEM does not support setting with speed
             p = curve_fit(CalibStageMotion.model2, spans, ydata=times, p0=[1, 0])
@@ -218,6 +294,38 @@ class CalibStageMotion(ABC):
         log('model time = (pace * span + windup) / speed + delay')
 
         return cls(pace_n, windup_n, delay_n)
+
+    @classmethod
+    def _from_data_independent(
+        cls,
+        spans: np.ndarray,
+        speeds: np.ndarray,
+        times: np.ndarray,
+    ) -> Self:
+        """Fit time = pace * span + delay separately for every speed setting."""
+        if np.any(np.isnan(speeds)):
+            raise ValueError('Independent calibration needs explicit speed settings.')
+
+        log(f'{cls.__name__} independent fit of motion model per speed setting:')
+        models: dict[Union[int, float], SpeedModel] = {}
+        for speed in np.unique(speeds):
+            mask = speeds == speed
+            if len(np.unique(spans[mask])) < 2:
+                raise ValueError(f'Need at least 2 distinct spans for speed {speed}.')
+            p, p_cov = curve_fit(
+                CalibStageMotion.model2, spans[mask], ydata=times[mask], p0=[1, 0]
+            )
+            pace_n, delay_n = p
+            pace_u, delay_u = np.sqrt(np.diag(p_cov))
+            models[_normalize_speed(speed)] = SpeedModel(pace_n, delay_n)
+            log(
+                f'speed {speed:g}: pace = {pace_n:12.6g} +/- {pace_u:12.6g} s / {cls._span_units}'
+            )
+            log(f'speed {speed:g}: delay = {delay_n:11.6f} +/- {delay_u:12.6f} s')
+        log('model time = pace * span + delay (separately for each speed setting)')
+
+        nan = float('nan')
+        return cls(nan, nan, nan, speed_models=models)
 
     @classmethod
     def from_file(cls, path: Optional[AnyPath] = None) -> Self:
