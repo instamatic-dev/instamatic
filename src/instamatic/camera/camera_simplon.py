@@ -101,9 +101,9 @@ class CameraSimplon(CameraBase):
     """
 
     streamable = True
-    MIN_EXPOSURE = 0.0001
+    MIN_EXPOSURE = 0.001
     MAX_EXPOSURE = 60.0
-    BAD_EXPOSURE_MSG = 'Requested exposure is out of supported range (>0-1m)'
+    BAD_EXPOSURE_MSG = 'Requested exposure is out of supported range (1ms-1min)'
 
     MAX_N_TRIGGERS = 2**16
     DEFAULT_STREAM_PORT = 31001
